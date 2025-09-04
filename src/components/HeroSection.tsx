@@ -133,7 +133,7 @@ export const HeroSection = () => {
                 <h2 className="text-2xl font-bold">Pourquoi ReviewRadar fonctionne ?</h2>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
                     <span className="text-xl mt-1">⚡</span>
@@ -165,6 +165,18 @@ export const HeroSection = () => {
                       <h3 className="text-lg font-semibold mb-2">Précision chirurgicale</h3>
                       <p className="text-blue-100 text-sm leading-relaxed">
                         L&apos;analytique analyse chaque mot, chaque émotion, chaque nuance pour vous donner des insights précis.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl mt-1">📈</span>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Résultat immédiat</h3>
+                      <p className="text-blue-100 text-sm leading-relaxed">
+                        Chaque utilisateur qui utilise analytique voit sa note augmenter de 0.5 à 1 point en moyenne chaque semaine.
                       </p>
                     </div>
                   </div>
