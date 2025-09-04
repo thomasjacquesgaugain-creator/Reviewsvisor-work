@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building } from "lucide-react";
+import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
@@ -88,7 +88,18 @@ const Dashboard = () => {
           </Card>
 
           {/* Feature cards */}
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
+              <CardContent className="p-0 space-y-4">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <Target className="w-6 h-6 text-purple-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Analyse IA avancée</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Détection automatique des thématiques, sentiments et mentions fréquentes dans vos avis
+                </p>
+              </CardContent>
+            </Card>
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
