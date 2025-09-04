@@ -34,47 +34,48 @@ export const HeroSection = () => {
           </div>
         </div>
 
-        {/* Main content */}
+        {/* Main hero card */}
         <div className="container mx-auto px-4 py-16">
-          {/* Hero text */}
-          <div className="text-center space-y-6 max-w-4xl mx-auto mb-12">
-            <div className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full text-sm font-medium">
-              <span>⚡</span>
-              Prêt à révolutionner votre établissement ?
-            </div>
-            
-            <p className="text-lg text-gray-600 leading-relaxed">
-              Rejoignez des centaines de restaurateurs qui ont déjà{" "}
-              <span className="text-green-600 font-semibold">augmenté leur note de 0.5 à 1 point</span>{" "}
-              en quelques semaines grâce à nos insights précis et actionnables.
-            </p>
+          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-12">
+            <CardContent className="p-8 text-center space-y-6">
+              <div className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full text-sm font-medium">
+                <span>⚡</span>
+                Prêt à révolutionner votre établissement ?
+              </div>
+              
+              <p className="text-lg text-gray-600 leading-relaxed">
+                Rejoignez des centaines de restaurateurs qui ont déjà{" "}
+                <span className="text-green-600 font-semibold">augmenté leur note de 0.5 à 1 point</span>{" "}
+                en quelques semaines grâce à nos insights précis et actionnables.
+              </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
-                <span>🚀</span>
-                Commencer gratuitement maintenant
-              </Button>
-              <Button variant="outline" className="border-gray-300 text-gray-700 px-8 py-3 rounded-full font-medium">
-                J'ai déjà un compte
-              </Button>
-            </div>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
+                  <span>🚀</span>
+                  Commencer gratuitement maintenant
+                </Button>
+                <Button variant="outline" className="border-gray-300 text-gray-700 px-8 py-3 rounded-full font-medium">
+                  J'ai déjà un compte
+                </Button>
+              </div>
 
-            {/* Trust indicators bottom */}
-            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 pt-4">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Aucune carte de crédit requise</span>
+              {/* Trust indicators bottom */}
+              <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 pt-4">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Aucune carte de crédit requise</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Analyse gratuite</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Résultats en 30 secondes</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Analyse gratuite</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Résultats en 30 secondes</span>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Feature cards */}
           <div className="grid md:grid-cols-3 gap-6 mb-12 max-w-5xl mx-auto">
