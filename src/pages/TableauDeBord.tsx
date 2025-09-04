@@ -38,10 +38,10 @@ const Dashboard = () => {
                   <BarChart3 className="w-4 h-4" />
                   Dashboard
                 </Button>
-                <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
+                <Link to="/etablissement" className="text-gray-700 hover:text-blue-600 flex items-center gap-1">
                   <Building className="w-4 h-4" />
                   Établissement
-                </Button>
+                </Link>
                 <div className="flex items-center gap-2 text-gray-700">
                   <span>Bonjour, Yohan Lopes</span>
                 </div>
