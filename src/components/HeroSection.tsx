@@ -50,10 +50,11 @@ export const HeroSection = () => {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
-                  <span>🚀</span>
+                  <span>✨</span>
                   Commencer gratuitement maintenant
                 </Button>
                 <Button variant="outline" className="border-gray-300 text-gray-700 px-8 py-3 rounded-full font-medium">
+                  <span>👤</span>
                   J'ai déjà un compte
                 </Button>
               </div>
