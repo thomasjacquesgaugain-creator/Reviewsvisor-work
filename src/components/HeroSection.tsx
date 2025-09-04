@@ -150,9 +150,9 @@ export const HeroSection = () => {
                   <div className="flex items-start gap-3">
                     <span className="text-xl mt-1">📈</span>
                     <div>
-                      <h3 className="text-lg font-semibold mb-2">Sécurité Totale</h3>
+                      <h3 className="text-lg font-semibold mb-2">Résultat immédiat</h3>
                       <p className="text-blue-100 text-sm leading-relaxed">
-                        Vos données sont protégées et isolées. Chaque utilisateur a son propre espace sécurisé et privé.
+                        Chaque utilisateur qui utilise analytique voit sa note augmenter de 0.5 à 1 point en moyenne chaque semaine.
                       </p>
                     </div>
                   </div>
@@ -174,9 +174,9 @@ export const HeroSection = () => {
                   <div className="flex items-start gap-3">
                     <span className="text-xl mt-1">🔒</span>
                     <div>
-                      <h3 className="text-lg font-semibold mb-2">Résultat immédiat</h3>
+                      <h3 className="text-lg font-semibold mb-2">Sécurité Totale</h3>
                       <p className="text-blue-100 text-sm leading-relaxed">
-                        Chaque utilisateur qui utilise analytique voit sa note augmenter de 0.5 à 1 point en moyenne chaque semaine.
+                        Vos données sont protégées et isolées. Chaque utilisateur a son propre espace sécurisé et privé.
                       </p>
                     </div>
                   </div>
