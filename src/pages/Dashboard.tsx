@@ -32,7 +32,7 @@ const Dashboard = () => {
             </div>
             
             <div className="flex items-center gap-6">
-              <Link to="/" className="text-gray-600 hover:text-blue-600 flex items-center gap-1">
+              <Link to="/tableau-de-bord" className="text-gray-600 hover:text-blue-600 flex items-center gap-1">
                 Accueil
               </Link>
               <Button variant="ghost" className="text-gray-600">
