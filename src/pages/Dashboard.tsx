@@ -12,7 +12,8 @@ import {
   Trash2,
   AlertTriangle,
   CheckCircle,
-  Lightbulb
+  Lightbulb,
+  Target
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -243,7 +244,7 @@ const Dashboard = () => {
         </div>
 
         {/* Recommandations */}
-        <Card>
+        <Card className="mb-8">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Lightbulb className="w-5 h-5 text-blue-500" />
@@ -265,6 +266,28 @@ const Dashboard = () => {
             <div className="mt-4 p-4 bg-blue-50 rounded-lg">
               <div className="font-medium text-blue-900">Correction réussie</div>
               <div className="text-sm text-blue-700">Redirection vers votre dashboard</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Analyse par thématiques */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-purple-500" />
+              <CardTitle className="text-lg">Analyse par thématiques</CardTitle>
+            </div>
+            <p className="text-sm text-gray-500">Répartition des avis par catégories</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                <div>
+                  <div className="font-medium">Services</div>
+                  <div className="text-sm text-gray-500">45% des avis</div>
+                </div>
+                <Badge className="bg-purple-500 text-white">Thématique</Badge>
+              </div>
             </div>
           </CardContent>
         </Card>
