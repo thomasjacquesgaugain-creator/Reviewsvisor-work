@@ -148,7 +148,7 @@ export const HeroSection = () => {
 
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <span className="text-xl mt-1">🔒</span>
+                    <span className="text-xl mt-1">📈</span>
                     <div>
                       <h3 className="text-lg font-semibold mb-2">Sécurité Totale</h3>
                       <p className="text-blue-100 text-sm leading-relaxed">
@@ -172,7 +172,7 @@ export const HeroSection = () => {
 
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <span className="text-xl mt-1">📈</span>
+                    <span className="text-xl mt-1">🔒</span>
                     <div>
                       <h3 className="text-lg font-semibold mb-2">Résultat immédiat</h3>
                       <p className="text-blue-100 text-sm leading-relaxed">
