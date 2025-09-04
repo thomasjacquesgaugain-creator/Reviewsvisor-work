@@ -133,7 +133,7 @@ export const HeroSection = () => {
                 <h2 className="text-2xl font-bold">Pourquoi ReviewRadar fonctionne ?</h2>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-8">
+              <div className="grid md:grid-cols-3 gap-8">
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
                     <span className="text-xl mt-1">⚡</span>
@@ -153,6 +153,18 @@ export const HeroSection = () => {
                       <h3 className="text-lg font-semibold mb-2">Sécurité Totale</h3>
                       <p className="text-blue-100 text-sm leading-relaxed">
                         Vos données sont protégées et isolées. Chaque utilisateur a son propre espace sécurisé et privé.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl mt-1">🔬</span>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Précision chirurgicale</h3>
+                      <p className="text-blue-100 text-sm leading-relaxed">
+                        L&apos;analytique analyse chaque mot, chaque émotion, chaque nuance pour vous donner des insights précis.
                       </p>
                     </div>
                   </div>
