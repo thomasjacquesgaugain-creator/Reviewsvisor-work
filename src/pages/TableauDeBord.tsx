@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home } from "lucide-react";
+import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
@@ -37,6 +37,10 @@ const Dashboard = () => {
                 <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
                   <BarChart3 className="w-4 h-4" />
                   Dashboard
+                </Button>
+                <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
+                  <Building className="w-4 h-4" />
+                  Établissement
                 </Button>
                 <div className="flex items-center gap-2 text-gray-700">
                   <span>Bonjour, Yohan Lopes</span>
