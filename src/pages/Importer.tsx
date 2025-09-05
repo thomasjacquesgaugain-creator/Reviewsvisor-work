@@ -193,7 +193,7 @@ const Importer = () => {
     }
   };
 
-  // Recherche d'établissements via Overpass (OSM) avec fallback Nominatim
+  // Recherche d'établissements améliorée via Overpass (OSM) et Nominatim
   const rechercherEtablissements = async (requete: string) => {
     const query = requete.trim();
     if (!query) {
@@ -207,45 +207,64 @@ const Importer = () => {
       const cityContext = villeSelectionnee || (ville.length >= 2 ? ville : "");
       const allowedTypes = ["restaurant", "cafe", "bar", "fast_food", "food_court", "pub", "biergarten"] as const;
 
-      // Helpers internes
+      // Helpers internes améliorés
       const ensureBBox = async (cityName: string) => {
         if (villeBBox && villeBBox.name.toLowerCase() === cityName.toLowerCase()) {
           return villeBBox;
         }
         setBboxEnCours(true);
-        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&q=${encodeURIComponent(cityName)}`;
-        const res = await fetch(url, { headers: { Accept: "application/json" } });
-        if (!res.ok) {
-          setBboxEnCours(false);
-          return null;
+        try {
+          // Recherche plus précise de la ville
+          const cityQueries = [
+            `${cityName} France`,
+            cityName,
+            `city ${cityName}`,
+            `town ${cityName}`
+          ];
+          
+          for (const cityQuery of cityQueries) {
+            const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&q=${encodeURIComponent(cityQuery)}&featuretype=city,town,village`;
+            const res = await fetch(url, { headers: { Accept: "application/json" } });
+            if (!res.ok) continue;
+            
+            const data: any[] = await res.json();
+            const cityItem = data.find(item => 
+              (item.class === "place" && ["city", "town", "village"].includes(item.type)) ||
+              (item.class === "boundary" && item.type === "administrative")
+            );
+            
+            if (cityItem?.boundingbox) {
+              const [south, north, west, east] = cityItem.boundingbox.map((v: string) => parseFloat(v));
+              const bbox = { s: south, n: north, w: west, e: east, name: cityName };
+              setVilleBBox(bbox);
+              setBboxEnCours(false);
+              return bbox;
+            }
+          }
+        } catch (error) {
+          console.error("Erreur bbox:", error);
         }
-        const data: any[] = await res.json();
-        const item = data?.[0];
-        if (!item?.boundingbox) {
-          setBboxEnCours(false);
-          return null;
-        }
-        const [south, north, west, east] = item.boundingbox.map((v: string) => parseFloat(v));
-        const bbox = { s: south, n: north, w: west, e: east, name: cityName };
-        setVilleBBox(bbox);
         setBboxEnCours(false);
-        return bbox;
+        return null;
       };
 
       const fetchOverpass = async (bbox: { s: number; n: number; w: number; e: number }) => {
         const { s, n, w, e } = bbox;
         const overpassQuery = `
-          [out:json][timeout:25];
+          [out:json][timeout:30];
           (
-            node["amenity"~"^(restaurant|cafe|bar|fast_food|food_court|pub|biergarten)$"](${s},${w},${n},${e});
-            way["amenity"~"^(restaurant|cafe|bar|fast_food|food_court|pub|biergarten)$"](${s},${w},${n},${e});
-            relation["amenity"~"^(restaurant|cafe|bar|fast_food|food_court|pub|biergarten)$"](${s},${w},${n},${e});
+            node["amenity"~"^(restaurant|cafe|bar|fast_food|food_court|pub|biergarten)$"]["name"](${s},${w},${n},${e});
+            way["amenity"~"^(restaurant|cafe|bar|fast_food|food_court|pub|biergarten)$"]["name"](${s},${w},${n},${e});
+            relation["amenity"~"^(restaurant|cafe|bar|fast_food|food_court|pub|biergarten)$"]["name"](${s},${w},${n},${e});
           );
-          out center 150;`;
+          out center 200;`;
+        
         const endpoints = [
           "https://overpass-api.de/api/interpreter",
           "https://overpass.kumi.systems/api/interpreter",
+          "https://overpass.openstreetmap.ru/api/interpreter"
         ];
+        
         for (const ep of endpoints) {
           try {
             const r = await fetch(ep, {
@@ -258,103 +277,116 @@ const Importer = () => {
               return json.elements || [];
             }
           } catch (err) {
-            // essayer endpoint suivant
+            console.log(`Endpoint ${ep} failed, trying next...`);
           }
         }
         return [];
       };
 
-      // Si une ville est renseignée, on privilégie Overpass avec bbox
+      // Recherche prioritaire avec bbox si ville renseignée
       if (cityContext) {
         const bbox = await ensureBBox(cityContext);
         if (bbox) {
           const elements = await fetchOverpass(bbox);
           const filterText = etablissement.trim().toLowerCase();
+          
           const list = elements
             .filter((el: any) => el.tags?.name)
             .map((el: any) => {
               const name = el.tags.name as string;
-              const city = (el.tags?.["addr:city"] as string) || cityContext;
-              return { name, city };
+              const amenity = el.tags.amenity as string;
+              const city = (el.tags?.["addr:city"] as string) || 
+                          (el.tags?.["addr:town"] as string) || 
+                          cityContext;
+              const typeLabel = amenity === "restaurant" ? "" : ` (${amenity})`;
+              return { name: name.trim(), city: city.trim(), type: typeLabel };
             })
-            .filter((it: any) => !filterText || it.name.toLowerCase().includes(filterText));
+            .filter((it: any) => 
+              !filterText || 
+              it.name.toLowerCase().includes(filterText) ||
+              it.name.toLowerCase().replace(/[^a-z0-9]/g, '').includes(filterText.replace(/[^a-z0-9]/g, ''))
+            )
+            .sort((a: any, b: any) => {
+              // Priorité aux correspondances exactes
+              const aExact = a.name.toLowerCase().startsWith(filterText);
+              const bExact = b.name.toLowerCase().startsWith(filterText);
+              if (aExact && !bExact) return -1;
+              if (!aExact && bExact) return 1;
+              return a.name.localeCompare(b.name);
+            });
 
           const noms: string[] = Array.from(
-            new Set<string>(list.map((it: { name: string; city: string }) => `${it.name} — ${it.city}`))
-          );
+            new Set<string>(list.map((it: { name: string; city: string; type: string }) => 
+              `${it.name}${it.type} — ${it.city}`
+            ))
+          ).slice(0, 50); // Limiter à 50 résultats
+          
           if (noms.length > 0) {
             setEtablissements(noms);
-            toast({
-              title: "Établissements trouvés",
-              description: `${noms.length} résultats pour « ${filterText ? `${etablissement} ${cityContext}` : cityContext} »`,
-              duration: 3000,
-            });
-            return; // On a des résultats pertinents, on sort
+            return;
           }
         }
-        // Si aucun bbox ou aucun résultat via Overpass, on continue avec Nominatim
       }
 
-      // Fallback: Nominatim (stratégies multiples)
+      // Fallback amélioré: Nominatim avec requêtes optimisées
       const strategies = [
-        `${query} restaurant`,
-        `${query}`,
-        query.includes(' ') ? query.split(' ').reverse().join(' ') + ' restaurant' : null,
-      ].filter(Boolean) as string[];
+        // Requêtes spécifiques avec ville
+        ...(cityContext ? [
+          `"${etablissement}" ${cityContext} restaurant`,
+          `${etablissement} restaurant ${cityContext}`,
+          `${etablissement} ${cityContext}`
+        ] : []),
+        // Requêtes générales
+        `"${etablissement}" restaurant`,
+        `${etablissement} restaurant`,
+        etablissement
+      ];
 
       let allResults: any[] = [];
       for (const searchQuery of strategies) {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=15&q=${encodeURIComponent(searchQuery)}`;
-        const res = await fetch(url, { headers: { Accept: "application/json" } });
-        if (!res.ok) continue;
-        const data: any[] = await res.json();
-        allResults = [...allResults, ...data];
-        const restaurantFound = data.some(
-          (item) => item.class === "amenity" && allowedTypes.includes(item.type)
-        );
-        if (restaurantFound) break;
+        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=20&q=${encodeURIComponent(searchQuery)}&extratags=1`;
+        try {
+          const res = await fetch(url, { headers: { Accept: "application/json" } });
+          if (!res.ok) continue;
+          const data: any[] = await res.json();
+          allResults = [...allResults, ...data];
+          
+          // Arrêter si on a trouvé des restaurants pertinents
+          const relevantFound = data.some(
+            (item) => item.class === "amenity" && allowedTypes.includes(item.type) && item.name
+          );
+          if (relevantFound && allResults.length >= 10) break;
+        } catch (error) {
+          console.log(`Nominatim query failed: ${searchQuery}`);
+        }
       }
 
+      // Traitement des résultats Nominatim
       const uniqueResults = allResults.filter(
         (item, index, self) => index === self.findIndex((t) => t.place_id === item.place_id)
       );
 
       let results = uniqueResults.filter(
-        (item: any) => item.class === "amenity" && allowedTypes.includes(item.type)
+        (item: any) => item.class === "amenity" && allowedTypes.includes(item.type) && item.name
       );
-      if (results.length === 0) results = uniqueResults.slice(0, 10);
+      
+      if (results.length === 0) {
+        results = uniqueResults.filter((item: any) => item.name).slice(0, 15);
+      }
 
       const nomsFallback: string[] = results
         .map((item: any) => {
-          const name = item.name || (item.display_name?.split(",")[0] ?? "").trim();
-          const city =
-            item.address?.city || item.address?.town || item.address?.village || item.address?.municipality;
+          const name = item.name?.trim() || (item.display_name?.split(",")[0] ?? "").trim();
+          const city = item.address?.city || item.address?.town || item.address?.village || item.address?.municipality;
           const type = item.type === "restaurant" ? "" : ` (${item.type})`;
-          return name ? (city ? `${name}${type} — ${city}` : `${name}${type}`) : null;
+          return name && city ? `${name}${type} — ${city}` : (name ? `${name}${type}` : null);
         })
         .filter(Boolean) as string[];
 
       setEtablissements(nomsFallback);
-      if (nomsFallback.length > 0) {
-        toast({
-          title: "Établissements trouvés",
-          description: `${nomsFallback.length} résultats pour « ${query} »`,
-          duration: 3000,
-        });
-      } else {
-        toast({
-          title: "Aucun établissement",
-          description: `Aucun résultat pour « ${query} ».`,
-          duration: 4000,
-        });
-      }
     } catch (e) {
-      toast({
-        title: "Erreur de recherche",
-        description: "Impossible de récupérer les établissements.",
-        variant: "destructive",
-        duration: 3000,
-      });
+      console.error("Erreur recherche établissements:", e);
+      setEtablissements([]);
     } finally {
       setRechercheEnCours(false);
     }
@@ -532,29 +564,6 @@ const Importer = () => {
           {/* Form avec bouton géolocalisation */}
           <Card className="mb-8">
             <CardContent className="p-8">
-              {/* Bouton géolocalisation */}
-              <div className="mb-6 flex gap-3">
-                <Button 
-                  onClick={obtenirGeolocalisation}
-                  disabled={geolocalisationEnCours}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  {geolocalisationEnCours ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                  ) : (
-                    <Locate className="w-4 h-4" />
-                  )}
-                  {geolocalisationEnCours ? "Localisation..." : "Utiliser ma position"}
-                </Button>
-                
-                {positionUtilisateur && (
-                  <div className="flex items-center gap-2 text-sm text-green-600">
-                    <MapPin className="w-4 h-4" />
-                    Position détectée
-                  </div>
-                )}
-              </div>
               <div className="grid md:grid-cols-3 gap-6 mb-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
