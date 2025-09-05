@@ -26,7 +26,7 @@ const Dashboard = () => {
               </div>
               
               <div className="flex items-center gap-4">
-                <Link to="/" className="text-blue-600 font-medium hover:underline flex items-center gap-1">
+                <Link to="/" className="text-blue-600 font-medium hover:underline flex items-center gap-2">
                   <Home className="w-4 h-4" />
                   Accueil
                 </Link>
