@@ -32,19 +32,24 @@ const Dashboard = () => {
             </div>
             
             <div className="flex items-center gap-6">
-              <Link to="/tableau-de-bord" className="text-gray-600 hover:text-blue-600 flex items-center gap-1">
+              <Link to="/" className="text-gray-600 hover:text-blue-600 flex items-center gap-1">
+                <Home className="w-4 h-4" />
                 Accueil
               </Link>
-              <Button variant="ghost" className="text-gray-600">
+              <Link to="/importer" className="text-gray-600 hover:text-blue-600 flex items-center gap-1">
+                <BarChart3 className="w-4 h-4" />
                 Importer
-              </Button>
-              <Button variant="ghost" className="text-blue-600 font-medium">
+              </Link>
+              <Button variant="ghost" className="text-blue-600 font-medium flex items-center gap-1">
+                <BarChart3 className="w-4 h-4" />
                 Dashboard
               </Button>
               <div className="flex items-center gap-2 text-gray-700">
+                <User className="w-4 h-4" />
                 <span>Bonjour, Yohan Lopes</span>
               </div>
-              <Button variant="ghost" className="text-gray-600">
+              <Button variant="ghost" className="text-gray-600 flex items-center gap-1">
+                <LogOut className="w-4 h-4" />
                 Déconnexion
               </Button>
             </div>
