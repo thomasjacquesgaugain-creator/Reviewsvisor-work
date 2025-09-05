@@ -185,18 +185,6 @@ const Importer = () => {
               <div className="grid md:grid-cols-3 gap-6 mb-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
-                    Ville <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    placeholder="Ex: Paris, Lyon, Marseille..."
-                    value={ville}
-                    onChange={(e) => setVille(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
                     Nom de l'établissement <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -246,6 +234,18 @@ const Importer = () => {
                       </button>
                     </div>
                   )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Ville <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    placeholder="Ex: Paris, Lyon, Marseille..."
+                    value={ville}
+                    onChange={(e) => setVille(e.target.value)}
+                    className="w-full"
+                  />
                 </div>
 
                 <div className="space-y-2">
