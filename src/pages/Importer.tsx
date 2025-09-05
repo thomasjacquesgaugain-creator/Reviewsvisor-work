@@ -709,66 +709,35 @@ const Importer = () => {
             </CardContent>
           </Card>
 
-          {/* Conseils et info Google Places */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Info className="w-5 h-5 text-blue-500" />
-                  <CardTitle className="text-lg">Conseils :</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3 text-gray-600">
-                  <li className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <span>Utilisez le bouton "Utiliser ma position" pour trouver les établissements à proximité</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <span>Tapez au moins 3 caractères pour déclencher la recherche automatique</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <span>Recherchez par nom d'établissement ou par ville</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <span>Les avis sont récupérés depuis Google, Tripadvisor et Yelp</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Search className="w-5 h-5 text-orange-500" />
-                  <CardTitle className="text-lg">Améliorer la recherche :</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <p className="text-gray-600">
-                    Pour une recherche plus précise et complète, vous pouvez intégrer Google Places API.
-                  </p>
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                    <h4 className="font-medium text-orange-900 mb-2">Google Places API</h4>
-                    <p className="text-sm text-orange-700 mb-3">
-                      Accès à des millions d'établissements avec photos, horaires, avis et coordonnées précises.
-                    </p>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="text-orange-600 border-orange-300 hover:bg-orange-50"
-                    >
-                      Configurer Google Places
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Conseils */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Info className="w-5 h-5 text-blue-500" />
+                <CardTitle className="text-lg">Conseils :</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3 text-gray-600">
+                <li className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                  <span>Tapez au moins 2 caractères pour déclencher la recherche automatique</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                  <span>Recherchez par nom d'établissement ou par ville</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                  <span>Les avis sont récupérés depuis Google, Tripadvisor et Yelp</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                  <span>Sélectionnez une ville pour une recherche plus précise</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
