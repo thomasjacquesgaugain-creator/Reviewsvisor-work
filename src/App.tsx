@@ -10,7 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Importer from "./pages/Importer";
 import ImportCSV from "./pages/ImportCSV";
 import SaisieManuelle from "./pages/SaisieManuelle";
-import Etablissement from "./pages/Etablissement";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,7 +29,7 @@ const App = () => (
           <Route path="/importer" element={<Importer />} />
           <Route path="/import-csv" element={<ImportCSV />} />
           <Route path="/saisie-manuelle" element={<SaisieManuelle />} />
-          <Route path="/etablissement" element={<Etablissement />} />
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

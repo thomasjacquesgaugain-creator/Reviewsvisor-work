@@ -42,10 +42,6 @@ const Dashboard = () => {
                     Dashboard
                   </Button>
                 </Link>
-                <Link to="/etablissement" className="text-gray-700 hover:text-blue-600 flex items-center gap-1">
-                  <Building className="w-4 h-4" />
-                  Établissement
-                </Link>
                 <div className="flex items-center gap-2 text-gray-700">
                   <span>Bonjour, Yohan Lopes</span>
                 </div>
