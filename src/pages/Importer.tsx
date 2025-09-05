@@ -521,6 +521,29 @@ const Importer = () => {
         </div>
       </nav>
 
+      {/* Header buttons */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-4">
+            <Link to="/saisie-manuelle">
+              <Button variant="ghost" className="text-gray-600 flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Saisie manuelle
+              </Button>
+            </Link>
+            <Link to="/import-csv">
+              <Button variant="ghost" className="text-gray-600 flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Import CSV
+              </Button>
+            </Link>
+            <Button variant="ghost" className="text-blue-600 font-medium flex items-center gap-2">
+              <Search className="w-4 h-4" />
+              Récupération automatique
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {/* Main content */}
       <div className="container mx-auto px-4 py-8">
@@ -536,25 +559,6 @@ const Importer = () => {
             <p className="text-lg text-gray-600">
               Récupérez automatiquement les avis Google, Tripadvisor et Yelp de votre établissement
             </p>
-          </div>
-
-          {/* Boutons de navigation horizontaux */}
-          <div className="flex flex-wrap gap-4 justify-center mb-8">
-            <Button variant="outline" className="flex items-center gap-2 px-6 py-3">
-              <FileText className="w-5 h-5" />
-              Saisie manuelle
-            </Button>
-            <Button variant="outline" className="flex items-center gap-2 px-6 py-3">
-              <Upload className="w-5 h-5" />
-              Import CSV
-            </Button>
-            <Button 
-              variant="default" 
-              className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90"
-            >
-              <Search className="w-5 h-5" />
-              Récupération automatique
-            </Button>
           </div>
 
           {/* Form avec bouton géolocalisation */}
