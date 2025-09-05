@@ -9,7 +9,9 @@ import {
   Info,
   Home,
   BarChart3,
-  LogOut
+  LogOut,
+  MapPin,
+  Locate
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -23,8 +25,123 @@ const Importer = () => {
   const [etablissements, setEtablissements] = useState<string[]>([]);
   const [rechercheEnCours, setRechercheEnCours] = useState(false);
   const [etablissementSelectionne, setEtablissementSelectionne] = useState("");
+  const [positionUtilisateur, setPositionUtilisateur] = useState<{lat: number, lng: number} | null>(null);
+  const [geolocalisationEnCours, setGeolocalisationEnCours] = useState(false);
 
-  // Recherche d'établissements via Nominatim (OpenStreetMap)
+  // Obtenir la géolocalisation de l'utilisateur
+  const obtenirGeolocalisation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "Géolocalisation non supportée",
+        description: "Votre navigateur ne supporte pas la géolocalisation",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    setGeolocalisationEnCours(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setPositionUtilisateur(coords);
+        setGeolocalisationEnCours(false);
+        
+        // Recherche automatique des établissements à proximité
+        rechercherEtablissementsProches(coords);
+        
+        toast({
+          title: "Position trouvée",
+          description: "Recherche d'établissements à proximité...",
+          duration: 3000,
+        });
+      },
+      (error) => {
+        setGeolocalisationEnCours(false);
+        let message = "Erreur de géolocalisation";
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            message = "Autorisation de géolocalisation refusée";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = "Position non disponible";
+            break;
+          case error.TIMEOUT:
+            message = "Délai de géolocalisation dépassé";
+            break;
+        }
+        toast({
+          title: "Erreur",
+          description: message,
+          variant: "destructive",
+          duration: 3000,
+        });
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+    );
+  };
+
+  // Recherche d'établissements à proximité avec coordonnées GPS
+  const rechercherEtablissementsProches = async (coords: {lat: number, lng: number}) => {
+    try {
+      setRechercheEnCours(true);
+      const radius = 2000; // 2km de rayon
+      const query = `restaurant near ${coords.lat},${coords.lng}`;
+      
+      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=20&q=${encodeURIComponent(query)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: any[] = await res.json();
+
+      const restaurantTypes = new Set(["restaurant", "cafe", "bar", "fast_food", "food_court", "pub", "biergarten"]);
+      const results = data.filter((item: any) => {
+        if (item.class === "amenity" && restaurantTypes.has(item.type)) {
+          // Vérifier la distance (approximative)
+          const distance = Math.sqrt(
+            Math.pow(parseFloat(item.lat) - coords.lat, 2) + 
+            Math.pow(parseFloat(item.lon) - coords.lng, 2)
+          ) * 111000; // Conversion approximative en mètres
+          return distance <= radius;
+        }
+        return false;
+      });
+
+      const noms: string[] = results
+        .map((item: any) => {
+          const name = item.name || (item.display_name?.split(",")[0] ?? "").trim();
+          const city = item.address?.city || item.address?.town || item.address?.village;
+          const distance = Math.round(Math.sqrt(
+            Math.pow(parseFloat(item.lat) - coords.lat, 2) + 
+            Math.pow(parseFloat(item.lon) - coords.lng, 2)
+          ) * 111000);
+          return name ? `${name}${city ? ` — ${city}` : ""} (${distance}m)` : null;
+        })
+        .filter(Boolean) as string[];
+
+      setEtablissements(noms);
+      if (noms.length > 0) {
+        toast({
+          title: "Établissements trouvés",
+          description: `${noms.length} établissements à proximité`,
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de rechercher les établissements à proximité",
+        variant: "destructive",
+        duration: 3000,
+      });
+    } finally {
+      setRechercheEnCours(false);
+    }
+  };
+
+  // Recherche d'établissements via Nominatim (OpenStreetMap) ou Google Places
   const rechercherEtablissements = async (requete: string) => {
     const query = requete.trim();
     if (!query) {
@@ -34,19 +151,24 @@ const Importer = () => {
 
     try {
       setRechercheEnCours(true);
-      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(query)}`;
+      
+      // Essayer d'abord avec Google Places si disponible, sinon Nominatim
+      let data: any[] = [];
+      
+      // TODO: Ajouter Google Places API ici pour de meilleurs résultats
+      // Pour l'instant, utiliser Nominatim
+      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=15&q=${encodeURIComponent(query + " restaurant")}`;
       const res = await fetch(url, {
-        headers: {
-          Accept: "application/json",
-        },
+        headers: { Accept: "application/json" },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data: any[] = await res.json();
+      data = await res.json();
 
       const allowed = new Set(["restaurant", "cafe", "bar", "fast_food", "food_court", "pub", "biergarten"]);
       let results = data.filter((item: any) => item.class === "amenity" && allowed.has(item.type));
       if (results.length === 0) {
-        results = data;
+        // Fallback: chercher tous types d'établissements
+        results = data.slice(0, 10);
       }
 
       const noms: string[] = results
@@ -67,14 +189,14 @@ const Importer = () => {
       } else {
         toast({
           title: "Aucun établissement",
-          description: `Aucun résultat pour « ${query} »`,
-          duration: 3000,
+          description: `Aucun résultat pour « ${query} ». Essayez avec Google Places API pour de meilleurs résultats.`,
+          duration: 4000,
         });
       }
     } catch (e) {
       toast({
         title: "Erreur de recherche",
-        description: "Impossible de récupérer les établissements pour le moment.",
+        description: "Impossible de récupérer les établissements. Essayez la géolocalisation.",
         variant: "destructive",
         duration: 3000,
       });
@@ -219,9 +341,32 @@ const Importer = () => {
             </p>
           </div>
 
-          {/* Form */}
+          {/* Form avec bouton géolocalisation */}
           <Card className="mb-8">
             <CardContent className="p-8">
+              {/* Bouton géolocalisation */}
+              <div className="mb-6 flex gap-3">
+                <Button 
+                  onClick={obtenirGeolocalisation}
+                  disabled={geolocalisationEnCours}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  {geolocalisationEnCours ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                  ) : (
+                    <Locate className="w-4 h-4" />
+                  )}
+                  {geolocalisationEnCours ? "Localisation..." : "Utiliser ma position"}
+                </Button>
+                
+                {positionUtilisateur && (
+                  <div className="flex items-center gap-2 text-sm text-green-600">
+                    <MapPin className="w-4 h-4" />
+                    Position détectée
+                  </div>
+                )}
+              </div>
               <div className="grid md:grid-cols-3 gap-6 mb-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
@@ -316,39 +461,66 @@ const Importer = () => {
             </CardContent>
           </Card>
 
-          {/* Conseils */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Info className="w-5 h-5 text-blue-500" />
-                <CardTitle className="text-lg">Conseils :</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3 text-gray-600">
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Saisissez au moins 3 caractères pour la ville pour déclencher la recherche automatique</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Les établissements de votre ville apparaîtront automatiquement dans la liste</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Cliquez sur l'établissement exact pour une sélection précise</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Si aucun avis n'est trouvé pour une période courte, essayez une période plus longue</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Les avis sont récupérés depuis Google, Tripadvisor et Yelp</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+          {/* Conseils et info Google Places */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Info className="w-5 h-5 text-blue-500" />
+                  <CardTitle className="text-lg">Conseils :</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3 text-gray-600">
+                  <li className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Utilisez le bouton "Utiliser ma position" pour trouver les établissements à proximité</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Tapez au moins 3 caractères pour déclencher la recherche automatique</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Recherchez par nom d'établissement ou par ville</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Les avis sont récupérés depuis Google, Tripadvisor et Yelp</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Search className="w-5 h-5 text-orange-500" />
+                  <CardTitle className="text-lg">Améliorer la recherche :</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <p className="text-gray-600">
+                    Pour une recherche plus précise et complète, vous pouvez intégrer Google Places API.
+                  </p>
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <h4 className="font-medium text-orange-900 mb-2">Google Places API</h4>
+                    <p className="text-sm text-orange-700 mb-3">
+                      Accès à des millions d'établissements avec photos, horaires, avis et coordonnées précises.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                    >
+                      Configurer Google Places
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
