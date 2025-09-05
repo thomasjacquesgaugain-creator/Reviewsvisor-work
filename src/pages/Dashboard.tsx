@@ -13,11 +13,21 @@ import {
   AlertTriangle,
   CheckCircle,
   Lightbulb,
-  Target
+  Target,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 const Dashboard = () => {
+  const [showAvis, setShowAvis] = useState(false);
+
+  const avisExemples = [
+    { id: 1, auteur: "Marie L.", note: 5, commentaire: "Excellent service, très satisfait !", date: "30/07/2025" },
+    { id: 2, auteur: "Jean D.", note: 4, commentaire: "Bonne ambiance, plats savoureux", date: "29/07/2025" },
+    { id: 3, auteur: "Sophie M.", note: 3, commentaire: "Service correct mais un peu d'attente", date: "28/07/2025" },
+  ];
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
@@ -81,14 +91,46 @@ const Dashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-4">
-                <span className="text-2xl font-bold text-blue-600">65</span>
-                <div>
-                  <div className="font-medium">31/07/2025 14:30</div>
-                  <div className="text-sm text-gray-500">2h avis</div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="text-2xl font-bold text-blue-600">65</span>
+                  <div>
+                    <div className="font-medium">31/07/2025 14:30</div>
+                    <div className="text-sm text-gray-500">2h avis</div>
+                  </div>
                 </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setShowAvis(!showAvis)}
+                  className="hover:bg-blue-50"
+                >
+                  {showAvis ? (
+                    <ChevronUp className="w-4 h-4 text-blue-600" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-blue-600" />
+                  )}
+                </Button>
               </div>
+              
+              {showAvis && (
+                <div className="mt-4 space-y-3 border-t pt-4">
+                  <h4 className="font-medium text-gray-700 mb-3">Avis récents :</h4>
+                  {avisExemples.map((avis) => (
+                    <div key={avis.id} className="bg-white p-3 rounded-lg border">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-sm">{avis.auteur}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-yellow-500">{'★'.repeat(avis.note)}</span>
+                          <span className="text-xs text-gray-500">{avis.date}</span>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600">{avis.commentaire}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
