@@ -524,23 +524,25 @@ const Importer = () => {
       {/* Header buttons */}
       <div className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link to="/saisie-manuelle">
-              <Button variant="ghost" className="text-gray-600 flex items-center gap-2">
+          <div className="flex items-center justify-between w-full">
+            <Link to="/saisie-manuelle" className="flex-1">
+              <Button variant="ghost" className="w-full text-gray-600 flex items-center gap-2">
                 <FileText className="w-4 h-4" />
                 Saisie manuelle
               </Button>
             </Link>
-            <Link to="/import-csv">
-              <Button variant="ghost" className="text-gray-600 flex items-center gap-2">
+            <Link to="/import-csv" className="flex-1">
+              <Button variant="ghost" className="w-full text-gray-600 flex items-center gap-2">
                 <Upload className="w-4 h-4" />
                 Import CSV
               </Button>
             </Link>
-            <Button variant="ghost" className="text-blue-600 font-medium flex items-center gap-2">
-              <Search className="w-4 h-4" />
-              Récupération automatique
-            </Button>
+            <div className="flex-1">
+              <Button variant="ghost" className="w-full text-blue-600 font-medium flex items-center gap-2">
+                <Search className="w-4 h-4" />
+                Récupération automatique
+              </Button>
+            </div>
           </div>
         </div>
       </div>
