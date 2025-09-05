@@ -116,9 +116,8 @@ const Dashboard = () => {
         <Card className="mb-8">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <div>
                 <CardTitle className="text-lg">Historique des analyses</CardTitle>
-                <span className="text-sm text-gray-500">Les analyses précédentes et terminées. Les résultats</span>
               </div>
               <Select value={periodeAnalyse} onValueChange={setPeriodeAnalyse}>
                 <SelectTrigger className="w-32">
@@ -131,6 +130,7 @@ const Dashboard = () => {
                 </SelectContent>
               </Select>
             </div>
+            <p className="text-sm text-gray-500 mt-2">Les analyses précédentes et terminées. Les résultats</p>
           </CardHeader>
           <CardContent>
             <div className="p-4 bg-gray-50 rounded-lg">
