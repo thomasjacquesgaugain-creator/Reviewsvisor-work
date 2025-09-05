@@ -96,9 +96,8 @@ const Dashboard = () => {
                   {date}
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-gray-700">
-                <User className="w-4 h-4" />
-                <span>Bonjour, Yohan Lopes</span>
+              <div className="text-gray-700">
+                Bonjour, Yohan Lopes
               </div>
               <Button variant="ghost" className="text-gray-600 flex items-center gap-1">
                 <LogOut className="w-4 h-4" />
