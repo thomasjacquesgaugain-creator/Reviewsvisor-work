@@ -33,6 +33,86 @@ const Importer = () => {
   const [bboxEnCours, setBboxEnCours] = useState(false);
   const [positionUtilisateur, setPositionUtilisateur] = useState<{lat: number, lng: number} | null>(null);
   const [geolocalisationEnCours, setGeolocalisationEnCours] = useState(false);
+  
+  // États pour l'import CSV
+  const [fichierCSV, setFichierCSV] = useState<File | null>(null);
+  const [donneesCSV, setDonneesCSV] = useState<any[]>([]);
+  const [importEnCours, setImportEnCours] = useState(false);
+
+  // Fonctions pour l'import CSV
+  const gererSelectionFichier = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const fichier = event.target.files?.[0];
+    if (fichier) {
+      if (fichier.type !== 'text/csv' && !fichier.name.endsWith('.csv')) {
+        toast({
+          title: "Erreur",
+          description: "Veuillez sélectionner un fichier CSV",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+      setFichierCSV(fichier);
+      lireFichierCSV(fichier);
+    }
+  };
+
+  const lireFichierCSV = (fichier: File) => {
+    setImportEnCours(true);
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const contenu = e.target?.result as string;
+        const lignes = contenu.split('\n');
+        const headers = lignes[0].split(',').map(h => h.trim().replace(/"/g, ''));
+        
+        const donnees = lignes.slice(1)
+          .filter(ligne => ligne.trim())
+          .map((ligne, index) => {
+            const valeurs = ligne.split(',').map(v => v.trim().replace(/"/g, ''));
+            const objet: any = {};
+            headers.forEach((header, i) => {
+              objet[header] = valeurs[i] || '';
+            });
+            objet.id = index + 1;
+            return objet;
+          });
+
+        setDonneesCSV(donnees);
+        toast({
+          title: "Fichier importé",
+          description: `${donnees.length} avis importés avec succès`,
+          duration: 3000,
+        });
+      } catch (error) {
+        toast({
+          title: "Erreur d'import",
+          description: "Impossible de lire le fichier CSV",
+          variant: "destructive",
+          duration: 3000,
+        });
+      } finally {
+        setImportEnCours(false);
+      }
+    };
+
+    reader.onerror = () => {
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la lecture du fichier",
+        variant: "destructive",
+        duration: 3000,
+      });
+      setImportEnCours(false);
+    };
+
+    reader.readAsText(fichier);
+  };
+
+  const ouvrirSelecteurFichier = () => {
+    document.getElementById('fichier-csv-input')?.click();
+  };
 
   // Obtenir la géolocalisation de l'utilisateur
   const obtenirGeolocalisation = () => {
@@ -771,31 +851,116 @@ const Importer = () => {
           {modeActuel === 'import' && (
             <Card>
               <CardContent className="p-8">
-                <div className="text-center py-12">
-                  <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Import CSV</h3>
-                  <p className="text-gray-600 mb-6">
-                    Importez vos avis depuis un fichier CSV au format standard
-                  </p>
-                  <div className="space-y-4">
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
-                      <p className="text-gray-500 mb-4">Glissez-déposez votre fichier CSV ici ou</p>
-                      <Button variant="outline">
-                        Choisir un fichier
-                      </Button>
-                    </div>
-                    <div className="text-left bg-gray-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-900 mb-2">Format CSV requis :</h4>
-                      <ul className="text-sm text-gray-600 space-y-1">
-                        <li>• Nom du client</li>
-                        <li>• Note (sur 5)</li>
-                        <li>• Commentaire</li>
-                        <li>• Date</li>
-                        <li>• Source (Google, TripAdvisor, etc.)</li>
-                      </ul>
+                {/* Input file caché */}
+                <input
+                  id="fichier-csv-input"
+                  type="file"
+                  accept=".csv"
+                  onChange={gererSelectionFichier}
+                  className="hidden"
+                />
+                
+                {!fichierCSV ? (
+                  <div className="text-center py-12">
+                    <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Import CSV</h3>
+                    <p className="text-gray-600 mb-6">
+                      Importez vos avis depuis un fichier CSV au format standard
+                    </p>
+                    <div className="space-y-4">
+                      <div 
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-8 hover:border-gray-400 transition-colors cursor-pointer"
+                        onClick={ouvrirSelecteurFichier}
+                      >
+                        <p className="text-gray-500 mb-4">Glissez-déposez votre fichier CSV ici ou</p>
+                        <Button variant="outline" disabled={importEnCours}>
+                          {importEnCours ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent mr-2"></div>
+                              Importation...
+                            </>
+                          ) : (
+                            'Choisir un fichier'
+                          )}
+                        </Button>
+                      </div>
+                      <div className="text-left bg-gray-50 p-4 rounded-lg">
+                        <h4 className="font-medium text-gray-900 mb-2">Format CSV requis :</h4>
+                        <ul className="text-sm text-gray-600 space-y-1">
+                          <li>• Nom du client</li>
+                          <li>• Note (sur 5)</li>
+                          <li>• Commentaire</li>
+                          <li>• Date</li>
+                          <li>• Source (Google, TripAdvisor, etc.)</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div>
+                    <div className="text-center mb-6">
+                      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Upload className="w-8 h-8 text-green-600" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Fichier importé</h3>
+                      <p className="text-gray-600">
+                        <strong>{fichierCSV.name}</strong> - {donneesCSV.length} avis trouvés
+                      </p>
+                    </div>
+
+                    {donneesCSV.length > 0 && (
+                      <div className="space-y-4">
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <h4 className="font-medium text-gray-900 mb-3">Aperçu des données :</h4>
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full bg-white rounded border">
+                              <thead className="bg-gray-100">
+                                <tr>
+                                  {Object.keys(donneesCSV[0] || {}).slice(0, 5).map((header) => (
+                                    <th key={header} className="px-4 py-2 text-left text-sm font-medium text-gray-700 border-b">
+                                      {header}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {donneesCSV.slice(0, 3).map((ligne, index) => (
+                                  <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                    {Object.values(ligne).slice(0, 5).map((valeur: any, i) => (
+                                      <td key={i} className="px-4 py-2 text-sm text-gray-600 border-b max-w-32 truncate">
+                                        {String(valeur)}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          {donneesCSV.length > 3 && (
+                            <p className="text-sm text-gray-500 mt-2">
+                              ... et {donneesCSV.length - 3} autres avis
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex gap-4">
+                          <Button className="flex-1">
+                            Valider l'import ({donneesCSV.length} avis)
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => {
+                              setFichierCSV(null);
+                              setDonneesCSV([]);
+                            }}
+                          >
+                            Changer de fichier
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
