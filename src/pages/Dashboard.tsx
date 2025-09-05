@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   BarChart3, 
-  Clock, 
   TrendingUp, 
   User, 
   LogOut, 
@@ -127,7 +126,6 @@ const Dashboard = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-gray-500" />
                 <CardTitle className="text-lg">Historique des analyses</CardTitle>
                 <span className="text-sm text-gray-500">Les analyses précédentes et terminées. Les résultats</span>
               </div>
