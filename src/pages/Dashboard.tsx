@@ -186,53 +186,6 @@ const Dashboard = () => {
                   <ChevronDown className="w-3 h-3 text-blue-600" />
                 )}
               </Button>
-              
-              {showPlateformes && (
-                <div className="mt-4 border-t pt-4">
-                  <h4 className="font-medium text-gray-700 mb-3 text-center">Plateformes connectées :</h4>
-                  
-                  <div className="space-y-3">
-                    <div className="bg-white p-3 rounded-lg border">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
-                            <span className="text-red-600 font-bold text-xs">G</span>
-                          </div>
-                          <span className="font-medium text-sm">Google My Business</span>
-                        </div>
-                        <Badge className="bg-green-100 text-green-700 text-xs">Connecté</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600">142 avis • 4.3 étoiles</p>
-                    </div>
-
-                    <div className="bg-white p-3 rounded-lg border">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-green-100 rounded flex items-center justify-center">
-                            <span className="text-green-600 font-bold text-xs">T</span>
-                          </div>
-                          <span className="font-medium text-sm">TripAdvisor</span>
-                        </div>
-                        <Badge className="bg-green-100 text-green-700 text-xs">Connecté</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600">98 avis • 4.1 étoiles</p>
-                    </div>
-
-                    <div className="bg-white p-3 rounded-lg border">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
-                            <span className="text-red-600 font-bold text-xs">Y</span>
-                          </div>
-                          <span className="font-medium text-sm">Yelp</span>
-                        </div>
-                        <Badge className="bg-green-100 text-green-700 text-xs">Connecté</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600">86 avis • 4.0 étoiles</p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -257,7 +210,60 @@ const Dashboard = () => {
                   <div className="text-sm text-gray-500">Avis négatifs</div>
                   <div className="text-2xl font-bold">22%</div>
                   <div className="text-xs text-gray-400">avis négatifs</div>
-                </div>
+        </div>
+
+        {/* Plateformes connectées - Affichage en dessous de la grille */}
+        {showPlateformes && (
+          <div className="mb-8 relative">
+            <div className="absolute -top-2 left-1/4 transform -translate-x-1/2">
+              <Card className="w-80 bg-white shadow-lg border">
+                <CardContent className="p-4">
+                  <h4 className="font-medium text-gray-700 mb-3 text-center">Plateformes connectées :</h4>
+                  <div className="space-y-3">
+                    <div className="bg-gray-50 p-3 rounded-lg border">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
+                            <span className="text-red-600 font-bold text-xs">G</span>
+                          </div>
+                          <span className="font-medium text-sm">Google My Business</span>
+                        </div>
+                        <Badge className="bg-green-100 text-green-700 text-xs">Connecté</Badge>
+                      </div>
+                      <p className="text-sm text-gray-600">142 avis • 4.3 étoiles</p>
+                    </div>
+
+                    <div className="bg-gray-50 p-3 rounded-lg border">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-green-100 rounded flex items-center justify-center">
+                            <span className="text-green-600 font-bold text-xs">T</span>
+                          </div>
+                          <span className="font-medium text-sm">TripAdvisor</span>
+                        </div>
+                        <Badge className="bg-green-100 text-green-700 text-xs">Connecté</Badge>
+                      </div>
+                      <p className="text-sm text-gray-600">98 avis • 4.1 étoiles</p>
+                    </div>
+
+                    <div className="bg-gray-50 p-3 rounded-lg border">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
+                            <span className="text-red-600 font-bold text-xs">Y</span>
+                          </div>
+                          <span className="font-medium text-sm">Yelp</span>
+                        </div>
+                        <Badge className="bg-green-100 text-green-700 text-xs">Connecté</Badge>
+                      </div>
+                      <p className="text-sm text-gray-600">86 avis • 4.0 étoiles</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
               </div>
             </CardContent>
           </Card>
