@@ -368,7 +368,7 @@ const Dashboard = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Target className="w-5 h-5 text-purple-500" />
+              <span className="text-2xl font-bold text-purple-600">78%</span>
               <CardTitle className="text-lg">Analyse par thématiques</CardTitle>
             </div>
             <p className="text-sm text-gray-500">Répartition des avis par catégories</p>
