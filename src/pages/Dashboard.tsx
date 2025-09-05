@@ -2,26 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  BarChart3, 
-  TrendingUp, 
-  User, 
-  LogOut, 
-  Home,
-  Eye,
-  Trash2,
-  AlertTriangle,
-  CheckCircle,
-  Lightbulb,
-  Target,
-  ChevronDown,
-  ChevronUp,
-  Building2,
-  Star
-} from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, Building2, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-
 const Dashboard = () => {
   const [showAvis, setShowAvis] = useState(false);
   const [showPlateformes, setShowPlateformes] = useState(false);
@@ -33,7 +16,6 @@ const Dashboard = () => {
     const interval = setInterval(() => {
       setCurrentDateTime(new Date());
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -53,16 +35,30 @@ const Dashboard = () => {
       })
     };
   };
-
-  const { date, time } = formatDateTime(currentDateTime);
-
-  const avisExemples = [
-    { id: 1, auteur: "Marie L.", note: 5, commentaire: "Excellent service, très satisfait !", date: "30/07/2025" },
-    { id: 2, auteur: "Jean D.", note: 4, commentaire: "Bonne ambiance, plats savoureux", date: "29/07/2025" },
-    { id: 3, auteur: "Sophie M.", note: 3, commentaire: "Service correct mais un peu d'attente", date: "28/07/2025" },
-  ];
-  return (
-    <div className="min-h-screen bg-gray-50">
+  const {
+    date,
+    time
+  } = formatDateTime(currentDateTime);
+  const avisExemples = [{
+    id: 1,
+    auteur: "Marie L.",
+    note: 5,
+    commentaire: "Excellent service, très satisfait !",
+    date: "30/07/2025"
+  }, {
+    id: 2,
+    auteur: "Jean D.",
+    note: 4,
+    commentaire: "Bonne ambiance, plats savoureux",
+    date: "29/07/2025"
+  }, {
+    id: 3,
+    auteur: "Sophie M.",
+    note: 3,
+    commentaire: "Service correct mais un peu d'attente",
+    date: "28/07/2025"
+  }];
+  return <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <nav className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
@@ -87,14 +83,7 @@ const Dashboard = () => {
                 Dashboard
               </Button>
               {/* Affichage de la date et heure en temps réel */}
-              <div className="flex flex-col items-center gap-1 px-3 py-2 bg-blue-50 rounded-lg">
-                <div className="flex items-center gap-2 text-blue-600">
-                  <span className="text-sm font-medium">{time}</span>
-                </div>
-                <div className="text-xs text-gray-600 capitalize">
-                  {date}
-                </div>
-              </div>
+              
               <div className="text-gray-700">
                 Bonjour, Yohan Lopes
               </div>
@@ -151,25 +140,14 @@ const Dashboard = () => {
                     <div className="text-sm text-gray-500">2h avis</div>
                   </div>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setShowAvis(!showAvis)}
-                  className="hover:bg-blue-50"
-                >
-                  {showAvis ? (
-                    <ChevronUp className="w-4 h-4 text-blue-600" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-blue-600" />
-                  )}
+                <Button variant="ghost" size="sm" onClick={() => setShowAvis(!showAvis)} className="hover:bg-blue-50">
+                  {showAvis ? <ChevronUp className="w-4 h-4 text-blue-600" /> : <ChevronDown className="w-4 h-4 text-blue-600" />}
                 </Button>
               </div>
               
-              {showAvis && (
-                <div className="mt-4 space-y-3 border-t pt-4">
+              {showAvis && <div className="mt-4 space-y-3 border-t pt-4">
                   <h4 className="font-medium text-gray-700 mb-3">Avis récents :</h4>
-                  {avisExemples.map((avis) => (
-                    <div key={avis.id} className="bg-white p-3 rounded-lg border">
+                  {avisExemples.map(avis => <div key={avis.id} className="bg-white p-3 rounded-lg border">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium text-sm">{avis.auteur}</span>
                         <div className="flex items-center gap-2">
@@ -178,10 +156,8 @@ const Dashboard = () => {
                         </div>
                       </div>
                       <p className="text-sm text-gray-600">{avis.commentaire}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    </div>)}
+                </div>}
             </div>
           </CardContent>
         </Card>
@@ -204,17 +180,8 @@ const Dashboard = () => {
               <div className="text-2xl font-bold text-blue-600 mb-2">326</div>
               <p className="text-sm text-gray-600">Total avis</p>
               <p className="text-xs text-gray-500">Tous plateformes</p>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setShowPlateformes(!showPlateformes)}
-                className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-blue-50"
-              >
-                {showPlateformes ? (
-                  <ChevronUp className="w-3 h-3 text-blue-600" />
-                ) : (
-                  <ChevronDown className="w-3 h-3 text-blue-600" />
-                )}
+              <Button variant="ghost" size="sm" onClick={() => setShowPlateformes(!showPlateformes)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-blue-50">
+                {showPlateformes ? <ChevronUp className="w-3 h-3 text-blue-600" /> : <ChevronDown className="w-3 h-3 text-blue-600" />}
               </Button>
             </CardContent>
           </Card>
@@ -246,8 +213,7 @@ const Dashboard = () => {
         </div>
 
         {/* Plateformes connectées - Affichées en dessous des métriques */}
-        {showPlateformes && (
-          <Card className="mb-8">
+        {showPlateformes && <Card className="mb-8">
             <CardHeader>
               <CardTitle className="text-xl">Plateformes connectées</CardTitle>
               <p className="text-sm text-gray-600">Gérer vos présences sur les différentes plateformes</p>
@@ -294,8 +260,7 @@ const Dashboard = () => {
                 </div>
               </div>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
 
         {/* Problèmes et Points forts */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -421,8 +386,6 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Dashboard;
