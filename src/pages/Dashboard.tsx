@@ -17,7 +17,8 @@ import {
   Target,
   ChevronDown,
   ChevronUp,
-  Building2
+  Building2,
+  Star
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
@@ -157,46 +158,31 @@ const Dashboard = () => {
         {/* Métriques */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-orange-600" />
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Satisfaction Score</div>
-                  <div className="text-2xl font-bold">0%</div>
-                </div>
+            <CardContent className="p-6 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Star className="w-5 h-5 text-yellow-500" />
+                <span className="text-2xl font-bold">4.2</span>
               </div>
+              <p className="text-sm text-gray-600">Note moyenne</p>
+              <p className="text-xs text-gray-500">Basée sur 158 avis</p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <BarChart3 className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Total avis</div>
-                  <div className="text-2xl font-bold">0</div>
-                  <div className="text-xs text-gray-400">avis analysés</div>
-                </div>
-              </div>
+            <CardContent className="p-6 text-center">
+              <div className="text-2xl font-bold text-blue-600 mb-2">326</div>
+              <p className="text-sm text-gray-600">Total avis</p>
+              <p className="text-xs text-gray-500">Tous plateformes</p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Avis positifs</div>
-                  <div className="text-2xl font-bold">0%</div>
-                  <div className="text-xs text-gray-400">avis analysés</div>
-                </div>
+            <CardContent className="p-6 text-center">
+              <div className="flex items-center justify-center gap-1 mb-2">
+                <span className="text-2xl font-bold text-green-600">78%</span>
               </div>
+              <p className="text-sm text-gray-600">Avis positifs</p>
+              <p className="text-xs text-gray-500">Note ≥ 4 étoiles</p>
             </CardContent>
           </Card>
 
@@ -208,7 +194,7 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <div className="text-sm text-gray-500">Avis négatifs</div>
-                  <div className="text-2xl font-bold">0%</div>
+                  <div className="text-2xl font-bold">22%</div>
                   <div className="text-xs text-gray-400">avis négatifs</div>
                 </div>
               </div>
