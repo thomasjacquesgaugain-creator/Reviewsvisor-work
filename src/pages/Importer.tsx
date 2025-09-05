@@ -21,10 +21,12 @@ const Importer = () => {
   const [etablissement, setEtablissement] = useState("");
   const [periode, setPeriode] = useState("1-mois");
   const [etablissements, setEtablissements] = useState<string[]>([]);
+  const [villes, setVilles] = useState<string[]>([]);
   const [rechercheEnCours, setRechercheEnCours] = useState(false);
   const [etablissementSelectionne, setEtablissementSelectionne] = useState("");
+  const [villeSelectionnee, setVilleSelectionnee] = useState("");
 
-  // Simulation de recherche d'établissements
+  // Recherche d'établissements basée sur la ville
   const rechercherEtablissements = async (villeRecherche: string) => {
     if (!villeRecherche.trim()) {
       setEtablissements([]);
@@ -33,7 +35,6 @@ const Importer = () => {
 
     setRechercheEnCours(true);
     
-    // Simulation d'une API de recherche d'établissements
     setTimeout(() => {
       const etablissementsExemples = [
         `Restaurant Le Petit ${villeRecherche}`,
@@ -56,29 +57,93 @@ const Importer = () => {
           duration: 3000,
         });
       }
-    }, 1500);
+    }, 1000);
   };
 
+  // Recherche de villes basée sur l'établissement
+  const rechercherVilles = async (etablissementRecherche: string) => {
+    if (!etablissementRecherche.trim()) {
+      setVilles([]);
+      return;
+    }
+
+    setRechercheEnCours(true);
+    
+    setTimeout(() => {
+      const villesExemples = [
+        "Paris",
+        "Lyon", 
+        "Marseille",
+        "Toulouse",
+        "Nice",
+        "Nantes",
+        "Strasbourg",
+        "Montpellier"
+      ];
+      
+      setVilles(villesExemples);
+      setRechercheEnCours(false);
+      
+      if (villesExemples.length > 0) {
+        toast({
+          title: "Villes suggérées",
+          description: `${villesExemples.length} villes où "${etablissementRecherche}" pourrait être présent`,
+          duration: 3000,
+        });
+      }
+    }, 1000);
+  };
+
+  // Effect pour la recherche basée sur la ville
   useEffect(() => {
-    if (ville.length >= 3) {
+    if (ville.length >= 3 && !villeSelectionnee) {
       const timeoutId = setTimeout(() => {
         rechercherEtablissements(ville);
+        setVilles([]); // Clear ville suggestions when typing ville
       }, 500);
       
       return () => clearTimeout(timeoutId);
-    } else {
+    } else if (ville.length < 3) {
       setEtablissements([]);
       setEtablissement("");
       setEtablissementSelectionne("");
     }
-  }, [ville]);
+  }, [ville, villeSelectionnee]);
+
+  // Effect pour la recherche basée sur l'établissement
+  useEffect(() => {
+    if (etablissement.length >= 3 && !etablissementSelectionne) {
+      const timeoutId = setTimeout(() => {
+        rechercherVilles(etablissement);
+        setEtablissements([]); // Clear etablissement suggestions when typing etablissement
+      }, 500);
+      
+      return () => clearTimeout(timeoutId);
+    } else if (etablissement.length < 3) {
+      setVilles([]);
+      setVille("");
+      setVilleSelectionnee("");
+    }
+  }, [etablissement, etablissementSelectionne]);
 
   const selectionnerEtablissement = (etablissementNom: string) => {
     setEtablissement(etablissementNom);
     setEtablissementSelectionne(etablissementNom);
+    setEtablissements([]); // Clear suggestions
     toast({
       title: "Établissement sélectionné",
       description: etablissementNom,
+      duration: 2000,
+    });
+  };
+
+  const selectionnerVille = (villeNom: string) => {
+    setVille(villeNom);
+    setVilleSelectionnee(villeNom);
+    setVilles([]); // Clear suggestions
+    toast({
+      title: "Ville sélectionnée",
+      description: villeNom,
       duration: 2000,
     });
   };
@@ -189,18 +254,35 @@ const Importer = () => {
                   </label>
                   <div className="relative">
                     <Input
-                      placeholder={ville ? "Recherche automatique en cours..." : "Sélectionnez d'abord une ville"}
+                      placeholder="Ex: Restaurant Le Petit Bistrot..."
                       value={etablissement}
                       onChange={(e) => setEtablissement(e.target.value)}
                       className="w-full"
-                      disabled={!ville || rechercheEnCours}
                     />
-                    {rechercheEnCours && (
+                    {rechercheEnCours && etablissement.length >= 3 && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
                       </div>
                     )}
                   </div>
+                  
+                  {/* Liste des villes suggérées */}
+                  {villes.length > 0 && !villeSelectionnee && (
+                    <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md bg-white shadow-lg">
+                      <div className="p-2 bg-gray-50 border-b text-xs font-medium text-gray-600">
+                        Villes suggérées pour cet établissement
+                      </div>
+                      {villes.map((villeItem, index) => (
+                        <button
+                          key={index}
+                          className="w-full text-left px-3 py-2 hover:bg-blue-50 hover:text-blue-600 text-sm border-b border-gray-100 last:border-b-0"
+                          onClick={() => selectionnerVille(villeItem)}
+                        >
+                          {villeItem}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   
                   {/* Liste des établissements trouvés */}
                   {etablissements.length > 0 && !etablissementSelectionne && (
@@ -240,12 +322,34 @@ const Importer = () => {
                   <label className="text-sm font-medium text-gray-700">
                     Ville <span className="text-red-500">*</span>
                   </label>
-                  <Input
-                    placeholder="Ex: Paris, Lyon, Marseille..."
-                    value={ville}
-                    onChange={(e) => setVille(e.target.value)}
-                    className="w-full"
-                  />
+                  <div className="relative">
+                    <Input
+                      placeholder="Ex: Paris, Lyon, Marseille..."
+                      value={ville}
+                      onChange={(e) => setVille(e.target.value)}
+                      className="w-full"
+                    />
+                    {rechercheEnCours && ville.length >= 3 && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {villeSelectionnee && (
+                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
+                      <span className="text-sm text-green-700">✓ {villeSelectionnee}</span>
+                      <button
+                        onClick={() => {
+                          setVilleSelectionnee("");
+                          setVille("");
+                        }}
+                        className="text-green-600 hover:text-green-800 text-xs underline"
+                      >
+                        Changer
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -288,15 +392,19 @@ const Importer = () => {
               <ul className="space-y-3 text-gray-600">
                 <li className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Saisissez au moins 3 caractères pour la ville pour déclencher la recherche automatique</span>
+                  <span>Vous pouvez commencer par saisir soit le nom de l'établissement, soit la ville</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Les établissements de votre ville apparaîtront automatiquement dans la liste</span>
+                  <span>Saisissez au moins 3 caractères pour déclencher la recherche automatique</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Cliquez sur l'établissement exact pour une sélection précise</span>
+                  <span>Si vous tapez un établissement, des villes suggérées apparaîtront</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                  <span>Si vous tapez une ville, des établissements suggérés apparaîtront</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
