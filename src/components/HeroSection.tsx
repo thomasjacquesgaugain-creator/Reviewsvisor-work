@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import logoAnalytique from "@/assets/logo-analytique-transparent.png";
 import { ArrowRight, Brain, Target, TrendingUp, CheckCircle, Zap, Shield } from "lucide-react";
 
 export const HeroSection = () => {
@@ -38,7 +39,7 @@ export const HeroSection = () => {
         <div className="container mx-auto px-4 py-16">
           {/* Logo Analytique */}
           <img 
-            src="/lovable-uploads/b43e95cc-d17b-43ab-a672-a5ef90947e95.png" 
+            src={logoAnalytique}
             alt="Logo Analytique"
             className="h-24 w-auto object-contain mx-auto mb-8"
           />
