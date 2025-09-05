@@ -69,23 +69,15 @@ const Dashboard = () => {
             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
             <span>Analyse de 0 avis clients</span>
           </div>
-          <Button variant="outline" className="mt-2 text-red-500 border-red-200">
-            Supprimer cette analyse
-          </Button>
         </div>
 
         {/* Historique des analyses */}
         <Card className="mb-8">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-gray-500" />
-                <CardTitle className="text-lg">Historique des analyses</CardTitle>
-                <span className="text-sm text-gray-500">Les analyses précédentes et terminées. Les résultats</span>
-              </div>
-              <Button variant="outline" className="text-red-500 border-red-200">
-                Supprimer tout
-              </Button>
+            <div className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-gray-500" />
+              <CardTitle className="text-lg">Historique des analyses</CardTitle>
+              <span className="text-sm text-gray-500">Les analyses précédentes et terminées. Les résultats</span>
             </div>
           </CardHeader>
           <CardContent>
