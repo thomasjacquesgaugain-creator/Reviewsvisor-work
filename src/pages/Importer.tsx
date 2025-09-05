@@ -641,12 +641,14 @@ const Importer = () => {
       <nav className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A</span>
+              <div className="flex items-center gap-2">
+                <img 
+                  src="/lovable-uploads/08f62503-65d7-4681-8ddf-00f4efb00ffa.png" 
+                  alt="Analytique logo" 
+                  className="w-8 h-8"
+                />
+                <span className="text-xl font-bold text-gray-900">analytique</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">analytique</span>
-            </div>
             
             <div className="flex items-center gap-6">
               <Link to="/tableau-de-bord" className="text-gray-600 hover:text-blue-600 flex items-center gap-1">
