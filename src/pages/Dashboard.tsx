@@ -91,7 +91,6 @@ const Dashboard = () => {
               {/* Affichage de la date et heure en temps réel */}
               <div className="flex flex-col items-center gap-1 px-3 py-2 bg-blue-50 rounded-lg">
                 <div className="flex items-center gap-2 text-blue-600">
-                  <Clock className="w-4 h-4" />
                   <span className="text-sm font-medium">{time}</span>
                 </div>
                 <div className="text-xs text-gray-600 capitalize">
