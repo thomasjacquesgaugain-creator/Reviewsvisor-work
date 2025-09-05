@@ -803,16 +803,40 @@ const Importer = () => {
 
                       {/* Suggestions d'établissements */}
                       {etablissements.length > 0 && (
-                        <div className="bg-white border border-gray-200 rounded-md shadow-sm max-h-40 overflow-y-auto z-10">
+                        <div className="bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto z-20 relative">
+                          <div className="px-3 py-2 bg-blue-50 border-b border-blue-200 text-xs text-blue-700 font-medium">
+                            {etablissements.length} établissement{etablissements.length > 1 ? 's' : ''} trouvé{etablissements.length > 1 ? 's' : ''} à {villeSelectionnee || ville}
+                          </div>
                           {etablissements.map((etablissementNom, index) => (
                             <button
                               key={index}
                               onClick={() => selectionnerEtablissement(etablissementNom)}
-                              className="w-full px-3 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 text-sm"
+                              className="w-full px-3 py-2 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0 text-sm flex items-center justify-between group"
                             >
-                              {etablissementNom}
+                              <span>{etablissementNom}</span>
+                              <Search className="w-3 h-3 text-gray-400 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </button>
                           ))}
+                        </div>
+                      )}
+                      
+                      {/* Message de recherche en cours */}
+                      {rechercheEnCours && etablissement.length >= 2 && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-700">
+                          <div className="flex items-center gap-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                            Recherche en ligne d'établissements pour "{etablissement}"...
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Message aucun résultat */}
+                      {!rechercheEnCours && etablissement.length >= 2 && etablissements.length === 0 && (villeSelectionnee || ville) && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-700">
+                          <div className="flex items-center gap-2">
+                            <Info className="w-4 h-4" />
+                            Aucun établissement trouvé pour "{etablissement}" à {villeSelectionnee || ville}. Essayez un nom plus court ou vérifiez l'orthographe.
+                          </div>
                         </div>
                       )}
                     </div>
@@ -855,22 +879,36 @@ const Importer = () => {
                     </Button>
                   </div>
                   
-                  {/* Message d'aide */}
+                  {/* Message d'aide amélioré */}
                   {(!ville.trim() || !etablissement.trim()) && (
-                    <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+                    <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-400 rounded-r-lg">
                       <div className="flex">
-                        <Info className="w-5 h-5 text-blue-400 mr-2 flex-shrink-0 mt-0.5" />
+                        <Info className="w-5 h-5 text-blue-500 mr-3 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-sm text-blue-700">
-                            <strong>Comment ça marche :</strong>
+                          <p className="text-sm text-blue-800 font-medium mb-2">
+                            🌐 Recherche automatique d'établissements en ligne
                           </p>
-                          <ol className="text-sm text-blue-600 mt-1 ml-4 list-decimal">
-                            <li>Tapez votre ville et sélectionnez-la dans la liste</li>
+                          <ol className="text-sm text-blue-700 ml-4 list-decimal space-y-1">
+                            <li>Tapez votre ville (ex: "Lorient", "Paris")</li>
+                            <li>Sélectionnez votre ville dans la liste</li>
                             <li>Tapez le nom de votre établissement</li>
-                            <li>Les suggestions apparaîtront automatiquement</li>
-                            <li>Cliquez sur "Rechercher et récupérer les avis"</li>
+                            <li>Les établissements apparaîtront automatiquement depuis OpenStreetMap</li>
+                            <li>Cliquez sur votre établissement puis sur "Rechercher"</li>
                           </ol>
+                          <p className="text-xs text-blue-600 mt-2 font-medium">
+                            ✨ Base de données mondiale • Mise à jour en temps réel • Plus de 100M d'établissements
+                          </p>
                         </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Indicateur de connexion internet */}
+                  {(rechercheVillesEnCours || rechercheEnCours) && (
+                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-green-700 text-sm">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        Connexion active avec les serveurs OpenStreetMap
                       </div>
                     </div>
                   )}
