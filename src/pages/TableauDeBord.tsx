@@ -75,10 +75,12 @@ const Dashboard = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
-                  <Upload className="w-5 h-5 mr-2" />
-                  Importer des avis
-                </Button>
+                <Link to="/importer">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
+                    <Upload className="w-5 h-5 mr-2" />
+                    Importer des avis
+                  </Button>
+                </Link>
                 <Link to="/dashboard">
                   <Button variant="outline" className="border-gray-300 text-gray-700 px-8 py-3 rounded-full font-medium">
                     <BarChart3 className="w-5 h-5 mr-2" />
