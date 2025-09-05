@@ -16,7 +16,8 @@ import {
   Lightbulb,
   Target,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Building2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
@@ -47,6 +48,10 @@ const Dashboard = () => {
               <Link to="/tableau-de-bord" className="text-gray-600 hover:text-blue-600 flex items-center gap-1">
                 <Home className="w-4 h-4" />
                 Accueil
+              </Link>
+              <Link to="/etablissement" className="text-gray-600 hover:text-blue-600 flex items-center gap-1">
+                <Building2 className="w-4 h-4" />
+                Établissement
               </Link>
               <Link to="/importer" className="text-gray-600 hover:text-blue-600 flex items-center gap-1">
                 <BarChart3 className="w-4 h-4" />
