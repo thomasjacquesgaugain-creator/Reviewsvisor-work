@@ -539,22 +539,24 @@ const Importer = () => {
           </div>
 
           {/* Boutons de navigation horizontaux */}
-          <div className="flex flex-wrap gap-4 justify-center mb-8">
-            <Button variant="outline" className="flex items-center gap-2 px-6 py-3">
-              <FileText className="w-5 h-5" />
-              Saisie manuelle
-            </Button>
-            <Button variant="outline" className="flex items-center gap-2 px-6 py-3">
-              <Upload className="w-5 h-5" />
-              Import CSV
-            </Button>
-            <Button 
-              variant="default" 
-              className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90"
-            >
-              <Search className="w-5 h-5" />
-              Récupération automatique
-            </Button>
+          <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8 shadow-sm">
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Button variant="outline" className="flex items-center gap-2 px-6 py-3 border-2">
+                <FileText className="w-5 h-5" />
+                Saisie manuelle
+              </Button>
+              <Button variant="outline" className="flex items-center gap-2 px-6 py-3 border-2">
+                <Upload className="w-5 h-5" />
+                Import CSV
+              </Button>
+              <Button 
+                variant="default" 
+                className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 border-2 border-primary"
+              >
+                <Search className="w-5 h-5" />
+                Récupération automatique
+              </Button>
+            </div>
           </div>
 
           {/* Form avec bouton géolocalisation */}
