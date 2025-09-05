@@ -569,7 +569,6 @@ const Importer = () => {
                         setVilleSelectionnee("");
                       }}
                       className="w-full"
-                      disabled={rechercheVillesEnCours}
                     />
                     {rechercheVillesEnCours && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -626,7 +625,6 @@ const Importer = () => {
                         setEtablissementSelectionne("");
                       }}
                       className="w-full"
-                      disabled={rechercheEnCours}
                     />
                     {rechercheEnCours && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
