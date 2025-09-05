@@ -19,6 +19,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 const Importer = () => {
   const { toast } = useToast();
+  const [modeActuel, setModeActuel] = useState<'recuperation' | 'saisie' | 'import'>('recuperation');
   const [ville, setVille] = useState("");
   const [etablissement, setEtablissement] = useState("");
   const [periode, setPeriode] = useState("1-mois");
@@ -422,7 +423,7 @@ const Importer = () => {
   const selectionnerVille = (nomVille: string) => {
     setVille(nomVille);
     setVilleSelectionnee(nomVille);
-    setVilleBBox(null); // réinitialiser le bbox pour la nouvelle ville
+    setVilleBBox(null);
     setVilles([]);
     toast({
       title: "Ville sélectionnée",
@@ -525,20 +526,32 @@ const Importer = () => {
       <div className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between w-full">
-            <Link to="/saisie-manuelle" className="flex-1">
-              <Button variant="ghost" className="w-full text-gray-600 flex items-center gap-2">
+            <div className="flex-1">
+              <Button 
+                variant="ghost" 
+                className={`w-full flex items-center gap-2 ${modeActuel === 'saisie' ? 'text-blue-600 font-medium' : 'text-gray-600'}`}
+                onClick={() => setModeActuel('saisie')}
+              >
                 <FileText className="w-4 h-4" />
                 Saisie manuelle
               </Button>
-            </Link>
-            <Link to="/import-csv" className="flex-1">
-              <Button variant="ghost" className="w-full text-gray-600 flex items-center gap-2">
+            </div>
+            <div className="flex-1">
+              <Button 
+                variant="ghost" 
+                className={`w-full flex items-center gap-2 ${modeActuel === 'import' ? 'text-blue-600 font-medium' : 'text-gray-600'}`}
+                onClick={() => setModeActuel('import')}
+              >
                 <Upload className="w-4 h-4" />
                 Import CSV
               </Button>
-            </Link>
+            </div>
             <div className="flex-1">
-              <Button variant="ghost" className="w-full text-gray-600 flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                className={`w-full flex items-center gap-2 ${modeActuel === 'recuperation' ? 'text-blue-600 font-medium' : 'text-gray-600'}`}
+                onClick={() => setModeActuel('recuperation')}
+              >
                 <Search className="w-4 h-4" />
                 Récupération automatique
               </Button>
@@ -550,196 +563,242 @@ const Importer = () => {
       {/* Main content */}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
+          {/* Header dynamique */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Search className="w-6 h-6 text-blue-600" />
+                {modeActuel === 'saisie' && <FileText className="w-6 h-6 text-blue-600" />}
+                {modeActuel === 'import' && <Upload className="w-6 h-6 text-blue-600" />}
+                {modeActuel === 'recuperation' && <Search className="w-6 h-6 text-blue-600" />}
               </div>
-              <h1 className="text-3xl font-bold text-gray-900">Récupération automatique d'avis</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {modeActuel === 'saisie' && 'Saisie manuelle d\'avis'}
+                {modeActuel === 'import' && 'Import CSV d\'avis'}
+                {modeActuel === 'recuperation' && 'Récupération automatique d\'avis'}
+              </h1>
             </div>
             <p className="text-lg text-gray-600">
-              Récupérez automatiquement les avis Google, Tripadvisor et Yelp de votre établissement
+              {modeActuel === 'saisie' && 'Saisissez vos avis manuellement dans le système'}
+              {modeActuel === 'import' && 'Importez vos avis depuis un fichier CSV'}
+              {modeActuel === 'recuperation' && 'Récupérez automatiquement les avis Google, Tripadvisor et Yelp de votre établissement'}
             </p>
           </div>
 
-          {/* Form avec bouton géolocalisation */}
-          <Card className="mb-8">
-            <CardContent className="p-8">
-              <div className="grid md:grid-cols-3 gap-6 mb-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    Ville <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Input
-                      placeholder="Tapez le nom de votre ville..."
-                      value={ville}
-                      onChange={(e) => {
-                        setVille(e.target.value);
-                        setVilleSelectionnee("");
-                      }}
-                      className="w-full"
-                    />
-                    {rechercheVillesEnCours && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+          {/* Contenu conditionnel */}
+          {modeActuel === 'recuperation' && (
+            <>
+              {/* Form avec bouton géolocalisation */}
+              <Card className="mb-8">
+                <CardContent className="p-8">
+                  <div className="grid md:grid-cols-3 gap-6 mb-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Ville <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Input
+                          placeholder="Tapez le nom de votre ville..."
+                          value={ville}
+                          onChange={(e) => {
+                            setVille(e.target.value);
+                            setVilleSelectionnee("");
+                          }}
+                          className="w-full"
+                        />
+                        {rechercheVillesEnCours && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                          </div>
+                        )}
+                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       </div>
+
+                      {/* Suggestions de villes */}
+                      {villes.length > 0 && (
+                        <div className="bg-white border border-gray-200 rounded-md shadow-sm max-h-40 overflow-y-auto z-10">
+                          {villes.map((nomVille, index) => (
+                            <button
+                              key={index}
+                              onClick={() => selectionnerVille(nomVille)}
+                              className="w-full px-3 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 text-sm"
+                            >
+                              {nomVille}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Nom de l'établissement <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Input
+                          placeholder="Tapez le nom de votre établissement..."
+                          value={etablissement}
+                          onChange={(e) => setEtablissement(e.target.value)}
+                          className="w-full"
+                        />
+                        {rechercheEnCours && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Suggestions d'établissements */}
+                      {etablissements.length > 0 && (
+                        <div className="bg-white border border-gray-200 rounded-md shadow-sm max-h-40 overflow-y-auto z-10">
+                          {etablissements.map((etablissementNom, index) => (
+                            <button
+                              key={index}
+                              onClick={() => selectionnerEtablissement(etablissementNom)}
+                              className="w-full px-3 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 text-sm"
+                            >
+                              {etablissementNom}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Période
+                      </label>
+                      <Select value={periode} onValueChange={setPeriode}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1-semaine">1 semaine</SelectItem>
+                          <SelectItem value="1-mois">1 mois</SelectItem>
+                          <SelectItem value="3-mois">3 mois</SelectItem>
+                          <SelectItem value="6-mois">6 mois</SelectItem>
+                          <SelectItem value="1-an">1 an</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Section géolocalisation */}
+                  <div className="flex items-center justify-center mb-6">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <span className="text-sm">ou</span>
+                    </div>
+                  </div>
+
+                  <div className="text-center mb-6">
+                    <Button
+                      onClick={obtenirGeolocalisation}
+                      disabled={geolocalisationEnCours}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      {geolocalisationEnCours ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                      ) : (
+                        <Locate className="w-4 h-4" />
+                      )}
+                      {geolocalisationEnCours 
+                        ? "Recherche de votre position..." 
+                        : "Utiliser ma position actuelle"
+                      }
+                    </Button>
+                    {positionUtilisateur && (
+                      <p className="text-sm text-green-600 mt-2">
+                        Position trouvée: {positionUtilisateur.lat.toFixed(4)}, {positionUtilisateur.lng.toFixed(4)}
+                      </p>
                     )}
                   </div>
-                  
-                  {/* Liste des villes trouvées */}
-                  {villes.length > 0 && !villeSelectionnee && (
-                    <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md bg-white shadow-lg z-50 relative">
-                      <div className="p-2 bg-gray-50 border-b text-xs font-medium text-gray-600">
-                        {villes.length} villes trouvées
-                      </div>
-                      {villes.map((ville, index) => (
-                        <button
-                          key={index}
-                          className="w-full text-left px-3 py-2 hover:bg-blue-50 hover:text-blue-600 text-sm border-b border-gray-100 last:border-b-0"
-                          onClick={() => selectionnerVille(ville)}
-                        >
-                          {ville}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {villeSelectionnee && (
-                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
-                      <span className="text-sm text-green-700">✓ {villeSelectionnee}</span>
-                      <button
-                        onClick={() => {
-                          setVilleSelectionnee("");
-                          setVille("");
-                          setVilleBBox(null);
-                        }}
-                        className="text-green-600 hover:text-green-800 text-xs underline"
-                      >
-                        Changer
-                      </button>
-                    </div>
-                  )}
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    Nom de l'établissement <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Input
-                      placeholder="Nom de votre établissement..."
-                      value={etablissement}
-                      onChange={(e) => {
-                        setEtablissement(e.target.value);
-                        setEtablissementSelectionne("");
-                      }}
-                      className="w-full"
-                    />
-                    {rechercheEnCours && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                      </div>
-                    )}
-                    {(villeSelectionnee || ville.length >= 2) && etablissement.length >= 2 && (
-                      <div className="absolute right-10 top-1/2 transform -translate-y-1/2 text-xs text-green-600">
-                        Recherche dans {villeSelectionnee || ville} {bboxEnCours ? "(zone...)" : ""}
-                      </div>
-                    )}
+                  <div className="flex gap-4">
+                    <Button onClick={lancerRecuperation} className="flex-1">
+                      Lancer la récupération
+                    </Button>
                   </div>
-                  
-                  {/* Liste des établissements trouvés */}
-                  {etablissements.length > 0 && !etablissementSelectionne && (
-                    <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md bg-white shadow-lg z-50 relative">
-                      <div className="p-2 bg-gray-50 border-b text-xs font-medium text-gray-600">
-                        {etablissements.length} établissements trouvés
-                      </div>
-                      {etablissements.map((etab, index) => (
-                        <button
-                          key={index}
-                          className="w-full text-left px-3 py-2 hover:bg-blue-50 hover:text-blue-600 text-sm border-b border-gray-100 last:border-b-0"
-                          onClick={() => selectionnerEtablissement(etab)}
-                        >
-                          {etab}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {etablissementSelectionne && (
-                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
-                      <span className="text-sm text-green-700">✓ {etablissementSelectionne}</span>
-                      <button
-                        onClick={() => {
-                          setEtablissementSelectionne("");
-                          setEtablissement("");
-                        }}
-                        className="text-green-600 hover:text-green-800 text-xs underline"
-                      >
-                        Changer
-                      </button>
-                    </div>
-                  )}
+                </CardContent>
+              </Card>
+
+              {/* Info card */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-3 mb-4">
+                    <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <h3 className="font-semibold text-gray-900">Comment ça fonctionne ?</h3>
+                  </div>
+                  <ul className="space-y-2 text-sm text-gray-600">
+                    <li className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                      <span>Recherche automatique sur Google My Business, TripAdvisor et Yelp</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                      <span>Extraction des avis selon la période sélectionnée</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                      <span>Analyse automatique du sentiment et des mots-clés</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                      <span>Sélectionnez une ville pour une recherche plus précise</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {modeActuel === 'saisie' && (
+            <Card>
+              <CardContent className="p-8">
+                <div className="text-center py-12">
+                  <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Saisie manuelle d'avis</h3>
+                  <p className="text-gray-600 mb-6">
+                    Ajoutez manuellement les avis de vos clients dans le système
+                  </p>
+                  <Button>
+                    Commencer la saisie
+                  </Button>
                 </div>
+              </CardContent>
+            </Card>
+          )}
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    Période des avis
-                  </label>
-                  <Select value={periode} onValueChange={setPeriode}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="1-mois">1 mois</SelectItem>
-                      <SelectItem value="3-mois">3 mois</SelectItem>
-                      <SelectItem value="6-mois">6 mois</SelectItem>
-                      <SelectItem value="1-an">1 an</SelectItem>
-                    </SelectContent>
-                  </Select>
+          {modeActuel === 'import' && (
+            <Card>
+              <CardContent className="p-8">
+                <div className="text-center py-12">
+                  <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Import CSV</h3>
+                  <p className="text-gray-600 mb-6">
+                    Importez vos avis depuis un fichier CSV au format standard
+                  </p>
+                  <div className="space-y-4">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
+                      <p className="text-gray-500 mb-4">Glissez-déposez votre fichier CSV ici ou</p>
+                      <Button variant="outline">
+                        Choisir un fichier
+                      </Button>
+                    </div>
+                    <div className="text-left bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">Format CSV requis :</h4>
+                      <ul className="text-sm text-gray-600 space-y-1">
+                        <li>• Nom du client</li>
+                        <li>• Note (sur 5)</li>
+                        <li>• Commentaire</li>
+                        <li>• Date</li>
+                        <li>• Source (Google, TripAdvisor, etc.)</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              <Button 
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-medium"
-                disabled={!ville || !etablissement}
-                onClick={lancerRecuperation}
-              >
-                Récupérer les avis
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Conseils */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Info className="w-5 h-5 text-blue-500" />
-                <CardTitle className="text-lg">Conseils :</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3 text-gray-600">
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Tapez au moins 2 caractères pour déclencher la recherche automatique</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Recherchez par nom d'établissement ou par ville</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Les avis sont récupérés depuis Google, Tripadvisor et Yelp</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Sélectionnez une ville pour une recherche plus précise</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
