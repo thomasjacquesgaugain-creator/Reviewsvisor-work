@@ -354,15 +354,31 @@ const Importer = () => {
     });
   };
 
-  // Empêcher le scroll avec la barre d'espace
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.code === 'Space' && e.target !== document.activeElement) {
-      e.preventDefault();
-    }
-  };
+  // Empêcher le scroll avec la barre d'espace globalement
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && e.target === document.body) {
+        e.preventDefault();
+      }
+    };
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !(e.target as HTMLElement)?.matches('input, textarea, [contenteditable]')) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keypress', handleKeyPress);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keypress', handleKeyPress);
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50" onKeyDown={handleKeyDown}>
+    <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <nav className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
@@ -490,10 +506,7 @@ const Importer = () => {
                   
                   {/* Liste des villes trouvées */}
                   {villes.length > 0 && !villeSelectionnee && (
-                    <div 
-                      className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md bg-white shadow-lg z-50 relative"
-                      onKeyDown={(e) => e.stopPropagation()}
-                    >
+                    <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md bg-white shadow-lg z-50 relative">
                       <div className="p-2 bg-gray-50 border-b text-xs font-medium text-gray-600">
                         {villes.length} villes trouvées
                       </div>
@@ -502,12 +515,6 @@ const Importer = () => {
                           key={index}
                           className="w-full text-left px-3 py-2 hover:bg-blue-50 hover:text-blue-600 text-sm border-b border-gray-100 last:border-b-0"
                           onClick={() => selectionnerVille(ville)}
-                          onKeyDown={(e) => {
-                            if (e.code === 'Space') {
-                              e.preventDefault();
-                              selectionnerVille(ville);
-                            }
-                          }}
                         >
                           {ville}
                         </button>
@@ -560,10 +567,7 @@ const Importer = () => {
                   
                   {/* Liste des établissements trouvés */}
                   {etablissements.length > 0 && !etablissementSelectionne && (
-                    <div 
-                      className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md bg-white shadow-lg z-50 relative"
-                      onKeyDown={(e) => e.stopPropagation()}
-                    >
+                    <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md bg-white shadow-lg z-50 relative">
                       <div className="p-2 bg-gray-50 border-b text-xs font-medium text-gray-600">
                         {etablissements.length} établissements trouvés
                       </div>
@@ -572,12 +576,6 @@ const Importer = () => {
                           key={index}
                           className="w-full text-left px-3 py-2 hover:bg-blue-50 hover:text-blue-600 text-sm border-b border-gray-100 last:border-b-0"
                           onClick={() => selectionnerEtablissement(etab)}
-                          onKeyDown={(e) => {
-                            if (e.code === 'Space') {
-                              e.preventDefault();
-                              selectionnerEtablissement(etab);
-                            }
-                          }}
                         >
                           {etab}
                         </button>
