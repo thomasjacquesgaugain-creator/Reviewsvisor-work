@@ -70,27 +70,30 @@ const Dashboard = () => {
               <span className="text-xl font-bold text-gray-900">analytique</span>
             </div>
             
-            <div className="flex items-center gap-6">
-              <Link to="/tableau-de-bord" className="text-gray-600 hover:text-blue-600 flex items-center gap-1">
-                <Home className="w-4 h-4" />
-                Accueil
-              </Link>
-              <Link to="/importer" className="text-gray-600 hover:text-blue-600 flex items-center gap-1">
-                <BarChart3 className="w-4 h-4" />
-                Importer
-              </Link>
-              <Button variant="ghost" className="text-blue-600 font-medium flex items-center gap-1">
-                Dashboard
-              </Button>
-              {/* Affichage de la date et heure en temps réel */}
-              
-              <div className="text-gray-700">
-                Bonjour, Yohan Lopes
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-6">
+                <Link to="/tableau-de-bord" className="text-gray-600 hover:text-blue-600 flex items-center gap-2">
+                  <Home className="w-4 h-4" />
+                  Accueil
+                </Link>
+                <Link to="/importer" className="text-gray-600 hover:text-blue-600 flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  Importer
+                </Link>
+                <Button variant="ghost" className="text-blue-600 font-medium flex items-center gap-2">
+                  Dashboard
+                </Button>
               </div>
-              <Button variant="ghost" className="text-gray-600 flex items-center gap-1">
-                <LogOut className="w-4 h-4" />
-                Déconnexion
-              </Button>
+              
+              <div className="flex items-center gap-4 ml-auto">
+                <div className="text-gray-700 font-medium">
+                  Bonjour, Yohan Lopes
+                </div>
+                <Button variant="ghost" className="text-gray-600 hover:text-red-600 flex items-center gap-2">
+                  <LogOut className="w-4 h-4" />
+                  Déconnexion
+                </Button>
+              </div>
             </div>
           </div>
         </div>
