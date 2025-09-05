@@ -21,12 +21,41 @@ import {
   Star
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const Dashboard = () => {
   const [showAvis, setShowAvis] = useState(false);
   const [showPlateformes, setShowPlateformes] = useState(false);
   const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+
+  // Mise à jour de l'heure en temps réel
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Formatage de la date et de l'heure
+  const formatDateTime = (date: Date) => {
+    return {
+      date: date.toLocaleDateString("fr-FR", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      }),
+      time: date.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      })
+    };
+  };
+
+  const { date, time } = formatDateTime(currentDateTime);
 
   const avisExemples = [
     { id: 1, auteur: "Marie L.", note: 5, commentaire: "Excellent service, très satisfait !", date: "30/07/2025" },
@@ -59,6 +88,16 @@ const Dashboard = () => {
                 <BarChart3 className="w-4 h-4" />
                 Dashboard
               </Button>
+              {/* Affichage de la date et heure en temps réel */}
+              <div className="flex flex-col items-center gap-1 px-3 py-2 bg-blue-50 rounded-lg">
+                <div className="flex items-center gap-2 text-blue-600">
+                  <Clock className="w-4 h-4" />
+                  <span className="text-sm font-medium">{time}</span>
+                </div>
+                <div className="text-xs text-gray-600 capitalize">
+                  {date}
+                </div>
+              </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <User className="w-4 h-4" />
                 <span>Bonjour, Yohan Lopes</span>
