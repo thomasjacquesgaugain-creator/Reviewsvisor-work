@@ -538,7 +538,7 @@ const Importer = () => {
               </Button>
             </Link>
             <div className="flex-1">
-              <Button variant="ghost" className="w-full text-blue-600 font-medium flex items-center gap-2">
+              <Button variant="ghost" className="w-full text-gray-600 flex items-center gap-2">
                 <Search className="w-4 h-4" />
                 Récupération automatique
               </Button>
