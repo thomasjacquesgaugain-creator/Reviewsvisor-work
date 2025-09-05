@@ -186,6 +186,51 @@ const Dashboard = () => {
                   <ChevronDown className="w-3 h-3 text-blue-600" />
                 )}
               </Button>
+              
+              {showPlateformes && (
+                <div className="mt-4 space-y-3 border-t pt-4 text-left">
+                  <h4 className="font-medium text-gray-700 mb-3 text-center">Plateformes connectées :</h4>
+                  
+                  <div className="bg-white p-3 rounded-lg border">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
+                          <span className="text-red-600 font-bold text-xs">G</span>
+                        </div>
+                        <span className="font-medium text-sm">Google My Business</span>
+                      </div>
+                      <Badge className="bg-green-100 text-green-700 text-xs">Connecté</Badge>
+                    </div>
+                    <p className="text-sm text-gray-600">142 avis • 4.3 étoiles</p>
+                  </div>
+
+                  <div className="bg-white p-3 rounded-lg border">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-green-100 rounded flex items-center justify-center">
+                          <span className="text-green-600 font-bold text-xs">T</span>
+                        </div>
+                        <span className="font-medium text-sm">TripAdvisor</span>
+                      </div>
+                      <Badge className="bg-green-100 text-green-700 text-xs">Connecté</Badge>
+                    </div>
+                    <p className="text-sm text-gray-600">98 avis • 4.1 étoiles</p>
+                  </div>
+
+                  <div className="bg-white p-3 rounded-lg border">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
+                          <span className="text-red-600 font-bold text-xs">Y</span>
+                        </div>
+                        <span className="font-medium text-sm">Yelp</span>
+                      </div>
+                      <Badge className="bg-green-100 text-green-700 text-xs">Connecté</Badge>
+                    </div>
+                    <p className="text-sm text-gray-600">86 avis • 4.0 étoiles</p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -195,57 +240,6 @@ const Dashboard = () => {
                 <span className="text-2xl font-bold text-green-600">78%</span>
         </div>
 
-        {/* Plateformes connectées */}
-        {showPlateformes && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="text-lg">Plateformes connectées</CardTitle>
-              <p className="text-sm text-gray-500">Répartition des avis par plateforme</p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                      <span className="text-red-600 font-bold">G</span>
-                    </div>
-                    <div>
-                      <div className="font-medium">Google My Business</div>
-                      <div className="text-sm text-gray-500">142 avis • 4.3 étoiles</div>
-                    </div>
-                  </div>
-                  <Badge className="bg-green-100 text-green-700">Connecté</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                      <span className="text-green-600 font-bold">T</span>
-                    </div>
-                    <div>
-                      <div className="font-medium">TripAdvisor</div>
-                      <div className="text-sm text-gray-500">98 avis • 4.1 étoiles</div>
-                    </div>
-                  </div>
-                  <Badge className="bg-green-100 text-green-700">Connecté</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                      <span className="text-red-600 font-bold">Y</span>
-                    </div>
-                    <div>
-                      <div className="font-medium">Yelp</div>
-                      <div className="text-sm text-gray-500">86 avis • 4.0 étoiles</div>
-                    </div>
-                  </div>
-                  <Badge className="bg-green-100 text-green-700">Connecté</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
               <p className="text-sm text-gray-600">Avis positifs</p>
               <p className="text-xs text-gray-500">Note ≥ 4 étoiles</p>
             </CardContent>
