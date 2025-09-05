@@ -345,7 +345,7 @@ const Importer = () => {
     }
   };
 
-  // Recherche d'établissements améliorée via Overpass (OSM) et Nominatim
+  // 🚀 RECHERCHE ULTRA-PUISSANTE d'établissements
   const rechercherEtablissements = async (requete: string) => {
     const query = requete.trim();
     if (!query) {
@@ -355,193 +355,257 @@ const Importer = () => {
 
     try {
       setRechercheEnCours(true);
-
       const cityContext = villeSelectionnee || (ville.length >= 2 ? ville : "");
-      const allowedTypes = ["restaurant", "cafe", "bar", "fast_food", "food_court", "pub", "biergarten"] as const;
+      let allResults: string[] = [];
 
-      // Helpers internes améliorés
-      const ensureBBox = async (cityName: string) => {
-        if (villeBBox && villeBBox.name.toLowerCase() === cityName.toLowerCase()) {
-          return villeBBox;
-        }
-        setBboxEnCours(true);
-        try {
-          // Recherche plus précise de la ville
-          const cityQueries = [
-            `${cityName} France`,
-            cityName,
-            `city ${cityName}`,
-            `town ${cityName}`
-          ];
-          
-          for (const cityQuery of cityQueries) {
-            const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&q=${encodeURIComponent(cityQuery)}&featuretype=city,town,village`;
-            const res = await fetch(url, { headers: { Accept: "application/json" } });
-            if (!res.ok) continue;
-            
-            const data: any[] = await res.json();
-            const cityItem = data.find(item => 
-              (item.class === "place" && ["city", "town", "village"].includes(item.type)) ||
-              (item.class === "boundary" && item.type === "administrative")
-            );
-            
-            if (cityItem?.boundingbox) {
-              const [south, north, west, east] = cityItem.boundingbox.map((v: string) => parseFloat(v));
-              const bbox = { s: south, n: north, w: west, e: east, name: cityName };
-              setVilleBBox(bbox);
-              setBboxEnCours(false);
-              return bbox;
-            }
-          }
-        } catch (error) {
-          console.error("Erreur bbox:", error);
-        }
-        setBboxEnCours(false);
-        return null;
-      };
-
-      const fetchOverpass = async (bbox: { s: number; n: number; w: number; e: number }) => {
-        const { s, n, w, e } = bbox;
-        const overpassQuery = `
-          [out:json][timeout:30];
-          (
-            node["amenity"~"^(restaurant|cafe|bar|fast_food|food_court|pub|biergarten)$"]["name"](${s},${w},${n},${e});
-            way["amenity"~"^(restaurant|cafe|bar|fast_food|food_court|pub|biergarten)$"]["name"](${s},${w},${n},${e});
-            relation["amenity"~"^(restaurant|cafe|bar|fast_food|food_court|pub|biergarten)$"]["name"](${s},${w},${n},${e});
-          );
-          out center 200;`;
-        
-        const endpoints = [
-          "https://overpass-api.de/api/interpreter",
-          "https://overpass.kumi.systems/api/interpreter",
-          "https://overpass.openstreetmap.ru/api/interpreter"
-        ];
-        
-        for (const ep of endpoints) {
-          try {
-            const r = await fetch(ep, {
-              method: "POST",
-              headers: { "Content-Type": "application/x-www-form-urlencoded" },
-              body: `data=${encodeURIComponent(overpassQuery)}`,
-            });
-            if (r.ok) {
-              const json = await r.json();
-              return json.elements || [];
-            }
-          } catch (err) {
-            console.log(`Endpoint ${ep} failed, trying next...`);
-          }
-        }
-        return [];
-      };
-
-      // Recherche prioritaire avec bbox si ville renseignée
+      // 🔍 STRATÉGIE 1: Recherche Overpass ULTRA-ÉLARGIE
       if (cityContext) {
-        const bbox = await ensureBBox(cityContext);
-        if (bbox) {
-          const elements = await fetchOverpass(bbox);
-          const filterText = etablissement.trim().toLowerCase();
-          
-          const list = elements
-            .filter((el: any) => el.tags?.name)
-            .map((el: any) => {
-              const name = el.tags.name as string;
-              const amenity = el.tags.amenity as string;
-              const city = (el.tags?.["addr:city"] as string) || 
-                          (el.tags?.["addr:town"] as string) || 
-                          cityContext;
-              const typeLabel = amenity === "restaurant" ? "" : ` (${amenity})`;
-              return { name: name.trim(), city: city.trim(), type: typeLabel };
-            })
-            .filter((it: any) => 
-              !filterText || 
-              it.name.toLowerCase().includes(filterText) ||
-              it.name.toLowerCase().replace(/[^a-z0-9]/g, '').includes(filterText.replace(/[^a-z0-9]/g, ''))
-            )
-            .sort((a: any, b: any) => {
-              // Priorité aux correspondances exactes
-              const aExact = a.name.toLowerCase().startsWith(filterText);
-              const bExact = b.name.toLowerCase().startsWith(filterText);
-              if (aExact && !bExact) return -1;
-              if (!aExact && bExact) return 1;
-              return a.name.localeCompare(b.name);
-            });
-
-          const noms: string[] = Array.from(
-            new Set<string>(list.map((it: { name: string; city: string; type: string }) => 
-              `${it.name}${it.type} — ${it.city}`
-            ))
-          ).slice(0, 50); // Limiter à 50 résultats
-          
-          if (noms.length > 0) {
-            setEtablissements(noms);
-            return;
-          }
-        }
+        const overpassResults = await searchOverpassUltra(query, cityContext);
+        allResults = [...allResults, ...overpassResults];
       }
 
-      // Fallback amélioré: Nominatim avec requêtes optimisées
-      const strategies = [
-        // Requêtes spécifiques avec ville
-        ...(cityContext ? [
-          `"${etablissement}" ${cityContext} restaurant`,
-          `${etablissement} restaurant ${cityContext}`,
-          `${etablissement} ${cityContext}`
-        ] : []),
-        // Requêtes générales
-        `"${etablissement}" restaurant`,
-        `${etablissement} restaurant`,
-        etablissement
-      ];
+      // 🔍 STRATÉGIE 2: Recherche Nominatim MULTI-VARIANTES
+      const nominatimResults = await searchNominatimUltra(query, cityContext);
+      allResults = [...allResults, ...nominatimResults];
 
-      let allResults: any[] = [];
-      for (const searchQuery of strategies) {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=20&q=${encodeURIComponent(searchQuery)}&extratags=1`;
-        try {
-          const res = await fetch(url, { headers: { Accept: "application/json" } });
-          if (!res.ok) continue;
-          const data: any[] = await res.json();
-          allResults = [...allResults, ...data];
-          
-          // Arrêter si on a trouvé des restaurants pertinents
-          const relevantFound = data.some(
-            (item) => item.class === "amenity" && allowedTypes.includes(item.type) && item.name
-          );
-          if (relevantFound && allResults.length >= 10) break;
-        } catch (error) {
-          console.log(`Nominatim query failed: ${searchQuery}`);
-        }
-      }
+      // 🔍 STRATÉGIE 3: Recherche PHONÉTIQUE
+      const phoneticResults = await searchPhonetic(query, cityContext);
+      allResults = [...allResults, ...phoneticResults];
 
-      // Traitement des résultats Nominatim
-      const uniqueResults = allResults.filter(
-        (item, index, self) => index === self.findIndex((t) => t.place_id === item.place_id)
-      );
+      // Déduplication et tri
+      const uniqueResults = [...new Set(allResults)]
+        .filter(result => result.toLowerCase().includes(query.toLowerCase()) || 
+                         result.toLowerCase().replace(/[^a-z0-9]/g, '').includes(query.toLowerCase().replace(/[^a-z0-9]/g, '')))
+        .sort((a, b) => {
+          const aScore = getRelevanceScore(a, query, cityContext);
+          const bScore = getRelevanceScore(b, query, cityContext);
+          return bScore - aScore;
+        });
 
-      let results = uniqueResults.filter(
-        (item: any) => item.class === "amenity" && allowedTypes.includes(item.type) && item.name
-      );
-      
-      if (results.length === 0) {
-        results = uniqueResults.filter((item: any) => item.name).slice(0, 15);
-      }
+      setEtablissements(uniqueResults.slice(0, 50));
 
-      const nomsFallback: string[] = results
-        .map((item: any) => {
-          const name = item.name?.trim() || (item.display_name?.split(",")[0] ?? "").trim();
-          const city = item.address?.city || item.address?.town || item.address?.village || item.address?.municipality;
-          const type = item.type === "restaurant" ? "" : ` (${item.type})`;
-          return name && city ? `${name}${type} — ${city}` : (name ? `${name}${type}` : null);
-        })
-        .filter(Boolean) as string[];
-
-      setEtablissements(nomsFallback);
-    } catch (e) {
-      console.error("Erreur recherche établissements:", e);
+    } catch (error) {
+      console.error("Erreur recherche établissements:", error);
       setEtablissements([]);
     } finally {
       setRechercheEnCours(false);
     }
+  };
+
+  // 🔍 Recherche Overpass ultra-puissante
+  const searchOverpassUltra = async (query: string, city: string) => {
+    try {
+      const bbox = await getBBoxForCity(city);
+      if (!bbox) return [];
+
+      // Zone élargie de 100%
+      const expansion = {
+        lat: (bbox.n - bbox.s) * 1.0,
+        lon: (bbox.e - bbox.w) * 1.0
+      };
+
+      const expandedBbox = {
+        s: bbox.s - expansion.lat,
+        n: bbox.n + expansion.lat,
+        w: bbox.w - expansion.lon,
+        e: bbox.e + expansion.lon
+      };
+
+      const overpassQuery = `
+        [out:json][timeout:60];
+        (
+          node["amenity"~"^(restaurant|cafe|bar|fast_food|food_court|pub|biergarten|ice_cream)$"]["name"](${expandedBbox.s},${expandedBbox.w},${expandedBbox.n},${expandedBbox.e});
+          way["amenity"~"^(restaurant|cafe|bar|fast_food|food_court|pub|biergarten|ice_cream)$"]["name"](${expandedBbox.s},${expandedBbox.w},${expandedBbox.n},${expandedBbox.e});
+          node["shop"~"^(bakery|pastry|confectionery|chocolate|coffee)$"]["name"](${expandedBbox.s},${expandedBbox.w},${expandedBbox.n},${expandedBbox.e});
+          way["shop"~"^(bakery|pastry|confectionery|chocolate|coffee)$"]["name"](${expandedBbox.s},${expandedBbox.w},${expandedBbox.n},${expandedBbox.e});
+          node["cuisine"]["name"](${expandedBbox.s},${expandedBbox.w},${expandedBbox.n},${expandedBbox.e});
+          way["cuisine"]["name"](${expandedBbox.s},${expandedBbox.w},${expandedBbox.n},${expandedBbox.e});
+        );
+        out center 500;`;
+
+      const endpoints = [
+        "https://overpass-api.de/api/interpreter",
+        "https://overpass.kumi.systems/api/interpreter",
+        "https://overpass.openstreetmap.ru/api/interpreter"
+      ];
+
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `data=${encodeURIComponent(overpassQuery)}`
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            return data.elements?.map((el: any) => {
+              const name = el.tags?.name || "";
+              const amenity = el.tags?.amenity || el.tags?.shop || "restaurant";
+              const typeLabel = amenity === "restaurant" ? "" : ` (${amenity})`;
+              return `${name}${typeLabel} — ${city}`;
+            }).filter((name: string) => name.trim()) || [];
+          }
+        } catch (err) {
+          console.log(`Overpass endpoint ${endpoint} failed`);
+        }
+      }
+    } catch (error) {
+      console.log("Overpass search failed:", error);
+    }
+    return [];
+  };
+
+  // 🔍 Recherche Nominatim ultra-variantes
+  const searchNominatimUltra = async (query: string, city: string) => {
+    const searchVariants = [
+      // Recherches avec ville
+      ...(city ? [
+        `"${query}" ${city} restaurant`,
+        `"${query}" ${city} café`,
+        `"${query}" ${city}`,
+        `${query} restaurant ${city}`,
+        `${query} ${city}`,
+        `restaurant ${query} ${city}`,
+        `café ${query} ${city}`
+      ] : []),
+      // Recherches générales
+      `"${query}" restaurant France`,
+      `"${query}" café France`,
+      `${query} restaurant`,
+      `${query} café`,
+      `${query} brasserie`,
+      query,
+      // Variantes orthographiques
+      query.replace(/é/g, 'e'),
+      query.replace(/è/g, 'e'),
+      query.replace(/ç/g, 'c'),
+      query.replace(/'/g, ''),
+      query.replace(/-/g, ' ')
+    ];
+
+    let allResults: string[] = [];
+
+    for (const searchTerm of searchVariants.slice(0, 12)) {
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=20&q=${encodeURIComponent(searchTerm)}&extratags=1`;
+        const response = await fetch(url, { headers: { Accept: "application/json" } });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const results = data
+            .filter((item: any) => item.name && (
+              (item.class === "amenity" && ["restaurant", "cafe", "bar", "fast_food", "pub", "biergarten"].includes(item.type)) ||
+              (item.class === "shop" && ["bakery", "pastry", "confectionery"].includes(item.type))
+            ))
+            .map((item: any) => {
+              const name = item.name.trim();
+              const cityName = item.address?.city || item.address?.town || item.address?.village || city || "France";
+              const typeLabel = item.type === "restaurant" ? "" : ` (${item.type})`;
+              return `${name}${typeLabel} — ${cityName}`;
+            });
+          
+          allResults = [...allResults, ...results];
+        }
+        
+        // Délai pour éviter le rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error) {
+        console.log(`Nominatim search failed for: ${searchTerm}`);
+      }
+    }
+
+    return allResults;
+  };
+
+  // 🔍 Recherche phonétique et similaire
+  const searchPhonetic = async (query: string, city: string) => {
+    const variants = [
+      query.replace(/ph/g, 'f'),
+      query.replace(/qu/g, 'k'),
+      query.replace(/ch/g, 'sh'),
+      query.replace(/mc/gi, 'mac'),
+      query.replace(/saint/gi, 'st'),
+      query.replace(/&/g, 'et')
+    ].filter(v => v !== query && v.length >= 3);
+
+    let results: string[] = [];
+    for (const variant of variants.slice(0, 5)) {
+      try {
+        const searchQuery = city ? `${variant} ${city}` : variant;
+        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=10&q=${encodeURIComponent(searchQuery)}`;
+        const response = await fetch(url, { headers: { Accept: "application/json" } });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const variantResults = data
+            .filter((item: any) => item.name)
+            .map((item: any) => {
+              const name = item.name.trim();
+              const cityName = item.address?.city || item.address?.town || city || "France";
+              return `${name} — ${cityName}`;
+            });
+          
+          results = [...results, ...variantResults];
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 150));
+      } catch (error) {
+        console.log(`Phonetic search failed for: ${variant}`);
+      }
+    }
+
+    return results;
+  };
+
+  // 🎯 Calcul du score de pertinence
+  const getRelevanceScore = (result: string, query: string, city: string) => {
+    const name = result.split(' — ')[0].toLowerCase();
+    const queryLower = query.toLowerCase();
+    let score = 0;
+
+    if (name === queryLower) score += 100;
+    else if (name.startsWith(queryLower)) score += 80;
+    else if (name.includes(queryLower)) score += 60;
+    else if (name.replace(/[^a-z0-9]/g, '').includes(queryLower.replace(/[^a-z0-9]/g, ''))) score += 40;
+
+    if (city && result.toLowerCase().includes(city.toLowerCase())) score += 20;
+
+    return score;
+  };
+
+  // 🗺️ Obtenir la bbox d'une ville
+  const getBBoxForCity = async (cityName: string) => {
+    if (villeBBox && villeBBox.name.toLowerCase() === cityName.toLowerCase()) {
+      return villeBBox;
+    }
+
+    try {
+      const queries = [`${cityName} France`, cityName, `city ${cityName}`];
+      
+      for (const cityQuery of queries) {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(cityQuery)}&featuretype=city,town,village`;
+        const response = await fetch(url, { headers: { Accept: "application/json" } });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const cityItem = data.find((item: any) => 
+            item.class === "place" || (item.class === "boundary" && item.type === "administrative")
+          );
+          
+          if (cityItem?.boundingbox) {
+            const [s, n, w, e] = cityItem.boundingbox.map((v: string) => parseFloat(v));
+            const bbox = { s, n, w, e, name: cityName };
+            setVilleBBox(bbox);
+            return bbox;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Erreur bbox:", error);
+    }
+    
+    return null;
   };
 
   // Recherche automatique de villes quand l'utilisateur tape
