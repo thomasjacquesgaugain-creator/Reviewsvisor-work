@@ -22,7 +22,7 @@ const Dashboard = () => {
                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-sm">R</span>
                 </div>
-                <span className="text-xl font-bold text-gray-900">ReviewRadar</span>
+                <span className="text-xl font-bold text-gray-900">analytique</span>
               </div>
               
               <div className="flex items-center gap-4">
@@ -59,7 +59,7 @@ const Dashboard = () => {
           {/* Header */}
           <div className="text-center space-y-4 mb-12">
             <h1 className="text-5xl font-bold text-gray-900">
-              Review<span className="text-blue-600">Radar</span>
+              <span className="text-blue-600">analytique</span>
             </h1>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
               Analysez automatiquement vos avis clients pour identifier les problèmes prioritaires et améliorer la satisfaction de votre établissement.
