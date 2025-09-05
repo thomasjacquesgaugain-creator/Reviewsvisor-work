@@ -173,27 +173,8 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Analyse IA, Problèmes et Points forts */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          {/* Analyse IA avancée */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Target className="w-5 h-5 text-purple-500" />
-                <CardTitle className="text-lg">Analyse IA avancée</CardTitle>
-              </div>
-              <p className="text-sm text-gray-500">Détection automatique des thématiques, sentiments et mentions fréquentes dans vos avis</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                <div>
-                  <div className="font-medium">Analyse en cours</div>
-                  <div className="text-sm text-gray-500">0 avis traités</div>
-                </div>
-                <Badge className="bg-purple-500 text-white">IA</Badge>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Problèmes et Points forts */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
           {/* Problèmes prioritaires */}
           <Card>
             <CardHeader>
