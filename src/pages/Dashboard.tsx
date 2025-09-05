@@ -85,7 +85,6 @@ const Dashboard = () => {
                 Importer
               </Link>
               <Button variant="ghost" className="text-blue-600 font-medium flex items-center gap-1">
-                <BarChart3 className="w-4 h-4" />
                 Dashboard
               </Button>
               {/* Affichage de la date et heure en temps réel */}
