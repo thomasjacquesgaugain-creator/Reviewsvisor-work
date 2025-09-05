@@ -791,13 +791,14 @@ const Importer = () => {
                           placeholder="Tapez le nom de votre établissement..."
                           value={etablissement}
                           onChange={(e) => setEtablissement(e.target.value)}
-                          className="w-full"
+                          className="w-full pl-10"
                         />
                         {rechercheEnCours && (
                           <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                             <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
                           </div>
                         )}
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       </div>
 
                       {/* Suggestions d'établissements */}
@@ -844,10 +845,35 @@ const Importer = () => {
 
 
                   <div className="flex gap-4">
-                    <Button onClick={lancerRecuperation} className="flex-1">
-                      Lancer la récupération
+                    <Button 
+                      onClick={lancerRecuperation} 
+                      className="flex-1"
+                      disabled={!ville.trim() || !etablissement.trim()}
+                    >
+                      <Search className="w-4 h-4 mr-2" />
+                      Rechercher et récupérer les avis
                     </Button>
                   </div>
+                  
+                  {/* Message d'aide */}
+                  {(!ville.trim() || !etablissement.trim()) && (
+                    <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+                      <div className="flex">
+                        <Info className="w-5 h-5 text-blue-400 mr-2 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm text-blue-700">
+                            <strong>Comment ça marche :</strong>
+                          </p>
+                          <ol className="text-sm text-blue-600 mt-1 ml-4 list-decimal">
+                            <li>Tapez votre ville et sélectionnez-la dans la liste</li>
+                            <li>Tapez le nom de votre établissement</li>
+                            <li>Les suggestions apparaîtront automatiquement</li>
+                            <li>Cliquez sur "Rechercher et récupérer les avis"</li>
+                          </ol>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
