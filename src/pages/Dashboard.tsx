@@ -139,7 +139,7 @@ const Dashboard = () => {
                 <div className="flex items-center gap-4">
                   <span className="text-2xl font-bold text-blue-600">65</span>
                   <div>
-                    <div className="font-medium">31/07/2025 14:30</div>
+                    <div className="font-medium">{date} {time}</div>
                     <div className="text-sm text-gray-500">2h avis</div>
                   </div>
                 </div>
