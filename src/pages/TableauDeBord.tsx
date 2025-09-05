@@ -30,14 +30,18 @@ const Dashboard = () => {
                   <Home className="w-4 h-4" />
                   Accueil
                 </Link>
-                <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
-                  <Upload className="w-4 h-4" />
-                  Importer
-                </Button>
-                <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
-                  <BarChart3 className="w-4 h-4" />
-                  Dashboard
-                </Button>
+                <Link to="/importer">
+                  <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
+                    <Upload className="w-4 h-4" />
+                    Importer
+                  </Button>
+                </Link>
+                <Link to="/dashboard">
+                  <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
+                    <BarChart3 className="w-4 h-4" />
+                    Dashboard
+                  </Button>
+                </Link>
                 <Link to="/etablissement" className="text-gray-700 hover:text-blue-600 flex items-center gap-1">
                   <Building className="w-4 h-4" />
                   Établissement
