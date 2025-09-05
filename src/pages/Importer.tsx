@@ -28,6 +28,8 @@ const Importer = () => {
   const [rechercheVillesEnCours, setRechercheVillesEnCours] = useState(false);
   const [etablissementSelectionne, setEtablissementSelectionne] = useState("");
   const [villeSelectionnee, setVilleSelectionnee] = useState("");
+  const [villeBBox, setVilleBBox] = useState<{s:number;n:number;w:number;e:number;name:string} | null>(null);
+  const [bboxEnCours, setBboxEnCours] = useState(false);
   const [positionUtilisateur, setPositionUtilisateur] = useState<{lat: number, lng: number} | null>(null);
   const [geolocalisationEnCours, setGeolocalisationEnCours] = useState(false);
 
@@ -191,7 +193,7 @@ const Importer = () => {
     }
   };
 
-  // Recherche d'établissements via Nominatim (OpenStreetMap) ou Google Places
+  // Recherche d'établissements via Overpass (OSM) avec fallback Nominatim
   const rechercherEtablissements = async (requete: string) => {
     const query = requete.trim();
     if (!query) {
@@ -201,73 +203,155 @@ const Importer = () => {
 
     try {
       setRechercheEnCours(true);
-      
-      // Plusieurs stratégies de recherche pour améliorer les résultats
+
+      const cityContext = villeSelectionnee || (ville.length >= 2 ? ville : "");
+      const allowedTypes = ["restaurant", "cafe", "bar", "fast_food", "food_court", "pub", "biergarten"] as const;
+
+      // Helpers internes
+      const ensureBBox = async (cityName: string) => {
+        if (villeBBox && villeBBox.name.toLowerCase() === cityName.toLowerCase()) {
+          return villeBBox;
+        }
+        setBboxEnCours(true);
+        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&q=${encodeURIComponent(cityName)}`;
+        const res = await fetch(url, { headers: { Accept: "application/json" } });
+        if (!res.ok) {
+          setBboxEnCours(false);
+          return null;
+        }
+        const data: any[] = await res.json();
+        const item = data?.[0];
+        if (!item?.boundingbox) {
+          setBboxEnCours(false);
+          return null;
+        }
+        const [south, north, west, east] = item.boundingbox.map((v: string) => parseFloat(v));
+        const bbox = { s: south, n: north, w: west, e: east, name: cityName };
+        setVilleBBox(bbox);
+        setBboxEnCours(false);
+        return bbox;
+      };
+
+      const fetchOverpass = async (bbox: { s: number; n: number; w: number; e: number }) => {
+        const { s, n, w, e } = bbox;
+        const overpassQuery = `
+          [out:json][timeout:25];
+          (
+            node["amenity"~"^(restaurant|cafe|bar|fast_food|food_court|pub|biergarten)$"](${s},${w},${n},${e});
+            way["amenity"~"^(restaurant|cafe|bar|fast_food|food_court|pub|biergarten)$"](${s},${w},${n},${e});
+            relation["amenity"~"^(restaurant|cafe|bar|fast_food|food_court|pub|biergarten)$"](${s},${w},${n},${e});
+          );
+          out center 150;`;
+        const endpoints = [
+          "https://overpass-api.de/api/interpreter",
+          "https://overpass.kumi.systems/api/interpreter",
+        ];
+        for (const ep of endpoints) {
+          try {
+            const r = await fetch(ep, {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: `data=${encodeURIComponent(overpassQuery)}`,
+            });
+            if (r.ok) {
+              const json = await r.json();
+              return json.elements || [];
+            }
+          } catch (err) {
+            // essayer endpoint suivant
+          }
+        }
+        return [];
+      };
+
+      // Si une ville est renseignée, on privilégie Overpass avec bbox
+      if (cityContext) {
+        const bbox = await ensureBBox(cityContext);
+        if (bbox) {
+          const elements = await fetchOverpass(bbox);
+          const filterText = etablissement.trim().toLowerCase();
+          const list = elements
+            .filter((el: any) => el.tags?.name)
+            .map((el: any) => {
+              const name = el.tags.name as string;
+              const city = (el.tags?.["addr:city"] as string) || cityContext;
+              return { name, city };
+            })
+            .filter((it: any) => !filterText || it.name.toLowerCase().includes(filterText));
+
+          const noms: string[] = Array.from(
+            new Set<string>(list.map((it: { name: string; city: string }) => `${it.name} — ${it.city}`))
+          );
+          if (noms.length > 0) {
+            setEtablissements(noms);
+            toast({
+              title: "Établissements trouvés",
+              description: `${noms.length} résultats pour « ${filterText ? `${etablissement} ${cityContext}` : cityContext} »`,
+              duration: 3000,
+            });
+            return; // On a des résultats pertinents, on sort
+          }
+        }
+        // Si aucun bbox ou aucun résultat via Overpass, on continue avec Nominatim
+      }
+
+      // Fallback: Nominatim (stratégies multiples)
       const strategies = [
         `${query} restaurant`,
         `${query}`,
         query.includes(' ') ? query.split(' ').reverse().join(' ') + ' restaurant' : null,
-      ].filter(Boolean);
-      
+      ].filter(Boolean) as string[];
+
       let allResults: any[] = [];
-      
       for (const searchQuery of strategies) {
         const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=15&q=${encodeURIComponent(searchQuery)}`;
-        const res = await fetch(url, {
-          headers: { Accept: "application/json" },
-        });
+        const res = await fetch(url, { headers: { Accept: "application/json" } });
         if (!res.ok) continue;
         const data: any[] = await res.json();
         allResults = [...allResults, ...data];
-        
-        // Si on a trouvé des restaurants, on peut s'arrêter
-        const restaurantFound = data.some(item => 
-          item.class === "amenity" && 
-          ["restaurant", "cafe", "bar", "fast_food", "food_court", "pub", "biergarten"].includes(item.type)
+        const restaurantFound = data.some(
+          (item) => item.class === "amenity" && allowedTypes.includes(item.type)
         );
         if (restaurantFound) break;
       }
 
-      // Dédupliquer par place_id
-      const uniqueResults = allResults.filter((item, index, self) => 
-        index === self.findIndex(t => t.place_id === item.place_id)
+      const uniqueResults = allResults.filter(
+        (item, index, self) => index === self.findIndex((t) => t.place_id === item.place_id)
       );
 
-      const allowed = new Set(["restaurant", "cafe", "bar", "fast_food", "food_court", "pub", "biergarten"]);
-      let results = uniqueResults.filter((item: any) => item.class === "amenity" && allowed.has(item.type));
-      
-      // Si aucun restaurant trouvé, prendre les premiers résultats généraux
-      if (results.length === 0) {
-        results = uniqueResults.slice(0, 10);
-      }
+      let results = uniqueResults.filter(
+        (item: any) => item.class === "amenity" && allowedTypes.includes(item.type)
+      );
+      if (results.length === 0) results = uniqueResults.slice(0, 10);
 
-      const noms: string[] = results
+      const nomsFallback: string[] = results
         .map((item: any) => {
           const name = item.name || (item.display_name?.split(",")[0] ?? "").trim();
-          const city = item.address?.city || item.address?.town || item.address?.village || item.address?.municipality;
+          const city =
+            item.address?.city || item.address?.town || item.address?.village || item.address?.municipality;
           const type = item.type === "restaurant" ? "" : ` (${item.type})`;
           return name ? (city ? `${name}${type} — ${city}` : `${name}${type}`) : null;
         })
         .filter(Boolean) as string[];
 
-      setEtablissements(noms);
-      if (noms.length > 0) {
+      setEtablissements(nomsFallback);
+      if (nomsFallback.length > 0) {
         toast({
           title: "Établissements trouvés",
-          description: `${noms.length} résultats pour « ${query} »`,
+          description: `${nomsFallback.length} résultats pour « ${query} »`,
           duration: 3000,
         });
       } else {
         toast({
           title: "Aucun établissement",
-          description: `Aucun résultat pour « ${query} ». Essayez Google Places API pour de meilleurs résultats.`,
+          description: `Aucun résultat pour « ${query} ».`,
           duration: 4000,
         });
       }
     } catch (e) {
       toast({
         title: "Erreur de recherche",
-        description: "Impossible de récupérer les établissements. Essayez la géolocalisation.",
+        description: "Impossible de récupérer les établissements.",
         variant: "destructive",
         duration: 3000,
       });
@@ -306,6 +390,7 @@ const Importer = () => {
   const selectionnerVille = (nomVille: string) => {
     setVille(nomVille);
     setVilleSelectionnee(nomVille);
+    setVilleBBox(null); // réinitialiser le bbox pour la nouvelle ville
     setVilles([]);
     // Relancer la recherche d'établissements si on en a déjà un
     if (etablissement.length >= 2) {
@@ -555,7 +640,7 @@ const Importer = () => {
                     )}
                     {(villeSelectionnee || ville.length >= 2) && etablissement.length >= 2 && (
                       <div className="absolute right-10 top-1/2 transform -translate-y-1/2 text-xs text-green-600">
-                        Recherche dans {villeSelectionnee || ville}
+                        Recherche dans {villeSelectionnee || ville} {bboxEnCours ? "(zone...)" : ""}
                       </div>
                     )}
                   </div>
