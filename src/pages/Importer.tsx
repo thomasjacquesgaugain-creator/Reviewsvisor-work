@@ -202,30 +202,51 @@ const Importer = () => {
     try {
       setRechercheEnCours(true);
       
-      // Essayer d'abord avec Google Places si disponible, sinon Nominatim
-      let data: any[] = [];
+      // Plusieurs stratégies de recherche pour améliorer les résultats
+      const strategies = [
+        `${query} restaurant`,
+        `${query}`,
+        query.includes(' ') ? query.split(' ').reverse().join(' ') + ' restaurant' : null,
+      ].filter(Boolean);
       
-      // TODO: Ajouter Google Places API ici pour de meilleurs résultats
-      // Pour l'instant, utiliser Nominatim
-      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=15&q=${encodeURIComponent(query + " restaurant")}`;
-      const res = await fetch(url, {
-        headers: { Accept: "application/json" },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      data = await res.json();
+      let allResults: any[] = [];
+      
+      for (const searchQuery of strategies) {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=15&q=${encodeURIComponent(searchQuery)}`;
+        const res = await fetch(url, {
+          headers: { Accept: "application/json" },
+        });
+        if (!res.ok) continue;
+        const data: any[] = await res.json();
+        allResults = [...allResults, ...data];
+        
+        // Si on a trouvé des restaurants, on peut s'arrêter
+        const restaurantFound = data.some(item => 
+          item.class === "amenity" && 
+          ["restaurant", "cafe", "bar", "fast_food", "food_court", "pub", "biergarten"].includes(item.type)
+        );
+        if (restaurantFound) break;
+      }
+
+      // Dédupliquer par place_id
+      const uniqueResults = allResults.filter((item, index, self) => 
+        index === self.findIndex(t => t.place_id === item.place_id)
+      );
 
       const allowed = new Set(["restaurant", "cafe", "bar", "fast_food", "food_court", "pub", "biergarten"]);
-      let results = data.filter((item: any) => item.class === "amenity" && allowed.has(item.type));
+      let results = uniqueResults.filter((item: any) => item.class === "amenity" && allowed.has(item.type));
+      
+      // Si aucun restaurant trouvé, prendre les premiers résultats généraux
       if (results.length === 0) {
-        // Fallback: chercher tous types d'établissements
-        results = data.slice(0, 10);
+        results = uniqueResults.slice(0, 10);
       }
 
       const noms: string[] = results
         .map((item: any) => {
           const name = item.name || (item.display_name?.split(",")[0] ?? "").trim();
           const city = item.address?.city || item.address?.town || item.address?.village || item.address?.municipality;
-          return name ? (city ? `${name} — ${city}` : name) : null;
+          const type = item.type === "restaurant" ? "" : ` (${item.type})`;
+          return name ? (city ? `${name}${type} — ${city}` : `${name}${type}`) : null;
         })
         .filter(Boolean) as string[];
 
@@ -239,7 +260,7 @@ const Importer = () => {
       } else {
         toast({
           title: "Aucun établissement",
-          description: `Aucun résultat pour « ${query} ». Essayez avec Google Places API pour de meilleurs résultats.`,
+          description: `Aucun résultat pour « ${query} ». Essayez Google Places API pour de meilleurs résultats.`,
           duration: 4000,
         });
       }
@@ -267,40 +288,36 @@ const Importer = () => {
     }
   }, [ville, villeSelectionnee]);
 
+  // Recherche automatique d'établissements quand ville ET établissement sont renseignés
   useEffect(() => {
-    if (ville.length >= 3 && villeSelectionnee) {
+    if (villeSelectionnee && etablissement.length >= 2) {
       const timeoutId = setTimeout(() => {
-        const q = etablissement.length >= 1 ? `${etablissement} ${ville}` : `restaurant ${ville}`;
-        rechercherEtablissements(q);
+        // Recherche combinée ville + établissement
+        rechercherEtablissements(`${etablissement} ${villeSelectionnee}`);
       }, 500);
       return () => clearTimeout(timeoutId);
-    } else {
-      if (etablissement.length < 3) {
-        setEtablissements([]);
-      }
-      setEtablissementSelectionne("");
-    }
-  }, [ville, villeSelectionnee]);
-
-  useEffect(() => {
-    if (etablissement.length >= 3) {
+    } else if (etablissement.length >= 3 && !villeSelectionnee) {
+      // Recherche seulement par nom d'établissement
       const timeoutId = setTimeout(() => {
-        const q = ville.length >= 1 ? `${etablissement} ${ville}` : etablissement;
-        rechercherEtablissements(q);
+        rechercherEtablissements(etablissement);
       }, 500);
       return () => clearTimeout(timeoutId);
-    } else {
-      if (ville.length < 3) {
-        setEtablissements([]);
-      }
+    } else if (etablissement.length < 2) {
+      setEtablissements([]);
       setEtablissementSelectionne("");
     }
-  }, [etablissement]);
+  }, [etablissement, villeSelectionnee]);
 
   const selectionnerVille = (nomVille: string) => {
     setVille(nomVille);
     setVilleSelectionnee(nomVille);
     setVilles([]);
+    // Relancer la recherche d'établissements si on en a déjà un
+    if (etablissement.length >= 2) {
+      setTimeout(() => {
+        rechercherEtablissements(`${etablissement} ${nomVille}`);
+      }, 100);
+    }
     toast({
       title: "Ville sélectionnée",
       description: nomVille,
@@ -311,6 +328,7 @@ const Importer = () => {
   const selectionnerEtablissement = (etablissementNom: string) => {
     setEtablissement(etablissementNom);
     setEtablissementSelectionne(etablissementNom);
+    setEtablissements([]);
     toast({
       title: "Établissement sélectionné",
       description: etablissementNom,
@@ -503,15 +521,23 @@ const Importer = () => {
                   </label>
                   <div className="relative">
                     <Input
-                      placeholder="Recherchez un établissement (nom ou ville)..."
+                      placeholder="Nom de votre établissement..."
                       value={etablissement}
-                      onChange={(e) => setEtablissement(e.target.value)}
+                      onChange={(e) => {
+                        setEtablissement(e.target.value);
+                        setEtablissementSelectionne("");
+                      }}
                       className="w-full"
                       disabled={rechercheEnCours}
                     />
                     {rechercheEnCours && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                      </div>
+                    )}
+                    {villeSelectionnee && etablissement.length >= 2 && (
+                      <div className="absolute right-10 top-1/2 transform -translate-y-1/2 text-xs text-green-600">
+                        Recherche dans {villeSelectionnee}
                       </div>
                     )}
                   </div>
