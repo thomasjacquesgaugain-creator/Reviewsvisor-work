@@ -38,6 +38,17 @@ const Importer = () => {
   const [fichierCSV, setFichierCSV] = useState<File | null>(null);
   const [donneesCSV, setDonneesCSV] = useState<any[]>([]);
   const [importEnCours, setImportEnCours] = useState(false);
+  
+  // États pour la saisie manuelle
+  const [avisManuel, setAvisManuel] = useState({
+    nomClient: '',
+    note: '',
+    commentaire: '',
+    date: new Date().toISOString().split('T')[0],
+    source: 'Saisie manuelle'
+  });
+  const [avisListe, setAvisListe] = useState<any[]>([]);
+  const [saisieEnCours, setSaisieEnCours] = useState(false);
 
   // Fonctions pour l'import CSV
   const gererSelectionFichier = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,6 +123,66 @@ const Importer = () => {
 
   const ouvrirSelecteurFichier = () => {
     document.getElementById('fichier-csv-input')?.click();
+  };
+
+  // Fonctions pour la saisie manuelle
+  const gererChangementAvis = (champ: string, valeur: string) => {
+    setAvisManuel(prev => ({
+      ...prev,
+      [champ]: valeur
+    }));
+  };
+
+  const ajouterAvis = () => {
+    if (!avisManuel.nomClient || !avisManuel.note || !avisManuel.commentaire) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    if (parseFloat(avisManuel.note) < 1 || parseFloat(avisManuel.note) > 5) {
+      toast({
+        title: "Erreur",
+        description: "La note doit être comprise entre 1 et 5",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    setSaisieEnCours(true);
+    
+    // Simuler un délai de traitement
+    setTimeout(() => {
+      const nouvelAvis = {
+        ...avisManuel,
+        id: Date.now(),
+        note: parseFloat(avisManuel.note)
+      };
+      
+      setAvisListe(prev => [...prev, nouvelAvis]);
+      
+      // Réinitialiser le formulaire
+      setAvisManuel({
+        nomClient: '',
+        note: '',
+        commentaire: '',
+        date: new Date().toISOString().split('T')[0],
+        source: 'Saisie manuelle'
+      });
+      
+      setSaisieEnCours(false);
+      
+      toast({
+        title: "Avis ajouté",
+        description: "L'avis a été ajouté avec succès",
+        duration: 3000,
+      });
+    }, 500);
   };
 
   // Obtenir la géolocalisation de l'utilisateur
@@ -834,15 +905,140 @@ const Importer = () => {
           {modeActuel === 'saisie' && (
             <Card>
               <CardContent className="p-8">
-                <div className="text-center py-12">
-                  <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Saisie manuelle d'avis</h3>
-                  <p className="text-gray-600 mb-6">
-                    Ajoutez manuellement les avis de vos clients dans le système
-                  </p>
-                  <Button>
-                    Commencer la saisie
-                  </Button>
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <FileText className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Saisie manuelle d'avis</h3>
+                    <p className="text-gray-600">
+                      Ajoutez un nouvel avis client dans le système
+                    </p>
+                  </div>
+
+                  {/* Formulaire de saisie */}
+                  <div className="max-w-2xl mx-auto space-y-4">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">
+                          Nom du client <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                          placeholder="Ex: Marie Dupont"
+                          value={avisManuel.nomClient}
+                          onChange={(e) => gererChangementAvis('nomClient', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">
+                          Note <span className="text-red-500">*</span>
+                        </label>
+                        <Select value={avisManuel.note} onValueChange={(value) => gererChangementAvis('note', value)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choisir une note" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">⭐ 1/5</SelectItem>
+                            <SelectItem value="2">⭐⭐ 2/5</SelectItem>
+                            <SelectItem value="3">⭐⭐⭐ 3/5</SelectItem>
+                            <SelectItem value="4">⭐⭐⭐⭐ 4/5</SelectItem>
+                            <SelectItem value="5">⭐⭐⭐⭐⭐ 5/5</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Commentaire <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        className="w-full min-h-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
+                        placeholder="Écrivez le commentaire du client..."
+                        value={avisManuel.commentaire}
+                        onChange={(e) => gererChangementAvis('commentaire', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">
+                          Date
+                        </label>
+                        <Input
+                          type="date"
+                          value={avisManuel.date}
+                          onChange={(e) => gererChangementAvis('date', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">
+                          Source
+                        </label>
+                        <Select value={avisManuel.source} onValueChange={(value) => gererChangementAvis('source', value)}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Saisie manuelle">Saisie manuelle</SelectItem>
+                            <SelectItem value="Google">Google</SelectItem>
+                            <SelectItem value="TripAdvisor">TripAdvisor</SelectItem>
+                            <SelectItem value="Yelp">Yelp</SelectItem>
+                            <SelectItem value="Facebook">Facebook</SelectItem>
+                            <SelectItem value="Site web">Site web</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 pt-4">
+                      <Button 
+                        onClick={ajouterAvis} 
+                        disabled={saisieEnCours}
+                        className="flex-1"
+                      >
+                        {saisieEnCours ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                            Ajout en cours...
+                          </>
+                        ) : (
+                          'Ajouter l\'avis'
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Liste des avis ajoutés */}
+                  {avisListe.length > 0 && (
+                    <div className="mt-8 pt-6 border-t">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                        Avis ajoutés ({avisListe.length})
+                      </h4>
+                      <div className="space-y-3 max-h-64 overflow-y-auto">
+                        {avisListe.map((avis) => (
+                          <div key={avis.id} className="bg-gray-50 p-4 rounded-lg">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <span className="font-medium text-gray-900">{avis.nomClient}</span>
+                                <div className="flex items-center gap-1 mt-1">
+                                  {Array.from({ length: avis.note }, (_, i) => (
+                                    <span key={i} className="text-yellow-400">⭐</span>
+                                  ))}
+                                  <span className="text-sm text-gray-500 ml-1">({avis.note}/5)</span>
+                                </div>
+                              </div>
+                              <div className="text-right text-sm text-gray-500">
+                                <div>{avis.date}</div>
+                                <div>{avis.source}</div>
+                              </div>
+                            </div>
+                            <p className="text-gray-700 text-sm">{avis.commentaire}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
