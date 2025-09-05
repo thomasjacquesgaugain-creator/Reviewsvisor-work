@@ -12,12 +12,94 @@ import {
   LogOut
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 const Importer = () => {
+  const { toast } = useToast();
   const [ville, setVille] = useState("");
   const [etablissement, setEtablissement] = useState("");
   const [periode, setPeriode] = useState("1-mois");
+  const [etablissements, setEtablissements] = useState<string[]>([]);
+  const [rechercheEnCours, setRechercheEnCours] = useState(false);
+  const [etablissementSelectionne, setEtablissementSelectionne] = useState("");
+
+  // Simulation de recherche d'établissements
+  const rechercherEtablissements = async (villeRecherche: string) => {
+    if (!villeRecherche.trim()) {
+      setEtablissements([]);
+      return;
+    }
+
+    setRechercheEnCours(true);
+    
+    // Simulation d'une API de recherche d'établissements
+    setTimeout(() => {
+      const etablissementsExemples = [
+        `Restaurant Le Petit ${villeRecherche}`,
+        `Café Central ${villeRecherche}`,
+        `Brasserie du Centre ${villeRecherche}`,
+        `Restaurant Gastronomique ${villeRecherche}`,
+        `Pizzeria Roma ${villeRecherche}`,
+        `Bistrot des Amis ${villeRecherche}`,
+        `Restaurant Asiatique ${villeRecherche}`,
+        `Bar-Restaurant Le ${villeRecherche}`
+      ];
+      
+      setEtablissements(etablissementsExemples);
+      setRechercheEnCours(false);
+      
+      if (etablissementsExemples.length > 0) {
+        toast({
+          title: "Établissements trouvés",
+          description: `${etablissementsExemples.length} établissements trouvés à ${villeRecherche}`,
+          duration: 3000,
+        });
+      }
+    }, 1500);
+  };
+
+  useEffect(() => {
+    if (ville.length >= 3) {
+      const timeoutId = setTimeout(() => {
+        rechercherEtablissements(ville);
+      }, 500);
+      
+      return () => clearTimeout(timeoutId);
+    } else {
+      setEtablissements([]);
+      setEtablissement("");
+      setEtablissementSelectionne("");
+    }
+  }, [ville]);
+
+  const selectionnerEtablissement = (etablissementNom: string) => {
+    setEtablissement(etablissementNom);
+    setEtablissementSelectionne(etablissementNom);
+    toast({
+      title: "Établissement sélectionné",
+      description: etablissementNom,
+      duration: 2000,
+    });
+  };
+
+  const lancerRecuperation = () => {
+    if (!ville || !etablissement) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner une ville et un établissement",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    toast({
+      title: "Récupération en cours",
+      description: `Recherche des avis pour ${etablissement} sur les derniers ${periode}...`,
+      duration: 4000,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -29,7 +111,7 @@ const Importer = () => {
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">R</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">ReviewRadar</span>
+              <span className="text-xl font-bold text-gray-900">analytique</span>
             </div>
             
             <div className="flex items-center gap-6">
@@ -117,13 +199,53 @@ const Importer = () => {
                   <label className="text-sm font-medium text-gray-700">
                     Nom de l'établissement <span className="text-red-500">*</span>
                   </label>
-                  <Input
-                    placeholder="Sélectionnez d'abord une ville"
-                    value={etablissement}
-                    onChange={(e) => setEtablissement(e.target.value)}
-                    className="w-full"
-                    disabled={!ville}
-                  />
+                  <div className="relative">
+                    <Input
+                      placeholder={ville ? "Recherche automatique en cours..." : "Sélectionnez d'abord une ville"}
+                      value={etablissement}
+                      onChange={(e) => setEtablissement(e.target.value)}
+                      className="w-full"
+                      disabled={!ville || rechercheEnCours}
+                    />
+                    {rechercheEnCours && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Liste des établissements trouvés */}
+                  {etablissements.length > 0 && !etablissementSelectionne && (
+                    <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md bg-white shadow-lg">
+                      <div className="p-2 bg-gray-50 border-b text-xs font-medium text-gray-600">
+                        {etablissements.length} établissements trouvés
+                      </div>
+                      {etablissements.map((etab, index) => (
+                        <button
+                          key={index}
+                          className="w-full text-left px-3 py-2 hover:bg-blue-50 hover:text-blue-600 text-sm border-b border-gray-100 last:border-b-0"
+                          onClick={() => selectionnerEtablissement(etab)}
+                        >
+                          {etab}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {etablissementSelectionne && (
+                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
+                      <span className="text-sm text-green-700">✓ {etablissementSelectionne}</span>
+                      <button
+                        onClick={() => {
+                          setEtablissementSelectionne("");
+                          setEtablissement("");
+                        }}
+                        className="text-green-600 hover:text-green-800 text-xs underline"
+                      >
+                        Changer
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -147,6 +269,7 @@ const Importer = () => {
               <Button 
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-medium"
                 disabled={!ville || !etablissement}
+                onClick={lancerRecuperation}
               >
                 Récupérer les avis
               </Button>
@@ -165,15 +288,15 @@ const Importer = () => {
               <ul className="space-y-3 text-gray-600">
                 <li className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Commencez par sélectionner une ville pour voir les établissements disponibles</span>
+                  <span>Saisissez au moins 3 caractères pour la ville pour déclencher la recherche automatique</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Tapez le nom de l'établissement pour voir les suggestions</span>
+                  <span>Les établissements de votre ville apparaîtront automatiquement dans la liste</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Sélectionnez l'établissement exact pour une précision maximale</span>
+                  <span>Cliquez sur l'établissement exact pour une sélection précise</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
