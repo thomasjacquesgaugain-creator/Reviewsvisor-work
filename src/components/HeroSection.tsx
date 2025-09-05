@@ -38,6 +38,15 @@ export const HeroSection = () => {
         <div className="container mx-auto px-4 py-16">
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-12">
             <CardContent className="p-8 text-center space-y-6">
+              {/* Logo Analytique */}
+              <div className="flex justify-center mb-6">
+                <img 
+                  src="/lovable-uploads/b43e95cc-d17b-43ab-a672-a5ef90947e95.png" 
+                  alt="Logo Analytique"
+                  className="h-20 w-auto object-contain"
+                />
+              </div>
+              
               <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
                 ⚡ Prêt à révolutionner votre établissement ?
               </h1>
