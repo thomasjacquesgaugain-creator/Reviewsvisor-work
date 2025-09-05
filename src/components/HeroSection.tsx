@@ -126,7 +126,7 @@ export const HeroSection = () => {
           {/* Why section */}
           <Card className="bg-blue-600 text-white border-0 shadow-xl rounded-3xl overflow-hidden max-w-4xl mx-auto">
             <CardContent className="p-8">
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 mb-4">
                 <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
                   <span className="text-xl">💡</span>
                 </div>
