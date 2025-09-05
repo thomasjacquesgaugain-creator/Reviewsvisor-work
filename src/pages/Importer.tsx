@@ -842,29 +842,6 @@ const Importer = () => {
                     </div>
                   </div>
 
-                  <div className="text-center mb-6">
-                    <Button
-                      onClick={obtenirGeolocalisation}
-                      disabled={geolocalisationEnCours}
-                      variant="outline"
-                      className="flex items-center gap-2"
-                    >
-                      {geolocalisationEnCours ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                      ) : (
-                        <Locate className="w-4 h-4" />
-                      )}
-                      {geolocalisationEnCours 
-                        ? "Recherche de votre position..." 
-                        : "Utiliser ma position actuelle"
-                      }
-                    </Button>
-                    {positionUtilisateur && (
-                      <p className="text-sm text-green-600 mt-2">
-                        Position trouvée: {positionUtilisateur.lat.toFixed(4)}, {positionUtilisateur.lng.toFixed(4)}
-                      </p>
-                    )}
-                  </div>
 
                   <div className="flex gap-4">
                     <Button onClick={lancerRecuperation} className="flex-1">
