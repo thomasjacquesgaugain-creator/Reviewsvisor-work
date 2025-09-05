@@ -392,12 +392,6 @@ const Importer = () => {
     setVilleSelectionnee(nomVille);
     setVilleBBox(null); // réinitialiser le bbox pour la nouvelle ville
     setVilles([]);
-    // Relancer la recherche d'établissements si on en a déjà un
-    if (etablissement.length >= 2) {
-      setTimeout(() => {
-        rechercherEtablissements(`${etablissement} ${nomVille}`);
-      }, 100);
-    }
     toast({
       title: "Ville sélectionnée",
       description: nomVille,
@@ -609,6 +603,7 @@ const Importer = () => {
                         onClick={() => {
                           setVilleSelectionnee("");
                           setVille("");
+                          setVilleBBox(null);
                         }}
                         className="text-green-600 hover:text-green-800 text-xs underline"
                       >
