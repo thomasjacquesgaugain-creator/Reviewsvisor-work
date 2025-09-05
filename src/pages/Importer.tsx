@@ -67,10 +67,12 @@ const Importer = () => {
                 Saisie manuelle
               </Button>
             </Link>
-            <Button variant="ghost" className="text-gray-600 flex items-center gap-2">
-              <Upload className="w-4 h-4" />
-              Import CSV
-            </Button>
+            <Link to="/import-csv">
+              <Button variant="ghost" className="text-gray-600 flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Import CSV
+              </Button>
+            </Link>
             <Button variant="ghost" className="text-blue-600 font-medium flex items-center gap-2">
               <Search className="w-4 h-4" />
               Récupération automatique

@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import TableauDeBord from "./pages/TableauDeBord";
 import Dashboard from "./pages/Dashboard";
 import Importer from "./pages/Importer";
+import ImportCSV from "./pages/ImportCSV";
 import SaisieManuelle from "./pages/SaisieManuelle";
 import Etablissement from "./pages/Etablissement";
 import NotFound from "./pages/NotFound";
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/tableau-de-bord" element={<TableauDeBord />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/importer" element={<Importer />} />
+          <Route path="/import-csv" element={<ImportCSV />} />
           <Route path="/saisie-manuelle" element={<SaisieManuelle />} />
           <Route path="/etablissement" element={<Etablissement />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
