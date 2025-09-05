@@ -188,46 +188,42 @@ const Dashboard = () => {
               </Button>
               
               {showPlateformes && (
-                <div className="mt-4 space-y-3 border-t pt-4 text-left">
+                <div className="mt-4 border-t pt-4">
                   <h4 className="font-medium text-gray-700 mb-3 text-center">Plateformes connectées :</h4>
                   
-                  <div className="bg-white p-3 rounded-lg border">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="bg-white p-2 rounded-lg border text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <div className="w-5 h-5 bg-red-100 rounded flex items-center justify-center">
                           <span className="text-red-600 font-bold text-xs">G</span>
                         </div>
-                        <span className="font-medium text-sm">Google My Business</span>
+                        <span className="font-medium text-xs">Google</span>
                       </div>
-                      <Badge className="bg-green-100 text-green-700 text-xs">Connecté</Badge>
+                      <p className="text-xs text-gray-600">142 avis</p>
+                      <Badge className="bg-green-100 text-green-700 text-xs mt-1">Connecté</Badge>
                     </div>
-                    <p className="text-sm text-gray-600">142 avis • 4.3 étoiles</p>
-                  </div>
 
-                  <div className="bg-white p-3 rounded-lg border">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-green-100 rounded flex items-center justify-center">
+                    <div className="bg-white p-2 rounded-lg border text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <div className="w-5 h-5 bg-green-100 rounded flex items-center justify-center">
                           <span className="text-green-600 font-bold text-xs">T</span>
                         </div>
-                        <span className="font-medium text-sm">TripAdvisor</span>
+                        <span className="font-medium text-xs">TripAdvisor</span>
                       </div>
-                      <Badge className="bg-green-100 text-green-700 text-xs">Connecté</Badge>
+                      <p className="text-xs text-gray-600">98 avis</p>
+                      <Badge className="bg-green-100 text-green-700 text-xs mt-1">Connecté</Badge>
                     </div>
-                    <p className="text-sm text-gray-600">98 avis • 4.1 étoiles</p>
-                  </div>
 
-                  <div className="bg-white p-3 rounded-lg border">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
+                    <div className="bg-white p-2 rounded-lg border text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <div className="w-5 h-5 bg-red-100 rounded flex items-center justify-center">
                           <span className="text-red-600 font-bold text-xs">Y</span>
                         </div>
-                        <span className="font-medium text-sm">Yelp</span>
+                        <span className="font-medium text-xs">Yelp</span>
                       </div>
-                      <Badge className="bg-green-100 text-green-700 text-xs">Connecté</Badge>
+                      <p className="text-xs text-gray-600">86 avis</p>
+                      <Badge className="bg-green-100 text-green-700 text-xs mt-1">Connecté</Badge>
                     </div>
-                    <p className="text-sm text-gray-600">86 avis • 4.0 étoiles</p>
                   </div>
                 </div>
               )}
