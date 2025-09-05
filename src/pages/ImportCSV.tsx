@@ -69,7 +69,7 @@ Pierre Durand,3,"Service correct dans l'ensemble",2024-01-13,Yelp`;
             </div>
             
             <div className="flex items-center gap-6">
-              <Link to="/" className="text-gray-600 hover:text-blue-600 flex items-center gap-1">
+              <Link to="/tableau-de-bord" className="text-gray-600 hover:text-blue-600 flex items-center gap-1">
                 <Home className="w-4 h-4" />
                 Accueil
               </Link>
