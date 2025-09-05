@@ -45,7 +45,7 @@ export const HeroSection = () => {
             />
           </div>
           
-          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-12">
+          <Card className="bg-transparent border-0 shadow-none rounded-3xl overflow-hidden max-w-3xl mx-auto mb-12">
             <CardContent className="p-8 text-center space-y-6">
               <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
                 ⚡ Prêt à révolutionner votre établissement ?
