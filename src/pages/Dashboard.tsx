@@ -220,7 +220,7 @@ const Dashboard = () => {
           <Card className="mb-8">
             <CardHeader>
               <CardTitle className="text-xl">Plateformes connectées</CardTitle>
-              <p className="text-sm text-gray-600">Détail des avis par plateforme</p>
+              <p className="text-sm text-gray-600">Gérer vos présences sur les différentes plateformes</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
