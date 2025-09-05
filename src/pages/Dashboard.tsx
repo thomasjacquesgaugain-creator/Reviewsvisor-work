@@ -89,16 +89,6 @@ const Dashboard = () => {
                   <div className="text-sm text-gray-500">2h avis</div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm">
-                  <Eye className="w-4 h-4" />
-                  Voir
-                </Button>
-                <Button variant="ghost" size="sm">
-                  <Trash2 className="w-4 h-4" />
-                  Supprimer
-                </Button>
-              </div>
             </div>
           </CardContent>
         </Card>
