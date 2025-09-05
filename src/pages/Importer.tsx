@@ -564,6 +564,16 @@ const Importer = () => {
           {/* Form avec bouton géolocalisation */}
           <Card className="mb-8">
             <CardContent className="p-8">
+              {/* Titre de la section */}
+              <div className="mb-8 text-center">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Récupération automatique d'avis
+                </h2>
+                <p className="text-gray-600">
+                  Sélectionnez votre ville et établissement pour récupérer automatiquement les avis
+                </p>
+              </div>
+
               <div className="grid md:grid-cols-3 gap-6 mb-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
