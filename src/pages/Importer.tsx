@@ -288,25 +288,20 @@ const Importer = () => {
     }
   }, [ville, villeSelectionnee]);
 
-  // Recherche automatique d'établissements quand ville ET établissement sont renseignés
+  // Recherche automatique d'établissements en fonction de ce qui est tapé (ville + établissement)
   useEffect(() => {
-    if (villeSelectionnee && etablissement.length >= 2) {
+    if (etablissement.length >= 2) {
+      const cityContext = villeSelectionnee || (ville.length >= 2 ? ville : "");
+      const q = cityContext ? `${etablissement} ${cityContext}` : etablissement;
       const timeoutId = setTimeout(() => {
-        // Recherche combinée ville + établissement
-        rechercherEtablissements(`${etablissement} ${villeSelectionnee}`);
-      }, 500);
+        rechercherEtablissements(q);
+      }, 300);
       return () => clearTimeout(timeoutId);
-    } else if (etablissement.length >= 3 && !villeSelectionnee) {
-      // Recherche seulement par nom d'établissement
-      const timeoutId = setTimeout(() => {
-        rechercherEtablissements(etablissement);
-      }, 500);
-      return () => clearTimeout(timeoutId);
-    } else if (etablissement.length < 2) {
+    } else {
       setEtablissements([]);
       setEtablissementSelectionne("");
     }
-  }, [etablissement, villeSelectionnee]);
+  }, [etablissement, ville, villeSelectionnee]);
 
   const selectionnerVille = (nomVille: string) => {
     setVille(nomVille);
@@ -558,9 +553,9 @@ const Importer = () => {
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
                       </div>
                     )}
-                    {villeSelectionnee && etablissement.length >= 2 && (
+                    {(villeSelectionnee || ville.length >= 2) && etablissement.length >= 2 && (
                       <div className="absolute right-10 top-1/2 transform -translate-y-1/2 text-xs text-green-600">
-                        Recherche dans {villeSelectionnee}
+                        Recherche dans {villeSelectionnee || ville}
                       </div>
                     )}
                   </div>
