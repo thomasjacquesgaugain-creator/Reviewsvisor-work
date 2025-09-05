@@ -23,8 +23,11 @@ const Importer = () => {
   const [etablissement, setEtablissement] = useState("");
   const [periode, setPeriode] = useState("1-mois");
   const [etablissements, setEtablissements] = useState<string[]>([]);
+  const [villes, setVilles] = useState<string[]>([]);
   const [rechercheEnCours, setRechercheEnCours] = useState(false);
+  const [rechercheVillesEnCours, setRechercheVillesEnCours] = useState(false);
   const [etablissementSelectionne, setEtablissementSelectionne] = useState("");
+  const [villeSelectionnee, setVilleSelectionnee] = useState("");
   const [positionUtilisateur, setPositionUtilisateur] = useState<{lat: number, lng: number} | null>(null);
   const [geolocalisationEnCours, setGeolocalisationEnCours] = useState(false);
 
@@ -141,6 +144,53 @@ const Importer = () => {
     }
   };
 
+  // Recherche de villes via Nominatim
+  const rechercherVilles = async (nomVille: string) => {
+    const query = nomVille.trim();
+    if (!query) {
+      setVilles([]);
+      return;
+    }
+
+    try {
+      setRechercheVillesEnCours(true);
+      
+      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(query)}&extratags=1&namedetails=1&featuretype=city,town,village,municipality`;
+      const res = await fetch(url, {
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: any[] = await res.json();
+
+      // Filtrer pour ne garder que les villes, villages, communes
+      const villesTypes = new Set(["city", "town", "village", "municipality", "administrative"]);
+      const results = data.filter((item: any) => 
+        villesTypes.has(item.type) || 
+        (item.class === "place" && ["city", "town", "village", "municipality"].includes(item.type)) ||
+        (item.class === "boundary" && item.type === "administrative")
+      );
+
+      const nomsVilles: string[] = results
+        .map((item: any) => {
+          const name = item.name || (item.display_name?.split(",")[0] ?? "").trim();
+          const country = item.address?.country || "";
+          const state = item.address?.state || "";
+          return name ? `${name}${state && country !== "France" ? `, ${state}` : ""}${country && country !== "France" ? `, ${country}` : ""}` : null;
+        })
+        .filter(Boolean) as string[];
+
+      // Enlever les doublons
+      const villesUniques = [...new Set(nomsVilles)];
+      setVilles(villesUniques);
+      
+    } catch (e) {
+      console.error("Erreur recherche villes:", e);
+      setVilles([]);
+    } finally {
+      setRechercheVillesEnCours(false);
+    }
+  };
+
   // Recherche d'établissements via Nominatim (OpenStreetMap) ou Google Places
   const rechercherEtablissements = async (requete: string) => {
     const query = requete.trim();
@@ -205,8 +255,20 @@ const Importer = () => {
     }
   };
 
+  // Recherche automatique de villes quand l'utilisateur tape
   useEffect(() => {
-    if (ville.length >= 3) {
+    if (ville.length >= 2 && !villeSelectionnee) {
+      const timeoutId = setTimeout(() => {
+        rechercherVilles(ville);
+      }, 300);
+      return () => clearTimeout(timeoutId);
+    } else if (ville.length < 2) {
+      setVilles([]);
+    }
+  }, [ville, villeSelectionnee]);
+
+  useEffect(() => {
+    if (ville.length >= 3 && villeSelectionnee) {
       const timeoutId = setTimeout(() => {
         const q = etablissement.length >= 1 ? `${etablissement} ${ville}` : `restaurant ${ville}`;
         rechercherEtablissements(q);
@@ -218,7 +280,7 @@ const Importer = () => {
       }
       setEtablissementSelectionne("");
     }
-  }, [ville]);
+  }, [ville, villeSelectionnee]);
 
   useEffect(() => {
     if (etablissement.length >= 3) {
@@ -234,6 +296,17 @@ const Importer = () => {
       setEtablissementSelectionne("");
     }
   }, [etablissement]);
+
+  const selectionnerVille = (nomVille: string) => {
+    setVille(nomVille);
+    setVilleSelectionnee(nomVille);
+    setVilles([]);
+    toast({
+      title: "Ville sélectionnée",
+      description: nomVille,
+      duration: 2000,
+    });
+  };
 
   const selectionnerEtablissement = (etablissementNom: string) => {
     setEtablissement(etablissementNom);
@@ -372,12 +445,56 @@ const Importer = () => {
                   <label className="text-sm font-medium text-gray-700">
                     Ville <span className="text-red-500">*</span>
                   </label>
-                  <Input
-                    placeholder="Ex: Paris, Lyon, Marseille..."
-                    value={ville}
-                    onChange={(e) => setVille(e.target.value)}
-                    className="w-full"
-                  />
+                  <div className="relative">
+                    <Input
+                      placeholder="Tapez le nom de votre ville..."
+                      value={ville}
+                      onChange={(e) => {
+                        setVille(e.target.value);
+                        setVilleSelectionnee("");
+                      }}
+                      className="w-full"
+                      disabled={rechercheVillesEnCours}
+                    />
+                    {rechercheVillesEnCours && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Liste des villes trouvées */}
+                  {villes.length > 0 && !villeSelectionnee && (
+                    <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md bg-white shadow-lg z-50 relative">
+                      <div className="p-2 bg-gray-50 border-b text-xs font-medium text-gray-600">
+                        {villes.length} villes trouvées
+                      </div>
+                      {villes.map((ville, index) => (
+                        <button
+                          key={index}
+                          className="w-full text-left px-3 py-2 hover:bg-blue-50 hover:text-blue-600 text-sm border-b border-gray-100 last:border-b-0"
+                          onClick={() => selectionnerVille(ville)}
+                        >
+                          {ville}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {villeSelectionnee && (
+                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
+                      <span className="text-sm text-green-700">✓ {villeSelectionnee}</span>
+                      <button
+                        onClick={() => {
+                          setVilleSelectionnee("");
+                          setVille("");
+                        }}
+                        className="text-green-600 hover:text-green-800 text-xs underline"
+                      >
+                        Changer
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
