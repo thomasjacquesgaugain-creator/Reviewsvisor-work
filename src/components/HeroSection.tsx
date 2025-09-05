@@ -130,7 +130,7 @@ export const HeroSection = () => {
                 <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
                   <span className="text-xl">💡</span>
                 </div>
-                <h2 className="text-2xl font-bold">Pourquoi ReviewRadar fonctionne ?</h2>
+                <h2 className="text-2xl font-bold">Pourquoi analytique fonctionne ?</h2>
               </div>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
