@@ -13,9 +13,7 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <HeroSection />
-      {!analysisData ? (
-        <RestaurantInput onAnalyze={handleAnalyze} />
-      ) : (
+      {analysisData && (
         <AnalyticsDashboard restaurantData={analysisData} />
       )}
     </div>
