@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   BarChart3, 
   Clock, 
@@ -22,6 +23,7 @@ import { useState } from "react";
 
 const Dashboard = () => {
   const [showAvis, setShowAvis] = useState(false);
+  const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
 
   const avisExemples = [
     { id: 1, auteur: "Marie L.", note: 5, commentaire: "Excellent service, très satisfait !", date: "30/07/2025" },
@@ -84,10 +86,22 @@ const Dashboard = () => {
         {/* Historique des analyses */}
         <Card className="mb-8">
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-gray-500" />
-              <CardTitle className="text-lg">Historique des analyses</CardTitle>
-              <span className="text-sm text-gray-500">Les analyses précédentes et terminées. Les résultats</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-gray-500" />
+                <CardTitle className="text-lg">Historique des analyses</CardTitle>
+                <span className="text-sm text-gray-500">Les analyses précédentes et terminées. Les résultats</span>
+              </div>
+              <Select value={periodeAnalyse} onValueChange={setPeriodeAnalyse}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="jour">Jour</SelectItem>
+                  <SelectItem value="semaine">Semaine</SelectItem>
+                  <SelectItem value="mois">Mois</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardHeader>
           <CardContent>
