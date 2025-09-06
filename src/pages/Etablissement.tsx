@@ -101,12 +101,21 @@ const Etablissement = () => {
           ]);
           
           const suggestionsAvecVille = dataAvecVille
-            .filter((item: any) => 
-              (item.class === "amenity" && etablissementTypes.has(item.type)) ||
-              (item.class === "shop" && ["bakery", "pastry", "confectionery"].includes(item.type)) ||
-              (item.class === "craft" && item.type === "caterer") ||
-              item.name // Inclure tout lieu avec un nom même si le type n'est pas reconnu
-            )
+            .filter((item: any) => {
+              // Filtrage plus inclusif pour les établissements
+              const isEstablishment = (
+                // Types d'établissements alimentaires
+                (item.class === "amenity" && ["restaurant", "cafe", "bar", "fast_food", "food_court", "pub", "biergarten", "ice_cream", "nightclub", "bakery", "pastry"].includes(item.type)) ||
+                // Magasins alimentaires
+                (item.class === "shop" && ["bakery", "pastry", "confectionery", "alcohol", "convenience", "supermarket"].includes(item.type)) ||
+                // Artisans traiteurs
+                (item.class === "craft" && item.type === "caterer") ||
+                // Tout lieu avec un nom qui contient une partie du terme recherché
+                (item.name && item.name.toLowerCase().includes(nom.toLowerCase().substring(0, 3)))
+              );
+              console.log(`Item ${item.name}: class=${item.class}, type=${item.type}, isEstablishment=${isEstablishment}`);
+              return isEstablishment;
+            })
             .map((item: any) => ({
               id: item.place_id,
               nom: item.name || item.display_name?.split(",")[0] || "Établissement",
@@ -146,12 +155,21 @@ const Etablissement = () => {
           ]);
           
           const suggestionsSansVille = dataSansVille
-            .filter((item: any) => 
-              (item.class === "amenity" && etablissementTypes.has(item.type)) ||
-              (item.class === "shop" && ["bakery", "pastry", "confectionery"].includes(item.type)) ||
-              (item.class === "craft" && item.type === "caterer") ||
-              (item.name && item.name.toLowerCase().includes(nom.toLowerCase())) // Recherche flexible par nom
-            )
+            .filter((item: any) => {
+              // Filtrage plus inclusif pour les établissements
+              const isEstablishment = (
+                // Types d'établissements alimentaires
+                (item.class === "amenity" && ["restaurant", "cafe", "bar", "fast_food", "food_court", "pub", "biergarten", "ice_cream", "nightclub", "bakery", "pastry"].includes(item.type)) ||
+                // Magasins alimentaires
+                (item.class === "shop" && ["bakery", "pastry", "confectionery", "alcohol", "convenience", "supermarket"].includes(item.type)) ||
+                // Artisans traiteurs
+                (item.class === "craft" && item.type === "caterer") ||
+                // Tout lieu avec un nom qui contient une partie du terme recherché
+                (item.name && item.name.toLowerCase().includes(nom.toLowerCase().substring(0, 3)))
+              );
+              console.log(`Item sans ville ${item.name}: class=${item.class}, type=${item.type}, isEstablishment=${isEstablishment}`);
+              return isEstablishment;
+            })
             .map((item: any) => ({
               id: item.place_id,
               nom: item.name || item.display_name?.split(",")[0] || "Établissement",
