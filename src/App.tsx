@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import TableauDeBord from "./pages/TableauDeBord";
 import Dashboard from "./pages/Dashboard";
 import Importer from "./pages/Importer";
+import Etablissement from "./pages/Etablissement";
 
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/tableau-de-bord" element={<TableauDeBord />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/importer" element={<Importer />} />
+          <Route path="/etablissement" element={<Etablissement />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
