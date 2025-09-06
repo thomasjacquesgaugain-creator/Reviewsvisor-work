@@ -23,7 +23,8 @@ const Etablissement = () => {
               <Link to="/importer" className="text-gray-700 hover:text-blue-600">
                 Importer
               </Link>
-              <Link to="/etablissement" className="text-blue-600 font-medium">
+              <Link to="/etablissement" className="text-blue-600 font-medium flex items-center gap-2">
+                <Building className="w-4 h-4" />
                 Établissement
               </Link>
             </div>

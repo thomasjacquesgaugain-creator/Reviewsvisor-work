@@ -11,7 +11,8 @@ import {
   BarChart3,
   LogOut,
   MapPin,
-  Locate
+  Locate,
+  Building
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -1046,6 +1047,10 @@ const Importer = () => {
               <Link to="/dashboard" className="text-gray-600 hover:text-blue-600 flex items-center gap-1">
                 <BarChart3 className="w-4 h-4" />
                 Dashboard
+              </Link>
+              <Link to="/etablissement" className="text-gray-600 hover:text-blue-600 flex items-center gap-1">
+                <Building className="w-4 h-4" />
+                Établissement
               </Link>
               <div className="flex items-center gap-2 text-gray-700">
                 <span>Bonjour, Yohan Lopes</span>

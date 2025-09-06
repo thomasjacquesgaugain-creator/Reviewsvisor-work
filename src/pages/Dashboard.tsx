@@ -77,6 +77,10 @@ const Dashboard = () => {
                   <BarChart3 className="w-4 h-4" />
                   Importer
                 </Link>
+                <Link to="/etablissement" className="text-gray-600 hover:text-blue-600 flex items-center gap-2">
+                  <Building2 className="w-4 h-4" />
+                  Établissement
+                </Link>
                 <Button variant="ghost" className="text-blue-600 font-medium flex items-center gap-2">
                   Dashboard
                 </Button>
