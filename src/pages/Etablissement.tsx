@@ -316,16 +316,7 @@ const Etablissement = () => {
                 </div>
 
                 <div className="flex gap-4">
-                  <Button 
-                    onClick={obtenirGeolocalisation}
-                    disabled={geolocalisationEnCours}
-                    className="flex items-center gap-2"
-                  >
-                    <Locate className="w-4 h-4" />
-                    {geolocalisationEnCours ? 'Localisation...' : 'Utiliser ma position'}
-                  </Button>
-                  
-                  <Button className="flex-1">
+                  <Button className="w-full">
                     Analyser les avis
                   </Button>
                 </div>
