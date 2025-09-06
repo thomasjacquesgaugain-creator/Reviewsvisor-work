@@ -77,60 +77,65 @@ const Etablissement = () => {
       
       let suggestions: any[] = [];
       
-      // Stratégie 1: Recherche combinée nom + ville si ville fournie
-      if (villeContext && villeContext.length > 2) {
-        const queryAvecVille = `${nom} ${villeContext}`;
-        console.log("Recherche avec ville:", queryAvecVille);
+      // Stratégie 1: Recherche précise avec ville si fournie
+      if (villeContext && villeContext.length > 1) {
+        const queries = [
+          `${nom} ${villeContext}`,
+          `${nom}, ${villeContext}`,
+          `"${nom}" ${villeContext}`,
+          `${nom} near ${villeContext}`
+        ];
         
-        const urlAvecVille = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=15&q=${encodeURIComponent(queryAvecVille)}&extratags=1`;
-        
-        const responseAvecVille = await fetch(urlAvecVille, {
-          headers: { 
-            Accept: "application/json",
-            "User-Agent": "AnalytiqueApp/1.0"
-          },
-        });
-        
-        if (responseAvecVille.ok) {
-          const dataAvecVille = await responseAvecVille.json();
-          console.log("Réponse avec ville:", dataAvecVille);
+        for (const query of queries) {
+          console.log("Recherche avec requête:", query);
           
-          // Filtrer les établissements (restaurants, cafés, etc.)
-          const etablissementTypes = new Set([
-            "restaurant", "cafe", "bar", "fast_food", "food_court", "pub", 
-            "biergarten", "ice_cream", "nightclub", "bakery", "pastry", "caterer"
-          ]);
+          const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=15&q=${encodeURIComponent(query)}&extratags=1&countrycodes=fr`;
           
-          const suggestionsAvecVille = dataAvecVille
-            .filter((item: any) => {
-              // Filtrage plus inclusif pour les établissements
-              const isEstablishment = (
-                // Types d'établissements alimentaires
-                (item.class === "amenity" && ["restaurant", "cafe", "bar", "fast_food", "food_court", "pub", "biergarten", "ice_cream", "nightclub", "bakery", "pastry"].includes(item.type)) ||
-                // Magasins alimentaires
-                (item.class === "shop" && ["bakery", "pastry", "confectionery", "alcohol", "convenience", "supermarket"].includes(item.type)) ||
-                // Artisans traiteurs
-                (item.class === "craft" && item.type === "caterer") ||
-                // Tout lieu avec un nom qui contient une partie du terme recherché
-                (item.name && item.name.toLowerCase().includes(nom.toLowerCase().substring(0, 3)))
-              );
-              console.log(`Item ${item.name}: class=${item.class}, type=${item.type}, isEstablishment=${isEstablishment}`);
-              return isEstablishment;
-            })
-            .map((item: any) => ({
-              id: item.place_id,
-              nom: item.name || item.display_name?.split(",")[0] || "Établissement",
-              adresse: item.display_name,
-              type: item.type || "establishment",
-              lat: parseFloat(item.lat),
-              lon: parseFloat(item.lon),
-              ville: item.address?.city || item.address?.town || item.address?.village || villeContext,
-              priorite: 1 // Haute priorité pour recherche avec ville
-            }));
+          const response = await fetch(url, {
+            headers: { 
+              Accept: "application/json",
+              "User-Agent": "AnalytiqueApp/1.0"
+            },
+          });
           
-          suggestions = [...suggestions, ...suggestionsAvecVille];
-          console.log(`Trouvé ${suggestionsAvecVille.length} établissements avec ville`);
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`Réponse pour "${query}":`, data);
+            
+            // Traiter tous les résultats, pas seulement les types prédéfinis
+            const nouveauxResultats = data
+              .filter((item: any) => {
+                // Plus inclusif - tout ce qui a un nom et une adresse dans la bonne ville
+                const nomMatch = item.name && item.name.toLowerCase().includes(nom.toLowerCase());
+                const villeMatch = item.display_name && item.display_name.toLowerCase().includes(villeContext.toLowerCase());
+                const isRelevant = nomMatch || (item.name && villeMatch);
+                
+                console.log(`Item "${item.name}": nomMatch=${nomMatch}, villeMatch=${villeMatch}, isRelevant=${isRelevant}`);
+                return isRelevant;
+              })
+              .map((item: any) => {
+                const nomMatchExact = item.name.toLowerCase().includes(nom.toLowerCase());
+                return {
+                  id: item.place_id,
+                  nom: item.name || item.display_name?.split(",")[0] || "Établissement",
+                  adresse: item.display_name,
+                  type: item.type || "establishment",
+                  lat: parseFloat(item.lat),
+                  lon: parseFloat(item.lon),
+                  ville: item.address?.city || item.address?.town || item.address?.village || villeContext,
+                  priorite: nomMatchExact ? 1 : 2,
+                  class: item.class
+                };
+              });
+            
+            suggestions = [...suggestions, ...nouveauxResultats];
+            console.log(`Ajouté ${nouveauxResultats.length} résultats pour "${query}"`);
+            
+            // Si on a trouvé des résultats pertinents, on peut arrêter
+            if (nouveauxResultats.length > 0) break;
+          }
         }
+        
       }
       
       // Stratégie 2: Recherche par nom seul
