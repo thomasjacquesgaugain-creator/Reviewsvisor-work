@@ -54,8 +54,7 @@ const Etablissement = () => {
           <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
+                <CardTitle>
                   Informations générales
                 </CardTitle>
               </CardHeader>
