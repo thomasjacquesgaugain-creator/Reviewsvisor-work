@@ -48,7 +48,6 @@ const Etablissement = () => {
     telephone: '',
     email: '',
     description: '',
-    horaires: '',
     type: 'Restaurant'
   });
 
@@ -396,16 +395,6 @@ const Etablissement = () => {
                   />
                 </div>
 
-                <div className="space-y-2 mb-6">
-                  <label className="text-sm font-medium text-gray-700">
-                    Horaires d'ouverture
-                  </label>
-                  <Input
-                    placeholder="Ex: Lun-Dim 12h-14h, 19h-22h"
-                    value={etablissementManuel.horaires}
-                    onChange={(e) => gererChangementEtablissement('horaires', e.target.value)}
-                  />
-                </div>
 
                 <Button 
                   onClick={enregistrerEtablissement}
