@@ -62,9 +62,18 @@ const Etablissement = () => {
     }));
   };
 
-  // Recherche automatique d'établissements
+  // Google Places API Key - À remplacer par votre clé API
+  const GOOGLE_API_KEY = "YOUR_GOOGLE_PLACES_API_KEY";
+
+  // Recherche automatique d'établissements avec Google Places API
   const rechercherEtablissementsAutomatique = async (nom: string, villeContext: string = "") => {
     if (!nom || nom.length < 2) {
+      setSuggestionsEtablissements([]);
+      return;
+    }
+
+    if (!GOOGLE_API_KEY || GOOGLE_API_KEY === "YOUR_GOOGLE_PLACES_API_KEY") {
+      console.warn("Clé API Google Places manquante");
       setSuggestionsEtablissements([]);
       return;
     }
@@ -72,106 +81,130 @@ const Etablissement = () => {
     try {
       setRechercheEtablissementsEnCours(true);
       
-      let suggestions: any[] = [];
+      const query = villeContext ? `${nom} ${villeContext}` : nom;
       
-      // Stratégie 1: Recherche combinée nom + ville si ville fournie
-      if (villeContext && villeContext.length > 2) {
-        const queryAvecVille = `${nom} ${villeContext}`;
-        console.log("Recherche avec ville:", queryAvecVille);
-        
-        const urlAvecVille = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=15&q=${encodeURIComponent(queryAvecVille)}&extratags=1`;
-        
-        const responseAvecVille = await fetch(urlAvecVille, {
-          headers: { Accept: "application/json" },
-        });
-        
-        if (responseAvecVille.ok) {
-          const dataAvecVille = await responseAvecVille.json();
-          
-          // Filtrer les établissements (restaurants, cafés, etc.)
-          const etablissementTypes = new Set([
-            "restaurant", "cafe", "bar", "fast_food", "food_court", "pub", 
-            "biergarten", "ice_cream", "nightclub", "bakery", "pastry", "caterer"
-          ]);
-          
-          const suggestionsAvecVille = dataAvecVille
-            .filter((item: any) => 
-              (item.class === "amenity" && etablissementTypes.has(item.type)) ||
-              (item.class === "shop" && ["bakery", "pastry", "confectionery"].includes(item.type)) ||
-              (item.class === "craft" && item.type === "caterer")
-            )
-            .map((item: any) => ({
-              id: item.place_id,
-              nom: item.name || item.display_name?.split(",")[0] || "Établissement",
-              adresse: item.display_name,
-              type: item.type,
-              lat: parseFloat(item.lat),
-              lon: parseFloat(item.lon),
-              ville: item.address?.city || item.address?.town || item.address?.village || villeContext,
-              priorite: 1 // Haute priorité pour recherche avec ville
-            }));
-          
-          suggestions = [...suggestions, ...suggestionsAvecVille];
-          console.log(`Trouvé ${suggestionsAvecVille.length} établissements avec ville`);
-        }
+      // Appel à l'API Google Places Autocomplete
+      const autocompleteUrl = new URL("https://maps.googleapis.com/maps/api/place/autocomplete/json");
+      autocompleteUrl.searchParams.set("input", query);
+      autocompleteUrl.searchParams.set("types", "establishment");
+      autocompleteUrl.searchParams.set("language", "fr");
+      autocompleteUrl.searchParams.set("components", "country:fr");
+      autocompleteUrl.searchParams.set("key", GOOGLE_API_KEY);
+
+      const response = await fetch(autocompleteUrl.toString());
+      
+      if (!response.ok) {
+        throw new Error("Erreur API Google Places");
       }
-      
-      // Stratégie 2: Recherche par nom seul (priorité plus faible)
-      if (suggestions.length < 5) {
-        console.log("Recherche complémentaire par nom:", nom);
-        
-        const urlSansVille = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(nom)}&extratags=1`;
-        
-        const responseSansVille = await fetch(urlSansVille, {
-          headers: { Accept: "application/json" },
-        });
-        
-        if (responseSansVille.ok) {
-          const dataSansVille = await responseSansVille.json();
-          
-          const etablissementTypes = new Set([
-            "restaurant", "cafe", "bar", "fast_food", "food_court", "pub", 
-            "biergarden", "ice_cream", "nightclub", "bakery", "pastry", "caterer"
-          ]);
-          
-          const suggestionsSansVille = dataSansVille
-            .filter((item: any) => 
-              (item.class === "amenity" && etablissementTypes.has(item.type)) ||
-              (item.class === "shop" && ["bakery", "pastry", "confectionery"].includes(item.type)) ||
-              (item.class === "craft" && item.type === "caterer")
-            )
-            .map((item: any) => ({
-              id: item.place_id,
-              nom: item.name || item.display_name?.split(",")[0] || "Établissement",
-              adresse: item.display_name,
-              type: item.type,
-              lat: parseFloat(item.lat),
-              lon: parseFloat(item.lon),
-              ville: item.address?.city || item.address?.town || item.address?.village || "",
-              priorite: 2 // Priorité plus faible
-            }));
-          
-          suggestions = [...suggestions, ...suggestionsSansVille];
-          console.log(`Trouvé ${suggestionsSansVille.length} établissements sans ville`);
-        }
-      }
-      
-      // Trier par priorité puis supprimer les doublons
-      const suggestionsUniques = suggestions
-        .sort((a, b) => a.priorite - b.priorite)
-        .filter((suggestion, index, self) => 
-          index === self.findIndex(s => s.id === suggestion.id)
-        )
-        .slice(0, 8); // Limiter à 8 suggestions
-      
-      setSuggestionsEtablissements(suggestionsUniques);
-      console.log(`Total final: ${suggestionsUniques.length} suggestions`);
+
+      const data = await response.json();
+      const predictions = data.predictions || [];
+
+      // Obtenir les détails pour chaque prédiction
+      const suggestionsAvecDetails = await Promise.all(
+        predictions.slice(0, 8).map(async (prediction: any) => {
+          try {
+            const detailsUrl = new URL("https://maps.googleapis.com/maps/api/place/details/json");
+            detailsUrl.searchParams.set("place_id", prediction.place_id);
+            detailsUrl.searchParams.set("fields", "place_id,name,formatted_address,address_component,geometry,types");
+            detailsUrl.searchParams.set("language", "fr");
+            detailsUrl.searchParams.set("key", GOOGLE_API_KEY);
+
+            const detailsResponse = await fetch(detailsUrl.toString());
+            if (!detailsResponse.ok) return null;
+
+            const detailsData = await detailsResponse.json();
+            const place = detailsData.result;
+
+            if (!place) return null;
+
+            // Parser les composants d'adresse
+            const addressComponents = place.address_components || [];
+            const getComponent = (type: string) => 
+              addressComponents.find((comp: any) => comp.types.includes(type))?.long_name || "";
+
+            return {
+              id: prediction.place_id,
+              nom: place.name || prediction.description,
+              adresse: place.formatted_address || prediction.description,
+              type: place.types[0] || "establishment",
+              lat: place.geometry?.location?.lat || 0,
+              lon: place.geometry?.location?.lng || 0,
+              ville: getComponent("locality") || getComponent("postal_town") || "",
+              details: {
+                numero: getComponent("street_number"),
+                voie: getComponent("route"),
+                ville: getComponent("locality") || getComponent("postal_town"),
+                codePostal: getComponent("postal_code"),
+                departement: getComponent("administrative_area_level_2"),
+                region: getComponent("administrative_area_level_1"),
+                pays: getComponent("country")
+              }
+            };
+          } catch (error) {
+            console.error("Erreur détails lieu:", error);
+            return null;
+          }
+        })
+      );
+
+      // Filtrer les résultats null et mettre à jour les suggestions
+      const suggestionsValides = suggestionsAvecDetails.filter(Boolean);
+      setSuggestionsEtablissements(suggestionsValides);
+      console.log(`Trouvé ${suggestionsValides.length} établissements via Google Places`);
       
     } catch (error) {
-      console.error("Erreur recherche établissements:", error);
+      console.error("Erreur recherche Google Places:", error);
       setSuggestionsEtablissements([]);
+      
+      // Fallback vers OpenStreetMap si Google API échoue
+      console.log("Fallback vers OpenStreetMap...");
+      await rechercherEtablissementsOpenStreetMap(nom, villeContext);
     } finally {
       setRechercheEtablissementsEnCours(false);
+    }
+  };
+
+  // Méthode de fallback OpenStreetMap
+  const rechercherEtablissementsOpenStreetMap = async (nom: string, villeContext: string = "") => {
+    try {
+      const query = villeContext ? `${nom} ${villeContext}` : nom;
+      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=8&q=${encodeURIComponent(query)}&extratags=1`;
+      
+      const response = await fetch(url, {
+        headers: { Accept: "application/json" },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        const etablissementTypes = new Set([
+          "restaurant", "cafe", "bar", "fast_food", "food_court", "pub", 
+          "biergarten", "ice_cream", "nightclub", "bakery", "pastry", "caterer"
+        ]);
+        
+        const suggestions = data
+          .filter((item: any) => 
+            (item.class === "amenity" && etablissementTypes.has(item.type)) ||
+            (item.class === "shop" && ["bakery", "pastry", "confectionery"].includes(item.type)) ||
+            (item.class === "craft" && item.type === "caterer")
+          )
+          .map((item: any) => ({
+            id: item.place_id,
+            nom: item.name || item.display_name?.split(",")[0] || "Établissement",
+            adresse: item.display_name,
+            type: item.type,
+            lat: parseFloat(item.lat),
+            lon: parseFloat(item.lon),
+            ville: item.address?.city || item.address?.town || item.address?.village || "",
+          }));
+        
+        setSuggestionsEtablissements(suggestions);
+        console.log(`Fallback OSM: ${suggestions.length} suggestions`);
+      }
+    } catch (error) {
+      console.error("Erreur fallback OpenStreetMap:", error);
+      setSuggestionsEtablissements([]);
     }
   };
 
