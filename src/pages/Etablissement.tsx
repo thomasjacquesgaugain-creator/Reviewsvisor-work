@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, MapPin, Phone, Mail, Globe, Star, Users, FileText } from "lucide-react";
+import { Building, MapPin, Phone, Mail, Globe, Star, Users, FileText, Home, BarChart3, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
 const Etablissement = () => {
   return <div className="min-h-screen bg-gray-50">
@@ -14,13 +14,16 @@ const Etablissement = () => {
             </div>
             
             <div className="flex items-center gap-4">
-              <Link to="/tableau-de-bord" className="text-gray-700 hover:text-blue-600">
+              <Link to="/tableau-de-bord" className="text-gray-700 hover:text-blue-600 flex items-center gap-2">
+                <Home className="w-4 h-4" />
                 Accueil
               </Link>
-              <Link to="/dashboard" className="text-gray-700 hover:text-blue-600">
+              <Link to="/dashboard" className="text-gray-700 hover:text-blue-600 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
                 Dashboard
               </Link>
-              <Link to="/importer" className="text-gray-700 hover:text-blue-600">
+              <Link to="/importer" className="text-gray-700 hover:text-blue-600 flex items-center gap-2">
+                <Upload className="w-4 h-4" />
                 Importer
               </Link>
               <Link to="/etablissement" className="text-blue-600 font-medium flex items-center gap-2">
