@@ -273,6 +273,18 @@ const Etablissement = () => {
                 <div className="grid md:grid-cols-3 gap-6 mb-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
+                      Établissement <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      placeholder="Nom de votre établissement..."
+                      value={etablissement}
+                      onChange={(e) => setEtablissement(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
                       Ville <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
@@ -283,18 +295,6 @@ const Etablissement = () => {
                         className="w-full"
                       />
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Établissement <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      placeholder="Nom de votre établissement..."
-                      value={etablissement}
-                      onChange={(e) => setEtablissement(e.target.value)}
-                      className="w-full"
-                    />
                   </div>
 
                   <div className="space-y-2">
