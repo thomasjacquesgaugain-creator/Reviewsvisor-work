@@ -2,8 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building, MapPin, Phone, Mail, Globe, Star, Users, FileText, Home, BarChart3, Upload, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
+
 const Etablissement = () => {
-  return <div className="min-h-screen bg-gray-50">
+  return (
+    <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <nav className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
@@ -62,6 +64,35 @@ const Etablissement = () => {
           </div>
         </div>
 
+        {/* Mode selection buttons */}
+        <div className="bg-white border border-gray-200 rounded-lg mb-8">
+          <div className="px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 px-4 py-2 text-sm"
+              >
+                <FileText className="w-4 h-4" />
+                Informations générales
+              </Button>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 px-4 py-2 text-sm"
+              >
+                <MapPin className="w-4 h-4" />
+                Localisation
+              </Button>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 px-4 py-2 text-sm"
+              >
+                <Users className="w-4 h-4" />
+                Équipe
+              </Button>
+            </div>
+          </div>
+        </div>
+
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Informations principales */}
           <div className="lg:col-span-2 space-y-6">
@@ -85,7 +116,9 @@ const Etablissement = () => {
                 <div className="text-center">
                   <div className="text-3xl font-bold text-yellow-600 mb-2">4.2</div>
                   <div className="flex justify-center gap-1 mb-2">
-                    {[1, 2, 3, 4, 5].map(star => <Star key={star} className={`w-4 h-4 ${star <= 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />)}
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <Star key={star} className={`w-4 h-4 ${star <= 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+                    ))}
                   </div>
                   <p className="text-sm text-gray-600">Basé sur 247 avis</p>
                 </div>
@@ -124,6 +157,8 @@ const Etablissement = () => {
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Etablissement;
