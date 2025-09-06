@@ -261,7 +261,7 @@ const Etablissement = () => {
               </h2>
             </div>
             <p className="text-lg text-gray-600">
-              {modeActuel === 'saisie' && "Saisissez vos avis manuellement dans le système"}
+              {modeActuel === 'saisie' && "Saisissez manuellement votre établissement dans le système"}
               {modeActuel === 'recuperation' && "Récupérez automatiquement les avis Google, Tripadvisor et Yelp de votre établissement"}
             </p>
           </div>
