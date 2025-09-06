@@ -31,6 +31,7 @@ const Etablissement = () => {
   const [periode, setPeriode] = useState("1-mois");
   const [etablissements, setEtablissements] = useState<string[]>([]);
   const [suggestionsEtablissements, setSuggestionsEtablissements] = useState<any[]>([]);
+  const [suggestionsVilles, setSuggestionsVilles] = useState<any[]>([]);
   const [villes, setVilles] = useState<string[]>([]);
   const [rechercheEnCours, setRechercheEnCours] = useState(false);
   const [rechercheEtablissementsEnCours, setRechercheEtablissementsEnCours] = useState(false);
@@ -203,6 +204,83 @@ const Etablissement = () => {
     } finally {
       setRechercheEtablissementsEnCours(false);
     }
+  };
+
+  // Recherche automatique de villes
+  const rechercherVillesAutomatique = async (nomVille: string) => {
+    console.log("Début recherche villes pour:", nomVille);
+    
+    if (!nomVille || nomVille.length < 2) {
+      setSuggestionsVilles([]);
+      return;
+    }
+
+    try {
+      setRechercheVillesEnCours(true);
+      
+      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(nomVille)}&extratags=1&countrycodes=fr`;
+      
+      const response = await fetch(url, {
+        headers: { 
+          Accept: "application/json",
+          "User-Agent": "AnalytiqueApp/1.0"
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Réponse villes:", data);
+        
+        // Filtrer pour les villes, villages, communes
+        const villeTypes = new Set([
+          "city", "town", "village", "municipality", "administrative"
+        ]);
+        
+        const suggestions = data
+          .filter((item: any) => 
+            (item.class === "place" && villeTypes.has(item.type)) ||
+            (item.class === "boundary" && item.type === "administrative" && 
+             (item.address?.city || item.address?.town || item.address?.village))
+          )
+          .map((item: any) => ({
+            id: item.place_id,
+            nom: item.name || item.display_name?.split(",")[0] || "Ville",
+            adresse: item.display_name,
+            type: item.type,
+            lat: parseFloat(item.lat),
+            lon: parseFloat(item.lon),
+            codePostal: item.address?.postcode || "",
+            departement: item.address?.county || item.address?.state || "",
+            pays: item.address?.country || "France"
+          }))
+          .slice(0, 8); // Limiter à 8 suggestions
+        
+        console.log(`Trouvé ${suggestions.length} villes:`, suggestions);
+        setSuggestionsVilles(suggestions);
+        
+      } else {
+        console.error("Erreur response villes:", response.status);
+        setSuggestionsVilles([]);
+      }
+      
+    } catch (error) {
+      console.error("Erreur recherche villes:", error);
+      setSuggestionsVilles([]);
+    } finally {
+      setRechercheVillesEnCours(false);
+    }
+  };
+
+  // Sélectionner une ville depuis les suggestions
+  const selectionnerVille = (villeSuggere: any) => {
+    setVille(villeSuggere.nom);
+    setSuggestionsVilles([]);
+    
+    toast({
+      title: "Ville sélectionnée",
+      description: `${villeSuggere.nom} a été sélectionnée`,
+      duration: 2000,
+    });
   };
 
   // Sélectionner un établissement depuis les suggestions
@@ -452,9 +530,36 @@ const Etablissement = () => {
                       <Input
                         placeholder="Tapez le nom de votre ville..."
                         value={ville}
-                        onChange={(e) => setVille(e.target.value)}
+                        onChange={(e) => {
+                          setVille(e.target.value);
+                          rechercherVillesAutomatique(e.target.value);
+                        }}
                         className="w-full"
                       />
+                      {rechercheVillesEnCours && (
+                        <div className="absolute right-3 top-3">
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                        </div>
+                      )}
+                      
+                      {/* Suggestions dropdown villes */}
+                      {suggestionsVilles.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl max-h-60 overflow-y-auto">
+                          {suggestionsVilles.map((suggestion) => (
+                            <div
+                              key={suggestion.id}
+                              onClick={() => selectionnerVille(suggestion)}
+                              className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                            >
+                              <div className="font-medium text-gray-900">{suggestion.nom}</div>
+                              <div className="text-sm text-gray-500">{suggestion.departement}</div>
+                              {suggestion.codePostal && (
+                                <div className="text-xs text-blue-600">{suggestion.codePostal}</div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 
