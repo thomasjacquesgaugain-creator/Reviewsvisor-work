@@ -243,7 +243,7 @@ const Etablissement = () => {
     }
   };
 
-  // Recherche automatique d'établissements (pour l'autocomplétion)
+  // Recherche automatique d'établissements avec l'Edge Function
   const rechercherEtablissementsAutomatique = async (nom: string, villeContext: string = "") => {
     console.log("Début recherche pour:", nom, "ville:", villeContext);
     
@@ -252,57 +252,41 @@ const Etablissement = () => {
       return;
     }
 
-    // Utiliser OpenStreetMap pour l'autocomplétion (plus rapide)
+    if (!villeContext || villeContext.length < 2) {
+      setSuggestionsEtablissements([]);
+      return;
+    }
+
     try {
       setRechercheEtablissementsEnCours(true);
       
-      const queries = [
-        `${nom} ${villeContext}`,
-        `${nom}, ${villeContext}`
-      ];
+      // Utiliser l'Edge Function pour la recherche
+      const response = await fetch('/api/find-establishment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: nom, city: villeContext })
+      });
+
+      const data = await response.json();
       
-      let suggestions: any[] = [];
-      
-      for (const query of queries) {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(query)}&extratags=1&countrycodes=fr`;
+      if (response.ok) {
+        const suggestions = data.results.map((item: any) => ({
+          id: item.place_id || item.osm_id?.toString() || Math.random().toString(),
+          nom: item.name,
+          adresse: item.formatted_address,
+          type: "establishment",
+          lat: item.location?.lat || 0,
+          lon: item.location?.lng || item.location?.lon || 0,
+          ville: villeContext,
+          source: item.source
+        }));
         
-        const response = await fetch(url, {
-          headers: { 
-            Accept: "application/json",
-            "User-Agent": "AnalytiqueApp/1.0"
-          },
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          const nouveauxResultats = data
-            .filter((item: any) => {
-              if (!item.name) return false;
-              const nomMatch = item.name.toLowerCase().includes(nom.toLowerCase());
-              return nomMatch;
-            })
-            .map((item: any) => ({
-              id: item.place_id,
-              nom: item.name || item.display_name?.split(",")[0] || "Établissement",
-              adresse: item.display_name,
-              type: item.type || "establishment",
-              lat: parseFloat(item.lat),
-              lon: parseFloat(item.lon),
-              ville: item.address?.city || item.address?.town || item.address?.village || villeContext,
-            }));
-          
-          suggestions = [...suggestions, ...nouveauxResultats];
-          if (suggestions.length >= 5) break;
-        }
+        setSuggestionsEtablissements(suggestions.slice(0, 8));
+      } else {
+        setSuggestionsEtablissements([]);
       }
-      
-      const suggestionsUniques = suggestions
-        .filter((suggestion, index, self) => 
-          index === self.findIndex(s => s.id === suggestion.id)
-        )
-        .slice(0, 8);
-      
-      setSuggestionsEtablissements(suggestionsUniques);
       
     } catch (error) {
       console.error("Erreur recherche établissements:", error);
