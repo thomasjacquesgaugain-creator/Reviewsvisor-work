@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, MapPin, Clock, Phone, Mail, Globe, Star, Users } from "lucide-react";
+import { Building, MapPin, Phone, Mail, Globe, Star, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Etablissement = () => {
