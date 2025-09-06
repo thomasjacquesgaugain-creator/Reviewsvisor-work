@@ -2,20 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building, MapPin, Phone, Mail, Globe, Star, Users, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
-
 const Etablissement = () => {
-  return (
-    <div className="min-h-screen bg-gray-50">
+  return <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <nav className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <img 
-                src="/lovable-uploads/08f62503-65d7-4681-8ddf-00f4efb00ffa.png" 
-                alt="Analytique logo" 
-                className="w-8 h-8"
-              />
+              <img src="/lovable-uploads/08f62503-65d7-4681-8ddf-00f4efb00ffa.png" alt="Analytique logo" className="w-8 h-8" />
               <span className="text-xl font-bold text-gray-900">analytique</span>
             </div>
             
@@ -53,56 +47,8 @@ const Etablissement = () => {
           {/* Informations principales */}
           <div className="lg:col-span-2 space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle>
-                  Informations générales
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Nom de l'établissement</label>
-                    <p className="text-lg font-semibold text-gray-900">Restaurant Le Gourmet</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Type d'établissement</label>
-                    <p className="text-gray-900">Restaurant</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-gray-500 mt-1" />
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Adresse</label>
-                    <p className="text-gray-900">123 Rue de la Gastronomie, 56100 Lorient</p>
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-gray-500" />
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Téléphone</label>
-                      <p className="text-gray-900">02 97 12 34 56</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-gray-500" />
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Email</label>
-                      <p className="text-gray-900">contact@legourmet.fr</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-gray-500" />
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Site web</label>
-                    <p className="text-blue-600 hover:underline cursor-pointer">www.legourmet.fr</p>
-                  </div>
-                </div>
-              </CardContent>
+              
+              
             </Card>
 
           </div>
@@ -120,14 +66,7 @@ const Etablissement = () => {
                 <div className="text-center">
                   <div className="text-3xl font-bold text-yellow-600 mb-2">4.2</div>
                   <div className="flex justify-center gap-1 mb-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`w-4 h-4 ${
-                          star <= 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                        }`}
-                      />
-                    ))}
+                    {[1, 2, 3, 4, 5].map(star => <Star key={star} className={`w-4 h-4 ${star <= 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />)}
                   </div>
                   <p className="text-sm text-gray-600">Basé sur 247 avis</p>
                 </div>
@@ -166,8 +105,6 @@ const Etablissement = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Etablissement;
