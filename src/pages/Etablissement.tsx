@@ -1,9 +1,246 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, MapPin, Phone, Mail, Globe, Star, Users, FileText, Home, BarChart3, Upload, LogOut } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Building, 
+  MapPin, 
+  Phone, 
+  Mail, 
+  Globe, 
+  Star, 
+  Users, 
+  FileText, 
+  Home, 
+  BarChart3, 
+  Upload, 
+  LogOut,
+  Search,
+  Info,
+  Locate
+} from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 const Etablissement = () => {
+  const { toast } = useToast();
+  const [modeActuel, setModeActuel] = useState<'recuperation' | 'saisie' | 'import'>('recuperation');
+  const [ville, setVille] = useState("");
+  const [etablissement, setEtablissement] = useState("");
+  const [periode, setPeriode] = useState("1-mois");
+  const [etablissements, setEtablissements] = useState<string[]>([]);
+  const [villes, setVilles] = useState<string[]>([]);
+  const [rechercheEnCours, setRechercheEnCours] = useState(false);
+  const [rechercheVillesEnCours, setRechercheVillesEnCours] = useState(false);
+  const [etablissementSelectionne, setEtablissementSelectionne] = useState("");
+  const [villeSelectionnee, setVilleSelectionnee] = useState("");
+  const [villeBBox, setVilleBBox] = useState<{s:number;n:number;w:number;e:number;name:string} | null>(null);
+  const [bboxEnCours, setBboxEnCours] = useState(false);
+  const [positionUtilisateur, setPositionUtilisateur] = useState<{lat: number, lng: number} | null>(null);
+  const [geolocalisationEnCours, setGeolocalisationEnCours] = useState(false);
+  
+  // États pour l'import CSV
+  const [fichierCSV, setFichierCSV] = useState<File | null>(null);
+  const [donneesCSV, setDonneesCSV] = useState<any[]>([]);
+  const [importEnCours, setImportEnCours] = useState(false);
+  
+  // États pour la saisie manuelle
+  const [avisManuel, setAvisManuel] = useState({
+    nomClient: '',
+    note: '',
+    commentaire: '',
+    date: new Date().toISOString().split('T')[0],
+    source: 'Saisie manuelle'
+  });
+  const [avisListe, setAvisListe] = useState<any[]>([]);
+  const [saisieEnCours, setSaisieEnCours] = useState(false);
+
+  const gererSelectionFichier = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const fichier = event.target.files?.[0];
+    if (fichier) {
+      if (fichier.type !== 'text/csv' && !fichier.name.endsWith('.csv')) {
+        toast({
+          title: "Erreur",
+          description: "Veuillez sélectionner un fichier CSV",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+      setFichierCSV(fichier);
+      lireFichierCSV(fichier);
+    }
+  };
+
+  const lireFichierCSV = (fichier: File) => {
+    setImportEnCours(true);
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const contenu = e.target?.result as string;
+        const lignes = contenu.split('\n');
+        const headers = lignes[0].split(',').map(h => h.trim().replace(/"/g, ''));
+        
+        const donnees = lignes.slice(1)
+          .filter(ligne => ligne.trim())
+          .map((ligne, index) => {
+            const valeurs = ligne.split(',').map(v => v.trim().replace(/"/g, ''));
+            const objet: any = {};
+            headers.forEach((header, i) => {
+              objet[header] = valeurs[i] || '';
+            });
+            objet.id = index + 1;
+            return objet;
+          });
+
+        setDonneesCSV(donnees);
+        toast({
+          title: "Fichier importé",
+          description: `${donnees.length} avis importés avec succès`,
+          duration: 3000,
+        });
+      } catch (error) {
+        toast({
+          title: "Erreur d'import",
+          description: "Impossible de lire le fichier CSV",
+          variant: "destructive",
+          duration: 3000,
+        });
+      } finally {
+        setImportEnCours(false);
+      }
+    };
+
+    reader.onerror = () => {
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la lecture du fichier",
+        variant: "destructive",
+        duration: 3000,
+      });
+      setImportEnCours(false);
+    };
+
+    reader.readAsText(fichier);
+  };
+
+  const ouvrirSelecteurFichier = () => {
+    document.getElementById('fichier-csv-input')?.click();
+  };
+
+  const gererChangementAvis = (champ: string, valeur: string) => {
+    setAvisManuel(prev => ({
+      ...prev,
+      [champ]: valeur
+    }));
+  };
+
+  const ajouterAvis = () => {
+    if (!avisManuel.nomClient || !avisManuel.note || !avisManuel.commentaire) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    if (parseFloat(avisManuel.note) < 1 || parseFloat(avisManuel.note) > 5) {
+      toast({
+        title: "Erreur",
+        description: "La note doit être comprise entre 1 et 5",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    setSaisieEnCours(true);
+    
+    // Simuler un délai de traitement
+    setTimeout(() => {
+      const nouvelAvis = {
+        ...avisManuel,
+        id: Date.now(),
+        note: parseFloat(avisManuel.note)
+      };
+      
+      setAvisListe(prev => [...prev, nouvelAvis]);
+      
+      // Réinitialiser le formulaire
+      setAvisManuel({
+        nomClient: '',
+        note: '',
+        commentaire: '',
+        date: new Date().toISOString().split('T')[0],
+        source: 'Saisie manuelle'
+      });
+      
+      setSaisieEnCours(false);
+      
+      toast({
+        title: "Avis ajouté",
+        description: "L'avis a été ajouté avec succès",
+        duration: 3000,
+      });
+    }, 500);
+  };
+
+  const obtenirGeolocalisation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "Géolocalisation non supportée",
+        description: "Votre navigateur ne supporte pas la géolocalisation",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    setGeolocalisationEnCours(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setPositionUtilisateur(coords);
+        setGeolocalisationEnCours(false);
+        
+        toast({
+          title: "Position trouvée",
+          description: "Recherche d'établissements à proximité...",
+          duration: 3000,
+        });
+      },
+      (error) => {
+        setGeolocalisationEnCours(false);
+        let message = "Erreur de géolocalisation";
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            message = "Autorisation de géolocalisation refusée";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = "Position non disponible";
+            break;
+          case error.TIMEOUT:
+            message = "Délai de géolocalisation dépassé";
+            break;
+        }
+        toast({
+          title: "Erreur",
+          description: message,
+          variant: "destructive",
+          duration: 3000,
+        });
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
@@ -64,18 +301,318 @@ const Etablissement = () => {
           </div>
         </div>
 
-        {/* Import button */}
-        <div className="bg-white border border-gray-200 rounded-lg mb-8">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-end">
-              <Link to="/importer">
-                <Button className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700">
-                  <Upload className="w-4 h-4" />
-                  Importer des avis
-                </Button>
-              </Link>
+        {/* Import section */}
+        <div className="mb-8">
+          {/* Header buttons */}
+          <div className="bg-white border border-gray-200 rounded-lg mb-6">
+            <div className="px-4 py-4">
+              <div className="flex items-center justify-between w-full">
+                <div className="flex-1">
+                  <Button 
+                    variant="ghost" 
+                    className={`w-full flex items-center gap-2 ${modeActuel === 'saisie' ? 'text-blue-600 font-medium' : 'text-gray-600'}`}
+                    onClick={() => setModeActuel('saisie')}
+                  >
+                    <FileText className="w-4 h-4" />
+                    Saisie manuelle
+                  </Button>
+                </div>
+                <div className="flex-1">
+                  <Button 
+                    variant="ghost" 
+                    className={`w-full flex items-center gap-2 ${modeActuel === 'import' ? 'text-blue-600 font-medium' : 'text-gray-600'}`}
+                    onClick={() => setModeActuel('import')}
+                  >
+                    <Upload className="w-4 h-4" />
+                    Import CSV
+                  </Button>
+                </div>
+                <div className="flex-1">
+                  <Button 
+                    variant="ghost" 
+                    className={`w-full flex items-center gap-2 ${modeActuel === 'recuperation' ? 'text-blue-600 font-medium' : 'text-gray-600'}`}
+                    onClick={() => setModeActuel('recuperation')}
+                  >
+                    <Search className="w-4 h-4" />
+                    Récupération automatique
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
+
+          {/* Header dynamique */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                {modeActuel === 'saisie' && <FileText className="w-6 h-6 text-blue-600" />}
+                {modeActuel === 'import' && <Upload className="w-6 h-6 text-blue-600" />}
+                {modeActuel === 'recuperation' && <Search className="w-6 h-6 text-blue-600" />}
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900">
+                {modeActuel === 'saisie' && 'Saisie manuelle d\'avis'}
+                {modeActuel === 'import' && 'Import CSV d\'avis'}
+                {modeActuel === 'recuperation' && 'Récupération automatique d\'avis'}
+              </h2>
+            </div>
+            <p className="text-lg text-gray-600">
+              {modeActuel === 'saisie' && 'Saisissez vos avis manuellement dans le système'}
+              {modeActuel === 'import' && 'Importez vos avis depuis un fichier CSV'}
+              {modeActuel === 'recuperation' && 'Récupérez automatiquement les avis Google, Tripadvisor et Yelp de votre établissement'}
+            </p>
+          </div>
+
+          {/* Contenu conditionnel */}
+          {modeActuel === 'recuperation' && (
+            <Card className="mb-8">
+              <CardContent className="p-8">
+                <div className="grid md:grid-cols-3 gap-6 mb-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Ville <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Input
+                        placeholder="Tapez le nom de votre ville..."
+                        value={ville}
+                        onChange={(e) => setVille(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Établissement <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      placeholder="Nom de votre établissement..."
+                      value={etablissement}
+                      onChange={(e) => setEtablissement(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Période d'analyse
+                    </label>
+                    <Select value={periode} onValueChange={setPeriode}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1-mois">1 mois</SelectItem>
+                        <SelectItem value="3-mois">3 mois</SelectItem>
+                        <SelectItem value="6-mois">6 mois</SelectItem>
+                        <SelectItem value="1-an">1 an</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <Button 
+                    onClick={obtenirGeolocalisation}
+                    disabled={geolocalisationEnCours}
+                    className="flex items-center gap-2"
+                  >
+                    <Locate className="w-4 h-4" />
+                    {geolocalisationEnCours ? 'Localisation...' : 'Utiliser ma position'}
+                  </Button>
+                  
+                  <Button className="flex-1">
+                    Analyser les avis
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {modeActuel === 'saisie' && (
+            <Card className="mb-8">
+              <CardContent className="p-8">
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Nom du client <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      placeholder="Ex: Marie Dupont"
+                      value={avisManuel.nomClient}
+                      onChange={(e) => gererChangementAvis('nomClient', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Note <span className="text-red-500">*</span>
+                    </label>
+                    <Select value={avisManuel.note} onValueChange={(value) => gererChangementAvis('note', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choisir une note" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">⭐ 1/5</SelectItem>
+                        <SelectItem value="2">⭐⭐ 2/5</SelectItem>
+                        <SelectItem value="3">⭐⭐⭐ 3/5</SelectItem>
+                        <SelectItem value="4">⭐⭐⭐⭐ 4/5</SelectItem>
+                        <SelectItem value="5">⭐⭐⭐⭐⭐ 5/5</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2 mb-6">
+                  <label className="text-sm font-medium text-gray-700">
+                    Commentaire <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    placeholder="Commentaire du client..."
+                    value={avisManuel.commentaire}
+                    onChange={(e) => gererChangementAvis('commentaire', e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-md resize-none"
+                    rows={4}
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Date
+                    </label>
+                    <Input
+                      type="date"
+                      value={avisManuel.date}
+                      onChange={(e) => gererChangementAvis('date', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Source
+                    </label>
+                    <Input
+                      value={avisManuel.source}
+                      onChange={(e) => gererChangementAvis('source', e.target.value)}
+                      placeholder="Ex: Google, TripAdvisor..."
+                    />
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={ajouterAvis}
+                  disabled={saisieEnCours}
+                  className="w-full"
+                >
+                  {saisieEnCours ? 'Ajout en cours...' : 'Ajouter l\'avis'}
+                </Button>
+
+                {avisListe.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-medium mb-4">Avis ajoutés ({avisListe.length})</h3>
+                    <div className="space-y-3">
+                      {avisListe.map((avis) => (
+                        <div key={avis.id} className="p-4 bg-gray-50 rounded-lg">
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="font-medium">{avis.nomClient}</span>
+                            <span className="text-yellow-500">{'★'.repeat(avis.note)}</span>
+                          </div>
+                          <p className="text-gray-600 text-sm">{avis.commentaire}</p>
+                          <div className="text-xs text-gray-500 mt-2">
+                            {avis.date} • {avis.source}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {modeActuel === 'import' && (
+            <Card className="mb-8">
+              <CardContent className="p-8">
+                <input
+                  id="fichier-csv-input"
+                  type="file"
+                  accept=".csv"
+                  onChange={gererSelectionFichier}
+                  className="hidden"
+                />
+                
+                {!fichierCSV ? (
+                  <div className="text-center py-12">
+                    <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Choisir un fichier CSV
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      Sélectionnez votre fichier CSV contenant les avis clients
+                    </p>
+                    <Button onClick={ouvrirSelecteurFichier}>
+                      Parcourir les fichiers
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
+                      <FileText className="w-5 h-5 text-green-600" />
+                      <div className="flex-1">
+                        <div className="font-medium text-green-900">{fichierCSV.name}</div>
+                        <div className="text-sm text-green-700">
+                          {donneesCSV.length} ligne(s) importée(s)
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {donneesCSV.length > 0 && (
+                      <div className="border rounded-lg overflow-hidden">
+                        <div className="bg-gray-50 p-3 border-b">
+                          <h4 className="font-medium">Aperçu des données</h4>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="bg-gray-50">
+                                {Object.keys(donneesCSV[0] || {}).slice(0, 5).map((header) => (
+                                  <th key={header} className="p-2 text-left border-b">
+                                    {header}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {donneesCSV.slice(0, 3).map((row, index) => (
+                                <tr key={index}>
+                                  {Object.values(row).slice(0, 5).map((value, colIndex) => (
+                                    <td key={colIndex} className="p-2 border-b">
+                                      {String(value).substring(0, 50)}
+                                      {String(value).length > 50 ? '...' : ''}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-3">
+                      <Button onClick={ouvrirSelecteurFichier} variant="outline">
+                        Changer de fichier
+                      </Button>
+                      <Button className="flex-1">
+                        Analyser les données
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
