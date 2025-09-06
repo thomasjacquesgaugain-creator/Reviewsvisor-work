@@ -40,40 +40,33 @@ const Etablissement = () => {
   const [positionUtilisateur, setPositionUtilisateur] = useState<{lat: number, lng: number} | null>(null);
   const [geolocalisationEnCours, setGeolocalisationEnCours] = useState(false);
   
-  // États pour la saisie manuelle
-  const [avisManuel, setAvisManuel] = useState({
-    nomClient: '',
-    note: '',
-    commentaire: '',
-    date: new Date().toISOString().split('T')[0],
-    source: "Recherche manuelle"
+  // États pour la saisie manuelle d'établissement
+  const [etablissementManuel, setEtablissementManuel] = useState({
+    nom: '',
+    url: '',
+    adresse: '',
+    telephone: '',
+    email: '',
+    description: '',
+    horaires: '',
+    type: 'Restaurant'
   });
-  const [avisListe, setAvisListe] = useState<any[]>([]);
+
   const [saisieEnCours, setSaisieEnCours] = useState(false);
 
-  // Fonctions pour la saisie manuelle
-  const gererChangementAvis = (champ: string, valeur: string) => {
-    setAvisManuel(prev => ({
+  // Fonctions pour la saisie manuelle d'établissement
+  const gererChangementEtablissement = (champ: string, valeur: string) => {
+    setEtablissementManuel(prev => ({
       ...prev,
       [champ]: valeur
     }));
   };
 
-  const ajouterAvis = () => {
-    if (!avisManuel.nomClient || !avisManuel.note || !avisManuel.commentaire) {
+  const enregistrerEtablissement = () => {
+    if (!etablissementManuel.nom || !etablissementManuel.url) {
       toast({
         title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires",
-        variant: "destructive",
-        duration: 3000,
-      });
-      return;
-    }
-
-    if (parseFloat(avisManuel.note) < 1 || parseFloat(avisManuel.note) > 5) {
-      toast({
-        title: "Erreur",
-        description: "La note doit être comprise entre 1 et 5",
+        description: "Veuillez remplir au moins le nom et l'URL",
         variant: "destructive",
         duration: 3000,
       });
@@ -84,28 +77,11 @@ const Etablissement = () => {
     
     // Simuler un délai de traitement
     setTimeout(() => {
-      const nouvelAvis = {
-        ...avisManuel,
-        id: Date.now(),
-        note: parseFloat(avisManuel.note)
-      };
-      
-      setAvisListe(prev => [...prev, nouvelAvis]);
-      
-      // Réinitialiser le formulaire
-      setAvisManuel({
-        nomClient: '',
-        note: '',
-        commentaire: '',
-        date: new Date().toISOString().split('T')[0],
-        source: "Recherche manuelle"
-      });
-      
       setSaisieEnCours(false);
       
       toast({
-        title: "Avis ajouté",
-        description: "L'avis a été ajouté avec succès",
+        title: "Établissement enregistré",
+        description: "Les informations ont été enregistrées avec succès",
         duration: 3000,
       });
     }, 500);
@@ -330,29 +306,78 @@ const Etablissement = () => {
                 <div className="grid md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
-                      Nom du client <span className="text-red-500">*</span>
+                      Nom de l'établissement <span className="text-red-500">*</span>
                     </label>
                     <Input
-                      placeholder="Ex: Marie Dupont"
-                      value={avisManuel.nomClient}
-                      onChange={(e) => gererChangementAvis('nomClient', e.target.value)}
+                      placeholder="Ex: Restaurant Le Gourmet"
+                      value={etablissementManuel.nom}
+                      onChange={(e) => gererChangementEtablissement('nom', e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
-                      Note <span className="text-red-500">*</span>
+                      URL/Site web <span className="text-red-500">*</span>
                     </label>
-                    <Select value={avisManuel.note} onValueChange={(value) => gererChangementAvis('note', value)}>
+                    <Input
+                      placeholder="https://monrestaurant.com"
+                      value={etablissementManuel.url}
+                      onChange={(e) => gererChangementEtablissement('url', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Adresse
+                    </label>
+                    <Input
+                      placeholder="123 Rue de la Paix, 75001 Paris"
+                      value={etablissementManuel.adresse}
+                      onChange={(e) => gererChangementEtablissement('adresse', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Téléphone
+                    </label>
+                    <Input
+                      placeholder="01 23 45 67 89"
+                      value={etablissementManuel.telephone}
+                      onChange={(e) => gererChangementEtablissement('telephone', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <Input
+                      placeholder="contact@monrestaurant.com"
+                      value={etablissementManuel.email}
+                      onChange={(e) => gererChangementEtablissement('email', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Type d'établissement
+                    </label>
+                    <Select value={etablissementManuel.type} onValueChange={(value) => gererChangementEtablissement('type', value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Choisir une note" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="1">⭐ 1/5</SelectItem>
-                        <SelectItem value="2">⭐⭐ 2/5</SelectItem>
-                        <SelectItem value="3">⭐⭐⭐ 3/5</SelectItem>
-                        <SelectItem value="4">⭐⭐⭐⭐ 4/5</SelectItem>
-                        <SelectItem value="5">⭐⭐⭐⭐⭐ 5/5</SelectItem>
+                        <SelectItem value="Restaurant">Restaurant</SelectItem>
+                        <SelectItem value="Café">Café</SelectItem>
+                        <SelectItem value="Bar">Bar</SelectItem>
+                        <SelectItem value="Boulangerie">Boulangerie</SelectItem>
+                        <SelectItem value="Hôtel">Hôtel</SelectItem>
+                        <SelectItem value="Autre">Autre</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -360,68 +385,35 @@ const Etablissement = () => {
 
                 <div className="space-y-2 mb-6">
                   <label className="text-sm font-medium text-gray-700">
-                    Commentaire <span className="text-red-500">*</span>
+                    Description
                   </label>
                   <textarea
-                    placeholder="Commentaire du client..."
-                    value={avisManuel.commentaire}
-                    onChange={(e) => gererChangementAvis('commentaire', e.target.value)}
+                    placeholder="Description de votre établissement..."
+                    value={etablissementManuel.description}
+                    onChange={(e) => gererChangementEtablissement('description', e.target.value)}
                     className="w-full p-3 border border-gray-300 rounded-md resize-none"
-                    rows={4}
+                    rows={3}
                   />
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Date
-                    </label>
-                    <Input
-                      type="date"
-                      value={avisManuel.date}
-                      onChange={(e) => gererChangementAvis('date', e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Source
-                    </label>
-                    <Input
-                      value={avisManuel.source}
-                      onChange={(e) => gererChangementAvis('source', e.target.value)}
-                      placeholder="Ex: Google, TripAdvisor..."
-                    />
-                  </div>
+                <div className="space-y-2 mb-6">
+                  <label className="text-sm font-medium text-gray-700">
+                    Horaires d'ouverture
+                  </label>
+                  <Input
+                    placeholder="Ex: Lun-Dim 12h-14h, 19h-22h"
+                    value={etablissementManuel.horaires}
+                    onChange={(e) => gererChangementEtablissement('horaires', e.target.value)}
+                  />
                 </div>
 
                 <Button 
-                  onClick={ajouterAvis}
+                  onClick={enregistrerEtablissement}
                   disabled={saisieEnCours}
                   className="w-full"
                 >
-                  {saisieEnCours ? 'Ajout en cours...' : 'Ajouter l\'avis'}
+                  {saisieEnCours ? 'Enregistrement en cours...' : 'Enregistrer les informations'}
                 </Button>
-
-                {avisListe.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-medium mb-4">Avis ajoutés ({avisListe.length})</h3>
-                    <div className="space-y-3">
-                      {avisListe.map((avis) => (
-                        <div key={avis.id} className="p-4 bg-gray-50 rounded-lg">
-                          <div className="flex justify-between items-start mb-2">
-                            <span className="font-medium">{avis.nomClient}</span>
-                            <span className="text-yellow-500">{'★'.repeat(avis.note)}</span>
-                          </div>
-                          <p className="text-gray-600 text-sm">{avis.commentaire}</p>
-                          <div className="text-xs text-gray-500 mt-2">
-                            {avis.date} • {avis.source}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           )}
