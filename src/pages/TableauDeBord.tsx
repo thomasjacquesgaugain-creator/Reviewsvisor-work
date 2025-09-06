@@ -32,16 +32,16 @@ const Dashboard = () => {
                   <Home className="w-4 h-4" />
                   Accueil
                 </Link>
-                <Link to="/importer">
-                  <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
-                    <Upload className="w-4 h-4" />
-                    Importer
-                  </Button>
-                </Link>
                 <Link to="/dashboard">
                   <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
                     <BarChart3 className="w-4 h-4" />
                     Dashboard
+                  </Button>
+                </Link>
+                <Link to="/importer">
+                  <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
+                    <Upload className="w-4 h-4" />
+                    Importer
                   </Button>
                 </Link>
                 <div className="flex items-center gap-2 text-gray-700">
