@@ -73,10 +73,6 @@ const Dashboard = () => {
                   <Home className="w-4 h-4" />
                   Accueil
                 </Link>
-                <Link to="/importer" className="text-gray-600 hover:text-blue-600 flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4" />
-                  Importer
-                </Link>
                 <Link to="/etablissement" className="text-gray-600 hover:text-blue-600 flex items-center gap-2">
                   <Building2 className="w-4 h-4" />
                   Établissement

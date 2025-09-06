@@ -265,12 +265,6 @@ const Etablissement = () => {
                   Dashboard
                 </Button>
               </Link>
-              <Link to="/importer">
-                <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
-                  <Upload className="w-4 h-4" />
-                  Importer
-                </Button>
-              </Link>
               <Link to="/etablissement">
                 <Button variant="ghost" className="text-blue-600 font-medium flex items-center gap-1">
                   <Building className="w-4 h-4" />
