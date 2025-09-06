@@ -106,31 +106,6 @@ const Etablissement = () => {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  Horaires d'ouverture
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {[
-                    { jour: "Lundi", horaires: "12h00 - 14h00, 19h00 - 22h00" },
-                    { jour: "Mardi", horaires: "12h00 - 14h00, 19h00 - 22h00" },
-                    { jour: "Mercredi", horaires: "12h00 - 14h00, 19h00 - 22h00" },
-                    { jour: "Jeudi", horaires: "12h00 - 14h00, 19h00 - 22h00" },
-                    { jour: "Vendredi", horaires: "12h00 - 14h00, 19h00 - 23h00" },
-                    { jour: "Samedi", horaires: "12h00 - 14h00, 19h00 - 23h00" },
-                    { jour: "Dimanche", horaires: "Fermé" },
-                  ].map((item, index) => (
-                    <div key={index} className="flex justify-between py-1">
-                      <span className="font-medium text-gray-700">{item.jour}</span>
-                      <span className="text-gray-900">{item.horaires}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Statistiques */}
