@@ -55,6 +55,9 @@ const Etablissement = () => {
 
   const [saisieEnCours, setSaisieEnCours] = useState(false);
 
+  // Google Maps API Key - À configurer
+  const GOOGLE_API_KEY = "YOUR_API_KEY";
+
   // Fonctions pour la saisie manuelle d'établissement
   const gererChangementEtablissement = (champ: string, valeur: string) => {
     setEtablissementManuel(prev => ({
@@ -63,118 +66,137 @@ const Etablissement = () => {
     }));
   };
 
-  // Recherche automatique d'établissements avec OpenStreetMap (sans clé API)
-  const rechercherEtablissementsAutomatique = async (nom: string, villeContext: string = "") => {
-    console.log("Début recherche pour:", nom, "ville:", villeContext);
+  // Recherche d'établissement avec Google Maps API
+  const rechercherEtablissement = async () => {
+    const nomEtablissement = etablissement.trim();
+    const nomVille = ville.trim();
     
-    if (!nom || nom.length < 2) {
-      setSuggestionsEtablissements([]);
+    if (!nomEtablissement || !nomVille) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez renseigner le nom de l'établissement et la ville",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    if (!GOOGLE_API_KEY || GOOGLE_API_KEY === "YOUR_API_KEY") {
+      // Fallback vers OpenStreetMap
+      await rechercherEtablissementsOpenStreetMap(nomEtablissement, nomVille);
       return;
     }
 
     try {
-      setRechercheEtablissementsEnCours(true);
+      setRechercheEnCours(true);
+      
+      // 1) Geocode de la ville pour obtenir les coordonnées
+      const geoUrl = new URL("https://maps.googleapis.com/maps/api/geocode/json");
+      geoUrl.searchParams.set("address", nomVille);
+      geoUrl.searchParams.set("language", "fr");
+      geoUrl.searchParams.set("key", GOOGLE_API_KEY);
+      
+      const geoResponse = await fetch(geoUrl.toString());
+      const geoData = await geoResponse.json();
+      const location = geoData?.results?.[0]?.geometry?.location;
+      
+      if (!location) {
+        toast({
+          title: "Ville introuvable",
+          description: `Impossible de localiser "${nomVille}"`,
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // 2) Text Search pour trouver l'établissement
+      const searchUrl = new URL("https://maps.googleapis.com/maps/api/place/textsearch/json");
+      searchUrl.searchParams.set("query", `${nomEtablissement} ${nomVille}`);
+      searchUrl.searchParams.set("location", `${location.lat},${location.lng}`);
+      searchUrl.searchParams.set("radius", "30000"); // 30km
+      searchUrl.searchParams.set("language", "fr");
+      searchUrl.searchParams.set("key", GOOGLE_API_KEY);
+      
+      const searchResponse = await fetch(searchUrl.toString());
+      const searchData = await searchResponse.json();
+      const results = searchData?.results || [];
+
+      if (!results.length) {
+        toast({
+          title: "Aucun résultat",
+          description: "Aucun établissement trouvé. Essayez une variante du nom.",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // Convertir les résultats au format attendu
+      const suggestions = results.slice(0, 8).map((result: any) => ({
+        id: result.place_id,
+        nom: result.name,
+        adresse: result.formatted_address,
+        type: result.types?.[0] || "establishment",
+        lat: result.geometry?.location?.lat || 0,
+        lon: result.geometry?.location?.lng || 0,
+        ville: nomVille,
+        rating: result.rating || 0,
+        user_ratings_total: result.user_ratings_total || 0
+      }));
+
+      setSuggestionsEtablissements(suggestions);
+      
+      toast({
+        title: "Recherche terminée",
+        description: `${results.length} établissement(s) trouvé(s)`,
+        duration: 3000,
+      });
+
+    } catch (error) {
+      console.error("Erreur recherche Google Maps:", error);
+      toast({
+        title: "Erreur de recherche",
+        description: "Impossible d'effectuer la recherche. Vérifiez votre connexion.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    } finally {
+      setRechercheEnCours(false);
+    }
+  };
+
+  // Fallback vers OpenStreetMap si Google API n'est pas disponible
+  const rechercherEtablissementsOpenStreetMap = async (nom: string, villeContext: string) => {
+    try {
+      setRechercheEnCours(true);
+      
+      const queries = [
+        `${nom} ${villeContext}`,
+        `${nom}, ${villeContext}`,
+        `"${nom}" ${villeContext}`
+      ];
       
       let suggestions: any[] = [];
       
-      // Stratégie 1: Recherche précise avec ville si fournie
-      if (villeContext && villeContext.length > 1) {
-        const queries = [
-          `${nom} ${villeContext}`,
-          `${nom}, ${villeContext}`,
-          `"${nom}" ${villeContext}`,
-          `${nom} near ${villeContext}`
-        ];
+      for (const query of queries) {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(query)}&extratags=1&countrycodes=fr`;
         
-        for (const query of queries) {
-          console.log("Recherche avec requête:", query);
-          
-          const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=15&q=${encodeURIComponent(query)}&extratags=1&countrycodes=fr`;
-          
-          const response = await fetch(url, {
-            headers: { 
-              Accept: "application/json",
-              "User-Agent": "AnalytiqueApp/1.0"
-            },
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log(`Réponse pour "${query}":`, data);
-            
-            // Traiter tous les résultats, pas seulement les types prédéfinis
-            const nouveauxResultats = data
-              .filter((item: any) => {
-                // Plus inclusif - tout ce qui a un nom et une adresse dans la bonne ville
-                const nomMatch = item.name && item.name.toLowerCase().includes(nom.toLowerCase());
-                const villeMatch = item.display_name && item.display_name.toLowerCase().includes(villeContext.toLowerCase());
-                const isRelevant = nomMatch || (item.name && villeMatch);
-                
-                console.log(`Item "${item.name}": nomMatch=${nomMatch}, villeMatch=${villeMatch}, isRelevant=${isRelevant}`);
-                return isRelevant;
-              })
-              .map((item: any) => {
-                const nomMatchExact = item.name.toLowerCase().includes(nom.toLowerCase());
-                return {
-                  id: item.place_id,
-                  nom: item.name || item.display_name?.split(",")[0] || "Établissement",
-                  adresse: item.display_name,
-                  type: item.type || "establishment",
-                  lat: parseFloat(item.lat),
-                  lon: parseFloat(item.lon),
-                  ville: item.address?.city || item.address?.town || item.address?.village || villeContext,
-                  priorite: nomMatchExact ? 1 : 2,
-                  class: item.class
-                };
-              });
-            
-            suggestions = [...suggestions, ...nouveauxResultats];
-            console.log(`Ajouté ${nouveauxResultats.length} résultats pour "${query}"`);
-            
-            // Si on a trouvé des résultats pertinents, on peut arrêter
-            if (nouveauxResultats.length > 0) break;
-          }
-        }
-        
-      }
-      
-      // Stratégie 2: Recherche par nom seul
-      if (suggestions.length < 5) {
-        console.log("Recherche complémentaire par nom:", nom);
-        
-        const urlSansVille = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(nom)}&extratags=1`;
-        
-        const responseSansVille = await fetch(urlSansVille, {
+        const response = await fetch(url, {
           headers: { 
             Accept: "application/json",
             "User-Agent": "AnalytiqueApp/1.0"
           },
         });
         
-        if (responseSansVille.ok) {
-          const dataSansVille = await responseSansVille.json();
-          console.log("Réponse sans ville:", dataSansVille);
-          
-          const etablissementTypes = new Set([
-            "restaurant", "cafe", "bar", "fast_food", "food_court", "pub", 
-            "biergarten", "ice_cream", "nightclub", "bakery", "pastry", "caterer"
-          ]);
-          
-          const suggestionsSansVille = dataSansVille
+        if (response.ok) {
+          const data = await response.json();
+          const nouveauxResultats = data
             .filter((item: any) => {
-              // Filtrage plus inclusif pour les établissements
-              const isEstablishment = (
-                // Types d'établissements alimentaires
-                (item.class === "amenity" && ["restaurant", "cafe", "bar", "fast_food", "food_court", "pub", "biergarten", "ice_cream", "nightclub", "bakery", "pastry"].includes(item.type)) ||
-                // Magasins alimentaires
-                (item.class === "shop" && ["bakery", "pastry", "confectionery", "alcohol", "convenience", "supermarket"].includes(item.type)) ||
-                // Artisans traiteurs
-                (item.class === "craft" && item.type === "caterer") ||
-                // Tout lieu avec un nom qui contient une partie du terme recherché
-                (item.name && item.name.toLowerCase().includes(nom.toLowerCase().substring(0, 3)))
-              );
-              console.log(`Item sans ville ${item.name}: class=${item.class}, type=${item.type}, isEstablishment=${isEstablishment}`);
-              return isEstablishment;
+              if (!item.name) return false;
+              const nomMatch = item.name.toLowerCase().includes(nom.toLowerCase());
+              const villeMatch = item.display_name && item.display_name.toLowerCase().includes(villeContext.toLowerCase());
+              return nomMatch || villeMatch;
             })
             .map((item: any) => ({
               id: item.place_id,
@@ -183,24 +205,103 @@ const Etablissement = () => {
               type: item.type || "establishment",
               lat: parseFloat(item.lat),
               lon: parseFloat(item.lon),
-              ville: item.address?.city || item.address?.town || item.address?.village || "",
-              priorite: 2 // Priorité plus faible
+              ville: item.address?.city || item.address?.town || item.address?.village || villeContext,
             }));
           
-          suggestions = [...suggestions, ...suggestionsSansVille];
-          console.log(`Trouvé ${suggestionsSansVille.length} établissements sans ville`);
+          suggestions = [...suggestions, ...nouveauxResultats];
+          if (suggestions.length >= 5) break;
         }
       }
       
-      // Trier par priorité puis supprimer les doublons
       const suggestionsUniques = suggestions
-        .sort((a, b) => a.priorite - b.priorite)
         .filter((suggestion, index, self) => 
           index === self.findIndex(s => s.id === suggestion.id)
         )
-        .slice(0, 8); // Limiter à 8 suggestions
+        .slice(0, 8);
       
-      console.log(`Total final: ${suggestionsUniques.length} suggestions:`, suggestionsUniques);
+      setSuggestionsEtablissements(suggestionsUniques);
+      
+      if (suggestionsUniques.length > 0) {
+        toast({
+          title: "Recherche terminée",
+          description: `${suggestionsUniques.length} établissement(s) trouvé(s)`,
+          duration: 3000,
+        });
+      } else {
+        toast({
+          title: "Aucun résultat",
+          description: "Aucun établissement trouvé avec OpenStreetMap",
+          variant: "destructive",
+          duration: 3000,
+        });
+      }
+      
+    } catch (error) {
+      console.error("Erreur recherche OpenStreetMap:", error);
+    } finally {
+      setRechercheEnCours(false);
+    }
+  };
+
+  // Recherche automatique d'établissements (pour l'autocomplétion)
+  const rechercherEtablissementsAutomatique = async (nom: string, villeContext: string = "") => {
+    console.log("Début recherche pour:", nom, "ville:", villeContext);
+    
+    if (!nom || nom.length < 2) {
+      setSuggestionsEtablissements([]);
+      return;
+    }
+
+    // Utiliser OpenStreetMap pour l'autocomplétion (plus rapide)
+    try {
+      setRechercheEtablissementsEnCours(true);
+      
+      const queries = [
+        `${nom} ${villeContext}`,
+        `${nom}, ${villeContext}`
+      ];
+      
+      let suggestions: any[] = [];
+      
+      for (const query of queries) {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(query)}&extratags=1&countrycodes=fr`;
+        
+        const response = await fetch(url, {
+          headers: { 
+            Accept: "application/json",
+            "User-Agent": "AnalytiqueApp/1.0"
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const nouveauxResultats = data
+            .filter((item: any) => {
+              if (!item.name) return false;
+              const nomMatch = item.name.toLowerCase().includes(nom.toLowerCase());
+              return nomMatch;
+            })
+            .map((item: any) => ({
+              id: item.place_id,
+              nom: item.name || item.display_name?.split(",")[0] || "Établissement",
+              adresse: item.display_name,
+              type: item.type || "establishment",
+              lat: parseFloat(item.lat),
+              lon: parseFloat(item.lon),
+              ville: item.address?.city || item.address?.town || item.address?.village || villeContext,
+            }));
+          
+          suggestions = [...suggestions, ...nouveauxResultats];
+          if (suggestions.length >= 5) break;
+        }
+      }
+      
+      const suggestionsUniques = suggestions
+        .filter((suggestion, index, self) => 
+          index === self.findIndex(s => s.id === suggestion.id)
+        )
+        .slice(0, 8);
+      
       setSuggestionsEtablissements(suggestionsUniques);
       
     } catch (error) {
@@ -209,6 +310,21 @@ const Etablissement = () => {
     } finally {
       setRechercheEtablissementsEnCours(false);
     }
+  };
+
+  // Sélectionner un établissement depuis les suggestions
+  const selectionnerEtablissement = (etablissementSuggere: any) => {
+    setEtablissement(etablissementSuggere.nom);
+    if (etablissementSuggere.ville && !ville) {
+      setVille(etablissementSuggere.ville);
+    }
+    setSuggestionsEtablissements([]);
+    
+    toast({
+      title: "Établissement sélectionné",
+      description: `${etablissementSuggere.nom} a été sélectionné`,
+      duration: 2000,
+    });
   };
 
   // Recherche automatique de villes
@@ -284,21 +400,6 @@ const Etablissement = () => {
     toast({
       title: "Ville sélectionnée",
       description: `${villeSuggere.nom} a été sélectionnée`,
-      duration: 2000,
-    });
-  };
-
-  // Sélectionner un établissement depuis les suggestions
-  const selectionnerEtablissement = (etablissementSuggere: any) => {
-    setEtablissement(etablissementSuggere.nom);
-    if (etablissementSuggere.ville && !ville) {
-      setVille(etablissementSuggere.ville);
-    }
-    setSuggestionsEtablissements([]);
-    
-    toast({
-      title: "Établissement sélectionné",
-      description: `${etablissementSuggere.nom} a été sélectionné`,
       duration: 2000,
     });
   };
@@ -508,23 +609,23 @@ const Etablissement = () => {
                         </div>
                       )}
                       
-                       {/* Suggestions dropdown */}
-                       {suggestionsEtablissements.length > 0 && (
-                         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl max-h-60 overflow-y-auto">
-                           {suggestionsEtablissements.map((suggestion) => (
-                             <div
-                               key={suggestion.id}
-                               onClick={() => selectionnerEtablissement(suggestion)}
-                               className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
-                             >
-                               <div className="font-medium text-gray-900">{suggestion.nom}</div>
-                               <div className="text-sm text-gray-500 truncate">{suggestion.adresse}</div>
-                               <div className="text-xs text-blue-600 capitalize">{suggestion.type}</div>
-                             </div>
-                           ))}
-                         </div>
-                       )}
-                     </div>
+                      {/* Suggestions dropdown */}
+                      {suggestionsEtablissements.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl max-h-60 overflow-y-auto">
+                          {suggestionsEtablissements.map((suggestion) => (
+                            <div
+                              key={suggestion.id}
+                              onClick={() => selectionnerEtablissement(suggestion)}
+                              className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                            >
+                              <div className="font-medium text-gray-900">{suggestion.nom}</div>
+                              <div className="text-sm text-gray-500 truncate">{suggestion.adresse}</div>
+                              <div className="text-xs text-blue-600 capitalize">{suggestion.type}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -587,10 +688,57 @@ const Etablissement = () => {
                 </div>
 
                 <div className="flex gap-4">
-                  <Button className="w-full">
-                    Recherche de l'établissement
+                  <Button 
+                    className="w-full"
+                    onClick={rechercherEtablissement}
+                    disabled={rechercheEnCours}
+                  >
+                    {rechercheEnCours ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                        Recherche en cours...
+                      </>
+                    ) : (
+                      "Recherche de l'établissement"
+                    )}
                   </Button>
                 </div>
+
+                {/* Affichage des résultats de recherche */}
+                {suggestionsEtablissements.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Résultats de recherche</h3>
+                    <div className="space-y-3">
+                      {suggestionsEtablissements.map((etablissement) => (
+                        <div
+                          key={etablissement.id}
+                          className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                          onClick={() => selectionnerEtablissement(etablissement)}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h4 className="font-medium text-gray-900">{etablissement.nom}</h4>
+                              <p className="text-sm text-gray-500 mt-1">{etablissement.adresse}</p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">
+                                  {etablissement.type}
+                                </span>
+                                {etablissement.rating && (
+                                  <div className="flex items-center gap-1">
+                                    <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                                    <span className="text-xs text-gray-600">
+                                      {etablissement.rating} ({etablissement.user_ratings_total} avis)
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -609,26 +757,24 @@ const Etablissement = () => {
                       onChange={(e) => gererChangementEtablissement('nom', e.target.value)}
                     />
                   </div>
-
+                  
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
                       URL/Site web <span className="text-red-500">*</span>
                     </label>
                     <Input
-                      placeholder="https://monrestaurant.com"
+                      placeholder="Ex: https://www.legourmet.fr"
                       value={etablissementManuel.url}
                       onChange={(e) => gererChangementEtablissement('url', e.target.value)}
                     />
                   </div>
-                </div>
 
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
                       Adresse
                     </label>
                     <Input
-                      placeholder="123 Rue de la Paix, 75001 Paris"
+                      placeholder="Ex: 123 Rue de la Paix, 75001 Paris"
                       value={etablissementManuel.adresse}
                       onChange={(e) => gererChangementEtablissement('adresse', e.target.value)}
                     />
@@ -639,20 +785,18 @@ const Etablissement = () => {
                       Téléphone
                     </label>
                     <Input
-                      placeholder="01 23 45 67 89"
+                      placeholder="Ex: +33 1 23 45 67 89"
                       value={etablissementManuel.telephone}
                       onChange={(e) => gererChangementEtablissement('telephone', e.target.value)}
                     />
                   </div>
-                </div>
 
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
                       Email
                     </label>
                     <Input
-                      placeholder="contact@monrestaurant.com"
+                      placeholder="Ex: contact@legourmet.fr"
                       value={etablissementManuel.email}
                       onChange={(e) => gererChangementEtablissement('email', e.target.value)}
                     />
@@ -670,90 +814,25 @@ const Etablissement = () => {
                         <SelectItem value="Restaurant">Restaurant</SelectItem>
                         <SelectItem value="Café">Café</SelectItem>
                         <SelectItem value="Bar">Bar</SelectItem>
-                        <SelectItem value="Boulangerie">Boulangerie</SelectItem>
                         <SelectItem value="Hôtel">Hôtel</SelectItem>
+                        <SelectItem value="Commerce">Commerce</SelectItem>
+                        <SelectItem value="Service">Service</SelectItem>
                         <SelectItem value="Autre">Autre</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
-
-
                 <Button 
-                  onClick={enregistrerEtablissement}
+                  onClick={enregistrerEtablissement} 
                   disabled={saisieEnCours}
                   className="w-full"
                 >
-                  {saisieEnCours ? 'Enregistrement en cours...' : 'Enregistrer les informations'}
+                  {saisieEnCours ? "Enregistrement..." : "Enregistrer l'établissement"}
                 </Button>
               </CardContent>
             </Card>
           )}
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Informations principales */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              
-              
-            </Card>
-
-          </div>
-
-          {/* Statistiques */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="w-5 h-5" />
-                  Note moyenne
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-yellow-600 mb-2">4.2</div>
-                  <div className="flex justify-center gap-1 mb-2">
-                    {[1, 2, 3, 4, 5].map(star => (
-                      <Star key={star} className={`w-4 h-4 ${star <= 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-600">Basé sur 247 avis</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Activité récente
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600 mb-1">23</div>
-                  <p className="text-sm text-gray-600">Nouveaux avis ce mois</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600 mb-1">89%</div>
-                  <p className="text-sm text-gray-600">Avis positifs</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <Button className="w-full mb-3">
-                  Modifier les informations
-                </Button>
-                <Button variant="outline" className="w-full">
-                  Voir les avis
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </div>
     </div>
