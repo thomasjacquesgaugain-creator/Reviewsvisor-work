@@ -256,7 +256,7 @@ const Etablissement = () => {
                 {modeActuel === 'recuperation' && <Search className="w-6 h-6 text-blue-600" />}
               </div>
               <h2 className="text-3xl font-bold text-gray-900">
-                {modeActuel === 'saisie' && "Recherche manuelle d'avis"}
+                {modeActuel === 'saisie' && "Recherche manuelle d'établissement"}
                 {modeActuel === 'recuperation' && "Recherche automatique d'avis"}
               </h2>
             </div>
