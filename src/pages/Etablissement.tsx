@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, MapPin, Phone, Mail, Globe, Star, Users } from "lucide-react";
+import { Building, MapPin, Phone, Mail, Globe, Star, Users, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Etablissement = () => {
@@ -55,7 +55,7 @@ const Etablissement = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Building className="w-5 h-5" />
+                  <FileText className="w-5 h-5" />
                   Informations générales
                 </CardTitle>
               </CardHeader>
