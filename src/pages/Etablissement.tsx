@@ -47,7 +47,6 @@ const Etablissement = () => {
     adresse: '',
     telephone: '',
     email: '',
-    description: '',
     type: 'Restaurant'
   });
 
@@ -382,18 +381,6 @@ const Etablissement = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2 mb-6">
-                  <label className="text-sm font-medium text-gray-700">
-                    Description
-                  </label>
-                  <textarea
-                    placeholder="Description de votre établissement..."
-                    value={etablissementManuel.description}
-                    onChange={(e) => gererChangementEtablissement('description', e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-md resize-none"
-                    rows={3}
-                  />
-                </div>
 
 
                 <Button 
