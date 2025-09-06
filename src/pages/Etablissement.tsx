@@ -72,42 +72,100 @@ const Etablissement = () => {
     try {
       setRechercheEtablissementsEnCours(true);
       
-      // Construire la requête de recherche
-      const query = villeContext ? `${nom} ${villeContext}` : nom;
+      let suggestions: any[] = [];
       
-      // Utiliser l'API Nominatim pour rechercher des établissements
-      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(query)}&extratags=1&namedetails=1`;
+      // Stratégie 1: Recherche combinée nom + ville si ville fournie
+      if (villeContext && villeContext.length > 2) {
+        const queryAvecVille = `${nom} ${villeContext}`;
+        console.log("Recherche avec ville:", queryAvecVille);
+        
+        const urlAvecVille = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=15&q=${encodeURIComponent(queryAvecVille)}&extratags=1`;
+        
+        const responseAvecVille = await fetch(urlAvecVille, {
+          headers: { Accept: "application/json" },
+        });
+        
+        if (responseAvecVille.ok) {
+          const dataAvecVille = await responseAvecVille.json();
+          
+          // Filtrer les établissements (restaurants, cafés, etc.)
+          const etablissementTypes = new Set([
+            "restaurant", "cafe", "bar", "fast_food", "food_court", "pub", 
+            "biergarten", "ice_cream", "nightclub", "bakery", "pastry", "caterer"
+          ]);
+          
+          const suggestionsAvecVille = dataAvecVille
+            .filter((item: any) => 
+              (item.class === "amenity" && etablissementTypes.has(item.type)) ||
+              (item.class === "shop" && ["bakery", "pastry", "confectionery"].includes(item.type)) ||
+              (item.class === "craft" && item.type === "caterer")
+            )
+            .map((item: any) => ({
+              id: item.place_id,
+              nom: item.name || item.display_name?.split(",")[0] || "Établissement",
+              adresse: item.display_name,
+              type: item.type,
+              lat: parseFloat(item.lat),
+              lon: parseFloat(item.lon),
+              ville: item.address?.city || item.address?.town || item.address?.village || villeContext,
+              priorite: 1 // Haute priorité pour recherche avec ville
+            }));
+          
+          suggestions = [...suggestions, ...suggestionsAvecVille];
+          console.log(`Trouvé ${suggestionsAvecVille.length} établissements avec ville`);
+        }
+      }
       
-      const response = await fetch(url, {
-        headers: { Accept: "application/json" },
-      });
+      // Stratégie 2: Recherche par nom seul (priorité plus faible)
+      if (suggestions.length < 5) {
+        console.log("Recherche complémentaire par nom:", nom);
+        
+        const urlSansVille = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(nom)}&extratags=1`;
+        
+        const responseSansVille = await fetch(urlSansVille, {
+          headers: { Accept: "application/json" },
+        });
+        
+        if (responseSansVille.ok) {
+          const dataSansVille = await responseSansVille.json();
+          
+          const etablissementTypes = new Set([
+            "restaurant", "cafe", "bar", "fast_food", "food_court", "pub", 
+            "biergarden", "ice_cream", "nightclub", "bakery", "pastry", "caterer"
+          ]);
+          
+          const suggestionsSansVille = dataSansVille
+            .filter((item: any) => 
+              (item.class === "amenity" && etablissementTypes.has(item.type)) ||
+              (item.class === "shop" && ["bakery", "pastry", "confectionery"].includes(item.type)) ||
+              (item.class === "craft" && item.type === "caterer")
+            )
+            .map((item: any) => ({
+              id: item.place_id,
+              nom: item.name || item.display_name?.split(",")[0] || "Établissement",
+              adresse: item.display_name,
+              type: item.type,
+              lat: parseFloat(item.lat),
+              lon: parseFloat(item.lon),
+              ville: item.address?.city || item.address?.town || item.address?.village || "",
+              priorite: 2 // Priorité plus faible
+            }));
+          
+          suggestions = [...suggestions, ...suggestionsSansVille];
+          console.log(`Trouvé ${suggestionsSansVille.length} établissements sans ville`);
+        }
+      }
       
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data: any[] = await response.json();
-
-      // Filtrer pour ne garder que les établissements (restaurants, cafés, etc.)
-      const etablissementTypes = new Set([
-        "restaurant", "cafe", "bar", "fast_food", "food_court", "pub", 
-        "biergarten", "ice_cream", "nightclub", "bakery", "pastry"
-      ]);
-      
-      const suggestions = data
-        .filter((item: any) => 
-          (item.class === "amenity" && etablissementTypes.has(item.type)) ||
-          (item.class === "shop" && ["bakery", "pastry", "confectionery"].includes(item.type))
+      // Trier par priorité puis supprimer les doublons
+      const suggestionsUniques = suggestions
+        .sort((a, b) => a.priorite - b.priorite)
+        .filter((suggestion, index, self) => 
+          index === self.findIndex(s => s.id === suggestion.id)
         )
-        .map((item: any) => ({
-          id: item.place_id,
-          nom: item.name || item.display_name?.split(",")[0] || "Établissement",
-          adresse: item.display_name,
-          type: item.type,
-          lat: parseFloat(item.lat),
-          lon: parseFloat(item.lon),
-          ville: item.address?.city || item.address?.town || item.address?.village || ""
-        }))
-        .slice(0, 5); // Limiter à 5 suggestions
-
-      setSuggestionsEtablissements(suggestions);
+        .slice(0, 8); // Limiter à 8 suggestions
+      
+      setSuggestionsEtablissements(suggestionsUniques);
+      console.log(`Total final: ${suggestionsUniques.length} suggestions`);
       
     } catch (error) {
       console.error("Erreur recherche établissements:", error);
