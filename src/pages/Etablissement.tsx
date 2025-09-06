@@ -46,7 +46,7 @@ const Etablissement = () => {
     note: '',
     commentaire: '',
     date: new Date().toISOString().split('T')[0],
-    source: 'Saisie manuelle'
+    source: "Recherche manuelle"
   });
   const [avisListe, setAvisListe] = useState<any[]>([]);
   const [saisieEnCours, setSaisieEnCours] = useState(false);
@@ -98,7 +98,7 @@ const Etablissement = () => {
         note: '',
         commentaire: '',
         date: new Date().toISOString().split('T')[0],
-        source: 'Saisie manuelle'
+        source: "Recherche manuelle"
       });
       
       setSaisieEnCours(false);
@@ -231,7 +231,7 @@ const Etablissement = () => {
                     onClick={() => setModeActuel('saisie')}
                   >
                     <FileText className="w-4 h-4" />
-                    Saisie manuelle
+                    Recherche manuelle
                   </Button>
                 </div>
                 <div className="flex-1">
@@ -256,12 +256,12 @@ const Etablissement = () => {
                 {modeActuel === 'recuperation' && <Search className="w-6 h-6 text-blue-600" />}
               </div>
               <h2 className="text-3xl font-bold text-gray-900">
-                {modeActuel === 'saisie' && 'Saisie manuelle d\'avis'}
+                {modeActuel === 'saisie' && "Recherche manuelle d'avis"}
                 {modeActuel === 'recuperation' && 'Récupération automatique d\'avis'}
               </h2>
             </div>
             <p className="text-lg text-gray-600">
-              {modeActuel === 'saisie' && 'Saisissez vos avis manuellement dans le système'}
+              {modeActuel === 'saisie' && "Saisissez vos avis manuellement dans le système"}
               {modeActuel === 'recuperation' && 'Récupérez automatiquement les avis Google, Tripadvisor et Yelp de votre établissement'}
             </p>
           </div>
