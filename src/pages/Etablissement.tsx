@@ -481,7 +481,7 @@ const Etablissement = () => {
 
                 <div className="flex gap-4">
                   <Button className="w-full">
-                    Analyser les avis
+                    Recherche de l'établissement
                   </Button>
                 </div>
               </CardContent>
