@@ -30,8 +30,10 @@ const Etablissement = () => {
   const [etablissement, setEtablissement] = useState("");
   const [periode, setPeriode] = useState("1-mois");
   const [etablissements, setEtablissements] = useState<string[]>([]);
+  const [suggestionsEtablissements, setSuggestionsEtablissements] = useState<any[]>([]);
   const [villes, setVilles] = useState<string[]>([]);
   const [rechercheEnCours, setRechercheEnCours] = useState(false);
+  const [rechercheEtablissementsEnCours, setRechercheEtablissementsEnCours] = useState(false);
   const [rechercheVillesEnCours, setRechercheVillesEnCours] = useState(false);
   const [etablissementSelectionne, setEtablissementSelectionne] = useState("");
   const [villeSelectionnee, setVilleSelectionnee] = useState("");
@@ -58,6 +60,76 @@ const Etablissement = () => {
       ...prev,
       [champ]: valeur
     }));
+  };
+
+  // Recherche automatique d'établissements
+  const rechercherEtablissementsAutomatique = async (nom: string, villeContext: string = "") => {
+    if (!nom || nom.length < 2) {
+      setSuggestionsEtablissements([]);
+      return;
+    }
+
+    try {
+      setRechercheEtablissementsEnCours(true);
+      
+      // Construire la requête de recherche
+      const query = villeContext ? `${nom} ${villeContext}` : nom;
+      
+      // Utiliser l'API Nominatim pour rechercher des établissements
+      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(query)}&extratags=1&namedetails=1`;
+      
+      const response = await fetch(url, {
+        headers: { Accept: "application/json" },
+      });
+      
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data: any[] = await response.json();
+
+      // Filtrer pour ne garder que les établissements (restaurants, cafés, etc.)
+      const etablissementTypes = new Set([
+        "restaurant", "cafe", "bar", "fast_food", "food_court", "pub", 
+        "biergarten", "ice_cream", "nightclub", "bakery", "pastry"
+      ]);
+      
+      const suggestions = data
+        .filter((item: any) => 
+          (item.class === "amenity" && etablissementTypes.has(item.type)) ||
+          (item.class === "shop" && ["bakery", "pastry", "confectionery"].includes(item.type))
+        )
+        .map((item: any) => ({
+          id: item.place_id,
+          nom: item.name || item.display_name?.split(",")[0] || "Établissement",
+          adresse: item.display_name,
+          type: item.type,
+          lat: parseFloat(item.lat),
+          lon: parseFloat(item.lon),
+          ville: item.address?.city || item.address?.town || item.address?.village || ""
+        }))
+        .slice(0, 5); // Limiter à 5 suggestions
+
+      setSuggestionsEtablissements(suggestions);
+      
+    } catch (error) {
+      console.error("Erreur recherche établissements:", error);
+      setSuggestionsEtablissements([]);
+    } finally {
+      setRechercheEtablissementsEnCours(false);
+    }
+  };
+
+  // Sélectionner un établissement depuis les suggestions
+  const selectionnerEtablissement = (etablissementSuggere: any) => {
+    setEtablissement(etablissementSuggere.nom);
+    if (etablissementSuggere.ville && !ville) {
+      setVille(etablissementSuggere.ville);
+    }
+    setSuggestionsEtablissements([]);
+    
+    toast({
+      title: "Établissement sélectionné",
+      description: `${etablissementSuggere.nom} a été sélectionné`,
+      duration: 2000,
+    });
   };
 
   const enregistrerEtablissement = () => {
@@ -249,12 +321,39 @@ const Etablissement = () => {
                     <label className="text-sm font-medium text-gray-700">
                       Établissement <span className="text-red-500">*</span>
                     </label>
-                    <Input
-                      placeholder="Nom de votre établissement..."
-                      value={etablissement}
-                      onChange={(e) => setEtablissement(e.target.value)}
-                      className="w-full"
-                    />
+                    <div className="relative">
+                      <Input
+                        placeholder="Nom de votre établissement..."
+                        value={etablissement}
+                        onChange={(e) => {
+                          setEtablissement(e.target.value);
+                          rechercherEtablissementsAutomatique(e.target.value, ville);
+                        }}
+                        className="w-full"
+                      />
+                      {rechercheEtablissementsEnCours && (
+                        <div className="absolute right-3 top-3">
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                        </div>
+                      )}
+                      
+                      {/* Suggestions dropdown */}
+                      {suggestionsEtablissements.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                          {suggestionsEtablissements.map((suggestion) => (
+                            <div
+                              key={suggestion.id}
+                              onClick={() => selectionnerEtablissement(suggestion)}
+                              className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="font-medium text-gray-900">{suggestion.nom}</div>
+                              <div className="text-sm text-gray-500 truncate">{suggestion.adresse}</div>
+                              <div className="text-xs text-blue-600 capitalize">{suggestion.type}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
