@@ -257,7 +257,7 @@ const Etablissement = () => {
               </div>
               <h2 className="text-3xl font-bold text-gray-900">
                 {modeActuel === 'saisie' && "Recherche manuelle d'établissement"}
-                {modeActuel === 'recuperation' && "Recherche automatique d'avis"}
+                {modeActuel === 'recuperation' && "Recherche automatique d'établissement"}
               </h2>
             </div>
             <p className="text-lg text-gray-600">
