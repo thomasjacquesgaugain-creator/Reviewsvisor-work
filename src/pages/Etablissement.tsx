@@ -67,28 +67,36 @@ const Etablissement = () => {
         {/* Mode selection buttons */}
         <div className="bg-white border border-gray-200 rounded-lg mb-8">
           <div className="px-6 py-4">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 px-4 py-2 text-sm"
-              >
-                <FileText className="w-4 h-4" />
-                Informations générales
-              </Button>
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 px-4 py-2 text-sm"
-              >
-                <MapPin className="w-4 h-4" />
-                Localisation
-              </Button>
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 px-4 py-2 text-sm"
-              >
-                <Users className="w-4 h-4" />
-                Équipe
-              </Button>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 px-4 py-2 text-sm"
+                >
+                  <FileText className="w-4 h-4" />
+                  Informations générales
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 px-4 py-2 text-sm"
+                >
+                  <MapPin className="w-4 h-4" />
+                  Localisation
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 px-4 py-2 text-sm"
+                >
+                  <Users className="w-4 h-4" />
+                  Équipe
+                </Button>
+              </div>
+              <Link to="/importer">
+                <Button className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700">
+                  <Upload className="w-4 h-4" />
+                  Importer des avis
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
