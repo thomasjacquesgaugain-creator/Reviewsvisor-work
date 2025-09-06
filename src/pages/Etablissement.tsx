@@ -25,7 +25,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 const Etablissement = () => {
   const { toast } = useToast();
-  const [modeActuel, setModeActuel] = useState<'recuperation' | 'saisie' | 'import'>('recuperation');
+  const [modeActuel, setModeActuel] = useState<'recuperation' | 'saisie'>('recuperation');
   const [ville, setVille] = useState("");
   const [etablissement, setEtablissement] = useState("");
   const [periode, setPeriode] = useState("1-mois");
@@ -40,11 +40,6 @@ const Etablissement = () => {
   const [positionUtilisateur, setPositionUtilisateur] = useState<{lat: number, lng: number} | null>(null);
   const [geolocalisationEnCours, setGeolocalisationEnCours] = useState(false);
   
-  // États pour l'import CSV
-  const [fichierCSV, setFichierCSV] = useState<File | null>(null);
-  const [donneesCSV, setDonneesCSV] = useState<any[]>([]);
-  const [importEnCours, setImportEnCours] = useState(false);
-  
   // États pour la saisie manuelle
   const [avisManuel, setAvisManuel] = useState({
     nomClient: '',
@@ -56,80 +51,7 @@ const Etablissement = () => {
   const [avisListe, setAvisListe] = useState<any[]>([]);
   const [saisieEnCours, setSaisieEnCours] = useState(false);
 
-  const gererSelectionFichier = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const fichier = event.target.files?.[0];
-    if (fichier) {
-      if (fichier.type !== 'text/csv' && !fichier.name.endsWith('.csv')) {
-        toast({
-          title: "Erreur",
-          description: "Veuillez sélectionner un fichier CSV",
-          variant: "destructive",
-          duration: 3000,
-        });
-        return;
-      }
-      setFichierCSV(fichier);
-      lireFichierCSV(fichier);
-    }
-  };
-
-  const lireFichierCSV = (fichier: File) => {
-    setImportEnCours(true);
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      try {
-        const contenu = e.target?.result as string;
-        const lignes = contenu.split('\n');
-        const headers = lignes[0].split(',').map(h => h.trim().replace(/"/g, ''));
-        
-        const donnees = lignes.slice(1)
-          .filter(ligne => ligne.trim())
-          .map((ligne, index) => {
-            const valeurs = ligne.split(',').map(v => v.trim().replace(/"/g, ''));
-            const objet: any = {};
-            headers.forEach((header, i) => {
-              objet[header] = valeurs[i] || '';
-            });
-            objet.id = index + 1;
-            return objet;
-          });
-
-        setDonneesCSV(donnees);
-        toast({
-          title: "Fichier importé",
-          description: `${donnees.length} avis importés avec succès`,
-          duration: 3000,
-        });
-      } catch (error) {
-        toast({
-          title: "Erreur d'import",
-          description: "Impossible de lire le fichier CSV",
-          variant: "destructive",
-          duration: 3000,
-        });
-      } finally {
-        setImportEnCours(false);
-      }
-    };
-
-    reader.onerror = () => {
-      toast({
-        title: "Erreur",
-        description: "Erreur lors de la lecture du fichier",
-        variant: "destructive",
-        duration: 3000,
-      });
-      setImportEnCours(false);
-    };
-
-    reader.readAsText(fichier);
-  };
-
-  const ouvrirSelecteurFichier = () => {
-    document.getElementById('fichier-csv-input')?.click();
-  };
-
+  // Fonctions pour la saisie manuelle
   const gererChangementAvis = (champ: string, valeur: string) => {
     setAvisManuel(prev => ({
       ...prev,
@@ -189,6 +111,7 @@ const Etablissement = () => {
     }, 500);
   };
 
+  // Obtenir la géolocalisation de l'utilisateur
   const obtenirGeolocalisation = () => {
     if (!navigator.geolocation) {
       toast({
@@ -314,16 +237,6 @@ const Etablissement = () => {
                 <div className="flex-1">
                   <Button 
                     variant="ghost" 
-                    className={`w-full flex items-center gap-2 ${modeActuel === 'import' ? 'text-blue-600 font-medium' : 'text-gray-600'}`}
-                    onClick={() => setModeActuel('import')}
-                  >
-                    <Upload className="w-4 h-4" />
-                    Import CSV
-                  </Button>
-                </div>
-                <div className="flex-1">
-                  <Button 
-                    variant="ghost" 
                     className={`w-full flex items-center gap-2 ${modeActuel === 'recuperation' ? 'text-blue-600 font-medium' : 'text-gray-600'}`}
                     onClick={() => setModeActuel('recuperation')}
                   >
@@ -340,18 +253,15 @@ const Etablissement = () => {
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                 {modeActuel === 'saisie' && <FileText className="w-6 h-6 text-blue-600" />}
-                {modeActuel === 'import' && <Upload className="w-6 h-6 text-blue-600" />}
                 {modeActuel === 'recuperation' && <Search className="w-6 h-6 text-blue-600" />}
               </div>
               <h2 className="text-3xl font-bold text-gray-900">
                 {modeActuel === 'saisie' && 'Saisie manuelle d\'avis'}
-                {modeActuel === 'import' && 'Import CSV d\'avis'}
                 {modeActuel === 'recuperation' && 'Récupération automatique d\'avis'}
               </h2>
             </div>
             <p className="text-lg text-gray-600">
               {modeActuel === 'saisie' && 'Saisissez vos avis manuellement dans le système'}
-              {modeActuel === 'import' && 'Importez vos avis depuis un fichier CSV'}
               {modeActuel === 'recuperation' && 'Récupérez automatiquement les avis Google, Tripadvisor et Yelp de votre établissement'}
             </p>
           </div>
@@ -518,89 +428,6 @@ const Etablissement = () => {
                           </div>
                         </div>
                       ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {modeActuel === 'import' && (
-            <Card className="mb-8">
-              <CardContent className="p-8">
-                <input
-                  id="fichier-csv-input"
-                  type="file"
-                  accept=".csv"
-                  onChange={gererSelectionFichier}
-                  className="hidden"
-                />
-                
-                {!fichierCSV ? (
-                  <div className="text-center py-12">
-                    <Upload className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Choisir un fichier CSV
-                    </h3>
-                    <p className="text-gray-600 mb-6">
-                      Sélectionnez votre fichier CSV contenant les avis clients
-                    </p>
-                    <Button onClick={ouvrirSelecteurFichier}>
-                      Parcourir les fichiers
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
-                      <FileText className="w-5 h-5 text-green-600" />
-                      <div className="flex-1">
-                        <div className="font-medium text-green-900">{fichierCSV.name}</div>
-                        <div className="text-sm text-green-700">
-                          {donneesCSV.length} ligne(s) importée(s)
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {donneesCSV.length > 0 && (
-                      <div className="border rounded-lg overflow-hidden">
-                        <div className="bg-gray-50 p-3 border-b">
-                          <h4 className="font-medium">Aperçu des données</h4>
-                        </div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="bg-gray-50">
-                                {Object.keys(donneesCSV[0] || {}).slice(0, 5).map((header) => (
-                                  <th key={header} className="p-2 text-left border-b">
-                                    {header}
-                                  </th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {donneesCSV.slice(0, 3).map((row, index) => (
-                                <tr key={index}>
-                                  {Object.values(row).slice(0, 5).map((value, colIndex) => (
-                                    <td key={colIndex} className="p-2 border-b">
-                                      {String(value).substring(0, 50)}
-                                      {String(value).length > 50 ? '...' : ''}
-                                    </td>
-                                  ))}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="flex gap-3">
-                      <Button onClick={ouvrirSelecteurFichier} variant="outline">
-                        Changer de fichier
-                      </Button>
-                      <Button className="flex-1">
-                        Analyser les données
-                      </Button>
                     </div>
                   </div>
                 )}
