@@ -508,8 +508,8 @@ const Etablissement = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-            <Building className="w-6 h-6 text-blue-600" />
+          <div className="w-16 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+            <Building className="w-8 h-6 text-blue-600" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Mon Établissement</h1>
