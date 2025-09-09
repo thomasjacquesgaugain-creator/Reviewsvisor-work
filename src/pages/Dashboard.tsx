@@ -530,14 +530,16 @@ const Dashboard = () => {
         {/* Analyse par thématiques */}
         <Card className="relative">
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-purple-600">78%</span>
-              <CardTitle className="text-lg">Analyse par thématiques</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-purple-600">78%</span>
+                <CardTitle className="text-lg">Analyse par thématiques</CardTitle>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowThematiques(!showThematiques)} className="h-6 w-6 p-0 hover:bg-purple-50">
+                {showThematiques ? <ChevronUp className="w-3 h-3 text-purple-600" /> : <ChevronDown className="w-3 h-3 text-purple-600" />}
+              </Button>
             </div>
             <p className="text-sm text-gray-500">Répartition des avis par catégories</p>
-            <Button variant="ghost" size="sm" onClick={() => setShowThematiques(!showThematiques)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-purple-50">
-              {showThematiques ? <ChevronUp className="w-3 h-3 text-purple-600" /> : <ChevronDown className="w-3 h-3 text-purple-600" />}
-            </Button>
           </CardHeader>
           {showThematiques && (
             <CardContent>
