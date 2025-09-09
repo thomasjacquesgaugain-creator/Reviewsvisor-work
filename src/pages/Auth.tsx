@@ -100,9 +100,22 @@ const Auth = () => {
             });
           }
         } else {
+          // Send welcome email
+          try {
+            await supabase.functions.invoke('send-welcome-email', {
+              body: {
+                email,
+                firstName,
+                lastName,
+              }
+            });
+          } catch (emailError) {
+            console.log('Email sending failed:', emailError);
+          }
+          
           toast({
             title: "Compte créé !",
-            description: "Vérifiez votre email pour confirmer votre compte.",
+            description: "Vérifiez votre email pour confirmer votre compte. Un email de bienvenue vous a été envoyé.",
           });
         }
       }
