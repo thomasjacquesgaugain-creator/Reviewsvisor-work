@@ -185,38 +185,40 @@ export const RestaurantInput = ({ onAnalyze }: RestaurantInputProps) => {
                 
                 {/* Suggestions dropdown */}
                 {showSuggestions && suggestions.length > 0 && (
-                  <Card className="absolute top-full left-0 right-0 z-50 mt-1 shadow-lg max-h-64 overflow-y-auto">
-                    <CardContent className="p-0">
-                      {suggestions.map((establishment) => (
-                        <div
-                          key={establishment.place_id}
-                          className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0 transition-colors"
-                          onClick={() => handleEstablishmentSelect(establishment)}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm truncate">{establishment.name}</h4>
-                              <p className="text-xs text-muted-foreground truncate mt-1">
-                                {establishment.address}
-                              </p>
-                              {establishment.rating && (
-                                <div className="flex items-center gap-1 mt-1">
-                                  <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                                  <span className="text-xs text-muted-foreground">
-                                    {establishment.rating.toFixed(1)}
-                                    {establishment.user_ratings_total && 
-                                      ` (${establishment.user_ratings_total} avis)`
-                                    }
-                                  </span>
-                                </div>
-                              )}
+                  <div className="absolute top-full left-0 right-0 z-50 mt-1">
+                    <Card className="bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 max-h-64 overflow-y-auto">
+                      <CardContent className="p-0">
+                        {suggestions.map((establishment) => (
+                          <div
+                            key={establishment.place_id}
+                            className="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0 transition-colors"
+                            onClick={() => handleEstablishmentSelect(establishment)}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-sm truncate text-gray-900 dark:text-gray-100">{establishment.name}</h4>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">
+                                  {establishment.address}
+                                </p>
+                                {establishment.rating && (
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                      {establishment.rating.toFixed(1)}
+                                      {establishment.user_ratings_total && 
+                                        ` (${establishment.user_ratings_total} avis)`
+                                      }
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <MapPin className="w-4 h-4 text-gray-400 ml-2 flex-shrink-0" />
                             </div>
-                            <MapPin className="w-4 h-4 text-muted-foreground ml-2 flex-shrink-0" />
                           </div>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  </div>
                 )}
               </div>
               
