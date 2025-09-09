@@ -26,20 +26,13 @@ import { useToast } from "@/components/ui/use-toast";
 const Etablissement = () => {
   const { toast } = useToast();
   const [modeActuel, setModeActuel] = useState<'recuperation' | 'saisie'>('recuperation');
-  const [ville, setVille] = useState("");
   const [etablissement, setEtablissement] = useState("");
   const [periode, setPeriode] = useState("1-mois");
   const [etablissements, setEtablissements] = useState<string[]>([]);
   const [suggestionsEtablissements, setSuggestionsEtablissements] = useState<any[]>([]);
-  const [suggestionsVilles, setSuggestionsVilles] = useState<any[]>([]);
-  const [villes, setVilles] = useState<string[]>([]);
   const [rechercheEnCours, setRechercheEnCours] = useState(false);
   const [rechercheEtablissementsEnCours, setRechercheEtablissementsEnCours] = useState(false);
-  const [rechercheVillesEnCours, setRechercheVillesEnCours] = useState(false);
   const [etablissementSelectionne, setEtablissementSelectionne] = useState("");
-  const [villeSelectionnee, setVilleSelectionnee] = useState("");
-  const [villeBBox, setVilleBBox] = useState<{s:number;n:number;w:number;e:number;name:string} | null>(null);
-  const [bboxEnCours, setBboxEnCours] = useState(false);
   const [positionUtilisateur, setPositionUtilisateur] = useState<{lat: number, lng: number} | null>(null);
   const [geolocalisationEnCours, setGeolocalisationEnCours] = useState(false);
   
@@ -66,12 +59,11 @@ const Etablissement = () => {
   // Recherche d'établissement avec Google Maps API
   const rechercherEtablissement = async () => {
     const nomEtablissement = etablissement.trim();
-    const nomVille = ville.trim();
     
-    if (!nomEtablissement || !nomVille) {
+    if (!nomEtablissement) {
       toast({
         title: "Erreur",
-        description: "Veuillez renseigner le nom de l'établissement et la ville",
+        description: "Veuillez renseigner le nom de l'établissement",
         variant: "destructive",
         duration: 3000,
       });
@@ -80,38 +72,17 @@ const Etablissement = () => {
 
     if (!GOOGLE_API_KEY || GOOGLE_API_KEY === "YOUR_API_KEY") {
       // Fallback vers OpenStreetMap
-      await rechercherEtablissementsOpenStreetMap(nomEtablissement, nomVille);
+      await rechercherEtablissementsOpenStreetMap(nomEtablissement);
       return;
     }
 
     try {
       setRechercheEnCours(true);
       
-      // 1) Geocode de la ville pour obtenir les coordonnées
-      const geoUrl = new URL("https://maps.googleapis.com/maps/api/geocode/json");
-      geoUrl.searchParams.set("address", nomVille);
-      geoUrl.searchParams.set("language", "fr");
-      geoUrl.searchParams.set("key", GOOGLE_API_KEY);
-      
-      const geoResponse = await fetch(geoUrl.toString());
-      const geoData = await geoResponse.json();
-      const location = geoData?.results?.[0]?.geometry?.location;
-      
-      if (!location) {
-        toast({
-          title: "Ville introuvable",
-          description: `Impossible de localiser "${nomVille}"`,
-          variant: "destructive",
-          duration: 3000,
-        });
-        return;
-      }
-
-      // 2) Text Search pour trouver l'établissement
+      // Text Search pour trouver l'établissement
       const searchUrl = new URL("https://maps.googleapis.com/maps/api/place/textsearch/json");
-      searchUrl.searchParams.set("query", `${nomEtablissement} ${nomVille}`);
-      searchUrl.searchParams.set("location", `${location.lat},${location.lng}`);
-      searchUrl.searchParams.set("radius", "30000"); // 30km
+      searchUrl.searchParams.set("query", nomEtablissement);
+      searchUrl.searchParams.set("region", "fr"); // Limité à la France
       searchUrl.searchParams.set("language", "fr");
       searchUrl.searchParams.set("key", GOOGLE_API_KEY);
       
@@ -137,7 +108,6 @@ const Etablissement = () => {
         type: result.types?.[0] || "establishment",
         lat: result.geometry?.location?.lat || 0,
         lon: result.geometry?.location?.lng || 0,
-        ville: nomVille,
         rating: result.rating || 0,
         user_ratings_total: result.user_ratings_total || 0
       }));
@@ -164,14 +134,14 @@ const Etablissement = () => {
   };
 
   // Fallback vers OpenStreetMap si Google API n'est pas disponible
-  const rechercherEtablissementsOpenStreetMap = async (nom: string, villeContext: string) => {
+  const rechercherEtablissementsOpenStreetMap = async (nom: string) => {
     try {
       setRechercheEnCours(true);
       
       const queries = [
-        `${nom} ${villeContext}`,
-        `${nom}, ${villeContext}`,
-        `"${nom}" ${villeContext}`
+        nom,
+        `"${nom}"`,
+        `${nom} France`
       ];
       
       let suggestions: any[] = [];
@@ -191,9 +161,7 @@ const Etablissement = () => {
           const nouveauxResultats = data
             .filter((item: any) => {
               if (!item.name) return false;
-              const nomMatch = item.name.toLowerCase().includes(nom.toLowerCase());
-              const villeMatch = item.display_name && item.display_name.toLowerCase().includes(villeContext.toLowerCase());
-              return nomMatch || villeMatch;
+              return item.name.toLowerCase().includes(nom.toLowerCase());
             })
             .map((item: any) => ({
               id: item.place_id,
@@ -202,7 +170,6 @@ const Etablissement = () => {
               type: item.type || "establishment",
               lat: parseFloat(item.lat),
               lon: parseFloat(item.lon),
-              ville: item.address?.city || item.address?.town || item.address?.village || villeContext,
             }));
           
           suggestions = [...suggestions, ...nouveauxResultats];
@@ -241,15 +208,10 @@ const Etablissement = () => {
   };
 
   // Recherche automatique d'établissements avec l'Edge Function
-  const rechercherEtablissementsAutomatique = async (nom: string, villeContext: string = "") => {
-    console.log("Début recherche pour:", nom, "ville:", villeContext);
+  const rechercherEtablissementsAutomatique = async (nom: string) => {
+    console.log("Début recherche pour:", nom);
     
     if (!nom || nom.length < 2) {
-      setSuggestionsEtablissements([]);
-      return;
-    }
-
-    if (!villeContext || villeContext.length < 2) {
       setSuggestionsEtablissements([]);
       return;
     }
@@ -258,26 +220,26 @@ const Etablissement = () => {
       setRechercheEtablissementsEnCours(true);
       
       // Utiliser l'Edge Function pour la recherche
-      const response = await fetch('/api/find-establishment', {
+      const response = await fetch('/api/search-establishments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: nom, city: villeContext })
+        body: JSON.stringify({ query: nom })
       });
 
       const data = await response.json();
       
       if (response.ok) {
-        const suggestions = data.results.map((item: any) => ({
-          id: item.place_id || item.osm_id?.toString() || Math.random().toString(),
+        const suggestions = data.establishments.map((item: any) => ({
+          id: item.place_id || Math.random().toString(),
           nom: item.name,
-          adresse: item.formatted_address,
+          adresse: item.address,
           type: "establishment",
           lat: item.location?.lat || 0,
-          lon: item.location?.lng || item.location?.lon || 0,
-          ville: villeContext,
-          source: item.source
+          lon: item.location?.lng || 0,
+          rating: item.rating || 0,
+          user_ratings_total: item.user_ratings_total || 0
         }));
         
         setSuggestionsEtablissements(suggestions.slice(0, 8));
@@ -296,91 +258,11 @@ const Etablissement = () => {
   // Sélectionner un établissement depuis les suggestions
   const selectionnerEtablissement = (etablissementSuggere: any) => {
     setEtablissement(etablissementSuggere.nom);
-    if (etablissementSuggere.ville && !ville) {
-      setVille(etablissementSuggere.ville);
-    }
     setSuggestionsEtablissements([]);
     
     toast({
       title: "Établissement sélectionné",
       description: `${etablissementSuggere.nom} a été sélectionné`,
-      duration: 2000,
-    });
-  };
-
-  // Recherche automatique de villes
-  const rechercherVillesAutomatique = async (nomVille: string) => {
-    console.log("Début recherche villes pour:", nomVille);
-    
-    if (!nomVille || nomVille.length < 2) {
-      setSuggestionsVilles([]);
-      return;
-    }
-
-    try {
-      setRechercheVillesEnCours(true);
-      
-      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(nomVille)}&extratags=1&countrycodes=fr`;
-      
-      const response = await fetch(url, {
-        headers: { 
-          Accept: "application/json",
-          "User-Agent": "AnalytiqueApp/1.0"
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Réponse villes:", data);
-        
-        // Filtrer pour les villes, villages, communes
-        const villeTypes = new Set([
-          "city", "town", "village", "municipality", "administrative"
-        ]);
-        
-        const suggestions = data
-          .filter((item: any) => 
-            (item.class === "place" && villeTypes.has(item.type)) ||
-            (item.class === "boundary" && item.type === "administrative" && 
-             (item.address?.city || item.address?.town || item.address?.village))
-          )
-          .map((item: any) => ({
-            id: item.place_id,
-            nom: item.name || item.display_name?.split(",")[0] || "Ville",
-            adresse: item.display_name,
-            type: item.type,
-            lat: parseFloat(item.lat),
-            lon: parseFloat(item.lon),
-            codePostal: item.address?.postcode || "",
-            departement: item.address?.county || item.address?.state || "",
-            pays: item.address?.country || "France"
-          }))
-          .slice(0, 8); // Limiter à 8 suggestions
-        
-        console.log(`Trouvé ${suggestions.length} villes:`, suggestions);
-        setSuggestionsVilles(suggestions);
-        
-      } else {
-        console.error("Erreur response villes:", response.status);
-        setSuggestionsVilles([]);
-      }
-      
-    } catch (error) {
-      console.error("Erreur recherche villes:", error);
-      setSuggestionsVilles([]);
-    } finally {
-      setRechercheVillesEnCours(false);
-    }
-  };
-
-  // Sélectionner une ville depuis les suggestions
-  const selectionnerVille = (villeSuggere: any) => {
-    setVille(villeSuggere.nom);
-    setSuggestionsVilles([]);
-    
-    toast({
-      title: "Ville sélectionnée",
-      description: `${villeSuggere.nom} a été sélectionnée`,
       duration: 2000,
     });
   };
@@ -580,7 +462,7 @@ const Etablissement = () => {
                         value={etablissement}
                         onChange={(e) => {
                           setEtablissement(e.target.value);
-                          rechercherEtablissementsAutomatique(e.target.value, ville);
+                          rechercherEtablissementsAutomatique(e.target.value);
                         }}
                         className="w-full"
                       />
