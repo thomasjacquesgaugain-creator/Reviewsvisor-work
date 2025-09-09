@@ -158,62 +158,64 @@ const Dashboard = () => {
             </Card>
 
             {/* Notifications section */}
-            <div className="max-w-3xl mx-auto mb-16">
-              <div className="flex items-center gap-2 mb-6">
-                <Bell className="w-5 h-5 text-blue-600" />
-                <h3 className="text-xl font-bold text-gray-900">Notifications</h3>
-              </div>
-              
-              <div className="grid md:grid-cols-2 gap-4">
-                <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 border rounded-xl">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center border-2 border-blue-300 shadow-md">
-                      <MessageCircle className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">3 nouveaux avis</p>
-                      <p className="text-sm text-gray-600">Reçus aujourd'hui</p>
-                    </div>
-                  </CardContent>
-                </Card>
+            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-16">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-2 mb-6">
+                  <Bell className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-xl font-bold text-gray-900">Notifications</h3>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 border rounded-xl">
+                    <CardContent className="p-4 flex items-center gap-3">
+                      <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center border-2 border-blue-300 shadow-md">
+                        <MessageCircle className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">3 nouveaux avis</p>
+                        <p className="text-sm text-gray-600">Reçus aujourd'hui</p>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200 border rounded-xl">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center border-2 border-green-300 shadow-md">
-                      <ArrowUp className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">Note augmentée de 0,3</p>
-                      <p className="text-sm text-gray-600">Cette semaine</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                  <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200 border rounded-xl">
+                    <CardContent className="p-4 flex items-center gap-3">
+                      <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center border-2 border-green-300 shadow-md">
+                        <ArrowUp className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Note augmentée de 0,3</p>
+                        <p className="text-sm text-gray-600">Cette semaine</p>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                <Card className="bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-200 border rounded-xl">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="w-12 h-12 bg-yellow-600 rounded-full flex items-center justify-center border-2 border-yellow-300 shadow-md">
-                      <Star className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">Moyenne 4,2/5</p>
-                      <p className="text-sm text-gray-600">Sur 30 derniers jours</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                  <Card className="bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-200 border rounded-xl">
+                    <CardContent className="p-4 flex items-center gap-3">
+                      <div className="w-12 h-12 bg-yellow-600 rounded-full flex items-center justify-center border-2 border-yellow-300 shadow-md">
+                        <Star className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Moyenne 4,2/5</p>
+                        <p className="text-sm text-gray-600">Sur 30 derniers jours</p>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 border rounded-xl">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center border-2 border-purple-300 shadow-md">
-                      <TrendingUp className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">+15% satisfaction</p>
-                      <p className="text-sm text-gray-600">Par rapport au mois dernier</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+                  <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 border rounded-xl">
+                    <CardContent className="p-4 flex items-center gap-3">
+                      <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center border-2 border-purple-300 shadow-md">
+                        <TrendingUp className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">+15% satisfaction</p>
+                        <p className="text-sm text-gray-600">Par rapport au mois dernier</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
 
           {/* Feature cards */}
           <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
