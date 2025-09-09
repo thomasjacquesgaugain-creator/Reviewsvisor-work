@@ -586,7 +586,7 @@ const Etablissement = () => {
                       />
                       {rechercheEtablissementsEnCours && (
                         <div className="absolute right-3 top-3">
-                          <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
                         </div>
                       )}
                       
