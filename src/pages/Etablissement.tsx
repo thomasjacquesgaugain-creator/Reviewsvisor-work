@@ -609,63 +609,6 @@ const Etablissement = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Ville <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <Input
-                        placeholder="Tapez le nom de votre ville..."
-                        value={ville}
-                        onChange={(e) => {
-                          setVille(e.target.value);
-                          rechercherVillesAutomatique(e.target.value);
-                        }}
-                        className="w-full"
-                      />
-                      {rechercheVillesEnCours && (
-                        <div className="absolute right-3 top-3">
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                        </div>
-                      )}
-                      
-                      {/* Suggestions dropdown villes */}
-                      {suggestionsVilles.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl max-h-60 overflow-y-auto">
-                          {suggestionsVilles.map((suggestion) => (
-                            <div
-                              key={suggestion.id}
-                              onClick={() => selectionnerVille(suggestion)}
-                              className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
-                            >
-                              <div className="font-medium text-gray-900">{suggestion.nom}</div>
-                              <div className="text-sm text-gray-500">{suggestion.departement}</div>
-                              {suggestion.codePostal && (
-                                <div className="text-xs text-blue-600">{suggestion.codePostal}</div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Période d'analyse
-                    </label>
-                    <Select value={periode} onValueChange={setPeriode}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1-mois">1 mois</SelectItem>
-                        <SelectItem value="3-mois">3 mois</SelectItem>
-                        <SelectItem value="6-mois">6 mois</SelectItem>
-                        <SelectItem value="1-an">1 an</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
 
                 <div className="flex gap-4">
