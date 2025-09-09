@@ -538,9 +538,45 @@ const Dashboard = () => {
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                <div>
-                  <div className="font-medium">Services</div>
-                  <div className="text-sm text-gray-500">45% des avis</div>
+                <div className="flex items-center gap-2">
+                  <UtensilsCrossed className="w-4 h-4 text-purple-500" />
+                  <div>
+                    <div className="font-medium">Cuisine</div>
+                    <div className="text-sm text-gray-500">35% des avis</div>
+                  </div>
+                </div>
+                <Badge className="bg-purple-500 text-white">Thématique</Badge>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-purple-500" />
+                  <div>
+                    <div className="font-medium">Service</div>
+                    <div className="text-sm text-gray-500">30% des avis</div>
+                  </div>
+                </div>
+                <Badge className="bg-purple-500 text-white">Thématique</Badge>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Wine className="w-4 h-4 text-purple-500" />
+                  <div>
+                    <div className="font-medium">Ambiance</div>
+                    <div className="text-sm text-gray-500">25% des avis</div>
+                  </div>
+                </div>
+                <Badge className="bg-purple-500 text-white">Thématique</Badge>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-purple-500" />
+                  <div>
+                    <div className="font-medium">Emplacement</div>
+                    <div className="text-sm text-gray-500">10% des avis</div>
+                  </div>
                 </div>
                 <Badge className="bg-purple-500 text-white">Thématique</Badge>
               </div>
