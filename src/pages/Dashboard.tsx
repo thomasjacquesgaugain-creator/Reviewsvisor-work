@@ -170,7 +170,6 @@ const Dashboard = () => {
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Star className="w-5 h-5 text-yellow-500" />
                 <span className="text-2xl font-bold">4.2</span>
-                <TrendingUp className="w-4 h-4 text-green-500 ml-1" />
               </div>
               <p className="text-sm text-gray-600">Note moyenne</p>
               <p className="text-xs text-gray-500">Basée sur 158 avis</p>
