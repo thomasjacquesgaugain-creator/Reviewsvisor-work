@@ -489,7 +489,7 @@ const Etablissement = () => {
               </Link>
               <Link to="/etablissement">
                 <Button variant="ghost" className="text-blue-600 font-medium flex items-center gap-1">
-                  <Building className="w-6 h-6" />
+                  <Building className="w-4 h-4" />
                   Établissement
                 </Button>
               </Link>
