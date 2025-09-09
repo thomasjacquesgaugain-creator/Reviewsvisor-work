@@ -10,6 +10,7 @@ const Dashboard = () => {
   const [showAvis, setShowAvis] = useState(false);
   const [showPlateformes, setShowPlateformes] = useState(false);
   const [showCourbeNote, setShowCourbeNote] = useState(false);
+  const [showAvisPositifs, setShowAvisPositifs] = useState(false);
   const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
@@ -69,6 +70,15 @@ const Dashboard = () => {
     { mois: 'Mai', note: 4.1 },
     { mois: 'Juin', note: 4.2 },
     { mois: 'Juil', note: 4.2 },
+  ];
+
+  // Données pour les 5 meilleurs avis
+  const meilleursAvis = [
+    { id: 1, auteur: "Marie L.", note: 5, commentaire: "Excellent service ! L'équipe est très professionnelle et attentionnée. Je recommande vivement !", date: "02/08/2025", plateforme: "Google" },
+    { id: 2, auteur: "Pierre M.", note: 5, commentaire: "Une expérience parfaite du début à la fin. Qualité exceptionnelle et service irréprochable.", date: "30/07/2025", plateforme: "TripAdvisor" },
+    { id: 3, auteur: "Sophie D.", note: 5, commentaire: "Magnifique ! Tout était parfait, je reviendrai certainement. Bravo à toute l'équipe !", date: "28/07/2025", plateforme: "Google" },
+    { id: 4, auteur: "Thomas R.", note: 5, commentaire: "Service de qualité supérieure, personnel très accueillant. Une adresse à retenir absolument.", date: "26/07/2025", plateforme: "Yelp" },
+    { id: 5, auteur: "Julie C.", note: 5, commentaire: "Parfait en tous points ! Qualité, service, ambiance... tout y est. Félicitations !", date: "25/07/2025", plateforme: "Google" }
   ];
   return <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
@@ -205,13 +215,16 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="relative">
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center gap-1 mb-2">
                 <span className="text-2xl font-bold text-green-600">78%</span>
               </div>
               <p className="text-sm text-gray-600">Avis positifs</p>
               <p className="text-xs text-gray-500">Note ≥ 4 étoiles</p>
+              <Button variant="ghost" size="sm" onClick={() => setShowAvisPositifs(!showAvisPositifs)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-green-50">
+                {showAvisPositifs ? <ChevronUp className="w-3 h-3 text-green-600" /> : <ChevronDown className="w-3 h-3 text-green-600" />}
+              </Button>
             </CardContent>
           </Card>
 
@@ -260,6 +273,39 @@ const Dashboard = () => {
                 </ResponsiveContainer>
               </div>
               <p className="text-sm text-gray-500 mt-4">Date de création du compte: 09/09/2025</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Meilleurs avis */}
+        {showAvisPositifs && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                Top 5 des meilleurs avis
+              </CardTitle>
+              <p className="text-sm text-gray-600">Les avis les mieux notés de vos clients</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {meilleursAvis.map((avis, index) => (
+                  <div key={avis.id} className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-green-700">#{index + 1}</span>
+                        <span className="font-medium">{avis.auteur}</span>
+                        <span className="text-yellow-500">{'★'.repeat(avis.note)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">{avis.plateforme}</span>
+                        <span className="text-xs text-gray-500">{avis.date}</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-700 italic">"{avis.commentaire}"</p>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}
