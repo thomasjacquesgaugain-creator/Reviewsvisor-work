@@ -53,8 +53,9 @@ serve(async (req) => {
     apiUrl.searchParams.set("q", q);                  // texte: nom, enseigne, siret, etc.
     apiUrl.searchParams.set("page", "1");
     apiUrl.searchParams.set("per_page", "8");         // 8 suggestions
-    apiUrl.searchParams.set("etat", "A");             // actifs
-    apiUrl.searchParams.set("precision", "etablissement"); // on veut des établissements
+    apiUrl.searchParams.set("est_ess", "false");      // exclure ESS pour avoir plus de résultats
+    apiUrl.searchParams.set("nature_juridique", "");  // toutes les natures
+    apiUrl.searchParams.set("etat_administratif", "A"); // actifs uniquement
 
     console.log('Calling API:', apiUrl.toString())
 
