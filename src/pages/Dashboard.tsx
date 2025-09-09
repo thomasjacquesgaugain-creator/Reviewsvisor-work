@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [showCourbeNote, setShowCourbeNote] = useState(false);
   const [showAvisPositifs, setShowAvisPositifs] = useState(false);
   const [showAvisNegatifs, setShowAvisNegatifs] = useState(false);
+  const [showThematiques, setShowThematiques] = useState(false);
   const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
@@ -527,61 +528,66 @@ const Dashboard = () => {
         </Card>
 
         {/* Analyse par thématiques */}
-        <Card>
+        <Card className="relative">
           <CardHeader>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-purple-600">78%</span>
               <CardTitle className="text-lg">Analyse par thématiques</CardTitle>
             </div>
             <p className="text-sm text-gray-500">Répartition des avis par catégories</p>
+            <Button variant="ghost" size="sm" onClick={() => setShowThematiques(!showThematiques)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-purple-50">
+              {showThematiques ? <ChevronUp className="w-3 h-3 text-purple-600" /> : <ChevronDown className="w-3 h-3 text-purple-600" />}
+            </Button>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <UtensilsCrossed className="w-4 h-4 text-purple-500" />
-                  <div>
-                    <div className="font-medium">Cuisine</div>
-                    <div className="text-sm text-gray-500">35% des avis</div>
+          {showThematiques && (
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <UtensilsCrossed className="w-4 h-4 text-purple-500" />
+                    <div>
+                      <div className="font-medium">Cuisine</div>
+                      <div className="text-sm text-gray-500">35% des avis</div>
+                    </div>
                   </div>
+                  <Badge className="bg-purple-500 text-white">Thématique</Badge>
                 </div>
-                <Badge className="bg-purple-500 text-white">Thématique</Badge>
-              </div>
 
-              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-purple-500" />
-                  <div>
-                    <div className="font-medium">Service</div>
-                    <div className="text-sm text-gray-500">30% des avis</div>
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-purple-500" />
+                    <div>
+                      <div className="font-medium">Service</div>
+                      <div className="text-sm text-gray-500">30% des avis</div>
+                    </div>
                   </div>
+                  <Badge className="bg-purple-500 text-white">Thématique</Badge>
                 </div>
-                <Badge className="bg-purple-500 text-white">Thématique</Badge>
-              </div>
 
-              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Wine className="w-4 h-4 text-purple-500" />
-                  <div>
-                    <div className="font-medium">Ambiance</div>
-                    <div className="text-sm text-gray-500">25% des avis</div>
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Wine className="w-4 h-4 text-purple-500" />
+                    <div>
+                      <div className="font-medium">Ambiance</div>
+                      <div className="text-sm text-gray-500">25% des avis</div>
+                    </div>
                   </div>
+                  <Badge className="bg-purple-500 text-white">Thématique</Badge>
                 </div>
-                <Badge className="bg-purple-500 text-white">Thématique</Badge>
-              </div>
 
-              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-purple-500" />
-                  <div>
-                    <div className="font-medium">Emplacement</div>
-                    <div className="text-sm text-gray-500">10% des avis</div>
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-purple-500" />
+                    <div>
+                      <div className="font-medium">Emplacement</div>
+                      <div className="text-sm text-gray-500">10% des avis</div>
+                    </div>
                   </div>
+                  <Badge className="bg-purple-500 text-white">Thématique</Badge>
                 </div>
-                <Badge className="bg-purple-500 text-white">Thématique</Badge>
               </div>
-            </div>
-          </CardContent>
+            </CardContent>
+          )}
         </Card>
       </div>
     </div>;
