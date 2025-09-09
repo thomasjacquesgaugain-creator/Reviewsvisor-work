@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 const Dashboard = () => {
   const [showAvis, setShowAvis] = useState(false);
   const [showPlateformes, setShowPlateformes] = useState(false);
+  const [showCourbeNote, setShowCourbeNote] = useState(false);
   const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
@@ -173,6 +174,9 @@ const Dashboard = () => {
               </div>
               <p className="text-sm text-gray-600">Note moyenne</p>
               <p className="text-xs text-gray-500">Basée sur 158 avis</p>
+              <Button variant="ghost" size="sm" onClick={() => setShowCourbeNote(!showCourbeNote)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-yellow-50">
+                {showCourbeNote ? <ChevronUp className="w-3 h-3 text-yellow-600" /> : <ChevronDown className="w-3 h-3 text-yellow-600" />}
+              </Button>
             </CardContent>
           </Card>
 
