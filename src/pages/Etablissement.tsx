@@ -550,9 +550,9 @@ const Etablissement = () => {
           {/* Header dynamique */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-20 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                {modeActuel === 'saisie' && <FileText className="w-10 h-6 text-blue-600" />}
-                {modeActuel === 'recuperation' && <Search className="w-10 h-6 text-blue-600" />}
+              <div className="w-24 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                {modeActuel === 'saisie' && <FileText className="w-12 h-6 text-blue-600" />}
+                {modeActuel === 'recuperation' && <Search className="w-12 h-6 text-blue-600" />}
               </div>
               <h2 className="text-3xl font-bold text-gray-900">
                 {modeActuel === 'saisie' && "Recherche manuelle d'établissement"}
