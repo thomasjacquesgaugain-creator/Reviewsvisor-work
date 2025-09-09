@@ -167,7 +167,7 @@ const Dashboard = () => {
               <div className="grid md:grid-cols-2 gap-4">
                 <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 border rounded-xl">
                   <CardContent className="p-4 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center border-2 border-blue-300 shadow-md">
                       <MessageCircle className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -179,7 +179,7 @@ const Dashboard = () => {
 
                 <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200 border rounded-xl">
                   <CardContent className="p-4 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center border-2 border-green-300 shadow-md">
                       <ArrowUp className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -191,7 +191,7 @@ const Dashboard = () => {
 
                 <Card className="bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-200 border rounded-xl">
                   <CardContent className="p-4 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-yellow-600 rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 bg-yellow-600 rounded-full flex items-center justify-center border-2 border-yellow-300 shadow-md">
                       <Star className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -203,7 +203,7 @@ const Dashboard = () => {
 
                 <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 border rounded-xl">
                   <CardContent className="p-4 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center border-2 border-purple-300 shadow-md">
                       <TrendingUp className="w-5 h-5 text-white" />
                     </div>
                     <div>
