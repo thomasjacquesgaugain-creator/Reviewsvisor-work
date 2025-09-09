@@ -20,15 +20,15 @@ export const HeroSection = () => {
             <div className="flex flex-wrap items-center justify-center gap-8 text-sm">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-gray-700">Aucune carte de crédit requise</span>
+                <span className="text-gray-700">Transformer retour en conception</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-gray-700">Analyse gratuite</span>
+                <span className="text-gray-700">Vos avis, votre croissance</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-gray-700">Résultats en 30 secondes</span>
+                <span className="text-gray-700">Un outil, une centralisation</span>
               </div>
             </div>
           </div>
@@ -67,15 +67,15 @@ export const HeroSection = () => {
               <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 pt-4">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Aucune carte de crédit requise</span>
+                  <span>Transformer retour en conception</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Analyse gratuite</span>
+                  <span>Vos avis, votre croissance</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Résultats en 30 secondes</span>
+                  <span>Un outil, une centralisation</span>
                 </div>
               </div>
             </CardContent>
