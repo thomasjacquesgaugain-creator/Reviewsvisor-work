@@ -11,6 +11,7 @@ const Dashboard = () => {
   const [showPlateformes, setShowPlateformes] = useState(false);
   const [showCourbeNote, setShowCourbeNote] = useState(false);
   const [showAvisPositifs, setShowAvisPositifs] = useState(false);
+  const [showAvisNegatifs, setShowAvisNegatifs] = useState(false);
   const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
@@ -79,6 +80,15 @@ const Dashboard = () => {
     { id: 3, auteur: "Sophie D.", note: 5, commentaire: "Magnifique ! Tout était parfait, je reviendrai certainement. Bravo à toute l'équipe !", date: "28/07/2025", plateforme: "Google" },
     { id: 4, auteur: "Thomas R.", note: 5, commentaire: "Service de qualité supérieure, personnel très accueillant. Une adresse à retenir absolument.", date: "26/07/2025", plateforme: "Yelp" },
     { id: 5, auteur: "Julie C.", note: 5, commentaire: "Parfait en tous points ! Qualité, service, ambiance... tout y est. Félicitations !", date: "25/07/2025", plateforme: "Google" }
+  ];
+
+  // Données pour les 5 pires avis
+  const piresAvis = [
+    { id: 1, auteur: "Marc D.", note: 1, commentaire: "Service décevant, temps d'attente très long et personnel peu professionnel.", date: "01/08/2025", plateforme: "Google" },
+    { id: 2, auteur: "Lisa F.", note: 1, commentaire: "Très mauvaise expérience, qualité insuffisante pour le prix demandé. Je ne recommande pas.", date: "29/07/2025", plateforme: "TripAdvisor" },
+    { id: 3, auteur: "Ahmed B.", note: 2, commentaire: "Pas à la hauteur des attentes. Service lent et produits de qualité moyenne.", date: "27/07/2025", plateforme: "Yelp" },
+    { id: 4, auteur: "Claire M.", note: 1, commentaire: "Expérience décevante, personnel désagréable et prestations insuffisantes.", date: "24/07/2025", plateforme: "Google" },
+    { id: 5, auteur: "David L.", note: 2, commentaire: "Rapport qualité-prix décevant, beaucoup d'améliorations à apporter.", date: "22/07/2025", plateforme: "TripAdvisor" }
   ];
   return <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
@@ -228,7 +238,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="relative">
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
@@ -240,6 +250,9 @@ const Dashboard = () => {
                   <div className="text-xs text-gray-400">avis négatifs</div>
                 </div>
               </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowAvisNegatifs(!showAvisNegatifs)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-red-50">
+                {showAvisNegatifs ? <ChevronUp className="w-3 h-3 text-red-600" /> : <ChevronDown className="w-3 h-3 text-red-600" />}
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -273,6 +286,39 @@ const Dashboard = () => {
                 </ResponsiveContainer>
               </div>
               <p className="text-sm text-gray-500 mt-4">Date de création du compte: 09/09/2025</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Pires avis */}
+        {showAvisNegatifs && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+                Top 5 des pires avis
+              </CardTitle>
+              <p className="text-sm text-gray-600">Les avis les moins bien notés nécessitant votre attention</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {piresAvis.map((avis, index) => (
+                  <div key={avis.id} className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-red-700">#{index + 1}</span>
+                        <span className="font-medium">{avis.auteur}</span>
+                        <span className="text-yellow-500">{'★'.repeat(avis.note)}{'☆'.repeat(5-avis.note)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">{avis.plateforme}</span>
+                        <span className="text-xs text-gray-500">{avis.date}</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-700 italic">"{avis.commentaire}"</p>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}
