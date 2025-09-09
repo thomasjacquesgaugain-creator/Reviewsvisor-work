@@ -80,7 +80,7 @@ const Dashboard = () => {
                 <Link to="/etablissement">
                   <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
                     <Building className="w-5 h-5 mr-2" />
-                    Importer des avis
+                    Établissement
                   </Button>
                 </Link>
                 <Link to="/dashboard">
