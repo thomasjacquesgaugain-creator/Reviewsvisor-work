@@ -23,6 +23,7 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import AutocompleteEtablissementInline from "@/components/AutocompleteEtablissementInline";
+import AutocompleteEtablissementsFR from "@/components/AutocompleteEtablissementsFR";
 
 const Etablissement = () => {
   const { toast } = useToast();
@@ -454,14 +455,15 @@ const Etablissement = () => {
               <CardContent className="p-8">
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">Établissement *</label>
-                  <AutocompleteEtablissementInline 
-                    onPicked={(place) => {
-                      setEtablissement(place.name);
+                  <AutocompleteEtablissementsFR 
+                    onPicked={(item) => {
+                      setEtablissement(item.label);
                       toast({
-                        title: "Établissement sélectionné",
-                        description: `${place.name} a été sélectionné`,
-                        duration: 2000,
+                        title: "Établissement français sélectionné",
+                        description: `${item.label} (SIRET: ${item.siret || 'Non disponible'})`,
+                        duration: 3000,
                       });
+                      console.log("Données SIRET:", item);
                     }}
                   />
                 </div>
