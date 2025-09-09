@@ -208,7 +208,7 @@ const Dashboard = () => {
                     <LineChart data={courbeNoteData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="mois" />
-                      <YAxis domain={[0, 5]} />
+                      <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
                       <Tooltip formatter={(value) => [`${value}/5`, 'Note moyenne']} />
                       <Line 
                         type="monotone" 
