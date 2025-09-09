@@ -49,8 +49,7 @@ const Etablissement = () => {
     url: '',
     adresse: '',
     telephone: '',
-    email: '',
-    type: 'Restaurant'
+    email: ''
   });
 
   const [saisieEnCours, setSaisieEnCours] = useState(false);
@@ -786,25 +785,6 @@ const Etablissement = () => {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Type d'établissement
-                    </label>
-                    <Select value={etablissementManuel.type} onValueChange={(value) => gererChangementEtablissement('type', value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Restaurant">Restaurant</SelectItem>
-                        <SelectItem value="Café">Café</SelectItem>
-                        <SelectItem value="Bar">Bar</SelectItem>
-                        <SelectItem value="Hôtel">Hôtel</SelectItem>
-                        <SelectItem value="Commerce">Commerce</SelectItem>
-                        <SelectItem value="Service">Service</SelectItem>
-                        <SelectItem value="Autre">Autre</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
 
                 <Button 
