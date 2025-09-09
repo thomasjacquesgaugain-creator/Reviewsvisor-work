@@ -220,7 +220,7 @@ const Dashboard = () => {
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-                <p className="text-sm text-gray-500 mt-4">Date de création du compte:</p>
+                <p className="text-sm text-gray-500 mt-4">Date de création du compte: 09/09/2025</p>
               </CardContent>
             </Card>
           </div>
