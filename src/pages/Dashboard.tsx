@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, Building2, Star } from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -419,25 +419,34 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                <div>
-                  <div className="font-medium">Temps d'attente trop long</div>
-                  <div className="text-sm text-gray-500">25% des avis</div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-red-500" />
+                  <div>
+                    <div className="font-medium">Temps d'attente trop long</div>
+                    <div className="text-sm text-gray-500">25% des avis</div>
+                  </div>
                 </div>
                 <Badge variant="destructive">Critique</Badge>
               </div>
               
               <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                <div>
-                  <div className="font-medium">Service client insatisfaisant</div>
-                  <div className="text-sm text-gray-500">20% des avis</div>
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-red-500" />
+                  <div>
+                    <div className="font-medium">Service client insatisfaisant</div>
+                    <div className="text-sm text-gray-500">20% des avis</div>
+                  </div>
                 </div>
                 <Badge variant="destructive">Critique</Badge>
               </div>
               
               <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                <div>
-                  <div className="font-medium">Prix trop élevés</div>
-                  <div className="text-sm text-gray-500">15% des avis</div>
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-yellow-600" />
+                  <div>
+                    <div className="font-medium">Prix trop élevés</div>
+                    <div className="text-sm text-gray-500">15% des avis</div>
+                  </div>
                 </div>
                 <Badge className="bg-yellow-500 text-white">Moyen</Badge>
               </div>
@@ -455,25 +464,34 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div>
-                  <div className="font-medium">Qualité exceptionnelle</div>
-                  <div className="text-sm text-gray-500">30% des avis</div>
+                <div className="flex items-center gap-2">
+                  <UtensilsCrossed className="w-4 h-4 text-green-500" />
+                  <div>
+                    <div className="font-medium">Qualité exceptionnelle</div>
+                    <div className="text-sm text-gray-500">30% des avis</div>
+                  </div>
                 </div>
                 <Badge className="bg-green-500 text-white">Force</Badge>
               </div>
               
               <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div>
-                  <div className="font-medium">Satisfaction générale</div>
-                  <div className="text-sm text-gray-500">25% des avis</div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <div>
+                    <div className="font-medium">Satisfaction générale</div>
+                    <div className="text-sm text-gray-500">25% des avis</div>
+                  </div>
                 </div>
                 <Badge className="bg-green-500 text-white">Force</Badge>
               </div>
               
               <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div>
-                  <div className="font-medium">Bonne ambiance</div>
-                  <div className="text-sm text-gray-500">20% des avis</div>
+                <div className="flex items-center gap-2">
+                  <Wine className="w-4 h-4 text-green-500" />
+                  <div>
+                    <div className="font-medium">Bonne ambiance</div>
+                    <div className="text-sm text-gray-500">20% des avis</div>
+                  </div>
                 </div>
                 <Badge className="bg-green-500 text-white">Force</Badge>
               </div>
