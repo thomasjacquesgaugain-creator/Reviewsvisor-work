@@ -37,17 +37,25 @@ export const RestaurantInput = ({ onAnalyze }: RestaurantInputProps) => {
 
   // Search for establishments with debounce
   const searchEstablishments = async (query: string) => {
+    console.log('searchEstablishments called with query:', query);
+    
     if (query.trim().length < 2) {
+      console.log('Query too short, clearing suggestions');
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
 
     setIsSearching(true);
+    console.log('Starting search for:', query);
+    
     try {
+      console.log('Calling supabase function search-establishments');
       const { data, error } = await supabase.functions.invoke('search-establishments', {
         body: { query: query.trim() }
       });
+
+      console.log('Function response:', { data, error });
 
       if (error) {
         console.error('Error searching establishments:', error);
@@ -59,10 +67,11 @@ export const RestaurantInput = ({ onAnalyze }: RestaurantInputProps) => {
         return;
       }
 
+      console.log('Establishments found:', data?.establishments?.length || 0);
       setSuggestions(data.establishments || []);
       setShowSuggestions(true);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error in searchEstablishments:', error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la recherche.",
@@ -75,6 +84,7 @@ export const RestaurantInput = ({ onAnalyze }: RestaurantInputProps) => {
 
   // Handle input change with debounce
   const handleInputChange = (value: string) => {
+    console.log('Input changed to:', value);
     setRestaurantName(value);
     setSelectedEstablishment(null);
     
@@ -85,6 +95,7 @@ export const RestaurantInput = ({ onAnalyze }: RestaurantInputProps) => {
 
     // Set new timeout for search
     searchTimeoutRef.current = setTimeout(() => {
+      console.log('Debounce timeout fired, searching for:', value);
       searchEstablishments(value);
     }, 300);
   };
