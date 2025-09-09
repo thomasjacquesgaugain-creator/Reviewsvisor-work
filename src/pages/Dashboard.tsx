@@ -188,30 +188,6 @@ const Dashboard = () => {
               <Button variant="ghost" size="sm" onClick={() => setShowCourbeNote(!showCourbeNote)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-yellow-50">
                 {showCourbeNote ? <ChevronUp className="w-3 h-3 text-yellow-600" /> : <ChevronDown className="w-3 h-3 text-yellow-600" />}
               </Button>
-              
-              {showCourbeNote && (
-                <div className="mt-4 border-t pt-4">
-                  <h4 className="font-medium text-gray-700 mb-3 text-sm">Évolution de la note moyenne :</h4>
-                  <div className="h-48 bg-gray-50 rounded-lg p-3">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={courbeNoteData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="mois" />
-                        <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
-                        <Tooltip formatter={(value) => [`${value}/5`, 'Note moyenne']} />
-                        <Line 
-                          type="monotone" 
-                          dataKey="note" 
-                          stroke="#eab308" 
-                          strokeWidth={2}
-                          dot={{ fill: '#eab308', strokeWidth: 2, r: 3 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">Date de création du compte: 09/09/2025</p>
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -254,6 +230,39 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Courbe de progression de la note */}
+        {showCourbeNote && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-500" />
+                Évolution de la note moyenne
+              </CardTitle>
+              <p className="text-sm text-gray-600">Progression de votre note depuis la création du compte</p>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={courbeNoteData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="mois" />
+                    <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
+                    <Tooltip formatter={(value) => [`${value}/5`, 'Note moyenne']} />
+                    <Line 
+                      type="monotone" 
+                      dataKey="note" 
+                      stroke="#eab308" 
+                      strokeWidth={3}
+                      dot={{ fill: '#eab308', strokeWidth: 2, r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="text-sm text-gray-500 mt-4">Date de création du compte: 09/09/2025</p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Plateformes connectées - Affichées en dessous des métriques */}
         {showPlateformes && <Card className="mb-8">
