@@ -47,9 +47,7 @@ const Etablissement = () => {
   const [etablissementManuel, setEtablissementManuel] = useState({
     nom: '',
     url: '',
-    adresse: '',
-    telephone: '',
-    email: ''
+    adresse: ''
   });
 
   const [saisieEnCours, setSaisieEnCours] = useState(false);
@@ -760,28 +758,6 @@ const Etablissement = () => {
                       placeholder="Ex: 123 Rue de la Paix, 75001 Paris"
                       value={etablissementManuel.adresse}
                       onChange={(e) => gererChangementEtablissement('adresse', e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Téléphone
-                    </label>
-                    <Input
-                      placeholder="Ex: +33 1 23 45 67 89"
-                      value={etablissementManuel.telephone}
-                      onChange={(e) => gererChangementEtablissement('telephone', e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Email
-                    </label>
-                    <Input
-                      placeholder="Ex: contact@legourmet.fr"
-                      value={etablissementManuel.email}
-                      onChange={(e) => gererChangementEtablissement('email', e.target.value)}
                     />
                   </div>
 
