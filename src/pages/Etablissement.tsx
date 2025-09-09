@@ -508,8 +508,8 @@ const Etablissement = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <div className="w-16 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-            <Building className="w-8 h-6 text-blue-600" />
+          <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+            <Building className="w-6 h-6 text-blue-600" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Mon Établissement</h1>
@@ -550,9 +550,9 @@ const Etablissement = () => {
           {/* Header dynamique */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-32 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                {modeActuel === 'saisie' && <FileText className="w-16 h-6 text-blue-600" />}
-                {modeActuel === 'recuperation' && <Search className="w-16 h-6 text-blue-600" />}
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                {modeActuel === 'saisie' && <FileText className="w-6 h-6 text-blue-600" />}
+                {modeActuel === 'recuperation' && <Search className="w-6 h-6 text-blue-600" />}
               </div>
               <h2 className="text-3xl font-bold text-gray-900">
                 {modeActuel === 'saisie' && "Recherche manuelle d'établissement"}
@@ -586,7 +586,7 @@ const Etablissement = () => {
                       />
                       {rechercheEtablissementsEnCours && (
                         <div className="absolute right-3 top-3">
-                          <div className="animate-spin rounded-full h-4 w-8 border-2 border-blue-600 border-t-transparent"></div>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
                         </div>
                       )}
                       
