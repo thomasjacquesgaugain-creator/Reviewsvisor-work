@@ -401,6 +401,54 @@ const Etablissement = () => {
           </div>
         </div>
 
+        {/* Section Mon Établissement */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building className="w-5 h-5" />
+              Mon Établissement
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Nom de l'établissement</label>
+                <div className="text-gray-900 font-medium">Restaurant Le Petit Paris</div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Adresse</label>
+                <div className="text-gray-900">123 Rue de la République, 75001 Paris</div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Téléphone</label>
+                <div className="text-gray-900">01 42 36 58 79</div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Email</label>
+                <div className="text-gray-900">contact@lepetitparis.fr</div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Type d'établissement</label>
+                <div className="text-gray-900">Restaurant</div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">SIRET</label>
+                <div className="text-gray-900">12345678912345</div>
+              </div>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <Button variant="outline" className="flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Modifier les informations
+              </Button>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Ajouter une photo
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Import section */}
         <div className="mb-8">
           {/* Header buttons */}
