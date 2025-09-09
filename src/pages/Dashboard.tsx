@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, Building2, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 const Dashboard = () => {
   const [showAvis, setShowAvis] = useState(false);
   const [showPlateformes, setShowPlateformes] = useState(false);
@@ -58,6 +59,17 @@ const Dashboard = () => {
     commentaire: "Service correct mais un peu d'attente",
     date: "28/07/2025"
   }];
+
+  // Données pour la courbe de progression de la note
+  const courbeNoteData = [
+    { mois: 'Jan', note: 3.8 },
+    { mois: 'Fév', note: 3.9 },
+    { mois: 'Mar', note: 4.0 },
+    { mois: 'Avr', note: 3.7 },
+    { mois: 'Mai', note: 4.1 },
+    { mois: 'Juin', note: 4.2 },
+    { mois: 'Juil', note: 4.2 },
+  ];
   return <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <nav className="bg-white border-b border-gray-200">
@@ -178,6 +190,40 @@ const Dashboard = () => {
               </Button>
             </CardContent>
           </Card>
+
+        {/* Courbe de progression de la note */}
+        {showCourbeNote && (
+          <div className="col-span-full mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Star className="w-5 h-5 text-yellow-500" />
+                  Évolution de la note moyenne
+                </CardTitle>
+                <p className="text-sm text-gray-600">Progression de votre note depuis la création du compte</p>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={courbeNoteData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="mois" />
+                      <YAxis domain={[3.5, 4.5]} />
+                      <Tooltip formatter={(value) => [`${value}/5`, 'Note moyenne']} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="note" 
+                        stroke="#eab308" 
+                        strokeWidth={3}
+                        dot={{ fill: '#eab308', strokeWidth: 2, r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
           <Card className="relative">
             <CardContent className="p-6 text-center">
