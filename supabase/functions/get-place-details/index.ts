@@ -35,7 +35,9 @@ serve(async (req) => {
   }
 
   try {
-    const { placeId, sessionToken } = await req.json();
+    const url = new URL(req.url);
+    const placeId = url.searchParams.get('placeId') || '';
+    const sessionToken = url.searchParams.get('sessionToken') || '';
     
     if (!placeId) {
       return new Response(
@@ -60,9 +62,9 @@ serve(async (req) => {
     }
 
     // Use Google Places Details API
-    const url = new URL('https://maps.googleapis.com/maps/api/place/details/json');
-    url.searchParams.append('place_id', placeId);
-    url.searchParams.append('fields', [
+    const apiUrl = new URL('https://maps.googleapis.com/maps/api/place/details/json');
+    apiUrl.searchParams.append('place_id', placeId);
+    apiUrl.searchParams.append('fields', [
       'place_id',
       'name',
       'formatted_address',
@@ -74,15 +76,15 @@ serve(async (req) => {
       'opening_hours/weekday_text',
       'types',
     ].join(','));
-    url.searchParams.append('language', 'fr');
+    apiUrl.searchParams.append('language', 'fr');
     if (sessionToken) {
-      url.searchParams.append('sessiontoken', sessionToken);
+      apiUrl.searchParams.append('sessiontoken', sessionToken);
     }
-    url.searchParams.append('key', googleMapsApiKey);
+    apiUrl.searchParams.append('key', googleMapsApiKey);
 
     console.log('Place details request for place_id:', placeId);
     
-    const response = await fetch(url.toString());
+    const response = await fetch(apiUrl.toString());
     const data: PlaceDetailsResponse = await response.json();
 
     if (!response.ok) {
