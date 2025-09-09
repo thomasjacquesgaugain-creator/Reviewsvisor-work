@@ -516,6 +516,26 @@ const Etablissement = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Section Réponse automatique */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Info className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Réponse automatique</h3>
+                  <p className="text-sm text-gray-600">Configurez les réponses automatiques aux avis</p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm">
+                Configurer
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>;
 };
