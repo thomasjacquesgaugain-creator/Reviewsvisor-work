@@ -365,7 +365,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Analyse par thématiques */}
-        <Card className="mb-8">
+        <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-purple-600">78%</span>
@@ -385,17 +385,6 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Réponse automatique */}
-        <div className="fixed bottom-8 right-8">
-          <Button 
-            size="lg" 
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center gap-2 px-6 py-3"
-          >
-            <Target className="w-5 h-5" />
-            Réponse automatique
-          </Button>
-        </div>
       </div>
     </div>;
 };
