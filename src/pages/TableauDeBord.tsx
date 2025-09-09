@@ -1,9 +1,69 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
+  const [userProfile, setUserProfile] = useState<{ first_name: string; last_name: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const getUserProfile = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          navigate('/auth');
+          return;
+        }
+
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching profile:', error);
+          toast({
+            title: "Erreur",
+            description: "Impossible de récupérer les informations du profil.",
+            variant: "destructive",
+          });
+        } else {
+          setUserProfile(profile);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getUserProfile();
+  }, [navigate, toast]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Chargement...</div>
+      </div>
+    );
+  }
+
+  const displayName = userProfile 
+    ? `${userProfile.first_name} ${userProfile.last_name}` 
+    : "Utilisateur";
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Background with organic shapes */}
@@ -45,9 +105,13 @@ const Dashboard = () => {
                   </Button>
                 </Link>
                 <div className="flex items-center gap-2 text-gray-700">
-                  <span>Bonjour, Yohan Lopes</span>
+                  <span>Bonjour, {displayName}</span>
                 </div>
-                <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
+                <Button 
+                  variant="ghost" 
+                  className="text-gray-700 flex items-center gap-1"
+                  onClick={handleLogout}
+                >
                   <LogOut className="w-4 h-4" />
                   Déconnexion
                 </Button>
@@ -71,7 +135,7 @@ const Dashboard = () => {
           {/* Welcome card */}
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-16">
             <CardContent className="p-8 text-center space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900">Bienvenue, Yohan Lopes !</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Bienvenue, {displayName} !</h2>
               <p className="text-gray-600">
                 Vous êtes connecté et pouvez maintenant analyser vos avis clients.
               </p>
