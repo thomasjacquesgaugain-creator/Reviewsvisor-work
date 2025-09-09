@@ -22,7 +22,7 @@ import {
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import AutocompleteEtablissement from "@/components/AutocompleteEtablissement";
+import AutocompleteEtablissementInline from "@/components/AutocompleteEtablissementInline";
 
 const Etablissement = () => {
   const { toast } = useToast();
@@ -452,16 +452,19 @@ const Etablissement = () => {
           {modeActuel === 'recuperation' && (
             <Card className="mb-8">
               <CardContent className="p-8">
-                <AutocompleteEtablissement 
-                  onPicked={(place) => {
-                    setEtablissement(place.name);
-                    toast({
-                      title: "Établissement sélectionné",
-                      description: `${place.name} a été sélectionné`,
-                      duration: 2000,
-                    });
-                  }}
-                />
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Établissement *</label>
+                  <AutocompleteEtablissementInline 
+                    onPicked={(place) => {
+                      setEtablissement(place.name);
+                      toast({
+                        title: "Établissement sélectionné",
+                        description: `${place.name} a été sélectionné`,
+                        duration: 2000,
+                      });
+                    }}
+                  />
+                </div>
 
                 <div className="mt-6">
                   <Button 
