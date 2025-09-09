@@ -22,6 +22,7 @@ import {
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import AutocompleteEtablissement from "@/components/AutocompleteEtablissement";
 
 const Etablissement = () => {
   const { toast } = useToast();
@@ -451,53 +452,22 @@ const Etablissement = () => {
           {modeActuel === 'recuperation' && (
             <Card className="mb-8">
               <CardContent className="p-8">
-                <div className="grid md:grid-cols-3 gap-6 mb-6">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Établissement <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <Input
-                        placeholder="Nom de votre établissement..."
-                        value={etablissement}
-                        onChange={(e) => {
-                          setEtablissement(e.target.value);
-                          rechercherEtablissementsAutomatique(e.target.value);
-                        }}
-                        className="w-full"
-                      />
-                      {rechercheEtablissementsEnCours && (
-                        <div className="absolute right-3 top-3">
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                        </div>
-                      )}
-                      
-                      {/* Suggestions dropdown */}
-                      {suggestionsEtablissements.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl max-h-60 overflow-y-auto">
-                          {suggestionsEtablissements.map((suggestion) => (
-                            <div
-                              key={suggestion.id}
-                              onClick={() => selectionnerEtablissement(suggestion)}
-                              className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
-                            >
-                              <div className="font-medium text-gray-900">{suggestion.nom}</div>
-                              <div className="text-sm text-gray-500 truncate">{suggestion.adresse}</div>
-                              <div className="text-xs text-blue-600 capitalize">{suggestion.type}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                <AutocompleteEtablissement 
+                  onPicked={(place) => {
+                    setEtablissement(place.name);
+                    toast({
+                      title: "Établissement sélectionné",
+                      description: `${place.name} a été sélectionné`,
+                      duration: 2000,
+                    });
+                  }}
+                />
 
-                </div>
-
-                <div className="flex gap-4">
+                <div className="mt-6">
                   <Button 
                     className="w-full"
                     onClick={rechercherEtablissement}
-                    disabled={rechercheEnCours}
+                    disabled={rechercheEnCours || !etablissement}
                   >
                     {rechercheEnCours ? (
                       <>
@@ -505,7 +475,7 @@ const Etablissement = () => {
                         Recherche en cours...
                       </>
                     ) : (
-                      "Recherche de l'établissement"
+                      "Analyser cet établissement"
                     )}
                   </Button>
                 </div>
