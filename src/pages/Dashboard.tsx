@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare } from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -655,8 +655,8 @@ const Dashboard = () => {
         <Card className="mb-8">
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <MessageSquare className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <Info className="w-5 h-5 text-purple-600" />
               </div>
               <div>
                 <div className="text-sm text-gray-500">Réponse automatique</div>
