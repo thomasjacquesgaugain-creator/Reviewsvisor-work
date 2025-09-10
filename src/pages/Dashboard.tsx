@@ -328,9 +328,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="relative">
-            
-          </Card>
+          
         </div>
 
         {/* Courbe de progression de la note */}
