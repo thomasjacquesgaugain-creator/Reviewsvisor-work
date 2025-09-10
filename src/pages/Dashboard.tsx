@@ -652,7 +652,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Réponse automatique */}
-        <Card className="relative">
+        <Card className="relative mt-6">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
