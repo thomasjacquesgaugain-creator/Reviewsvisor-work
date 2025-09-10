@@ -197,7 +197,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Métriques */}
-        <div className="grid md:grid-cols-5 gap-6 mb-8">
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card className="relative">
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
@@ -605,6 +605,22 @@ const Dashboard = () => {
               </div>
             </CardContent>
           )}
+        </Card>
+
+        {/* Réponse automatique */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">Réponse automatique</div>
+                <div className="text-2xl font-bold">Activée</div>
+                <div className="text-xs text-gray-400">aux avis clients</div>
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </div>
     </div>;
