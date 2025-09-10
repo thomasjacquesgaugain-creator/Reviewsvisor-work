@@ -652,19 +652,18 @@ const Dashboard = () => {
         </Card>
 
         {/* Réponse automatique */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Info className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Réponse automatique</div>
-                <div className="text-2xl font-bold">Activée</div>
-                <div className="text-xs text-gray-400">aux avis clients</div>
+        <Card className="relative">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-purple-600">
+                  <Info className="w-6 h-6" />
+                </span>
+                <CardTitle className="text-lg">Réponse automatique</CardTitle>
               </div>
             </div>
-          </CardContent>
+            <p className="text-sm text-gray-500">Système automatisé aux avis clients</p>
+          </CardHeader>
         </Card>
       </div>
     </div>;
