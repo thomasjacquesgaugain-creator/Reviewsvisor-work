@@ -130,6 +130,36 @@ export type Database = {
           },
         ]
       }
+      profile_access_logs: {
+        Row: {
+          access_type: string
+          accessed_at: string
+          accessed_profile_id: string
+          accessor_user_id: string
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+        }
+        Insert: {
+          access_type: string
+          accessed_at?: string
+          accessed_profile_id: string
+          accessor_user_id: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+        }
+        Update: {
+          access_type?: string
+          accessed_at?: string
+          accessed_profile_id?: string
+          accessor_user_id?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -373,6 +403,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_profile_access: {
+        Args: { access_type?: string; profile_id: string }
+        Returns: undefined
       }
     }
     Enums: {
