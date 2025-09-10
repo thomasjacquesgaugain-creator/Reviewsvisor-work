@@ -200,20 +200,6 @@ const Dashboard = () => {
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card className="relative">
             <CardContent className="p-6 text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Star className="w-5 h-5 text-yellow-500" />
-                <span className="text-2xl font-bold">4.2</span>
-              </div>
-              <p className="text-sm text-gray-600">Note moyenne</p>
-              <p className="text-xs text-gray-500">Basée sur 158 avis</p>
-              <Button variant="ghost" size="sm" onClick={() => setShowCourbeNote(!showCourbeNote)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-yellow-50">
-                {showCourbeNote ? <ChevronUp className="w-3 h-3 text-yellow-600" /> : <ChevronDown className="w-3 h-3 text-yellow-600" />}
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="relative">
-            <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center gap-1 mb-2">
                 <span className="text-2xl font-bold text-blue-600">326</span>
                 <TrendingUp className="w-4 h-4 text-green-500 ml-1" />
