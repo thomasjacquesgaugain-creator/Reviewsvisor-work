@@ -13,6 +13,7 @@ const Dashboard = () => {
   const [showAvisPositifs, setShowAvisPositifs] = useState(false);
   const [showAvisNegatifs, setShowAvisNegatifs] = useState(false);
   const [showThematiques, setShowThematiques] = useState(false);
+  const [showReponseAuto, setShowReponseAuto] = useState(false);
   const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
@@ -661,9 +662,66 @@ const Dashboard = () => {
                 </span>
                 <CardTitle className="text-lg">Réponse automatique</CardTitle>
               </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowReponseAuto(!showReponseAuto)} className="h-6 w-6 p-0 hover:bg-purple-50">
+                {showReponseAuto ? <ChevronUp className="w-3 h-3 text-purple-600" /> : <ChevronDown className="w-3 h-3 text-purple-600" />}
+              </Button>
             </div>
             <p className="text-sm text-gray-500">Système automatisé aux avis clients</p>
           </CardHeader>
+          {showReponseAuto && <CardContent>
+              <div className="space-y-4">
+                <div className="border rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-gray-500" />
+                      <span className="font-medium">Sophie M.</span>
+                      <div className="flex items-center ml-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                        ))}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-green-600 border-green-600">À valider</Badge>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3">"Excellent restaurant, service impeccable et plats délicieux !"</p>
+                  <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
+                    <p className="text-sm text-gray-600 font-medium mb-1">Réponse automatique proposée :</p>
+                    <p className="text-sm text-gray-700">"Merci Sophie pour votre retour positif ! Nous sommes ravis que vous ayez apprécié votre expérience chez nous. Au plaisir de vous revoir bientôt !"</p>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
+                    <Button size="sm" variant="outline">Modifier</Button>
+                  </div>
+                </div>
+
+                <div className="border rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-gray-500" />
+                      <span className="font-medium">Thomas R.</span>
+                      <div className="flex items-center ml-2">
+                        {[1, 2].map((star) => (
+                          <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                        ))}
+                        {[3, 4, 5].map((star) => (
+                          <Star key={star} className="w-3 h-3 text-gray-300" />
+                        ))}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-orange-600 border-orange-600">À valider</Badge>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3">"Service très lent et plats tièdes à l'arrivée. Déçu de cette expérience."</p>
+                  <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
+                    <p className="text-sm text-gray-600 font-medium mb-1">Réponse automatique proposée :</p>
+                    <p className="text-sm text-gray-700">"Bonjour Thomas, nous vous présentons nos excuses pour cette expérience décevante. Vos remarques sont précieuses et nous allons améliorer nos services. N'hésitez pas à nous recontacter directement."</p>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
+                    <Button size="sm" variant="outline">Modifier</Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>}
         </Card>
       </div>
     </div>;
