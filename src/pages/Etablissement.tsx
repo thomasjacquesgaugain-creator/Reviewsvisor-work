@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import AutocompleteEtablissementInline from "@/components/AutocompleteEtablissementInline";
 import AutocompleteEtablissementsFR from "@/components/AutocompleteEtablissementsFR";
+import PlacesSearchInput from "@/components/PlacesSearchInput";
 const Etablissement = () => {
   const {
     toast
@@ -391,17 +392,41 @@ const Etablissement = () => {
           {/* Contenu conditionnel */}
           {modeActuel === 'recuperation' && <Card className="mb-8">
               <CardContent className="p-8">
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Établissement *</label>
-                  <AutocompleteEtablissementsFR onPicked={item => {
-                setEtablissement(item.label);
-                toast({
-                  title: "Établissement français sélectionné",
-                  description: `${item.label} (SIRET: ${item.siret || 'Non disponible'})`,
-                  duration: 3000
-                });
-                console.log("Données SIRET:", item);
-              }} />
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Recherche Google Places *
+                    </label>
+                    <PlacesSearchInput 
+                      value={etablissement}
+                      onChange={setEtablissement}
+                      onSelect={(place) => {
+                        setEtablissement(place.name);
+                        toast({
+                          title: "Établissement sélectionné",
+                          description: `${place.name} - ${place.formatted_address}`,
+                          duration: 3000
+                        });
+                        console.log("Place sélectionné:", place);
+                      }}
+                      placeholder="Tapez le nom + ville (ex: Chez Guy Paris 11)"
+                    />
+                  </div>
+                  
+                  <div className="pt-4 border-t border-gray-200">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ou recherche dans la base française (SIRET)
+                    </label>
+                    <AutocompleteEtablissementsFR onPicked={item => {
+                      setEtablissement(item.label);
+                      toast({
+                        title: "Établissement français sélectionné",
+                        description: `${item.label} (SIRET: ${item.siret || 'Non disponible'})`,
+                        duration: 3000
+                      });
+                      console.log("Données SIRET:", item);
+                    }} />
+                  </div>
                 </div>
 
                 <div className="mt-6">
