@@ -3,12 +3,51 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Eye, EyeOff, AlertTriangle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast({
+          title: "Erreur de connexion",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Connexion réussie",
+          description: "Vous êtes maintenant connecté !",
+        });
+        navigate('/tableau-de-bord');
+      }
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Une erreur inattendue s'est produite.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -36,7 +75,7 @@ const Login = () => {
                 <p className="text-gray-600">Accédez à vos analyses d'avis clients</p>
               </div>
 
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleLogin}>
                 <div className="space-y-2">
                   <label htmlFor="email" className="text-sm font-medium text-gray-700">
                     Email
@@ -48,6 +87,7 @@ const Login = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
+                    required
                   />
                 </div>
 
@@ -63,6 +103,7 @@ const Login = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="h-12 px-4 pr-12 bg-gray-50 border-gray-200 rounded-xl"
+                      required
                     />
                     <button
                       type="button"
@@ -81,8 +122,9 @@ const Login = () => {
                 <Button 
                   type="submit" 
                   className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium"
+                  disabled={loading}
                 >
-                  Se connecter
+                  {loading ? "Connexion..." : "Se connecter"}
                 </Button>
               </form>
 
