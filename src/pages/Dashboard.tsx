@@ -594,6 +594,7 @@ const Dashboard = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-purple-600" />
                 <span className="text-2xl font-bold text-purple-600">78%</span>
                 <CardTitle className="text-lg">Analyse par thématiques</CardTitle>
               </div>
