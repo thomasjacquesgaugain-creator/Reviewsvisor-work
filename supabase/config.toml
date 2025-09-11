@@ -1,13 +1,1 @@
-project_id = "njtvgofnlumfxwtxdnaw"
-
-[functions.search-establishments]
-verify_jwt = false
-
-[functions.find-establishment]
-verify_jwt = false
-
-[functions.places-search]
-verify_jwt = false
-
-[functions.send-welcome-email]
-verify_jwt = false
+project_id = "zzjmtipdsccxmmoaetlp"
