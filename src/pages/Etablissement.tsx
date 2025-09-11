@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import AutocompleteEtablissementInline from "@/components/AutocompleteEtablissementInline";
 import AutocompleteEtablissementsFR from "@/components/AutocompleteEtablissementsFR";
 import PlacesSearchInput from "@/components/PlacesSearchInput";
+import GooglePlaceAutocomplete from "@/components/GooglePlaceAutocomplete";
 const Etablissement = () => {
   const {
     toast
@@ -395,17 +396,18 @@ const Etablissement = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Recherche Google Places *
+                      Recherche Google Places (Auto-complétion) *
                     </label>
-                    <PlacesSearchInput 
+                    <GooglePlaceAutocomplete
                       value={etablissement}
                       onChange={setEtablissement}
                       onSelect={(place) => {
                         setEtablissement(place.name);
-                        toast({
-                          title: "Établissement sélectionné",
-                          description: `${place.name} - ${place.formatted_address}`,
-                          duration: 3000
+                        // Pré-remplir automatiquement les champs
+                        setEtablissementManuel({
+                          nom: place.name,
+                          url: place.website || '',
+                          adresse: place.address
                         });
                         console.log("Place sélectionné:", place);
                       }}
@@ -468,28 +470,88 @@ const Etablissement = () => {
 
           {modeActuel === 'saisie' && <Card className="mb-8">
               <CardContent className="p-8">
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Nom de l'établissement <span className="text-red-500">*</span>
+                <div className="space-y-6">
+                  {/* Recherche Google Places pour pré-remplissage */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Recherche Google Places (pour pré-remplissage)
                     </label>
-                    <Input placeholder="Ex: Restaurant Le Gourmet" value={etablissementManuel.nom} onChange={e => gererChangementEtablissement('nom', e.target.value)} />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      URL/Site web <span className="text-red-500">*</span>
-                    </label>
-                    <Input placeholder="Ex: https://www.legourmet.fr" value={etablissementManuel.url} onChange={e => gererChangementEtablissement('url', e.target.value)} />
+                    <GooglePlaceAutocomplete
+                      value=""
+                      onChange={() => {}}
+                      onSelect={(place) => {
+                        setEtablissementManuel({
+                          nom: place.name,
+                          url: place.website || '',
+                          adresse: place.address
+                        });
+                        toast({
+                          title: "Informations pré-remplies",
+                          description: `Données de ${place.name} importées`,
+                          duration: 3000
+                        });
+                      }}
+                      placeholder="Rechercher pour pré-remplir automatiquement"
+                    />
+                    <div className="text-xs text-gray-500 mt-1">
+                      Sélectionnez un établissement pour remplir automatiquement les champs ci-dessous
+                    </div>
                   </div>
 
-                  
+                  <div className="border-t pt-6">
+                    <h3 className="font-medium text-gray-900 mb-4">Informations de l'établissement</h3>
+                    
+                    <div className="grid md:grid-cols-2 gap-6 mb-6">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">
+                          Nom de l'établissement <span className="text-red-500">*</span>
+                        </label>
+                        <Input 
+                          placeholder="Ex: Restaurant Le Gourmet" 
+                          value={etablissementManuel.nom} 
+                          onChange={e => gererChangementEtablissement('nom', e.target.value)} 
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">
+                          URL/Site web <span className="text-red-500">*</span>
+                        </label>
+                        <Input 
+                          placeholder="Ex: https://www.legourmet.fr" 
+                          value={etablissementManuel.url} 
+                          onChange={e => gererChangementEtablissement('url', e.target.value)} 
+                        />
+                      </div>
 
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">
+                          Adresse (optionnelle)
+                        </label>
+                        <Input 
+                          placeholder="Ex: 123 Rue de la Paix, 75001 Paris" 
+                          value={etablissementManuel.adresse} 
+                          onChange={e => gererChangementEtablissement('adresse', e.target.value)} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button 
+                    onClick={enregistrerEtablissement} 
+                    disabled={saisieEnCours || !etablissementManuel.nom || !etablissementManuel.url} 
+                    className="w-full"
+                  >
+                    {saisieEnCours ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                        Enregistrement...
+                      </>
+                    ) : (
+                      "Analyser cet établissement"
+                    )}
+                  </Button>
                 </div>
-
-                <Button onClick={enregistrerEtablissement} disabled={saisieEnCours} className="w-full">
-                  {saisieEnCours ? "Enregistrement..." : "Enregistrer l'établissement"}
-                </Button>
               </CardContent>
             </Card>}
         </div>

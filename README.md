@@ -19,12 +19,13 @@ Application React/TypeScript pour l'analyse d'avis clients d'établissements ave
 #### Edge Functions (Supabase)
 - `GOOGLE_MAPS_KEY` : Clé serveur Google (sans restriction de domaine)
   - APIs requises : Places API
-  - Restrictions : Aucune (ou IP si déployé sur serveur fixe)
+  - Restrictions : Aucune restriction de referrer, seulement restriction d'API
 
-#### Frontend (optionnel pour cartes)
+#### Frontend (Auto-complétion Google Places)
 - `VITE_GOOGLE_MAPS_API_KEY` : Clé navigateur Google
   - APIs requises : Maps JavaScript API, Places API
-  - Restrictions : HTTP referrers (votre domaine)
+  - Restrictions : HTTP referrers (localhost, domaines de production)
+  - Referrers à ajouter : `http://localhost:5173/*`, `https://*.app.github.dev/*`, `https://*.vercel.app/*`, votre domaine
 
 ### Configuration Google Cloud Platform
 

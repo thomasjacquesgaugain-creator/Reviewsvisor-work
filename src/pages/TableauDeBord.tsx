@@ -22,22 +22,13 @@ const Dashboard = () => {
           return;
         }
 
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('first_name, last_name')
-          .eq('user_id', session.user.id)
-          .single();
+        // Pour l'instant, utiliser les données de base de l'utilisateur
+        const profile = {
+          first_name: session.user.user_metadata?.first_name || 'Utilisateur',
+          last_name: session.user.user_metadata?.last_name || ''
+        };
 
-        if (error) {
-          console.error('Error fetching profile:', error);
-          toast({
-            title: "Erreur",
-            description: "Impossible de récupérer les informations du profil.",
-            variant: "destructive",
-          });
-        } else {
-          setUserProfile(profile);
-        }
+        setUserProfile(profile);
       } catch (error) {
         console.error('Error:', error);
       } finally {
