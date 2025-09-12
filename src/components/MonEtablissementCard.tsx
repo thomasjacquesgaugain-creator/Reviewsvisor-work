@@ -43,6 +43,18 @@ export default function MonEtablissementCard() {
     return () => window.removeEventListener(EVT_SAVED, onSaved);
   }, []);
 
+  // C) Écouter les changements d'authentification
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (_event === "SIGNED_IN" || _event === "TOKEN_REFRESHED") {
+        // recharger depuis Supabase (tu peux factoriser load() dans un hook)
+        // ici, un simple reload propre :
+        window.location.reload();
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   // Fonction pour oublier l'établissement
   const handleForgetEstablishment = () => {
     localStorage.removeItem(STORAGE_KEY);
