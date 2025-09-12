@@ -14,7 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      establishments: {
+        Row: {
+          created_at: string | null
+          formatted_address: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+          phone: string | null
+          place_id: string
+          rating: number | null
+          raw: Json | null
+          source: string
+          types: Json | null
+          updated_at: string | null
+          user_id: string
+          user_ratings_total: number | null
+          website: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          formatted_address?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          phone?: string | null
+          place_id: string
+          rating?: number | null
+          raw?: Json | null
+          source?: string
+          types?: Json | null
+          updated_at?: string | null
+          user_id: string
+          user_ratings_total?: number | null
+          website?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          formatted_address?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          phone?: string | null
+          place_id?: string
+          rating?: number | null
+          raw?: Json | null
+          source?: string
+          types?: Json | null
+          updated_at?: string | null
+          user_id?: string
+          user_ratings_total?: number | null
+          website?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
