@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
 const Dashboard = () => {
   const [showAvis, setShowAvis] = useState(false);
   const [showPlateformes, setShowPlateformes] = useState(false);
@@ -14,8 +14,19 @@ const Dashboard = () => {
   const [showAvisNegatifs, setShowAvisNegatifs] = useState(false);
   const [showThematiques, setShowThematiques] = useState(false);
   const [showReponseAuto, setShowReponseAuto] = useState(false);
+  const [showParetoChart, setShowParetoChart] = useState(false);
   const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
+
+  // Données mockées pour le diagramme de Pareto
+  const paretoData = [
+    { name: "Service lent", count: 45, percentage: 32.1, cumulative: 32.1 },
+    { name: "Nourriture froide", count: 38, percentage: 27.1, cumulative: 59.2 },
+    { name: "Attente longue", count: 25, percentage: 17.9, cumulative: 77.1 },
+    { name: "Personnel impoli", count: 18, percentage: 12.9, cumulative: 90.0 },
+    { name: "Prix élevés", count: 8, percentage: 5.7, cumulative: 95.7 },
+    { name: "Autres", count: 6, percentage: 4.3, cumulative: 100.0 }
+  ];
 
   // Mise à jour de l'heure en temps réel
   useEffect(() => {
@@ -479,7 +490,10 @@ const Dashboard = () => {
                   <AlertTriangle className="w-5 h-5 text-red-500" />
                   <CardTitle className="text-lg">Top 3 Problèmes prioritaires</CardTitle>
                 </div>
-                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                <ChevronDown 
+                  className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoChart ? 'rotate-180' : ''}`}
+                  onClick={() => setShowParetoChart(!showParetoChart)}
+                />
               </div>
               <p className="text-sm text-gray-500">Les plus mentionnés par fréquence et pourcentage en priorité</p>
             </CardHeader>
@@ -562,6 +576,53 @@ const Dashboard = () => {
                 <Badge className="bg-green-500 text-white">Force</Badge>
               </div>
             </CardContent>
+            
+            {/* Diagramme de Pareto */}
+            {showParetoChart && (
+              <CardContent className="pt-0">
+                <div className="mt-4 border-t pt-4">
+                  <h4 className="text-sm font-medium mb-4">Diagramme de Pareto - Analyse des problèmes</h4>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <ComposedChart data={paretoData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="name" 
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        fontSize={12}
+                      />
+                      <YAxis yAxisId="left" orientation="left" />
+                      <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
+                      <Tooltip 
+                        formatter={(value, name) => {
+                          if (name === 'Cumulative') return [`${value}%`, 'Cumul %'];
+                          return [value, 'Occurrences'];
+                        }}
+                      />
+                      <Bar 
+                        yAxisId="left" 
+                        dataKey="count" 
+                        fill="hsl(var(--destructive))" 
+                        name="Occurrences"
+                      />
+                      <Line 
+                        yAxisId="right" 
+                        type="monotone" 
+                        dataKey="cumulative" 
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={2}
+                        dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
+                        name="Cumulative"
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Le diagramme de Pareto permet d'identifier les 20% de causes qui génèrent 80% des problèmes
+                  </p>
+                </div>
+              </CardContent>
+            )}
           </Card>
         </div>
 
