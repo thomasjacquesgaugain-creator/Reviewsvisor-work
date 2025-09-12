@@ -259,6 +259,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_establishment: {
+        Row: {
+          address: string | null
+          created_at: string
+          lat: number | null
+          lng: number | null
+          name: string
+          phone: string | null
+          place_id: string
+          rating: number | null
+          updated_at: string
+          url: string | null
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          phone?: string | null
+          place_id: string
+          rating?: number | null
+          updated_at?: string
+          url?: string | null
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          phone?: string | null
+          place_id?: string
+          rating?: number | null
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       venues: {
         Row: {
           address: string | null
