@@ -34,7 +34,8 @@ const Etablissement = () => {
   const [etablissementManuel, setEtablissementManuel] = useState({
     nom: '',
     url: '',
-    adresse: ''
+    adresse: '',
+    telephone: ''
   });
   const [saisieEnCours, setSaisieEnCours] = useState(false);
 
@@ -440,7 +441,8 @@ const Etablissement = () => {
                         setEtablissementManuel({
                           nom: place.name,
                           url: place.website || '',
-                          adresse: place.address
+                          adresse: place.address,
+                          telephone: place.phone || ''
                         });
                       }} 
                       onEstablishmentSaved={handleEstablishmentSaved}
@@ -511,7 +513,8 @@ const Etablissement = () => {
                   setEtablissementManuel({
                     nom: place.name,
                     url: place.website || '',
-                    adresse: place.address
+                    adresse: place.address,
+                    telephone: place.phone || ''
                   });
                   toast({
                     title: "Informations pré-remplies",
@@ -532,21 +535,48 @@ const Etablissement = () => {
                         <label className="text-sm font-medium text-gray-700">
                           Nom de l'établissement <span className="text-red-500">*</span>
                         </label>
-                        <Input placeholder="Ex: Restaurant Le Gourmet" value={etablissementManuel.nom} onChange={e => gererChangementEtablissement('nom', e.target.value)} />
+                        <Input 
+                          id="venue_name"
+                          placeholder="Ex: Restaurant Le Gourmet" 
+                          value={etablissementManuel.nom} 
+                          onChange={e => gererChangementEtablissement('nom', e.target.value)} 
+                        />
                       </div>
                       
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">
                           URL/Site web <span className="text-red-500">*</span>
                         </label>
-                        <Input placeholder="Ex: https://www.legourmet.fr" value={etablissementManuel.url} onChange={e => gererChangementEtablissement('url', e.target.value)} />
+                        <Input 
+                          id="venue_website"
+                          placeholder="Ex: https://www.legourmet.fr" 
+                          value={etablissementManuel.url} 
+                          onChange={e => gererChangementEtablissement('url', e.target.value)} 
+                        />
                       </div>
 
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">
                           Adresse (optionnelle)
                         </label>
-                        <Input placeholder="Ex: 123 Rue de la Paix, 75001 Paris" value={etablissementManuel.adresse} onChange={e => gererChangementEtablissement('adresse', e.target.value)} />
+                        <Input 
+                          id="venue_address"
+                          placeholder="Ex: 123 Rue de la Paix, 75001 Paris" 
+                          value={etablissementManuel.adresse} 
+                          onChange={e => gererChangementEtablissement('adresse', e.target.value)} 
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">
+                          Téléphone (optionnel)
+                        </label>
+                        <Input 
+                          id="venue_phone"
+                          placeholder="Ex: +33 1 23 45 67 89" 
+                          value={etablissementManuel.telephone || ''} 
+                          onChange={e => gererChangementEtablissement('telephone', e.target.value)} 
+                        />
                       </div>
                     </div>
                   </div>
