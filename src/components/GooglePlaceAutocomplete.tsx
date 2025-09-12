@@ -274,8 +274,9 @@ export default function GooglePlaceAutocomplete({
     onChange(suggestion.description);
     
     try {
-      // Save establishment to Supabase and get place details
-      const savedEstablishment = await saveEstablishmentFromPlaceId(suggestion.place_id);
+      // Import and save venue to Supabase and get place details
+      const { saveVenueFromPlaceId } = await import('@/services/establishments');
+      const savedEstablishment = await saveVenueFromPlaceId(suggestion.place_id);
       
       // Create PlaceResult for backward compatibility
       const placeResult: PlaceResult = {
