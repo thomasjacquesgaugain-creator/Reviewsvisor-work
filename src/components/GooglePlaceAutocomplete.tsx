@@ -271,40 +271,91 @@ export default function GooglePlaceAutocomplete({
     }
 
     setIsSaving(true);
-    onChange(suggestion.description);
     
+    // Récupérer d'abord les détails complets depuis Google Places
+    if (!services?.placesService) {
+      console.error('PlacesService non disponible');
+      setIsSaving(false);
+      return;
+    }
+
     try {
-      // Call saveSelectedPlace with the place_id
-      const { saveSelectedPlace } = await import('@/services/establishments');
-      await saveSelectedPlace(suggestion.place_id);
-      
-      // Also save venue to get establishment data for the form
-      const { saveVenueFromPlaceId } = await import('@/services/establishments');
-      const savedEstablishment = await saveVenueFromPlaceId(suggestion.place_id);
-      
-      // Create PlaceResult for backward compatibility
-      const placeResult: PlaceResult = {
-        place_id: savedEstablishment.place_id,
-        name: savedEstablishment.name,
-        address: savedEstablishment.formatted_address || '',
-        location: {
-          lat: savedEstablishment.lat || 0,
-          lng: savedEstablishment.lng || 0
-        },
-        website: savedEstablishment.website,
-        phone: savedEstablishment.phone,
-        rating: savedEstablishment.rating,
-        user_ratings_total: savedEstablishment.user_ratings_total,
-        source: 'google-places'
+      const request = {
+        placeId: suggestion.place_id,
+        fields: [
+          'place_id',
+          'name', 
+          'formatted_address',
+          'geometry.location',
+          'international_phone_number',
+          'website',
+          'rating',
+          'user_ratings_total'
+        ],
+        sessionToken: sessionToken
       };
 
-      onSelect(placeResult);
-      onEstablishmentSaved?.(savedEstablishment);
-      setShowSuggestions(false);
-      setSuggestions([]);
-      
-      // Create a new session token for next search
-      createNewSessionToken().then(setSessionToken);
+      services.placesService.getDetails(request, async (place: any, status: any) => {
+        if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && place) {
+          // Afficher "Nom — Adresse" dans l'input de recherche
+          const displayLabel = [place.name, place.formatted_address].filter(Boolean).join(" — ");
+          onChange(displayLabel);
+          
+          try {
+            // Call saveSelectedPlace with the place_id
+            const { saveSelectedPlace } = await import('@/services/establishments');
+            await saveSelectedPlace(suggestion.place_id);
+            
+            // Also save venue to get establishment data for the form
+            const { saveVenueFromPlaceId } = await import('@/services/establishments');
+            const savedEstablishment = await saveVenueFromPlaceId(suggestion.place_id);
+            
+            // Create PlaceResult for backward compatibility
+            const placeResult: PlaceResult = {
+              place_id: savedEstablishment.place_id,
+              name: savedEstablishment.name,
+              address: savedEstablishment.formatted_address || '',
+              location: {
+                lat: savedEstablishment.lat || 0,
+                lng: savedEstablishment.lng || 0
+              },
+              website: savedEstablishment.website,
+              phone: savedEstablishment.phone,
+              rating: savedEstablishment.rating,
+              user_ratings_total: savedEstablishment.user_ratings_total,
+              source: 'google-places'
+            };
+
+            onSelect(placeResult);
+            onEstablishmentSaved?.(savedEstablishment);
+            setShowSuggestions(false);
+            setSuggestions([]);
+            
+            // Create a new session token for next search
+            createNewSessionToken().then(setSessionToken);
+            
+          } catch (error) {
+            console.error('Error saving establishment:', error);
+            toast({
+              title: "Erreur",
+              description: "Impossible d'enregistrer l'établissement",
+              variant: "destructive",
+              duration: 3000
+            });
+          } finally {
+            setIsSaving(false);
+          }
+        } else {
+          console.error('Erreur PlacesService:', status);
+          toast({
+            title: "Erreur",
+            description: "Impossible de récupérer les détails de l'établissement",
+            variant: "destructive",
+            duration: 3000
+          });
+          setIsSaving(false);
+        }
+      });
       
     } catch (error) {
       console.error('Error saving establishment:', error);
@@ -314,7 +365,6 @@ export default function GooglePlaceAutocomplete({
         variant: "destructive",
         duration: 3000
       });
-    } finally {
       setIsSaving(false);
     }
   };
