@@ -151,6 +151,90 @@ export type Database = {
           },
         ]
       }
+      review_insights: {
+        Row: {
+          avg_rating: number | null
+          place_id: string
+          positive_ratio: number | null
+          themes: Json | null
+          top_issues: Json | null
+          top_praises: Json | null
+          total_count: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avg_rating?: number | null
+          place_id: string
+          positive_ratio?: number | null
+          themes?: Json | null
+          top_issues?: Json | null
+          top_praises?: Json | null
+          total_count?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avg_rating?: number | null
+          place_id?: string
+          positive_ratio?: number | null
+          themes?: Json | null
+          top_issues?: Json | null
+          top_praises?: Json | null
+          total_count?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          author: string | null
+          id: number
+          inserted_at: string | null
+          language: string | null
+          place_id: string
+          published_at: string | null
+          rating: number | null
+          raw: Json | null
+          source: string
+          source_review_id: string
+          text: string | null
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          author?: string | null
+          id?: number
+          inserted_at?: string | null
+          language?: string | null
+          place_id: string
+          published_at?: string | null
+          rating?: number | null
+          raw?: Json | null
+          source: string
+          source_review_id: string
+          text?: string | null
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          author?: string | null
+          id?: number
+          inserted_at?: string | null
+          language?: string | null
+          place_id?: string
+          published_at?: string | null
+          rating?: number | null
+          raw?: Json | null
+          source?: string
+          source_review_id?: string
+          text?: string | null
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       spatial_ref_sys: {
         Row: {
           auth_name: string | null
