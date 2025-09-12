@@ -1,794 +1,167 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building, MapPin, Phone, Mail, Globe, Star, Users, FileText, Home, BarChart3, Upload, LogOut, Search, Info, Locate } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import AutocompleteEtablissementInline from "@/components/AutocompleteEtablissementInline";
-import AutocompleteEtablissementsFR from "@/components/AutocompleteEtablissementsFR";
-import PlacesSearchInput from "@/components/PlacesSearchInput";
-import GooglePlaceAutocomplete from "@/components/GooglePlaceAutocomplete";
-import EstablishmentCard from "@/components/EstablishmentCard";
-import { useEstablishmentStore } from "@/store/establishmentStore";
-import { getCurrentEstablishment, EstablishmentData } from "@/services/establishments";
+import { useEffect, useState } from "react";
+
+type Etab = {
+  place_id: string;
+  name: string;
+  address: string;
+  lat: number | null;
+  lng: number | null;
+  url?: string;
+  website?: string;
+  phone?: string;
+  rating?: number | null;
+};
+
+const STORAGE_KEY = "mon-etablissement";
+
+function MonEtablissement({ etab }: { etab: Etab | null }) {
+  if (!etab) {
+    return (
+      <div className="text-muted-foreground">
+        Aucun établissement sélectionné. Utilisez l'autocomplétion ci-dessus pour en choisir un.
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      <div><strong>Nom :</strong> {etab.name}</div>
+      <div><strong>Adresse :</strong> {etab.address}</div>
+      <div><strong>Téléphone :</strong> {etab.phone || "—"}</div>
+      <div><strong>Site web :</strong> {etab.website ? <a href={etab.website} target="_blank" rel="noreferrer" className="text-primary hover:underline">{etab.website}</a> : "—"}</div>
+      <div><strong>Note Google :</strong> {etab.rating ?? "—"}</div>
+      <div><strong>Google Maps :</strong> {etab.url ? <a href={etab.url} target="_blank" rel="noreferrer" className="text-primary hover:underline">Voir la fiche</a> : "—"}</div>
+      <div className="text-xs text-muted-foreground"><strong>place_id :</strong> {etab.place_id}</div>
+    </div>
+  );
+}
+
+export default function EtablissementPage() {
+  const [selected, setSelected] = useState<Etab | null>(null); // ce que l'utilisateur vient de choisir
+  const [saved, setSaved] = useState<Etab | null>(null);       // ce qui est enregistré/persisté
+  const [isSaving, setIsSaving] = useState(false);
+
+  // 1) Hydrate depuis localStorage au chargement
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) setSaved(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+  // Initialize Google Places API
+  useEffect(() => {
+    const initPlaces = () => {
+      const input = document.getElementById('places-input') as HTMLInputElement;
+      if (!input || !window.google?.maps?.places) return;
+      
+      const autocomplete = new window.google.maps.places.Autocomplete(input, {
+        types: ['establishment'],
+        fields: [
+          'place_id','name','formatted_address','geometry.location',
+          'url','website','formatted_phone_number','rating'
+        ],
+      });
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place || !place.place_id) {
+          setSelected(null);
+          return;
+        }
+        setSelected(serializePlace(place));
+      });
+    };
+
+    // Load Google Maps API if not already loaded
+    if (!window.google?.maps?.places) {
+      const script = document.createElement('script');
+      script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDvTGpCZ9kmCFdF9k8h9h3kh9kh9kh9kh9&libraries=places';
+      script.async = true;
+      script.defer = true;
+      script.onload = initPlaces;
+      document.head.appendChild(script);
+    } else {
+      initPlaces();
+    }
+  }, []);
+
+  function serializePlace(place: any): Etab {
+    return {
+      place_id: place.place_id,
+      name: place.name ?? "",
+      address: place.formatted_address ?? "",
+      lat: place.geometry?.location?.lat() ?? null,
+      lng: place.geometry?.location?.lng() ?? null,
+      url: place.url ?? "",
+      website: place.website ?? "",
+      phone: place.formatted_phone_number ?? "",
+      rating: place.rating ?? null,
+    };
+  }
+
+  // 3) Bouton Enregistrer → persist + affiche dans Mon Établissement
+  async function handleSave() {
+    if (!selected) return;
+    setIsSaving(true);
+    try {
+      // A) Persistance locale
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
+      setSaved(selected);
+
+      // Clear selection after saving
+      setSelected(null);
+      const input = document.getElementById('places-input') as HTMLInputElement;
+      if (input) input.value = '';
+
+    } catch (e: any) {
+      console.error(e);
+      alert(e?.message ?? "Erreur lors de l'enregistrement");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-8">Gestion des Établissements</h1>
+      
+      <div className="space-y-6">
+        {/* --- Barre d'autocomplétion --- */}
+        <div className="space-y-2">
+          <input
+            id="places-input"
+            className="w-full border border-border rounded-md px-3 py-2"
+            placeholder="Rechercher un établissement…"
+          />
+          {selected && (
+            <div className="inline-flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
+              <span>✅ Sélectionné :</span>
+              <strong>{selected.name}</strong>
+            </div>
+          )}
+          <button
+            className="mt-2 w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-4 py-3 disabled:opacity-50"
+            onClick={handleSave}
+            disabled={!selected || isSaving}
+            title="Enregistrer l'établissement"
+          >
+            💾 Enregistrer l'établissement
+          </button>
+        </div>
+
+        {/* --- Section Mon Établissement --- */}
+        <section className="border border-border rounded-md p-4">
+          <h2 className="text-xl font-semibold mb-3">🏢 Mon Établissement</h2>
+          <MonEtablissement etab={saved} />
+        </section>
+      </div>
+    </div>
+  );
+}
 
 // TypeScript declarations for Google Maps
 declare global {
   interface Window {
     google: any;
-    initAutocomplete: () => void;
-    initPlaces: () => void;
   }
 }
-const Etablissement = () => {
-  const {
-    toast
-  } = useToast();
-  const {
-    selectedEstablishment,
-    setSelectedEstablishment,
-    isLoading,
-    setIsLoading
-  } = useEstablishmentStore();
-  const [modeActuel, setModeActuel] = useState<'recuperation' | 'saisie'>('recuperation');
-  const [etablissement, setEtablissement] = useState("");
-  const [periode, setPeriode] = useState("1-mois");
-  const [etablissements, setEtablissements] = useState<string[]>([]);
-  const [suggestionsEtablissements, setSuggestionsEtablissements] = useState<any[]>([]);
-  const [rechercheEnCours, setRechercheEnCours] = useState(false);
-  const [rechercheEtablissementsEnCours, setRechercheEtablissementsEnCours] = useState(false);
-  const [etablissementSelectionne, setEtablissementSelectionne] = useState("");
-  const [positionUtilisateur, setPositionUtilisateur] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
-  const [geolocalisationEnCours, setGeolocalisationEnCours] = useState(false);
-
-  // États pour la saisie manuelle d'établissement
-  const [etablissementManuel, setEtablissementManuel] = useState({
-    nom: '',
-    url: '',
-    adresse: '',
-    telephone: ''
-  });
-  const [saisieEnCours, setSaisieEnCours] = useState(false);
-
-  // Google Maps API Key - À configurer
-  const GOOGLE_API_KEY = "YOUR_API_KEY";
-
-  // Fonctions pour la saisie manuelle d'établissement
-  const gererChangementEtablissement = (champ: string, valeur: string) => {
-    setEtablissementManuel(prev => ({
-      ...prev,
-      [champ]: valeur
-    }));
-  };
-
-  // Recherche d'établissement avec Google Maps API
-  const rechercherEtablissement = async () => {
-    const nomEtablissement = etablissement.trim();
-    if (!nomEtablissement) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez renseigner le nom de l'établissement",
-        variant: "destructive",
-        duration: 3000
-      });
-      return;
-    }
-    if (!GOOGLE_API_KEY || GOOGLE_API_KEY === "YOUR_API_KEY") {
-      // Fallback vers OpenStreetMap
-      await rechercherEtablissementsOpenStreetMap(nomEtablissement);
-      return;
-    }
-    try {
-      setRechercheEnCours(true);
-
-      // Text Search pour trouver l'établissement
-      const searchUrl = new URL("https://maps.googleapis.com/maps/api/place/textsearch/json");
-      searchUrl.searchParams.set("query", nomEtablissement);
-      searchUrl.searchParams.set("region", "fr"); // Limité à la France
-      searchUrl.searchParams.set("language", "fr");
-      searchUrl.searchParams.set("key", GOOGLE_API_KEY);
-      const searchResponse = await fetch(searchUrl.toString());
-      const searchData = await searchResponse.json();
-      const results = searchData?.results || [];
-      if (!results.length) {
-        toast({
-          title: "Aucun résultat",
-          description: "Aucun établissement trouvé. Essayez une variante du nom.",
-          variant: "destructive",
-          duration: 3000
-        });
-        return;
-      }
-
-      // Convertir les résultats au format attendu
-      const suggestions = results.slice(0, 8).map((result: any) => ({
-        id: result.place_id,
-        nom: result.name,
-        adresse: result.formatted_address,
-        type: result.types?.[0] || "establishment",
-        lat: result.geometry?.location?.lat || 0,
-        lon: result.geometry?.location?.lng || 0,
-        rating: result.rating || 0,
-        user_ratings_total: result.user_ratings_total || 0
-      }));
-      setSuggestionsEtablissements(suggestions);
-      toast({
-        title: "Recherche terminée",
-        description: `${results.length} établissement(s) trouvé(s)`,
-        duration: 3000
-      });
-    } catch (error) {
-      console.error("Erreur recherche Google Maps:", error);
-      toast({
-        title: "Erreur de recherche",
-        description: "Impossible d'effectuer la recherche. Vérifiez votre connexion.",
-        variant: "destructive",
-        duration: 3000
-      });
-    } finally {
-      setRechercheEnCours(false);
-    }
-  };
-
-  // Fallback vers OpenStreetMap si Google API n'est pas disponible
-  const rechercherEtablissementsOpenStreetMap = async (nom: string) => {
-    try {
-      setRechercheEnCours(true);
-      const queries = [nom, `"${nom}"`, `${nom} France`];
-      let suggestions: any[] = [];
-      for (const query of queries) {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(query)}&extratags=1&countrycodes=fr`;
-        const response = await fetch(url, {
-          headers: {
-            Accept: "application/json",
-            "User-Agent": "AnalytiqueApp/1.0"
-          }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const nouveauxResultats = data.filter((item: any) => {
-            if (!item.name) return false;
-            return item.name.toLowerCase().includes(nom.toLowerCase());
-          }).map((item: any) => ({
-            id: item.place_id,
-            nom: item.name || item.display_name?.split(",")[0] || "Établissement",
-            adresse: item.display_name,
-            type: item.type || "establishment",
-            lat: parseFloat(item.lat),
-            lon: parseFloat(item.lon)
-          }));
-          suggestions = [...suggestions, ...nouveauxResultats];
-          if (suggestions.length >= 5) break;
-        }
-      }
-      const suggestionsUniques = suggestions.filter((suggestion, index, self) => index === self.findIndex(s => s.id === suggestion.id)).slice(0, 8);
-      setSuggestionsEtablissements(suggestionsUniques);
-      if (suggestionsUniques.length > 0) {
-        toast({
-          title: "Recherche terminée",
-          description: `${suggestionsUniques.length} établissement(s) trouvé(s)`,
-          duration: 3000
-        });
-      } else {
-        toast({
-          title: "Aucun résultat",
-          description: "Aucun établissement trouvé avec OpenStreetMap",
-          variant: "destructive",
-          duration: 3000
-        });
-      }
-    } catch (error) {
-      console.error("Erreur recherche OpenStreetMap:", error);
-    } finally {
-      setRechercheEnCours(false);
-    }
-  };
-
-  // Recherche automatique d'établissements avec l'Edge Function
-  const rechercherEtablissementsAutomatique = async (nom: string) => {
-    console.log("Début recherche pour:", nom);
-    if (!nom || nom.length < 2) {
-      setSuggestionsEtablissements([]);
-      return;
-    }
-    try {
-      setRechercheEtablissementsEnCours(true);
-
-      // Utiliser l'Edge Function pour la recherche
-      const response = await fetch('/api/search-establishments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          query: nom
-        })
-      });
-      const data = await response.json();
-      if (response.ok) {
-        const suggestions = data.establishments.map((item: any) => ({
-          id: item.place_id || Math.random().toString(),
-          nom: item.name,
-          adresse: item.address,
-          type: "establishment",
-          lat: item.location?.lat || 0,
-          lon: item.location?.lng || 0,
-          rating: item.rating || 0,
-          user_ratings_total: item.user_ratings_total || 0
-        }));
-        setSuggestionsEtablissements(suggestions.slice(0, 8));
-      } else {
-        setSuggestionsEtablissements([]);
-      }
-    } catch (error) {
-      console.error("Erreur recherche établissements:", error);
-      setSuggestionsEtablissements([]);
-    } finally {
-      setRechercheEtablissementsEnCours(false);
-    }
-  };
-
-  // Sélectionner un établissement depuis les suggestions
-  const selectionnerEtablissement = (etablissementSuggere: any) => {
-    setEtablissement(etablissementSuggere.nom);
-    setSuggestionsEtablissements([]);
-    toast({
-      title: "Établissement sélectionné",
-      description: `${etablissementSuggere.nom} a été sélectionné`,
-      duration: 2000
-    });
-  };
-  const enregistrerEtablissement = () => {
-    if (!etablissementManuel.nom || !etablissementManuel.url) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez remplir au moins le nom et l'URL",
-        variant: "destructive",
-        duration: 3000
-      });
-      return;
-    }
-    setSaisieEnCours(true);
-
-    // Simuler un délai de traitement
-    setTimeout(() => {
-      setSaisieEnCours(false);
-      toast({
-        title: "Établissement enregistré",
-        description: "Les informations ont été enregistrées avec succès",
-        duration: 3000
-      });
-    }, 500);
-  };
-
-  // Obtenir la géolocalisation de l'utilisateur
-  const obtenirGeolocalisation = () => {
-    if (!navigator.geolocation) {
-      toast({
-        title: "Géolocalisation non supportée",
-        description: "Votre navigateur ne supporte pas la géolocalisation",
-        variant: "destructive",
-        duration: 3000
-      });
-      return;
-    }
-    setGeolocalisationEnCours(true);
-    navigator.geolocation.getCurrentPosition(position => {
-      const coords = {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude
-      };
-      setPositionUtilisateur(coords);
-      setGeolocalisationEnCours(false);
-      toast({
-        title: "Position trouvée",
-        description: "Recherche d'établissements à proximité...",
-        duration: 3000
-      });
-    }, error => {
-      setGeolocalisationEnCours(false);
-      let message = "Erreur de géolocalisation";
-      switch (error.code) {
-        case error.PERMISSION_DENIED:
-          message = "Autorisation de géolocalisation refusée";
-          break;
-        case error.POSITION_UNAVAILABLE:
-          message = "Position non disponible";
-          break;
-        case error.TIMEOUT:
-          message = "Délai de géolocalisation dépassé";
-          break;
-      }
-      toast({
-        title: "Erreur",
-        description: message,
-        variant: "destructive",
-        duration: 3000
-      });
-    }, {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 300000
-    });
-  };
-
-  // Load current establishment on component mount
-  useEffect(() => {
-    const loadCurrentEstablishment = async () => {
-      if (selectedEstablishment) return; // Already loaded
-
-      try {
-        setIsLoading(true);
-        const current = await getCurrentEstablishment();
-        setSelectedEstablishment(current);
-      } catch (error) {
-        console.error('Error loading current establishment:', error);
-        // Don't show error toast for this, it's normal if no establishment exists
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadCurrentEstablishment();
-  }, [selectedEstablishment, setSelectedEstablishment, setIsLoading]);
-
-  // Google Places integration with improved functionality
-  useEffect(() => {
-    let selectedPlace: any = null;
-    const serializePlace = (place: any) => {
-      return {
-        place_id: place.place_id,
-        name: place.name ?? '',
-        address: place.formatted_address ?? '',
-        lat: place.geometry?.location?.lat() ?? null,
-        lng: place.geometry?.location?.lng() ?? null,
-        url: place.url ?? '',
-        website: place.website ?? '',
-        phone: place.formatted_phone_number ?? '',
-        rating: place.rating ?? null
-      };
-    };
-    const setValidated = (ok: boolean, name = '') => {
-      const badge = document.getElementById('selected-place-badge');
-      const badgeName = document.getElementById('selected-place-name');
-      const saveBtn = document.getElementById('save-place-btn') as HTMLButtonElement;
-      if (!badge || !badgeName || !saveBtn) return;
-      if (ok) {
-        badge.style.display = 'inline-block';
-        badgeName.textContent = name;
-        saveBtn.disabled = false;
-      } else {
-        badge.style.display = 'none';
-        badgeName.textContent = '';
-        saveBtn.disabled = true;
-      }
-    };
-    const initPlaces = () => {
-      const input = document.getElementById('places-input') as HTMLInputElement;
-      if (!input || !window.google?.maps?.places) return;
-      const autocomplete = new window.google.maps.places.Autocomplete(input, {
-        types: ['establishment'],
-        fields: ['place_id', 'name', 'formatted_address', 'geometry.location', 'url', 'website', 'formatted_phone_number', 'rating']
-      });
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-
-        // Check if place data is complete
-        if (!place || !place.place_id) {
-          selectedPlace = null;
-          setValidated(false);
-          return;
-        }
-        selectedPlace = serializePlace(place);
-        setValidated(true, selectedPlace.name);
-      });
-    };
-    const handleSaveClick = async () => {
-      if (!selectedPlace) return;
-      const saveBtn = document.getElementById('save-place-btn') as HTMLButtonElement;
-      if (!saveBtn) return;
-      const originalText = saveBtn.textContent;
-      saveBtn.disabled = true;
-      saveBtn.textContent = "Enregistrement…";
-      try {
-        // Here you can integrate with your backend or Supabase
-        // Example Supabase integration:
-        /*
-        const { data, error } = await supabase
-          .from('etablissements')
-          .upsert(selectedPlace, { onConflict: 'place_id' });
-        if (error) throw error;
-        */
-
-        toast({
-          title: "Établissement enregistré",
-          description: "L'établissement a été sauvegardé avec succès ✅"
-        });
-
-        // Update form fields with selected data
-        setEtablissementManuel({
-          nom: selectedPlace.name,
-          url: selectedPlace.website || selectedPlace.url,
-          adresse: selectedPlace.address,
-          telephone: selectedPlace.phone
-        });
-      } catch (error) {
-        console.error('Error saving establishment:', error);
-        toast({
-          title: "Erreur",
-          description: "Erreur lors de l'enregistrement",
-          variant: "destructive"
-        });
-      } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = originalText;
-      }
-    };
-    const loadGoogleMaps = () => {
-      if (document.querySelector('script[src*="maps.googleapis.com"]')) {
-        return; // Script already loaded
-      }
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initPlaces`;
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-    };
-
-    // Set up global callback
-    window.initPlaces = initPlaces;
-
-    // Add save button event listener
-    const saveBtn = document.getElementById('save-place-btn');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', handleSaveClick);
-    }
-
-    // Load Google Maps or initialize if already loaded
-    if (window.google?.maps?.places) {
-      initPlaces();
-    } else {
-      loadGoogleMaps();
-
-      // Retry initialization until Google Maps is available
-      const interval = setInterval(() => {
-        if (window.google?.maps?.places) {
-          clearInterval(interval);
-          initPlaces();
-        }
-      }, 100);
-
-      // Cleanup interval after 10 seconds to prevent infinite polling
-      setTimeout(() => clearInterval(interval), 10000);
-    }
-
-    // Cleanup function
-    return () => {
-      if (saveBtn) {
-        saveBtn.removeEventListener('click', handleSaveClick);
-      }
-    };
-  }, [toast, setEtablissementManuel]);
-
-  // Handler for when an establishment is saved
-  const handleEstablishmentSaved = (establishment: EstablishmentData) => {
-    setSelectedEstablishment(establishment);
-    toast({
-      title: "Établissement mis à jour",
-      description: "Votre établissement courant a été mis à jour"
-    });
-  };
-  return <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <img src="/lovable-uploads/08f62503-65d7-4681-8ddf-00f4efb00ffa.png" alt="Analytique logo" className="w-8 h-8" />
-              <span className="text-xl font-bold text-gray-900">analytique</span>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <Link to="/tableau-de-bord">
-                <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
-                  <Home className="w-4 h-4" />
-                  Accueil
-                </Button>
-              </Link>
-              <Link to="/dashboard">
-                <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
-                  <BarChart3 className="w-4 h-4" />
-                  Dashboard
-                </Button>
-              </Link>
-              <Link to="/etablissement">
-                <Button variant="ghost" className="text-blue-600 font-medium flex items-center gap-1">
-                  <Building className="w-4 h-4" />
-                  Établissement
-                </Button>
-              </Link>
-              <div className="flex items-center gap-2 text-gray-700">
-                <span>Bonjour, Yohan Lopes</span>
-              </div>
-              <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
-                <LogOut className="w-4 h-4" />
-                Déconnexion
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-            <Building className="w-6 h-6 text-blue-600" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Mon Établissement</h1>
-            <p className="text-gray-600">Gérez les informations de votre établissement</p>
-          </div>
-        </div>
-
-        {/* Import section */}
-        <div className="mb-8">
-          {/* Header buttons */}
-          <div className="bg-white border border-gray-200 rounded-lg mb-6">
-            <div className="px-4 py-4">
-              <div className="flex items-center justify-between w-full">
-                <div className="flex-1">
-                  <Button variant="ghost" className={`w-full flex items-center gap-2 ${modeActuel === 'saisie' ? 'text-blue-600 font-medium' : 'text-gray-600'}`} onClick={() => setModeActuel('saisie')}>
-                    <FileText className="w-4 h-4" />
-                    Recherche manuelle
-                  </Button>
-                </div>
-                <div className="flex-1">
-                  <Button variant="ghost" className={`w-full flex items-center gap-2 ${modeActuel === 'recuperation' ? 'text-blue-600 font-medium' : 'text-gray-600'}`} onClick={() => setModeActuel('recuperation')}>
-                    <Search className="w-4 h-4" />
-                    Recherche automatique
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Header dynamique */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                {modeActuel === 'saisie' && <FileText className="w-6 h-6 text-blue-600" />}
-                {modeActuel === 'recuperation' && <Search className="w-6 h-6 text-blue-600" />}
-              </div>
-              <h2 className="text-3xl font-bold text-gray-900">
-                {modeActuel === 'saisie' && "Recherche manuelle d'établissement"}
-                {modeActuel === 'recuperation' && "Recherche automatique d'établissement"}
-              </h2>
-            </div>
-            <p className="text-lg text-gray-600">
-              {modeActuel === 'saisie' && "Saisissez manuellement votre établissement dans le système"}
-              {modeActuel === 'recuperation' && "Récupérez automatiquement les avis Google, Tripadvisor et Yelp de votre établissement"}
-            </p>
-          </div>
-
-          {/* Contenu conditionnel */}
-          {modeActuel === 'recuperation' && <Card className="mb-8">
-              <CardContent className="p-8">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Recherche Google Places (Auto-complétion) *
-                    </label>
-                    <div className="space-y-3">
-                      <input id="places-input" type="text" placeholder="Rechercher un établissement…" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                      
-                      <span id="selected-place-badge" style={{
-                    display: 'none'
-                  }} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                        ✅ Sélectionné : <strong id="selected-place-name"></strong>
-                      </span>
-                      
-                      <button id="save-place-btn" disabled title="Enregistrer l'établissement" className="w-full px-4 py-2 bg-blue-600 text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors">
-                        💾 Enregistrer l'établissement
-                      </button>
-                    </div>
-                  </div>
-                  
-                  
-                </div>
-
-                <div className="mt-6">
-                  
-                </div>
-
-                {/* Affichage des résultats de recherche */}
-                {suggestionsEtablissements.length > 0 && <div className="mt-6">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Résultats de recherche</h3>
-                    <div className="space-y-3">
-                      {suggestionsEtablissements.map(etablissement => <div key={etablissement.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => selectionnerEtablissement(etablissement)}>
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h4 className="font-medium text-gray-900">{etablissement.nom}</h4>
-                              <p className="text-sm text-gray-500 mt-1">{etablissement.adresse}</p>
-                              <div className="flex items-center gap-2 mt-2">
-                                <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">
-                                  {etablissement.type}
-                                </span>
-                                {etablissement.rating && <div className="flex items-center gap-1">
-                                    <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                                    <span className="text-xs text-gray-600">
-                                      {etablissement.rating} ({etablissement.user_ratings_total} avis)
-                                    </span>
-                                  </div>}
-                              </div>
-                            </div>
-                          </div>
-                        </div>)}
-                    </div>
-                  </div>}
-              </CardContent>
-            </Card>}
-
-          {modeActuel === 'saisie' && <Card className="mb-8">
-              <CardContent className="p-8">
-                <div className="space-y-6">
-                  {/* Recherche Google Places pour pré-remplissage */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Recherche Google Places (pour pré-remplissage)
-                    </label>
-                    <GooglePlaceAutocomplete value="" onChange={() => {}} onSelect={place => {
-                  setEtablissementManuel({
-                    nom: place.name,
-                    url: place.website || '',
-                    adresse: place.address,
-                    telephone: place.phone || ''
-                  });
-                  toast({
-                    title: "Informations pré-remplies",
-                    description: `Données de ${place.name} importées`,
-                    duration: 3000
-                  });
-                }} placeholder="Rechercher pour pré-remplir automatiquement" />
-                    <div className="text-xs text-gray-500 mt-1">
-                      Sélectionnez un établissement pour remplir automatiquement les champs ci-dessous
-                    </div>
-                  </div>
-
-                  <div className="border-t pt-6">
-                    <h3 className="font-medium text-gray-900 mb-4">Informations de l'établissement</h3>
-                    
-                    <div className="grid md:grid-cols-2 gap-6 mb-6">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">
-                          Nom de l'établissement <span className="text-red-500">*</span>
-                        </label>
-                        <Input id="venue_name" placeholder="Ex: Restaurant Le Gourmet" value={etablissementManuel.nom} onChange={e => gererChangementEtablissement('nom', e.target.value)} />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">
-                          URL/Site web <span className="text-red-500">*</span>
-                        </label>
-                        <Input id="venue_website" placeholder="Ex: https://www.legourmet.fr" value={etablissementManuel.url} onChange={e => gererChangementEtablissement('url', e.target.value)} />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">
-                          Adresse (optionnelle)
-                        </label>
-                        <Input id="venue_address" placeholder="Ex: 123 Rue de la Paix, 75001 Paris" value={etablissementManuel.adresse} onChange={e => gererChangementEtablissement('adresse', e.target.value)} />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">
-                          Téléphone (optionnel)
-                        </label>
-                        <Input id="venue_phone" placeholder="Ex: +33 1 23 45 67 89" value={etablissementManuel.telephone || ''} onChange={e => gererChangementEtablissement('telephone', e.target.value)} />
-                      </div>
-                    </div>
-                  </div>
-
-                  <Button onClick={enregistrerEtablissement} disabled={saisieEnCours || !etablissementManuel.nom || !etablissementManuel.url} className="w-full">
-                    {saisieEnCours ? <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                        Enregistrement...
-                      </> : "Enregistrer l'établissement"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>}
-        </div>
-
-        {/* Section Mon Établissement */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-8">
-          <EstablishmentCard establishment={selectedEstablishment} isLoading={isLoading} />
-          <Card>
-            <CardHeader>
-              <CardTitle>Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                Utilisez l'autocomplétion Google Places ci-dessus pour sélectionner votre établissement et voir ses informations s'afficher automatiquement.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Keep the old static card for comparison - can be removed later */}
-        <Card className="mb-8" style={{
-        display: 'none'
-      }}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building className="w-5 h-5" />
-              Mon Établissement (Statique)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Nom de l'établissement</label>
-                <div className="text-gray-900 font-medium">Restaurant Le Petit Paris</div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Adresse</label>
-                <div className="text-gray-900">123 Rue de la République, 75001 Paris</div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Téléphone</label>
-                <div className="text-gray-900">01 42 36 58 79</div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Email</label>
-                <div className="text-gray-900">contact@lepetitparis.fr</div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Type d'établissement</label>
-                <div className="text-gray-900">Restaurant</div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">SIRET</label>
-                <div className="text-gray-900">12345678912345</div>
-              </div>
-            </div>
-            <div className="mt-6 flex gap-3">
-              <Button variant="outline" className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Modifier les informations
-              </Button>
-              <Button variant="outline" className="flex items-center gap-2">
-                <Upload className="w-4 h-4" />
-                Ajouter une photo
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Section Réponse automatique */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Info className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Réponse automatique</h3>
-                  <p className="text-sm text-gray-600">Configurez les réponses automatiques aux avis</p>
-                </div>
-              </div>
-              <Button variant="outline" size="sm">
-                Configurer
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>;
-};
-export default Etablissement;
