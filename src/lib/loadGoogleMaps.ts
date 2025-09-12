@@ -1,4 +1,5 @@
-// Updated to work with script-based Google Maps loading
+import { Loader } from '@googlemaps/js-api-loader';
+
 let loadingPromise: Promise<any> | null = null;
 let isLoaded = false;
 
@@ -13,48 +14,39 @@ export async function loadGoogleMaps(): Promise<any> {
     return loadingPromise;
   }
 
+  // Vérifier que la clé API est présente
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  if (!apiKey) {
+    throw new Error('VITE_GOOGLE_MAPS_API_KEY is required');
+  }
+
   // Démarrer le chargement
-  loadingPromise = new Promise((resolve, reject) => {
-    // Check if Google Maps is already loaded
-    if ((window as any).google && (window as any).google.maps) {
-      isLoaded = true;
-      resolve((window as any).google);
-      return;
-    }
+  loadingPromise = (async () => {
+    try {
+      const loader = new Loader({
+        apiKey,
+        libraries: ['places'],
+        language: 'fr',
+        region: 'FR'
+      });
 
-    // Check if script is already loading
-    if ((window as any).googleMapsLoaded) {
-      isLoaded = true;
-      resolve((window as any).google);
-      return;
-    }
-
-    // Listen for the custom event
-    const handleLoad = () => {
-      if ((window as any).google && (window as any).google.maps) {
-        isLoaded = true;
-        console.debug('Google Maps loaded successfully via script');
-        resolve((window as any).google);
-      } else {
-        reject(new Error('Google Maps failed to load'));
+      const g = await loader.load();
+      
+      // S'assurer que window.google est bien défini
+      if (!(window as any).google) {
+        (window as any).google = g;
       }
-      window.removeEventListener('googleMapsLoaded', handleLoad);
-    };
 
-    window.addEventListener('googleMapsLoaded', handleLoad);
-
-    // Set timeout as fallback
-    setTimeout(() => {
-      if ((window as any).google && (window as any).google.maps) {
-        isLoaded = true;
-        resolve((window as any).google);
-      } else {
-        loadingPromise = null;
-        reject(new Error('Google Maps loading timeout'));
-      }
-      window.removeEventListener('googleMapsLoaded', handleLoad);
-    }, 10000);
-  });
+      isLoaded = true;
+      console.debug('Google Maps loaded successfully', typeof (window as any).google !== 'undefined');
+      
+      return g;
+    } catch (error) {
+      // Reset en cas d'erreur pour permettre une nouvelle tentative
+      loadingPromise = null;
+      throw error;
+    }
+  })();
 
   return loadingPromise;
 }
