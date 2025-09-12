@@ -15,10 +15,11 @@ const Dashboard = () => {
   const [showThematiques, setShowThematiques] = useState(false);
   const [showReponseAuto, setShowReponseAuto] = useState(false);
   const [showParetoChart, setShowParetoChart] = useState(false);
+  const [showParetoPoints, setShowParetoPoints] = useState(false);
   const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
-  // Données mockées pour le diagramme de Pareto
+  // Données mockées pour le diagramme de Pareto des problèmes
   const paretoData = [
     { name: "Service lent", count: 45, percentage: 32.1, cumulative: 32.1 },
     { name: "Nourriture froide", count: 38, percentage: 27.1, cumulative: 59.2 },
@@ -26,6 +27,16 @@ const Dashboard = () => {
     { name: "Personnel impoli", count: 18, percentage: 12.9, cumulative: 90.0 },
     { name: "Prix élevés", count: 8, percentage: 5.7, cumulative: 95.7 },
     { name: "Autres", count: 6, percentage: 4.3, cumulative: 100.0 }
+  ];
+
+  // Données mockées pour le diagramme de Pareto des points forts
+  const paretoPointsData = [
+    { name: "Qualité nourriture", count: 52, percentage: 35.4, cumulative: 35.4 },
+    { name: "Service rapide", count: 41, percentage: 27.9, cumulative: 63.3 },
+    { name: "Ambiance agréable", count: 28, percentage: 19.0, cumulative: 82.3 },
+    { name: "Prix abordables", count: 15, percentage: 10.2, cumulative: 92.5 },
+    { name: "Personnel aimable", count: 7, percentage: 4.8, cumulative: 97.3 },
+    { name: "Autres", count: 4, percentage: 2.7, cumulative: 100.0 }
   ];
 
   // Mise à jour de l'heure en temps réel
@@ -536,9 +547,15 @@ const Dashboard = () => {
           {/* Points forts */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <CardTitle className="text-lg">Top 3 Points forts</CardTitle>
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <CardTitle className="text-lg">Top 3 Points forts</CardTitle>
+                </div>
+                <ChevronDown 
+                  className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoPoints ? 'rotate-180' : ''}`}
+                  onClick={() => setShowParetoPoints(!showParetoPoints)}
+                />
               </div>
               <p className="text-sm text-gray-500">Les points forts les plus mentionnés par vos clients</p>
             </CardHeader>
@@ -578,6 +595,57 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Diagramme de Pareto des Points Forts */}
+        {showParetoPoints && <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                Diagramme de Pareto - Analyse des points forts
+              </CardTitle>
+              <p className="text-sm text-gray-600">Identification des 20% de points forts qui génèrent 80% de la satisfaction</p>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={paretoPointsData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="name" 
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                      fontSize={12}
+                    />
+                    <YAxis yAxisId="left" orientation="left" />
+                    <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
+                    <Tooltip 
+                      formatter={(value, name) => {
+                        if (name === 'Cumulative') return [`${value}%`, 'Cumul %'];
+                        return [value, 'Mentions positives'];
+                      }}
+                    />
+                    <Bar 
+                      yAxisId="left" 
+                      dataKey="count" 
+                      fill="hsl(var(--primary))" 
+                      name="Mentions positives"
+                    />
+                    <Line 
+                      yAxisId="right" 
+                      type="monotone" 
+                      dataKey="cumulative" 
+                      stroke="hsl(var(--green-600))" 
+                      strokeWidth={2}
+                      dot={{ fill: "hsl(var(--green-600))", strokeWidth: 2, r: 4 }}
+                      name="Cumulative"
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="text-sm text-gray-500 mt-4">Les barres représentent les mentions positives, la ligne le pourcentage cumulé des forces</p>
+            </CardContent>
+          </Card>}
 
         {/* Diagramme de Pareto */}
         {showParetoChart && <Card className="mb-8">
