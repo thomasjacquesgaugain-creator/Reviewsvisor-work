@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp, TrendingDown, Star, MessageSquare, Heart, AlertTriangle, ChevronRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Star, MessageSquare, Heart, AlertTriangle } from "lucide-react";
 
 interface AnalyticsDashboardProps {
   restaurantData: {
@@ -184,8 +184,6 @@ export const AnalyticsDashboard = ({ restaurantData }: AnalyticsDashboardProps) 
                             {getSentimentIcon(theme.sentiment)}
                           </Badge>
                           <span className="font-medium">{theme.name}</span>
-                          {/* Afficher la flèche pour les 3 premiers éléments (top 3) */}
-                          {index < 3 && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <span>{theme.mentions} mentions</span>
