@@ -81,6 +81,27 @@ const GooglePlaceAutocomplete: React.FC<GooglePlaceAutocompleteProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
+  useEffect(() => {
+    let ok = true;
+    (async () => {
+      try {
+        const g = await loadGoogleMaps();
+        console.debug('maps loaded', typeof (window as any).google !== 'undefined');
+        if (!ok) return;
+        if (!autocompleteService) {
+          autocompleteService = new (window as any).google.maps.places.AutocompleteService();
+        }
+        if (!placesService) {
+          const div = document.createElement('div');
+          placesService = new (window as any).google.maps.places.PlacesService(div);
+        }
+      } catch (e) {
+        console.error('Erreur de chargement Google Maps:', e);
+      }
+    })();
+    return () => { ok = false; };
+  }, []);
+
   // Créer un nouveau token de session
   const createNewSessionToken = async () => {
     try {
