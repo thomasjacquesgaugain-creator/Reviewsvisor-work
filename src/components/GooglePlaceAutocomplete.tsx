@@ -274,7 +274,11 @@ export default function GooglePlaceAutocomplete({
     onChange(suggestion.description);
     
     try {
-      // Import and save venue to Supabase and get place details
+      // Call saveSelectedPlace with the place_id
+      const { saveSelectedPlace } = await import('@/services/establishments');
+      await saveSelectedPlace(suggestion.place_id);
+      
+      // Also save venue to get establishment data for the form
       const { saveVenueFromPlaceId } = await import('@/services/establishments');
       const savedEstablishment = await saveVenueFromPlaceId(suggestion.place_id);
       
@@ -301,12 +305,6 @@ export default function GooglePlaceAutocomplete({
       
       // Create a new session token for next search
       createNewSessionToken().then(setSessionToken);
-      
-      toast({
-        title: "Établissement enregistré ✅",
-        description: `${savedEstablishment.name} a été sauvegardé avec succès`,
-        duration: 3000
-      });
       
     } catch (error) {
       console.error('Error saving establishment:', error);

@@ -76,28 +76,33 @@ export default function AutocompleteEtablissementInline({
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  function getDetails(placeId: string) {
+  async function getDetails(placeId: string) {
     setLoading(true);
     setErr(null);
     const usedToken = tokenRef.current;
     tokenRef.current = Math.random().toString(36).slice(2) + Date.now().toString(36);
     
-    supabase.functions
-      .invoke('get-place-details', {
+    try {
+      // Call saveSelectedPlace first
+      const { saveSelectedPlace } = await import('@/services/establishments');
+      await saveSelectedPlace(placeId);
+
+      // Then get place details
+      const { data, error } = await supabase.functions.invoke('get-place-details', {
         body: { 
           placeId: placeId, 
           sessionToken: usedToken 
         }
-      })
-      .then(({ data, error }) => {
-        if (error) throw error;
-        onPicked?.(data?.result);
-      })
-      .catch((e) => {
-        setErr("Erreur de récupération des détails");
-        console.error('Place details error:', e);
-      })
-      .finally(() => setLoading(false));
+      });
+      
+      if (error) throw error;
+      onPicked?.(data?.result);
+    } catch (e) {
+      setErr("Erreur de récupération des détails");
+      console.error('Place details error:', e);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function onSelect(s: Suggestion) {
