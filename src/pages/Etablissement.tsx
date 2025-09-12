@@ -5,15 +5,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Building, MapPin, Phone, Mail, Globe, Star, Users, FileText, Home, BarChart3, Upload, LogOut, Search, Info, Locate } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import AutocompleteEtablissementInline from "@/components/AutocompleteEtablissementInline";
 import AutocompleteEtablissementsFR from "@/components/AutocompleteEtablissementsFR";
 import PlacesSearchInput from "@/components/PlacesSearchInput";
 import GooglePlaceAutocomplete from "@/components/GooglePlaceAutocomplete";
+import EstablishmentCard from "@/components/EstablishmentCard";
+import { useEstablishmentStore } from "@/store/establishmentStore";
+import { getCurrentEstablishment, EstablishmentData } from "@/services/establishments";
 const Etablissement = () => {
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const { selectedEstablishment, setSelectedEstablishment, isLoading, setIsLoading } = useEstablishmentStore();
   const [modeActuel, setModeActuel] = useState<'recuperation' | 'saisie'>('recuperation');
   const [etablissement, setEtablissement] = useState("");
   const [periode, setPeriode] = useState("1-mois");
@@ -297,6 +299,36 @@ const Etablissement = () => {
       maximumAge: 300000
     });
   };
+
+  // Load current establishment on component mount
+  useEffect(() => {
+    const loadCurrentEstablishment = async () => {
+      if (selectedEstablishment) return; // Already loaded
+      
+      try {
+        setIsLoading(true);
+        const current = await getCurrentEstablishment();
+        setSelectedEstablishment(current);
+      } catch (error) {
+        console.error('Error loading current establishment:', error);
+        // Don't show error toast for this, it's normal if no establishment exists
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCurrentEstablishment();
+  }, [selectedEstablishment, setSelectedEstablishment, setIsLoading]);
+
+  // Handler for when an establishment is saved
+  const handleEstablishmentSaved = (establishment: EstablishmentData) => {
+    setSelectedEstablishment(establishment);
+    toast({
+      title: "Établissement mis à jour",
+      description: "Votre établissement courant a été mis à jour",
+    });
+  };
+
   return <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <nav className="bg-white border-b border-gray-200">
@@ -398,16 +430,21 @@ const Etablissement = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Recherche Google Places (Auto-complétion) *
                     </label>
-                    <GooglePlaceAutocomplete value={etablissement} onChange={setEtablissement} onSelect={place => {
-                  setEtablissement(place.name);
-                  // Pré-remplir automatiquement les champs
-                  setEtablissementManuel({
-                    nom: place.name,
-                    url: place.website || '',
-                    adresse: place.address
-                  });
-                  console.log("Place sélectionné:", place);
-                }} placeholder="Tapez le nom + ville (ex: Chez Guy Paris 11)" />
+                    <GooglePlaceAutocomplete 
+                      value={etablissement} 
+                      onChange={setEtablissement} 
+                      onSelect={place => {
+                        setEtablissement(place.name);
+                        // Pré-remplir automatiquement les champs
+                        setEtablissementManuel({
+                          nom: place.name,
+                          url: place.website || '',
+                          adresse: place.address
+                        });
+                      }} 
+                      onEstablishmentSaved={handleEstablishmentSaved}
+                      placeholder="Tapez le nom + ville (ex: Chez Guy Paris 11)" 
+                    />
                   </div>
                   
                   <div className="pt-4 border-t border-gray-200">
@@ -525,11 +562,29 @@ const Etablissement = () => {
         </div>
 
         {/* Section Mon Établissement */}
-        <Card className="mb-8">
+        <div className="grid lg:grid-cols-2 gap-8 mb-8">
+          <EstablishmentCard 
+            establishment={selectedEstablishment} 
+            isLoading={isLoading}
+          />
+          <Card>
+            <CardHeader>
+              <CardTitle>Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                Utilisez l'autocomplétion Google Places ci-dessus pour sélectionner votre établissement et voir ses informations s'afficher automatiquement.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Keep the old static card for comparison - can be removed later */}
+        <Card className="mb-8" style={{ display: 'none' }}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building className="w-5 h-5" />
-              Mon Établissement
+              Mon Établissement (Statique)
             </CardTitle>
           </CardHeader>
           <CardContent>

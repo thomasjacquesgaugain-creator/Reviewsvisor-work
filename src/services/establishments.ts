@@ -59,6 +59,15 @@ export async function saveEstablishmentFromPlaceDetails(details: any): Promise<E
     throw new Error('Erreur lors de la sauvegarde de l\'établissement');
   }
 
+  // Update current establishment in profile
+  if (data) {
+    try {
+      await updateCurrentEstablishment(data.id!);
+    } catch (error) {
+      console.warn('Could not update current establishment in profile:', error);
+    }
+  }
+
   return data as EstablishmentData;
 }
 
@@ -111,4 +120,71 @@ export async function getUserEstablishments(): Promise<EstablishmentData[]> {
   }
 
   return (data || []) as EstablishmentData[];
+}
+
+export async function getCurrentEstablishment(): Promise<EstablishmentData | null> {
+  // Get current user
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  
+  if (userError || !user) {
+    throw new Error('Utilisateur non connecté');
+  }
+
+  // Try to get current establishment from profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('current_establishment_id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (profile?.current_establishment_id) {
+    const { data: establishment, error } = await supabase
+      .from('establishments')
+      .select('*')
+      .eq('id', profile.current_establishment_id)
+      .single();
+
+    if (!error && establishment) {
+      return establishment as EstablishmentData;
+    }
+  }
+
+  // Fallback: get the most recent establishment
+  const { data: establishments, error } = await supabase
+    .from('establishments')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.error('Error fetching current establishment:', error);
+    return null;
+  }
+
+  return establishments && establishments.length > 0 ? establishments[0] as EstablishmentData : null;
+}
+
+export async function updateCurrentEstablishment(establishmentId: string): Promise<void> {
+  // Get current user
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  
+  if (userError || !user) {
+    throw new Error('Utilisateur non connecté');
+  }
+
+  // Upsert profile with current establishment
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({
+      user_id: user.id,
+      current_establishment_id: establishmentId
+    }, {
+      onConflict: 'user_id'
+    });
+
+  if (error) {
+    console.error('Error updating current establishment:', error);
+    throw new Error('Erreur lors de la mise à jour de l\'établissement courant');
+  }
 }
