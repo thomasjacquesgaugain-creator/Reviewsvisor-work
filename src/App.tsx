@@ -54,6 +54,11 @@ const App = () => {
                   </div>
                 </div>
               } />
+              <Route path="/accueil" element={
+                <Protected>
+                  <Accueil />
+                </Protected>
+              } />
               <Route path="/" element={
                 <Protected>
                   <Accueil />
