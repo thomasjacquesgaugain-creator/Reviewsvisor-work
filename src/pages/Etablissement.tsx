@@ -62,10 +62,13 @@ export default function EtablissementPage() {
         ],
       });
 
-      autocomplete.addListener("place_changed", () => {
+      autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
-        if (!place || !place.place_id) return;
-        setSelected(serializePlace(place)); // <= rend le badge vert + active le bouton
+        if (!place || !place.place_id) {
+          setSelected(null);
+          return;
+        }
+        setSelected(serializePlace(place));
       });
     };
 
