@@ -124,8 +124,9 @@ export const AnalyticsDashboard = ({ restaurantData }: AnalyticsDashboardProps) 
                 <AlertTriangle className="w-4 h-4 text-warning" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-warning">
+                <div className="text-2xl font-bold text-warning flex items-center gap-2">
                   {mockData.themes.filter(t => t.sentiment === "negative").length}
+                  <TrendingDown className="w-4 h-4 text-destructive" />
                 </div>
                 <p className="text-xs text-muted-foreground">domaines à améliorer</p>
               </CardContent>
