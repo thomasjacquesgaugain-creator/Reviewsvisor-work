@@ -9,7 +9,7 @@ import { AuthProvider } from "@/contexts/AuthProvider";
 import Protected from "@/components/Protected";
 import SignInForm from "@/components/SignInForm";
 import SignUpForm from "@/components/SignUpForm";
-import Index from "./pages/Index";
+import Accueil from "./pages/Accueil";
 import Login from "./pages/Login";
 import Auth from "./pages/Auth";
 import TableauDeBord from "./pages/TableauDeBord";
@@ -56,7 +56,7 @@ const App = () => {
               } />
               <Route path="/" element={
                 <Protected>
-                  <Index />
+                  <Accueil />
                 </Protected>
               } />
               <Route path="/login" element={<Login />} />
