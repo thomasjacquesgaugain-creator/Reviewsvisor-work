@@ -479,7 +479,7 @@ const Dashboard = () => {
                   <AlertTriangle className="w-5 h-5 text-red-500" />
                   <CardTitle className="text-lg">Top 3 Problèmes prioritaires</CardTitle>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
               </div>
               <p className="text-sm text-gray-500">Les plus mentionnés par fréquence et pourcentage en priorité</p>
             </CardHeader>
