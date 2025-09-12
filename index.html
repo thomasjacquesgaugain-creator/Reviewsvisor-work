@@ -15,6 +15,19 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <!-- Google Maps API -->
+    <script>
+      // Define the function before loading Google Maps
+      window.initAutocomplete = () => {
+        console.log('Google Maps API loaded and ready');
+        window.googleMapsLoaded = true;
+        // Dispatch custom event to notify React components
+        window.dispatchEvent(new CustomEvent('googleMapsLoaded'));
+      };
+    </script>
+    <script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=YOUR_BROWSER_KEY&libraries=places&callback=initAutocomplete">
+    </script>
   </head>
 
   <body>
