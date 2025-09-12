@@ -227,45 +227,6 @@ export type Database = {
       }
     }
     Views: {
-      etablissements: {
-        Row: {
-          adresse: string | null
-          created_at: string | null
-          email: string | null
-          id: string | null
-          nom: string | null
-          place_id: string | null
-          telephone: string | null
-          type: string | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          adresse?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string | null
-          nom?: string | null
-          place_id?: string | null
-          telephone?: string | null
-          type?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          adresse?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string | null
-          nom?: string | null
-          place_id?: string | null
-          telephone?: string | null
-          type?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       geography_columns: {
         Row: {
           coord_dimension: number | null
