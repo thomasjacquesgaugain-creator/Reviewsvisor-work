@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { loadGoogleMaps } from "@/lib/loadGoogleMaps";
 import { AuthProvider } from "@/contexts/AuthProvider";
@@ -59,11 +59,7 @@ const App = () => {
                   <Accueil />
                 </Protected>
               } />
-              <Route path="/" element={
-                <Protected>
-                  <Accueil />
-                </Protected>
-              } />
+              <Route path="/" element={<Navigate to="/accueil" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/tableau-de-bord" element={
                 <Protected>
