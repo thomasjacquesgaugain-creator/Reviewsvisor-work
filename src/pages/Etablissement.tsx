@@ -469,7 +469,7 @@ const Etablissement = () => {
                     {rechercheEnCours ? <>
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
                         Recherche en cours...
-                      </> : "Analyser cet établissement"}
+                      </> : "Enregistrer l'établissement"}
                   </Button>
                 </div>
 
@@ -585,7 +585,7 @@ const Etablissement = () => {
                     {saisieEnCours ? <>
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
                         Enregistrement...
-                      </> : "Analyser cet établissement"}
+                      </> : "Enregistrer l'établissement"}
                   </Button>
                 </div>
               </CardContent>
