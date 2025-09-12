@@ -576,55 +576,59 @@ const Dashboard = () => {
                 <Badge className="bg-green-500 text-white">Force</Badge>
               </div>
             </CardContent>
-            
-            {/* Diagramme de Pareto */}
-            {showParetoChart && (
-              <CardContent className="pt-0">
-                <div className="mt-4 border-t pt-4">
-                  <h4 className="text-sm font-medium mb-4">Diagramme de Pareto - Analyse des problèmes</h4>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <ComposedChart data={paretoData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="name" 
-                        angle={-45}
-                        textAnchor="end"
-                        height={80}
-                        fontSize={12}
-                      />
-                      <YAxis yAxisId="left" orientation="left" />
-                      <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
-                      <Tooltip 
-                        formatter={(value, name) => {
-                          if (name === 'Cumulative') return [`${value}%`, 'Cumul %'];
-                          return [value, 'Occurrences'];
-                        }}
-                      />
-                      <Bar 
-                        yAxisId="left" 
-                        dataKey="count" 
-                        fill="hsl(var(--destructive))" 
-                        name="Occurrences"
-                      />
-                      <Line 
-                        yAxisId="right" 
-                        type="monotone" 
-                        dataKey="cumulative" 
-                        stroke="hsl(var(--primary))" 
-                        strokeWidth={2}
-                        dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
-                        name="Cumulative"
-                      />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Le diagramme de Pareto permet d'identifier les 20% de causes qui génèrent 80% des problèmes
-                  </p>
-                </div>
-              </CardContent>
-            )}
           </Card>
         </div>
+
+        {/* Diagramme de Pareto */}
+        {showParetoChart && <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+                Diagramme de Pareto - Analyse des problèmes
+              </CardTitle>
+              <p className="text-sm text-gray-600">Identification des 20% de causes qui génèrent 80% des problèmes</p>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={paretoData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="name" 
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                      fontSize={12}
+                    />
+                    <YAxis yAxisId="left" orientation="left" />
+                    <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
+                    <Tooltip 
+                      formatter={(value, name) => {
+                        if (name === 'Cumulative') return [`${value}%`, 'Cumul %'];
+                        return [value, 'Occurrences'];
+                      }}
+                    />
+                    <Bar 
+                      yAxisId="left" 
+                      dataKey="count" 
+                      fill="hsl(var(--destructive))" 
+                      name="Occurrences"
+                    />
+                    <Line 
+                      yAxisId="right" 
+                      type="monotone" 
+                      dataKey="cumulative" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2}
+                      dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
+                      name="Cumulative"
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="text-sm text-gray-500 mt-4">Les barres représentent le nombre d'occurrences, la ligne le pourcentage cumulé</p>
+            </CardContent>
+          </Card>}
 
         {/* Recommandations */}
         <Card className="mb-8">
