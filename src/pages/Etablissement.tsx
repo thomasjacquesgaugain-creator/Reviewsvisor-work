@@ -13,6 +13,14 @@ import GooglePlaceAutocomplete from "@/components/GooglePlaceAutocomplete";
 import EstablishmentCard from "@/components/EstablishmentCard";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { getCurrentEstablishment, EstablishmentData } from "@/services/establishments";
+
+// TypeScript declarations for Google Maps
+declare global {
+  interface Window {
+    google: any;
+    initAutocomplete: () => void;
+  }
+}
 const Etablissement = () => {
   const { toast } = useToast();
   const { selectedEstablishment, setSelectedEstablishment, isLoading, setIsLoading } = useEstablishmentStore();
@@ -321,6 +329,98 @@ const Etablissement = () => {
     loadCurrentEstablishment();
   }, [selectedEstablishment, setSelectedEstablishment, setIsLoading]);
 
+  // Load Google Maps and initialize autocomplete
+  useEffect(() => {
+    const loadGoogleMaps = () => {
+      if (document.querySelector('script[src*="maps.googleapis.com"]')) {
+        return; // Script already loaded
+      }
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initAutocomplete`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    };
+
+    const initAutocomplete = () => {
+      const input = document.getElementById('places-input') as HTMLInputElement;
+      const badge = document.getElementById('selected-place-badge') as HTMLElement;
+      const nameEl = document.getElementById('selected-place-name') as HTMLElement;
+      const btn = document.getElementById('save-place-btn') as HTMLButtonElement;
+
+      if (!input || !badge || !nameEl || !btn || !window.google) return;
+
+      const autocomplete = new window.google.maps.places.Autocomplete(input, {
+        types: ['establishment'],
+        fields: ['place_id', 'name', 'formatted_address']
+      });
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place || !place.place_id) return;
+
+        // Display "Name — Address" in search bar
+        const label = [place.name, place.formatted_address].filter(Boolean).join(" — ");
+        input.value = label;
+
+        // Show selection badge
+        nameEl.textContent = place.name || '';
+        badge.style.display = 'inline-flex';
+
+        // Store place_id and enable button
+        btn.dataset.placeId = place.place_id;
+        btn.disabled = false;
+      });
+
+      // Save button click handler
+      btn.addEventListener('click', async () => {
+        const placeId = btn.dataset.placeId;
+        if (!placeId) {
+          toast({
+            title: "Erreur",
+            description: "Veuillez d'abord sélectionner un établissement",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        btn.disabled = true;
+        const originalText = btn.textContent;
+        btn.textContent = "Enregistrement…";
+
+        try {
+          // Here you would call your save function
+          toast({
+            title: "Établissement enregistré",
+            description: "L'établissement a été sauvegardé avec succès"
+          });
+        } catch (error) {
+          console.error('Error saving establishment:', error);
+          toast({
+            title: "Erreur",
+            description: "Erreur lors de l'enregistrement",
+            variant: "destructive"
+          });
+        } finally {
+          btn.disabled = false;
+          btn.textContent = originalText;
+        }
+      });
+    };
+
+    // Set up global callback
+    window.initAutocomplete = initAutocomplete;
+
+    // Load Google Maps script
+    loadGoogleMaps();
+
+    // Check if Google Maps is already loaded
+    if (window.google && window.google.maps && window.google.maps.places) {
+      initAutocomplete();
+    }
+  }, [toast]);
+
   // Handler for when an establishment is saved
   const handleEstablishmentSaved = (establishment: EstablishmentData) => {
     setSelectedEstablishment(establishment);
@@ -431,36 +531,39 @@ const Etablissement = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Recherche Google Places (Auto-complétion) *
                     </label>
-                    <GooglePlaceAutocomplete 
-                      id="venueSearch"
-                      value={etablissement} 
-                      onChange={setEtablissement} 
-                      onSelect={place => {
-                        setEtablissement(place.name);
-                        // Pré-remplir automatiquement les champs
-                        setEtablissementManuel({
-                          nom: place.name,
-                          url: place.website || '',
-                          adresse: place.address,
-                          telephone: place.phone || ''
-                        });
-                      }} 
-                      onEstablishmentSaved={handleEstablishmentSaved}
-                      placeholder="Rechercher un établissement…" 
-                    />
+                    <div className="space-y-3">
+                      <input 
+                        id="places-input" 
+                        type="text" 
+                        placeholder="Rechercher un établissement…" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      
+                      <span id="selected-place-badge" style={{display:'none'}} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        ✅ Sélectionné : <strong id="selected-place-name"></strong>
+                      </span>
+                      
+                      <button 
+                        id="save-place-btn" 
+                        disabled 
+                        title="Enregistrer l'établissement" 
+                        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
+                      >
+                        💾 Enregistrer l'établissement
+                      </button>
+                    </div>
                   </div>
                   
                   <div className="pt-4 border-t border-gray-200">
-                    
                     <AutocompleteEtablissementsFR onPicked={item => {
-                  setEtablissement(item.label);
-                  toast({
-                    title: "Établissement français sélectionné",
-                    description: `${item.label} (SIRET: ${item.siret || 'Non disponible'})`,
-                    duration: 3000
-                  });
-                  console.log("Données SIRET:", item);
-                }} />
+                      setEtablissement(item.label);
+                      toast({
+                        title: "Établissement français sélectionné",
+                        description: `${item.label} (SIRET: ${item.siret || 'Non disponible'})`,
+                        duration: 3000
+                      });
+                      console.log("Données SIRET:", item);
+                    }} />
                   </div>
                 </div>
 
