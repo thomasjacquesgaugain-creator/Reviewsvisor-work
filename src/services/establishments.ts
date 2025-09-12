@@ -135,6 +135,19 @@ export async function saveEstablishmentFromPlaceDetails(details: any): Promise<E
   return data as EstablishmentData;
 }
 
+// Simple function to save selected place by place_id
+export async function saveSelectedPlace(placeId: string): Promise<void> {
+  try {
+    console.log('Saving selected place:', placeId);
+    const savedVenue = await saveVenueFromPlaceId(placeId);
+    console.log('Place saved successfully:', savedVenue);
+    alert('Établissement enregistré ✅');
+  } catch (error) {
+    console.error('Error saving place:', error);
+    alert('Erreur lors de l\'enregistrement : ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
+  }
+}
+
 // Save venue from Google Place ID (new approach)
 export async function saveVenueFromPlaceId(placeId: string): Promise<EstablishmentData> {
   // Ensure Google Maps is loaded
