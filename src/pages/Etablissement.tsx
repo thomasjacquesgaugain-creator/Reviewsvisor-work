@@ -19,6 +19,7 @@ declare global {
   interface Window {
     google: any;
     initAutocomplete: () => void;
+    initPlaces: () => void;
   }
 }
 const Etablissement = () => {
@@ -329,97 +330,161 @@ const Etablissement = () => {
     loadCurrentEstablishment();
   }, [selectedEstablishment, setSelectedEstablishment, setIsLoading]);
 
-  // Load Google Maps and initialize autocomplete
+  // Google Places integration with improved functionality
   useEffect(() => {
+    let selectedPlace: any = null;
+
+    const serializePlace = (place: any) => {
+      return {
+        place_id: place.place_id,
+        name: place.name ?? '',
+        address: place.formatted_address ?? '',
+        lat: place.geometry?.location?.lat() ?? null,
+        lng: place.geometry?.location?.lng() ?? null,
+        url: place.url ?? '',
+        website: place.website ?? '',
+        phone: place.formatted_phone_number ?? '',
+        rating: place.rating ?? null,
+      };
+    };
+
+    const setValidated = (ok: boolean, name = '') => {
+      const badge = document.getElementById('selected-place-badge');
+      const badgeName = document.getElementById('selected-place-name');
+      const saveBtn = document.getElementById('save-place-btn') as HTMLButtonElement;
+
+      if (!badge || !badgeName || !saveBtn) return;
+
+      if (ok) {
+        badge.style.display = 'inline-block';
+        badgeName.textContent = name;
+        saveBtn.disabled = false;
+      } else {
+        badge.style.display = 'none';
+        badgeName.textContent = '';
+        saveBtn.disabled = true;
+      }
+    };
+
+    const initPlaces = () => {
+      const input = document.getElementById('places-input') as HTMLInputElement;
+      if (!input || !window.google?.maps?.places) return;
+
+      const autocomplete = new window.google.maps.places.Autocomplete(input, {
+        types: ['establishment'],
+        fields: [
+          'place_id', 'name', 'formatted_address', 'geometry.location',
+          'url', 'website', 'formatted_phone_number', 'rating'
+        ],
+      });
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+
+        // Check if place data is complete
+        if (!place || !place.place_id) {
+          selectedPlace = null;
+          setValidated(false);
+          return;
+        }
+
+        selectedPlace = serializePlace(place);
+        setValidated(true, selectedPlace.name);
+      });
+    };
+
+    const handleSaveClick = async () => {
+      if (!selectedPlace) return;
+
+      const saveBtn = document.getElementById('save-place-btn') as HTMLButtonElement;
+      if (!saveBtn) return;
+
+      const originalText = saveBtn.textContent;
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Enregistrement…";
+
+      try {
+        // Here you can integrate with your backend or Supabase
+        // Example Supabase integration:
+        /*
+        const { data, error } = await supabase
+          .from('etablissements')
+          .upsert(selectedPlace, { onConflict: 'place_id' });
+        if (error) throw error;
+        */
+
+        toast({
+          title: "Établissement enregistré",
+          description: "L'établissement a été sauvegardé avec succès ✅"
+        });
+
+        // Update form fields with selected data
+        setEtablissementManuel({
+          nom: selectedPlace.name,
+          url: selectedPlace.website || selectedPlace.url,
+          adresse: selectedPlace.address,
+          telephone: selectedPlace.phone
+        });
+
+      } catch (error) {
+        console.error('Error saving establishment:', error);
+        toast({
+          title: "Erreur",
+          description: "Erreur lors de l'enregistrement",
+          variant: "destructive"
+        });
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
+    };
+
     const loadGoogleMaps = () => {
       if (document.querySelector('script[src*="maps.googleapis.com"]')) {
         return; // Script already loaded
       }
 
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initAutocomplete`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initPlaces`;
       script.async = true;
       script.defer = true;
       document.head.appendChild(script);
     };
 
-    const initAutocomplete = () => {
-      const input = document.getElementById('places-input') as HTMLInputElement;
-      const badge = document.getElementById('selected-place-badge') as HTMLElement;
-      const nameEl = document.getElementById('selected-place-name') as HTMLElement;
-      const btn = document.getElementById('save-place-btn') as HTMLButtonElement;
-
-      if (!input || !badge || !nameEl || !btn || !window.google) return;
-
-      const autocomplete = new window.google.maps.places.Autocomplete(input, {
-        types: ['establishment'],
-        fields: ['place_id', 'name', 'formatted_address']
-      });
-
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        if (!place || !place.place_id) return;
-
-        // Display "Name — Address" in search bar
-        const label = [place.name, place.formatted_address].filter(Boolean).join(" — ");
-        input.value = label;
-
-        // Show selection badge
-        nameEl.textContent = place.name || '';
-        badge.style.display = 'inline-flex';
-
-        // Store place_id and enable button
-        btn.dataset.placeId = place.place_id;
-        btn.disabled = false;
-      });
-
-      // Save button click handler
-      btn.addEventListener('click', async () => {
-        const placeId = btn.dataset.placeId;
-        if (!placeId) {
-          toast({
-            title: "Erreur",
-            description: "Veuillez d'abord sélectionner un établissement",
-            variant: "destructive"
-          });
-          return;
-        }
-
-        btn.disabled = true;
-        const originalText = btn.textContent;
-        btn.textContent = "Enregistrement…";
-
-        try {
-          // Here you would call your save function
-          toast({
-            title: "Établissement enregistré",
-            description: "L'établissement a été sauvegardé avec succès"
-          });
-        } catch (error) {
-          console.error('Error saving establishment:', error);
-          toast({
-            title: "Erreur",
-            description: "Erreur lors de l'enregistrement",
-            variant: "destructive"
-          });
-        } finally {
-          btn.disabled = false;
-          btn.textContent = originalText;
-        }
-      });
-    };
-
     // Set up global callback
-    window.initAutocomplete = initAutocomplete;
+    window.initPlaces = initPlaces;
 
-    // Load Google Maps script
-    loadGoogleMaps();
-
-    // Check if Google Maps is already loaded
-    if (window.google && window.google.maps && window.google.maps.places) {
-      initAutocomplete();
+    // Add save button event listener
+    const saveBtn = document.getElementById('save-place-btn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', handleSaveClick);
     }
-  }, [toast]);
+
+    // Load Google Maps or initialize if already loaded
+    if (window.google?.maps?.places) {
+      initPlaces();
+    } else {
+      loadGoogleMaps();
+      
+      // Retry initialization until Google Maps is available
+      const interval = setInterval(() => {
+        if (window.google?.maps?.places) {
+          clearInterval(interval);
+          initPlaces();
+        }
+      }, 100);
+
+      // Cleanup interval after 10 seconds to prevent infinite polling
+      setTimeout(() => clearInterval(interval), 10000);
+    }
+
+    // Cleanup function
+    return () => {
+      if (saveBtn) {
+        saveBtn.removeEventListener('click', handleSaveClick);
+      }
+    };
+  }, [toast, setEtablissementManuel]);
 
   // Handler for when an establishment is saved
   const handleEstablishmentSaved = (establishment: EstablishmentData) => {
