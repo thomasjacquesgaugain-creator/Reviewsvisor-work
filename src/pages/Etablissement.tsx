@@ -431,6 +431,7 @@ const Etablissement = () => {
                       Recherche Google Places (Auto-complétion) *
                     </label>
                     <GooglePlaceAutocomplete 
+                      id="venueSearch"
                       value={etablissement} 
                       onChange={setEtablissement} 
                       onSelect={place => {
@@ -443,7 +444,7 @@ const Etablissement = () => {
                         });
                       }} 
                       onEstablishmentSaved={handleEstablishmentSaved}
-                      placeholder="Tapez le nom + ville (ex: Chez Guy Paris 11)" 
+                      placeholder="Rechercher un établissement…" 
                     />
                   </div>
                   

@@ -32,6 +32,7 @@ interface GooglePlaceAutocompleteProps {
   onEstablishmentSaved?: (establishment: any) => void;
   placeholder?: string;
   className?: string;
+  id?: string;
 }
 
 // Services Google Maps globaux
@@ -77,7 +78,8 @@ export default function GooglePlaceAutocomplete({
   onSelect, 
   onEstablishmentSaved,
   placeholder = "Rechercher un lieu...",
-  className = ""
+  className = "",
+  id
 }: GooglePlaceAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -377,6 +379,7 @@ export default function GooglePlaceAutocomplete({
       <div className="relative">
         <Input
           ref={inputRef}
+          id={id}
           type="text"
           value={value}
           onChange={handleInputChange}
