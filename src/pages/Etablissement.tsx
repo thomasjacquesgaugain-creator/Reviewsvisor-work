@@ -398,36 +398,29 @@ const Etablissement = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Recherche Google Places (Auto-complétion) *
                     </label>
-                    <GooglePlaceAutocomplete
-                      value={etablissement}
-                      onChange={setEtablissement}
-                      onSelect={(place) => {
-                        setEtablissement(place.name);
-                        // Pré-remplir automatiquement les champs
-                        setEtablissementManuel({
-                          nom: place.name,
-                          url: place.website || '',
-                          adresse: place.address
-                        });
-                        console.log("Place sélectionné:", place);
-                      }}
-                      placeholder="Tapez le nom + ville (ex: Chez Guy Paris 11)"
-                    />
+                    <GooglePlaceAutocomplete value={etablissement} onChange={setEtablissement} onSelect={place => {
+                  setEtablissement(place.name);
+                  // Pré-remplir automatiquement les champs
+                  setEtablissementManuel({
+                    nom: place.name,
+                    url: place.website || '',
+                    adresse: place.address
+                  });
+                  console.log("Place sélectionné:", place);
+                }} placeholder="Tapez le nom + ville (ex: Chez Guy Paris 11)" />
                   </div>
                   
                   <div className="pt-4 border-t border-gray-200">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Ou recherche dans la base française (SIRET)
-                    </label>
+                    
                     <AutocompleteEtablissementsFR onPicked={item => {
-                      setEtablissement(item.label);
-                      toast({
-                        title: "Établissement français sélectionné",
-                        description: `${item.label} (SIRET: ${item.siret || 'Non disponible'})`,
-                        duration: 3000
-                      });
-                      console.log("Données SIRET:", item);
-                    }} />
+                  setEtablissement(item.label);
+                  toast({
+                    title: "Établissement français sélectionné",
+                    description: `${item.label} (SIRET: ${item.siret || 'Non disponible'})`,
+                    duration: 3000
+                  });
+                  console.log("Données SIRET:", item);
+                }} />
                   </div>
                 </div>
 
@@ -476,23 +469,18 @@ const Etablissement = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Recherche Google Places (pour pré-remplissage)
                     </label>
-                    <GooglePlaceAutocomplete
-                      value=""
-                      onChange={() => {}}
-                      onSelect={(place) => {
-                        setEtablissementManuel({
-                          nom: place.name,
-                          url: place.website || '',
-                          adresse: place.address
-                        });
-                        toast({
-                          title: "Informations pré-remplies",
-                          description: `Données de ${place.name} importées`,
-                          duration: 3000
-                        });
-                      }}
-                      placeholder="Rechercher pour pré-remplir automatiquement"
-                    />
+                    <GooglePlaceAutocomplete value="" onChange={() => {}} onSelect={place => {
+                  setEtablissementManuel({
+                    nom: place.name,
+                    url: place.website || '',
+                    adresse: place.address
+                  });
+                  toast({
+                    title: "Informations pré-remplies",
+                    description: `Données de ${place.name} importées`,
+                    duration: 3000
+                  });
+                }} placeholder="Rechercher pour pré-remplir automatiquement" />
                     <div className="text-xs text-gray-500 mt-1">
                       Sélectionnez un établissement pour remplir automatiquement les champs ci-dessous
                     </div>
@@ -506,50 +494,30 @@ const Etablissement = () => {
                         <label className="text-sm font-medium text-gray-700">
                           Nom de l'établissement <span className="text-red-500">*</span>
                         </label>
-                        <Input 
-                          placeholder="Ex: Restaurant Le Gourmet" 
-                          value={etablissementManuel.nom} 
-                          onChange={e => gererChangementEtablissement('nom', e.target.value)} 
-                        />
+                        <Input placeholder="Ex: Restaurant Le Gourmet" value={etablissementManuel.nom} onChange={e => gererChangementEtablissement('nom', e.target.value)} />
                       </div>
                       
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">
                           URL/Site web <span className="text-red-500">*</span>
                         </label>
-                        <Input 
-                          placeholder="Ex: https://www.legourmet.fr" 
-                          value={etablissementManuel.url} 
-                          onChange={e => gererChangementEtablissement('url', e.target.value)} 
-                        />
+                        <Input placeholder="Ex: https://www.legourmet.fr" value={etablissementManuel.url} onChange={e => gererChangementEtablissement('url', e.target.value)} />
                       </div>
 
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">
                           Adresse (optionnelle)
                         </label>
-                        <Input 
-                          placeholder="Ex: 123 Rue de la Paix, 75001 Paris" 
-                          value={etablissementManuel.adresse} 
-                          onChange={e => gererChangementEtablissement('adresse', e.target.value)} 
-                        />
+                        <Input placeholder="Ex: 123 Rue de la Paix, 75001 Paris" value={etablissementManuel.adresse} onChange={e => gererChangementEtablissement('adresse', e.target.value)} />
                       </div>
                     </div>
                   </div>
 
-                  <Button 
-                    onClick={enregistrerEtablissement} 
-                    disabled={saisieEnCours || !etablissementManuel.nom || !etablissementManuel.url} 
-                    className="w-full"
-                  >
-                    {saisieEnCours ? (
-                      <>
+                  <Button onClick={enregistrerEtablissement} disabled={saisieEnCours || !etablissementManuel.nom || !etablissementManuel.url} className="w-full">
+                    {saisieEnCours ? <>
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
                         Enregistrement...
-                      </>
-                    ) : (
-                      "Analyser cet établissement"
-                    )}
+                      </> : "Analyser cet établissement"}
                   </Button>
                 </div>
               </CardContent>
