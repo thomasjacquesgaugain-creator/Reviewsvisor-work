@@ -12,7 +12,7 @@ import PlacesSearchInput from "@/components/PlacesSearchInput";
 import GooglePlaceAutocomplete from "@/components/GooglePlaceAutocomplete";
 import EstablishmentCard from "@/components/EstablishmentCard";
 import { useEstablishmentStore } from "@/store/establishmentStore";
-import { getCurrentEstablishment, EstablishmentData } from "@/services/establishments";
+import { getCurrentEstablishment, EstablishmentData, saveSelectedPlace } from "@/services/establishments";
 const Etablissement = () => {
   const { toast } = useToast();
   const { selectedEstablishment, setSelectedEstablishment, isLoading, setIsLoading } = useEstablishmentStore();
@@ -29,6 +29,10 @@ const Etablissement = () => {
     lng: number;
   } | null>(null);
   const [geolocalisationEnCours, setGeolocalisationEnCours] = useState(false);
+  
+  // New state for the form integration
+  const [selectedPlaceId, setSelectedPlaceId] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // États pour la saisie manuelle d'établissement
   const [etablissementManuel, setEtablissementManuel] = useState({
@@ -330,6 +334,29 @@ const Etablissement = () => {
     });
   };
 
+  // Handle analyze establishment button click
+  const handleAnalyzeEstablishment = async () => {
+    const pid = (document.getElementById('selected_place_id') as HTMLInputElement)?.value;
+    if (pid) {
+      setIsAnalyzing(true);
+      try {
+        await saveSelectedPlace(pid);
+        toast({
+          title: "Analyse terminée",
+          description: "L'établissement a été analysé et sauvegardé avec succès",
+        });
+      } catch (error) {
+        toast({
+          title: "Erreur",
+          description: "Erreur lors de l'analyse de l'établissement",
+          variant: "destructive",
+        });
+      } finally {
+        setIsAnalyzing(false);
+      }
+    }
+  };
+
   return <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <nav className="bg-white border-b border-gray-200">
@@ -437,6 +464,8 @@ const Etablissement = () => {
                       onChange={setEtablissement} 
                       onSelect={place => {
                         setEtablissement(place.name);
+                        // Store the place_id for analysis
+                        setSelectedPlaceId(place.place_id);
                         // Pré-remplir automatiquement les champs
                         setEtablissementManuel({
                           nom: place.name,
@@ -444,33 +473,113 @@ const Etablissement = () => {
                           adresse: place.address,
                           telephone: place.phone || ''
                         });
-                      }} 
+                      }}
                       onEstablishmentSaved={handleEstablishmentSaved}
                       placeholder="Rechercher un établissement…" 
                     />
                   </div>
                   
-                  <div className="pt-4 border-t border-gray-200">
-                    
-                    <AutocompleteEtablissementsFR onPicked={item => {
-                  setEtablissement(item.label);
-                  toast({
-                    title: "Établissement français sélectionné",
-                    description: `${item.label} (SIRET: ${item.siret || 'Non disponible'})`,
-                    duration: 3000
-                  });
-                  console.log("Données SIRET:", item);
-                }} />
-                  </div>
-                </div>
+                  {/* Hidden input to store selected place_id */}
+                  <input 
+                    id="selected_place_id" 
+                    type="hidden" 
+                    value={selectedPlaceId}
+                    readOnly
+                  />
 
-                <div className="mt-6">
-                  <Button className="w-full" onClick={rechercherEtablissement} disabled={rechercheEnCours || !etablissement}>
-                    {rechercheEnCours ? <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                        Recherche en cours...
-                      </> : "Analyser cet établissement"}
-                  </Button>
+                  {/* Venue Information Fields */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nom de l'établissement
+                      </label>
+                      <Input
+                        id="venue_name"
+                        value={etablissementManuel.nom}
+                        onChange={(e) => gererChangementEtablissement('nom', e.target.value)}
+                        placeholder="Nom"
+                        className="w-full"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Adresse
+                      </label>
+                      <Input
+                        id="venue_address"
+                        value={etablissementManuel.adresse}
+                        onChange={(e) => gererChangementEtablissement('adresse', e.target.value)}
+                        placeholder="Adresse"
+                        className="w-full"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Téléphone
+                      </label>
+                      <Input
+                        id="venue_phone"
+                        value={etablissementManuel.telephone}
+                        onChange={(e) => gererChangementEtablissement('telephone', e.target.value)}
+                        placeholder="Téléphone"
+                        className="w-full"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Site web
+                      </label>
+                      <Input
+                        id="venue_website"
+                        value={etablissementManuel.url}
+                        onChange={(e) => gererChangementEtablissement('url', e.target.value)}
+                        placeholder="Site web"
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Analyze Button */}
+                  <div className="flex justify-center pt-6">
+                    <Button
+                      id="analyzeBtn"
+                      onClick={handleAnalyzeEstablishment}
+                      disabled={!selectedPlaceId || isAnalyzing}
+                      className="px-8 py-2"
+                    >
+                      {isAnalyzing ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                          Analyse en cours...
+                        </>
+                      ) : (
+                        'Analyser cet établissement'
+                      )}
+                    </Button>
+                  </div>
+                  
+                  <div className="pt-4 border-t border-gray-200">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ou rechercher dans la base française
+                    </label>
+                    <AutocompleteEtablissementsFR onPicked={item => {
+                      setEtablissement(item.label);
+                      setEtablissementManuel({
+                        nom: item.label,
+                        url: '',
+                        adresse: item.secondary || '',
+                        telephone: ''
+                      });
+                      toast({
+                        title: "Établissement français sélectionné",
+                        description: `${item.label} (SIRET: ${item.siret || 'Non disponible'})`,
+                        duration: 3000
+                      });
+                    }} />
+                  </div>
                 </div>
 
                 {/* Affichage des résultats de recherche */}
