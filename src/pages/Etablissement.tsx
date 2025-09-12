@@ -23,8 +23,15 @@ declare global {
   }
 }
 const Etablissement = () => {
-  const { toast } = useToast();
-  const { selectedEstablishment, setSelectedEstablishment, isLoading, setIsLoading } = useEstablishmentStore();
+  const {
+    toast
+  } = useToast();
+  const {
+    selectedEstablishment,
+    setSelectedEstablishment,
+    isLoading,
+    setIsLoading
+  } = useEstablishmentStore();
   const [modeActuel, setModeActuel] = useState<'recuperation' | 'saisie'>('recuperation');
   const [etablissement, setEtablissement] = useState("");
   const [periode, setPeriode] = useState("1-mois");
@@ -314,7 +321,7 @@ const Etablissement = () => {
   useEffect(() => {
     const loadCurrentEstablishment = async () => {
       if (selectedEstablishment) return; // Already loaded
-      
+
       try {
         setIsLoading(true);
         const current = await getCurrentEstablishment();
@@ -326,14 +333,12 @@ const Etablissement = () => {
         setIsLoading(false);
       }
     };
-
     loadCurrentEstablishment();
   }, [selectedEstablishment, setSelectedEstablishment, setIsLoading]);
 
   // Google Places integration with improved functionality
   useEffect(() => {
     let selectedPlace: any = null;
-
     const serializePlace = (place: any) => {
       return {
         place_id: place.place_id,
@@ -344,17 +349,14 @@ const Etablissement = () => {
         url: place.url ?? '',
         website: place.website ?? '',
         phone: place.formatted_phone_number ?? '',
-        rating: place.rating ?? null,
+        rating: place.rating ?? null
       };
     };
-
     const setValidated = (ok: boolean, name = '') => {
       const badge = document.getElementById('selected-place-badge');
       const badgeName = document.getElementById('selected-place-name');
       const saveBtn = document.getElementById('save-place-btn') as HTMLButtonElement;
-
       if (!badge || !badgeName || !saveBtn) return;
-
       if (ok) {
         badge.style.display = 'inline-block';
         badgeName.textContent = name;
@@ -365,19 +367,13 @@ const Etablissement = () => {
         saveBtn.disabled = true;
       }
     };
-
     const initPlaces = () => {
       const input = document.getElementById('places-input') as HTMLInputElement;
       if (!input || !window.google?.maps?.places) return;
-
       const autocomplete = new window.google.maps.places.Autocomplete(input, {
         types: ['establishment'],
-        fields: [
-          'place_id', 'name', 'formatted_address', 'geometry.location',
-          'url', 'website', 'formatted_phone_number', 'rating'
-        ],
+        fields: ['place_id', 'name', 'formatted_address', 'geometry.location', 'url', 'website', 'formatted_phone_number', 'rating']
       });
-
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
 
@@ -387,22 +383,17 @@ const Etablissement = () => {
           setValidated(false);
           return;
         }
-
         selectedPlace = serializePlace(place);
         setValidated(true, selectedPlace.name);
       });
     };
-
     const handleSaveClick = async () => {
       if (!selectedPlace) return;
-
       const saveBtn = document.getElementById('save-place-btn') as HTMLButtonElement;
       if (!saveBtn) return;
-
       const originalText = saveBtn.textContent;
       saveBtn.disabled = true;
       saveBtn.textContent = "Enregistrement…";
-
       try {
         // Here you can integrate with your backend or Supabase
         // Example Supabase integration:
@@ -425,7 +416,6 @@ const Etablissement = () => {
           adresse: selectedPlace.address,
           telephone: selectedPlace.phone
         });
-
       } catch (error) {
         console.error('Error saving establishment:', error);
         toast({
@@ -438,12 +428,10 @@ const Etablissement = () => {
         saveBtn.textContent = originalText;
       }
     };
-
     const loadGoogleMaps = () => {
       if (document.querySelector('script[src*="maps.googleapis.com"]')) {
         return; // Script already loaded
       }
-
       const script = document.createElement('script');
       script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initPlaces`;
       script.async = true;
@@ -465,7 +453,7 @@ const Etablissement = () => {
       initPlaces();
     } else {
       loadGoogleMaps();
-      
+
       // Retry initialization until Google Maps is available
       const interval = setInterval(() => {
         if (window.google?.maps?.places) {
@@ -491,10 +479,9 @@ const Etablissement = () => {
     setSelectedEstablishment(establishment);
     toast({
       title: "Établissement mis à jour",
-      description: "Votre établissement courant a été mis à jour",
+      description: "Votre établissement courant a été mis à jour"
     });
   };
-
   return <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <nav className="bg-white border-b border-gray-200">
@@ -597,48 +584,25 @@ const Etablissement = () => {
                       Recherche Google Places (Auto-complétion) *
                     </label>
                     <div className="space-y-3">
-                      <input 
-                        id="places-input" 
-                        type="text" 
-                        placeholder="Rechercher un établissement…" 
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
+                      <input id="places-input" type="text" placeholder="Rechercher un établissement…" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
                       
-                      <span id="selected-place-badge" style={{display:'none'}} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                      <span id="selected-place-badge" style={{
+                    display: 'none'
+                  }} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                         ✅ Sélectionné : <strong id="selected-place-name"></strong>
                       </span>
                       
-                      <button 
-                        id="save-place-btn" 
-                        disabled 
-                        title="Enregistrer l'établissement" 
-                        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
-                      >
+                      <button id="save-place-btn" disabled title="Enregistrer l'établissement" className="w-full px-4 py-2 bg-blue-600 text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors">
                         💾 Enregistrer l'établissement
                       </button>
                     </div>
                   </div>
                   
-                  <div className="pt-4 border-t border-gray-200">
-                    <AutocompleteEtablissementsFR onPicked={item => {
-                      setEtablissement(item.label);
-                      toast({
-                        title: "Établissement français sélectionné",
-                        description: `${item.label} (SIRET: ${item.siret || 'Non disponible'})`,
-                        duration: 3000
-                      });
-                      console.log("Données SIRET:", item);
-                    }} />
-                  </div>
+                  
                 </div>
 
                 <div className="mt-6">
-                  <Button className="w-full" onClick={rechercherEtablissement} disabled={rechercheEnCours || !etablissement}>
-                    {rechercheEnCours ? <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                        Recherche en cours...
-                      </> : "Enregistrer l'établissement"}
-                  </Button>
+                  
                 </div>
 
                 {/* Affichage des résultats de recherche */}
@@ -703,48 +667,28 @@ const Etablissement = () => {
                         <label className="text-sm font-medium text-gray-700">
                           Nom de l'établissement <span className="text-red-500">*</span>
                         </label>
-                        <Input 
-                          id="venue_name"
-                          placeholder="Ex: Restaurant Le Gourmet" 
-                          value={etablissementManuel.nom} 
-                          onChange={e => gererChangementEtablissement('nom', e.target.value)} 
-                        />
+                        <Input id="venue_name" placeholder="Ex: Restaurant Le Gourmet" value={etablissementManuel.nom} onChange={e => gererChangementEtablissement('nom', e.target.value)} />
                       </div>
                       
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">
                           URL/Site web <span className="text-red-500">*</span>
                         </label>
-                        <Input 
-                          id="venue_website"
-                          placeholder="Ex: https://www.legourmet.fr" 
-                          value={etablissementManuel.url} 
-                          onChange={e => gererChangementEtablissement('url', e.target.value)} 
-                        />
+                        <Input id="venue_website" placeholder="Ex: https://www.legourmet.fr" value={etablissementManuel.url} onChange={e => gererChangementEtablissement('url', e.target.value)} />
                       </div>
 
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">
                           Adresse (optionnelle)
                         </label>
-                        <Input 
-                          id="venue_address"
-                          placeholder="Ex: 123 Rue de la Paix, 75001 Paris" 
-                          value={etablissementManuel.adresse} 
-                          onChange={e => gererChangementEtablissement('adresse', e.target.value)} 
-                        />
+                        <Input id="venue_address" placeholder="Ex: 123 Rue de la Paix, 75001 Paris" value={etablissementManuel.adresse} onChange={e => gererChangementEtablissement('adresse', e.target.value)} />
                       </div>
 
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">
                           Téléphone (optionnel)
                         </label>
-                        <Input 
-                          id="venue_phone"
-                          placeholder="Ex: +33 1 23 45 67 89" 
-                          value={etablissementManuel.telephone || ''} 
-                          onChange={e => gererChangementEtablissement('telephone', e.target.value)} 
-                        />
+                        <Input id="venue_phone" placeholder="Ex: +33 1 23 45 67 89" value={etablissementManuel.telephone || ''} onChange={e => gererChangementEtablissement('telephone', e.target.value)} />
                       </div>
                     </div>
                   </div>
@@ -762,10 +706,7 @@ const Etablissement = () => {
 
         {/* Section Mon Établissement */}
         <div className="grid lg:grid-cols-2 gap-8 mb-8">
-          <EstablishmentCard 
-            establishment={selectedEstablishment} 
-            isLoading={isLoading}
-          />
+          <EstablishmentCard establishment={selectedEstablishment} isLoading={isLoading} />
           <Card>
             <CardHeader>
               <CardTitle>Actions</CardTitle>
@@ -779,7 +720,9 @@ const Etablissement = () => {
         </div>
 
         {/* Keep the old static card for comparison - can be removed later */}
-        <Card className="mb-8" style={{ display: 'none' }}>
+        <Card className="mb-8" style={{
+        display: 'none'
+      }}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building className="w-5 h-5" />
