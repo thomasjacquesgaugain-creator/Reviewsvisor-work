@@ -2,19 +2,41 @@ import { useEffect, useState } from "react";
 import { Etab, STORAGE_KEY, EVT_SAVED } from "../types/etablissement";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function MonEtablissementCard() {
   const [etab, setEtab] = useState<Etab | null>(null);
 
-  // 1) Lire ce qui est déjà enregistré (au chargement)
+  // A) Au montage : essayer Supabase (si connecté), sinon localStorage
   useEffect(() => {
-    try {
+    let cancelled = false;
+
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data, error } = await (supabase as any)
+          .from("user_establishment")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (!cancelled && data && !error) {
+          const { user_id, updated_at, ...rest } = data as any;
+          setEtab(rest as Etab);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(rest)); // cache local
+          return;
+        }
+      }
+      // fallback local
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setEtab(JSON.parse(raw));
-    } catch {}
+      if (!cancelled && raw) setEtab(JSON.parse(raw));
+    }
+
+    load();
+    return () => { cancelled = true; };
   }, []);
 
-  // 2) Se mettre à jour instantanément quand on clique "Enregistrer"
+  // B) Se mettre à jour instantanément après un "Enregistrer"
   useEffect(() => {
     const onSaved = (e: any) => setEtab(e.detail as Etab);
     window.addEventListener(EVT_SAVED, onSaved);
