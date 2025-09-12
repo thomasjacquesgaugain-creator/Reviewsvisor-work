@@ -333,7 +333,7 @@ const GooglePlaceAutocomplete: React.FC<GooglePlaceAutocompleteProps> = ({
       </div>
 
       {showSuggestions && suggestions.length > 0 && (
-        <Card className="absolute top-full left-0 right-0 mt-1 max-h-80 overflow-y-auto shadow-lg z-[1000] bg-background border">
+        <Card className="absolute top-full left-0 w-full mt-1 max-h-80 overflow-y-auto shadow-lg z-[1000] bg-background border">
           <CardContent className="p-0">
             {suggestions.map((suggestion, index) => (
               <div
@@ -358,7 +358,7 @@ const GooglePlaceAutocomplete: React.FC<GooglePlaceAutocompleteProps> = ({
       )}
 
       {showSuggestions && suggestions.length === 0 && !isLoading && value.length >= 2 && (
-        <Card className="absolute top-full left-0 right-0 mt-1 shadow-lg z-[1000] bg-background border">
+        <Card className="absolute top-full left-0 w-full mt-1 shadow-lg z-[1000] bg-background border">
           <CardContent className="p-4 text-center text-muted-foreground">
             Aucun résultat trouvé
           </CardContent>
