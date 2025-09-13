@@ -271,7 +271,7 @@ function quickSummary(all:Review[]){
   const textBlob = all.map(r=>r.text||'').join('\n').toLowerCase();
   const key = (w:string)=>textBlob.includes(w);
   const top_issues:string[] = [];
-  if(key('attente')||key('wait')) top_issues.push('Temps d'attente');
+  if(key('attente')||key('wait')) top_issues.push("Temps d'attente");
   if(key('prix')||key('cher')) top_issues.push('Prix');
   const top_strengths:string[] = [];
   if(key('qualité')||key('quality')) top_strengths.push('Qualité');
