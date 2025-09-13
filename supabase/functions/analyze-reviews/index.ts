@@ -14,6 +14,7 @@ const supabase = createClient(
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
 const GOOGLE_PLACES_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY")!;
 const YELP_API_KEY = Deno.env.get("YELP_API_KEY");
+const USE_YELP = (Deno.env.get('REVIEWS_USE_YELP') || 'false').toLowerCase() === 'true';
 
 type Input = { place_id: string; name?: string; address?: string };
 
@@ -223,10 +224,7 @@ serve(async (req) => {
       return [];
     });
     
-    const reviewsYelp = await fetchYelpReviews(input.name, input.address).catch((err) => {
-      console.error('Yelp reviews error:', err);
-      return [];
-    });
+    const reviewsYelp = USE_YELP ? await fetchYelpReviews(input.name, input.address).catch(() => []) : [];
     
     const all = [...reviewsGoogle, ...reviewsYelp];
     console.log(`Collected ${all.length} reviews (Google: ${reviewsGoogle.length}, Yelp: ${reviewsYelp.length})`);
@@ -269,7 +267,8 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       ok: true, 
-      counts: { collected: all.length } 
+      counts: { collected: all.length },
+      source_flags: { google: true, yelp: USE_YELP }
     }), { 
       status: 200, 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

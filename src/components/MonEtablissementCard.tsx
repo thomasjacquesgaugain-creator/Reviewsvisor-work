@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Etab, STORAGE_KEY, EVT_SAVED } from "../types/etablissement";
-import { Trash2, BarChart3 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { AnalyzeEstablishmentButton } from "./AnalyzeEstablishmentButton";
 
 export default function MonEtablissementCard() {
   const [etab, setEtab] = useState<Etab | null>(null);
@@ -61,31 +62,6 @@ export default function MonEtablissementCard() {
     setEtab(null);
   };
 
-  // Fonction pour analyser l'établissement
-  const handleAnalyzeEstablishment = async () => {
-    if (!etab) return;
-    
-    try {
-      const { error } = await supabase.functions.invoke('analyze-reviews', {
-        body: { 
-          place_id: etab.place_id, 
-          name: etab.name, 
-          address: etab.address 
-        },
-      });
-      
-      if (error) {
-        console.error('Erreur lors de l\'analyse:', error);
-        alert("Échec de l'analyse. Réessaie dans un instant.");
-      } else {
-        alert("Analyse terminée ! Rendez-vous sur le dashboard pour voir les résultats.");
-      }
-    } catch (e) {
-      console.error('Erreur:', e);
-      alert("Échec de l'analyse. Réessaie dans un instant.");
-    }
-  };
-
   if (!etab) {
     return (
       <div className="text-neutral-500">
@@ -108,13 +84,11 @@ export default function MonEtablissementCard() {
       
       {/* Bouton analyser établissement au milieu en bas */}
       <div className="flex justify-center mt-4">
-        <Button
-          onClick={handleAnalyzeEstablishment}
-          className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-        >
-          <BarChart3 className="w-4 h-4" />
-          Analyser cet établissement
-        </Button>
+        <AnalyzeEstablishmentButton 
+          place_id={etab.place_id} 
+          name={etab.name} 
+          address={etab.address} 
+        />
       </div>
       
       {/* Icône oublier établissement en bas à droite */}
