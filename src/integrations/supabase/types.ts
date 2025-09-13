@@ -245,34 +245,40 @@ export type Database = {
         Row: {
           author: string | null
           created_at: string | null
+          hash: string | null
           id: number
           place_id: string
           rating: number | null
           raw: Json | null
           reviewed_at: string | null
           source: string
+          source_ref: string | null
           text: string | null
         }
         Insert: {
           author?: string | null
           created_at?: string | null
+          hash?: string | null
           id?: never
           place_id: string
           rating?: number | null
           raw?: Json | null
           reviewed_at?: string | null
           source: string
+          source_ref?: string | null
           text?: string | null
         }
         Update: {
           author?: string | null
           created_at?: string | null
+          hash?: string | null
           id?: never
           place_id?: string
           rating?: number | null
           raw?: Json | null
           reviewed_at?: string | null
           source?: string
+          source_ref?: string | null
           text?: string | null
         }
         Relationships: []

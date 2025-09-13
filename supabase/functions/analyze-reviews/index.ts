@@ -26,6 +26,24 @@ const USE_YELP = env('USE_YELP') === 'true';
 // Client admin pour DB (pas besoin d'Authorization côté requête)
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
+type Review = {
+  source: 'google'|'yelp';
+  source_ref?: string;
+  author?: string;
+  rating?: number;
+  text?: string;
+  url?: string;
+  created_at?: string; // ISO
+};
+
+const toHex = (buf:ArrayBuffer)=>[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+async function hashReview(r:Review, place_id:string){
+  const key = `${place_id}|${r.source}|${(r.author??'').trim()}|${(r.text??'').trim()}|${r.created_at??''}`;
+  const buf = new TextEncoder().encode(key);
+  const digest = await crypto.subtle.digest('SHA-256', buf);
+  return toHex(digest);
+}
+
 function avg(nums: number[]) { return nums.length ? nums.reduce((a,b)=>a+b,0) / nums.length : null; }
 function pct(part: number, total: number) { return total ? Math.round((part/total)*100) : null; }
 
@@ -140,7 +158,10 @@ async function analyzeWithAIorFallback(all: any[], metaRating: number | null) {
 
 type Input = { place_id: string; name?: string; address?: string; __ping?: boolean };
 
-async function fetchGoogleReviews(place_id: string) {
+// --- Collecteurs ---
+async function collectGoogle(place_id:string):Promise<Review[]>{
+  if(!GOOGLE_PLACES_API_KEY) return [];
+  
   // FieldMask détaillé : noter chaque sous-champ requis
   const fieldMask = [
     'rating',
@@ -149,7 +170,8 @@ async function fetchGoogleReviews(place_id: string) {
     'reviews.text',
     'reviews.originalText.text',
     'reviews.publishTime',
-    'reviews.authorAttribution.displayName'
+    'reviews.authorAttribution.displayName',
+    'reviews.authorAttribution.uri'
   ].join(',');
 
   async function tryFetch(pathVariant: 'plain' | 'withPrefix') {
@@ -176,57 +198,50 @@ async function fetchGoogleReviews(place_id: string) {
   if (invalid) res = await tryFetch('withPrefix');
 
   if (!res.ok) {
-    const code = (res.body && res.body.error && res.body.error.status) || res.status || 'UNKNOWN';
-    const msg  = (res.body && res.body.error && res.body.error.message) || JSON.stringify(res.body);
-    throw new Error(`google_v1_http_${code}: ${msg}`);
+    console.error('Google Places API error:', res.body);
+    return [];
   }
 
   const j = res.json || {};
   const reviews = j?.reviews ?? [];
-  return {
-    meta: {
-      rating: j?.rating ?? null,
-      total: j?.userRatingCount ?? null,
-      usedUrl: res.url,
-    },
-    rows: reviews.map((rv: any) => ({
-      source: 'google',
-      author: rv?.authorAttribution?.displayName ?? null,
-      rating: rv?.rating ?? null,
-      text: rv?.originalText?.text ?? rv?.text ?? null,
-      reviewed_at: rv?.publishTime ? new Date(rv.publishTime).toISOString() : null,
-      raw: rv,
-    })),
-    raw: j,
-  };
+  return reviews.map((rv: any) => ({
+    source: 'google' as const,
+    source_ref: rv.name, // id de l'avis si dispo
+    author: rv?.authorAttribution?.displayName ?? undefined,
+    rating: rv?.rating,
+    text: rv?.originalText?.text ?? rv?.text ?? '',
+    url: rv?.authorAttribution?.uri ?? undefined,
+    created_at: rv?.publishTime ?? undefined,
+  }));
 }
 
-async function fetchYelpReviews(name?: string, address?: string) {
-  const YELP_API_KEY = env('YELP_API_KEY');
-  if (!YELP_API_KEY || !name || !address) return [];
+async function collectYelp(name?:string, address?:string):Promise<Review[]>{
+  if(!USE_YELP || !env('YELP_API_KEY') || !name || !address) return [];
+  const headers = { Authorization: `Bearer ${env('YELP_API_KEY')}` };
   
   try {
-    const params = new URLSearchParams({ term: name, location: address });
-    const r1 = await fetch('https://api.yelp.com/v3/businesses/search?' + params.toString(), {
-      headers: { Authorization: `Bearer ${YELP_API_KEY}` },
-    });
-    const j1 = await r1.json();
-    const id = j1?.businesses?.[0]?.id;
-    if (!id) return [];
+    // 1) Trouver le business
+    const qs = new URLSearchParams({ term: name, location: address, limit:'1' });
+    const sres = await fetch(`https://api.yelp.com/v3/businesses/search?${qs}`, { headers });
+    if(!sres.ok) return [];
+    const sjson = await sres.json();
+    const biz = sjson.businesses?.[0];
+    if(!biz?.id) return [];
     
-    const r2 = await fetch(`https://api.yelp.com/v3/businesses/${id}/reviews`, {
-      headers: { Authorization: `Bearer ${YELP_API_KEY}` },
-    });
-    const j2 = await r2.json();
-    const reviews = j2?.reviews ?? [];
+    // 2) Récupérer les reviews (limité à 3 via l'API publique)
+    const rres = await fetch(`https://api.yelp.com/v3/businesses/${biz.id}/reviews`, { headers });
+    if(!rres.ok) return [];
+    const rjson = await rres.json();
+    const revs:any[] = rjson.reviews ?? [];
     
-    return reviews.map((rv: any) => ({
-      source: 'yelp',
-      author: rv.user?.name,
+    return revs.map(rv=>({
+      source:'yelp' as const,
+      source_ref: rv.id,
+      author: rv.user?.name ?? undefined,
       rating: rv.rating,
-      text: rv.text,
-      reviewed_at: rv.time_created ? new Date(rv.time_created).toISOString() : null,
-      raw: rv
+      text: rv.text ?? '',
+      url: rv.url ?? undefined,
+      created_at: rv.time_created ?? undefined,
     }));
   } catch (error) {
     console.error('Yelp API error:', error);
@@ -234,132 +249,47 @@ async function fetchYelpReviews(name?: string, address?: string) {
   }
 }
 
-async function analyzeWithAI(reviews: { rating?: number; text?: string }[]) {
-  const chunks: string[] = [];
-  let buffer = '';
-  
-  for (const r of reviews) {
-    const line = `- (${r.rating ?? 'NA'}/5) ${r.text?.replaceAll('\n',' ').slice(0,600)}`;
-    if ((buffer + '\n' + line).length > 12000) {
-      chunks.push(buffer); 
-      buffer = line;
-    } else {
-      buffer += '\n' + line;
-    }
+async function upsertRaw(place_id:string, items:Review[]){
+  for(const r of items){
+    const h = await hashReview(r, place_id);
+    // upsert par hash pour éviter les doublons
+    await admin.from('reviews_raw').upsert({
+      place_id, source:r.source, source_ref:r.source_ref ?? null,
+      author:r.author ?? null, rating:r.rating ?? null, text:r.text ?? null,
+      url:r.url ?? null, created_at: r.created_at ? new Date(r.created_at).toISOString() : null,
+      reviewed_at: r.created_at ? new Date(r.created_at).toISOString() : null,
+      hash: h,
+    }, { onConflict: 'hash' });
   }
-  if (buffer) chunks.push(buffer);
-
-  const insights = { 
-    counts: { total: reviews.length }, 
-    top_issues: [] as any[], 
-    top_strengths: [] as any[], 
-    recommendations: [] as any[], 
-    overall_rating: null as number | null, 
-    positive_pct: null as number | null, 
-    negative_pct: null as number | null 
-  };
-
-  for (const chunk of chunks) {
-    const prompt = `Tu es analyste d'avis clients pour la restauration.
-Voici un lot d'avis (notation sur 5 quand dispo).
-Dégage:
-- note moyenne approximative
-- % positifs vs négatifs (approx)
-- 3 problèmes prioritaires (avec raison brève)
-- 3 points forts majeurs
-- 5 recommandations actionnables et concrètes
-Réponds en JSON strict: {
-  "avg": number, "pos_pct": number, "neg_pct": number,
-  "issues": [{"label": string, "why": string}],
-  "strengths": [{"label": string, "why": string}],
-  "reco": [string]
-}
-Avis:
-${chunk}`;
-
-    try {
-      const r = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${OPENAI_API_KEY}`, 
-          'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify({
-          model: 'gpt-5-2025-08-07',
-          messages: [{ role: 'user', content: prompt }],
-          max_completion_tokens: 1000,
-        })
-      });
-      
-      const j = await r.json();
-      const txt = j?.choices?.[0]?.message?.content ?? '{}';
-      let pj;
-      try { 
-        pj = JSON.parse(txt); 
-      } catch { 
-        continue; 
-      }
-      
-      // agrégation naïve
-      if (typeof pj.avg === 'number') {
-        insights.overall_rating = (insights.overall_rating ?? pj.avg) * 0.5 + pj.avg * 0.5;
-      }
-      if (typeof pj.pos_pct === 'number') {
-        insights.positive_pct = (insights.positive_pct ?? pj.pos_pct) * 0.5 + pj.pos_pct * 0.5;
-      }
-      if (typeof pj.neg_pct === 'number') {
-        insights.negative_pct = (insights.negative_pct ?? pj.neg_pct) * 0.5 + pj.neg_pct * 0.5;
-      }
-      insights.top_issues.push(...(pj.issues ?? []));
-      insights.top_strengths.push(...(pj.strengths ?? []));
-      insights.recommendations.push(...(pj.reco ?? []));
-    } catch (error) {
-      console.error('OpenAI API error:', error);
-    }
-  }
-
-  // dédup & top 3
-  function top3(arr: any[], key='label') {
-    const map = new Map<string, any & {count:number}>();
-    for (const a of arr) {
-      const k = (a?.[key] || '').toLowerCase();
-      if (!k) continue;
-      const cur = map.get(k) || { ...a, count: 0 };
-      cur.count++; 
-      cur.why ||= a.why;
-      map.set(k, cur);
-    }
-    return Array.from(map.values())
-      .sort((a,b)=>b.count-a.count)
-      .slice(0,3)
-      .map(({count, ...rest})=>rest);
-  }
-  
-  const uniqRecos = Array.from(new Set(insights.recommendations)).slice(0,5);
-  
-  return {
-    overall_rating: insights.overall_rating ? Number(insights.overall_rating.toFixed(2)) : null,
-    positive_pct: insights.positive_pct ? Math.round(insights.positive_pct) : null,
-    negative_pct: insights.negative_pct ? Math.round(insights.negative_pct) : null,
-    counts: insights.counts,
-    top_issues: top3(insights.top_issues),
-    top_strengths: top3(insights.top_strengths),
-    recommendations: uniqRecos
-  };
 }
 
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+// --- Analyse très simple (tu peux brancher ton IA existante ici) ---
+function quickSummary(all:Review[]){
+  const ratings = all.filter(r=>typeof r.rating==='number').map(r=>Number(r.rating));
+  const overall = ratings.length ? Number((ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(2)) : null;
+  // mini extraction de thèmes par mots clés (placeholder)
+  const textBlob = all.map(r=>r.text||'').join('\n').toLowerCase();
+  const key = (w:string)=>textBlob.includes(w);
+  const top_issues:string[] = [];
+  if(key('attente')||key('wait')) top_issues.push('Temps d'attente');
+  if(key('prix')||key('cher')) top_issues.push('Prix');
+  const top_strengths:string[] = [];
+  if(key('qualité')||key('quality')) top_strengths.push('Qualité');
+  if(key('service')||key('accueil')) top_strengths.push('Service');
+  return { overall_rating: overall, top_issues, top_strengths };
+}
 
-  try {
-    // 1) lire le body
-    const input = await req.json().catch(() => ({}));
-    const placeId = input?.place_id;
-    if (!placeId) return json({ ok: false, error: 'missing_place_id' }, 400);
+serve(async (req)=>{
+  if(req.method==='OPTIONS') return new Response('ok',{headers:corsHeaders});
+  if(req.method!=='POST') return json({error:'Method not allowed'},405);
+  try{
+    const body = await req.json().catch(()=>({}));
+    const place_id = (body?.place_id??'').trim();
+    const name = (body?.name??'').trim();
+    const address = (body?.address??'').trim();
+    if(!place_id) return json({ok:false,error:'missing_place_id'},400);
 
-    if (input.__ping) {
+    if (body.__ping) {
       return json({
         ok: true,
         env: {
@@ -386,80 +316,47 @@ serve(async (req) => {
     }
 
     const logs: any[] = [];
-    function log(step: string, data?: any) { if (input.__debug) logs.push({ step, data }); }
+    function log(step: string, data?: any) { if (body.__debug) logs.push({ step, data }); }
 
-    // 1) Google (strict place_id)
-    log('google_fetch_start', { place_id: input.place_id });
-    const g = await fetchGoogleReviews(input.place_id);
-    log('google_fetch_ok', { meta: g.meta, count: g.rows.length });
-    log('google_meta', { meta: g.meta });
+   // 1) Collecte multi-sources
+    log('collect_start', { place_id, name, address });
+    const [g,y] = await Promise.all([
+      collectGoogle(place_id),
+      collectYelp(name, address)
+    ]);
+    const all = [...g, ...y];
+    log('collect_done', { total: all.length, google: g.length, yelp: y.length });
 
-    // 2) Yelp (off par défaut)
-    let yRows: any[] = [];
-    if (USE_YELP && env('YELP_API_KEY')) {
-      log('yelp_fetch_start', { name: input.name, address: input.address });
-      yRows = await fetchYelpReviews(input.name, input.address).catch((e)=>{ log('yelp_fetch_err', String(e)); return []; });
-      log('yelp_fetch_ok', { count: yRows.length });
-    }
-
-    const all = [...g.rows, ...yRows];
-    log('collect_done', { total: all.length });
-
-    // 3) Insert bruts (sauf en dry-run)
-    if (!input.__dryRun && all.length) {
-      const chunk = 500;
-      for (let i=0;i<all.length;i+=chunk) {
-        const slice = all.slice(i,i+chunk).map(r => ({
-          place_id: input.place_id,
-          source: r.source, author: r.author ?? null, rating: r.rating ?? null, text: r.text ?? null,
-          reviewed_at: r.reviewed_at ?? null, raw: r.raw ?? null
-        }));
-        const ins = await admin.from('reviews_raw').insert(slice);
-        if (ins.error) log('insert_err', ins.error.message);
-      }
-      log('insert_done');
+    // 2) Dédupe côté DB (hash) + stockage brut
+    if (!body.__dryRun && all.length) {
+      await upsertRaw(place_id, all);
+      log('upsert_raw_done');
     } else {
-      log('insert_skipped', { dryRun: true });
+      log('upsert_raw_skipped', { dryRun: !!body.__dryRun });
     }
 
-    // 4) Analyse IA (sauf si aucun avis)
-    let insights: any = null;
-    if (all.length) {
-      insights = await analyzeWithAIorFallback(all, g.meta?.rating ?? null);
-      log('ai_done', { summary: { ...insights, recommendations: (insights?.recommendations||[]).slice(0,2) } });
-    } else {
-      log('ai_skipped_no_reviews');
-    }
+    // 3) Calcul / IA (placeholder simple ici)
+    const counts = { collected: all.length, google: g.length, yelp: y.length };
+    const meta = { rating: null as number|null, total: null as number|null };
+    const summary = quickSummary(all);
 
-   // 5) Upsert insights (sauf dry-run)
-    if (!input.__dryRun && insights) {
-      const payload: any = {
-        place_id: input.place_id,
-        user_id: user_id,                      // peut être null
-        summary: insights ?? {},
+    // 4) Upsert insights unifiés
+    if (!body.__dryRun) {
+      const up = await admin.from('review_insights').upsert({
+        place_id,
+        user_id,
         last_analyzed_at: new Date().toISOString(),
-      };
-
-      const up = await admin
-        .from('review_insights')
-        .upsert(payload, { onConflict: 'place_id' }) // force mise à jour sur place_id
-        .select()
-        .single();
-      if (up.error) throw new Error('upsert_failed:' + up.error.message);
-      log('upsert_done');
+        summary: { counts, top_issues: summary.top_issues, top_strengths: summary.top_strengths, overall_rating: summary.overall_rating, recommendations: [] },
+      }, { onConflict: 'place_id' }).select().single();
+      if(up.error) return json({ok:false,error:'upsert_failed:'+up.error.message},500);
+      log('upsert_insights_done');
     } else {
-      log('upsert_skipped', { dryRun: true });
+      log('upsert_insights_skipped', { dryRun: true });
     }
 
-    return json({
-      ok: true,
-      counts: { collected: all.length, google: g.rows.length, yelp: yRows.length },
-      g_meta: g.meta,
-      dryRun: !!input.__dryRun,
-      logs: input.__debug ? logs : undefined
-    });
-  } catch (e: any) {
+    return json({ ok:true, counts, g_meta: meta, dryRun: !!body.__dryRun, logs: body.__debug ? logs : undefined });
+  }catch(e:any){
     console.error('Error in analyze-reviews:', e);
-    return json({ ok: false, error: String(e?.message || e) }, 500);
+    return json({ ok:false, error:String(e?.message||e) },500);
   }
 });
