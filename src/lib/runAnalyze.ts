@@ -81,7 +81,7 @@ export async function runAnalyze({ place_id, name, address, dryRun }: AnalyzePar
 export async function pingAnalyzeFunction(): Promise<AnalyzeResponse> {
   try {
     const { data, error } = await supabase.functions.invoke('analyze-reviews', {
-      body: {},
+      body: { ping: true },
       headers: {
         'Content-Type': 'application/json'
       }
