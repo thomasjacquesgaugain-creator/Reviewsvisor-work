@@ -30,12 +30,11 @@ export default function InsightsDebug() {
       const resp = await runAnalyze({ place_id: pid.trim() });
       setServerOut(resp);
       await load();
-      setMsg('Analyse OK & rechargée');
-    } catch (e: any) {
-      setMsg('Analyze error: ' + (e?.message || e));
-    } finally { 
-      setBusy(false); 
-    }
+      setMsg('Analyse OK (fallback si besoin).');
+    } catch (e:any) {
+      setServerOut({ error: String(e?.message || e) });
+      setMsg('Analyze error.');
+    } finally { setBusy(false); }
   }
   
   return (
