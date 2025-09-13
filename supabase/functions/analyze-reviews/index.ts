@@ -66,10 +66,10 @@ function deriveRecommendations(issues: {label:string}[]) {
 // Fallback "statistiques + règles"
 function analyzeFallback(all: any[]) {
   const ratings = all.map(r=> Number(r.rating)).filter(n=>!Number.isNaN(n) && n>0);
-  if (!ratings.length && metaRating != null) ratings.push(Number(metaRating));
   const texts = all.map(r=> (r.text || '').toString()).filter(Boolean);
   const positives = all.filter(r=> Number(r.rating) >= 4).length;
   const negatives = all.filter(r=> Number(r.rating) <= 2).length;
+  const total = all.length;
 
   const kw = topKeywords(texts, 8);
   // Heuristique : mots-clés "problèmes" vs "forces"
@@ -359,31 +359,28 @@ serve(async (req) => {
         env: {
           OPENAI_API_KEY: !!OPENAI_API_KEY,
           GOOGLE_PLACES_API_KEY: !!GOOGLE_PLACES_API_KEY,
-          SUPABASE_URL: !!supabaseUrl,
-          SUPABASE_SERVICE_ROLE_KEY: !!serviceRoleKey,
+          SUPABASE_URL: !!SUPABASE_URL,
+          SUPABASE_SERVICE_ROLE_KEY: !!SERVICE_ROLE,
           USE_YELP: USE_YELP && !!YELP_API_KEY,
         }
       });
     }
 
-    const authHeader = req.headers.get('Authorization') || '';
-    let userId: string | null = null;
-    try {
-      if (authHeader.startsWith('Bearer ')) {
-        const { createClient } = await import('jsr:@supabase/supabase-js');
-        const authClient = createClient(supabaseUrl, SUPABASE_ANON_KEY, {
+    // Auth utilisateur optionnelle : on essaie de lire le user si le header est présent, sinon on continue
+    const authHeader = req.headers.get('Authorization') ?? '';
+    let user_id: string | null = null;
+    if (authHeader.startsWith('Bearer ')) {
+      try {
+        const authed = createClient(SUPABASE_URL, SERVICE_ROLE, {
           global: { headers: { Authorization: authHeader } },
         });
-        const { data: { user } } = await authClient.auth.getUser();
-        userId = user?.id ?? null;
-      }
-    } catch {}
+        const { data: { user } } = await authed.auth.getUser();
+        user_id = user?.id ?? null;
+      } catch (_e) { /* pas bloquant */ }
+    }
 
     const logs: any[] = [];
     function log(step: string, data?: any) { if (input.__debug) logs.push({ step, data }); }
-
-    const { createClient } = await import('jsr:@supabase/supabase-js');
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // 1) Google (strict place_id)
     log('google_fetch_start', { place_id: input.place_id });
@@ -408,11 +405,10 @@ serve(async (req) => {
       for (let i=0;i<all.length;i+=chunk) {
         const slice = all.slice(i,i+chunk).map(r => ({
           place_id: input.place_id,
-          user_id: userId,
           source: r.source, author: r.author ?? null, rating: r.rating ?? null, text: r.text ?? null,
           reviewed_at: r.reviewed_at ?? null, raw: r.raw ?? null
         }));
-        const ins = await supabase.from('reviews_raw').insert(slice);
+        const ins = await admin.from('reviews_raw').insert(slice);
         if (ins.error) log('insert_err', ins.error.message);
       }
       log('insert_done');
@@ -433,12 +429,12 @@ serve(async (req) => {
     if (!input.__dryRun && insights) {
       const payload: any = {
         place_id: input.place_id,
+        user_id: user_id,                      // peut être null
         summary: insights ?? {},
         last_analyzed_at: new Date().toISOString(),
       };
-      if (userId) payload.user_id = userId;
 
-      const up = await supabase
+      const up = await admin
         .from('review_insights')
         .upsert(payload, { onConflict: 'place_id' }) // force mise à jour sur place_id
         .select()
