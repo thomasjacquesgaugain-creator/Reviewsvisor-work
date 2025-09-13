@@ -7,28 +7,39 @@ export default function InsightsDebug() {
   const [pid, setPid] = useState('');
   const [rows, setRows] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
-  
+  const [msg, setMsg] = useState<string>('');
+
   async function load() {
-    setBusy(true);
-    const { data } = await supabase
+    if (!pid.trim()) return;
+    setBusy(true); setMsg('');
+    const { data, error } = await supabase
       .from('review_insights')
       .select('place_id,user_id,last_analyzed_at,summary')
       .eq('place_id', pid.trim())
       .order('last_analyzed_at', { ascending: false });
+    if (error) setMsg('SELECT error: ' + error.message);
     setRows(data || []);
     setBusy(false);
   }
   
   async function run() {
-    setBusy(true);
-    await runAnalyze({ place_id: pid.trim() });
-    await load();
+    if (!pid.trim()) return;
+    setBusy(true); setMsg('');
+    try {
+      await runAnalyze({ place_id: pid.trim() });
+      await load();
+      setMsg('Analyse OK & rechargée');
+    } catch (e: any) {
+      setMsg('Analyze error: ' + (e?.message || e));
+    } finally { 
+      setBusy(false); 
+    }
   }
   
   return (
     <div className="p-6 space-y-3">
       <h1 className="text-xl font-semibold">Insights Inspector</h1>
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <input 
           className="border rounded px-3 py-2 w-96" 
           placeholder="place_id" 
@@ -50,9 +61,15 @@ export default function InsightsDebug() {
           {busy ? '…' : 'Analyser & enregistrer'}
         </button>
       </div>
+      {msg && <div className="text-sm">{msg}</div>}
       <pre className="text-sm whitespace-pre-wrap">
         {JSON.stringify(rows, null, 2)}
       </pre>
+      {!rows?.length && (
+        <div className="text-sm text-muted-foreground">
+          Aucune ligne trouvée (vérifie les politiques RLS et relance une analyse).
+        </div>
+      )}
     </div>
   );
 }
