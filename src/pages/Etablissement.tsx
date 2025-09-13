@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { loadGoogleMaps } from "@/lib/loadGoogleMaps";
 import MonEtablissementCard from "@/components/MonEtablissementCard";
 import SaveEstablishmentButton from "@/components/SaveEstablishmentButton";
+import { AnalyzeEstablishmentButton } from "@/components/AnalyzeEstablishmentButton";
 import { Etab } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
 import { Building2, Home, LogOut } from "lucide-react";
@@ -134,6 +135,16 @@ export default function EtablissementPage() {
             </div>
             
             <SaveEstablishmentButton selected={selected} />
+            
+            {selected && (
+              <div className="mt-4">
+                <AnalyzeEstablishmentButton
+                  place_id={selected.place_id}
+                  name={selected.name}
+                  address={selected.address}
+                />
+              </div>
+            )}
           </div>
 
           {/* Section Mon Établissement */}
