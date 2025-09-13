@@ -5,7 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Helper: force JSON
 async function safeJson(res: Response) {
   const text = await res.text();
   try { 
@@ -16,53 +15,46 @@ async function safeJson(res: Response) {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
     );
 
-    // Get authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: 'No authorization header' }),
+        JSON.stringify({ error: 'unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Verify the JWT token
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     
     if (authError || !user) {
       return new Response(
-        JSON.stringify({ error: 'Invalid or expired token' }),
+        JSON.stringify({ error: 'unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Parse request body
     const requestBody = await req.json();
     const { url, method = 'POST', headers = {}, body } = requestBody;
 
-    // Validate URL
-    const targetUrl = new URL(url);
-    if (targetUrl.hostname !== 'lovable-api.com') {
+    const u = new URL(url);
+    if (u.hostname !== 'lovable-api.com') {
       return new Response(
-        JSON.stringify({ error: 'Forbidden host' }),
+        JSON.stringify({ error: 'forbidden host' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Make the proxied request
-    const response = await fetch(targetUrl.toString(), {
+    const response = await fetch(u.toString(), {
       method,
       headers: {
         'Authorization': authHeader,
@@ -86,7 +78,6 @@ Deno.serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('Proxy error:', error);
     return new Response(
       JSON.stringify({ error: error?.message || 'proxy_error' }),
       { 

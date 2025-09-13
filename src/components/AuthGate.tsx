@@ -13,7 +13,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
           options: { redirectTo: window.location.origin },
         });
         if (error) console.error(error);
-        return; // redirigé vers Google
+        return; // redirection provider
       }
       setReady(true);
     })();

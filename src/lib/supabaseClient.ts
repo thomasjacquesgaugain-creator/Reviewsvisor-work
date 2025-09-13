@@ -12,7 +12,7 @@ export const supabase = createClient(
   }
 );
 
-// Expose pour debug (dev uniquement)
+// Debug (dev seulement)
 if (typeof window !== 'undefined' && import.meta.env.DEV) {
   // @ts-ignore
   window.supabase = supabase;

@@ -127,3 +127,8 @@ Ouvrez [Lovable](https://lovable.dev/projects/69f773ab-2fa2-45af-85a1-20363e9a3b
 
 Naviguez vers Project > Settings > Domains et cliquez Connect Domain.
 Plus d'infos : [Configuration d'un domaine personnalisé](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## Comment tester l'auth
+
+1. Aller sur /debug et vérifier `hasSession: true`
+2. Lancer l'action "AnalyzeReviews" → l'appel doit viser `/api/lovable-proxy` (200)
