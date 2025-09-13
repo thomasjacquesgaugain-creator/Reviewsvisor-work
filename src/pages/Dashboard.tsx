@@ -5,6 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import DiagnosticPanel from "@/components/DiagnosticPanel";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
 const Dashboard = () => {
   const [showAvis, setShowAvis] = useState(false);
@@ -18,6 +20,32 @@ const Dashboard = () => {
   const [showParetoPoints, setShowParetoPoints] = useState(false);
   const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [establishment, setEstablishment] = useState<{ place_id: string; name?: string; address?: string } | null>(null);
+
+  // Récupérer l'établissement courant
+  useEffect(() => {
+    const fetchEstablishment = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data } = await supabase
+          .from('user_establishment')
+          .select('place_id, name, address')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (data) {
+          setEstablishment(data);
+        }
+      } catch (error) {
+        console.error('Error fetching establishment:', error);
+      }
+    };
+
+    fetchEstablishment();
+  }, []);
 
   // Données mockées pour le diagramme de Pareto des problèmes
   const paretoData = [
@@ -237,6 +265,15 @@ const Dashboard = () => {
             <span>Analyse de 0 avis clients</span>
           </div>
         </div>
+
+        {/* Diagnostic Panel */}
+        {establishment && (
+          <DiagnosticPanel 
+            place_id={establishment.place_id} 
+            name={establishment.name} 
+            address={establishment.address} 
+          />
+        )}
 
         {/* Historique des analyses */}
         <Card className="mb-8">
