@@ -60,8 +60,8 @@ function deriveRecommendations(issues: {label:string}[]) {
 // Fallback "statistiques + règles"
 function analyzeFallback(all: any[]) {
   const ratings = all.map(r=> Number(r.rating)).filter(n=>!Number.isNaN(n) && n>0);
+  if (!ratings.length && metaRating != null) ratings.push(Number(metaRating));
   const texts = all.map(r=> (r.text || '').toString()).filter(Boolean);
-  const total = all.length;
   const positives = all.filter(r=> Number(r.rating) >= 4).length;
   const negatives = all.filter(r=> Number(r.rating) <= 2).length;
 
@@ -83,7 +83,7 @@ function analyzeFallback(all: any[]) {
   };
 }
 
-async function analyzeWithAIorFallback(all: any[]) {
+async function analyzeWithAIorFallback(all: any[], metaRating: number | null) {
   // essaie l'IA si dispo ; sinon fallback
   try {
     if (!OPENAI_API_KEY) throw new Error('no_openai_key');
@@ -130,8 +130,17 @@ async function analyzeWithAIorFallback(all: any[]) {
 type Input = { place_id: string; name?: string; address?: string; __ping?: boolean };
 
 async function fetchGoogleReviews(place_id: string) {
-  // Essaye 2 variantes d'URL : /v1/places/{id} puis /v1/places/places/{id}
-  const fieldMask = 'rating,userRatingCount,reviews';
+  // FieldMask détaillé : noter chaque sous-champ requis
+  const fieldMask = [
+    'rating',
+    'userRatingCount',
+    'reviews.rating',
+    'reviews.text',
+    'reviews.originalText.text',
+    'reviews.publishTime',
+    'reviews.authorAttribution.displayName'
+  ].join(',');
+
   async function tryFetch(pathVariant: 'plain' | 'withPrefix') {
     const path = pathVariant === 'plain'
       ? `https://places.googleapis.com/v1/places/${encodeURIComponent(place_id)}`
@@ -148,9 +157,7 @@ async function fetchGoogleReviews(place_id: string) {
     return { ok: r.ok, status: r.status, body: j ?? text, json: j, url: path };
   }
 
-  // 1er essai
   let res = await tryFetch('plain');
-  // fallback si 400/404/INVALID_ARGUMENT
   const invalid =
     !res.ok &&
     (res.status === 400 || res.status === 404 ||
@@ -159,7 +166,7 @@ async function fetchGoogleReviews(place_id: string) {
 
   if (!res.ok) {
     const code = (res.body && res.body.error && res.body.error.status) || res.status || 'UNKNOWN';
-   const msg = (res.body && res.body.error && res.body.error.message) || JSON.stringify(res.body);
+    const msg  = (res.body && res.body.error && res.body.error.message) || JSON.stringify(res.body);
     throw new Error(`google_v1_http_${code}: ${msg}`);
   }
 
@@ -168,7 +175,7 @@ async function fetchGoogleReviews(place_id: string) {
   return {
     meta: {
       rating: j?.rating ?? null,
-      total: j?.userRatingCount ?? null, // v1: userRatingCount
+      total: j?.userRatingCount ?? null,
       usedUrl: res.url,
     },
     rows: reviews.map((rv: any) => ({
@@ -411,7 +418,7 @@ serve(async (req) => {
     // 4) Analyse IA (sauf si aucun avis)
     let insights: any = null;
     if (all.length) {
-      insights = await analyzeWithAIorFallback(all);
+      insights = await analyzeWithAIorFallback(all, g.meta?.rating ?? null);
       log('ai_done', { summary: { ...insights, recommendations: (insights?.recommendations||[]).slice(0,2) } });
     } else {
       log('ai_skipped_no_reviews');
