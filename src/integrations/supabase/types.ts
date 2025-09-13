@@ -235,6 +235,42 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews_raw: {
+        Row: {
+          author: string | null
+          created_at: string | null
+          id: number
+          place_id: string
+          rating: number | null
+          raw: Json | null
+          reviewed_at: string | null
+          source: string
+          text: string | null
+        }
+        Insert: {
+          author?: string | null
+          created_at?: string | null
+          id?: never
+          place_id: string
+          rating?: number | null
+          raw?: Json | null
+          reviewed_at?: string | null
+          source: string
+          text?: string | null
+        }
+        Update: {
+          author?: string | null
+          created_at?: string | null
+          id?: never
+          place_id?: string
+          rating?: number | null
+          raw?: Json | null
+          reviewed_at?: string | null
+          source?: string
+          text?: string | null
+        }
+        Relationships: []
+      }
       spatial_ref_sys: {
         Row: {
           auth_name: string | null
