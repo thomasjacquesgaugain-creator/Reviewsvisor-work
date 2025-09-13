@@ -37,7 +37,7 @@ export default function EnvDebug() {
               disabled={loading}
               className="w-full"
             >
-              {loading ? 'Test en cours...' : 'Ping analyze_reviews'}
+              {loading ? 'Test en cours...' : 'Ping analyze-reviews'}
             </Button>
             
             {out && (
