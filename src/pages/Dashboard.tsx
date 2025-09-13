@@ -31,24 +31,20 @@ export default function DashboardPage() {
       setLoading(true); setErr(null);
       const { data: { session } } = await supabase.auth.getSession();
       const uid = session?.user?.id ?? null;
-      const base = supabase.from('review_insights').select('summary,last_analyzed_at').eq('place_id', placeId);
-      try {
-        let result;
-        if (uid) {
-          result = await base.eq('user_id', uid).single();
-          if (result.error) {
-            result = await base.is('user_id', null).single();
-          }
-        } else {
-          result = await base.is('user_id', null).single();
-        }
-        const { data, error } = result;
-        if (error) setErr(error.message);
-        setSummary((data?.summary as any) ?? null);
-        setLastAt(data?.last_analyzed_at ?? null);
-      } catch (e: any) {
-        setErr(e.message);
-      }
+      const base = supabase
+        .from('review_insights')
+        .select('summary,last_analyzed_at')
+        .eq('place_id', placeId)
+        .order('last_analyzed_at', { ascending: false })
+        .limit(1);
+      
+      const { data, error } = uid
+        ? await base.eq('user_id', uid).maybeSingle()
+        : await base.is('user_id', null).maybeSingle();
+        
+      if (error) setErr(error.message);
+      setSummary((data?.summary as any) ?? null);
+      setLastAt(data?.last_analyzed_at ?? null);
       setLoading(false);
     })();
   }, [placeId]);
