@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '@/lib/publicEnv';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function ReviewsDebug() {
