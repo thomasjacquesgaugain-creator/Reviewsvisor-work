@@ -294,7 +294,7 @@ serve(async (req) => {
     if (!input.__dryRun && insights) {
       const up = await supabase.from('review_insights').upsert({
         place_id: input.place_id,
-        summary: insights,
+        summary: insights ?? {},
         last_analyzed_at: new Date().toISOString()
       }).select().single();
       if (up.error) throw new Error('upsert_failed:' + up.error.message);
