@@ -15,7 +15,7 @@ export default function EnvDebug() {
       const data = await runAnalyze({ place_id: 'test', __ping: true });
       setOut(data);
     } catch (e) {
-      setOut({ error: e });
+      setOut({ error: String((e as Error)?.message || e) });
     } finally {
       setLoading(false);
     }
