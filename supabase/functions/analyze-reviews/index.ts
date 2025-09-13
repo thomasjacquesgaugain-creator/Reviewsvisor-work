@@ -21,19 +21,29 @@ async function fetchGoogleReviews(place_id: string) {
   url.searchParams.set('place_id', place_id);
   url.searchParams.set('fields', 'rating,user_ratings_total,reviews');
   url.searchParams.set('key', GOOGLE_PLACES_API_KEY);
-  
   const r = await fetch(url.toString());
-  const j = await r.json();
+  const j = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(`google_http_${r.status}`);
+  const status = j?.status || j?.result?.status || 'OK';
+  if (status !== 'OK') {
+    const em = j?.error_message || j?.status || 'unknown_error';
+   throw new Error(`google_status_${em}`);
+  }
   const reviews = j?.result?.reviews ?? [];
-  
-  return reviews.map((rv: any) => ({
-    source: 'google',
-    author: rv.author_name,
-    rating: rv.rating,
-    text: rv.text,
-    reviewed_at: rv.time ? new Date(rv.time * 1000).toISOString() : null,
-    raw: rv
-  }));
+  return {
+    meta: {
+      rating: j?.result?.rating ?? null,
+      total: j?.result?.user_ratings_total ?? null,
+    },
+    rows: reviews.map((rv: any) => ({
+      source: 'google',
+      author: rv.author_name,
+      rating: rv.rating,
+      text: rv.text,
+      reviewed_at: rv.time ? new Date(rv.time * 1000).toISOString() : null,
+      raw: rv
+    }))
+  };
 }
 
 async function fetchYelpReviews(name?: string, address?: string) {
@@ -190,9 +200,8 @@ serve(async (req) => {
 
   try {
     if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
-    const input = await req.json() as { place_id: string; name?: string; address?: string, __ping?: boolean };
+    const input = await req.json() as { place_id: string; name?: string; address?: string; __ping?: boolean; __dryRun?: boolean; __debug?: boolean };
 
-    // mode ping (diagnostic sécurisé)
     if (input.__ping) {
       return new Response(JSON.stringify({
         ok: true,
@@ -206,29 +215,32 @@ serve(async (req) => {
       }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    if (!input?.place_id) {
-      return new Response(JSON.stringify({ error: 'missing_place_id' }), { 
-        status: 400, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      });
+    if (!input?.place_id) return new Response(JSON.stringify({ error: 'missing_place_id' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+    const logs: any[] = [];
+    function log(step: string, data?: any) { if (input.__debug) logs.push({ step, data }); }
+
+    const { createClient } = await import('jsr:@supabase/supabase-js');
+    const supabase = createClient(supabaseUrl, serviceRoleKey, { global: { headers: { Authorization: req.headers.get('Authorization') || '' } } });
+
+    // 1) Google (strict place_id)
+    log('google_fetch_start', { place_id: input.place_id });
+    const g = await fetchGoogleReviews(input.place_id);
+    log('google_fetch_ok', { meta: g.meta, count: g.rows.length });
+
+    // 2) Yelp (off par défaut)
+    let yRows: any[] = [];
+    if (USE_YELP && YELP_API_KEY) {
+      log('yelp_fetch_start', { name: input.name, address: input.address });
+      yRows = await fetchYelpReviews(input.name, input.address).catch((e)=>{ log('yelp_fetch_err', String(e)); return []; });
+      log('yelp_fetch_ok', { count: yRows.length });
     }
 
-    // crée client service role
-    const { createClient } = await import('jsr:@supabase/supabase-js');
-    const supabase = createClient(supabaseUrl, serviceRoleKey, {
-      global: { headers: { Authorization: req.headers.get('Authorization') || '' } },
-    });
+    const all = [...g.rows, ...yRows];
+    log('collect_done', { total: all.length });
 
-    console.log(`Analyzing reviews for place_id: ${input.place_id}`);
-
-    // fetch avis (Google by place_id uniquement)
-    const reviewsGoogle = await fetchGoogleReviews(input.place_id).catch((e)=>{ throw new Error('google_fetch_failed:' + e?.message); });
-    const reviewsYelp = (USE_YELP && YELP_API_KEY) ? await fetchYelpReviews(input.name, input.address).catch(()=>[]) : [];
-    const all = [...reviewsGoogle, ...reviewsYelp];
-    console.log(`Collected ${all.length} reviews (Google: ${reviewsGoogle.length}, Yelp: ${reviewsYelp.length})`);
-
-    // insert bruts (tolérant)
-    if (all.length) {
+    // 3) Insert bruts (sauf en dry-run)
+    if (!input.__dryRun && all.length) {
       const chunk = 500;
       for (let i=0;i<all.length;i+=chunk) {
         const slice = all.slice(i,i+chunk).map(r => ({
@@ -236,25 +248,42 @@ serve(async (req) => {
           source: r.source, author: r.author ?? null, rating: r.rating ?? null, text: r.text ?? null,
           reviewed_at: r.reviewed_at ?? null, raw: r.raw ?? null
         }));
-        await supabase.from('reviews_raw').insert(slice).catch(()=>({})); // best effort
+        const ins = await supabase.from('reviews_raw').insert(slice);
+        if (ins.error) log('insert_err', ins.error.message);
       }
+      log('insert_done');
+    } else {
+      log('insert_skipped', { dryRun: true });
     }
 
-    // analyse IA
-    const insights = await analyzeWithAI(all);
-    console.log('AI analysis completed:', insights);
+    // 4) Analyse IA (sauf si aucun avis)
+    let insights: any = null;
+    if (all.length) {
+      insights = await analyzeWithAI(all);
+      log('ai_done', { summary: { ...insights, recommendations: (insights?.recommendations||[]).slice(0,2) } });
+    } else {
+      log('ai_skipped_no_reviews');
+    }
 
-    const up = await supabase.from('review_insights').upsert({
-      place_id: input.place_id,
-      summary: insights,
-      last_analyzed_at: new Date().toISOString()
-    }).select().single();
-    if (up.error) throw new Error('upsert_failed:' + up.error.message);
+   // 5) Upsert insights (sauf dry-run)
+    if (!input.__dryRun && insights) {
+      const up = await supabase.from('review_insights').upsert({
+        place_id: input.place_id,
+        summary: insights,
+        last_analyzed_at: new Date().toISOString()
+      }).select().single();
+      if (up.error) throw new Error('upsert_failed:' + up.error.message);
+      log('upsert_done');
+    } else {
+      log('upsert_skipped', { dryRun: true });
+    }
 
     return new Response(JSON.stringify({
       ok: true,
-      counts: { collected: all.length },
-      source_flags: { google: true, yelp: USE_YELP && !!YELP_API_KEY }
+      counts: { collected: all.length, google: g.rows.length, yelp: yRows.length },
+      google_meta: g.meta,
+      dryRun: !!input.__dryRun,
+      logs: input.__debug ? logs : undefined
     }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e: any) {
     console.error('Error in analyze-reviews:', e);
