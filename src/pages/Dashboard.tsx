@@ -1,337 +1,866 @@
-import { useLocation } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { getCurrentPlace } from '@/lib/currentPlace';
-import { runAnalyze } from '@/lib/runAnalyze';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
+const Dashboard = () => {
+  const [showAvis, setShowAvis] = useState(false);
+  const [showPlateformes, setShowPlateformes] = useState(false);
+  const [showCourbeNote, setShowCourbeNote] = useState(false);
+  const [showAvisPositifs, setShowAvisPositifs] = useState(false);
+  const [showAvisNegatifs, setShowAvisNegatifs] = useState(false);
+  const [showThematiques, setShowThematiques] = useState(false);
+  const [showReponseAuto, setShowReponseAuto] = useState(false);
+  const [showParetoChart, setShowParetoChart] = useState(false);
+  const [showParetoPoints, setShowParetoPoints] = useState(false);
+  const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
-type Summary = {
-  overall_rating: number | null;
-  positive_pct: number | null;
-  negative_pct: number | null;
-  counts?: { collected?: number; google?: number; yelp?: number; total?: number };
-  top_issues?: { label: string; why?: string }[];
-  top_strengths?: { label: string; why?: string }[];
-  recommendations?: string[];
-};
+  // Données mockées pour le diagramme de Pareto des problèmes
+  const paretoData = [
+    { name: "Service lent", count: 45, percentage: 32.1, cumulative: 32.1 },
+    { name: "Nourriture froide", count: 38, percentage: 27.1, cumulative: 59.2 },
+    { name: "Attente longue", count: 25, percentage: 17.9, cumulative: 77.1 },
+    { name: "Personnel impoli", count: 18, percentage: 12.9, cumulative: 90.0 },
+    { name: "Prix élevés", count: 8, percentage: 5.7, cumulative: 95.7 },
+    { name: "Autres", count: 6, percentage: 4.3, cumulative: 100.0 }
+  ];
 
-type HistoryItem = {
-  last_analyzed_at: string;
-  summary: Summary;
-  place_id: string;
-};
+  // Données mockées pour le diagramme de Pareto des points forts
+  const paretoPointsData = [
+    { name: "Qualité nourriture", count: 52, percentage: 35.4, cumulative: 35.4 },
+    { name: "Service rapide", count: 41, percentage: 27.9, cumulative: 63.3 },
+    { name: "Ambiance agréable", count: 28, percentage: 19.0, cumulative: 82.3 },
+    { name: "Prix abordables", count: 15, percentage: 10.2, cumulative: 92.5 },
+    { name: "Personnel aimable", count: 7, percentage: 4.8, cumulative: 97.3 },
+    { name: "Autres", count: 4, percentage: 2.7, cumulative: 100.0 }
+  ];
 
-export default function DashboardPage() {
-  const location = useLocation();
-  const placeId = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    return params.get('place_id') || getCurrentPlace()?.place_id || null;
-  }, [location.search]);
-  
-  const [summary, setSummary] = useState<Summary | null>(null);
-  const [lastAt, setLastAt] = useState<string | null>(null);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState('month');
-
-  async function loadData() {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    // Load main data
-    if (placeId) {
-      const { data, error } = await supabase
-        .from('review_insights')
-        .select('summary,last_analyzed_at,place_id')
-        .eq('place_id', placeId)
-        .order('last_analyzed_at', { ascending: false });
-        
-      if (error) { 
-        setErr(error.message); 
-        setSummary(null); 
-        setLastAt(null); 
-        return; 
-      }
-      
-      if (data && data.length > 0) {
-        setSummary((data[0].summary as any) ?? null);
-        setLastAt(data[0].last_analyzed_at ?? null);
-      }
-    } else {
-      // No place_id, get the most recent analysis
-      const { data, error } = await supabase
-        .from('review_insights')
-        .select('summary,last_analyzed_at,place_id')
-        .order('last_analyzed_at', { ascending: false })
-        .limit(1);
-        
-      if (!error && data && data.length > 0) {
-        setSummary((data[0].summary as any) ?? null);
-        setLastAt(data[0].last_analyzed_at ?? null);
-      }
-    }
-    
-    // Load history for all places
-    const { data: historyData } = await supabase
-      .from('review_insights')
-      .select('summary,last_analyzed_at,place_id')
-      .order('last_analyzed_at', { ascending: false })
-      .limit(10);
-      
-    if (historyData) {
-      setHistory(historyData as HistoryItem[]);
-    }
-  }
-
+  // Mise à jour de l'heure en temps réel
   useEffect(() => {
-    (async () => {
-      setErr(null); 
-      setLoading(true);
-      await loadData();
-      setLoading(false);
-    })();
-  }, [placeId]);
+    const interval = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  async function rerun() {
-    if (!placeId) return;
-    const cp = getCurrentPlace() || { place_id: placeId };
-    await runAnalyze(cp as any);
-    await loadData();
-  }
+  // Formatage de la date et de l'heure
+  const formatDateTime = (date: Date) => {
+    return {
+      date: date.toLocaleDateString("fr-FR", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      }),
+      time: date.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit"
+      })
+    };
+  };
+  const {
+    date,
+    time
+  } = formatDateTime(currentDateTime);
+  const avisExemples = [{
+    id: 1,
+    auteur: "Marie L.",
+    note: 5,
+    commentaire: "Excellent service, très satisfait !",
+    date: "30/07/2025"
+  }, {
+    id: 2,
+    auteur: "Jean D.",
+    note: 4,
+    commentaire: "Bonne ambiance, plats savoureux",
+    date: "29/07/2025"
+  }, {
+    id: 3,
+    auteur: "Sophie M.",
+    note: 3,
+    commentaire: "Service correct mais un peu d'attente",
+    date: "28/07/2025"
+  }];
 
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-48 w-full" />
-        <div className="grid grid-cols-3 gap-6">
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
+  // Données pour la courbe de progression de la note
+  const courbeNoteData = [{
+    mois: 'Jan',
+    note: 3.8
+  }, {
+    mois: 'Fév',
+    note: 3.9
+  }, {
+    mois: 'Mar',
+    note: 4.0
+  }, {
+    mois: 'Avr',
+    note: 3.7
+  }, {
+    mois: 'Mai',
+    note: 4.1
+  }, {
+    mois: 'Juin',
+    note: 4.2
+  }, {
+    mois: 'Juil',
+    note: 4.2
+  }];
+
+  // Données pour les 5 meilleurs avis
+  const meilleursAvis = [{
+    id: 1,
+    auteur: "Marie L.",
+    note: 5,
+    commentaire: "Excellent service ! L'équipe est très professionnelle et attentionnée. Je recommande vivement !",
+    date: "02/08/2025",
+    plateforme: "Google"
+  }, {
+    id: 2,
+    auteur: "Pierre M.",
+    note: 5,
+    commentaire: "Une expérience parfaite du début à la fin. Qualité exceptionnelle et service irréprochable.",
+    date: "30/07/2025",
+    plateforme: "TripAdvisor"
+  }, {
+    id: 3,
+    auteur: "Sophie D.",
+    note: 5,
+    commentaire: "Magnifique ! Tout était parfait, je reviendrai certainement. Bravo à toute l'équipe !",
+    date: "28/07/2025",
+    plateforme: "Google"
+  }, {
+    id: 4,
+    auteur: "Thomas R.",
+    note: 5,
+    commentaire: "Service de qualité supérieure, personnel très accueillant. Une adresse à retenir absolument.",
+    date: "26/07/2025",
+    plateforme: "Yelp"
+  }, {
+    id: 5,
+    auteur: "Julie C.",
+    note: 5,
+    commentaire: "Parfait en tous points ! Qualité, service, ambiance... tout y est. Félicitations !",
+    date: "25/07/2025",
+    plateforme: "Google"
+  }];
+
+  // Données pour les 5 pires avis
+  const piresAvis = [{
+    id: 1,
+    auteur: "Marc D.",
+    note: 1,
+    commentaire: "Service décevant, temps d'attente très long et personnel peu professionnel.",
+    date: "01/08/2025",
+    plateforme: "Google"
+  }, {
+    id: 2,
+    auteur: "Lisa F.",
+    note: 1,
+    commentaire: "Très mauvaise expérience, qualité insuffisante pour le prix demandé. Je ne recommande pas.",
+    date: "29/07/2025",
+    plateforme: "TripAdvisor"
+  }, {
+    id: 3,
+    auteur: "Ahmed B.",
+    note: 2,
+    commentaire: "Pas à la hauteur des attentes. Service lent et produits de qualité moyenne.",
+    date: "27/07/2025",
+    plateforme: "Yelp"
+  }, {
+    id: 4,
+    auteur: "Claire M.",
+    note: 1,
+    commentaire: "Expérience décevante, personnel désagréable et prestations insuffisantes.",
+    date: "24/07/2025",
+    plateforme: "Google"
+  }, {
+    id: 5,
+    auteur: "David L.",
+    note: 2,
+    commentaire: "Rapport qualité-prix décevant, beaucoup d'améliorations à apporter.",
+    date: "22/07/2025",
+    plateforme: "TripAdvisor"
+  }];
+  return <div className="min-h-screen bg-gray-50">
+      {/* Navigation */}
+      <nav className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <img src="/lovable-uploads/62ee8352-36cc-4657-89b4-5c00321ab74c.png" alt="Analytics Logo" className="w-8 h-8" />
+              <span className="text-xl font-bold text-gray-900">analytique</span>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-6">
+                <Link to="/tableau-de-bord" className="text-gray-600 hover:text-blue-600 flex items-center gap-2">
+                  <Home className="w-4 h-4" />
+                  Accueil
+                </Link>
+                <Button variant="ghost" className="text-blue-600 font-medium flex items-center gap-2">
+                  Dashboard
+                </Button>
+                <Link to="/etablissement" className="text-gray-600 hover:text-blue-600 flex items-center gap-2">
+                  <Building2 className="w-4 h-4" />
+                  Établissement
+                </Link>
+              </div>
+              
+              <div className="flex items-center gap-4 ml-auto">
+                <div className="text-gray-700 font-medium">
+                  Bonjour, Yohan Lopes
+                </div>
+                <Button variant="ghost" className="text-gray-600 hover:text-red-600 flex items-center gap-2">
+                  <LogOut className="w-4 h-4" />
+                  Déconnexion
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    );
-  }
+      </nav>
 
-  if (err) {
-    return (
-      <div className="max-w-7xl mx-auto p-6">
-        <Card className="border-red-200">
-          <CardContent className="pt-6">
-            <p className="text-red-600">Erreur: {err}</p>
+      {/* Main content */}
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-2">
+            <BarChart3 className="w-6 h-6 text-blue-600" />
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard d'analyse</h1>
+          </div>
+          <div className="flex items-center gap-2 text-gray-600">
+            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+            <span>Analyse de 0 avis clients</span>
+          </div>
+        </div>
+
+        {/* Historique des analyses */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Historique des analyses</CardTitle>
+              </div>
+              <Select value={periodeAnalyse} onValueChange={setPeriodeAnalyse}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="jour">Jour</SelectItem>
+                  <SelectItem value="semaine">Semaine</SelectItem>
+                  <SelectItem value="mois">Mois</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-sm text-gray-500 mt-2">Les analyses précédentes et terminées. Les résultats</p>
+          </CardHeader>
+          <CardContent>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="text-2xl font-bold text-blue-600">65</span>
+                  <div>
+                    <div className="font-medium">{date} {time}</div>
+                    <div className="text-sm text-gray-500">2h avis</div>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setShowAvis(!showAvis)} className="hover:bg-blue-50">
+                  {showAvis ? <ChevronUp className="w-4 h-4 text-blue-600" /> : <ChevronDown className="w-4 h-4 text-blue-600" />}
+                </Button>
+              </div>
+              
+              {showAvis && <div className="mt-4 space-y-3 border-t pt-4">
+                  <h4 className="font-medium text-gray-700 mb-3">Avis récents :</h4>
+                  {avisExemples.map(avis => <div key={avis.id} className="bg-white p-3 rounded-lg border">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-sm">{avis.auteur}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-yellow-500">{'★'.repeat(avis.note)}</span>
+                          <span className="text-xs text-gray-500">{avis.date}</span>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600">{avis.commentaire}</p>
+                    </div>)}
+                </div>}
+            </div>
           </CardContent>
         </Card>
-      </div>
-    );
-  }
 
-  if (!summary) {
-    return (
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        <div className="text-center space-y-4">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard d'analyse</h1>
-          <p className="text-slate-600">Aucune analyse disponible pour ce lieu</p>
-          <Button onClick={rerun} className="mt-4">
-            Lancer une analyse
-          </Button>
+        {/* Métriques */}
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
+          <Card className="relative">
+            <CardContent className="p-6 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Star className="w-5 h-5 text-yellow-500" />
+                <span className="text-2xl font-bold">4.2</span>
+              </div>
+              <p className="text-sm text-gray-600">Note moyenne</p>
+              <p className="text-xs text-gray-500">Basée sur 158 avis</p>
+              <Button variant="ghost" size="sm" onClick={() => setShowCourbeNote(!showCourbeNote)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-yellow-50">
+                {showCourbeNote ? <ChevronUp className="w-3 h-3 text-yellow-600" /> : <ChevronDown className="w-3 h-3 text-yellow-600" />}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="relative">
+            <CardContent className="p-6 text-center">
+              <div className="flex items-center justify-center gap-1 mb-2">
+                <span className="text-2xl font-bold text-blue-600">326</span>
+                <TrendingUp className="w-4 h-4 text-green-500 ml-1" />
+              </div>
+              <p className="text-sm text-gray-600">Total avis</p>
+              <p className="text-xs text-gray-500">Tous plateformes</p>
+              <Button variant="ghost" size="sm" onClick={() => setShowPlateformes(!showPlateformes)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-blue-50">
+                {showPlateformes ? <ChevronUp className="w-3 h-3 text-blue-600" /> : <ChevronDown className="w-3 h-3 text-blue-600" />}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="relative">
+            <CardContent className="p-6 text-center">
+              <div className="flex items-center justify-center gap-1 mb-2">
+                <span className="text-2xl font-bold text-green-600">78%</span>
+              </div>
+              <p className="text-sm text-gray-600">Avis positifs</p>
+              <p className="text-xs text-gray-500">Note ≥ 4 étoiles</p>
+              <Button variant="ghost" size="sm" onClick={() => setShowAvisPositifs(!showAvisPositifs)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-green-50">
+                {showAvisPositifs ? <ChevronUp className="w-3 h-3 text-green-600" /> : <ChevronDown className="w-3 h-3 text-green-600" />}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="relative">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">Avis négatifs</div>
+                  <div className="text-2xl font-bold">22%</div>
+                  <div className="text-xs text-gray-400">avis négatifs</div>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowAvisNegatifs(!showAvisNegatifs)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-red-50">
+                {showAvisNegatifs ? <ChevronUp className="w-3 h-3 text-red-600" /> : <ChevronDown className="w-3 h-3 text-red-600" />}
+              </Button>
+            </CardContent>
+          </Card>
+
+          
         </div>
-      </div>
-    );
-  }
 
-  const totalAvis = summary.counts?.collected || summary.counts?.total || 0;
-  const positivePercentage = summary.positive_pct != null ? Math.round(summary.positive_pct) : null;
+        {/* Courbe de progression de la note */}
+        {showCourbeNote && <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-500" />
+                Évolution de la note moyenne
+              </CardTitle>
+              <p className="text-sm text-gray-600">Progression de votre note depuis la création du compte</p>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={courbeNoteData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="mois" />
+                    <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
+                    <Tooltip formatter={value => [`${value}/5`, 'Note moyenne']} />
+                    <Line type="monotone" dataKey="note" stroke="#eab308" strokeWidth={3} dot={{
+                  fill: '#eab308',
+                  strokeWidth: 2,
+                  r: 4
+                }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="text-sm text-gray-500 mt-4">Date de création du compte: 09/09/2025</p>
+            </CardContent>
+          </Card>}
 
-  return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard d'analyse</h1>
-        <div className="flex items-center gap-2 text-sm">
-          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span className="text-slate-600">
-            Analyse de {totalAvis} avis clients
-            {lastAt && ` • Dernière analyse : ${new Date(lastAt).toLocaleDateString('fr-FR', { 
-              day: '2-digit', 
-              month: '2-digit', 
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}`}
-          </span>
-        </div>
-      </div>
-
-      {/* Historique des analyses */}
-      <Card className="w-full">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-lg font-semibold">Historique des analyses</CardTitle>
-              <p className="text-sm text-slate-500 mt-1">Les analyses précédentes et terminées. Les résultats</p>
-            </div>
-            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-              <SelectTrigger className="w-28">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="week">Semaine</SelectItem>
-                <SelectItem value="month">Mois</SelectItem>
-                <SelectItem value="year">Année</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {history.length > 0 ? (
-            <div className="space-y-3">
-              {history.slice(0, 5).map((item, idx) => {
-                const itemSummary = item.summary as any;
-                const count = itemSummary?.counts?.collected || itemSummary?.counts?.total || 0;
-                return (
-                  <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                    <div className="flex items-center gap-4">
-                      <span className="text-lg font-semibold text-slate-900 w-8">{count}</span>
-                      <div>
-                        <div className="text-sm font-medium text-slate-900">
-                          {new Date(item.last_analyzed_at).toLocaleDateString('fr-FR', { 
-                            day: '2-digit', 
-                            month: '2-digit', 
-                            year: 'numeric' 
-                          })} à {new Date(item.last_analyzed_at).toLocaleTimeString('fr-FR', { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
-                        </div>
-                        <div className="text-xs text-slate-500">{count}h avis</div>
+        {/* Pires avis */}
+        {showAvisNegatifs && <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+                Top 5 des mauvais avis
+              </CardTitle>
+              <p className="text-sm text-gray-600">Les avis les moins bien notés nécessitant votre attention</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {piresAvis.map((avis, index) => <div key={avis.id} className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-red-700">#{index + 1}</span>
+                        <span className="font-medium">{avis.auteur}</span>
+                        <span className="text-yellow-500">{'★'.repeat(avis.note)}{'☆'.repeat(5 - avis.note)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">{avis.plateforme}</span>
+                        <span className="text-xs text-gray-500">{avis.date}</span>
                       </div>
                     </div>
+                    <p className="text-sm text-gray-700 italic">"{avis.commentaire}"</p>
+                  </div>)}
+              </div>
+            </CardContent>
+          </Card>}
+
+        {/* Meilleurs avis */}
+        {showAvisPositifs && <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                Top 5 des meilleurs avis
+              </CardTitle>
+              <p className="text-sm text-gray-600">Les avis les mieux notés de vos clients</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {meilleursAvis.map((avis, index) => <div key={avis.id} className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-green-700">#{index + 1}</span>
+                        <span className="font-medium">{avis.auteur}</span>
+                        <span className="text-yellow-500">{'★'.repeat(avis.note)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">{avis.plateforme}</span>
+                        <span className="text-xs text-gray-500">{avis.date}</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-700 italic">"{avis.commentaire}"</p>
+                  </div>)}
+              </div>
+            </CardContent>
+          </Card>}
+
+        {/* Plateformes connectées - Affichées en dessous des métriques */}
+        {showPlateformes && <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-xl">Plateformes connectées</CardTitle>
+              <p className="text-sm text-gray-600">Gérer vos présences sur les différentes plateformes</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                      <span className="text-red-600 font-bold">G</span>
+                    </div>
+                    <div>
+                      <div className="font-medium">Google My Business</div>
+                      <div className="text-sm text-gray-500">142 avis • 4.3 étoiles</div>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-slate-500 text-sm">Aucun historique disponible</p>
-          )}
-        </CardContent>
-      </Card>
+                  <Badge className="bg-green-100 text-green-700">Connecté</Badge>
+                </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-3 gap-6">
-        <Card className="p-6">
-          <div className="space-y-2">
-            <div className="text-5xl font-extrabold leading-none">
-              ⭐ {summary.overall_rating ? Number(summary.overall_rating).toFixed(1) : '—'}
-            </div>
-            <div className="text-sm font-medium text-slate-600">Note moyenne</div>
-            <div className="text-xs text-slate-500">
-              {totalAvis > 0 ? `Basée sur ${totalAvis} avis` : 'Aucun avis disponible'}
-            </div>
-          </div>
-        </Card>
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <span className="text-green-600 font-bold">T</span>
+                    </div>
+                    <div>
+                      <div className="font-medium">TripAdvisor</div>
+                      <div className="text-sm text-gray-500">98 avis • 4.1 étoiles</div>
+                    </div>
+                  </div>
+                  <Badge className="bg-green-100 text-green-700">Connecté</Badge>
+                </div>
 
-        <Card className="p-6">
-          <div className="space-y-2">
-            <div className="text-5xl font-extrabold leading-none">{totalAvis}</div>
-            <div className="text-sm font-medium text-slate-600">Total avis</div>
-            <div className="text-xs text-slate-500">Tous plateformes</div>
-          </div>
-        </Card>
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                      <span className="text-yellow-600 font-bold">Y</span>
+                    </div>
+                    <div>
+                      <div className="font-medium">Yelp</div>
+                      <div className="text-sm text-gray-500">86 avis • 4.0 étoiles</div>
+                    </div>
+                  </div>
+                  <Badge className="bg-green-100 text-green-700">Connecté</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>}
 
-        <Card className="p-6">
-          <div className="space-y-2">
-            <div className="text-5xl font-extrabold leading-none">
-              {positivePercentage !== null ? `${positivePercentage}%` : '—'}
-            </div>
-            <div className="text-sm font-medium text-slate-600">Avis positifs</div>
-            <div className="text-xs text-slate-500">Note ≥ 4 étoiles</div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Action Button */}
-      <div className="flex justify-end">
-        <Button onClick={rerun} variant="outline" className="px-6">
-          Relancer l'analyse
-        </Button>
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-2 gap-6">
-        {/* Top 3 Problèmes prioritaires */}
-        <Card className="p-6">
-          <CardTitle className="text-lg font-semibold mb-4">🚨 Top 3 Problèmes prioritaires</CardTitle>
-          <div className="space-y-3">
-            {summary.top_issues && summary.top_issues.length > 0 ? (
-              summary.top_issues.slice(0, 3).map((issue, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                  <Badge 
-                    variant="destructive" 
-                    className={`${idx === 0 || idx === 1 ? 'bg-red-500' : 'bg-yellow-500'} text-white text-xs px-2 py-1`}
-                  >
-                    {idx === 0 || idx === 1 ? 'Critique' : 'Moyen'}
-                  </Badge>
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{issue.label}</p>
-                    {issue.why && (
-                      <p className="text-xs text-slate-500 mt-1">{issue.why}</p>
-                    )}
+        {/* Problèmes et Points forts */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          {/* Problèmes prioritaires */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                  <CardTitle className="text-lg">Top 3 Problèmes prioritaires</CardTitle>
+                </div>
+                <ChevronDown 
+                  className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoChart ? 'rotate-180' : ''}`}
+                  onClick={() => setShowParetoChart(!showParetoChart)}
+                />
+              </div>
+              <p className="text-sm text-gray-500">Les plus mentionnés par fréquence et pourcentage en priorité</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-red-500" />
+                  <div>
+                    <div className="font-medium">Temps d'attente trop long</div>
+                    <div className="text-sm text-gray-500">25% des avis</div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-slate-500 text-sm">Aucun problème prioritaire identifié</p>
-            )}
-          </div>
-        </Card>
-
-        {/* Top 3 Points forts */}
-        <Card className="p-6">
-          <CardTitle className="text-lg font-semibold mb-4">✅ Top 3 Points forts</CardTitle>
-          <div className="space-y-3">
-            {summary.top_strengths && summary.top_strengths.length > 0 ? (
-              summary.top_strengths.slice(0, 3).map((strength, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                  <Badge 
-                    variant="secondary" 
-                    className="bg-green-500 text-white text-xs px-2 py-1"
-                  >
-                    Force
-                  </Badge>
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{strength.label}</p>
-                    {strength.why && (
-                      <p className="text-xs text-slate-500 mt-1">{strength.why}</p>
-                    )}
+                <Badge variant="destructive">Critique</Badge>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-red-500" />
+                  <div>
+                    <div className="font-medium">Service client insatisfaisant</div>
+                    <div className="text-sm text-gray-500">20% des avis</div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-slate-500 text-sm">Aucun point fort identifié</p>
-            )}
-          </div>
+                <Badge variant="destructive">Critique</Badge>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-yellow-600" />
+                  <div>
+                    <div className="font-medium">Prix trop élevés</div>
+                    <div className="text-sm text-gray-500">15% des avis</div>
+                  </div>
+                </div>
+                <Badge className="bg-yellow-500 text-white">Moyen</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Points forts */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <CardTitle className="text-lg">Top 3 Points forts</CardTitle>
+                </div>
+                <ChevronDown 
+                  className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoPoints ? 'rotate-180' : ''}`}
+                  onClick={() => setShowParetoPoints(!showParetoPoints)}
+                />
+              </div>
+              <p className="text-sm text-gray-500">Les points forts les plus mentionnés par vos clients</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <UtensilsCrossed className="w-4 h-4 text-green-500" />
+                  <div>
+                    <div className="font-medium">Qualité exceptionnelle</div>
+                    <div className="text-sm text-gray-500">30% des avis</div>
+                  </div>
+                </div>
+                <Badge className="bg-green-500 text-white">Force</Badge>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <div>
+                    <div className="font-medium">Satisfaction générale</div>
+                    <div className="text-sm text-gray-500">25% des avis</div>
+                  </div>
+                </div>
+                <Badge className="bg-green-500 text-white">Force</Badge>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Wine className="w-4 h-4 text-green-500" />
+                  <div>
+                    <div className="font-medium">Bonne ambiance</div>
+                    <div className="text-sm text-gray-500">20% des avis</div>
+                  </div>
+                </div>
+                <Badge className="bg-green-500 text-white">Force</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Diagramme de Pareto des Points Forts */}
+        {showParetoPoints && <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                Diagramme de Pareto - Analyse des points forts
+              </CardTitle>
+              <p className="text-sm text-gray-600">Identification des 20% de points forts qui génèrent 80% de la satisfaction</p>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={paretoPointsData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="name" 
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                      fontSize={12}
+                    />
+                    <YAxis yAxisId="left" orientation="left" />
+                    <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
+                    <Tooltip 
+                      formatter={(value, name) => {
+                        if (name === 'Cumulative') return [`${value}%`, 'Cumul %'];
+                        return [value, 'Mentions positives'];
+                      }}
+                    />
+                    <Bar 
+                      yAxisId="left" 
+                      dataKey="count" 
+                      fill="hsl(var(--primary))" 
+                      name="Mentions positives"
+                    />
+                    <Line 
+                      yAxisId="right" 
+                      type="monotone" 
+                      dataKey="cumulative" 
+                      stroke="hsl(var(--green-600))" 
+                      strokeWidth={2}
+                      dot={{ fill: "hsl(var(--green-600))", strokeWidth: 2, r: 4 }}
+                      name="Cumulative"
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="text-sm text-gray-500 mt-4">Les barres représentent les mentions positives, la ligne le pourcentage cumulé des forces</p>
+            </CardContent>
+          </Card>}
+
+        {/* Diagramme de Pareto */}
+        {showParetoChart && <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+                Diagramme de Pareto - Analyse des problèmes
+              </CardTitle>
+              <p className="text-sm text-gray-600">Identification des 20% de causes qui génèrent 80% des problèmes</p>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={paretoData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="name" 
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                      fontSize={12}
+                    />
+                    <YAxis yAxisId="left" orientation="left" />
+                    <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
+                    <Tooltip 
+                      formatter={(value, name) => {
+                        if (name === 'Cumulative') return [`${value}%`, 'Cumul %'];
+                        return [value, 'Occurrences'];
+                      }}
+                    />
+                    <Bar 
+                      yAxisId="left" 
+                      dataKey="count" 
+                      fill="hsl(var(--destructive))" 
+                      name="Occurrences"
+                    />
+                    <Line 
+                      yAxisId="right" 
+                      type="monotone" 
+                      dataKey="cumulative" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2}
+                      dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
+                      name="Cumulative"
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="text-sm text-gray-500 mt-4">Les barres représentent le nombre d'occurrences, la ligne le pourcentage cumulé</p>
+            </CardContent>
+          </Card>}
+
+        {/* Recommandations */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Lightbulb className="w-5 h-5 text-blue-500" />
+              <CardTitle className="text-lg">Recommandations actionnables</CardTitle>
+            </div>
+            <p className="text-sm text-gray-500">Actions concrètes à mettre en place</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span>Améliorer le service</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span>Être attentif aux retours clients</span>
+              </div>
+            </div>
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+              <div className="font-medium text-blue-900">Correction réussie</div>
+              <div className="text-sm text-blue-700">Redirection vers votre dashboard</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Analyse par thématiques */}
+        <Card className="relative">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-purple-600" />
+                <span className="text-2xl font-bold text-purple-600">78%</span>
+                <CardTitle className="text-lg">Analyse par thématiques</CardTitle>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowThematiques(!showThematiques)} className="h-6 w-6 p-0 hover:bg-purple-50">
+                {showThematiques ? <ChevronUp className="w-3 h-3 text-purple-600" /> : <ChevronDown className="w-3 h-3 text-purple-600" />}
+              </Button>
+            </div>
+            <p className="text-sm text-gray-500">Répartition des avis par catégories</p>
+          </CardHeader>
+          {showThematiques && <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <UtensilsCrossed className="w-4 h-4 text-purple-500" />
+                    <div>
+                      <div className="font-medium">Cuisine</div>
+                      <div className="text-sm text-gray-500">35% des avis</div>
+                    </div>
+                  </div>
+                  <Badge className="bg-purple-500 text-white">Thématique</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-purple-500" />
+                    <div>
+                      <div className="font-medium">Service</div>
+                      <div className="text-sm text-gray-500">30% des avis</div>
+                    </div>
+                  </div>
+                  <Badge className="bg-purple-500 text-white">Thématique</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Wine className="w-4 h-4 text-purple-500" />
+                    <div>
+                      <div className="font-medium">Ambiance</div>
+                      <div className="text-sm text-gray-500">25% des avis</div>
+                    </div>
+                  </div>
+                  <Badge className="bg-purple-500 text-white">Thématique</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-purple-500" />
+                    <div>
+                      <div className="font-medium">Emplacement</div>
+                      <div className="text-sm text-gray-500">10% des avis</div>
+                    </div>
+                  </div>
+                  <Badge className="bg-purple-500 text-white">Thématique</Badge>
+                </div>
+              </div>
+            </CardContent>}
+        </Card>
+
+        {/* Réponse automatique */}
+        <Card className="relative mt-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-purple-600">
+                  <Info className="w-6 h-6" />
+                </span>
+                <CardTitle className="text-lg">Réponse automatique</CardTitle>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowReponseAuto(!showReponseAuto)} className="h-6 w-6 p-0 hover:bg-purple-50">
+                {showReponseAuto ? <ChevronUp className="w-3 h-3 text-purple-600" /> : <ChevronDown className="w-3 h-3 text-purple-600" />}
+              </Button>
+            </div>
+            <p className="text-sm text-gray-500">Système automatisé aux avis clients</p>
+          </CardHeader>
+          {showReponseAuto && <CardContent>
+              <div className="space-y-4">
+                <div className="border rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-gray-500" />
+                      <span className="font-medium">Sophie M.</span>
+                      <div className="flex items-center ml-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                        ))}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-green-600 border-green-600">À valider</Badge>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3">"Excellent restaurant, service impeccable et plats délicieux !"</p>
+                  <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
+                    <p className="text-sm text-gray-600 font-medium mb-1">Réponse automatique proposée :</p>
+                    <p className="text-sm text-gray-700">"Merci Sophie pour votre retour positif ! Nous sommes ravis que vous ayez apprécié votre expérience chez nous. Au plaisir de vous revoir bientôt !"</p>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
+                    <Button size="sm" variant="outline">Modifier</Button>
+                  </div>
+                </div>
+
+                <div className="border rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-gray-500" />
+                      <span className="font-medium">Thomas R.</span>
+                      <div className="flex items-center ml-2">
+                        {[1, 2].map((star) => (
+                          <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                        ))}
+                        {[3, 4, 5].map((star) => (
+                          <Star key={star} className="w-3 h-3 text-gray-300" />
+                        ))}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-orange-600 border-orange-600">À valider</Badge>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3">"Service très lent et plats tièdes à l'arrivée. Déçu de cette expérience."</p>
+                  <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
+                    <p className="text-sm text-gray-600 font-medium mb-1">Réponse automatique proposée :</p>
+                    <p className="text-sm text-gray-700">"Bonjour Thomas, nous vous présentons nos excuses pour cette expérience décevante. Vos remarques sont précieuses et nous allons améliorer nos services. N'hésitez pas à nous recontacter directement."</p>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
+                    <Button size="sm" variant="outline">Modifier</Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>}
         </Card>
       </div>
-
-      {/* Recommandations actionnables */}
-      <Card className="p-6">
-        <CardTitle className="text-lg font-semibold mb-4">💡 Recommandations actionnables</CardTitle>
-        {summary.recommendations && summary.recommendations.length > 0 ? (
-          <ol className="list-decimal pl-6 space-y-2">
-            {summary.recommendations.map((rec, idx) => (
-              <li key={idx} className="text-sm leading-relaxed">{rec}</li>
-            ))}
-          </ol>
-        ) : (
-          <p className="text-slate-500 text-sm">
-            Aucune recommandation spécifique disponible pour le moment.
-          </p>
-        )}
-      </Card>
-    </div>
-  );
-}
+    </div>;
+};
+export default Dashboard;

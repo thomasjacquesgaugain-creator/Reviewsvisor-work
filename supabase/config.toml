@@ -1,7 +1,1 @@
 project_id = "zzjmtipdsccxmmoaetlp"
-
-[functions."analyze-reviews"]
-verify_jwt = false
-
-[functions."analyser-avis"]
-verify_jwt = false
