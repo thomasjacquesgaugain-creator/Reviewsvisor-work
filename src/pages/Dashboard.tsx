@@ -5,8 +5,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthProvider";
+import { useEstablishmentStore } from "@/store/establishmentStore";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
 const Dashboard = () => {
+  const { user } = useAuth();
+  const { selectedEstablishment } = useEstablishmentStore();
+  
   const [showAvis, setShowAvis] = useState(false);
   const [showPlateformes, setShowPlateformes] = useState(false);
   const [showCourbeNote, setShowCourbeNote] = useState(false);
@@ -18,26 +24,54 @@ const Dashboard = () => {
   const [showParetoPoints, setShowParetoPoints] = useState(false);
   const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  
+  // Review insights data from Supabase
+  const [insight, setInsight] = useState<any>(null);
+  const [isLoadingInsight, setIsLoadingInsight] = useState(false);
 
-  // Données mockées pour le diagramme de Pareto des problèmes
-  const paretoData = [
+  // Mocked data for Pareto charts (will be updated below after variables are declared)
+  const defaultParetoData = [
     { name: "Service lent", count: 45, percentage: 32.1, cumulative: 32.1 },
     { name: "Nourriture froide", count: 38, percentage: 27.1, cumulative: 59.2 },
-    { name: "Attente longue", count: 25, percentage: 17.9, cumulative: 77.1 },
-    { name: "Personnel impoli", count: 18, percentage: 12.9, cumulative: 90.0 },
-    { name: "Prix élevés", count: 8, percentage: 5.7, cumulative: 95.7 },
-    { name: "Autres", count: 6, percentage: 4.3, cumulative: 100.0 }
+    { name: "Attente longue", count: 25, percentage: 17.9, cumulative: 77.1 }
   ];
 
-  // Données mockées pour le diagramme de Pareto des points forts
-  const paretoPointsData = [
+  const defaultParetoPointsData = [
     { name: "Qualité nourriture", count: 52, percentage: 35.4, cumulative: 35.4 },
     { name: "Service rapide", count: 41, percentage: 27.9, cumulative: 63.3 },
-    { name: "Ambiance agréable", count: 28, percentage: 19.0, cumulative: 82.3 },
-    { name: "Prix abordables", count: 15, percentage: 10.2, cumulative: 92.5 },
-    { name: "Personnel aimable", count: 7, percentage: 4.8, cumulative: 97.3 },
-    { name: "Autres", count: 4, percentage: 2.7, cumulative: 100.0 }
+    { name: "Ambiance agréable", count: 28, percentage: 19.0, cumulative: 82.3 }
   ];
+
+  // Fetch review insights data
+  useEffect(() => {
+    const fetchInsights = async () => {
+      if (!user?.id || !selectedEstablishment?.place_id) return;
+      
+      setIsLoadingInsight(true);
+      try {
+        const { data: insightData, error } = await supabase
+          .from('review_insights')
+          .select('counts, overall_rating, top_issues, top_strengths, positive_ratio, g_meta, last_analyzed_at')
+          .eq('place_id', selectedEstablishment.place_id)
+          .eq('user_id', user.id)
+          .order('last_analyzed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) {
+          console.error('[dashboard] review_insights error:', error);
+        } else {
+          setInsight(insightData);
+        }
+      } catch (error) {
+        console.error('[dashboard] fetch insights error:', error);
+      } finally {
+        setIsLoadingInsight(false);
+      }
+    };
+
+    fetchInsights();
+  }, [user?.id, selectedEstablishment?.place_id]);
 
   // Mise à jour de l'heure en temps réel
   useEffect(() => {
@@ -66,6 +100,53 @@ const Dashboard = () => {
     date,
     time
   } = formatDateTime(currentDateTime);
+  
+  // Map insight data to variables used by UI components
+  const totalAnalyzed = insight?.counts?.google ?? 0;
+  const avgRating = insight?.overall_rating ?? insight?.g_meta?.rating ?? 4.2;
+  const totalReviews = insight?.counts?.google ?? 326;
+  const positivePct = insight?.positive_ratio != null ? Math.round(insight.positive_ratio * 100) : 78;
+  const negativePct = 100 - positivePct;
+  const topIssues = insight?.top_issues ?? [];
+  const topStrengths = insight?.top_strengths ?? [];
+
+  // Map top issues to Pareto data format
+  const paretoData = topIssues.length > 0 ? topIssues.slice(0, 3).map((issue: any, index: number) => {
+    const count = issue.count || issue.mentions || 0;
+    const percentage = totalAnalyzed > 0 ? (count / totalAnalyzed * 100) : 0;
+    return {
+      name: issue.theme || issue.issue || `Problème ${index + 1}`,
+      count,
+      percentage,
+      cumulative: 0 // Will be calculated below
+    };
+  }) : defaultParetoData;
+
+  // Calculate cumulative percentages for issues
+  let cumulativeIssues = 0;
+  paretoData.forEach((item: any) => {
+    cumulativeIssues += item.percentage;
+    item.cumulative = cumulativeIssues;
+  });
+
+  // Map top strengths to Pareto data format
+  const paretoPointsData = topStrengths.length > 0 ? topStrengths.slice(0, 3).map((strength: any, index: number) => {
+    const count = strength.count || strength.mentions || 0;
+    const percentage = totalAnalyzed > 0 ? (count / totalAnalyzed * 100) : 0;
+    return {
+      name: strength.theme || strength.strength || `Point fort ${index + 1}`,
+      count,
+      percentage,
+      cumulative: 0 // Will be calculated below
+    };
+  }) : defaultParetoPointsData;
+
+  // Calculate cumulative percentages for strengths
+  let cumulativeStrengths = 0;
+  paretoPointsData.forEach((item: any) => {
+    cumulativeStrengths += item.percentage;
+    item.cumulative = cumulativeStrengths;
+  });
   const avisExemples = [{
     id: 1,
     auteur: "Marie L.",
@@ -234,7 +315,7 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center gap-2 text-gray-600">
             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-            <span>Analyse de 0 avis clients</span>
+            <span>Analyse de {totalAnalyzed} avis clients</span>
           </div>
         </div>
 
@@ -296,10 +377,10 @@ const Dashboard = () => {
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Star className="w-5 h-5 text-yellow-500" />
-                <span className="text-2xl font-bold">4.2</span>
+                <span className="text-2xl font-bold">{avgRating.toFixed(1)}</span>
               </div>
               <p className="text-sm text-gray-600">Note moyenne</p>
-              <p className="text-xs text-gray-500">Basée sur 158 avis</p>
+              <p className="text-xs text-gray-500">Basée sur {totalReviews} avis</p>
               <Button variant="ghost" size="sm" onClick={() => setShowCourbeNote(!showCourbeNote)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-yellow-50">
                 {showCourbeNote ? <ChevronUp className="w-3 h-3 text-yellow-600" /> : <ChevronDown className="w-3 h-3 text-yellow-600" />}
               </Button>
@@ -309,7 +390,7 @@ const Dashboard = () => {
           <Card className="relative">
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center gap-1 mb-2">
-                <span className="text-2xl font-bold text-blue-600">326</span>
+                <span className="text-2xl font-bold text-blue-600">{totalReviews}</span>
                 <TrendingUp className="w-4 h-4 text-green-500 ml-1" />
               </div>
               <p className="text-sm text-gray-600">Total avis</p>
@@ -323,7 +404,7 @@ const Dashboard = () => {
           <Card className="relative">
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center gap-1 mb-2">
-                <span className="text-2xl font-bold text-green-600">78%</span>
+                <span className="text-2xl font-bold text-green-600">{positivePct}%</span>
               </div>
               <p className="text-sm text-gray-600">Avis positifs</p>
               <p className="text-xs text-gray-500">Note ≥ 4 étoiles</p>
@@ -341,7 +422,7 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <div className="text-sm text-gray-500">Avis négatifs</div>
-                  <div className="text-2xl font-bold">22%</div>
+                  <div className="text-2xl font-bold">{negativePct}%</div>
                   <div className="text-xs text-gray-400">avis négatifs</div>
                 </div>
               </div>
