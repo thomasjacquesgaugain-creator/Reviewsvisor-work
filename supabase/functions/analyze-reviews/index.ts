@@ -1,25 +1,30 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// Helpers ENV (Deno) + CORS + JSON
 const corsHeaders = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': '*',
   'Access-Control-Allow-Methods': 'POST,OPTIONS',
 };
+const json = (body: any, status = 200) =>
+  new Response(JSON.stringify(body ?? {}), { status, headers: corsHeaders });
 
-function json(body: any, status = 200) {
-  return new Response(JSON.stringify(body ?? {}), { status, headers: corsHeaders });
-}
+const env = (k: string, required = false) => {
+  const v = Deno.env.get(k);
+  if (required && (!v || v.length === 0)) throw new Error(`env_missing:${k}`);
+  return v ?? '';
+};
 
-const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')!;
-const GOOGLE_PLACES_API_KEY = Deno.env.get('GOOGLE_PLACES_API_KEY')!;
-const YELP_API_KEY = Deno.env.get('YELP_API_KEY') || '';
-const USE_YELP = (Deno.env.get('REVIEWS_USE_YELP') || 'false').toLowerCase() === 'true';
+const SUPABASE_URL = env('SUPABASE_URL', true);
+const SERVICE_ROLE = env('SUPABASE_SERVICE_ROLE_KEY', true);
+const OPENAI_API_KEY = env('OPENAI_API_KEY');
+const GOOGLE_PLACES_API_KEY = env('GOOGLE_PLACES_API_KEY');
+const USE_YELP = env('USE_YELP') === 'true';
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-// IMPORTANT: service role pour bypass RLS côté serveur (ne JAMAIS exposer côté client)
-const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+// Client admin pour DB (pas besoin d'Authorization côté requête)
+const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
 function avg(nums: number[]) { return nums.length ? nums.reduce((a,b)=>a+b,0) / nums.length : null; }
 function pct(part: number, total: number) { return total ? Math.round((part/total)*100) : null; }
@@ -197,6 +202,7 @@ async function fetchGoogleReviews(place_id: string) {
 }
 
 async function fetchYelpReviews(name?: string, address?: string) {
+  const YELP_API_KEY = env('YELP_API_KEY');
   if (!YELP_API_KEY || !name || !address) return [];
   
   try {
@@ -361,7 +367,7 @@ serve(async (req) => {
           GOOGLE_PLACES_API_KEY: !!GOOGLE_PLACES_API_KEY,
           SUPABASE_URL: !!SUPABASE_URL,
           SUPABASE_SERVICE_ROLE_KEY: !!SERVICE_ROLE,
-          USE_YELP: USE_YELP && !!YELP_API_KEY,
+          USE_YELP: USE_YELP && !!env('YELP_API_KEY'),
         }
       });
     }
@@ -390,7 +396,7 @@ serve(async (req) => {
 
     // 2) Yelp (off par défaut)
     let yRows: any[] = [];
-    if (USE_YELP && YELP_API_KEY) {
+    if (USE_YELP && env('YELP_API_KEY')) {
       log('yelp_fetch_start', { name: input.name, address: input.address });
       yRows = await fetchYelpReviews(input.name, input.address).catch((e)=>{ log('yelp_fetch_err', String(e)); return []; });
       log('yelp_fetch_ok', { count: yRows.length });
