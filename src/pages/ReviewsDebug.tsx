@@ -12,19 +12,22 @@ export default function ReviewsDebug() {
 
   async function call(dryRun:boolean) {
     setBusy(true);
-    // 1) via runAnalyze (unifié)
-    let r1Data = null, r1Error = null;
     try {
-      r1Data = await runAnalyze({ place_id: placeId.trim(), name: name.trim() || undefined, address: address.trim() || undefined, __dryRun: dryRun, __debug: true });
-    } catch (e) {
-      r1Error = e;
+      const resp = await runAnalyze({ place_id: placeId.trim(), name: name.trim() || undefined, address: address.trim() || undefined, __dryRun: dryRun, __debug: true });
+      setOut({
+        success: { data: resp, picked: resp.__picked, attempts: resp.__attempts },
+        error: null
+      });
+    } catch (e:any) {
+      let err: any = null;
+      try { err = JSON.parse(String(e?.message || e)); } catch { err = { error: String(e?.message || e) }; }
+      setOut({
+        success: null,
+        error: err
+      });
+    } finally {
+      setBusy(false);
     }
-    
-    setOut({
-      invoke: { data: r1Data ?? null, error: r1Error ?? null },
-      raw: { status: 'unified', ok: !r1Error, body: r1Data || r1Error }
-    });
-    setBusy(false);
   }
 
   return (

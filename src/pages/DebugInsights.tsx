@@ -28,11 +28,13 @@ export default function InsightsDebug() {
     setBusy(true); setMsg('');
     try {
       const resp = await runAnalyze({ place_id: pid.trim() });
-      setServerOut(resp);
+      setServerOut(resp);     // montrera __picked et __attempts
       await load();
-      setMsg('Analyse OK (fallback si besoin).');
+      setMsg('Analyse OK');
     } catch (e:any) {
-      setServerOut({ error: String(e?.message || e) });
+      let err: any = null;
+      try { err = JSON.parse(String(e?.message || e)); } catch { err = { error: String(e?.message || e) }; }
+      setServerOut(err);
       setMsg('Analyze error.');
     } finally { setBusy(false); }
   }

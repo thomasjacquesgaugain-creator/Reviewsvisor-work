@@ -1,12 +1,77 @@
 import { supabase } from '@/lib/supabaseClient';
+
 type Payload = { place_id: string; name?: string; address?: string; __dryRun?: boolean; __debug?: boolean; __ping?: boolean };
+type Attempt =
+  | { ok: true; via: 'invoke' | 'raw'; name: string; data: any }
+  | { ok: false; via: 'invoke' | 'raw'; name: string; error?: string; status?: number; body?: any };
+
+function getFunctionsBaseFromClient() {
+  const sb: any = supabase as any;
+  if (sb?.supabaseUrl) return `${sb.supabaseUrl.replace(/\/$/, '')}/functions/v1`;
+  if (sb?.rest?.url)   return `${new URL(sb.rest.url).origin}/functions/v1`;
+  if (sb?.functions?.url) return String(sb.functions.url).replace(/\/$/, '');
+  throw new Error('no_functions_base_from_client');
+}
+function getFunctionsHeadersFromClient() {
+  const sb: any = supabase as any;
+  const h = sb?.functions?.headers;
+  if (h && typeof h.forEach === 'function') {
+    const obj: Record<string,string> = {}; (h as Headers).forEach((v,k)=>obj[k]=v); return obj;
+  }
+  return (h && typeof h === 'object') ? h : {};
+}
+
+const CANDIDATES = [
+  'analyze-reviews',    // EN tiret
+  'analyser-avis',      // FR tiret
+  'analyze_reviews',    // EN underscore
+  'analyser_avis',      // FR underscore
+];
+
+async function tryInvoke(name: string, body: Payload): Promise<Attempt> {
+  try {
+    const { data, error } = await supabase.functions.invoke(name, {
+      body: { __debug: true, ...body },
+      headers: { 'x-client': 'web' },
+    });
+    if (error) return { ok: false, via: 'invoke', name, error: error.message || String(error) };
+    if (!data)  return { ok: false, via: 'invoke', name, error: 'empty_response' };
+    if ((data as any)?.error) return { ok: false, via: 'invoke', name, error: String((data as any).error) };
+    return { ok: true, via: 'invoke', name, data };
+  } catch (e:any) {
+    return { ok: false, via: 'invoke', name, error: String(e?.message || e) };
+  }
+}
+
+async function tryRaw(name: string, body: Payload): Promise<Attempt> {
+  try {
+    const base = getFunctionsBaseFromClient();
+    const fnHeaders = getFunctionsHeadersFromClient();
+    const r = await fetch(`${base}/${name}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...fnHeaders } as Record<string,string>,
+      body: JSON.stringify({ __debug: true, ...body }),
+    });
+    const text = await r.text();
+    let json: any = null; try { json = JSON.parse(text); } catch {}
+    if (!r.ok) return { ok: false, via: 'raw', name, status: r.status, body: json ?? text };
+    if (json?.error) return { ok: false, via: 'raw', name, status: r.status, body: json };
+    return { ok: true, via: 'raw', name, data: json };
+  } catch (e:any) {
+    return { ok: false, via: 'raw', name, error: String(e?.message || e) };
+  }
+}
+
 export async function runAnalyze(body: Payload) {
-  const { data, error } = await supabase.functions.invoke('analyze-reviews', {
-    body: { __debug: true, ...body },
-    headers: { 'x-client': 'web' },
-  });
-  if (error) throw new Error(error.message || 'invoke_failed');
-  if (!data) throw new Error('empty_response');
-  if ((data as any).error) throw new Error(String((data as any).error));
-  return data;
+  const attempts: Attempt[] = [];
+  for (const name of CANDIDATES) {
+    // 1) invoke
+   const a1 = await tryInvoke(name, body); attempts.push(a1);
+    if (a1.ok) return { ...a1.data, __picked: { name, via: 'invoke' }, __attempts: attempts };
+    // 2) raw fetch (au cas où)
+    const a2 = await tryRaw(name, body); attempts.push(a2);
+    if (a2.ok) return { ...a2.data, __picked: { name, via: 'raw' }, __attempts: attempts };
+  }
+  // si aucun succès : remonter tout le journal
+  throw new Error(JSON.stringify({ message: 'all_candidates_failed', attempts }));
 }
