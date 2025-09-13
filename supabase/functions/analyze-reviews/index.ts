@@ -1,22 +1,20 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL")!, 
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-);
-
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
-const GOOGLE_PLACES_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY")!;
-const YELP_API_KEY = Deno.env.get("YELP_API_KEY");
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')!;
+const GOOGLE_PLACES_API_KEY = Deno.env.get('GOOGLE_PLACES_API_KEY')!;
+const YELP_API_KEY = Deno.env.get('YELP_API_KEY') || '';
 const USE_YELP = (Deno.env.get('REVIEWS_USE_YELP') || 'false').toLowerCase() === 'true';
 
-type Input = { place_id: string; name?: string; address?: string };
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+// IMPORTANT: service role pour bypass RLS côté serveur (ne JAMAIS exposer côté client)
+const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+type Input = { place_id: string; name?: string; address?: string; __ping?: boolean };
 
 async function fetchGoogleReviews(place_id: string) {
   const url = new URL('https://maps.googleapis.com/maps/api/place/details/json');
@@ -121,9 +119,9 @@ ${chunk}`;
           'Content-Type': 'application/json' 
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-5-2025-08-07',
           messages: [{ role: 'user', content: prompt }],
-          temperature: 0.2,
+          max_completion_tokens: 1000,
         })
       });
       
@@ -185,103 +183,83 @@ ${chunk}`;
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  if (req.method !== 'POST') {
-    return new Response('Method Not Allowed', { 
-      status: 405, 
-      headers: corsHeaders 
-    });
-  }
-
   try {
-    const auth = req.headers.get("Authorization") ?? "";
-    const userResp = await supabase.auth.getUser(auth.replace("Bearer ", ""));
-    const user = userResp.data.user;
-    
-    if (!user) {
-      return new Response("Unauthorized", { 
-        status: 401, 
-        headers: corsHeaders 
+    if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+    const input = await req.json() as { place_id: string; name?: string; address?: string, __ping?: boolean };
+
+    // mode ping (diagnostic sécurisé)
+    if (input.__ping) {
+      return new Response(JSON.stringify({
+        ok: true,
+        env: {
+          OPENAI_API_KEY: !!OPENAI_API_KEY,
+          GOOGLE_PLACES_API_KEY: !!GOOGLE_PLACES_API_KEY,
+          SUPABASE_URL: !!supabaseUrl,
+          SUPABASE_SERVICE_ROLE_KEY: !!serviceRoleKey,
+          USE_YELP: USE_YELP && !!YELP_API_KEY,
+        }
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    if (!input?.place_id) {
+      return new Response(JSON.stringify({ error: 'missing_place_id' }), { 
+        status: 400, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
     }
 
-    const input = (await req.json()) as Input;
-    if (!input?.place_id) {
-      return new Response(JSON.stringify({ error: 'missing place_id' }), { 
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    // crée client service role
+    const { createClient } = await import('jsr:@supabase/supabase-js');
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+      global: { headers: { Authorization: req.headers.get('Authorization') || '' } },
+    });
 
     console.log(`Analyzing reviews for place_id: ${input.place_id}`);
 
-    // 1) Récup avis multi-sources
-    const reviewsGoogle = await fetchGoogleReviews(input.place_id).catch((err) => {
-      console.error('Google reviews error:', err);
-      return [];
-    });
-    
-    const reviewsYelp = USE_YELP ? await fetchYelpReviews(input.name, input.address).catch(() => []) : [];
-    
+    // fetch avis (Google by place_id uniquement)
+    const reviewsGoogle = await fetchGoogleReviews(input.place_id).catch((e)=>{ throw new Error('google_fetch_failed:' + e?.message); });
+    const reviewsYelp = (USE_YELP && YELP_API_KEY) ? await fetchYelpReviews(input.name, input.address).catch(()=>[]) : [];
     const all = [...reviewsGoogle, ...reviewsYelp];
     console.log(`Collected ${all.length} reviews (Google: ${reviewsGoogle.length}, Yelp: ${reviewsYelp.length})`);
 
-    // 2) Enregistre les avis bruts
+    // insert bruts (tolérant)
     if (all.length) {
       const chunk = 500;
-      for (let i = 0; i < all.length; i += chunk) {
-        const slice = all.slice(i, i + chunk).map(r => ({
+      for (let i=0;i<all.length;i+=chunk) {
+        const slice = all.slice(i,i+chunk).map(r => ({
           place_id: input.place_id,
-          source: r.source,
-          author: r.author ?? null,
-          rating: r.rating ?? null,
-          text: r.text ?? null,
-          reviewed_at: r.reviewed_at ?? null,
-          raw: r.raw ?? null
+          source: r.source, author: r.author ?? null, rating: r.rating ?? null, text: r.text ?? null,
+          reviewed_at: r.reviewed_at ?? null, raw: r.raw ?? null
         }));
-        
-        await supabase.from('reviews_raw').insert(slice).catch((err) => {
-          console.error('Failed to insert reviews:', err);
-        });
+        await supabase.from('reviews_raw').insert(slice).catch(()=>({})); // best effort
       }
     }
 
-    // 3) Analyse IA
+    // analyse IA
     const insights = await analyzeWithAI(all);
     console.log('AI analysis completed:', insights);
 
-    // 4) Upsert insights
-    const { error: upsertError } = await supabase.from('review_insights').upsert({
+    const up = await supabase.from('review_insights').upsert({
       place_id: input.place_id,
       summary: insights,
       last_analyzed_at: new Date().toISOString()
-    });
+    }).select().single();
+    if (up.error) throw new Error('upsert_failed:' + up.error.message);
 
-    if (upsertError) {
-      console.error('Failed to upsert insights:', upsertError);
-      throw upsertError;
-    }
-
-    return new Response(JSON.stringify({ 
-      ok: true, 
+    return new Response(JSON.stringify({
+      ok: true,
       counts: { collected: all.length },
-      source_flags: { google: true, yelp: USE_YELP }
-    }), { 
-      status: 200, 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-    });
-
-  } catch (error) {
-    console.error('Error in analyze-reviews:', error);
-    return new Response(JSON.stringify({ 
-      ok: false, 
-      error: String(error) 
-    }), { 
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      source_flags: { google: true, yelp: USE_YELP && !!YELP_API_KEY }
+    }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  } catch (e: any) {
+    console.error('Error in analyze-reviews:', e);
+    return new Response(JSON.stringify({ ok:false, error: String(e?.message || e) }), {
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });
