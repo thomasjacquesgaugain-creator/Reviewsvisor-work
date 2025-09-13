@@ -15,6 +15,118 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 // IMPORTANT: service role pour bypass RLS côté serveur (ne JAMAIS exposer côté client)
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+function avg(nums: number[]) { return nums.length ? nums.reduce((a,b)=>a+b,0) / nums.length : null; }
+function pct(part: number, total: number) { return total ? Math.round((part/total)*100) : null; }
+
+// Mots vides FR/EN très simples
+const STOP = new Set(['le','la','les','un','une','des','de','du','au','aux','et','ou','mais','donc','or','ni','car','en','dans','sur','avec','pour','par','pas','plus','moins','tres','très','est','cest','ce','ça','sa','son','ses','se','sur','the','a','an','and','or','but','for','to','of','in','on','at','is','it','this','that','was','were','are','be','been','very','not','no','yes','i','you','we','they','he','she','my','your','their']);
+
+function normalizeText(t: string) {
+  return t
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // enlever accents
+    .replace(/[^a-z0-9\s]+/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+function topKeywords(texts: string[], k = 5) {
+  const freq = new Map<string, number>();
+  for (const t of texts) {
+    const norm = normalizeText(t || '');
+    for (const w of norm.split(' ')) {
+      if (!w || w.length < 3 || STOP.has(w)) continue;
+      freq.set(w, (freq.get(w)||0) + 1);
+    }
+  }
+  return [...freq.entries()]
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0, k)
+    .map(([label]) => ({ label }));
+}
+
+function deriveRecommendations(issues: {label:string}[]) {
+  const rec: string[] = [];
+  const L = issues.map(i=>i.label);
+  const has = (s:string)=>L.some(x=>x.includes(s));
+  if (has('attente') || has('wait')) rec.push("Réduire le temps d'attente : optimiser le service aux heures de pointe et afficher les délais.");
+  if (has('prix') || has('price')) rec.push("Revoir la politique tarifaire et proposer des offres claires.");
+  if (has('service') || has('accueil') || has('staff')) rec.push("Former le personnel à l'accueil et à la résolution des problèmes.");
+  if (has('qualite') || has('quality')) rec.push("Standardiser la qualité des produits/prestations et contrôler régulièrement.");
+  if (!rec.length) rec.push("Demander des retours ciblés aux clients et traiter les points récurrents en priorité.");
+  return rec.slice(0,5);
+}
+
+// Fallback "statistiques + règles"
+function analyzeFallback(all: any[]) {
+  const ratings = all.map(r=> Number(r.rating)).filter(n=>!Number.isNaN(n) && n>0);
+  const texts = all.map(r=> (r.text || '').toString()).filter(Boolean);
+  const total = all.length;
+  const positives = all.filter(r=> Number(r.rating) >= 4).length;
+  const negatives = all.filter(r=> Number(r.rating) <= 2).length;
+
+  const kw = topKeywords(texts, 8);
+  // Heuristique : mots-clés "problèmes" vs "forces"
+  const issueHints = ['attente','retard','lente','lent','prix','cher','sale','froid','bruit','bruyant','service','accueil','erreur','erreurs','wrong','slow','dirty','cold','loud','expensive','rude','mistake'];
+  const strengthHints = ['qualite','propre','rapide','sympa','accueil','chaleureux','bon','bonne','delicieux','delicieuse','cosy','calme','friendly','clean','fast','tasty','great','nice','warm','quiet'];
+  const issues = kw.filter(k => issueHints.some(h=>k.label.includes(h))).slice(0,3);
+  const strengths = kw.filter(k => strengthHints.some(h=>k.label.includes(h))).slice(0,3);
+
+  return {
+    overall_rating: ratings.length ? Number(avg(ratings)?.toFixed(2)) : null,
+    positive_pct: pct(positives, total),
+    negative_pct: pct(negatives, total),
+    counts: { total },
+    top_issues: issues,
+    top_strengths: strengths,
+    recommendations: deriveRecommendations(issues),
+  };
+}
+
+async function analyzeWithAIorFallback(all: any[]) {
+  // essaie l'IA si dispo ; sinon fallback
+  try {
+    if (!OPENAI_API_KEY) throw new Error('no_openai_key');
+    const base = analyzeFallback(all); // stats de base garanties
+    // === Appel IA optionnel pour améliorer la synthèse (JSON attendu) ===
+    // Remplace par ton provider si besoin :
+    const prompt = `Tu es un analyste d'avis. Retourne un JSON avec ces clés:
+    overall_rating (nombre ou null),
+    positive_pct (0-100 ou null),
+    negative_pct (0-100 ou null),
+    top_issues (array de {label}), top_strengths (array de {label}),
+    recommendations (array de strings).
+    Voici un échantillon d'avis (texte + note sur 5):\n` + JSON.stringify(all.slice(0,50).map(r=>({rating:r.rating,text:r.text})));
+
+    // Exemple minimal avec fetch OpenAI compat (évite dépendances) — si ça échoue, on garde le fallback :
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role:'user', content: prompt }],
+        response_format: { type: 'json_object' },
+      })
+    });
+    if (!r.ok) throw new Error('openai_http_'+r.status);
+    const j = await r.json();
+    const content = j?.choices?.[0]?.message?.content;
+    const ai = JSON.parse(content || '{}');
+    // merge "ai" sur la base statistique
+    return {
+      overall_rating: ai.overall_rating ?? base.overall_rating,
+      positive_pct: ai.positive_pct ?? base.positive_pct,
+      negative_pct: ai.negative_pct ?? base.negative_pct,
+      counts: base.counts,
+      top_issues: Array.isArray(ai.top_issues) && ai.top_issues.length ? ai.top_issues.slice(0,3) : base.top_issues,
+      top_strengths: Array.isArray(ai.top_strengths) && ai.top_strengths.length ? ai.top_strengths.slice(0,3) : base.top_strengths,
+      recommendations: Array.isArray(ai.recommendations) && ai.recommendations.length ? ai.recommendations.slice(0,5) : base.recommendations,
+    };
+  } catch {
+    return analyzeFallback(all);
+  }
+}
+
 type Input = { place_id: string; name?: string; address?: string; __ping?: boolean };
 
 async function fetchGoogleReviews(place_id: string) {
@@ -299,7 +411,7 @@ serve(async (req) => {
     // 4) Analyse IA (sauf si aucun avis)
     let insights: any = null;
     if (all.length) {
-      insights = await analyzeWithAI(all);
+      insights = await analyzeWithAIorFallback(all);
       log('ai_done', { summary: { ...insights, recommendations: (insights?.recommendations||[]).slice(0,2) } });
     } else {
       log('ai_skipped_no_reviews');
@@ -307,15 +419,13 @@ serve(async (req) => {
 
    // 5) Upsert insights (sauf dry-run)
     if (!input.__dryRun && insights) {
-      const payload: any = {
+      const up = await supabase.from('review_insights').upsert({
         place_id: input.place_id,
-        summary: insights ?? {},
-        last_analyzed_at: new Date().toISOString()
-      };
-      if (userId) payload.user_id = userId;
-
-      const up = await supabase.from('review_insights').upsert(payload).select().single();
-      if (up.error) throw new Error('upsert_failed:' + up.error.message);
+        summary: insights,
+        last_analyzed_at: new Date().toISOString(),
+        ...(userId ? { user_id: userId } : {}),
+      }).select().single();
+      if (up.error) throw new Error('upsert_failed:'+up.error.message);
       log('upsert_done');
     } else {
       log('upsert_skipped', { dryRun: true });
