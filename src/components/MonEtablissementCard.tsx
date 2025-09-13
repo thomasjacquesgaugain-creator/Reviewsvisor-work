@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Etab, STORAGE_KEY, EVT_SAVED } from "../types/etablissement";
-import { Trash2 } from "lucide-react";
+import { Trash2, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -61,6 +61,12 @@ export default function MonEtablissementCard() {
     setEtab(null);
   };
 
+  // Fonction pour analyser l'établissement
+  const handleAnalyzeEstablishment = () => {
+    // TODO: Implémenter l'analyse
+    console.log("Analyser l'établissement:", etab);
+  };
+
   if (!etab) {
     return (
       <div className="text-neutral-500">
@@ -79,6 +85,17 @@ export default function MonEtablissementCard() {
         <div><strong>Note Google :</strong> {etab.rating ?? "—"}</div>
         <div><strong>Google Maps :</strong> {etab.url ? <a href={etab.url} target="_blank">Voir la fiche</a> : "—"}</div>
         <div className="text-xs text-neutral-500"><strong>place_id :</strong> {etab.place_id}</div>
+      </div>
+      
+      {/* Bouton analyser établissement au milieu en bas */}
+      <div className="flex justify-center mt-4">
+        <Button
+          onClick={handleAnalyzeEstablishment}
+          className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+        >
+          <BarChart3 className="w-4 h-4" />
+          Analyser cet établissement
+        </Button>
       </div>
       
       {/* Icône oublier établissement en bas à droite */}
