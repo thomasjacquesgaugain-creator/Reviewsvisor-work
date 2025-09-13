@@ -2,8 +2,8 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+  'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
+} as const;
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')!;
 const GOOGLE_PLACES_API_KEY = Deno.env.get('GOOGLE_PLACES_API_KEY')!;
@@ -197,11 +197,11 @@ ${chunk}`;
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+    if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     const input = await req.json() as { place_id: string; name?: string; address?: string; __ping?: boolean; __dryRun?: boolean; __debug?: boolean };
 
     if (input.__ping) {
@@ -223,7 +223,7 @@ serve(async (req) => {
     function log(step: string, data?: any) { if (input.__debug) logs.push({ step, data }); }
 
     const { createClient } = await import('jsr:@supabase/supabase-js');
-    const supabase = createClient(supabaseUrl, serviceRoleKey, { global: { headers: { Authorization: req.headers.get('Authorization') || '' } } });
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // 1) Google (strict place_id)
     log('google_fetch_start', { place_id: input.place_id });
