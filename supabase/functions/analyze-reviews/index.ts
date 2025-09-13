@@ -1,9 +1,15 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
 const corsHeaders = {
+  'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
-} as const;
+  'Access-Control-Allow-Headers': '*',
+  'Access-Control-Allow-Methods': 'POST,OPTIONS',
+};
+
+function json(body: any, status = 200) {
+  return new Response(JSON.stringify(body ?? {}), { status, headers: corsHeaders });
+}
 
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')!;
@@ -338,16 +344,17 @@ ${chunk}`;
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
   try {
-    if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    const input = await req.json() as { place_id: string; name?: string; address?: string; __ping?: boolean; __dryRun?: boolean; __debug?: boolean };
+    // 1) lire le body
+    const input = await req.json().catch(() => ({}));
+    const placeId = input?.place_id;
+    if (!placeId) return json({ ok: false, error: 'missing_place_id' }, 400);
 
     if (input.__ping) {
-      return new Response(JSON.stringify({
+      return json({
         ok: true,
         env: {
           OPENAI_API_KEY: !!OPENAI_API_KEY,
@@ -356,10 +363,8 @@ serve(async (req) => {
           SUPABASE_SERVICE_ROLE_KEY: !!serviceRoleKey,
           USE_YELP: USE_YELP && !!YELP_API_KEY,
         }
-      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      });
     }
-
-    if (!input?.place_id) return new Response(JSON.stringify({ error: 'missing_place_id' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     const authHeader = req.headers.get('Authorization') || '';
     let userId: string | null = null;
@@ -444,17 +449,15 @@ serve(async (req) => {
       log('upsert_skipped', { dryRun: true });
     }
 
-    return new Response(JSON.stringify({
+    return json({
       ok: true,
       counts: { collected: all.length, google: g.rows.length, yelp: yRows.length },
-      google_meta: g.meta,
+      g_meta: g.meta,
       dryRun: !!input.__dryRun,
       logs: input.__debug ? logs : undefined
-    }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    });
   } catch (e: any) {
     console.error('Error in analyze-reviews:', e);
-    return new Response(JSON.stringify({ ok:false, error: String(e?.message || e) }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return json({ ok: false, error: String(e?.message || e) }, 500);
   }
 });
