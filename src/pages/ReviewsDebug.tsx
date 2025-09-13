@@ -1,7 +1,18 @@
 'use client';
 import { useState } from 'react';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '@/lib/publicEnv';
 import { supabase } from '@/integrations/supabase/client';
+
+// Récupère l'URL et les headers déjà configurés dans supabase.functions
+function getFunctionsInfo() {
+  const anySb: any = supabase as any;
+  const fn = anySb?.functions || {};
+  const base =
+    fn.url || fn._url || // v2 a une propriété "url"
+    (anySb?.rest?.url ? anySb.rest.url.replace('/rest/v1','/functions/v1') : null);
+  const headers = fn.headers || {};
+  if (!base) throw new Error('Impossible de déterminer l\'URL des Functions depuis supabase.functions');
+  return { base: String(base).replace(/\/$/, ''), headers };
+}
 
 export default function ReviewsDebug() {
   const [placeId, setPlaceId] = useState('');
@@ -17,14 +28,10 @@ export default function ReviewsDebug() {
       body: { place_id: placeId.trim(), name: name.trim() || undefined, address: address.trim() || undefined, __dryRun: dryRun, __debug: true }
     });
     // 2) via fetch brut pour avoir status et body complets (diagnostic)
-    const url = `https://zzjmtipdsccxmmoaetlp.supabase.co/functions/v1/analyze-reviews`;
-    const r2 = await fetch(url, {
+    const { base, headers } = getFunctionsInfo();
+    const r2 = await fetch(`${base}/analyze_reviews`, {
       method: 'POST',
-      headers: {
-        apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU',
-        authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU',
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify({ place_id: placeId.trim(), name: name.trim() || undefined, address: address.trim() || undefined, __dryRun: dryRun, __debug: true })
     });
     const text = await r2.text();

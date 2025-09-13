@@ -1,17 +1,21 @@
 import { supabase } from '@/lib/supabaseClient';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '@/lib/publicEnv';
 
-type Payload = { place_id: string; name?: string; address?: string; __dryRun?: boolean; __debug?: boolean };
+type Payload = { place_id: string; name?: string; address?: string; __dryRun?: boolean; __debug?: boolean; __ping?: boolean };
 
-function functionsUrl(path = 'analyze_reviews') {
-  if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_ANON_KEY) {
-    throw new Error('ENV manquantes: SUPABASE_URL/ANON_KEY (côté client).');
-  }
-  return `${PUBLIC_SUPABASE_URL.replace(/\/$/, '')}/functions/v1/${path}`;
+// Récupère l'URL et les headers déjà configurés dans supabase.functions
+function getFunctionsInfo() {
+  const anySb: any = supabase as any;
+  const fn = anySb?.functions || {};
+  const base =
+    fn.url || fn._url || // v2 a une propriété "url"
+    (anySb?.rest?.url ? anySb.rest.url.replace('/rest/v1','/functions/v1') : null);
+  const headers = fn.headers || {};
+  if (!base) throw new Error('Impossible de déterminer l\'URL des Functions depuis supabase.functions');
+  return { base: String(base).replace(/\/$/, ''), headers };
 }
 
 export async function runAnalyze(body: Payload) {
-  // 1) Tentative via supabase-js
+  // 1) tentative via supabase-js
   try {
     const { data, error } = await supabase.functions.invoke('analyze_reviews', { body });
     if (error) throw error;
@@ -20,16 +24,16 @@ export async function runAnalyze(body: Payload) {
     }
     if ((data as any)?.error) throw new Error(String((data as any).error));
     return data;
-  } catch (_err) {
-    // 2) Fallback : appel brut vers l'Edge Function
-    const url = functionsUrl();
-    const r = await fetch(url, {
+  } catch {
+    // 2) Fallback : fetch brut en réutilisant l'URL + headers internes
+    const { base, headers } = getFunctionsInfo();
+    const r = await fetch(`${base}/analyze_reviews`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        apikey: PUBLIC_SUPABASE_ANON_KEY,
-        authorization: `Bearer ${PUBLIC_SUPABASE_ANON_KEY}`,
-      },
+        // réutilise apikey/authorization déjà fournis par supabase-js
+        ...headers,
+      } as Record<string,string>,
       body: JSON.stringify({ __debug: true, ...body }),
     });
     const text = await r.text();

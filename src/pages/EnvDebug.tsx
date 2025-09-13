@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { runAnalyze } from '@/lib/runAnalyze';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -11,10 +12,8 @@ export default function EnvDebug() {
   const handlePing = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('analyze-reviews', { 
-        body: { __ping: true }
-      });
-      setOut(error ? { error } : data);
+      const data = await runAnalyze({ place_id: 'test', __ping: true });
+      setOut(data);
     } catch (e) {
       setOut({ error: e });
     } finally {

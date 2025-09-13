@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { runAnalyze } from '@/lib/runAnalyze';
 import { Button } from '@/components/ui/button';
 
 type Summary = {
@@ -55,10 +56,7 @@ export default function DiagnosticPanel({
   async function rerun() {
     try {
       setRefreshing(true);
-      const { error } = await supabase.functions.invoke('analyze-reviews', {
-        body: { place_id, name, address },
-      });
-      if (error) throw error;
+      await runAnalyze({ place_id, name, address });
       await load();
       alert('Analyse relancée avec succès.');
     } catch (e) {
