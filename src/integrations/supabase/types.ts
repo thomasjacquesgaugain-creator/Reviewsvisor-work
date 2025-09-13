@@ -163,7 +163,7 @@ export type Database = {
           top_praises: Json | null
           total_count: number | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           avg_rating?: number | null
@@ -176,7 +176,7 @@ export type Database = {
           top_praises?: Json | null
           total_count?: number | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           avg_rating?: number | null
@@ -189,7 +189,7 @@ export type Database = {
           top_praises?: Json | null
           total_count?: number | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }

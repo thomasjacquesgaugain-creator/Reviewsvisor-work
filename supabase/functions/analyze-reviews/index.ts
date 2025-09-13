@@ -5,6 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
 } as const;
 
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')!;
 const GOOGLE_PLACES_API_KEY = Deno.env.get('GOOGLE_PLACES_API_KEY')!;
 const YELP_API_KEY = Deno.env.get('YELP_API_KEY') || '';
@@ -241,6 +242,19 @@ serve(async (req) => {
 
     if (!input?.place_id) return new Response(JSON.stringify({ error: 'missing_place_id' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
+    const authHeader = req.headers.get('Authorization') || '';
+    let userId: string | null = null;
+    try {
+      if (authHeader.startsWith('Bearer ')) {
+        const { createClient } = await import('jsr:@supabase/supabase-js');
+        const authClient = createClient(supabaseUrl, SUPABASE_ANON_KEY, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data: { user } } = await authClient.auth.getUser();
+        userId = user?.id ?? null;
+      }
+    } catch {}
+
     const logs: any[] = [];
     function log(step: string, data?: any) { if (input.__debug) logs.push({ step, data }); }
 
@@ -270,6 +284,7 @@ serve(async (req) => {
       for (let i=0;i<all.length;i+=chunk) {
         const slice = all.slice(i,i+chunk).map(r => ({
           place_id: input.place_id,
+          user_id: userId,
           source: r.source, author: r.author ?? null, rating: r.rating ?? null, text: r.text ?? null,
           reviewed_at: r.reviewed_at ?? null, raw: r.raw ?? null
         }));
@@ -292,11 +307,14 @@ serve(async (req) => {
 
    // 5) Upsert insights (sauf dry-run)
     if (!input.__dryRun && insights) {
-      const up = await supabase.from('review_insights').upsert({
+      const payload: any = {
         place_id: input.place_id,
         summary: insights ?? {},
         last_analyzed_at: new Date().toISOString()
-      }).select().single();
+      };
+      if (userId) payload.user_id = userId;
+
+      const up = await supabase.from('review_insights').upsert(payload).select().single();
       if (up.error) throw new Error('upsert_failed:' + up.error.message);
       log('upsert_done');
     } else {
