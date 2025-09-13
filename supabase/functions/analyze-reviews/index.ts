@@ -17,32 +17,34 @@ const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 type Input = { place_id: string; name?: string; address?: string; __ping?: boolean };
 
 async function fetchGoogleReviews(place_id: string) {
-  const url = new URL('https://maps.googleapis.com/maps/api/place/details/json');
-  url.searchParams.set('place_id', place_id);
-  url.searchParams.set('fields', 'rating,user_ratings_total,reviews');
-  url.searchParams.set('key', GOOGLE_PLACES_API_KEY);
-  const r = await fetch(url.toString());
-  const j = await r.json().catch(()=>({}));
-  if (!r.ok) throw new Error(`google_http_${r.status}`);
-  const status = j?.status || j?.result?.status || 'OK';
-  if (status !== 'OK') {
-    const em = j?.error_message || j?.status || 'unknown_error';
-   throw new Error(`google_status_${em}`);
+  // Google Places API v1 (New)
+  // Doc: https://developers.google.com/maps/documentation/places/web-service/details
+  // Endpoint: GET https://places.googleapis.com/v1/places/{place_id}?fields=rating,userRatingsTotal,reviews
+  const url = `https://places.googleapis.com/v1/places/${encodeURIComponent(place_id)}?fields=rating,userRatingsTotal,reviews`;
+  const r = await fetch(url, { headers: { 'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY } });
+  const text = await r.text();
+  let j: any = {};
+  try { j = JSON.parse(text); } catch {}
+  if (!r.ok) {
+    const code = j?.error?.status || r.status;
+    const msg = j?.error?.message || text || 'unknown_error';
+    throw new Error(`google_v1_http_${code}:${msg}`);
   }
-  const reviews = j?.result?.reviews ?? [];
+  const reviews = j?.reviews ?? [];
   return {
     meta: {
-      rating: j?.result?.rating ?? null,
-      total: j?.result?.user_ratings_total ?? null,
+      rating: j?.rating ?? null,
+      total: j?.userRatingsTotal ?? null,
     },
     rows: reviews.map((rv: any) => ({
       source: 'google',
-      author: rv.author_name,
-      rating: rv.rating,
-      text: rv.text,
-      reviewed_at: rv.time ? new Date(rv.time * 1000).toISOString() : null,
-      raw: rv
-    }))
+      author: rv?.authorAttribution?.displayName ?? null,
+      rating: rv?.rating ?? null,
+      text: rv?.originalText?.text ?? rv?.text ?? null,
+      reviewed_at: rv?.publishTime ? new Date(rv.publishTime).toISOString() : null,
+      raw: rv,
+    })),
+    raw: j
   };
 }
 
@@ -227,6 +229,7 @@ serve(async (req) => {
     log('google_fetch_start', { place_id: input.place_id });
     const g = await fetchGoogleReviews(input.place_id);
     log('google_fetch_ok', { meta: g.meta, count: g.rows.length });
+    log('google_meta', { meta: g.meta });
 
     // 2) Yelp (off par défaut)
     let yRows: any[] = [];
