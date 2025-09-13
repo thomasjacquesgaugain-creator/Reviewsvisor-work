@@ -16,12 +16,21 @@ serve(async (req) => {
 
   // Global try/catch - always return 200 with structured JSON
   try {
+    // Environment variables with fallback
+    const SUPABASE_URL = Deno.env.get('SB_URL') ?? Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SB_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') ?? '';
+    const GOOGLE_PLACES_API_KEY = Deno.env.get('GOOGLE_PLACES_API_KEY') ?? '';
+    const USE_YELP = (Deno.env.get('USE_YELP') ?? 'false') === 'true';
+
     const env = {
-      OPENAI_API_KEY: !!Deno.env.get('OPENAI_API_KEY'),
-      GOOGLE_PLACES_API_KEY: !!Deno.env.get('GOOGLE_PLACES_API_KEY'),
+      SB_URL: !!Deno.env.get('SB_URL'),
       SUPABASE_URL: !!Deno.env.get('SUPABASE_URL'),
+      SB_SERVICE_ROLE_KEY: !!Deno.env.get('SB_SERVICE_ROLE_KEY'),
       SUPABASE_SERVICE_ROLE_KEY: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
-      USE_YELP: (Deno.env.get('USE_YELP') || 'false') === 'true'
+      OPENAI_API_KEY: !!OPENAI_API_KEY,
+      GOOGLE_PLACES_API_KEY: !!GOOGLE_PLACES_API_KEY,
+      USE_YELP
     };
 
     console.log('Environment check:', env);
@@ -82,8 +91,8 @@ serve(async (req) => {
     let user_id = null;
     try {
       const authHeader = req.headers.get('Authorization');
-      if (authHeader && env.SUPABASE_URL) {
-        const supabaseAuth = createClient(env.SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY') || '');
+      if (authHeader && SUPABASE_URL) {
+        const supabaseAuth = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY') || '');
         const token = authHeader.replace('Bearer ', '');
         const { data: { user } } = await supabaseAuth.auth.getUser(token);
         user_id = user?.id || null;
@@ -97,10 +106,10 @@ serve(async (req) => {
     let reviews = [];
     let g_meta = { rating: 0, user_ratings_total: 0 };
     
-    if (env.GOOGLE_PLACES_API_KEY) {
+    if (GOOGLE_PLACES_API_KEY) {
       try {
         const placesResponse = await fetch(
-          `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&fields=reviews,rating,user_ratings_total&key=${Deno.env.get('GOOGLE_PLACES_API_KEY')}`
+          `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&fields=reviews,rating,user_ratings_total&key=${GOOGLE_PLACES_API_KEY}`
         );
         
         if (placesResponse.ok) {
@@ -154,7 +163,7 @@ serve(async (req) => {
       overall_rating: g_meta.rating
     };
 
-    if (env.OPENAI_API_KEY && reviews.length > 0) {
+    if (OPENAI_API_KEY && reviews.length > 0) {
       try {
         const reviewTexts = reviews.map(r => r.text).filter(Boolean);
         
@@ -173,7 +182,7 @@ Respond with valid JSON only.`;
           const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+              'Authorization': `Bearer ${OPENAI_API_KEY}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
@@ -211,16 +220,16 @@ Respond with valid JSON only.`;
       } catch (error) {
         logs.push(`OpenAI analysis failed: ${error.message}`);
       }
-    } else if (!env.OPENAI_API_KEY) {
+    } else if (!OPENAI_API_KEY) {
       logs.push('No OpenAI API key configured');
     }
 
     // Upsert to review_insights
-    if (env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       try {
-        const supabase = createClient(env.SUPABASE_URL, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'));
+        const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false }});
         
-        const { error } = await supabase
+        const { error } = await admin
           .from('review_insights')
           .upsert({
             place_id,
