@@ -20,6 +20,7 @@ import Debug from "./pages/Debug";
 import EnvDebug from "./pages/EnvDebug";
 import ReviewsDebug from "./pages/ReviewsDebug";
 import NotFound from "./pages/NotFound";
+import DebugInsights from "./pages/DebugInsights";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +85,7 @@ const App = () => {
                 <Route path="/debug" element={<Debug />} />
                 <Route path="/debug/env" element={<EnvDebug />} />
                 <Route path="/debug/reviews" element={<ReviewsDebug />} />
+                <Route path="/debug/insights" element={<DebugInsights />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
