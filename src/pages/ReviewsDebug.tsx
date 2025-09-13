@@ -1,17 +1,24 @@
 'use client';
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { runAnalyze } from '@/lib/runAnalyze';
 
-// Récupère l'URL et les headers déjà configurés dans supabase.functions
-function getFunctionsInfo() {
-  const anySb: any = supabase as any;
-  const fn = anySb?.functions || {};
-  const base =
-    fn.url || fn._url || // v2 a une propriété "url"
-    (anySb?.rest?.url ? anySb.rest.url.replace('/rest/v1','/functions/v1') : null);
-  const headers = fn.headers || {};
-  if (!base) throw new Error('Impossible de déterminer l\'URL des Functions depuis supabase.functions');
-  return { base: String(base).replace(/\/$/, ''), headers };
+function getFunctionsBaseFromClient() {
+  const sb: any = (supabase as any);
+  if (sb?.supabaseUrl) return `${sb.supabaseUrl.replace(/\/$/, '')}/functions/v1`;
+  if (sb?.rest?.url) return `${new URL(sb.rest.url).origin}/functions/v1`;
+  if (sb?.functions?.url) return String(sb.functions.url).replace(/\/$/, '');
+  throw new Error('no_functions_base_from_client');
+}
+function getFunctionsHeadersFromClient() {
+  const sb: any = (supabase as any);
+  const h = sb?.functions?.headers;
+  if (h && typeof h.forEach === 'function') {
+    const obj: Record<string,string> = {};
+    (h as Headers).forEach((v,k)=>{ obj[k]=v; });
+    return obj;
+  }
+  return (h && typeof h === 'object') ? h : {};
 }
 
 export default function ReviewsDebug() {
@@ -23,12 +30,16 @@ export default function ReviewsDebug() {
 
   async function call(dryRun:boolean) {
     setBusy(true);
-    // 1) via supabase.functions.invoke (pour usage normal)
-    const r1 = await supabase.functions.invoke('analyze-reviews', {
-      body: { place_id: placeId.trim(), name: name.trim() || undefined, address: address.trim() || undefined, __dryRun: dryRun, __debug: true }
-    });
+    // 1) via runAnalyze (pour usage normal)
+    let r1Data = null, r1Error = null;
+    try {
+      r1Data = await runAnalyze({ place_id: placeId.trim(), name: name.trim() || undefined, address: address.trim() || undefined, __dryRun: dryRun, __debug: true });
+    } catch (e) {
+      r1Error = e;
+    }
     // 2) via fetch brut pour avoir status et body complets (diagnostic)
-    const { base, headers } = getFunctionsInfo();
+    const base = getFunctionsBaseFromClient();
+    const headers = getFunctionsHeadersFromClient();
     const r2 = await fetch(`${base}/analyze_reviews`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...headers },
@@ -37,7 +48,7 @@ export default function ReviewsDebug() {
     const text = await r2.text();
     let json:any = null; try { json = JSON.parse(text); } catch {}
     setOut({
-      invoke: { data: r1.data ?? null, error: r1.error ?? null },
+      invoke: { data: r1Data ?? null, error: r1Error ?? null },
       raw: { status: r2.status, ok: r2.ok, body: json ?? text }
     });
     setBusy(false);
