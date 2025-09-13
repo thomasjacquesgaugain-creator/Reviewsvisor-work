@@ -2,16 +2,40 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp, TrendingDown, Star, MessageSquare, Heart, AlertTriangle } from "lucide-react";
+import { useReviewInsights } from "@/hooks/useReviewInsights";
 
 interface AnalyticsDashboardProps {
   restaurantData: {
     name: string;
     url: string;
+    place_id: string;
   };
 }
 
 export const AnalyticsDashboard = ({ restaurantData }: AnalyticsDashboardProps) => {
-  // Données simulées pour la démonstration
+  const { loading, summary } = useReviewInsights(restaurantData.place_id);
+  
+  if (loading) {
+    return (
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="container mx-auto text-center">
+          <div className="text-lg">Chargement des analyses...</div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!summary) {
+    return (
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="container mx-auto text-center">
+          <div className="text-lg">Aucune analyse disponible. Lance une analyse depuis la page établissement.</div>
+        </div>
+      </section>
+    );
+  }
+
+  // Données simulées pour la démonstration - remplacées par les vraies données
   const mockData = {
     totalReviews: 247,
     averageRating: 4.3,
@@ -78,8 +102,8 @@ export const AnalyticsDashboard = ({ restaurantData }: AnalyticsDashboardProps) 
                 <MessageSquare className="w-4 h-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{mockData.totalReviews}</div>
-                <p className="text-xs text-muted-foreground">+12% ce mois</p>
+                <div className="text-2xl font-bold">{summary.counts?.total ?? '—'}</div>
+                <p className="text-xs text-muted-foreground">échantillon analysé</p>
               </CardContent>
             </Card>
 
@@ -90,16 +114,9 @@ export const AnalyticsDashboard = ({ restaurantData }: AnalyticsDashboardProps) 
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold flex items-center gap-2">
-                  {mockData.averageRating}
-                  {mockData.recentTrends.rating.trend === "up" ? (
-                    <TrendingUp className="w-4 h-4 text-success" />
-                  ) : (
-                    <TrendingDown className="w-4 h-4 text-destructive" />
-                  )}
+                  {summary.overall_rating ?? '—'}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  +{(mockData.recentTrends.rating.current - mockData.recentTrends.rating.previous).toFixed(1)} depuis le mois dernier
-                </p>
+                <p className="text-xs text-muted-foreground">analysée par IA</p>
               </CardContent>
             </Card>
 
@@ -110,25 +127,22 @@ export const AnalyticsDashboard = ({ restaurantData }: AnalyticsDashboardProps) 
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-success">
-                  {mockData.sentimentDistribution.positive}%
+                  {summary.positive_pct != null ? `${summary.positive_pct}%` : '—'}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  +{mockData.recentTrends.sentiment.current - mockData.recentTrends.sentiment.previous}% ce mois
-                </p>
+                <p className="text-xs text-muted-foreground">avis positifs</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Amélioration Requise</CardTitle>
+                <CardTitle className="text-sm font-medium">Problèmes Identifiés</CardTitle>
                 <AlertTriangle className="w-4 h-4 text-warning" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-warning flex items-center gap-2">
-                  {mockData.themes.filter(t => t.sentiment === "negative").length}
-                  <TrendingDown className="w-4 h-4 text-destructive" />
+                  {summary.top_issues?.length ?? 0}
                 </div>
-                <p className="text-xs text-muted-foreground">domaines à améliorer</p>
+                <p className="text-xs text-muted-foreground">problèmes prioritaires</p>
               </CardContent>
             </Card>
           </div>
@@ -145,23 +159,16 @@ export const AnalyticsDashboard = ({ restaurantData }: AnalyticsDashboardProps) 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-success">Positif</span>
-                  <span>{mockData.sentimentDistribution.positive}%</span>
+                  <span>{summary.positive_pct ?? 0}%</span>
                 </div>
-                <Progress value={mockData.sentimentDistribution.positive} className="h-2" />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-warning">Neutre</span>
-                  <span>{mockData.sentimentDistribution.neutral}%</span>
-                </div>
-                <Progress value={mockData.sentimentDistribution.neutral} className="h-2" />
+                <Progress value={summary.positive_pct ?? 0} className="h-2" />
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-destructive">Négatif</span>
-                  <span>{mockData.sentimentDistribution.negative}%</span>
+                  <span>{summary.negative_pct ?? 0}%</span>
                 </div>
-                <Progress value={mockData.sentimentDistribution.negative} className="h-2" />
+                <Progress value={summary.negative_pct ?? 0} className="h-2" />
               </div>
             </CardContent>
           </Card>
@@ -177,23 +184,33 @@ export const AnalyticsDashboard = ({ restaurantData }: AnalyticsDashboardProps) 
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockData.themes.map((theme, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex justify-between items-center">
+                  {/* Top Issues */}
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-destructive">Problèmes prioritaires</h4>
+                    {summary.top_issues?.length ? summary.top_issues.map((issue, index) => (
+                      <div key={index} className="p-3 rounded-lg bg-red-50 border border-red-200">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={`${getSentimentColor(theme.sentiment)} text-white`}>
-                            {getSentimentIcon(theme.sentiment)}
-                          </Badge>
-                          <span className="font-medium">{theme.name}</span>
+                          <AlertTriangle className="w-4 h-4 text-red-600" />
+                          <span className="font-medium">{issue.label}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>{theme.mentions} mentions</span>
-                        </div>
+                        {issue.why && <p className="text-sm text-gray-600 mt-1">{issue.why}</p>}
                       </div>
-                      <Progress value={theme.score} className="h-2" />
-                      <p className="text-xs text-muted-foreground">Score: {theme.score}%</p>
-                    </div>
-                  ))}
+                    )) : <p className="text-sm text-muted-foreground">Aucun problème critique identifié</p>}
+                  </div>
+                  
+                  {/* Top Strengths */}
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-success">Points forts</h4>
+                    {summary.top_strengths?.length ? summary.top_strengths.map((strength, index) => (
+                      <div key={index} className="p-3 rounded-lg bg-green-50 border border-green-200">
+                        <div className="flex items-center gap-2">
+                          <Heart className="w-4 h-4 text-green-600" />
+                          <span className="font-medium">{strength.label}</span>
+                        </div>
+                        {strength.why && <p className="text-sm text-gray-600 mt-1">{strength.why}</p>}
+                      </div>
+                    )) : <p className="text-sm text-muted-foreground">Aucun point fort spécifique identifié</p>}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -201,26 +218,21 @@ export const AnalyticsDashboard = ({ restaurantData }: AnalyticsDashboardProps) 
             {/* Mots-clés populaires */}
             <Card>
               <CardHeader>
-                <CardTitle>Mots-clés Populaires</CardTitle>
+                <CardTitle>Recommandations IA</CardTitle>
                 <CardDescription>
-                  Les termes les plus fréquents dans vos avis
+                  Actions concrètes suggérées par l'analyse
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {mockData.topKeywords.map((keyword, index) => (
-                    <div key={index} className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">"{keyword.word}"</span>
-                        <Badge variant="outline" className={`${getSentimentColor(keyword.sentiment)} text-white text-xs`}>
-                          {keyword.sentiment}
-                        </Badge>
+                  {summary.recommendations?.length ? summary.recommendations.map((reco, index) => (
+                    <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                      <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-white text-xs font-bold">{index + 1}</span>
                       </div>
-                      <span className="text-sm text-muted-foreground">
-                        {keyword.count} fois
-                      </span>
+                      <span className="text-sm">{reco}</span>
                     </div>
-                  ))}
+                  )) : <p className="text-sm text-muted-foreground">Aucune recommandation disponible</p>}
                 </div>
               </CardContent>
             </Card>

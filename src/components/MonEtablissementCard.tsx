@@ -62,9 +62,28 @@ export default function MonEtablissementCard() {
   };
 
   // Fonction pour analyser l'établissement
-  const handleAnalyzeEstablishment = () => {
-    // TODO: Implémenter l'analyse
-    console.log("Analyser l'établissement:", etab);
+  const handleAnalyzeEstablishment = async () => {
+    if (!etab) return;
+    
+    try {
+      const { error } = await supabase.functions.invoke('analyze-reviews', {
+        body: { 
+          place_id: etab.place_id, 
+          name: etab.name, 
+          address: etab.address 
+        },
+      });
+      
+      if (error) {
+        console.error('Erreur lors de l\'analyse:', error);
+        alert("Échec de l'analyse. Réessaie dans un instant.");
+      } else {
+        alert("Analyse terminée ! Rendez-vous sur le dashboard pour voir les résultats.");
+      }
+    } catch (e) {
+      console.error('Erreur:', e);
+      alert("Échec de l'analyse. Réessaie dans un instant.");
+    }
   };
 
   if (!etab) {

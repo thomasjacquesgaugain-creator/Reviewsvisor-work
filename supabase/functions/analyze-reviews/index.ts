@@ -10,12 +10,189 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!, 
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
+
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
+const GOOGLE_PLACES_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY")!;
+const YELP_API_KEY = Deno.env.get("YELP_API_KEY");
+
+type Input = { place_id: string; name?: string; address?: string };
+
+async function fetchGoogleReviews(place_id: string) {
+  const url = new URL('https://maps.googleapis.com/maps/api/place/details/json');
+  url.searchParams.set('place_id', place_id);
+  url.searchParams.set('fields', 'rating,user_ratings_total,reviews');
+  url.searchParams.set('key', GOOGLE_PLACES_API_KEY);
+  
+  const r = await fetch(url.toString());
+  const j = await r.json();
+  const reviews = j?.result?.reviews ?? [];
+  
+  return reviews.map((rv: any) => ({
+    source: 'google',
+    author: rv.author_name,
+    rating: rv.rating,
+    text: rv.text,
+    reviewed_at: rv.time ? new Date(rv.time * 1000).toISOString() : null,
+    raw: rv
+  }));
+}
+
+async function fetchYelpReviews(name?: string, address?: string) {
+  if (!YELP_API_KEY || !name || !address) return [];
+  
+  try {
+    const params = new URLSearchParams({ term: name, location: address });
+    const r1 = await fetch('https://api.yelp.com/v3/businesses/search?' + params.toString(), {
+      headers: { Authorization: `Bearer ${YELP_API_KEY}` },
+    });
+    const j1 = await r1.json();
+    const id = j1?.businesses?.[0]?.id;
+    if (!id) return [];
+    
+    const r2 = await fetch(`https://api.yelp.com/v3/businesses/${id}/reviews`, {
+      headers: { Authorization: `Bearer ${YELP_API_KEY}` },
+    });
+    const j2 = await r2.json();
+    const reviews = j2?.reviews ?? [];
+    
+    return reviews.map((rv: any) => ({
+      source: 'yelp',
+      author: rv.user?.name,
+      rating: rv.rating,
+      text: rv.text,
+      reviewed_at: rv.time_created ? new Date(rv.time_created).toISOString() : null,
+      raw: rv
+    }));
+  } catch (error) {
+    console.error('Yelp API error:', error);
+    return [];
+  }
+}
+
+async function analyzeWithAI(reviews: { rating?: number; text?: string }[]) {
+  const chunks: string[] = [];
+  let buffer = '';
+  
+  for (const r of reviews) {
+    const line = `- (${r.rating ?? 'NA'}/5) ${r.text?.replaceAll('\n',' ').slice(0,600)}`;
+    if ((buffer + '\n' + line).length > 12000) {
+      chunks.push(buffer); 
+      buffer = line;
+    } else {
+      buffer += '\n' + line;
+    }
+  }
+  if (buffer) chunks.push(buffer);
+
+  const insights = { 
+    counts: { total: reviews.length }, 
+    top_issues: [] as any[], 
+    top_strengths: [] as any[], 
+    recommendations: [] as any[], 
+    overall_rating: null as number | null, 
+    positive_pct: null as number | null, 
+    negative_pct: null as number | null 
+  };
+
+  for (const chunk of chunks) {
+    const prompt = `Tu es analyste d'avis clients pour la restauration.
+Voici un lot d'avis (notation sur 5 quand dispo).
+Dégage:
+- note moyenne approximative
+- % positifs vs négatifs (approx)
+- 3 problèmes prioritaires (avec raison brève)
+- 3 points forts majeurs
+- 5 recommandations actionnables et concrètes
+Réponds en JSON strict: {
+  "avg": number, "pos_pct": number, "neg_pct": number,
+  "issues": [{"label": string, "why": string}],
+  "strengths": [{"label": string, "why": string}],
+  "reco": [string]
+}
+Avis:
+${chunk}`;
+
+    try {
+      const r = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${OPENAI_API_KEY}`, 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.2,
+        })
+      });
+      
+      const j = await r.json();
+      const txt = j?.choices?.[0]?.message?.content ?? '{}';
+      let pj;
+      try { 
+        pj = JSON.parse(txt); 
+      } catch { 
+        continue; 
+      }
+      
+      // agrégation naïve
+      if (typeof pj.avg === 'number') {
+        insights.overall_rating = (insights.overall_rating ?? pj.avg) * 0.5 + pj.avg * 0.5;
+      }
+      if (typeof pj.pos_pct === 'number') {
+        insights.positive_pct = (insights.positive_pct ?? pj.pos_pct) * 0.5 + pj.pos_pct * 0.5;
+      }
+      if (typeof pj.neg_pct === 'number') {
+        insights.negative_pct = (insights.negative_pct ?? pj.neg_pct) * 0.5 + pj.neg_pct * 0.5;
+      }
+      insights.top_issues.push(...(pj.issues ?? []));
+      insights.top_strengths.push(...(pj.strengths ?? []));
+      insights.recommendations.push(...(pj.reco ?? []));
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+    }
+  }
+
+  // dédup & top 3
+  function top3(arr: any[], key='label') {
+    const map = new Map<string, any & {count:number}>();
+    for (const a of arr) {
+      const k = (a?.[key] || '').toLowerCase();
+      if (!k) continue;
+      const cur = map.get(k) || { ...a, count: 0 };
+      cur.count++; 
+      cur.why ||= a.why;
+      map.set(k, cur);
+    }
+    return Array.from(map.values())
+      .sort((a,b)=>b.count-a.count)
+      .slice(0,3)
+      .map(({count, ...rest})=>rest);
+  }
+  
+  const uniqRecos = Array.from(new Set(insights.recommendations)).slice(0,5);
+  
+  return {
+    overall_rating: insights.overall_rating ? Number(insights.overall_rating.toFixed(2)) : null,
+    positive_pct: insights.positive_pct ? Math.round(insights.positive_pct) : null,
+    negative_pct: insights.negative_pct ? Math.round(insights.negative_pct) : null,
+    counts: insights.counts,
+    top_issues: top3(insights.top_issues),
+    top_strengths: top3(insights.top_strengths),
+    recommendations: uniqRecos
+  };
+}
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  if (req.method !== 'POST') {
+    return new Response('Method Not Allowed', { 
+      status: 405, 
+      headers: corsHeaders 
+    });
   }
 
   try {
@@ -30,128 +207,80 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Analyzing reviews for user: ${user.id}`);
-
-    // Etablissement
-    const { data: ue } = await supabase
-      .from("user_establishment")
-      .select("place_id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    
-    if (!ue?.place_id) {
-      console.log("No establishment found for user");
-      return new Response(JSON.stringify({ ok: true, analyzed: 0 }), {
+    const input = (await req.json()) as Input;
+    if (!input?.place_id) {
+      return new Response(JSON.stringify({ error: 'missing place_id' }), { 
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log(`Fetching reviews for place_id: ${ue.place_id}`);
+    console.log(`Analyzing reviews for place_id: ${input.place_id}`);
 
-    // Récupérer les derniers avis (ex. 300 max)
-    const { data: revs } = await supabase
-      .from("reviews")
-      .select("rating,text,language,published_at,source")
-      .eq("user_id", user.id)
-      .eq("place_id", ue.place_id)
-      .order("published_at", { ascending: false })
-      .limit(300);
-
-    const docs = (revs ?? []).filter(r => r?.text?.trim());
-    console.log(`Found ${docs.length} reviews with text content`);
+    // 1) Récup avis multi-sources
+    const reviewsGoogle = await fetchGoogleReviews(input.place_id).catch((err) => {
+      console.error('Google reviews error:', err);
+      return [];
+    });
     
-    if (!docs.length) {
-      return new Response(JSON.stringify({ ok: true, analyzed: 0 }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    const reviewsYelp = await fetchYelpReviews(input.name, input.address).catch((err) => {
+      console.error('Yelp reviews error:', err);
+      return [];
+    });
+    
+    const all = [...reviewsGoogle, ...reviewsYelp];
+    console.log(`Collected ${all.length} reviews (Google: ${reviewsGoogle.length}, Yelp: ${reviewsYelp.length})`);
+
+    // 2) Enregistre les avis bruts
+    if (all.length) {
+      const chunk = 500;
+      for (let i = 0; i < all.length; i += chunk) {
+        const slice = all.slice(i, i + chunk).map(r => ({
+          place_id: input.place_id,
+          source: r.source,
+          author: r.author ?? null,
+          rating: r.rating ?? null,
+          text: r.text ?? null,
+          reviewed_at: r.reviewed_at ?? null,
+          raw: r.raw ?? null
+        }));
+        
+        await supabase.from('reviews_raw').insert(slice).catch((err) => {
+          console.error('Failed to insert reviews:', err);
+        });
+      }
     }
 
-    // Pré-agrégations simples
-    const avg = docs.reduce((s, r) => s + (Number(r.rating) || 0), 0) / docs.length;
-    const positives = docs.filter(r => Number(r.rating) >= 4).length;
-    const positiveRatio = docs.length ? positives / docs.length : 0;
+    // 3) Analyse IA
+    const insights = await analyzeWithAI(all);
+    console.log('AI analysis completed:', insights);
 
-    console.log(`Stats: avg=${avg.toFixed(2)}, positive_ratio=${positiveRatio.toFixed(3)}`);
-
-    // Appel LLM (résumé structuré)
-    const prompt = `
-Tu es un analyste de satisfaction client. À partir d'avis bruts de restaurant/bar, produis un JSON concis :
-
-{
-  "top_praises":[{"theme":"service","examples":["..."],"count":n}, ...],
-  "top_issues":[{"theme":"prix","examples":["..."],"count":n}, ...],
-  "themes_summary":"paragraphe de synthèse (max 120 mots)"
-}
-
-Contraintes:
-- regroupe par thèmes (service, ambiance, qualité, prix, rapidité, propreté, musique, terrasse, cocktails, etc.)
-- extrais 2-3 exemples courts par thème.
-- réponds UNIQUEMENT en JSON valide.
-Avis:
-${docs.map(d => `- (${d.source} ${d.published_at}) [${d.rating}/5] ${d.text.replace(/\s+/g,' ').slice(0,400)}`).join("\n")}
-`;
-
-    console.log("Calling OpenAI for analysis...");
-    
-    const llmRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { 
-        "Authorization": `Bearer ${OPENAI_API_KEY}`, 
-        "Content-Type": "application/json" 
-      },
-      body: JSON.stringify({
-        model: "gpt-5-mini-2025-08-07", // Updated to newer model
-        max_completion_tokens: 2000, // Use max_completion_tokens for newer models
-        messages: [{ role: "user", content: prompt }]
-      })
+    // 4) Upsert insights
+    const { error: upsertError } = await supabase.from('review_insights').upsert({
+      place_id: input.place_id,
+      summary: insights,
+      last_analyzed_at: new Date().toISOString()
     });
 
-    if (!llmRes.ok) {
-      const errorText = await llmRes.text();
-      console.error("OpenAI API error:", llmRes.status, errorText);
-      throw new Error(`OpenAI API error: ${llmRes.status} - ${errorText}`);
+    if (upsertError) {
+      console.error('Failed to upsert insights:', upsertError);
+      throw upsertError;
     }
 
-    const llmData = await llmRes.json();
-    console.log("OpenAI response received");
-
-    let parsed = null;
-    try { 
-      const content = llmData.choices?.[0]?.message?.content ?? "{}";
-      parsed = JSON.parse(content);
-      console.log("Successfully parsed AI response");
-    } catch (parseError) {
-      console.error("Failed to parse AI response:", parseError);
-    }
-
-    const payload = {
-      user_id: user.id,
-      place_id: ue.place_id,
-      total_count: docs.length,
-      avg_rating: Number(avg.toFixed(2)),
-      positive_ratio: Number(positiveRatio.toFixed(3)),
-      top_praises: parsed?.top_praises ?? [],
-      top_issues: parsed?.top_issues ?? [],
-      themes: { summary: parsed?.themes_summary ?? "" },
-      updated_at: new Date().toISOString()
-    };
-
-    console.log("Saving insights to database...");
-    const { error } = await supabase.from("review_insights").upsert(payload);
-    if (error) {
-      console.error("Database upsert error:", error);
-      throw error;
-    }
-
-    console.log(`Successfully analyzed ${docs.length} reviews`);
-    
-    return new Response(JSON.stringify({ ok: true, analyzed: docs.length }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    return new Response(JSON.stringify({ 
+      ok: true, 
+      counts: { collected: all.length } 
+    }), { 
+      status: 200, 
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });
 
-  } catch (e) {
-    console.error("Error in analyze-reviews:", e);
-    return new Response(JSON.stringify({ ok: false, error: String(e) }), { 
+  } catch (error) {
+    console.error('Error in analyze-reviews:', error);
+    return new Response(JSON.stringify({ 
+      ok: false, 
+      error: String(error) 
+    }), { 
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

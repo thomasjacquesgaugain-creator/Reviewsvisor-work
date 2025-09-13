@@ -4,9 +4,9 @@ import { RestaurantInput } from "@/components/RestaurantInput";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 
 const Accueil = () => {
-  const [analysisData, setAnalysisData] = useState<{ name: string; url: string } | null>(null);
+  const [analysisData, setAnalysisData] = useState<{ name: string; url: string; place_id: string } | null>(null);
 
-  const handleAnalyze = (restaurantData: { name: string; url: string }) => {
+  const handleAnalyze = (restaurantData: { name: string; url: string; place_id: string }) => {
     setAnalysisData(restaurantData);
   };
 
