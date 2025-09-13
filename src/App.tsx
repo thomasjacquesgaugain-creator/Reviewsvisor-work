@@ -20,16 +20,6 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => {
-  React.useEffect(() => {
-    loadGoogleMaps()
-      .then(() => {
-        console.debug('maps loaded app', typeof (window as any).google !== 'undefined');
-      })
-      .catch((e) => {
-        console.error('Erreur de chargement Google Maps:', e);
-      });
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       
