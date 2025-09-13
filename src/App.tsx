@@ -17,6 +17,7 @@ import TableauDeBord from "./pages/TableauDeBord";
 import Dashboard from "./pages/Dashboard";
 import Etablissement from "./pages/Etablissement";
 import Debug from "./pages/Debug";
+import EnvDebug from "./pages/EnvDebug";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -80,6 +81,7 @@ const App = () => {
                   </Protected>
                 } />
                 <Route path="/debug" element={<Debug />} />
+                <Route path="/debug/env" element={<EnvDebug />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
