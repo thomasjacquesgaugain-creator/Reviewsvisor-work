@@ -154,8 +154,10 @@ export type Database = {
       review_insights: {
         Row: {
           avg_rating: number | null
+          last_analyzed_at: string | null
           place_id: string
           positive_ratio: number | null
+          summary: Json | null
           themes: Json | null
           top_issues: Json | null
           top_praises: Json | null
@@ -165,8 +167,10 @@ export type Database = {
         }
         Insert: {
           avg_rating?: number | null
+          last_analyzed_at?: string | null
           place_id: string
           positive_ratio?: number | null
+          summary?: Json | null
           themes?: Json | null
           top_issues?: Json | null
           top_praises?: Json | null
@@ -176,8 +180,10 @@ export type Database = {
         }
         Update: {
           avg_rating?: number | null
+          last_analyzed_at?: string | null
           place_id?: string
           positive_ratio?: number | null
+          summary?: Json | null
           themes?: Json | null
           top_issues?: Json | null
           top_praises?: Json | null
