@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentPlace } from '@/lib/currentPlace';
+import { runAnalyze } from '@/lib/runAnalyze';
 
 type Summary = {
   overall_rating: number | null;
@@ -52,12 +53,20 @@ export default function DashboardPage() {
   async function rerun() {
     if (!placeId) return;
     const p = getCurrentPlace() || { place_id: placeId };
-    const { data, error } = await supabase.functions.invoke('analyze_reviews', { body: p });
-    if (error || data?.error) { alert(`Échec: ${error?.message || data?.error}`); return; }
-    // reload
-    const { data: ref } = await supabase.from('review_insights').select('summary,last_analyzed_at').eq('place_id', placeId).maybeSingle();
-    setSummary((ref?.summary as any) ?? null);
-    setLastAt(ref?.last_analyzed_at ?? null);
+    try {
+      await runAnalyze(p as any);
+      const { data: ref } = await supabase
+        .from('review_insights')
+        .select('summary,last_analyzed_at')
+        .eq('place_id', placeId)
+        .order('last_analyzed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setSummary((ref?.summary as any) ?? null);
+      setLastAt(ref?.last_analyzed_at ?? null);
+    } catch (e: any) {
+      alert(`Échec: ${e?.message || e}`);
+    }
   }
 
   if (!placeId) return <div className="p-6">Aucun établissement sélectionné.</div>;
