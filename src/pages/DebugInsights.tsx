@@ -8,6 +8,7 @@ export default function InsightsDebug() {
   const [rows, setRows] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string>('');
+  const [serverOut, setServerOut] = useState<any>(null);
 
   async function load() {
     if (!pid.trim()) return;
@@ -26,7 +27,8 @@ export default function InsightsDebug() {
     if (!pid.trim()) return;
     setBusy(true); setMsg('');
     try {
-      await runAnalyze({ place_id: pid.trim() });
+      const resp = await runAnalyze({ place_id: pid.trim() });
+      setServerOut(resp);
       await load();
       setMsg('Analyse OK & rechargée');
     } catch (e: any) {
@@ -65,6 +67,8 @@ export default function InsightsDebug() {
       <pre className="text-sm whitespace-pre-wrap">
         {JSON.stringify(rows, null, 2)}
       </pre>
+      <div className="mt-2 text-sm font-semibold">Retour serveur :</div>
+      <pre className="text-sm whitespace-pre-wrap">{JSON.stringify(serverOut, null, 2)}</pre>
       {!rows?.length && (
         <div className="text-sm text-muted-foreground">
           Aucune ligne trouvée (vérifie les politiques RLS et relance une analyse).

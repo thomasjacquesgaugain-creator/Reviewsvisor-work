@@ -426,13 +426,19 @@ serve(async (req) => {
 
    // 5) Upsert insights (sauf dry-run)
     if (!input.__dryRun && insights) {
-      const up = await supabase.from('review_insights').upsert({
+      const payload: any = {
         place_id: input.place_id,
-        summary: insights,
+        summary: insights ?? {},
         last_analyzed_at: new Date().toISOString(),
-        ...(userId ? { user_id: userId } : {}),
-      }).select().single();
-      if (up.error) throw new Error('upsert_failed:'+up.error.message);
+      };
+      if (userId) payload.user_id = userId;
+
+      const up = await supabase
+        .from('review_insights')
+        .upsert(payload, { onConflict: 'place_id' }) // force mise à jour sur place_id
+        .select()
+        .single();
+      if (up.error) throw new Error('upsert_failed:' + up.error.message);
       log('upsert_done');
     } else {
       log('upsert_skipped', { dryRun: true });
