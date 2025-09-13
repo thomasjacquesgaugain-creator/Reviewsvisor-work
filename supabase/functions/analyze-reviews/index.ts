@@ -17,24 +17,46 @@ const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 type Input = { place_id: string; name?: string; address?: string; __ping?: boolean };
 
 async function fetchGoogleReviews(place_id: string) {
-  // Google Places API v1 (New)
-  // Doc: https://developers.google.com/maps/documentation/places/web-service/details
-  // Endpoint: GET https://places.googleapis.com/v1/places/{place_id}?fields=rating,userRatingsTotal,reviews
-  const url = `https://places.googleapis.com/v1/places/${encodeURIComponent(place_id)}?fields=rating,userRatingsTotal,reviews`;
-  const r = await fetch(url, { headers: { 'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY } });
-  const text = await r.text();
-  let j: any = {};
-  try { j = JSON.parse(text); } catch {}
-  if (!r.ok) {
-    const code = j?.error?.status || r.status;
-    const msg = j?.error?.message || text || 'unknown_error';
-    throw new Error(`google_v1_http_${code}:${msg}`);
+  // Essaye 2 variantes d'URL : /v1/places/{id} puis /v1/places/places/{id}
+  const fieldMask = 'rating,userRatingCount,reviews';
+  async function tryFetch(pathVariant: 'plain' | 'withPrefix') {
+    const path = pathVariant === 'plain'
+      ? `https://places.googleapis.com/v1/places/${encodeURIComponent(place_id)}`
+      : `https://places.googleapis.com/v1/places/places/${encodeURIComponent(place_id)}`;
+
+    const r = await fetch(path, {
+      headers: {
+        'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+        'X-Goog-FieldMask': fieldMask,
+      },
+    });
+    const text = await r.text();
+    let j: any = null; try { j = JSON.parse(text); } catch {}
+    return { ok: r.ok, status: r.status, body: j ?? text, json: j, url: path };
   }
+
+  // 1er essai
+  let res = await tryFetch('plain');
+  // fallback si 400/404/INVALID_ARGUMENT
+  const invalid =
+    !res.ok &&
+    (res.status === 400 || res.status === 404 ||
+     (typeof res.body === 'object' && res.body?.error?.status === 'INVALID_ARGUMENT'));
+  if (invalid) res = await tryFetch('withPrefix');
+
+  if (!res.ok) {
+    const code = (res.body && res.body.error && res.body.error.status) || res.status || 'UNKNOWN';
+   const msg = (res.body && res.body.error && res.body.error.message) || JSON.stringify(res.body);
+    throw new Error(`google_v1_http_${code}: ${msg}`);
+  }
+
+  const j = res.json || {};
   const reviews = j?.reviews ?? [];
   return {
     meta: {
       rating: j?.rating ?? null,
-      total: j?.userRatingsTotal ?? null,
+      total: j?.userRatingCount ?? null, // v1: userRatingCount
+      usedUrl: res.url,
     },
     rows: reviews.map((rv: any) => ({
       source: 'google',
@@ -44,7 +66,7 @@ async function fetchGoogleReviews(place_id: string) {
       reviewed_at: rv?.publishTime ? new Date(rv.publishTime).toISOString() : null,
       raw: rv,
     })),
-    raw: j
+    raw: j,
   };
 }
 
