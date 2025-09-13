@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarDays, TrendingUp, AlertTriangle, ThumbsUp, Lightbulb } from 'lucide-react';
 
 type Summary = {
   overall_rating: number | null;
@@ -42,7 +41,6 @@ export default function DashboardPage() {
 
   async function loadData() {
     const { data: { session } } = await supabase.auth.getSession();
-    const uid = session?.user?.id ?? null;
     
     // Load main data
     if (placeId) {
@@ -50,8 +48,7 @@ export default function DashboardPage() {
         .from('review_insights')
         .select('summary,last_analyzed_at,place_id')
         .eq('place_id', placeId)
-        .order('last_analyzed_at', { ascending: false })
-        .maybeSingle();
+        .order('last_analyzed_at', { ascending: false });
         
       if (error) { 
         setErr(error.message); 
@@ -60,9 +57,21 @@ export default function DashboardPage() {
         return; 
       }
       
-      if (data) {
-        setSummary((data.summary as any) ?? null);
-        setLastAt(data.last_analyzed_at ?? null);
+      if (data && data.length > 0) {
+        setSummary((data[0].summary as any) ?? null);
+        setLastAt(data[0].last_analyzed_at ?? null);
+      }
+    } else {
+      // No place_id, get the most recent analysis
+      const { data, error } = await supabase
+        .from('review_insights')
+        .select('summary,last_analyzed_at,place_id')
+        .order('last_analyzed_at', { ascending: false })
+        .limit(1);
+        
+      if (!error && data && data.length > 0) {
+        setSummary((data[0].summary as any) ?? null);
+        setLastAt(data[0].last_analyzed_at ?? null);
       }
     }
     
@@ -96,16 +105,13 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
         <Skeleton className="h-8 w-64" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Skeleton className="h-64" />
-          <Skeleton className="h-64" />
+        <Skeleton className="h-48 w-full" />
+        <div className="grid grid-cols-3 gap-6">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
         </div>
       </div>
     );
@@ -113,10 +119,10 @@ export default function DashboardPage() {
 
   if (err) {
     return (
-      <div className="p-6">
-        <Card className="border-destructive">
+      <div className="max-w-7xl mx-auto p-6">
+        <Card className="border-red-200">
           <CardContent className="pt-6">
-            <p className="text-destructive">Erreur: {err}</p>
+            <p className="text-red-600">Erreur: {err}</p>
           </CardContent>
         </Card>
       </div>
@@ -125,10 +131,10 @@ export default function DashboardPage() {
 
   if (!summary) {
     return (
-      <div className="p-6 space-y-6">
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
         <div className="text-center space-y-4">
-          <h1 className="text-3xl font-bold">Dashboard d'analyse</h1>
-          <p className="text-muted-foreground">Aucune analyse disponible pour ce lieu</p>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard d'analyse</h1>
+          <p className="text-slate-600">Aucune analyse disponible pour ce lieu</p>
           <Button onClick={rerun} className="mt-4">
             Lancer une analyse
           </Button>
@@ -138,158 +144,38 @@ export default function DashboardPage() {
   }
 
   const totalAvis = summary.counts?.collected || summary.counts?.total || 0;
+  const positivePercentage = summary.positive_pct != null ? Math.round(summary.positive_pct) : null;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Dashboard d'analyse</h1>
-            <p className="text-muted-foreground">
-              Analyse de {totalAvis} avis clients
-              {lastAt && ` • Dernière analyse: ${new Date(lastAt).toLocaleDateString('fr-FR')}`}
-            </p>
-          </div>
-          <Button onClick={rerun} variant="outline">
-            Relancer l'analyse
-          </Button>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard d'analyse</h1>
+        <div className="flex items-center gap-2 text-sm">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span className="text-slate-600">
+            Analyse de {totalAvis} avis clients
+            {lastAt && ` • Dernière analyse : ${new Date(lastAt).toLocaleDateString('fr-FR', { 
+              day: '2-digit', 
+              month: '2-digit', 
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}`}
+          </span>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">⭐ Note moyenne</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {summary.overall_rating ? `${Number(summary.overall_rating).toFixed(1)}/5` : '—'}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total avis</CardTitle>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalAvis}</div>
-            {summary.counts?.google && summary.counts?.yelp && (
-              <p className="text-xs text-muted-foreground">
-                Google: {summary.counts.google} • Yelp: {summary.counts.yelp}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avis positifs</CardTitle>
-            <ThumbsUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {summary.positive_pct != null ? `${Math.round(summary.positive_pct)}%` : '—'}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top 3 Problèmes prioritaires */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              Top 3 Problèmes prioritaires
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {summary.top_issues && summary.top_issues.length > 0 ? (
-              summary.top_issues.slice(0, 3).map((issue, idx) => (
-                <div key={idx} className="flex items-start gap-2">
-                  <Badge variant="destructive" className="mt-1">
-                    {idx + 1}
-                  </Badge>
-                  <div>
-                    <p className="font-medium">{issue.label}</p>
-                    {issue.why && (
-                      <p className="text-sm text-muted-foreground">{issue.why}</p>
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-muted-foreground text-sm">Aucun problème prioritaire identifié</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Top 3 Points forts */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ThumbsUp className="h-5 w-5 text-green-600" />
-              Top 3 Points forts
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {summary.top_strengths && summary.top_strengths.length > 0 ? (
-              summary.top_strengths.slice(0, 3).map((strength, idx) => (
-                <div key={idx} className="flex items-start gap-2">
-                  <Badge variant="secondary" className="mt-1 bg-green-100 text-green-800">
-                    {idx + 1}
-                  </Badge>
-                  <div>
-                    <p className="font-medium">{strength.label}</p>
-                    {strength.why && (
-                      <p className="text-sm text-muted-foreground">{strength.why}</p>
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-muted-foreground text-sm">Aucun point fort identifié</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recommandations actionnables */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lightbulb className="h-5 w-5 text-yellow-600" />
-            Recommandations actionnables
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {summary.recommendations && summary.recommendations.length > 0 ? (
-            <ol className="list-decimal pl-6 space-y-2">
-              {summary.recommendations.map((rec, idx) => (
-                <li key={idx} className="text-sm leading-relaxed">{rec}</li>
-              ))}
-            </ol>
-          ) : (
-            <p className="text-muted-foreground text-sm">
-              Aucune recommandation spécifique disponible pour le moment.
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Historique des analyses */}
-      <Card>
-        <CardHeader>
+      <Card className="w-full">
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle>Historique des analyses</CardTitle>
+            <div>
+              <CardTitle className="text-lg font-semibold">Historique des analyses</CardTitle>
+              <p className="text-sm text-slate-500 mt-1">Les analyses précédentes et terminées. Les résultats</p>
+            </div>
             <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-28">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -303,29 +189,148 @@ export default function DashboardPage() {
         <CardContent>
           {history.length > 0 ? (
             <div className="space-y-3">
-              {history.slice(0, 5).map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">
-                      {new Date(item.last_analyzed_at).toLocaleDateString('fr-FR')}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {(item.summary as any)?.counts?.collected || 0} avis analysés
-                    </p>
+              {history.slice(0, 5).map((item, idx) => {
+                const itemSummary = item.summary as any;
+                const count = itemSummary?.counts?.collected || itemSummary?.counts?.total || 0;
+                return (
+                  <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                    <div className="flex items-center gap-4">
+                      <span className="text-lg font-semibold text-slate-900 w-8">{count}</span>
+                      <div>
+                        <div className="text-sm font-medium text-slate-900">
+                          {new Date(item.last_analyzed_at).toLocaleDateString('fr-FR', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            year: 'numeric' 
+                          })} à {new Date(item.last_analyzed_at).toLocaleTimeString('fr-FR', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </div>
+                        <div className="text-xs text-slate-500">{count}h avis</div>
+                      </div>
+                    </div>
                   </div>
-                  <Badge variant="outline">
-                    {(item.summary as any)?.overall_rating ? 
-                      `${Number((item.summary as any).overall_rating).toFixed(1)}/5` : 
-                      'N/A'
-                    }
-                  </Badge>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
-            <p className="text-muted-foreground text-sm">Aucun historique disponible</p>
+            <p className="text-slate-500 text-sm">Aucun historique disponible</p>
           )}
         </CardContent>
+      </Card>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-3 gap-6">
+        <Card className="p-6">
+          <div className="space-y-2">
+            <div className="text-5xl font-extrabold leading-none">
+              ⭐ {summary.overall_rating ? Number(summary.overall_rating).toFixed(1) : '—'}
+            </div>
+            <div className="text-sm font-medium text-slate-600">Note moyenne</div>
+            <div className="text-xs text-slate-500">
+              {totalAvis > 0 ? `Basée sur ${totalAvis} avis` : 'Aucun avis disponible'}
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="space-y-2">
+            <div className="text-5xl font-extrabold leading-none">{totalAvis}</div>
+            <div className="text-sm font-medium text-slate-600">Total avis</div>
+            <div className="text-xs text-slate-500">Tous plateformes</div>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="space-y-2">
+            <div className="text-5xl font-extrabold leading-none">
+              {positivePercentage !== null ? `${positivePercentage}%` : '—'}
+            </div>
+            <div className="text-sm font-medium text-slate-600">Avis positifs</div>
+            <div className="text-xs text-slate-500">Note ≥ 4 étoiles</div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Action Button */}
+      <div className="flex justify-end">
+        <Button onClick={rerun} variant="outline" className="px-6">
+          Relancer l'analyse
+        </Button>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-2 gap-6">
+        {/* Top 3 Problèmes prioritaires */}
+        <Card className="p-6">
+          <CardTitle className="text-lg font-semibold mb-4">🚨 Top 3 Problèmes prioritaires</CardTitle>
+          <div className="space-y-3">
+            {summary.top_issues && summary.top_issues.length > 0 ? (
+              summary.top_issues.slice(0, 3).map((issue, idx) => (
+                <div key={idx} className="flex items-start gap-3">
+                  <Badge 
+                    variant="destructive" 
+                    className={`${idx === 0 || idx === 1 ? 'bg-red-500' : 'bg-yellow-500'} text-white text-xs px-2 py-1`}
+                  >
+                    {idx === 0 || idx === 1 ? 'Critique' : 'Moyen'}
+                  </Badge>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{issue.label}</p>
+                    {issue.why && (
+                      <p className="text-xs text-slate-500 mt-1">{issue.why}</p>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-slate-500 text-sm">Aucun problème prioritaire identifié</p>
+            )}
+          </div>
+        </Card>
+
+        {/* Top 3 Points forts */}
+        <Card className="p-6">
+          <CardTitle className="text-lg font-semibold mb-4">✅ Top 3 Points forts</CardTitle>
+          <div className="space-y-3">
+            {summary.top_strengths && summary.top_strengths.length > 0 ? (
+              summary.top_strengths.slice(0, 3).map((strength, idx) => (
+                <div key={idx} className="flex items-start gap-3">
+                  <Badge 
+                    variant="secondary" 
+                    className="bg-green-500 text-white text-xs px-2 py-1"
+                  >
+                    Force
+                  </Badge>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{strength.label}</p>
+                    {strength.why && (
+                      <p className="text-xs text-slate-500 mt-1">{strength.why}</p>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-slate-500 text-sm">Aucun point fort identifié</p>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* Recommandations actionnables */}
+      <Card className="p-6">
+        <CardTitle className="text-lg font-semibold mb-4">💡 Recommandations actionnables</CardTitle>
+        {summary.recommendations && summary.recommendations.length > 0 ? (
+          <ol className="list-decimal pl-6 space-y-2">
+            {summary.recommendations.map((rec, idx) => (
+              <li key={idx} className="text-sm leading-relaxed">{rec}</li>
+            ))}
+          </ol>
+        ) : (
+          <p className="text-slate-500 text-sm">
+            Aucune recommandation spécifique disponible pour le moment.
+          </p>
+        )}
       </Card>
     </div>
   );
