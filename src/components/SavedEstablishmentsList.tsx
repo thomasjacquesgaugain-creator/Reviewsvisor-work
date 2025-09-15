@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { runAnalyze } from "@/lib/runAnalyze";
+import { STORAGE_KEY, EVT_SAVED, Etab } from "@/types/etablissement";
 
 // Icons disponibles pour les établissements
 const ESTABLISHMENT_ICONS = [
@@ -105,6 +106,26 @@ export function SavedEstablishmentsList() {
     } finally {
       setAnalyzingId(null);
     }
+  };
+
+  // Sélectionner un établissement (l'afficher dans "Mon Établissement")
+  const handleSelect = (establishment: SavedEstablishment) => {
+    const etabData: Etab = {
+      place_id: establishment.place_id,
+      name: establishment.name,
+      address: establishment.formatted_address,
+      lat: null, // Ces données ne sont pas stockées dans establishments
+      lng: null,
+      phone: null,
+      website: null,
+      rating: establishment.rating
+    };
+
+    // Sauvegarder dans localStorage
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(etabData));
+    
+    // Déclencher l'événement pour mettre à jour MonEtablissementCard
+    window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etabData }));
   };
 
   // Supprimer un établissement
@@ -219,6 +240,15 @@ export function SavedEstablishmentsList() {
                 </div>
 
                 <div className="flex gap-2 mt-4">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleSelect(establishment)}
+                    className="flex-1"
+                  >
+                    Sélectionner
+                  </Button>
+                  
                   <Button
                     size="sm"
                     onClick={() => handleAnalyze(establishment)}
