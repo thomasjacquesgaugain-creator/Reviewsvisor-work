@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Etab, STORAGE_KEY_LIST, STORAGE_KEY, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
-import { Building2 } from "lucide-react";
-
+import { Building2, X, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function SavedEstablishmentsList() {
@@ -65,8 +65,31 @@ export default function SavedEstablishmentsList() {
     return () => window.removeEventListener(EVT_LIST_UPDATED, onListUpdated);
   }, []);
 
+  // Supprimer un établissement de la liste
+  const handleRemove = async (place_id: string) => {
+    try {
+      const updatedList = establishments.filter(etab => etab.place_id !== place_id);
+      setEstablishments(updatedList);
+      localStorage.setItem(STORAGE_KEY_LIST, JSON.stringify(updatedList));
+      
+      // Supprimer aussi de la base de données si connecté
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from("établissements")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("place_id", place_id);
+      }
+      
+      window.dispatchEvent(new CustomEvent(EVT_LIST_UPDATED, { detail: updatedList }));
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+    }
+  };
+
   // Définir un établissement comme principal
-  const handleSelectEstablishment = (etab: Etab) => {
+  const handleSetAsPrimary = (etab: Etab) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(etab));
     window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));
   };
@@ -89,8 +112,7 @@ export default function SavedEstablishmentsList() {
         {establishments.map((etab) => (
           <div
             key={etab.place_id}
-            onClick={() => handleSelectEstablishment(etab)}
-            className="cursor-pointer bg-card border border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/5 transition-all"
+            className="relative group bg-card border border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-start gap-2">
               <div className="mt-1 text-primary">
@@ -112,6 +134,31 @@ export default function SavedEstablishmentsList() {
                   </div>
                 )}
               </div>
+            </div>
+            
+            {/* Boutons d'action */}
+            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+              {/* Bouton définir comme principal */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleSetAsPrimary(etab)}
+                className="p-1 h-auto w-auto text-primary hover:text-primary hover:bg-primary/10"
+                title="Définir comme établissement principal"
+              >
+                <Star className="w-3 h-3" />
+              </Button>
+              
+              {/* Bouton supprimer */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleRemove(etab.place_id)}
+                className="p-1 h-auto w-auto text-muted-foreground hover:text-destructive"
+                title="Supprimer de la liste"
+              >
+                <X className="w-3 h-3" />
+              </Button>
             </div>
           </div>
         ))}
