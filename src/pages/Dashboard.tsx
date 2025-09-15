@@ -371,24 +371,25 @@ const Dashboard = () => {
             <CardContent className="p-4">
               <div className="relative">
                 <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Building2 className="w-5 h-5 text-blue-600" />
-                    </div>
-                    {/* Flèche vers le bas en haut à droite de l'icône */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 p-0.5 h-auto w-auto bg-white border border-gray-200 rounded-full shadow-sm"
-                      title="Choisir un autre établissement"
-                    >
-                      <ChevronDown className="w-3 h-3" />
-                    </Button>
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-blue-600" />
                   </div>
                   <div className="flex-1">
                     <div className="font-medium text-gray-900">{selectedEtab.name}</div>
                     <div className="text-sm text-gray-500">{selectedEtab.address}</div>
                   </div>
+                </div>
+                
+                {/* Flèche vers le bas en haut à droite */}
+                <div className="absolute top-0 right-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-400 hover:text-gray-600 p-1 h-auto"
+                    title="Choisir un autre établissement"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
                 </div>
                 
                 {/* Icônes en bas à droite */}
