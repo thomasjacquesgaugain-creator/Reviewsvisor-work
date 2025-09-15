@@ -22,7 +22,7 @@ export default function SavedEstablishmentsList() {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (!authError && user) {
           const { data: etablissements, error } = await supabase
-            .from("établissements")
+            .from("establishments")
             .select("*")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false });
@@ -31,14 +31,14 @@ export default function SavedEstablishmentsList() {
             // Convertir le format de la base vers le format Etab
             const convertedEstabs: Etab[] = etablissements.map(etab => ({
               place_id: etab.place_id,
-              name: etab.nom,
-              address: etab.adresse || "",
-              lat: null,
-              lng: null,
-              phone: etab.telephone || "",
-              website: "",
+              name: etab.name,
+              address: etab.formatted_address || "",
+              lat: etab.lat,
+              lng: etab.lng,
+              phone: etab.phone || "",
+              website: etab.website || "",
               url: "",
-              rating: null
+              rating: etab.rating || null
             }));
             
             setEstablishments(convertedEstabs);
