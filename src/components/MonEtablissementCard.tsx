@@ -4,6 +4,7 @@ import { Trash2, BarChart3, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { runAnalyze } from "@/lib/runAnalyze";
 import { useToast } from "@/hooks/use-toast";
+import ImportAvisModal from "./ImportAvisModal";
 
 export default function MonEtablissementCard() {
   const [etab, setEtab] = useState<Etab | null>(null);
@@ -88,14 +89,16 @@ export default function MonEtablissementCard() {
       
       {/* Icône importer vos avis au centre-bas */}
       <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto"
-          title="Importer vos avis"
-        >
-          <Download className="w-4 h-4" />
-        </Button>
+        <ImportAvisModal>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto"
+            title="Importer vos avis"
+          >
+            <Download className="w-4 h-4" />
+          </Button>
+        </ImportAvisModal>
       </div>
       
       {/* Icônes en bas à droite */}
