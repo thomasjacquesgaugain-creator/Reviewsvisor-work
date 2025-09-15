@@ -1,4 +1,4 @@
-import { Etab, STORAGE_KEY, EVT_SAVED } from "../types/etablissement";
+import { Etab, STORAGE_KEY, STORAGE_KEY_LIST, EVT_SAVED, EVT_LIST_UPDATED } from "../types/etablissement";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function SaveEstablishmentButton({
@@ -11,10 +11,23 @@ export default function SaveEstablishmentButton({
   async function handleSave() {
     if (!selected) return;
 
-    // 1) Sauvegarde locale (fallback hors-ligne)
+    // 1) Sauvegarde locale principale (pour "Mon Établissement")
     localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
 
-    // 2) Sauvegarde par utilisateur
+    // 2) Ajouter à la liste des établissements sauvegardés
+    try {
+      const existingList = JSON.parse(localStorage.getItem(STORAGE_KEY_LIST) || "[]") as Etab[];
+      const updatedList = existingList.filter(etab => etab.place_id !== selected.place_id);
+      updatedList.push(selected);
+      localStorage.setItem(STORAGE_KEY_LIST, JSON.stringify(updatedList));
+      
+      // Notifier la mise à jour de la liste
+      window.dispatchEvent(new CustomEvent(EVT_LIST_UPDATED, { detail: updatedList }));
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde de la liste:", error);
+    }
+
+    // 3) Sauvegarde par utilisateur
     const { data: { user }, error: authErr } = await supabase.auth.getUser();
     if (authErr || !user) {
       // pas connecté : on garde localStorage et on informe
@@ -32,10 +45,10 @@ export default function SaveEstablishmentButton({
       return;
     }
 
-    // C) Notifier toute l'app (la carte se mettra à jour instantanément)
+    // 4) Notifier toute l'app (la carte se mettra à jour instantanément)
     window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: selected }));
 
-    // D) Feedback de succès
+    // 5) Feedback de succès
     alert("Établissement enregistré avec succès!");
   }
 

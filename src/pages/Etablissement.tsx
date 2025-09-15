@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { loadGoogleMaps } from "@/lib/loadGoogleMaps";
 import MonEtablissementCard from "@/components/MonEtablissementCard";
 import SaveEstablishmentButton from "@/components/SaveEstablishmentButton";
+import SavedEstablishmentsList from "@/components/SavedEstablishmentsList";
 import { AnalyzeEstablishmentButton } from "@/components/AnalyzeEstablishmentButton";
 import { Etab } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
@@ -152,6 +153,9 @@ export default function EtablissementPage() {
             <h2 className="text-xl font-semibold mb-3">🏢 Mon Établissement</h2>
             <MonEtablissementCard />
           </section>
+
+          {/* Liste des établissements enregistrés */}
+          <SavedEstablishmentsList />
         </div>
       </div>
     </div>
