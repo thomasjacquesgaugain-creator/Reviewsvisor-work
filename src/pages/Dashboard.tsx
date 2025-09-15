@@ -441,6 +441,18 @@ const Dashboard = () => {
                   </div>
                 </div>
                 
+                {/* Icône "Importer vos avis" au milieu en bas */}
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-600 hover:text-blue-600 p-1 h-auto w-auto"
+                    title="Importer vos avis"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                  </Button>
+                </div>
+                
                 {/* Icônes en bas à droite */}
                 <div className="absolute bottom-0 right-0 flex gap-1">
                   {/* Bouton analyser établissement */}
