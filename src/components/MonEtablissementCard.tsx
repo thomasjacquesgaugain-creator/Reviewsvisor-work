@@ -86,6 +86,18 @@ export default function MonEtablissementCard() {
         <div className="text-xs text-neutral-500"><strong>place_id :</strong> {etab.place_id}</div>
       </div>
       
+      {/* Icône importer vos avis au centre-bas */}
+      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-green-500 hover:text-green-700 hover:bg-green-50 p-1 h-auto"
+          title="Importer vos avis"
+        >
+          <BarChart3 className="w-4 h-4" />
+        </Button>
+      </div>
+      
       {/* Icônes en bas à droite */}
       <div className="absolute bottom-0 right-0 flex gap-1">
         {/* Bouton analyser établissement */}
