@@ -149,11 +149,7 @@ export default function EtablissementPage() {
           </div>
 
           {/* Section Mon Établissement */}
-          <section className="border border-border rounded-lg p-4 relative">
-            {/* Icône de validation en haut à droite */}
-            <div className="absolute -top-2 -right-2 bg-green-500 rounded p-1">
-              <Check className="w-3 h-3 text-white" />
-            </div>
+          <section className="border border-border rounded-lg p-4">
             <h2 className="text-xl font-semibold mb-3">🏢 Mon Établissement</h2>
             <MonEtablissementCard />
           </section>
