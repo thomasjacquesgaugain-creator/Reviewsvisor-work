@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Etab, STORAGE_KEY, EVT_SAVED } from "../types/etablissement";
-import { Trash2, BarChart3 } from "lucide-react";
+import { Trash2, BarChart3, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { runAnalyze } from "@/lib/runAnalyze";
 import { useToast } from "@/hooks/use-toast";
@@ -78,6 +78,11 @@ export default function MonEtablissementCard() {
 
   return (
     <div className="relative">
+      {/* Icône de validation en haut à droite */}
+      <div className="absolute -top-2 -right-2 bg-green-100 border-2 border-green-500 rounded-lg p-1">
+        <CheckCircle className="w-5 h-5 text-green-600" />
+      </div>
+      
       <div className="space-y-2">
         <div><strong>Nom :</strong> {etab.name}</div>
         <div><strong>Adresse :</strong> {etab.address}</div>
