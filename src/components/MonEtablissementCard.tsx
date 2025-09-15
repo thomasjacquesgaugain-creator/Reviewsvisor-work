@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Etab, STORAGE_KEY, EVT_SAVED } from "../types/etablissement";
-import { Trash2, BarChart3, CheckCircle } from "lucide-react";
+import { Trash2, BarChart3, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { runAnalyze } from "@/lib/runAnalyze";
 import { useToast } from "@/hooks/use-toast";
@@ -80,7 +80,7 @@ export default function MonEtablissementCard() {
     <div className="relative">
       {/* Icône de validation sobre en haut à droite */}
       <div className="absolute -top-1 -right-1 bg-green-500 rounded p-1">
-        <CheckCircle className="w-3 h-3 text-white" />
+        <Check className="w-3 h-3 text-white" />
       </div>
       
       <div className="space-y-2">
