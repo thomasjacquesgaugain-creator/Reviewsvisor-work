@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Etab, STORAGE_KEY, EVT_SAVED } from "../types/etablissement";
-import { Trash2, BarChart3 } from "lucide-react";
+import { Trash2, BarChart3, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { runAnalyze } from "@/lib/runAnalyze";
 import { useToast } from "@/hooks/use-toast";
@@ -94,7 +94,7 @@ export default function MonEtablissementCard() {
           className="text-green-500 hover:text-green-700 hover:bg-green-50 p-1 h-auto"
           title="Importer vos avis"
         >
-          <BarChart3 className="w-4 h-4" />
+          <Download className="w-4 h-4" />
         </Button>
       </div>
       
