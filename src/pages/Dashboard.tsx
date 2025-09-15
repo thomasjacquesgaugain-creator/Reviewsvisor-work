@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
+import { Etab, STORAGE_KEY, EVT_SAVED } from "@/types/etablissement";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
 const Dashboard = () => {
   const { user } = useAuth();
@@ -24,6 +25,34 @@ const Dashboard = () => {
   const [showParetoPoints, setShowParetoPoints] = useState(false);
   const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  
+  // Établissement sélectionné (depuis localStorage ou store)
+  const [selectedEtab, setSelectedEtab] = useState<Etab | null>(null);
+  
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) setSelectedEtab(JSON.parse(raw));
+    } catch {}
+    const onSaved = (e: any) => setSelectedEtab(e.detail as Etab);
+    window.addEventListener(EVT_SAVED, onSaved);
+    return () => window.removeEventListener(EVT_SAVED, onSaved);
+  }, []);
+  
+  useEffect(() => {
+    if (selectedEstablishment) {
+      setSelectedEtab({
+        place_id: selectedEstablishment.place_id,
+        name: selectedEstablishment.name,
+        address: selectedEstablishment.formatted_address || "",
+        lat: selectedEstablishment.lat ?? null,
+        lng: selectedEstablishment.lng ?? null,
+        website: selectedEstablishment.website,
+        phone: selectedEstablishment.phone,
+        rating: selectedEstablishment.rating ?? null,
+      });
+    }
+  }, [selectedEstablishment]);
   
   // Review insights data from Supabase
   const [insight, setInsight] = useState<any>(null);
@@ -330,6 +359,23 @@ const Dashboard = () => {
                 <div>
                   <div className="font-medium text-gray-900">{selectedEstablishment.name}</div>
                   <div className="text-sm text-gray-500">{selectedEstablishment.formatted_address}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Établissement sélectionné */}
+        {selectedEtab && (
+          <Card className="mb-4">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900">{selectedEtab.name}</div>
+                  <div className="text-sm text-gray-500">{selectedEtab.address}</div>
                 </div>
               </div>
             </CardContent>
