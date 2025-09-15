@@ -369,13 +369,47 @@ const Dashboard = () => {
         {selectedEtab && (
           <Card className="mb-4">
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-blue-600" />
+              <div className="relative">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">{selectedEtab.name}</div>
+                    <div className="text-sm text-gray-500">{selectedEtab.address}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-medium text-gray-900">{selectedEtab.name}</div>
-                  <div className="text-sm text-gray-500">{selectedEtab.address}</div>
+                
+                {/* Icônes en bas à droite */}
+                <div className="absolute bottom-0 right-0 flex gap-1">
+                  {/* Bouton analyser établissement */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      if (!selectedEtab?.place_id) return;
+                      // TODO: Implémenter l'analyse
+                      console.log('Analyser:', selectedEtab.place_id);
+                    }}
+                    className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto"
+                    title="Analyser cet établissement"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                  </Button>
+                  
+                  {/* Bouton oublier établissement */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      localStorage.removeItem(STORAGE_KEY);
+                      setSelectedEtab(null);
+                    }}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
+                    title="Oublier cet établissement"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
             </CardContent>
