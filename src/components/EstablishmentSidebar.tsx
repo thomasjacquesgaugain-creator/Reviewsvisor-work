@@ -39,7 +39,8 @@ interface EstablishmentData {
 
 export function EstablishmentSidebar() {
   const { user } = useAuth();
-  const { collapsed } = useSidebar();
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
   const { selectedEstablishment, setSelectedEstablishment } = useEstablishmentStore();
   const [establishments, setEstablishments] = useState<EstablishmentData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -98,7 +99,7 @@ export function EstablishmentSidebar() {
   };
 
   return (
-    <Sidebar className={collapsed ? "w-16" : "w-80"} collapsible>
+    <Sidebar className={collapsed ? "w-16" : "w-80"} collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="flex items-center gap-2">
