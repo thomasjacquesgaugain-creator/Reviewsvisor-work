@@ -319,6 +319,23 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Établissement sélectionné */}
+        {selectedEstablishment && (
+          <Card className="mb-4">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900">{selectedEstablishment.name}</div>
+                  <div className="text-sm text-gray-500">{selectedEstablishment.formatted_address}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Historique des analyses */}
         <Card className="mb-8">
           <CardHeader>
