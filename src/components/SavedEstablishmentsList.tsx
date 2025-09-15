@@ -28,6 +28,8 @@ interface SavedEstablishment {
   rating: number | null;
   icon_type: string;
   created_at: string;
+  phone: string | null;
+  website: string | null;
 }
 
 export function SavedEstablishmentsList() {
@@ -48,7 +50,7 @@ export function SavedEstablishmentsList() {
       try {
         const { data, error } = await supabase
           .from('establishments')
-          .select('id, name, formatted_address, place_id, rating, icon_type, created_at')
+          .select('id, name, formatted_address, place_id, rating, icon_type, created_at, phone, website')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
@@ -117,8 +119,8 @@ export function SavedEstablishmentsList() {
       address: establishment.formatted_address,
       lat: null, // Ces données ne sont pas stockées dans establishments
       lng: null,
-      phone: null,
-      website: null,
+      phone: establishment.phone,
+      website: establishment.website,
       rating: establishment.rating
     };
 
