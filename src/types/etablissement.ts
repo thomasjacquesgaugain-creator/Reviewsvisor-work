@@ -7,6 +7,8 @@ export type Etab = {
   url?: string;
   website?: string;
   phone?: string;
+  phoneIntl?: string;
+  mapsUrl?: string;
   rating?: number | null;
 };
 

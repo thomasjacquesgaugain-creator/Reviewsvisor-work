@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Etab, STORAGE_KEY_LIST, STORAGE_KEY, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
-import { Building2 } from "lucide-react";
+import EstablishmentItem from "./EstablishmentItem";
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -87,33 +87,11 @@ export default function SavedEstablishmentsList() {
       
       <div className="flex flex-wrap gap-3">
         {establishments.map((etab) => (
-          <div
+          <EstablishmentItem
             key={etab.place_id}
-            onClick={() => handleSelectEstablishment(etab)}
-            className="cursor-pointer bg-card border border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/5 transition-all"
-          >
-            <div className="flex items-start gap-2">
-              <div className="mt-1 text-primary">
-                <Building2 className="w-4 h-4" />
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm text-foreground truncate" title={etab.name}>
-                  {etab.name}
-                </h4>
-                <p className="text-xs text-muted-foreground truncate" title={etab.address}>
-                  {etab.address}
-                </p>
-                
-                {etab.rating && (
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="text-yellow-500">⭐</span>
-                    <span className="text-xs text-muted-foreground">{etab.rating}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+            etab={etab}
+            onSelect={handleSelectEstablishment}
+          />
         ))}
       </div>
     </div>

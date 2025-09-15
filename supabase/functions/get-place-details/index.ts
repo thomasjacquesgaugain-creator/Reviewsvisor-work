@@ -49,7 +49,7 @@ serve(async (req) => {
       );
     }
 
-    const googleMapsApiKey = Deno.env.get('GOOGLE_MAPS_KEY');
+    const googleMapsApiKey = Deno.env.get('GOOGLE_PLACES_API_KEY') || Deno.env.get('GOOGLE_MAPS_KEY');
     if (!googleMapsApiKey) {
       console.error('Google Maps API key not found');
       return new Response(
@@ -70,11 +70,13 @@ serve(async (req) => {
       'formatted_address',
       'geometry/location',
       'international_phone_number',
+      'formatted_phone_number',
       'website',
       'rating',
       'user_ratings_total',
       'opening_hours/weekday_text',
       'types',
+      'url',
     ].join(','));
     apiUrl.searchParams.append('language', 'fr');
     if (sessionToken) {
