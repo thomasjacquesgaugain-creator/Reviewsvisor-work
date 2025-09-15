@@ -374,10 +374,20 @@ const Dashboard = () => {
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                     <Building2 className="w-5 h-5 text-blue-600" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <div className="font-medium text-gray-900">{selectedEtab.name}</div>
                     <div className="text-sm text-gray-500">{selectedEtab.address}</div>
                   </div>
+                  
+                  {/* Flèche vers le bas pour afficher la liste des établissements */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-400 hover:text-gray-600 p-1 h-auto"
+                    title="Choisir un autre établissement"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
                 </div>
                 
                 {/* Icônes en bas à droite */}
