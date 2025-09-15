@@ -36,7 +36,7 @@ export default function ImportAvisModal({ children }: ImportAvisModalProps) {
       <PopoverTrigger asChild>
         {children}
       </PopoverTrigger>
-      <PopoverContent className="w-80" align="start">
+      <PopoverContent className="w-80" align="center" side="bottom">
         {currentView === 'menu' ? (
           <div className="space-y-4">
             <h4 className="font-medium text-sm">Analysez vos avis clients</h4>
