@@ -26,15 +26,12 @@ interface AnalyzeResponse {
 
 export async function runAnalyze({ place_id, name, address, dryRun }: AnalyzeParams): Promise<AnalyzeResponse> {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    console.log('Calling analyze-reviews function with:', { place_id, name, address, dryRun });
     
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json'
-    };
+    const { data: session } = await supabase.auth.getSession();
     
-    // Add authorization header if session exists
-    if (session?.access_token) {
-      headers['Authorization'] = `Bearer ${session.access_token}`;
+    if (!session.session?.access_token) {
+      throw new Error('User not authenticated');
     }
 
     const { data, error } = await supabase.functions.invoke('analyze-reviews', {
@@ -42,38 +39,25 @@ export async function runAnalyze({ place_id, name, address, dryRun }: AnalyzePar
         place_id,
         name,
         address,
-        dryRun,
-        __debug: true
+        dryRun
       },
-      headers
+      headers: {
+        Authorization: `Bearer ${session.session.access_token}`,
+      },
     });
 
     if (error) {
-      console.error('Function invocation error:', error);
-      return {
-        ok: false,
-        error: 'function_invocation_failed',
-        details: error.message
-      };
+      console.error('Error calling analyze-reviews function:', error);
+      throw error;
     }
 
-    // Always expect JSON response
-    if (typeof data === 'object' && data !== null) {
-      return data as AnalyzeResponse;
-    }
-
-    return {
-      ok: false,
-      error: 'invalid_response_format',
-      details: 'Expected JSON response from function'
-    };
-
+    console.log('Function response:', data);
+    return data as AnalyzeResponse;
   } catch (error) {
-    console.error('runAnalyze error:', error);
+    console.error('Error in runAnalyze:', error);
     return {
       ok: false,
-      error: 'network_error',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
     };
   }
 }

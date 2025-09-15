@@ -1,297 +1,243 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// supabase/functions/analyze-reviews/index.ts
+// Deno Edge Function (TypeScript)
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import "https://deno.land/x/dotenv@v3.2.2/load.ts";
 
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+type ReviewRow = {
+  user_id: string | null;
+  place_id: string;
+  source: "google";
+  remote_id: string;
+  rating: number | null;
+  text: string | null;
+  language_code: string | null;
+  published_at: string | null;
+  author_name: string | null;
+  author_url: string | null;
+  author_photo_url: string | null;
+  like_count: number | null;
 };
 
-serve(async (req) => {
-  // Handle CORS preflight requests - always return 200
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { status: 200, headers: cors });
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+} as const;
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body, null, 2), {
+    status,
+    headers: { "content-type": "application/json", ...cors },
+  });
+}
+
+function env(key: string, fallback = "") {
+  // compat anciennes/ nouvelles variables
+  return Deno.env.get(key) ??
+         (key === "SUPABASE_URL" ? Deno.env.get("SB_URL") : undefined) ??
+         (key === "SUPABASE_SERVICE_ROLE_KEY" ? Deno.env.get("SB_SERVICE_ROLE_KEY") : undefined) ??
+         fallback;
+}
+
+const SUPABASE_URL = env("SUPABASE_URL");
+const SERVICE_ROLE = env("SUPABASE_SERVICE_ROLE_KEY");
+const GOOGLE_KEY   = env("GOOGLE_PLACES_API_KEY");
+const OPENAI_KEY   = env("OPENAI_API_KEY", "");
+
+const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE, {
+  auth: { persistSession: false },
+});
+
+// Google Places API v1 - list all reviews with pagination
+async function fetchAllGoogleReviews(placeId: string) {
+  if (!GOOGLE_KEY) throw new Error("missing_google_key");
+
+  const base = `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}/reviews`;
+  const headers: HeadersInit = {
+    "X-Goog-Api-Key": GOOGLE_KEY,
+    // on liste les champs utiles (field mask obligatoire en v1)
+    "X-Goog-FieldMask":
+      "reviews.name,reviews.rating,reviews.text.text,reviews.publishTime," +
+      "reviews.authorAttribution.displayName,reviews.authorAttribution.uri," +
+      "reviews.authorAttribution.photoUri,nextPageToken",
+  };
+
+  let pageToken = "";
+  const out: any[] = [];
+
+  for (let i = 0; i < 100; i++) { // garde-fou
+    const url = new URL(base);
+    url.searchParams.set("pageSize", "50");
+    if (pageToken) url.searchParams.set("pageToken", pageToken);
+
+    const r = await fetch(url.toString(), { headers });
+    if (!r.ok) {
+      const e = await r.text();
+      throw new Error(`google_fetch_failed: ${r.status} ${e}`);
+    }
+    const j = await r.json();
+    const reviews = j.reviews ?? [];
+    out.push(...reviews);
+
+    pageToken = j.nextPageToken ?? "";
+    if (!pageToken) break;
+
+    // la v1 impose parfois une petite pause
+    await new Promise(res => setTimeout(res, 900));
   }
 
-  // Global try/catch - always return 200 with structured JSON
+  return out;
+}
+
+// Simple agrégateur (note moyenne, %)
+function computeStats(rows: ReviewRow[]) {
+  const ratings = rows.map(r => r.rating ?? 0).filter(n => n > 0);
+  const total = rows.length;
+  const avg = ratings.length ? (ratings.reduce((a,b)=>a+b,0) / ratings.length) : null;
+
+  const pos = rows.filter(r => (r.rating ?? 0) >= 4).length;
+  const neg = rows.filter(r => (r.rating ?? 0) <= 2).length;
+  const positive_pct = total ? Math.round((pos / total) * 100) : 0;
+  const negative_pct = total ? Math.round((neg / total) * 100) : 0;
+
+  const by_rating: Record<string, number> = {};
+  for (let i=1;i<=5;i++) by_rating[i] = rows.filter(r => (r.rating ?? 0) === i).length;
+
+  return { total, by_rating, positive_pct, negative_pct, overall: avg };
+}
+
+// Résumé IA (facultatif si pas de clé)
+async function summarizeWithOpenAI(placeName: string, samples: string[]) {
+  if (!OPENAI_KEY) {
+    return { top_issues: [], top_strengths: [], recommendations: [] };
+  }
+
+  // Petits lots pour éviter les tokens
+  const chunks: string[][] = [];
+  for (let i = 0; i < samples.length; i += 10) chunks.push(samples.slice(i, i + 10));
+
+  // Merge des résumés
+  let issues: string[] = [];
+  let strengths: string[] = [];
+  let recos: string[] = [];
+
+  for (const chunk of chunks) {
+    const prompt = [
+      { role: "system", content: "Tu es un analyste qui synthétise des avis clients en français. Réponds exclusivement en JSON." },
+      { role: "user", content:
+`Établissement: ${placeName}
+Avis (échantillon):
+${chunk.map((t,i)=>`${i+1}. ${t}`).join("\n")}
+
+Retourne strictement ce JSON:
+{
+  "top_issues": ["..."],       // 3 problèmes les plus récurrents (phrases courtes)
+  "top_strengths": ["..."],    // 3 points forts
+  "recommendations": ["..."]   // 3 actions concrètes
+}`
+      }
+    ];
+
+    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json", "authorization": `Bearer ${OPENAI_KEY}` },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        temperature: 0.2,
+        response_format: { type: "json_object" },
+        messages: prompt
+      })
+    });
+
+    const data = await resp.json();
+    const txt = data.choices?.[0]?.message?.content ?? "{}";
+    try {
+      const j = JSON.parse(txt);
+      issues.push(...(j.top_issues ?? []));
+      strengths.push(...(j.top_strengths ?? []));
+      recos.push(...(j.recommendations ?? []));
+    } catch {}
+  }
+
+  // Dédupliquer et tronquer à 3
+  const uniq = (arr: string[]) => [...new Set(arr.map(s=>s.trim()))].filter(Boolean).slice(0,3);
+  return { top_issues: uniq(issues), top_strengths: uniq(strengths), recommendations: uniq(recos) };
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+
   try {
-    // Environment variables with fallback
-    const SUPABASE_URL = Deno.env.get('SB_URL') ?? Deno.env.get('SUPABASE_URL');
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SB_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') ?? '';
-    const GOOGLE_PLACES_API_KEY = Deno.env.get('GOOGLE_PLACES_API_KEY') ?? '';
-    const USE_YELP = (Deno.env.get('USE_YELP') ?? 'false') === 'true';
-
-    const env = {
-      SB_URL: !!Deno.env.get('SB_URL'),
-      SUPABASE_URL: !!Deno.env.get('SUPABASE_URL'),
-      SB_SERVICE_ROLE_KEY: !!Deno.env.get('SB_SERVICE_ROLE_KEY'),
-      SUPABASE_SERVICE_ROLE_KEY: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
-      OPENAI_API_KEY: !!OPENAI_API_KEY,
-      GOOGLE_PLACES_API_KEY: !!GOOGLE_PLACES_API_KEY,
-      USE_YELP
-    };
-
-    console.log('Environment check:', env);
-
-    // Handle ping mode (GET requests or body with ping: true)
-    if (req.method === 'GET') {
-      return new Response(JSON.stringify({ 
-        ok: true, 
-        mode: 'ping', 
-        env 
-      }), { 
-        status: 200, 
-        headers: { 'Content-Type': 'application/json', ...cors } 
-      });
-    }
-
-    // Parse request body safely
-    let body = {};
-    try {
-      const text = await req.text();
-      if (text.trim()) {
-        body = JSON.parse(text);
-      }
-    } catch (parseError) {
-      console.log('JSON parse error (non-fatal):', parseError.message);
-      // Continue with empty body instead of failing
-    }
-
-    const { place_id, name, address, dryRun, __debug, ping } = body as any;
-
-    // Handle ping mode via body
-    if (ping) {
-      return new Response(JSON.stringify({ 
-        ok: true, 
-        mode: 'ping', 
-        env 
-      }), { 
-        status: 200, 
-        headers: { 'Content-Type': 'application/json', ...cors } 
-      });
-    }
-
-    // Validate required parameters
-    if (!place_id) {
-      return new Response(JSON.stringify({
-        ok: false,
-        error: 'missing_place_id',
-        details: 'place_id is required for analysis'
-      }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', ...cors },
-      });
-    }
-
-    const logs = [];
-
-    // Get user ID from auth header if present (optional)
-    let user_id = null;
-    try {
-      const authHeader = req.headers.get('Authorization');
-      if (authHeader && SUPABASE_URL) {
-        const supabaseAuth = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY') || '');
-        const token = authHeader.replace('Bearer ', '');
-        const { data: { user } } = await supabaseAuth.auth.getUser(token);
-        user_id = user?.id || null;
-        logs.push('Auth processed successfully');
-      }
-    } catch (error) {
-      logs.push(`Auth parsing failed (non-fatal): ${error.message}`);
-    }
-
-    // Fetch Google Places reviews
-    let reviews = [];
-    let g_meta = { rating: 0, user_ratings_total: 0 };
-    
-    if (GOOGLE_PLACES_API_KEY) {
+    // Auth utilisateur (si dispo)
+    const auth = req.headers.get("Authorization") ?? "";
+    let userId: string | null = null;
+    if (auth.toLowerCase().startsWith("bearer ")) {
       try {
-        const placesResponse = await fetch(
-          `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&fields=reviews,rating,user_ratings_total&key=${GOOGLE_PLACES_API_KEY}`
-        );
-        
-        if (placesResponse.ok) {
-          const placesData = await placesResponse.json();
-          
-          if (placesData.status === 'OK' && placesData.result) {
-            reviews = placesData.result.reviews || [];
-            g_meta = {
-              rating: placesData.result.rating || 0,
-              user_ratings_total: placesData.result.user_ratings_total || 0
-            };
-            logs.push(`Fetched ${reviews.length} Google reviews`);
-          } else {
-            logs.push(`Google Places API error: ${placesData.status}`);
-          }
-        } else {
-          logs.push(`Google Places HTTP error: ${placesResponse.status}`);
-        }
-      } catch (error) {
-        logs.push(`Google fetch failed: ${error.message}`);
-      }
-    } else {
-      logs.push('No Google Places API key configured');
+        const { data } = await supabaseAdmin.auth.getUser(auth.split(" ")[1]);
+        userId = data.user?.id ?? null;
+      } catch {}
     }
 
-    const counts = {
-      collected: reviews.length,
-      google: reviews.length,
-      yelp: 0 // Always 0 since USE_YELP=false
-    };
+    const { place_id, name, dryRun = false } = await req.json().catch(()=>({}));
+    if (!place_id) return json({ ok:false, error:"missing_place_id" }, 400);
 
-    if (dryRun) {
-      return new Response(JSON.stringify({
-        ok: true,
-        counts,
-        g_meta,
-        dryRun: true,
-        logs: __debug ? logs : undefined
-      }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', ...cors },
+    // 1) Fetch Google Reviews (pagination)
+    const gReviews = await fetchAllGoogleReviews(place_id);
+
+    // 2) Map en rows pour upsert
+    const rows: ReviewRow[] = gReviews.map((r: any) => {
+      // r.name ressemble à: "places/ChIJ.../reviews/abc123"
+      const remote_id = String(r.name ?? "").split("/").pop() ?? crypto.randomUUID();
+      return {
+        user_id: userId,
+        place_id,
+        source: "google",
+        remote_id,
+        rating: r.rating ?? null,
+        text: r.text?.text ?? null,
+        language_code: null,
+        published_at: r.publishTime ?? null,
+        author_name: r.authorAttribution?.displayName ?? null,
+        author_url: r.authorAttribution?.uri ?? null,
+        author_photo_url: r.authorAttribution?.photoUri ?? null,
+        like_count: null,
+      };
+    });
+
+    // 3) Upsert (service role, RLS bypass)
+    if (!dryRun && rows.length) {
+      const { error } = await supabaseAdmin.from("reviews")
+        .upsert(rows, { onConflict: "source,remote_id" })
+        .select("id");
+      if (error) throw new Error(`upsert_failed:${error.message}`);
+    }
+
+    // 4) Stats + IA
+    const stats = computeStats(rows);
+    const sampleTexts = rows.map(r => r.text ?? "").filter(Boolean).slice(0, 120);
+    const summary = await summarizeWithOpenAI(name ?? "Cet établissement", sampleTexts);
+
+    if (!dryRun) {
+      const { error } = await supabaseAdmin.from("review_insights").upsert({
+        place_id,
+        user_id: userId ?? "00000000-0000-0000-0000-000000000000", // fallback
+        last_analyzed_at: new Date().toISOString(),
+        counts: { total: stats.total, by_rating: stats.by_rating, positive_pct: stats.positive_pct, negative_pct: stats.negative_pct },
+        overall_rating: stats.overall,
+        top_issues: summary.top_issues,
+        top_strengths: summary.top_strengths,
+        recommendations: summary.recommendations,
       });
+      if (error) throw new Error(`insights_upsert_failed:${error.message}`);
     }
 
-    // Analyze reviews with OpenAI if we have reviews and API key
-    let summary = {
-      counts,
-      top_issues: [],
-      top_strengths: [],
-      recommendations: [],
-      overall_rating: g_meta.rating
-    };
-
-    if (OPENAI_API_KEY && reviews.length > 0) {
-      try {
-        const reviewTexts = reviews.map(r => r.text).filter(Boolean);
-        
-        if (reviewTexts.length > 0) {
-          const prompt = `Analyze these restaurant reviews and provide a JSON response with:
-- top_issues: max 3 issues with format {issue: string, severity: "Critique"|"Moyen", percentage: number}
-- top_strengths: max 3 strengths with format {strength: string, percentage: number}
-- recommendations: array of actionable recommendations
-- overall_rating: calculated rating from sentiment (1-5)
-
-Reviews:
-${reviewTexts.slice(0, 20).join('\n---\n')}
-
-Respond with valid JSON only.`;
-
-          const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${OPENAI_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'gpt-4o-mini',
-              messages: [
-                { role: 'system', content: 'You are a restaurant review analyst. Always respond with valid JSON.' },
-                { role: 'user', content: prompt }
-              ],
-              temperature: 0.3,
-              max_tokens: 1000
-            }),
-          });
-
-          if (openAIResponse.ok) {
-            const openAIData = await openAIResponse.json();
-            try {
-              const analysis = JSON.parse(openAIData.choices[0].message.content);
-              
-              summary = {
-                counts,
-                top_issues: analysis.top_issues || [],
-                top_strengths: analysis.top_strengths || [],
-                recommendations: analysis.recommendations || [],
-                overall_rating: analysis.overall_rating || g_meta.rating
-              };
-              
-              logs.push('OpenAI analysis completed');
-            } catch (parseError) {
-              logs.push(`OpenAI response parse failed: ${parseError.message}`);
-            }
-          } else {
-            logs.push(`OpenAI HTTP error: ${openAIResponse.status}`);
-          }
-        }
-      } catch (error) {
-        logs.push(`OpenAI analysis failed: ${error.message}`);
-      }
-    } else if (!OPENAI_API_KEY) {
-      logs.push('No OpenAI API key configured');
-    }
-
-    // Upsert to review_insights
-    if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
-      try {
-        const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false }});
-        
-        const { error } = await admin
-          .from('review_insights')
-          .upsert({
-            place_id,
-            user_id,
-            last_analyzed_at: new Date().toISOString(),
-            summary
-          }, {
-            onConflict: 'place_id'
-          });
-
-        if (error) {
-          logs.push(`Upsert failed: ${error.message}`);
-          return new Response(JSON.stringify({
-            ok: false,
-            error: 'upsert_failed',
-            details: error.message,
-            logs: __debug ? logs : undefined
-          }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json', ...cors },
-          });
-        }
-        
-        logs.push('Successfully upserted to review_insights');
-      } catch (error) {
-        logs.push(`Supabase error: ${error.message}`);
-        return new Response(JSON.stringify({
-          ok: false,
-          error: 'supabase_error',
-          details: error.message,
-          logs: __debug ? logs : undefined
-        }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json', ...cors },
-        });
-      }
-    } else {
-      logs.push('Supabase credentials not configured');
-    }
-
-    // Success response
-    return new Response(JSON.stringify({
+    return json({
       ok: true,
-      counts,
-      g_meta,
-      dryRun: false,
-      logs: __debug ? logs : undefined
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', ...cors },
+      counts: { collected: rows.length, google: rows.length, yelp: 0 },
+      g_meta: { rating: stats.overall, total: stats.total },
+      dryRun
     });
-
-  } catch (error) {
-    // Global error handler - always return 200 with structured error
-    console.error('Error in analyze-reviews function:', error);
-    return new Response(JSON.stringify({
-      ok: false,
-      error: 'function_error',
-      details: error.message
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', ...cors },
-    });
+  } catch (e) {
+    return json({ ok:false, error: String(e?.message ?? e) }, 500);
   }
 });
