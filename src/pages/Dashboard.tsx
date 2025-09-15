@@ -2,13 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
-import { Etab, STORAGE_KEY, EVT_SAVED } from "@/types/etablissement";
+import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
 const Dashboard = () => {
   const { user } = useAuth();
@@ -29,10 +30,18 @@ const Dashboard = () => {
   // Établissement sélectionné (depuis localStorage ou store)
   const [selectedEtab, setSelectedEtab] = useState<Etab | null>(null);
   
+  // Liste des établissements enregistrés
+  const [establishments, setEstablishments] = useState<Etab[]>([]);
+  const [showEstablishmentsDropdown, setShowEstablishmentsDropdown] = useState(false);
+  
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setSelectedEtab(JSON.parse(raw));
+      
+      // Charger la liste des établissements
+      const rawList = localStorage.getItem(STORAGE_KEY_LIST);
+      if (rawList) setEstablishments(JSON.parse(rawList));
     } catch {}
     const onSaved = (e: any) => setSelectedEtab(e.detail as Etab);
     window.addEventListener(EVT_SAVED, onSaved);
@@ -376,14 +385,55 @@ const Dashboard = () => {
                       <Building2 className="w-5 h-5 text-blue-600" />
                     </div>
                     {/* Flèche vers le bas en haut à droite de l'icône */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 p-0.5 h-auto w-auto bg-white border border-gray-200 rounded-full shadow-sm"
-                      title="Choisir un autre établissement"
-                    >
-                      <ChevronDown className="w-3 h-3" />
-                    </Button>
+                    <Popover open={showEstablishmentsDropdown} onOpenChange={setShowEstablishmentsDropdown}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 p-0.5 h-auto w-auto bg-white border border-gray-200 rounded-full shadow-sm"
+                          title="Choisir un autre établissement"
+                        >
+                          <ChevronDown className="w-3 h-3" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-2 bg-white" align="start">
+                        <div className="space-y-2">
+                          <div className="text-sm font-medium text-gray-700 px-3 py-2">
+                            Mes Établissements
+                          </div>
+                          {establishments.length === 0 ? (
+                            <div className="text-sm text-gray-500 px-3 py-2">
+                              Aucun établissement enregistré
+                            </div>
+                          ) : (
+                            establishments.map((etab) => (
+                              <Button
+                                key={etab.place_id}
+                                variant="ghost"
+                                className="w-full justify-start p-3 h-auto text-left hover:bg-gray-50"
+                                onClick={() => {
+                                  localStorage.setItem(STORAGE_KEY, JSON.stringify(etab));
+                                  setSelectedEtab(etab);
+                                  setShowEstablishmentsDropdown(false);
+                                  // Déclencher l'événement pour mettre à jour d'autres composants
+                                  window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));
+                                }}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <Building2 className="w-4 h-4 text-blue-600" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-gray-900 truncate">{etab.name}</div>
+                                    <div className="text-sm text-gray-500 truncate">{etab.address}</div>
+                                  </div>
+                                </div>
+                              </Button>
+                            ))
+                          )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="flex-1">
                     <div className="font-medium text-gray-900">{selectedEtab.name}</div>
