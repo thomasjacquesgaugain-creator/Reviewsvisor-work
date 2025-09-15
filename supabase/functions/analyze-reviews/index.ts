@@ -3,19 +3,29 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import "https://deno.land/x/dotenv@v3.2.2/load.ts";
 
-type ReviewRow = {
-  user_id: string | null;
-  place_id: string;
+type NormalizedReview = {
   source: "google";
-  remote_id: string;
+  place_id: string;
+  review_id: string;
+  author_name: string | null;
+  author_uri: string | null;
   rating: number | null;
   text: string | null;
-  language_code: string | null;
-  published_at: string | null;
+  publish_time: string | null;
+  language: string;
+};
+
+type ReviewRow = {
+  source: "google";
+  review_id: string;
+  place_id: string;
+  rating: number | null;
+  text: string | null;
   author_name: string | null;
-  author_url: string | null;
-  author_photo_url: string | null;
-  like_count: number | null;
+  author_uri: string | null;
+  publish_time: string | null;
+  language: string;
+  created_at: string;
 };
 
 const cors = {
@@ -48,49 +58,131 @@ const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false },
 });
 
-// Google Places API v1 - list all reviews with pagination
-async function fetchAllGoogleReviews(placeId: string) {
-  if (!GOOGLE_KEY) throw new Error("missing_google_key");
+// Helper pour récupérer JSON avec gestion d'erreur
+async function safeJson(res: Response) {
+  try { 
+    return await res.json(); 
+  } catch { 
+    return { text: await res.text() }; 
+  }
+}
 
-  const base = `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}/reviews`;
-  const headers: HeadersInit = {
-    "X-Goog-Api-Key": GOOGLE_KEY,
-    // on liste les champs utiles (field mask obligatoire en v1)
-    "X-Goog-FieldMask":
-      "reviews.name,reviews.rating,reviews.text.text,reviews.publishTime," +
-      "reviews.authorAttribution.displayName,reviews.authorAttribution.uri," +
-      "reviews.authorAttribution.photoUri,nextPageToken",
+// Génère un ID aléatoire
+function cryptoRandomId() { 
+  return (crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`); 
+}
+
+// Normalise un avis Google vers notre format standard
+function normalizeGoogleReview(place_id: string, language: string, r: any): NormalizedReview {
+  const name = r?.name || ""; // ex: "places/XXX/reviews/YYY"
+  const review_id = name.split("/").pop() || cryptoRandomId();
+  const author = r?.authorAttribution ?? {};
+  
+  return {
+    source: "google",
+    place_id,
+    review_id,
+    author_name: author.displayName ?? null,
+    author_uri: author.uri ?? null,
+    rating: typeof r?.rating === "number" ? r.rating : null,
+    text: r?.text?.text ?? r?.originalText?.text ?? r?.text ?? null,
+    publish_time: r?.publishTime ?? null,
+    language,
   };
+}
 
-  let pageToken = "";
-  const out: any[] = [];
+// Récupération robuste des avis Google avec stratégie A/B
+async function fetchGoogleReviewsAll(placeId: string, language = "fr") {
+  const key = Deno.env.get("GOOGLE_PLACES_API_KEY") ?? Deno.env.get("GOOGLE_API_KEY") ?? "";
+  if (!key) throw new Error("missing_google_key");
+  
+  const base = "https://places.googleapis.com/v1";
+  const headers = { "X-Goog-Api-Key": key };
+  const reviews: any[] = [];
+  const logs: any[] = [];
 
-  for (let i = 0; i < 100; i++) { // garde-fou
-    const url = new URL(base);
-    url.searchParams.set("pageSize", "50");
-    if (pageToken) url.searchParams.set("pageToken", pageToken);
+  // A) Route dédiée reviews (pagination)
+  let usedA = false;
+  try {
+    usedA = true;
+    let pageToken = "";
+    for (let i = 0; i < 50; i++) { // garde-fou
+      const u = new URL(`${base}/places/${placeId}/reviews`);
+      u.searchParams.set("maxResultCount", "10");
+      u.searchParams.set("languageCode", language);
+      if (pageToken) u.searchParams.set("pageToken", pageToken);
 
-    const r = await fetch(url.toString(), { headers });
-    if (!r.ok) {
-      const e = await r.text();
-      throw new Error(`google_fetch_failed: ${r.status} ${e}`);
+      logs.push({ step: "google_reviews_call", url: u.toString(), iteration: i + 1 });
+      const r = await fetch(u, { headers });
+      
+      if (r.status === 404) { 
+        logs.push({ step: "google_reviews_404", message: "Route /reviews non disponible, fallback vers /places" });
+        usedA = false; 
+        break; 
+      }
+      
+      if (!r.ok) {
+        const e = await safeJson(r);
+        logs.push({ step: "google_reviews_error", status: r.status, error: e });
+        throw new Error(`google_fetch_failed:${r.status}:${JSON.stringify(e)}`);
+      }
+      
+      const j = await r.json();
+      if (Array.isArray(j.reviews)) {
+        reviews.push(...j.reviews);
+        logs.push({ step: "google_reviews_success", reviews_count: j.reviews.length, total_so_far: reviews.length });
+      }
+      
+      if (j.nextPageToken) {
+        pageToken = j.nextPageToken;
+        // Pause pour éviter le rate limiting
+        await new Promise(res => setTimeout(res, 500));
+      } else {
+        logs.push({ step: "google_reviews_complete", total_pages: i + 1 });
+        break;
+      }
     }
-    const j = await r.json();
-    const reviews = j.reviews ?? [];
-    out.push(...reviews);
-
-    pageToken = j.nextPageToken ?? "";
-    if (!pageToken) break;
-
-    // la v1 impose parfois une petite pause
-    await new Promise(res => setTimeout(res, 900));
+  } catch (e) {
+    logs.push({ step: "google_reviews_error", error: String(e) });
+    if (usedA) throw e; // si on a vraiment tenté A et que ce n'est pas un 404, on remonte
   }
 
-  return out;
+  // B) Fallback Place Details (5 avis pertinents)
+  if (!usedA || reviews.length === 0) {
+    logs.push({ step: "fallback_to_place_details", reason: usedA ? "no_reviews_found" : "reviews_route_unavailable" });
+    
+    const u = new URL(`${base}/places/${placeId}`);
+    u.searchParams.set("fields", "overallRating,reviewCount,reviews");
+    u.searchParams.set("languageCode", language);
+    
+    logs.push({ step: "google_details_call", url: u.toString() });
+    const r = await fetch(u, { headers });
+    
+    if (!r.ok) {
+      const e = await safeJson(r);
+      logs.push({ step: "google_details_error", status: r.status, error: e });
+      throw new Error(`google_fetch_failed:${r.status}:${JSON.stringify(e)}`);
+    }
+    
+    const j = await r.json();
+    if (Array.isArray(j.reviews)) {
+      reviews.push(...j.reviews);
+      logs.push({ step: "google_details_success", reviews_count: j.reviews.length });
+    }
+    
+    return { 
+      reviews, 
+      meta: { rating: j.overallRating ?? null, total: j.reviewCount ?? null }, 
+      logs 
+    };
+  }
+  
+  logs.push({ step: "final_count", total_reviews: reviews.length });
+  return { reviews, meta: { rating: null, total: null }, logs };
 }
 
 // Simple agrégateur (note moyenne, %)
-function computeStats(rows: ReviewRow[]) {
+function computeStats(rows: NormalizedReview[]) {
   const ratings = rows.map(r => r.rating ?? 0).filter(n => n > 0);
   const total = rows.length;
   const avg = ratings.length ? (ratings.reduce((a,b)=>a+b,0) / ratings.length) : null;
@@ -167,6 +259,8 @@ Retourne strictement ce JSON:
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
+  const allLogs: any[] = [];
+  
   try {
     // Auth utilisateur (si dispo)
     const auth = req.headers.get("Authorization") ?? "";
@@ -175,69 +269,159 @@ Deno.serve(async (req) => {
       try {
         const { data } = await supabaseAdmin.auth.getUser(auth.split(" ")[1]);
         userId = data.user?.id ?? null;
-      } catch {}
+        allLogs.push({ step: "auth_success", user_id: userId });
+      } catch (e) {
+        allLogs.push({ step: "auth_failed", error: String(e) });
+      }
     }
 
-    const { place_id, name, dryRun = false } = await req.json().catch(()=>({}));
-    if (!place_id) return json({ ok:false, error:"missing_place_id" }, 400);
-
-    // 1) Fetch Google Reviews (pagination)
-    const gReviews = await fetchAllGoogleReviews(place_id);
-
-    // 2) Map en rows pour upsert
-    const rows: ReviewRow[] = gReviews.map((r: any) => {
-      // r.name ressemble à: "places/ChIJ.../reviews/abc123"
-      const remote_id = String(r.name ?? "").split("/").pop() ?? crypto.randomUUID();
-      return {
-        user_id: userId,
-        place_id,
-        source: "google",
-        remote_id,
-        rating: r.rating ?? null,
-        text: r.text?.text ?? null,
-        language_code: null,
-        published_at: r.publishTime ?? null,
-        author_name: r.authorAttribution?.displayName ?? null,
-        author_url: r.authorAttribution?.uri ?? null,
-        author_photo_url: r.authorAttribution?.photoUri ?? null,
-        like_count: null,
-      };
-    });
-
-    // 3) Upsert (service role, RLS bypass)
-    if (!dryRun && rows.length) {
-      const { error } = await supabaseAdmin.from("reviews")
-        .upsert(rows, { onConflict: "source,remote_id" })
-        .select("id");
-      if (error) throw new Error(`upsert_failed:${error.message}`);
+    // Parse body avec validation
+    const body = await req.json().catch(() => ({}));
+    const { place_id, language = "fr", dryRun = false, name } = body;
+    
+    if (!place_id) {
+      allLogs.push({ step: "validation_error", error: "missing_place_id" });
+      return json({ ok: false, error: "missing_place_id", logs: allLogs }, 400);
     }
+    
+    allLogs.push({ step: "params", place_id, language, dryRun, name });
 
-    // 4) Stats + IA
-    const stats = computeStats(rows);
-    const sampleTexts = rows.map(r => r.text ?? "").filter(Boolean).slice(0, 120);
-    const summary = await summarizeWithOpenAI(name ?? "Cet établissement", sampleTexts);
+    // 1) Fetch Google Reviews avec stratégie robuste
+    const { reviews: gReviews, meta, logs: fetchLogs } = await fetchGoogleReviewsAll(place_id, language);
+    allLogs.push(...fetchLogs);
 
-    if (!dryRun) {
-      const { error } = await supabaseAdmin.from("review_insights").upsert({
-        place_id,
-        user_id: userId ?? "00000000-0000-0000-0000-000000000000", // fallback
-        last_analyzed_at: new Date().toISOString(),
-        counts: { total: stats.total, by_rating: stats.by_rating, positive_pct: stats.positive_pct, negative_pct: stats.negative_pct },
-        overall_rating: stats.overall,
-        top_issues: summary.top_issues,
-        top_strengths: summary.top_strengths,
-        recommendations: summary.recommendations,
+    // 2) Normaliser les reviews
+    const normalizedReviews: NormalizedReview[] = gReviews.map(r => 
+      normalizeGoogleReview(place_id, language, r)
+    );
+    
+    allLogs.push({ step: "normalized", count: normalizedReviews.length });
+
+    // Si dryRun, on retourne sans écrire en base
+    if (dryRun) {
+      const stats = computeStats(normalizedReviews);
+      return json({
+        ok: true,
+        counts: { google: normalizedReviews.length, collected: normalizedReviews.length },
+        sample: normalizedReviews.slice(0, 5),
+        g_meta: { total: meta.total, rating: meta.rating },
+        logs: allLogs
       });
-      if (error) throw new Error(`insights_upsert_failed:${error.message}`);
+    }
+
+    // 3) Créer la table reviews si elle n'existe pas
+    try {
+      await supabaseAdmin.rpc('exec_sql', {
+        sql: `
+          CREATE TABLE IF NOT EXISTS public.reviews (
+            source TEXT NOT NULL,
+            review_id TEXT NOT NULL,
+            place_id TEXT NOT NULL,
+            rating NUMERIC,
+            text TEXT,
+            author_name TEXT,
+            author_uri TEXT,
+            publish_time TIMESTAMPTZ,
+            language TEXT NOT NULL,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            PRIMARY KEY (source, review_id)
+          );
+        `
+      });
+      allLogs.push({ step: "table_creation", status: "success" });
+    } catch (e) {
+      // La table existe probablement déjà, on continue
+      allLogs.push({ step: "table_creation", status: "skipped", error: String(e) });
+    }
+
+    // 4) Upsert en base (service role, RLS bypass)
+    if (normalizedReviews.length > 0) {
+      const rows: ReviewRow[] = normalizedReviews.map(r => ({
+        source: r.source,
+        review_id: r.review_id,
+        place_id: r.place_id,
+        rating: r.rating,
+        text: r.text,
+        author_name: r.author_name,
+        author_uri: r.author_uri,
+        publish_time: r.publish_time,
+        language: r.language,
+        created_at: new Date().toISOString(),
+      }));
+
+      const { data: insertedData, error } = await supabaseAdmin
+        .from("reviews")
+        .upsert(rows, { onConflict: "source,review_id" })
+        .select("review_id");
+        
+      if (error) {
+        allLogs.push({ step: "upsert_error", error: error.message });
+        throw new Error(`upsert_failed: ${error.message}`);
+      }
+      
+      const inserted = insertedData?.length ?? 0;
+      allLogs.push({ step: "upsert_success", inserted, total: rows.length });
+    }
+
+    // 5) Stats + IA
+    const stats = computeStats(normalizedReviews);
+    const sampleTexts = normalizedReviews.map(r => r.text ?? "").filter(Boolean).slice(0, 120);
+    const summary = await summarizeWithOpenAI(name ?? "Cet établissement", sampleTexts);
+    
+    allLogs.push({ step: "analysis_complete", stats: { total: stats.total, avg: stats.overall } });
+
+    // 6) Sauvegarder les insights
+    const { error: insightsError } = await supabaseAdmin.from("review_insights").upsert({
+      place_id,
+      user_id: userId ?? "00000000-0000-0000-0000-000000000000",
+      last_analyzed_at: new Date().toISOString(),
+      counts: { 
+        total: stats.total, 
+        by_rating: stats.by_rating, 
+        positive_pct: stats.positive_pct, 
+        negative_pct: stats.negative_pct 
+      },
+      overall_rating: stats.overall,
+      top_issues: summary.top_issues,
+      top_strengths: summary.top_strengths,
+      recommendations: summary.recommendations,
+    });
+    
+    if (insightsError) {
+      allLogs.push({ step: "insights_error", error: insightsError.message });
+    } else {
+      allLogs.push({ step: "insights_success" });
     }
 
     return json({
       ok: true,
-      counts: { collected: rows.length, google: rows.length, yelp: 0 },
+      counts: { google: normalizedReviews.length, collected: normalizedReviews.length },
       g_meta: { rating: stats.overall, total: stats.total },
-      dryRun
+      logs: allLogs
     });
+    
   } catch (e) {
-    return json({ ok:false, error: String(e?.message ?? e) }, 500);
+    const errorMessage = String(e?.message ?? e);
+    allLogs.push({ step: "final_error", error: errorMessage });
+    
+    // Parse Google API error if available
+    let details = null;
+    if (errorMessage.includes("google_fetch_failed:")) {
+      try {
+        const parts = errorMessage.split(":");
+        const status = parts[1];
+        const payload = parts.slice(2).join(":");
+        details = { status, payload: JSON.parse(payload) };
+      } catch {
+        details = { raw_error: errorMessage };
+      }
+    }
+
+    return json({ 
+      ok: false, 
+      error: errorMessage,
+      details,
+      logs: allLogs 
+    }, 200); // 200 pour ne pas casser le front
   }
 });
