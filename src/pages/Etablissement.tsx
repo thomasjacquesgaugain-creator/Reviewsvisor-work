@@ -6,7 +6,7 @@ import { AnalyzeEstablishmentButton } from "@/components/AnalyzeEstablishmentBut
 import { SavedEstablishmentsList } from "@/components/SavedEstablishmentsList";
 import { Etab } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
-import { Building2, Home, LogOut, Check } from "lucide-react";
+import { Building2, Home, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 
 // TypeScript declarations for Google Maps

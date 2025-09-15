@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Building2, Coffee, UtensilsCrossed, ShoppingBag, Car, Heart, Star, BarChart3, Trash2, Check } from "lucide-react";
+import { Building2, Coffee, UtensilsCrossed, ShoppingBag, Car, Heart, Star, BarChart3, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useEstablishmentStore } from "@/store/establishmentStore";
@@ -36,7 +36,6 @@ export function SavedEstablishmentsList() {
   const [establishments, setEstablishments] = useState<SavedEstablishment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
-  const [selectedEstablishmentId, setSelectedEstablishmentId] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Charger tous les établissements de l'utilisateur
@@ -121,9 +120,6 @@ export function SavedEstablishmentsList() {
       website: null,
       rating: establishment.rating
     };
-
-    // Marquer cet établissement comme sélectionné
-    setSelectedEstablishmentId(establishment.id);
 
     // Sauvegarder dans localStorage
     localStorage.setItem(STORAGE_KEY, JSON.stringify(etabData));
@@ -210,15 +206,8 @@ export function SavedEstablishmentsList() {
             return (
               <div
                 key={establishment.id}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative"
+                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
               >
-                {/* Icône de validation si cet établissement est sélectionné */}
-                {selectedEstablishmentId === establishment.id && (
-                  <div className="absolute -top-2 -right-2 bg-green-500 rounded p-1">
-                    <Check className="w-3 h-3 text-white" />
-                  </div>
-                )}
-                
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0">
                     <IconComponent className={`w-8 h-8 ${iconData.color}`} />
