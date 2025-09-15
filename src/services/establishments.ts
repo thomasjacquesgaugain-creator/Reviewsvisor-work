@@ -106,7 +106,6 @@ export async function saveEstablishmentFromPlaceDetails(details: any): Promise<E
     user_ratings_total: details.user_ratings_total,
     types: details.types,
     source: 'google',
-    icon_type: details.icon_type || 'Restaurant', // Nouveau champ
     raw: details
   };
 

@@ -3,7 +3,6 @@ import { loadGoogleMaps } from "@/lib/loadGoogleMaps";
 import MonEtablissementCard from "@/components/MonEtablissementCard";
 import SaveEstablishmentButton from "@/components/SaveEstablishmentButton";
 import { AnalyzeEstablishmentButton } from "@/components/AnalyzeEstablishmentButton";
-import { SavedEstablishmentsList } from "@/components/SavedEstablishmentsList";
 import { Etab } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
 import { Building2, Home, LogOut } from "lucide-react";
@@ -152,11 +151,6 @@ export default function EtablissementPage() {
           <section className="border border-border rounded-lg p-4">
             <h2 className="text-xl font-semibold mb-3">🏢 Mon Établissement</h2>
             <MonEtablissementCard />
-          </section>
-
-          {/* Section Mes Établissements Enregistrés */}
-          <section>
-            <SavedEstablishmentsList />
           </section>
         </div>
       </div>
