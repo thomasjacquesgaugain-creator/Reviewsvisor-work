@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Download, Upload, FileText, RefreshCw, ArrowLeft } from "lucide-react";
@@ -26,25 +26,20 @@ export default function ImportAvisModal({ children }: ImportAvisModalProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
+    <Popover open={isOpen} onOpenChange={(open) => {
       setIsOpen(open);
       if (!open) {
         setCurrentView('menu');
         setManualReviews('');
       }
     }}>
-      <DialogTrigger asChild>
+      <PopoverTrigger asChild>
         {children}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>
-            {currentView === 'menu' ? 'Analysez vos avis clients' : 'Saisie manuelle des avis'}
-          </DialogTitle>
-        </DialogHeader>
-        
+      </PopoverTrigger>
+      <PopoverContent className="w-80" align="start">
         {currentView === 'menu' ? (
-          <div className="space-y-4 py-4">
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm">Analysez vos avis clients</h4>
             <p className="text-sm text-muted-foreground">
               Choisissez une méthode pour importer et analyser vos avis clients (un par ligne)
             </p>
@@ -119,7 +114,7 @@ export default function ImportAvisModal({ children }: ImportAvisModalProps) {
             </div>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </PopoverContent>
+    </Popover>
   );
 }
