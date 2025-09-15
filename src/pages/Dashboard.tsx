@@ -51,7 +51,7 @@ const Dashboard = () => {
       try {
         const { data: insightData, error } = await supabase
           .from('review_insights')
-          .select('counts, overall_rating, top_issues, top_strengths, positive_ratio, g_meta, last_analyzed_at')
+          .select('counts, overall_rating, top_issues, top_strengths, recommendations, last_analyzed_at')
           .eq('place_id', selectedEstablishment.place_id)
           .eq('user_id', user.id)
           .order('last_analyzed_at', { ascending: false })
@@ -71,6 +71,14 @@ const Dashboard = () => {
     };
 
     fetchInsights();
+
+    // Écouter les analyses terminées pour rafraîchir automatiquement
+    const handleAnalysisCompleted = () => {
+      setTimeout(fetchInsights, 1000); // Délai pour laisser le temps à la base de se mettre à jour
+    };
+
+    window.addEventListener('analysis-completed', handleAnalysisCompleted);
+    return () => window.removeEventListener('analysis-completed', handleAnalysisCompleted);
   }, [user?.id, selectedEstablishment?.place_id]);
 
   // Mise à jour de l'heure en temps réel

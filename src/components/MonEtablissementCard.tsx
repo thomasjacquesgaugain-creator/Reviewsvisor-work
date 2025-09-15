@@ -48,6 +48,8 @@ export default function MonEtablissementCard() {
           title: "Analyse terminée",
           description: `${result.counts?.collected || 0} avis analysés avec succès`,
         });
+        // Déclencher un événement pour rafraîchir le dashboard
+        window.dispatchEvent(new CustomEvent('analysis-completed'));
       } else {
         toast({
           title: "Erreur d'analyse",
