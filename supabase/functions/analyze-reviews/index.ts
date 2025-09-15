@@ -97,7 +97,12 @@ async function fetchGoogleReviewsAll(placeId: string, language = "fr") {
   if (!key) throw new Error("missing_google_key");
   
   const base = "https://places.googleapis.com/v1";
-  const headers = { "X-Goog-Api-Key": key };
+  const headers = { 
+    "X-Goog-Api-Key": key,
+    "Content-Type": "application/json",
+    "User-Agent": "Mozilla/5.0 (compatible; Lovable-Analytics/1.0)",
+    "Referer": "https://zzjmtipdsccxmmoaetlp.supabase.co"
+  };
   const reviews: any[] = [];
   const logs: any[] = [];
 
