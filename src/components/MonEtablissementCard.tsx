@@ -79,8 +79,8 @@ export default function MonEtablissementCard() {
   return (
     <div className="relative">
       {/* Icône de validation sobre en haut à droite */}
-      <div className="absolute -top-1 -right-1 bg-white border border-gray-200 rounded-full p-1 shadow-sm">
-        <CheckCircle className="w-3 h-3 text-green-600" />
+      <div className="absolute -top-1 -right-1 bg-green-500 rounded p-1">
+        <CheckCircle className="w-3 h-3 text-white" />
       </div>
       
       <div className="space-y-2">
