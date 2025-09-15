@@ -12,9 +12,12 @@ import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
 const Dashboard = () => {
-  const { user } = useAuth();
-  const { selectedEstablishment } = useEstablishmentStore();
-  
+  const {
+    user
+  } = useAuth();
+  const {
+    selectedEstablishment
+  } = useEstablishmentStore();
   const [showAvis, setShowAvis] = useState(false);
   const [showPlateformes, setShowPlateformes] = useState(false);
   const [showCourbeNote, setShowCourbeNote] = useState(false);
@@ -26,19 +29,18 @@ const Dashboard = () => {
   const [showParetoPoints, setShowParetoPoints] = useState(false);
   const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
-  
+
   // Établissement sélectionné (depuis localStorage ou store)
   const [selectedEtab, setSelectedEtab] = useState<Etab | null>(null);
-  
+
   // Liste des établissements enregistrés
   const [establishments, setEstablishments] = useState<Etab[]>([]);
   const [showEstablishmentsDropdown, setShowEstablishmentsDropdown] = useState(false);
-  
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setSelectedEtab(JSON.parse(raw));
-      
+
       // Charger la liste des établissements
       const rawList = localStorage.getItem(STORAGE_KEY_LIST);
       if (rawList) setEstablishments(JSON.parse(rawList));
@@ -47,7 +49,6 @@ const Dashboard = () => {
     window.addEventListener(EVT_SAVED, onSaved);
     return () => window.removeEventListener(EVT_SAVED, onSaved);
   }, []);
-  
   useEffect(() => {
     if (selectedEstablishment) {
       setSelectedEtab({
@@ -58,44 +59,61 @@ const Dashboard = () => {
         lng: selectedEstablishment.lng ?? null,
         website: selectedEstablishment.website,
         phone: selectedEstablishment.phone,
-        rating: selectedEstablishment.rating ?? null,
+        rating: selectedEstablishment.rating ?? null
       });
     }
   }, [selectedEstablishment]);
-  
+
   // Review insights data from Supabase
   const [insight, setInsight] = useState<any>(null);
   const [isLoadingInsight, setIsLoadingInsight] = useState(false);
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
-  const defaultParetoData = [
-    { name: "Service lent", count: 45, percentage: 32.1, cumulative: 32.1 },
-    { name: "Nourriture froide", count: 38, percentage: 27.1, cumulative: 59.2 },
-    { name: "Attente longue", count: 25, percentage: 17.9, cumulative: 77.1 }
-  ];
-
-  const defaultParetoPointsData = [
-    { name: "Qualité nourriture", count: 52, percentage: 35.4, cumulative: 35.4 },
-    { name: "Service rapide", count: 41, percentage: 27.9, cumulative: 63.3 },
-    { name: "Ambiance agréable", count: 28, percentage: 19.0, cumulative: 82.3 }
-  ];
+  const defaultParetoData = [{
+    name: "Service lent",
+    count: 45,
+    percentage: 32.1,
+    cumulative: 32.1
+  }, {
+    name: "Nourriture froide",
+    count: 38,
+    percentage: 27.1,
+    cumulative: 59.2
+  }, {
+    name: "Attente longue",
+    count: 25,
+    percentage: 17.9,
+    cumulative: 77.1
+  }];
+  const defaultParetoPointsData = [{
+    name: "Qualité nourriture",
+    count: 52,
+    percentage: 35.4,
+    cumulative: 35.4
+  }, {
+    name: "Service rapide",
+    count: 41,
+    percentage: 27.9,
+    cumulative: 63.3
+  }, {
+    name: "Ambiance agréable",
+    count: 28,
+    percentage: 19.0,
+    cumulative: 82.3
+  }];
 
   // Fetch review insights data
   useEffect(() => {
     const fetchInsights = async () => {
       if (!user?.id || !selectedEstablishment?.place_id) return;
-      
       setIsLoadingInsight(true);
       try {
-        const { data: insightData, error } = await supabase
-          .from('review_insights')
-          .select('counts, overall_rating, top_issues, top_strengths, positive_ratio, g_meta, last_analyzed_at')
-          .eq('place_id', selectedEstablishment.place_id)
-          .eq('user_id', user.id)
-          .order('last_analyzed_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
+        const {
+          data: insightData,
+          error
+        } = await supabase.from('review_insights').select('counts, overall_rating, top_issues, top_strengths, positive_ratio, g_meta, last_analyzed_at').eq('place_id', selectedEstablishment.place_id).eq('user_id', user.id).order('last_analyzed_at', {
+          ascending: false
+        }).limit(1).maybeSingle();
         if (error) {
           console.error('[dashboard] review_insights error:', error);
         } else {
@@ -107,7 +125,6 @@ const Dashboard = () => {
         setIsLoadingInsight(false);
       }
     };
-
     fetchInsights();
   }, [user?.id, selectedEstablishment?.place_id]);
 
@@ -138,7 +155,7 @@ const Dashboard = () => {
     date,
     time
   } = formatDateTime(currentDateTime);
-  
+
   // Map insight data to variables used by UI components
   const totalAnalyzed = insight?.counts?.google ?? 0;
   const avgRating = insight?.overall_rating ?? insight?.g_meta?.rating ?? 4.2;
@@ -151,7 +168,7 @@ const Dashboard = () => {
   // Map top issues to Pareto data format
   const paretoData = topIssues.length > 0 ? topIssues.slice(0, 3).map((issue: any, index: number) => {
     const count = issue.count || issue.mentions || 0;
-    const percentage = totalAnalyzed > 0 ? (count / totalAnalyzed * 100) : 0;
+    const percentage = totalAnalyzed > 0 ? count / totalAnalyzed * 100 : 0;
     return {
       name: issue.theme || issue.issue || `Problème ${index + 1}`,
       count,
@@ -170,7 +187,7 @@ const Dashboard = () => {
   // Map top strengths to Pareto data format
   const paretoPointsData = topStrengths.length > 0 ? topStrengths.slice(0, 3).map((strength: any, index: number) => {
     const count = strength.count || strength.mentions || 0;
-    const percentage = totalAnalyzed > 0 ? (count / totalAnalyzed * 100) : 0;
+    const percentage = totalAnalyzed > 0 ? count / totalAnalyzed * 100 : 0;
     return {
       name: strength.theme || strength.strength || `Point fort ${index + 1}`,
       count,
@@ -358,8 +375,7 @@ const Dashboard = () => {
         </div>
 
         {/* Établissement sélectionné */}
-        {selectedEstablishment && (
-          <Card className="mb-4">
+        {selectedEstablishment && <Card className="mb-4">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -371,12 +387,10 @@ const Dashboard = () => {
                 </div>
               </div>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
 
         {/* Établissement sélectionné */}
-        {selectedEtab && (
-          <Card className="mb-4">
+        {selectedEtab && <Card className="mb-4">
             <CardContent className="p-4">
               <div className="relative">
                 <div className="flex items-center gap-3">
@@ -387,12 +401,7 @@ const Dashboard = () => {
                     {/* Flèche vers le bas en haut à droite de l'icône */}
                     <Popover open={showEstablishmentsDropdown} onOpenChange={setShowEstablishmentsDropdown}>
                       <PopoverTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 p-0.5 h-auto w-auto bg-white border border-gray-200 rounded-full shadow-sm"
-                          title="Choisir un autre établissement"
-                        >
+                        <Button variant="ghost" size="sm" className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 p-0.5 h-auto w-auto bg-white border border-gray-200 rounded-full shadow-sm" title="Choisir un autre établissement">
                           <ChevronDown className="w-3 h-3" />
                         </Button>
                       </PopoverTrigger>
@@ -401,24 +410,17 @@ const Dashboard = () => {
                           <div className="text-sm font-medium text-gray-700 px-3 py-2">
                             Mes Établissements
                           </div>
-                          {establishments.length === 0 ? (
-                            <div className="text-sm text-gray-500 px-3 py-2">
+                          {establishments.length === 0 ? <div className="text-sm text-gray-500 px-3 py-2">
                               Aucun établissement enregistré
-                            </div>
-                          ) : (
-                            establishments.map((etab) => (
-                              <Button
-                                key={etab.place_id}
-                                variant="ghost"
-                                className="w-full justify-start p-3 h-auto text-left hover:bg-gray-50"
-                                onClick={() => {
-                                  localStorage.setItem(STORAGE_KEY, JSON.stringify(etab));
-                                  setSelectedEtab(etab);
-                                  setShowEstablishmentsDropdown(false);
-                                  // Déclencher l'événement pour mettre à jour d'autres composants
-                                  window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));
-                                }}
-                              >
+                            </div> : establishments.map(etab => <Button key={etab.place_id} variant="ghost" className="w-full justify-start p-3 h-auto text-left hover:bg-gray-50" onClick={() => {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(etab));
+                        setSelectedEtab(etab);
+                        setShowEstablishmentsDropdown(false);
+                        // Déclencher l'événement pour mettre à jour d'autres composants
+                        window.dispatchEvent(new CustomEvent(EVT_SAVED, {
+                          detail: etab
+                        }));
+                      }}>
                                 <div className="flex items-center gap-3">
                                   <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                                     <Building2 className="w-4 h-4 text-blue-600" />
@@ -428,9 +430,7 @@ const Dashboard = () => {
                                     <div className="text-sm text-gray-500 truncate">{etab.address}</div>
                                   </div>
                                 </div>
-                              </Button>
-                            ))
-                          )}
+                              </Button>)}
                         </div>
                       </PopoverContent>
                     </Popover>
@@ -443,51 +443,31 @@ const Dashboard = () => {
                 
                 {/* Icône "Importer vos avis" au milieu en bas */}
                 <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-gray-600 hover:text-blue-600 p-1 h-auto w-auto"
-                    title="Importer vos avis"
-                  >
-                    <BarChart3 className="w-4 h-4" />
-                  </Button>
+                  
                 </div>
                 
                 {/* Icônes en bas à droite */}
                 <div className="absolute bottom-0 right-0 flex gap-1">
                   {/* Bouton analyser établissement */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={async () => {
-                      if (!selectedEtab?.place_id) return;
-                      // TODO: Implémenter l'analyse
-                      console.log('Analyser:', selectedEtab.place_id);
-                    }}
-                    className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto"
-                    title="Analyser cet établissement"
-                  >
+                  <Button variant="ghost" size="sm" onClick={async () => {
+                if (!selectedEtab?.place_id) return;
+                // TODO: Implémenter l'analyse
+                console.log('Analyser:', selectedEtab.place_id);
+              }} className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto" title="Analyser cet établissement">
                     <BarChart3 className="w-4 h-4" />
                   </Button>
                   
                   {/* Bouton oublier établissement */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      localStorage.removeItem(STORAGE_KEY);
-                      setSelectedEtab(null);
-                    }}
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
-                    title="Oublier cet établissement"
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => {
+                localStorage.removeItem(STORAGE_KEY);
+                setSelectedEtab(null);
+              }} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto" title="Oublier cet établissement">
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
 
         {/* Historique des analyses */}
         <Card className="mb-8">
@@ -752,10 +732,7 @@ const Dashboard = () => {
                   <AlertTriangle className="w-5 h-5 text-red-500" />
                   <CardTitle className="text-lg">Top 3 Problèmes prioritaires</CardTitle>
                 </div>
-                <ChevronDown 
-                  className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoChart ? 'rotate-180' : ''}`}
-                  onClick={() => setShowParetoChart(!showParetoChart)}
-                />
+                <ChevronDown className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoChart ? 'rotate-180' : ''}`} onClick={() => setShowParetoChart(!showParetoChart)} />
               </div>
               <p className="text-sm text-gray-500">Les plus mentionnés par fréquence et pourcentage en priorité</p>
             </CardHeader>
@@ -803,10 +780,7 @@ const Dashboard = () => {
                   <CheckCircle className="w-5 h-5 text-green-500" />
                   <CardTitle className="text-lg">Top 3 Points forts</CardTitle>
                 </div>
-                <ChevronDown 
-                  className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoPoints ? 'rotate-180' : ''}`}
-                  onClick={() => setShowParetoPoints(!showParetoPoints)}
-                />
+                <ChevronDown className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoPoints ? 'rotate-180' : ''}`} onClick={() => setShowParetoPoints(!showParetoPoints)} />
               </div>
               <p className="text-sm text-gray-500">Les points forts les plus mentionnés par vos clients</p>
             </CardHeader>
@@ -859,38 +833,26 @@ const Dashboard = () => {
             <CardContent>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={paretoPointsData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                  <ComposedChart data={paretoPointsData} margin={{
+                top: 20,
+                right: 30,
+                left: 20,
+                bottom: 60
+              }}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="name" 
-                      angle={-45}
-                      textAnchor="end"
-                      height={80}
-                      fontSize={12}
-                    />
+                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={12} />
                     <YAxis yAxisId="left" orientation="left" />
                     <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
-                    <Tooltip 
-                      formatter={(value, name) => {
-                        if (name === 'Cumulative') return [`${value}%`, 'Cumul %'];
-                        return [value, 'Mentions positives'];
-                      }}
-                    />
-                    <Bar 
-                      yAxisId="left" 
-                      dataKey="count" 
-                      fill="hsl(var(--primary))" 
-                      name="Mentions positives"
-                    />
-                    <Line 
-                      yAxisId="right" 
-                      type="monotone" 
-                      dataKey="cumulative" 
-                      stroke="hsl(var(--green-600))" 
-                      strokeWidth={2}
-                      dot={{ fill: "hsl(var(--green-600))", strokeWidth: 2, r: 4 }}
-                      name="Cumulative"
-                    />
+                    <Tooltip formatter={(value, name) => {
+                  if (name === 'Cumulative') return [`${value}%`, 'Cumul %'];
+                  return [value, 'Mentions positives'];
+                }} />
+                    <Bar yAxisId="left" dataKey="count" fill="hsl(var(--primary))" name="Mentions positives" />
+                    <Line yAxisId="right" type="monotone" dataKey="cumulative" stroke="hsl(var(--green-600))" strokeWidth={2} dot={{
+                  fill: "hsl(var(--green-600))",
+                  strokeWidth: 2,
+                  r: 4
+                }} name="Cumulative" />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
@@ -910,38 +872,26 @@ const Dashboard = () => {
             <CardContent>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={paretoData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                  <ComposedChart data={paretoData} margin={{
+                top: 20,
+                right: 30,
+                left: 20,
+                bottom: 60
+              }}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="name" 
-                      angle={-45}
-                      textAnchor="end"
-                      height={80}
-                      fontSize={12}
-                    />
+                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={12} />
                     <YAxis yAxisId="left" orientation="left" />
                     <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
-                    <Tooltip 
-                      formatter={(value, name) => {
-                        if (name === 'Cumulative') return [`${value}%`, 'Cumul %'];
-                        return [value, 'Occurrences'];
-                      }}
-                    />
-                    <Bar 
-                      yAxisId="left" 
-                      dataKey="count" 
-                      fill="hsl(var(--destructive))" 
-                      name="Occurrences"
-                    />
-                    <Line 
-                      yAxisId="right" 
-                      type="monotone" 
-                      dataKey="cumulative" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={2}
-                      dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
-                      name="Cumulative"
-                    />
+                    <Tooltip formatter={(value, name) => {
+                  if (name === 'Cumulative') return [`${value}%`, 'Cumul %'];
+                  return [value, 'Occurrences'];
+                }} />
+                    <Bar yAxisId="left" dataKey="count" fill="hsl(var(--destructive))" name="Occurrences" />
+                    <Line yAxisId="right" type="monotone" dataKey="cumulative" stroke="hsl(var(--primary))" strokeWidth={2} dot={{
+                  fill: "hsl(var(--primary))",
+                  strokeWidth: 2,
+                  r: 4
+                }} name="Cumulative" />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
@@ -1064,9 +1014,7 @@ const Dashboard = () => {
                       <User className="w-4 h-4 text-gray-500" />
                       <span className="font-medium">Sophie M.</span>
                       <div className="flex items-center ml-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        ))}
+                        {[1, 2, 3, 4, 5].map(star => <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />)}
                       </div>
                     </div>
                     <Badge variant="outline" className="text-green-600 border-green-600">À valider</Badge>
@@ -1088,12 +1036,8 @@ const Dashboard = () => {
                       <User className="w-4 h-4 text-gray-500" />
                       <span className="font-medium">Thomas R.</span>
                       <div className="flex items-center ml-2">
-                        {[1, 2].map((star) => (
-                          <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        ))}
-                        {[3, 4, 5].map((star) => (
-                          <Star key={star} className="w-3 h-3 text-gray-300" />
-                        ))}
+                        {[1, 2].map(star => <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />)}
+                        {[3, 4, 5].map(star => <Star key={star} className="w-3 h-3 text-gray-300" />)}
                       </div>
                     </div>
                     <Badge variant="outline" className="text-orange-600 border-orange-600">À valider</Badge>
