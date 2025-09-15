@@ -69,45 +69,6 @@ export default function EstablishmentItem({ etab, onSelect }: EstablishmentItemP
             )}
           </div>
         </div>
-
-        {/* Action buttons at bottom right */}
-        <div className="flex items-center gap-1 mt-2 justify-end">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-6 w-6 p-0 rounded ${displayPhone ? 'hover:bg-accent' : 'opacity-40 cursor-not-allowed'}`}
-                onClick={handlePhoneClick}
-                disabled={!displayPhone}
-                aria-label="Appeler"
-              >
-                <Phone className="w-3 h-3" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{displayPhone ? 'Appeler' : 'Téléphone indisponible'}</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-6 w-6 p-0 rounded ${displayMapsUrl ? 'hover:bg-accent' : 'opacity-40 cursor-not-allowed'}`}
-                onClick={handleMapsClick}
-                disabled={!displayMapsUrl}
-                aria-label="Ouvrir dans Google Maps"
-              >
-                <MapPin className="w-3 h-3" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{displayMapsUrl ? 'Ouvrir dans Google Maps' : 'Lien indisponible'}</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
       </div>
     </TooltipProvider>
   );
