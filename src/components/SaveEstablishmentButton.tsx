@@ -14,7 +14,7 @@ export default function SaveEstablishmentButton({
     // 1) Sauvegarde locale principale (pour "Mon Établissement")
     localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
 
-    // 2) Ajouter à la liste des établissements sauvegardés localement
+    // 2) Ajouter à la liste des établissements sauvegardés
     try {
       const existingList = JSON.parse(localStorage.getItem(STORAGE_KEY_LIST) || "[]") as Etab[];
       const updatedList = existingList.filter(etab => etab.place_id !== selected.place_id);
@@ -27,7 +27,7 @@ export default function SaveEstablishmentButton({
       console.error("Erreur lors de la sauvegarde de la liste:", error);
     }
 
-    // 3) Sauvegarde en base de données
+    // 3) Sauvegarde par utilisateur
     const { data: { user }, error: authErr } = await supabase.auth.getUser();
     if (authErr || !user) {
       // pas connecté : on garde localStorage et on informe
@@ -36,29 +36,16 @@ export default function SaveEstablishmentButton({
       return;
     }
 
-    // Sauvegarder l'établissement principal dans user_establishment
-    const userEstabPayload = { user_id: user.id, ...selected };
-    const { error: userEstabError } = await (supabase as any).from("user_establishment").upsert(userEstabPayload);
-    
-    // Sauvegarder aussi dans la table établissements pour la liste
-    const etablissementPayload = {
-      user_id: user.id,
-      place_id: selected.place_id,
-      nom: selected.name,
-      adresse: selected.address,
-      telephone: selected.phone || null,
-      type: "Restaurant" // Type par défaut
-    };
-    const { error: etabError } = await (supabase as any).from("établissements").upsert(etablissementPayload);
-
-    if (userEstabError || etabError) {
-      console.error("Erreur sauvegarde:", { userEstabError, etabError });
+    const payload = { user_id: user.id, ...selected };
+    const { error } = await (supabase as any).from("user_establishment").upsert(payload); // PK = user_id
+    if (error) {
+      console.error(error);
       alert("Erreur sauvegarde distante. Conservé localement.");
       window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: selected }));
       return;
     }
 
-    // 4) Notifier toute l'app
+    // 4) Notifier toute l'app (la carte se mettra à jour instantanément)
     window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: selected }));
 
     // 5) Feedback de succès
