@@ -91,7 +91,7 @@ export default function MonEtablissementCard() {
         <Button
           variant="ghost"
           size="sm"
-          className="text-green-500 hover:text-green-700 hover:bg-green-50 p-1 h-auto"
+          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto"
           title="Importer vos avis"
         >
           <Download className="w-4 h-4" />
