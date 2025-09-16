@@ -109,7 +109,7 @@ export default function MonEtablissementCard() {
           onClick={handleAnalyze}
           disabled={isAnalyzing}
           className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto disabled:opacity-50"
-          title="Visuel des avis"
+          title="Analyser cet établissement"
           data-testid="btn-analyser-etablissement"
         >
           <BarChart3 className={`w-4 h-4 ${isAnalyzing ? 'animate-spin' : ''}`} />
