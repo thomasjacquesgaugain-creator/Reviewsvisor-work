@@ -173,7 +173,7 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
         <Button
           data-testid="btn-paste-import"
           type="button"
-          onClick={handleImport}
+          onClick={() => handlePasteImport(validReviews)}
           disabled={!showPreview || validReviewsCount === 0 || isImporting || !currentEstablishment}
           className="pointer-events-auto relative z-10"
         >
