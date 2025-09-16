@@ -6,7 +6,6 @@ import SavedEstablishmentsList from "@/components/SavedEstablishmentsList";
 import { AnalyzeEstablishmentButton } from "@/components/AnalyzeEstablishmentButton";
 import ImportAvisToolbar from "@/components/ImportAvisToolbar";
 import { ReviewsVisualPanel } from "@/components/ReviewsVisualPanel";
-import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { Etab } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
 import { Building2, Home, LogOut } from "lucide-react";
@@ -24,8 +23,6 @@ export default function EtablissementPage() {
   const [selected, setSelected] = useState<Etab | null>(null);
   const [showImportBar, setShowImportBar] = useState(false);
   const [showReviewsVisual, setShowReviewsVisual] = useState(false);
-  const [visualEstablishmentId, setVisualEstablishmentId] = useState<string>("");
-  const currentEstablishment = useCurrentEstablishment();
 
   // ⚠️ Utilise EXACTEMENT ces champs dans Autocomplete pour récupérer phone/website/rating :
   // fields: ['place_id','name','formatted_address','geometry.location','url','website','formatted_phone_number','rating']
@@ -92,18 +89,13 @@ export default function EtablissementPage() {
         }, 50);
       }
       if (target && (target.closest('[data-testid="btn-analyser-etablissement"]'))) {
-        // Get current establishment and store its ID
-        const est = currentEstablishment;
-        if (est) {
-          setVisualEstablishmentId(est.place_id || est.id || "");
-          setShowReviewsVisual(!showReviewsVisual);
-          setTimeout(() => {
-            document.getElementById('reviews-visual-anchor')?.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start'
-            });
-          }, 50);
-        }
+        setShowReviewsVisual(!showReviewsVisual);
+        setTimeout(() => {
+          document.getElementById('reviews-visual-anchor')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }, 50);
       }
     };
 
@@ -125,7 +117,7 @@ export default function EtablissementPage() {
       document.removeEventListener('click', handleDocumentClick, true);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [showImportBar, showReviewsVisual, currentEstablishment]);
+  }, [showImportBar, showReviewsVisual]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -218,10 +210,7 @@ export default function EtablissementPage() {
 
           {/* Reviews Visual Panel */}
           {showReviewsVisual && (
-            <ReviewsVisualPanel 
-              establishmentId={visualEstablishmentId}
-              onClose={() => setShowReviewsVisual(false)} 
-            />
+            <ReviewsVisualPanel onClose={() => setShowReviewsVisual(false)} />
           )}
 
           {/* Anchor pour le scroll vers la barre d'import */}

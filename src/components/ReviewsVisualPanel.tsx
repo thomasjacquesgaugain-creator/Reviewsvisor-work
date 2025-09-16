@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { X, Star, TrendingUp, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-import { getReviewsSummary, getRecentReviews, type RecentReview } from "@/services/reviewsService";
+import { getReviewsSummary } from "@/services/reviewsService";
 
 interface ReviewsSummary {
   total: number;
@@ -16,48 +15,37 @@ interface ReviewsSummary {
 }
 
 interface ReviewsVisualPanelProps {
-  establishmentId?: string;
   onClose: () => void;
 }
 
-export function ReviewsVisualPanel({ establishmentId, onClose }: ReviewsVisualPanelProps) {
+export function ReviewsVisualPanel({ onClose }: ReviewsVisualPanelProps) {
   const [summary, setSummary] = useState<ReviewsSummary | null>(null);
-  const [recentReviews, setRecentReviews] = useState<RecentReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const currentEstablishment = useCurrentEstablishment();
-  
-  // Use passed establishmentId or fall back to currentEstablishment
-  const targetEstablishmentId = establishmentId || currentEstablishment?.place_id;
 
   useEffect(() => {
-    const loadData = async () => {
-      if (!targetEstablishmentId) {
+    const loadSummary = async () => {
+      if (!currentEstablishment?.id) {
         setIsLoading(false);
         return;
       }
 
       try {
         setIsLoading(true);
-        // Load summary and recent reviews in parallel
-        const [summaryData, recentData] = await Promise.all([
-          getReviewsSummary(targetEstablishmentId),
-          getRecentReviews(targetEstablishmentId, 20)
-        ]);
-        setSummary(summaryData);
-        setRecentReviews(recentData);
+        const data = await getReviewsSummary(currentEstablishment.id);
+        setSummary(data);
       } catch (error) {
-        console.error("Error loading reviews data:", error);
+        console.error("Error loading reviews summary:", error);
         setSummary(null);
-        setRecentReviews([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadData();
-  }, [targetEstablishmentId]);
+    loadSummary();
+  }, [currentEstablishment?.id]);
 
-  if (!targetEstablishmentId) {
+  if (!currentEstablishment) {
     return (
       <Card className="relative z-20 max-w-4xl mx-auto" data-testid="reviews-visual-panel">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -75,13 +63,9 @@ export function ReviewsVisualPanel({ establishmentId, onClose }: ReviewsVisualPa
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">Établissement introuvable</h3>
-            <p className="text-muted-foreground">
-              Impossible de charger les données pour cet établissement.
-            </p>
-          </div>
+          <p className="text-muted-foreground text-center py-8">
+            Aucun établissement sélectionné
+          </p>
         </CardContent>
       </Card>
     );
@@ -205,55 +189,6 @@ export function ReviewsVisualPanel({ establishmentId, onClose }: ReviewsVisualPa
                       )}
                     </AreaChart>
                   </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-
-            {/* Recent Reviews Table */}
-            {recentReviews.length > 0 && (
-              <div>
-                <h3 className="text-lg font-medium mb-4">Avis récents</h3>
-                <div className="border rounded-lg" data-testid="recent-reviews-table">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Auteur</TableHead>
-                        <TableHead>Note</TableHead>
-                        <TableHead>Commentaire</TableHead>
-                        <TableHead>Source</TableHead>
-                        <TableHead>Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {recentReviews.map((review) => (
-                        <TableRow key={review.id}>
-                          <TableCell className="font-medium">
-                            {review.author || "Anonyme"}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 text-yellow-500" />
-                              {review.rating}/5
-                            </div>
-                          </TableCell>
-                          <TableCell className="max-w-md">
-                            <div className="line-clamp-3 text-sm">
-                              {review.text || "Aucun commentaire"}
-                            </div>
-                          </TableCell>
-                          <TableCell className="capitalize">
-                            {review.source}
-                          </TableCell>
-                          <TableCell>
-                            {review.published_at 
-                              ? new Date(review.published_at).toLocaleDateString('fr-FR')
-                              : "—"
-                            }
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
                 </div>
               </div>
             )}

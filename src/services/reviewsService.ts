@@ -162,33 +162,3 @@ export async function getReviewsSummary(establishmentId: string) {
     byMonth
   };
 }
-
-export interface RecentReview {
-  id: number;
-  author: string;
-  rating: number;
-  text: string;
-  published_at: string | null;
-  source: string;
-}
-
-export async function getRecentReviews(establishmentId: string, limit: number = 20): Promise<RecentReview[]> {
-  const { data: user } = await supabase.auth.getUser();
-  if (!user.user) throw new Error('User not authenticated');
-
-  const { data: reviews, error } = await supabase
-    .from('reviews')
-    .select('id, author, rating, text, published_at, source')
-    .eq('user_id', user.user.id)
-    .eq('place_id', establishmentId)
-    .order('published_at', { ascending: false })
-    .order('inserted_at', { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    console.error('Error fetching recent reviews:', error);
-    throw error;
-  }
-
-  return reviews || [];
-}
