@@ -31,25 +31,28 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
     setShowPreview(true);
   };
 
-  const handleImport = async () => {
+  const handlePasteImport = async (validReviews: ParsedReview[]) => {
     if (!currentEstablishment) {
       toast({
         title: "Erreur",
-        description: "Impossible d'identifier l'établissement courant. Réessayez depuis la page de l'établissement.",
+        description: (
+          <span data-testid="toast-import-error">
+            Impossible d'identifier l'établissement courant. Réessayez depuis la page de l'établissement.
+          </span>
+        ),
         variant: "destructive",
       });
       return;
     }
     
-    // Filter only valid reviews (with rating 1-5)
-    const validReviews = parsedReviews.filter(review => 
-      Number.isFinite(review.rating) && review.rating >= 1 && review.rating <= 5
-    );
-    
     if (validReviews.length === 0) {
       toast({
         title: "Aucun avis valide",
-        description: "Aucun avis avec une note valide (1-5) n'a été trouvé.",
+        description: (
+          <span data-testid="toast-import-error">
+            Aucun avis avec une note valide (1-5) n'a été trouvé.
+          </span>
+        ),
         variant: "destructive",
       });
       return;
@@ -70,7 +73,7 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
         comment: review.comment || "",
         review_date: review.reviewDate || null,
         import_method: "paste",
-        import_source_url: null
+        import_source_url: (review as any).sourceUrl || null,
       }));
       
       const result = await bulkCreateReviews(reviewsToCreate);
@@ -78,7 +81,9 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
       // Success toast
       toast({
         title: "✅ Import réussi",
-        description: `${result.inserted} avis enregistrés pour ${currentEstablishment.name}${result.skipped > 0 ? ` (doublons ignorés : ${result.skipped})` : ''}.`,
+        description: (
+          <span data-testid="toast-import-success">{`${result.inserted} avis enregistrés pour ${currentEstablishment.name}${result.skipped > 0 ? ` (doublons ignorés : ${result.skipped})` : ''}.`}</span>
+        ),
       });
       
       // Reset state
@@ -95,7 +100,9 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
       console.error('Error importing reviews:', error);
       toast({
         title: "Erreur d'import",
-        description: "Une erreur est survenue lors de l'import des avis. Veuillez réessayer.",
+        description: (
+          <span data-testid="toast-import-error">Une erreur est survenue lors de l'import des avis. Veuillez réessayer.</span>
+        ),
         variant: "destructive",
       });
     } finally {
@@ -108,6 +115,7 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
     Number.isFinite(review.rating) && review.rating >= 1 && review.rating <= 5
   );
   const validReviewsCount = validReviews.length;
+  const canImport = !isImporting && validReviewsCount > 0;
 
   const renderStars = (rating: number) => {
     return (
@@ -125,7 +133,7 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
   };
 
   return (
-    <div data-testid="paste-import-panel" className="space-y-6">
+    <div data-testid="paste-import-panel" className="space-y-6 relative z-40 pointer-events-auto">
       {/* Instructions */}
       <div className="text-sm text-muted-foreground">
         <p className="mb-2">

@@ -82,7 +82,7 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed }: ImportAvi
 
   return (
     <Card 
-      className="w-full max-w-4xl mx-auto"
+      className="w-full max-w-4xl mx-auto relative z-40 pointer-events-auto"
       data-testid="import-avis-toolbar"
     >
       <CardContent className="p-6">
