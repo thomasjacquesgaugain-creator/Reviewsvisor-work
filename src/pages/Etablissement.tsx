@@ -4,6 +4,7 @@ import MonEtablissementCard from "@/components/MonEtablissementCard";
 import SaveEstablishmentButton from "@/components/SaveEstablishmentButton";
 import SavedEstablishmentsList from "@/components/SavedEstablishmentsList";
 import { AnalyzeEstablishmentButton } from "@/components/AnalyzeEstablishmentButton";
+import ImportAvisToolbar from "@/components/ImportAvisToolbar";
 import { Etab } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
 import { Building2, Home, LogOut } from "lucide-react";
@@ -19,6 +20,7 @@ declare global {
 
 export default function EtablissementPage() {
   const [selected, setSelected] = useState<Etab | null>(null);
+  const [showImportBar, setShowImportBar] = useState(false);
 
   // ⚠️ Utilise EXACTEMENT ces champs dans Autocomplete pour récupérer phone/website/rating :
   // fields: ['place_id','name','formatted_address','geometry.location','url','website','formatted_phone_number','rating']
@@ -70,6 +72,40 @@ export default function EtablissementPage() {
         });
     }
   }, []);
+
+  // Handle import button click and ESC key
+  useEffect(() => {
+    const handleImportClick = () => {
+      setShowImportBar(true);
+      // Scroll to toolbar after state update
+      setTimeout(() => {
+        document.getElementById('import-avis-toolbar-anchor')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 100);
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showImportBar) {
+        setShowImportBar(false);
+      }
+    };
+
+    const importButton = document.querySelector('[data-testid="btn-import-avis"]');
+    if (importButton) {
+      importButton.addEventListener('click', handleImportClick);
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      if (importButton) {
+        importButton.removeEventListener('click', handleImportClick);
+      }
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showImportBar]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -153,6 +189,20 @@ export default function EtablissementPage() {
             <h2 className="text-xl font-semibold mb-3">🏢 Mon Établissement</h2>
             <MonEtablissementCard />
           </section>
+
+          {/* Anchor pour le scroll vers la barre d'import */}
+          <div id="import-avis-toolbar-anchor" />
+
+          {/* Barre d'outils d'import (affichée conditionnellement) */}
+          {showImportBar && (
+            <ImportAvisToolbar 
+              onClose={() => setShowImportBar(false)}
+              onFileAnalyzed={() => {
+                // TODO: Rafraîchir les données du dashboard
+                console.log("Fichier analysé, rafraîchissement des données...");
+              }}
+            />
+          )}
 
           {/* Liste des établissements enregistrés */}
           <SavedEstablishmentsList />
