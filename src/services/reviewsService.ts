@@ -8,7 +8,7 @@ export interface ReviewCreate {
   author_first_name: string;
   author_last_name: string;
   rating: number;
-  comment: string;
+  comment: string; // Can be empty string
   review_date?: string | null;
   import_method: string;
   import_source_url?: string | null;
@@ -37,9 +37,9 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
   for (const review of reviews) {
     try {
       // Create hash for deduplication
-      const normalizedText = review.comment.toLowerCase().trim();
+      const normalizedText = (review.comment || "").toLowerCase().trim();
       const authorName = `${review.author_first_name} ${review.author_last_name}`.trim();
-      const hashInput = `${review.establishment_id}${normalizedText}${review.review_date || ""}${authorName}`;
+      const hashInput = `${review.establishment_id}|${review.author_first_name || ""}|${review.author_last_name || ""}|${review.review_date || ""}|${review.rating}|${normalizedText}`;
       const reviewHash = simpleHash(hashInput);
       
       // Check if review already exists (by hash)
@@ -48,7 +48,7 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
         .select('id')
         .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
         .eq('place_id', review.establishment_place_id)
-        .eq('text', review.comment)
+        .eq('text', review.comment || "")
         .single();
       
       if (existingReview) {
@@ -65,7 +65,7 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
           source: review.source,
           author: `${review.author_first_name} ${review.author_last_name}`.trim(),
           rating: review.rating,
-          text: review.comment,
+          text: review.comment || "",
           published_at: review.review_date ? new Date(review.review_date).toISOString() : null,
           source_review_id: reviewHash,
           raw: {

@@ -2,7 +2,7 @@ export interface ParsedReview {
   firstName: string;
   lastName: string;
   rating: number; // 1-5
-  comment: string;
+  comment: string; // Can be empty string
   platform: string;
   reviewDate: string;
   isValid: boolean;
@@ -132,7 +132,7 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
       comment: commentLines.join(' ').trim(),
       platform: currentReview.platform || 'unknown',
       reviewDate: currentReview.reviewDate || '',
-      isValid: !!(currentReview.firstName && currentReview.rating && commentLines.length > 0)
+      isValid: !!(currentReview.firstName && currentReview.rating)
     };
     
     // Simple deduplication based on content hash

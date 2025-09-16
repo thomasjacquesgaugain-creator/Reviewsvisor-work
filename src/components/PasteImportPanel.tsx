@@ -205,8 +205,12 @@ export default function PasteImportPanel({ onImportBulk }: PasteImportPanelProps
                         {renderStars(review.rating)}
                       </td>
                       <td className="border border-border px-3 py-2 text-sm max-w-md">
-                        <div className="truncate" title={review.comment}>
-                          {review.comment || <span className="text-muted-foreground italic">Pas de commentaire</span>}
+                        <div className="truncate" title={review.comment || "Pas de commentaire"}>
+                          {review.comment ? (
+                            review.comment
+                          ) : (
+                            <span className="text-muted-foreground italic">Pas de commentaire</span>
+                          )}
                         </div>
                       </td>
                       <td className="border border-border px-3 py-2">
