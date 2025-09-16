@@ -5,6 +5,7 @@ import SaveEstablishmentButton from "@/components/SaveEstablishmentButton";
 import SavedEstablishmentsList from "@/components/SavedEstablishmentsList";
 import { AnalyzeEstablishmentButton } from "@/components/AnalyzeEstablishmentButton";
 import ImportAvisToolbar from "@/components/ImportAvisToolbar";
+import { ReviewsVisualPanel } from "@/components/ReviewsVisualPanel";
 import { Etab } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
 import { Building2, Home, LogOut } from "lucide-react";
@@ -21,6 +22,7 @@ declare global {
 export default function EtablissementPage() {
   const [selected, setSelected] = useState<Etab | null>(null);
   const [showImportBar, setShowImportBar] = useState(false);
+  const [showReviewsVisual, setShowReviewsVisual] = useState(false);
 
   // ⚠️ Utilise EXACTEMENT ces champs dans Autocomplete pour récupérer phone/website/rating :
   // fields: ['place_id','name','formatted_address','geometry.location','url','website','formatted_phone_number','rating']
@@ -73,7 +75,7 @@ export default function EtablissementPage() {
     }
   }, []);
 
-  // Handle import button click and ESC key
+  // Handle import button click and analysis button click and ESC key
   useEffect(() => {
     const handleDocumentClick = (e: MouseEvent) => {
       const target = e.target as Element | null;
@@ -86,11 +88,25 @@ export default function EtablissementPage() {
           });
         }, 50);
       }
+      if (target && (target.closest('[data-testid="btn-analyser-etablissement"]'))) {
+        setShowReviewsVisual(!showReviewsVisual);
+        setTimeout(() => {
+          document.getElementById('reviews-visual-anchor')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }, 50);
+      }
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && showImportBar) {
-        setShowImportBar(false);
+      if (e.key === 'Escape') {
+        if (showImportBar) {
+          setShowImportBar(false);
+        }
+        if (showReviewsVisual) {
+          setShowReviewsVisual(false);
+        }
       }
     };
 
@@ -101,7 +117,7 @@ export default function EtablissementPage() {
       document.removeEventListener('click', handleDocumentClick, true);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [showImportBar]);
+  }, [showImportBar, showReviewsVisual]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -188,6 +204,14 @@ export default function EtablissementPage() {
             <h2 className="text-xl font-semibold mb-3">🏢 Mon Établissement</h2>
             <MonEtablissementCard />
           </section>
+
+          {/* Anchor for reviews visual panel */}
+          <div id="reviews-visual-anchor" />
+
+          {/* Reviews Visual Panel */}
+          {showReviewsVisual && (
+            <ReviewsVisualPanel onClose={() => setShowReviewsVisual(false)} />
+          )}
 
           {/* Anchor pour le scroll vers la barre d'import */}
           <div id="import-avis-toolbar-anchor" />

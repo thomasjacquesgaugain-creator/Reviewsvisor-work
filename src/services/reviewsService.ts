@@ -91,3 +91,74 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
   
   return { inserted, skipped };
 }
+
+export async function getReviewsSummary(establishmentId: string) {
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) throw new Error('User not authenticated');
+
+  // Get all reviews for the establishment
+  const { data: reviews, error } = await supabase
+    .from('reviews')
+    .select('rating, published_at')
+    .eq('user_id', user.user.id)
+    .eq('place_id', establishmentId);
+
+  if (error) {
+    console.error('Error fetching reviews:', error);
+    throw error;
+  }
+
+  if (!reviews || reviews.length === 0) {
+    return {
+      total: 0,
+      avgRating: 0,
+      byStars: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+      byMonth: []
+    };
+  }
+
+  // Calculate metrics
+  const total = reviews.length;
+  const avgRating = reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / total;
+
+  // Group by stars
+  const byStars = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  reviews.forEach(r => {
+    if (r.rating >= 1 && r.rating <= 5) {
+      byStars[Math.floor(r.rating) as keyof typeof byStars]++;
+    }
+  });
+
+  // Group by month (last 12 months)
+  const monthCounts: Record<string, { count: number; total: number }> = {};
+  const now = new Date();
+  
+  reviews.forEach(r => {
+    if (r.published_at) {
+      const date = new Date(r.published_at);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!monthCounts[monthKey]) {
+        monthCounts[monthKey] = { count: 0, total: 0 };
+      }
+      monthCounts[monthKey].count++;
+      monthCounts[monthKey].total += r.rating || 0;
+    }
+  });
+
+  const byMonth = Object.entries(monthCounts)
+    .map(([month, data]) => ({
+      month,
+      count: data.count,
+      avg: data.count > 0 ? data.total / data.count : 0
+    }))
+    .sort((a, b) => a.month.localeCompare(b.month))
+    .slice(-12); // Last 12 months
+
+  return {
+    total,
+    avgRating,
+    byStars,
+    byMonth
+  };
+}
