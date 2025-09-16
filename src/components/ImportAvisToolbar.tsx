@@ -13,19 +13,12 @@ interface ImportAvisToolbarProps {
 
 type ActiveTab = "manual" | "csv" | "auto";
 
-interface ManualReview {
-  firstName: string;
-  lastName: string;
-  rating: number;
-  comment: string;
-}
-
 export default function ImportAvisToolbar({ onClose, onFileAnalyzed }: ImportAvisToolbarProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>("csv");
 
-  const handleManualReviewSubmit = (review: ManualReview) => {
+  const handleManualReviewSubmit = (review: { firstName: string; lastName: string; rating: number; comment: string }) => {
+    // Pour l'instant, simple log
     console.log("Avis manuel:", review);
-    // TODO: Envoyer l'avis au backend
   };
 
   const tabs = [

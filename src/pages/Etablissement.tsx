@@ -75,15 +75,17 @@ export default function EtablissementPage() {
 
   // Handle import button click and ESC key
   useEffect(() => {
-    const handleImportClick = () => {
-      setShowImportBar(true);
-      // Scroll to toolbar after state update
-      setTimeout(() => {
-        document.getElementById('import-avis-toolbar-anchor')?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }, 100);
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = e.target as Element | null;
+      if (target && (target.closest('[data-testid="btn-import-avis"]'))) {
+        setShowImportBar(true);
+        setTimeout(() => {
+          document.getElementById('import-avis-toolbar-anchor')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }, 50);
+      }
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -92,17 +94,11 @@ export default function EtablissementPage() {
       }
     };
 
-    const importButton = document.querySelector('[data-testid="btn-import-avis"]');
-    if (importButton) {
-      importButton.addEventListener('click', handleImportClick);
-    }
-
+    document.addEventListener('click', handleDocumentClick, true);
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      if (importButton) {
-        importButton.removeEventListener('click', handleImportClick);
-      }
+      document.removeEventListener('click', handleDocumentClick, true);
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [showImportBar]);
