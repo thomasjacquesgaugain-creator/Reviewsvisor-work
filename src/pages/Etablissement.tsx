@@ -110,12 +110,28 @@ export default function EtablissementPage() {
       }
     };
 
+    // Handle reviews imported event
+    const handleReviewsImported = (e: CustomEvent) => {
+      const establishmentId = e.detail?.establishmentId;
+      if (establishmentId) {
+        setShowReviewsVisual(true);
+        setTimeout(() => {
+          document.getElementById('reviews-visual-anchor')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }, 100);
+      }
+    };
+
     document.addEventListener('click', handleDocumentClick, true);
     document.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('reviews:imported', handleReviewsImported as EventListener);
 
     return () => {
       document.removeEventListener('click', handleDocumentClick, true);
       document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('reviews:imported', handleReviewsImported as EventListener);
     };
   }, [showImportBar, showReviewsVisual]);
 

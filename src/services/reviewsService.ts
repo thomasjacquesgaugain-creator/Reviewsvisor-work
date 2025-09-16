@@ -162,3 +162,23 @@ export async function getReviewsSummary(establishmentId: string) {
     byMonth
   };
 }
+
+export async function getRecentReviews(establishmentId: string, limit: number = 20) {
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) throw new Error('User not authenticated');
+
+  const { data: reviews, error } = await supabase
+    .from('reviews')
+    .select('author, rating, text, source, published_at, inserted_at')
+    .eq('user_id', user.user.id)
+    .eq('place_id', establishmentId)
+    .order('inserted_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching recent reviews:', error);
+    throw error;
+  }
+
+  return reviews || [];
+}

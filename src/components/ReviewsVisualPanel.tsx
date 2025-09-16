@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { X, Star, TrendingUp, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-import { getReviewsSummary } from "@/services/reviewsService";
+import { getReviewsSummary, getRecentReviews } from "@/services/reviewsService";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface ReviewsSummary {
   total: number;
@@ -14,13 +16,24 @@ interface ReviewsSummary {
   byMonth: Array<{ month: string; count: number; avg?: number }>;
 }
 
+interface RecentReview {
+  author: string;
+  rating: number;
+  text: string;
+  source: string;
+  published_at: string | null;
+  inserted_at: string;
+}
+
 interface ReviewsVisualPanelProps {
   onClose: () => void;
 }
 
 export function ReviewsVisualPanel({ onClose }: ReviewsVisualPanelProps) {
   const [summary, setSummary] = useState<ReviewsSummary | null>(null);
+  const [recentReviews, setRecentReviews] = useState<RecentReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const currentEstablishment = useCurrentEstablishment();
 
   useEffect(() => {
@@ -32,17 +45,35 @@ export function ReviewsVisualPanel({ onClose }: ReviewsVisualPanelProps) {
 
       try {
         setIsLoading(true);
-        const data = await getReviewsSummary(currentEstablishment.id);
-        setSummary(data);
+        const [summaryData, recentData] = await Promise.all([
+          getReviewsSummary(currentEstablishment.id),
+          getRecentReviews(currentEstablishment.id, 20)
+        ]);
+        setSummary(summaryData);
+        setRecentReviews(recentData);
       } catch (error) {
-        console.error("Error loading reviews summary:", error);
+        console.error("Error loading reviews data:", error);
         setSummary(null);
+        setRecentReviews([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadSummary();
+  }, [currentEstablishment?.id, refreshTrigger]);
+
+  // Listen for reviews imported event to refresh data
+  useEffect(() => {
+    const handleReviewsImported = (e: CustomEvent) => {
+      const establishmentId = e.detail?.establishmentId;
+      if (establishmentId === currentEstablishment?.id) {
+        setRefreshTrigger(prev => prev + 1);
+      }
+    };
+
+    window.addEventListener('reviews:imported', handleReviewsImported as EventListener);
+    return () => window.removeEventListener('reviews:imported', handleReviewsImported as EventListener);
   }, [currentEstablishment?.id]);
 
   if (!currentEstablishment) {
@@ -189,6 +220,65 @@ export function ReviewsVisualPanel({ onClose }: ReviewsVisualPanelProps) {
                       )}
                     </AreaChart>
                   </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+
+            {/* Recent Reviews Table */}
+            {recentReviews.length > 0 && (
+              <div>
+                <h3 className="text-lg font-medium mb-4">Avis récents</h3>
+                <div className="border rounded-lg" data-testid="recent-reviews-table">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Auteur</TableHead>
+                        <TableHead>Note</TableHead>
+                        <TableHead>Commentaire</TableHead>
+                        <TableHead>Source</TableHead>
+                        <TableHead>Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {recentReviews.map((review, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">
+                            {review.author || "Anonyme"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  className={`w-4 h-4 ${
+                                    star <= review.rating 
+                                      ? "fill-yellow-400 text-yellow-400" 
+                                      : "text-gray-300"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-md">
+                            <div className="truncate" title={review.text || "Pas de commentaire"}>
+                              {review.text || (
+                                <span className="text-muted-foreground italic">Pas de commentaire</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{review.source}</Badge>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {review.published_at 
+                              ? new Date(review.published_at).toLocaleDateString('fr-FR')
+                              : new Date(review.inserted_at).toLocaleDateString('fr-FR')
+                            }
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
             )}

@@ -67,11 +67,19 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
         description: (
           <span data-testid="toast-import-success">{`${inserted} avis enregistrés pour ${est.name} (doublons ignorés : ${skipped}).`}</span>
         ),
+        duration: 4000,
       });
+      
       // Nettoyage silencieux
       setParsedReviews([]);
       setPastedText("");
       setShowPreview(false);
+      
+      // Trigger visual panel refresh
+      window.dispatchEvent(new CustomEvent('reviews:imported', { 
+        detail: { establishmentId: est.id || est.place_id } 
+      }));
+      
       // Option : fermer la barre
       if (onClose) {
         onClose();
