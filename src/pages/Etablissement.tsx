@@ -185,7 +185,10 @@ export default function EtablissementPage() {
           </div>
 
           {/* Section Mon Établissement */}
-          <section className="border border-border rounded-lg p-4">
+          <section 
+            className="border border-border rounded-lg p-4"
+            data-testid="card-mon-etablissement"
+          >
             <h2 className="text-xl font-semibold mb-3">🏢 Mon Établissement</h2>
             <MonEtablissementCard />
           </section>
@@ -205,7 +208,9 @@ export default function EtablissementPage() {
           )}
 
           {/* Liste des établissements enregistrés */}
-          <SavedEstablishmentsList />
+          <div data-testid="section-etablissements-enregistres">
+            <SavedEstablishmentsList />
+          </div>
         </div>
       </div>
     </div>
