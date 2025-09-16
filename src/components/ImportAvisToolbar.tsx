@@ -15,7 +15,7 @@ interface ImportAvisToolbarProps {
 type ActiveTab = "manual" | "csv" | "paste" | "auto";
 
 export default function ImportAvisToolbar({ onClose, onFileAnalyzed }: ImportAvisToolbarProps) {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("csv");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("paste");
 
   const handleManualReviewSubmit = (review: { firstName: string; lastName: string; rating: number; comment: string }) => {
     // Pour l'instant, simple log

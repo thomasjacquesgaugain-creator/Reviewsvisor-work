@@ -4,7 +4,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { parsePastedReviews, ParsedReview } from "@/utils/parsePastedReviews";
-import { Star } from "lucide-react";
+import { Star, Loader2 } from "lucide-react";
+import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
+import { bulkCreateReviews, ReviewCreate } from "@/services/reviewsService";
+import { useToast } from "@/hooks/use-toast";
 
 interface PasteImportPanelProps {
   onImportBulk?: (reviews: any[]) => void;
@@ -14,6 +17,10 @@ export default function PasteImportPanel({ onImportBulk }: PasteImportPanelProps
   const [pastedText, setPastedText] = useState("");
   const [parsedReviews, setParsedReviews] = useState<ParsedReview[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  
+  const currentEstablishment = useCurrentEstablishment();
+  const { toast } = useToast();
 
   const handlePreview = () => {
     if (!pastedText.trim()) return;
@@ -23,24 +30,62 @@ export default function PasteImportPanel({ onImportBulk }: PasteImportPanelProps
     setShowPreview(true);
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
+    if (!currentEstablishment) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'identifier l'établissement courant. Réessayez depuis la page de l'établissement.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const validReviews = parsedReviews.filter(review => review.isValid);
     
-    if (validReviews.length > 0 && onImportBulk) {
-      // Convert to format expected by the existing system
-      const formattedReviews = validReviews.map(review => ({
-        firstName: review.firstName,
-        lastName: review.lastName,
+    if (validReviews.length === 0) {
+      return;
+    }
+    
+    setIsImporting(true);
+    
+    try {
+      // Convert to ReviewCreate format
+      const reviewsToCreate: ReviewCreate[] = validReviews.map(review => ({
+        establishment_id: currentEstablishment.id,
+        establishment_place_id: currentEstablishment.place_id,
+        establishment_name: currentEstablishment.name,
+        source: review.platform || "pasted",
+        author_first_name: review.firstName,
+        author_last_name: review.lastName,
         rating: review.rating,
-        comment: review.comment
+        comment: review.comment,
+        review_date: review.reviewDate || null,
+        import_method: "paste",
+        import_source_url: null
       }));
       
-      onImportBulk(formattedReviews);
+      const result = await bulkCreateReviews(reviewsToCreate);
+      
+      // Success toast
+      toast({
+        title: "✅ Import réussi",
+        description: `${result.inserted} avis enregistrés pour ${currentEstablishment.name}${result.skipped > 0 ? ` (doublons ignorés : ${result.skipped})` : ''}.`,
+      });
       
       // Reset state
       setPastedText("");
       setParsedReviews([]);
       setShowPreview(false);
+      
+    } catch (error) {
+      console.error('Error importing reviews:', error);
+      toast({
+        title: "Erreur d'import",
+        description: "Une erreur est survenue lors de l'import des avis. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -102,9 +147,16 @@ export default function PasteImportPanel({ onImportBulk }: PasteImportPanelProps
         <Button
           data-testid="btn-paste-import"
           onClick={handleImport}
-          disabled={!showPreview || validReviewsCount === 0}
+          disabled={!showPreview || validReviewsCount === 0 || isImporting || !currentEstablishment}
         >
-          Importer ({validReviewsCount} avis)
+          {isImporting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Import en cours...
+            </>
+          ) : (
+            `Importer (${validReviewsCount} avis)`
+          )}
         </Button>
       </div>
 
