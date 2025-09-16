@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Upload, FileText, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import ManualReviewPanel from "./ManualReviewPanel";
 
 interface ImportAvisPopoverProps {
   children: React.ReactNode;
@@ -116,6 +117,47 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
     }
   };
 
+  const handleManualReviewSubmit = async (review: {
+    firstName: string;
+    lastName: string;
+    rating: number;
+    comment: string;
+  }) => {
+    try {
+      const reviewData = {
+        ...review,
+        locationId: locationId || undefined,
+      };
+
+      const response = await fetch('/api/reviews/manual', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reviewData),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Avis ajouté",
+          description: `L'avis de ${review.firstName} ${review.lastName} a été ajouté avec succès`,
+        });
+        
+        // Rafraîchir les données
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        throw new Error(error.message || 'Erreur lors de l\'ajout de l\'avis');
+      }
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Une erreur inattendue s'est produite",
+        variant: "destructive",
+      });
+    }
+  };
+
   const resetAndClose = () => {
     setIsOpen(false);
     setSelectedFile(null);
@@ -188,10 +230,7 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
 
             {/* Contenu Saisie manuelle */}
             <TabsContent value="manual" className="mt-6">
-              <div className="text-center py-8 text-muted-foreground">
-                <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p>Fonctionnalité de saisie manuelle à venir...</p>
-              </div>
+              <ManualReviewPanel onSubmit={handleManualReviewSubmit} />
             </TabsContent>
 
             {/* Contenu Import CSV */}
