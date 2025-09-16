@@ -1,17 +1,18 @@
 import { useState } from "react";
-import { X, Edit3, Upload, Zap } from "lucide-react";
+import { X, Edit3, Upload, Zap, Clipboard } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ManualReviewPanel from "./ManualReviewPanel";
 import ImportCsvPanel from "./ImportCsvPanel";
+import PasteImportPanel from "./PasteImportPanel";
 
 interface ImportAvisToolbarProps {
   onClose: () => void;
   onFileAnalyzed?: () => void;
 }
 
-type ActiveTab = "manual" | "csv" | "auto";
+type ActiveTab = "manual" | "csv" | "paste" | "auto";
 
 export default function ImportAvisToolbar({ onClose, onFileAnalyzed }: ImportAvisToolbarProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>("csv");
@@ -19,6 +20,14 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed }: ImportAvi
   const handleManualReviewSubmit = (review: { firstName: string; lastName: string; rating: number; comment: string }) => {
     // Pour l'instant, simple log
     console.log("Avis manuel:", review);
+  };
+
+  const handleBulkImport = (reviews: any[]) => {
+    // Pour l'instant, simple log des avis en masse
+    console.log("Import en masse:", reviews);
+    reviews.forEach((review, index) => {
+      console.log(`Avis ${index + 1}:`, review);
+    });
   };
 
   const tabs = [
@@ -35,6 +44,12 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed }: ImportAvi
       testId: "tab-csv"
     },
     {
+      id: "paste" as const,
+      label: "Coller des avis",
+      icon: Clipboard,
+      testId: "tab-paste"
+    },
+    {
       id: "auto" as const,
       label: "Récupération auto",
       icon: Zap,
@@ -48,6 +63,8 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed }: ImportAvi
         return <ManualReviewPanel onSubmit={handleManualReviewSubmit} />;
       case "csv":
         return <ImportCsvPanel onFileAnalyzed={onFileAnalyzed} />;
+      case "paste":
+        return <PasteImportPanel onImportBulk={handleBulkImport} />;
       case "auto":
         return (
           <div className="text-center py-8 text-muted-foreground">
