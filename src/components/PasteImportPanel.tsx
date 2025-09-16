@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,91 +31,72 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
     setShowPreview(true);
   };
 
-  const handlePasteImport = async (validReviews: ParsedReview[]) => {
-    if (!currentEstablishment) {
+  const handlePasteImport = useCallback(async (valid?: ParsedReview[]) => {
+    const est = currentEstablishment;
+    const list = valid && valid.length ? valid : (parsedReviews || []).filter(r => Number.isFinite(r.rating) && r.rating >= 1 && r.rating <= 5);
+
+    if (!est) {
       toast({
         title: "Erreur",
-        description: (
-          <span data-testid="toast-import-error">
-            Impossible d'identifier l'établissement courant. Réessayez depuis la page de l'établissement.
-          </span>
-        ),
+        description: "Impossible d'identifier l'établissement courant.",
         variant: "destructive",
       });
       return;
     }
-    
-    if (validReviews.length === 0) {
-      toast({
-        title: "Aucun avis valide",
-        description: (
-          <span data-testid="toast-import-error">
-            Aucun avis avec une note valide (1-5) n'a été trouvé.
-          </span>
-        ),
-        variant: "destructive",
-      });
-      return;
-    }
-    
+    if (!list.length) return;
+
+    const payload: ReviewCreate[] = list.map(v => ({
+      establishment_id: est.id || est.place_id,
+      establishment_place_id: est.place_id,
+      establishment_name: est.name,
+      source: v.platform || "pasted",
+      author_first_name: v.firstName || "",
+      author_last_name: v.lastName || "",
+      rating: v.rating,
+      comment: v.comment || "",
+      review_date: v.reviewDate || null,
+      import_method: "paste",
+      import_source_url: (v as any).sourceUrl || null,
+    }));
+
     setIsImporting(true);
-    
     try {
-      // Convert to ReviewCreate format
-      const reviewsToCreate: ReviewCreate[] = validReviews.map(review => ({
-        establishment_id: currentEstablishment.id || currentEstablishment.place_id,
-        establishment_place_id: currentEstablishment.place_id,
-        establishment_name: currentEstablishment.name,
-        source: review.platform || "pasted",
-        author_first_name: review.firstName || "",
-        author_last_name: review.lastName || "",
-        rating: review.rating,
-        comment: review.comment || "",
-        review_date: review.reviewDate || null,
-        import_method: "paste",
-        import_source_url: (review as any).sourceUrl || null,
-      }));
-      
-      const result = await bulkCreateReviews(reviewsToCreate);
-      
-      // Success toast
+      const { inserted, skipped } = await bulkCreateReviews(payload);
       toast({
         title: "✅ Import réussi",
         description: (
-          <span data-testid="toast-import-success">{`${result.inserted} avis enregistrés pour ${currentEstablishment.name}${result.skipped > 0 ? ` (doublons ignorés : ${result.skipped})` : ''}.`}</span>
+          <span data-testid="toast-import-success">{`${inserted} avis enregistrés pour ${est.name} (doublons ignorés : ${skipped}).`}</span>
         ),
       });
-      
-      // Reset state
-      setPastedText("");
+      // Nettoyage silencieux
       setParsedReviews([]);
+      setPastedText("");
       setShowPreview(false);
-      
-      // Optionally close the import toolbar
+      // Option : fermer la barre
       if (onClose) {
         onClose();
       }
-      
-    } catch (error) {
-      console.error('Error importing reviews:', error);
+    } catch (e) {
       toast({
         title: "Erreur d'import",
         description: (
-          <span data-testid="toast-import-error">Une erreur est survenue lors de l'import des avis. Veuillez réessayer.</span>
+          <span data-testid="toast-import-error">Échec de l'import des avis.</span>
         ),
         variant: "destructive",
       });
+      console.error(e);
     } finally {
       setIsImporting(false);
     }
-  };
+  }, [currentEstablishment, parsedReviews, onClose]);
 
   // Calculate valid reviews count based on rating criteria
-  const validReviews = parsedReviews.filter(review => 
-    Number.isFinite(review.rating) && review.rating >= 1 && review.rating <= 5
-  );
-  const validReviewsCount = validReviews.length;
-  const canImport = !isImporting && validReviewsCount > 0;
+  const validReviews = useMemo(() => {
+    const source = parsedReviews?.length ? parsedReviews : parsePastedReviews(pastedText || "");
+    return (source || []).filter(r => Number.isFinite(r.rating) && r.rating >= 1 && r.rating <= 5);
+  }, [parsedReviews, pastedText]);
+
+  const canImport = !isImporting && validReviews.length > 0;
 
   const renderStars = (rating: number) => {
     return (
@@ -145,133 +126,142 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
       </div>
 
       {/* Paste area */}
-      <div className="space-y-2">
-        <Textarea
-          data-testid="paste-input"
-          placeholder="Collez ici les avis copiés depuis Google Maps ou Tripadvisor..."
-          value={pastedText}
-          onChange={(e) => setPastedText(e.target.value)}
-          className="min-h-[200px] resize-none"
-          aria-describedby="paste-help"
-        />
-        <p id="paste-help" className="text-xs text-muted-foreground">
-          Collez plusieurs avis en une fois. Le système détectera automatiquement les notes, auteurs et commentaires.
-        </p>
+      <div data-testid="paste-input-wrap" className="relative z-10">
+        <div className="space-y-2">
+          <Textarea
+            data-testid="paste-input"
+            placeholder="Collez ici les avis copiés depuis Google Maps ou Tripadvisor..."
+            value={pastedText}
+            onChange={(e) => setPastedText(e.target.value)}
+            className="min-h-[200px] resize-none"
+            aria-describedby="paste-help"
+          />
+          <p id="paste-help" className="text-xs text-muted-foreground">
+            Collez plusieurs avis en une fois. Le système détectera automatiquement les notes, auteurs et commentaires.
+          </p>
+        </div>
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-3">
-        <Button
-          data-testid="btn-paste-preview"
-          variant="outline"
-          onClick={handlePreview}
-          disabled={!pastedText.trim()}
-        >
-          Aperçu
-        </Button>
-        
-        <Button
-          data-testid="btn-paste-import"
-          type="button"
-          onClick={() => handlePasteImport(validReviews)}
-          disabled={!showPreview || validReviewsCount === 0 || isImporting || !currentEstablishment}
-          className="pointer-events-auto relative z-10"
-        >
-          {isImporting ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Import en cours...
-            </>
-          ) : (
-            `Importer (${validReviewsCount} avis)`
-          )}
-        </Button>
+      <div data-testid="paste-actions" className="relative z-50 pointer-events-auto bg-background">
+        <div className="flex gap-3">
+          <Button
+            data-testid="btn-paste-preview"
+            type="button"
+            variant="outline"
+            onClick={handlePreview}
+            disabled={!pastedText.trim()}
+          >
+            Aperçu
+          </Button>
+          
+          <Button
+            data-testid="btn-paste-import"
+            type="button"
+            className="relative z-50"
+            disabled={!canImport}
+            onClick={() => handlePasteImport(validReviews)}
+          >
+            {isImporting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Import en cours...
+              </>
+            ) : (
+              `Importer (${validReviews.length} avis)`
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Preview table */}
       {showPreview && parsedReviews.length > 0 && (
-        <Card>
-          <CardContent className="p-4">
-            <h4 className="font-medium mb-4">
-              Aperçu des avis détectés ({parsedReviews.length} total, {validReviewsCount} valides)
-            </h4>
-            
-            <div className="overflow-x-auto">
-              <table 
-                data-testid="paste-preview-table"
-                className="w-full border-collapse border border-border"
-              >
-                <thead>
-                  <tr className="bg-muted/50">
-                    <th scope="col" className="border border-border px-3 py-2 text-left text-sm font-medium">
-                      Auteur
-                    </th>
-                    <th scope="col" className="border border-border px-3 py-2 text-left text-sm font-medium">
-                      Note
-                    </th>
-                    <th scope="col" className="border border-border px-3 py-2 text-left text-sm font-medium">
-                      Commentaire
-                    </th>
-                    <th scope="col" className="border border-border px-3 py-2 text-left text-sm font-medium">
-                      Source
-                    </th>
-                    <th scope="col" className="border border-border px-3 py-2 text-left text-sm font-medium">
-                      Date
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {parsedReviews.map((review, index) => (
-                    <tr
-                      key={index}
-                      className={!review.isValid ? "border-destructive bg-destructive/5" : ""}
-                    >
-                      <td className="border border-border px-3 py-2 text-sm">
-                        {review.firstName} {review.lastName}
-                      </td>
-                      <td className="border border-border px-3 py-2">
-                        {renderStars(review.rating)}
-                      </td>
-                      <td className="border border-border px-3 py-2 text-sm max-w-md">
-                        <div className="truncate" title={review.comment || "Pas de commentaire"}>
-                          {review.comment ? (
-                            review.comment
-                          ) : (
-                            <span className="text-muted-foreground italic">Pas de commentaire</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="border border-border px-3 py-2">
-                        <Badge variant={review.platform === 'unknown' ? 'secondary' : 'default'}>
-                          {review.platform}
-                        </Badge>
-                      </td>
-                      <td className="border border-border px-3 py-2 text-sm text-muted-foreground">
-                        {review.reviewDate || '-'}
-                      </td>
+        <section data-testid="paste-preview-wrap" className="relative z-0">
+          <Card>
+            <CardContent className="p-4">
+              <h4 className="font-medium mb-4">
+                Aperçu des avis détectés ({parsedReviews.length} total, {validReviews.length} valides)
+              </h4>
+              
+              <div className="overflow-x-auto">
+                <table 
+                  data-testid="paste-preview-table"
+                  className="w-full border-collapse border border-border"
+                >
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th scope="col" className="border border-border px-3 py-2 text-left text-sm font-medium">
+                        Auteur
+                      </th>
+                      <th scope="col" className="border border-border px-3 py-2 text-left text-sm font-medium">
+                        Note
+                      </th>
+                      <th scope="col" className="border border-border px-3 py-2 text-left text-sm font-medium">
+                        Commentaire
+                      </th>
+                      <th scope="col" className="border border-border px-3 py-2 text-left text-sm font-medium">
+                        Source
+                      </th>
+                      <th scope="col" className="border border-border px-3 py-2 text-left text-sm font-medium">
+                        Date
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            
-            {parsedReviews.some(r => !r.isValid) && (
-              <p className="text-xs text-destructive mt-2">
-                Les lignes en rouge sont incomplètes et ne seront pas importées.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+                  </thead>
+                  <tbody>
+                    {parsedReviews.map((review, index) => (
+                      <tr
+                        key={index}
+                        className={!review.isValid ? "border-destructive bg-destructive/5" : ""}
+                      >
+                        <td className="border border-border px-3 py-2 text-sm">
+                          {review.firstName} {review.lastName}
+                        </td>
+                        <td className="border border-border px-3 py-2">
+                          {renderStars(review.rating)}
+                        </td>
+                        <td className="border border-border px-3 py-2 text-sm max-w-md">
+                          <div className="truncate" title={review.comment || "Pas de commentaire"}>
+                            {review.comment ? (
+                              review.comment
+                            ) : (
+                              <span className="text-muted-foreground italic">Pas de commentaire</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="border border-border px-3 py-2">
+                          <Badge variant={review.platform === 'unknown' ? 'secondary' : 'default'}>
+                            {review.platform}
+                          </Badge>
+                        </td>
+                        <td className="border border-border px-3 py-2 text-sm text-muted-foreground">
+                          {review.reviewDate || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {parsedReviews.some(r => !r.isValid) && (
+                <p className="text-xs text-destructive mt-2">
+                  Les lignes en rouge sont incomplètes et ne seront pas importées.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </section>
       )}
 
       {showPreview && parsedReviews.length === 0 && (
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">
-              Aucun avis détecté dans le texte collé. Vérifiez le format ou essayez de coller un autre contenu.
-            </p>
-          </CardContent>
-        </Card>
+        <section data-testid="paste-preview-wrap" className="relative z-0">
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground">
+                Aucun avis détecté dans le texte collé. Vérifiez le format ou essayez de coller un autre contenu.
+              </p>
+            </CardContent>
+          </Card>
+        </section>
       )}
     </div>
   );
