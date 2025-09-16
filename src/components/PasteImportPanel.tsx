@@ -11,9 +11,10 @@ import { useToast } from "@/hooks/use-toast";
 
 interface PasteImportPanelProps {
   onImportBulk?: (reviews: any[]) => void;
+  onClose?: () => void;
 }
 
-export default function PasteImportPanel({ onImportBulk }: PasteImportPanelProps) {
+export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportPanelProps) {
   const [pastedText, setPastedText] = useState("");
   const [parsedReviews, setParsedReviews] = useState<ParsedReview[]>([]);
   const [showPreview, setShowPreview] = useState(false);
@@ -51,14 +52,14 @@ export default function PasteImportPanel({ onImportBulk }: PasteImportPanelProps
     try {
       // Convert to ReviewCreate format
       const reviewsToCreate: ReviewCreate[] = validReviews.map(review => ({
-        establishment_id: currentEstablishment.id,
+        establishment_id: currentEstablishment.id || currentEstablishment.place_id,
         establishment_place_id: currentEstablishment.place_id,
         establishment_name: currentEstablishment.name,
         source: review.platform || "pasted",
-        author_first_name: review.firstName,
-        author_last_name: review.lastName,
+        author_first_name: review.firstName || "",
+        author_last_name: review.lastName || "",
         rating: review.rating,
-        comment: review.comment,
+        comment: review.comment || "",
         review_date: review.reviewDate || null,
         import_method: "paste",
         import_source_url: null
@@ -76,6 +77,11 @@ export default function PasteImportPanel({ onImportBulk }: PasteImportPanelProps
       setPastedText("");
       setParsedReviews([]);
       setShowPreview(false);
+      
+      // Optionally close the import toolbar
+      if (onClose) {
+        onClose();
+      }
       
     } catch (error) {
       console.error('Error importing reviews:', error);

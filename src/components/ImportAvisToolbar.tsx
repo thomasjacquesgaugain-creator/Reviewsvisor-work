@@ -64,7 +64,7 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed }: ImportAvi
       case "csv":
         return <ImportCsvPanel onFileAnalyzed={onFileAnalyzed} />;
       case "paste":
-        return <PasteImportPanel onImportBulk={handleBulkImport} />;
+        return <PasteImportPanel onImportBulk={handleBulkImport} onClose={onClose} />;
       case "auto":
         return (
           <div className="text-center py-8 text-muted-foreground">
