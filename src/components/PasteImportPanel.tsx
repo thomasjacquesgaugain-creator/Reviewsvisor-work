@@ -63,9 +63,9 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
     try {
       const { inserted, skipped } = await bulkCreateReviews(payload);
       toast({
-        title: "✅ Import réussi",
+        title: "Avis enregistrés",
         description: (
-          <span data-testid="toast-import-success">{`${inserted} avis enregistrés pour ${est.name} (doublons ignorés : ${skipped}).`}</span>
+          <span data-testid="toast-import-success">{`✅ ${inserted} avis enregistrés pour ${est.name} (doublons ignorés : ${skipped}).`}</span>
         ),
         duration: 4000,
       });

@@ -182,3 +182,43 @@ export async function getRecentReviews(establishmentId: string, limit: number = 
 
   return reviews || [];
 }
+
+export async function getReviewsList(
+  establishmentId: string, 
+  options: { limit?: number; cursor?: string } = {}
+): Promise<{ items: any[]; nextCursor?: string }> {
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) throw new Error('User not authenticated');
+
+  const { limit = 50, cursor } = options;
+  
+  let query = supabase
+    .from('reviews')
+    .select('id, author, rating, text, source, published_at, inserted_at')
+    .eq('user_id', user.user.id)
+    .eq('place_id', establishmentId)
+    .order('published_at', { ascending: false })
+    .order('inserted_at', { ascending: false })
+    .limit(limit + 1); // Get one extra to check if there are more
+
+  if (cursor) {
+    query = query.lt('inserted_at', cursor);
+  }
+
+  const { data: reviews, error } = await query;
+
+  if (error) {
+    console.error('Error fetching reviews list:', error);
+    throw error;
+  }
+
+  const items = reviews || [];
+  const hasMore = items.length > limit;
+  const actualItems = hasMore ? items.slice(0, limit) : items;
+  const nextCursor = hasMore ? items[limit - 1].inserted_at : undefined;
+
+  return {
+    items: actualItems,
+    nextCursor
+  };
+}
