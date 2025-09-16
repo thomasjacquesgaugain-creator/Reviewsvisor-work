@@ -41,9 +41,17 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
       return;
     }
     
-    const validReviews = parsedReviews.filter(review => review.isValid);
+    // Filter only valid reviews (with rating 1-5)
+    const validReviews = parsedReviews.filter(review => 
+      Number.isFinite(review.rating) && review.rating >= 1 && review.rating <= 5
+    );
     
     if (validReviews.length === 0) {
+      toast({
+        title: "Aucun avis valide",
+        description: "Aucun avis avec une note valide (1-5) n'a été trouvé.",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -95,7 +103,11 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
     }
   };
 
-  const validReviewsCount = parsedReviews.filter(review => review.isValid).length;
+  // Calculate valid reviews count based on rating criteria
+  const validReviews = parsedReviews.filter(review => 
+    Number.isFinite(review.rating) && review.rating >= 1 && review.rating <= 5
+  );
+  const validReviewsCount = validReviews.length;
 
   const renderStars = (rating: number) => {
     return (
@@ -152,8 +164,10 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
         
         <Button
           data-testid="btn-paste-import"
+          type="button"
           onClick={handleImport}
           disabled={!showPreview || validReviewsCount === 0 || isImporting || !currentEstablishment}
+          className="pointer-events-auto relative z-10"
         >
           {isImporting ? (
             <>
