@@ -60,6 +60,7 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
       review_date: v.reviewDate || null,
       import_method: "paste",
       import_source_url: (v as any).sourceUrl || null,
+      raw_fingerprint: v.rawFingerprint || undefined,
     }));
 
     setIsImporting(true);

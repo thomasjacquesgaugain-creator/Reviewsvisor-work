@@ -12,6 +12,7 @@ export interface ReviewCreate {
   review_date?: string | null;
   import_method: string;
   import_source_url?: string | null;
+  raw_fingerprint?: string; // Fingerprint for paste deduplication
 }
 
 export interface BulkCreateResult {
@@ -37,10 +38,17 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
   for (const review of reviews) {
     try {
       // Create hash for deduplication
-      const normalizedText = (review.comment || "").toLowerCase().trim();
-      const authorName = `${review.author_first_name} ${review.author_last_name}`.trim();
-      const hashInput = `${review.establishment_id}|${review.author_first_name || ""}|${review.author_last_name || ""}|${review.review_date || ""}|${review.rating}|${normalizedText}`;
-      const reviewHash = simpleHash(hashInput);
+      let reviewHash: string;
+      
+      if (review.import_method === "paste" && review.raw_fingerprint) {
+        // Use fingerprint for paste imports to avoid over-deduplication
+        reviewHash = simpleHash(`${review.establishment_id}|${review.raw_fingerprint}`);
+      } else {
+        // Fallback to strict deduplication for other imports
+        const normalizedText = (review.comment || "").toLowerCase().trim();
+        const hashInput = `${review.establishment_id}|${review.author_first_name || ""}|${review.author_last_name || ""}|${review.review_date || ""}|${review.rating}|${normalizedText}`;
+        reviewHash = simpleHash(hashInput);
+      }
       
       // Check if review already exists (by hash)
       const { data: existingReview } = await supabase

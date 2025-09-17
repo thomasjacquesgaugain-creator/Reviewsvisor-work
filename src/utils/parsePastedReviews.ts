@@ -6,6 +6,22 @@ export interface ParsedReview {
   platform: string;
   reviewDate: string;
   isValid: boolean;
+  rawFingerprint?: string; // Fingerprint of the raw text block
+}
+
+// Simple hash function for fingerprinting
+function simpleHash(text: string): string {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash).toString(16);
+}
+
+function normSpaces(s: string): string {
+  return (s || "").trim().replace(/\s+/g, " ").toLowerCase();
 }
 
 export function parsePastedReviews(rawText: string): ParsedReview[] {
@@ -15,6 +31,7 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
   let currentReview: Partial<ParsedReview> = {};
   let collectingComment = false;
   let commentLines: string[] = [];
+  let reviewStartIndex = 0; // Track where current review block starts
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -24,13 +41,14 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
     if (ratingMatch) {
       // Save previous review if exists
       if (currentReview.rating && currentReview.firstName) {
-        finishCurrentReview();
+        finishCurrentReview(i - 1);
       }
       
       // Start new review
       currentReview = {};
       collectingComment = false;
       commentLines = [];
+      reviewStartIndex = i; // Mark start of new review block
       
       if (ratingMatch[1]) {
         // Numeric rating like "4,5/5" or "4.5/5"
@@ -121,10 +139,13 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
   
   // Don't forget the last review
   if (currentReview.rating && currentReview.firstName) {
-    finishCurrentReview();
+    finishCurrentReview(lines.length - 1);
   }
   
-  function finishCurrentReview() {
+  function finishCurrentReview(endIndex: number) {
+    // Calculate fingerprint from raw text block
+    const rawBlock = lines.slice(reviewStartIndex, endIndex + 1).join("\n");
+    const fingerprint = simpleHash(normSpaces(rawBlock));
     const review: ParsedReview = {
       firstName: currentReview.firstName || '',
       lastName: currentReview.lastName || '',
@@ -132,7 +153,8 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
       comment: commentLines.join(' ').trim(),
       platform: currentReview.platform || 'unknown',
       reviewDate: currentReview.reviewDate || '',
-      isValid: !!(currentReview.firstName && currentReview.rating)
+      isValid: !!(currentReview.firstName && currentReview.rating),
+      rawFingerprint: fingerprint
     };
     
     // Simple deduplication based on content hash
