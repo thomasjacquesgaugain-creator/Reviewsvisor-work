@@ -647,6 +647,12 @@ export type Database = {
         Args: { "": unknown } | { "": unknown }
         Returns: string
       }
+      count_unique_reviews: {
+        Args: { p_place_id: string; p_user_id: string }
+        Returns: {
+          count: number
+        }[]
+      }
       disablelongtransactions: {
         Args: Record<PropertyKey, never>
         Returns: string

@@ -69,7 +69,7 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
       
       // TOAST bas-droite avec rapport détaillé
       const duplicates = reasons?.duplicate || 0;
-      sonnerToast.success(`✅ ${inserted} avis enregistrés pour ${est.name} (doublons: ${duplicates})`, {
+      sonnerToast.success(`✅ ${inserted} avis ajoutés. 🔁 Doublons ignorés : ${duplicates + (skipped - duplicates)}`, {
         duration: 5000,
         action: {
           label: "Détails",

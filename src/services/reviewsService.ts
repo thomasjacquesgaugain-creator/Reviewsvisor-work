@@ -265,17 +265,6 @@ export async function getReviewsSummary(establishmentId: string) {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('User not authenticated');
 
-  // Get COUNT DISTINCT for unique reviews count
-  const { data: countData, error: countError } = await supabase
-    .rpc('count_unique_reviews', { 
-      p_place_id: establishmentId, 
-      p_user_id: user.user.id 
-    });
-
-  if (countError) {
-    console.warn('Error fetching unique count, falling back to regular count:', countError);
-  }
-
   // Get all reviews for ratings calculations (use DISTINCT to avoid duplicates)
   const { data: reviews, error } = await supabase
     .from('reviews')
@@ -304,8 +293,8 @@ export async function getReviewsSummary(establishmentId: string) {
     };
   }
 
-  // Use the count from RPC if available, otherwise use filtered count
-  const total = countData?.[0]?.count || uniqueReviews.length;
+  // Use filtered unique count
+  const total = uniqueReviews.length;
   const avgRating = uniqueReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / uniqueReviews.length;
 
   // Group by stars (using unique reviews only)
