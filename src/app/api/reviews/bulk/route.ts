@@ -2,18 +2,15 @@ import { supabase } from "@/integrations/supabase/client";
 import crypto from "crypto";
 
 interface ReviewCreate {
-  establishment_id: string;
-  establishment_place_id: string;
-  establishment_name: string;
-  source: string;
-  author_first_name: string;
-  author_last_name: string;
+  establishmentId: string;
+  platform: string;
+  authorFirstName: string | null;
+  authorLastName: string | null;
   rating: number;
   comment: string;
-  review_date?: string | null;
+  reviewDate?: string | null;
   import_method: string;
-  import_source_url?: string | null;
-  raw_fingerprint?: string;
+  raw_fingerprint?: string | null;
 }
 
 interface BulkCreateResult {
@@ -30,40 +27,18 @@ interface BulkCreateResult {
   }>;
 }
 
-function normalizeText(text: string): string {
-  return (text || "").trim().replace(/\s+/g, " ").toLowerCase();
-}
+const norm = (s?: string) => (s || "").trim().replace(/\s+/g, " ").toLowerCase();
 
-function generateDedupKey(review: ReviewCreate): string {
-  if (review.import_method === "paste" && review.raw_fingerprint) {
-    return crypto
-      .createHash("sha1")
-      .update(`${review.establishment_place_id}|${review.raw_fingerprint}`)
-      .digest("hex");
-  }
-  
-  // Fallback for CSV/auto imports
-  const parts = [
-    review.establishment_place_id,
-    normalizeText(review.author_first_name) + " " + normalizeText(review.author_last_name),
-    String(review.rating),
-    normalizeText(review.comment),
-    String(review.review_date || ""),
-    normalizeText(review.source || "")
-  ];
-  
-  return crypto
-    .createHash("sha1")
-    .update(parts.join("|"))
-    .digest("hex");
+function sha1Hex(s: string): string {
+  return crypto.createHash("sha1").update(s).digest("hex");
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const reviews: ReviewCreate[] = body.reviews || [];
+    const input = body.reviews || [];
 
-    if (!Array.isArray(reviews) || reviews.length === 0) {
+    if (!Array.isArray(input) || input.length === 0) {
       return Response.json({ error: "No reviews provided" }, { status: 400 });
     }
 
@@ -74,7 +49,6 @@ export async function POST(request: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    let inserted = 0;
     const reasons = {
       duplicate: 0,
       missingRating: 0,
@@ -82,94 +56,145 @@ export async function POST(request: Request) {
     };
     const sampleSkipped: Array<{ reason: string; snippet: string }> = [];
 
-    for (const review of reviews) {
-      try {
-        // Validate required fields
-        if (!review.establishment_place_id) {
-          reasons.missingEstablishment++;
-          if (sampleSkipped.length < 5) {
-            sampleSkipped.push({
-              reason: 'missing_establishment',
-              snippet: `${review.author_first_name || 'Anonyme'}: ${(review.comment || '').substring(0, 50)}...`
-            });
-          }
-          continue;
-        }
-
-        if (!review.rating || review.rating < 1 || review.rating > 5) {
-          reasons.missingRating++;
-          if (sampleSkipped.length < 5) {
-            sampleSkipped.push({
-              reason: 'missing_rating',
-              snippet: `${review.author_first_name || 'Anonyme'}: ${(review.comment || '').substring(0, 50)}...`
-            });
-          }
-          continue;
-        }
-
-        // Generate dedup key
-        const dedupKey = generateDedupKey(review);
-        
-        // Parse review date safely
-        let publishedAt: string | null = null;
-        if (review.review_date) {
-          try {
-            const date = new Date(review.review_date);
-            if (!isNaN(date.getTime()) && review.review_date !== 'Invalid Date') {
-              publishedAt = date.toISOString();
-            }
-          } catch (e) {
-            // Invalid date, keep null
-          }
-        }
-        
-        // Insert new review with dedup_key
-        const { error } = await supabase
-          .from('reviews')
-          .insert({
-            user_id: user.id,
-            place_id: review.establishment_place_id,
-            source: review.source,
-            author: `${review.author_first_name} ${review.author_last_name}`.trim() || 'Anonyme',
-            rating: review.rating,
-            text: review.comment || "",
-            published_at: publishedAt,
-            source_review_id: dedupKey, // Keep existing field for compatibility
-            dedup_key: dedupKey, // New dedicated field
-            raw: {
-              import_method: review.import_method,
-              import_source_url: review.import_source_url,
-              author_first_name: review.author_first_name,
-              author_last_name: review.author_last_name,
-              establishment_name: review.establishment_name,
-              raw_fingerprint: review.raw_fingerprint
-            }
+    // Process and validate reviews
+    const processedReviews: Array<ReviewCreate & { dedupKey: string }> = [];
+    
+    for (const r of input) {
+      if (!r.establishmentId || !Number.isFinite(r.rating)) { 
+        reasons.missingEstablishment++;
+        if (sampleSkipped.length < 5) {
+          sampleSkipped.push({
+            reason: 'missing_establishment',
+            snippet: `${r.authorFirstName || 'Anonyme'}: ${(r.comment || '').substring(0, 50)}...`
           });
-        
-        if (error) {
-          // Check if it's a duplicate constraint violation
-          if (error.code === '23505' && error.message?.includes('ux_reviews_est_dedup')) {
-            reasons.duplicate++;
-            if (sampleSkipped.length < 5) {
-              sampleSkipped.push({
-                reason: 'duplicate',
-                snippet: `${review.author_first_name || 'Anonyme'}: ${(review.comment || '').substring(0, 50)}...`
-              });
-            }
-          } else {
-            console.error('Error inserting review:', error);
-          }
-        } else {
-          inserted++;
         }
-      } catch (error) {
-        console.error('Error processing review:', error);
+        continue;
+      }
+
+      if (r.rating < 1 || r.rating > 5) {
+        reasons.missingRating++;
+        if (sampleSkipped.length < 5) {
+          sampleSkipped.push({
+            reason: 'missing_rating',
+            snippet: `${r.authorFirstName || 'Anonyme'}: ${(r.comment || '').substring(0, 50)}...`
+          });
+        }
+        continue;
+      }
+
+      // Generate dedupKey
+      let dedupKey: string;
+      if (r.import_method === "paste" && r.raw_fingerprint) {
+        dedupKey = sha1Hex(`${r.establishmentId}|${norm(r.raw_fingerprint)}`);
+      } else {
+        dedupKey = sha1Hex([
+          r.establishmentId,
+          norm(r.authorFirstName) + " " + norm(r.authorLastName),
+          String(r.rating),
+          norm(r.comment),
+          String(r.reviewDate || ""),
+          norm(r.platform || "")
+        ].join("|"));
+      }
+
+      // Ensure comment is not null
+      if (r.comment == null) r.comment = "";
+
+      processedReviews.push({ ...r, dedupKey });
+    }
+
+    if (processedReviews.length === 0) {
+      return Response.json({ 
+        inserted: 0, 
+        skipped: input.length,
+        reasons,
+        sampleSkipped
+      });
+    }
+
+    // Check for existing dedupKeys to filter duplicates BEFORE insertion
+    const dedupKeys = processedReviews.map(r => r.dedupKey);
+    const { data: existingReviews } = await supabase
+      .from('reviews')
+      .select('dedup_key')
+      .eq('user_id', user.id)
+      .eq('place_id', processedReviews[0].establishmentId)
+      .in('dedup_key', dedupKeys);
+
+    const existingKeys = new Set(existingReviews?.map(r => r.dedup_key) || []);
+    const toCreate = processedReviews.filter(r => !existingKeys.has(r.dedupKey));
+    
+    // Count duplicates found during pre-filtering
+    const duplicatesCount = processedReviews.length - toCreate.length;
+    reasons.duplicate = duplicatesCount;
+    
+    // Add duplicate samples
+    for (const review of processedReviews) {
+      if (existingKeys.has(review.dedupKey) && sampleSkipped.length < 5) {
+        sampleSkipped.push({
+          reason: 'duplicate',
+          snippet: `${review.authorFirstName || 'Anonyme'}: ${(review.comment || '').substring(0, 50)}...`
+        });
       }
     }
-    
+
+    if (toCreate.length === 0) {
+      return Response.json({ 
+        inserted: 0, 
+        skipped: input.length,
+        reasons,
+        sampleSkipped
+      });
+    }
+
+    // Bulk insert only unique reviews
+    const reviewsToInsert = toCreate.map(review => {
+      // Parse review date safely
+      let publishedAt: string | null = null;
+      if (review.reviewDate) {
+        try {
+          const date = new Date(review.reviewDate);
+          if (!isNaN(date.getTime()) && review.reviewDate !== 'Invalid Date') {
+            publishedAt = date.toISOString();
+          }
+        } catch (e) {
+          // Invalid date, keep null
+        }
+      }
+
+      return {
+        user_id: user.id,
+        place_id: review.establishmentId,
+        source: review.platform,
+        author: `${review.authorFirstName || ""} ${review.authorLastName || ""}`.trim() || 'Anonyme',
+        rating: review.rating,
+        text: review.comment || "",
+        published_at: publishedAt,
+        source_review_id: review.dedupKey, // Keep for backward compatibility
+        dedup_key: review.dedupKey, // New dedup_key column
+        raw: {
+          import_method: review.import_method,
+          author_first_name: review.authorFirstName,
+          author_last_name: review.authorLastName,
+          raw_fingerprint: review.raw_fingerprint
+        }
+      };
+    });
+
+    const { data, error } = await supabase
+      .from('reviews')
+      .insert(reviewsToInsert)
+      .select('id');
+
+    if (error) {
+      console.error('Bulk insert error:', error);
+      throw error;
+    }
+
+    const inserted = data?.length || 0;
     const result: BulkCreateResult = { 
       inserted, 
-      skipped: reviews.length - inserted,
+      skipped: input.length - inserted,
       reasons,
       sampleSkipped
     };
