@@ -1,3 +1,6 @@
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 import { supabase } from "@/integrations/supabase/client";
 
 export async function GET(request: Request) {
@@ -41,6 +44,13 @@ export async function GET(request: Request) {
       totalUnique,
       duplicates,
       avgRating: Number(avgRating.toFixed(1))
+    }, {
+      // Empêcher tout cache intermédiaire
+      headers: {
+        "Cache-Control": "no-store, max-age=0, must-revalidate",
+        "CDN-Cache-Control": "no-store",
+        "Vercel-CDN-Cache-Control": "no-store",
+      },
     });
 
   } catch (error) {

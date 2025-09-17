@@ -16,6 +16,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
+import { useReviewsSummary } from "@/hooks/useReviewsSummary";
 import { getReviewsSummary, listAllReviews, listAll } from "@/services/reviewsService";
 import { STORAGE_KEY } from "@/types/etablissement";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
@@ -51,11 +52,32 @@ export function ReviewsVisualPanel({
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [refreshToken, setRefreshToken] = useState(0);
   const currentEstablishment = useCurrentEstablishment();
   
   // Use props first, fallback to current establishment
   const effectiveId = establishmentId || currentEstablishment?.id || currentEstablishment?.place_id;
   const displayName = establishmentName ?? currentEstablishment?.name ?? "—";
+  
+  // Hook pour le résumé avec cache-busting
+  const { summary: hookSummary, isLoading: isLoadingSummary, refetch: refetchSummary } = useReviewsSummary(effectiveId, refreshToken);
+  
+  // État local optimistic pour la tuile
+  const [localSummary, setLocalSummary] = useState<{ totalAll: number; avgRating: number | null }>({
+    totalAll: 0,
+    avgRating: null,
+  });
+  // Sync quand hookSummary change
+  useEffect(() => {
+    if (hookSummary) {
+      setLocalSummary({ 
+        totalAll: hookSummary.totalAll ?? 0, 
+        avgRating: hookSummary.avgRating ?? null 
+      });
+      setSummary(hookSummary as ReviewsSummary);
+    }
+  }, [hookSummary]);
+
   useEffect(() => {
     const loadData = async () => {
       if (!effectiveId) {
@@ -65,16 +87,10 @@ export function ReviewsVisualPanel({
       }
       
       try {
-        setIsLoading(true);
         setIsLoadingReviews(true);
         
-        // Load summary and ALL reviews in parallel
-        const [summaryData, allReviews] = await Promise.all([
-          getReviewsSummary(effectiveId),
-          listAll(effectiveId)
-        ]);
-        
-        setSummary(summaryData);
+        // Load ALL reviews
+        const allReviews = await listAll(effectiveId);
         
         // Map ALL reviews to table format
         const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
@@ -88,7 +104,6 @@ export function ReviewsVisualPanel({
         setReviewsList(mappedRows);
       } catch (error) {
         console.error("Error loading reviews data:", error);
-        setSummary(null);
         setReviewsList([]);
       } finally {
         setIsLoading(false);
@@ -97,7 +112,7 @@ export function ReviewsVisualPanel({
     };
     
     loadData();
-  }, [effectiveId]);
+  }, [effectiveId, refreshToken]);
 
   // Écoute l'évènement envoyé après import pour recharger
   useEffect(() => {
@@ -183,15 +198,15 @@ export function ReviewsVisualPanel({
       return;
     }
 
-    // Collecter les IDs des avis affichés - on va utiliser l'index comme ID temporaire
-    // car les ReviewsTableRow n'ont pas d'ID dans l'interface actuelle
     const visibleCount = reviewsList.length;
 
     try {
       setIsDeleting(true);
       
-      // Pour cette version, on va supprimer par place_id comme avant
-      // mais en utilisant la nouvelle route pour cohérence
+      // OPTIMISTIC UI : mise à 0 immédiate
+      setReviewsList([]);
+      setLocalSummary({ totalAll: 0, avgRating: null });
+      
       const response = await fetch('/api/avis/purge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -216,25 +231,13 @@ export function ReviewsVisualPanel({
       
       toast.success(`🗑️ ${deleted} avis supprimés`);
       
-      // Vider immédiatement la liste et le résumé
-      setReviewsList([]);
-      setSummary({
-        total: 0,
-        avgRating: 0,
-        byStars: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
-        byMonth: []
-      });
+      // Refetch forcé avec cache-buster
+      setRefreshToken(Date.now());
+      await refetchSummary();
       
-      // Recharger les données avec cache-busting
+      // Recharger la liste aussi
       try {
-        const cacheBuster = Date.now();
-        const [summaryData, allReviews] = await Promise.all([
-          getReviewsSummary(effectiveId).then(data => ({ ...data, _cacheBuster: cacheBuster })),
-          listAll(effectiveId).then(data => ({ ...data, _cacheBuster: cacheBuster }))
-        ]);
-        
-        setSummary(summaryData);
-        
+        const allReviews = await listAll(effectiveId);
         const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
           authorName: review.author || "Anonyme",
           rating: review.rating || 0,
@@ -242,7 +245,6 @@ export function ReviewsVisualPanel({
           platform: review.source || "Google",
           reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
         }));
-        
         setReviewsList(mappedRows);
       } catch (refreshError) {
         console.error('Error refreshing data after delete:', refreshError);
@@ -256,6 +258,10 @@ export function ReviewsVisualPanel({
     } catch (error) {
       console.error('Purge error:', error);
       toast.error(`❌ Erreur lors de la suppression : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      
+      // En cas d'erreur, recharger pour annuler l'optimistic UI
+      setRefreshToken(Date.now());
+      await refetchSummary();
     } finally {
       setIsDeleting(false);
     }
@@ -352,7 +358,9 @@ export function ReviewsVisualPanel({
                   <Star className="w-8 h-8 text-yellow-500 mr-3" />
                   <div>
                     <p className="text-sm text-muted-foreground">Note moyenne</p>
-                    <p className="text-2xl font-bold">{summary.avgRating.toFixed(1)}/5</p>
+                    <p className="text-2xl font-bold">
+                      {localSummary.avgRating ? localSummary.avgRating.toFixed(1) : "—"}/5
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -362,9 +370,9 @@ export function ReviewsVisualPanel({
                   <BarChart3 className="w-8 h-8 text-blue-500 mr-3" />
                   <div>
                     <p className="text-sm text-muted-foreground">Total d'avis</p>
-                    <p className="text-2xl font-bold">{summary.total}</p>
+                    <p className="text-2xl font-bold">{localSummary.totalAll}</p>
                   </div>
-                  {summary.total > 0 && (
+                  {localSummary.totalAll > 0 && (
                     <Button
                       variant="ghost"
                       size="icon"
