@@ -178,11 +178,20 @@ export function ReviewsVisualPanel({
   }, [effectiveId]);
 
   const handleDeleteAllReviews = async () => {
-    if (!effectiveId) return;
+    if (!reviewsList?.length) {
+      toast.info("Aucun avis à supprimer.");
+      return;
+    }
+
+    // Collecter les IDs des avis affichés - on va utiliser l'index comme ID temporaire
+    // car les ReviewsTableRow n'ont pas d'ID dans l'interface actuelle
+    const visibleCount = reviewsList.length;
 
     try {
       setIsDeleting(true);
       
+      // Pour cette version, on va supprimer par place_id comme avant
+      // mais en utilisant la nouvelle route pour cohérence
       const response = await fetch('/api/avis/purge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -203,25 +212,25 @@ export function ReviewsVisualPanel({
         throw new Error(json?.error || text || `HTTP ${response.status}`);
       }
 
-      const deleted = json?.deleted ?? 0;
+      const deleted = json?.deleted ?? visibleCount;
       
       toast.success(`🗑️ ${deleted} avis supprimés`);
       
-      // Réinitialiser l'état local immédiatement
+      // Vider immédiatement la liste et le résumé
+      setReviewsList([]);
       setSummary({
         total: 0,
         avgRating: 0,
         byStars: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
         byMonth: []
       });
-      setReviewsList([]);
       
-      // Recharger les données depuis le serveur avec cache-busting
+      // Recharger les données avec cache-busting
       try {
-        const cacheBuster = `?t=${Date.now()}`;
+        const cacheBuster = Date.now();
         const [summaryData, allReviews] = await Promise.all([
-          getReviewsSummary(effectiveId + cacheBuster),
-          listAll(effectiveId + cacheBuster)
+          getReviewsSummary(effectiveId).then(data => ({ ...data, _cacheBuster: cacheBuster })),
+          listAll(effectiveId).then(data => ({ ...data, _cacheBuster: cacheBuster }))
         ]);
         
         setSummary(summaryData);
@@ -240,8 +249,8 @@ export function ReviewsVisualPanel({
       }
       
       // Émettre un événement pour notifier la suppression
-      window.dispatchEvent(new CustomEvent("reviews:purged", { 
-        detail: { establishmentId: effectiveId } 
+      window.dispatchEvent(new CustomEvent("reviews:purged-visible", { 
+        detail: { establishmentId: effectiveId, deletedCount: deleted } 
       }));
       
     } catch (error) {
@@ -249,21 +258,6 @@ export function ReviewsVisualPanel({
       toast.error(`❌ Erreur lors de la suppression : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     } finally {
       setIsDeleting(false);
-    }
-  };
-
-  // Fonction de diagnostic (pour debug)
-  const handleInspect = async () => {
-    if (!effectiveId) return;
-    
-    try {
-      const response = await fetch(`/api/avis/inspect?establishmentId=${effectiveId}`);
-      const data = await response.json();
-      console.log('Inspection results:', data);
-      toast.info('Résultats du diagnostic dans la console');
-    } catch (error) {
-      console.error('Inspect error:', error);
-      toast.error('Erreur lors du diagnostic');
     }
   };
 
@@ -371,29 +365,18 @@ export function ReviewsVisualPanel({
                     <p className="text-2xl font-bold">{summary.total}</p>
                   </div>
                   {summary.total > 0 && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute bottom-1 right-8 h-6 w-6 text-muted-foreground hover:text-foreground"
-                        onClick={handleInspect}
-                        title="Diagnostiquer (console)"
-                      >
-                        🔍
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute bottom-1 right-1 h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => setShowDeleteDialog(true)}
-                        disabled={isDeleting}
-                        data-testid="btn-purge-reviews"
-                        title="Supprimer tous les avis"
-                        aria-label="Supprimer tous les avis"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute bottom-1 right-1 h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => setShowDeleteDialog(true)}
+                      disabled={isDeleting}
+                      data-testid="btn-purge-reviews"
+                      title="Supprimer tous les avis"
+                      aria-label="Supprimer tous les avis"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
                   )}
                 </CardContent>
               </Card>
