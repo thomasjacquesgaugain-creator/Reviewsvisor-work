@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText } from "lucide-react";
+import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
@@ -38,6 +39,7 @@ export function ReviewsVisualPanel({
   const [isLoading, setIsLoading] = useState(true);
   const [reviewsList, setReviewsList] = useState<ReviewsTableRow[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const currentEstablishment = useCurrentEstablishment();
   
   // Use props first, fallback to current establishment
@@ -120,6 +122,59 @@ export function ReviewsVisualPanel({
     window.addEventListener("reviews:imported", onImported);
     return () => window.removeEventListener("reviews:imported", onImported);
   }, [effectiveId]);
+
+  const handleDeleteAllReviews = async () => {
+    if (!effectiveId) return;
+    
+    if (!confirm("Êtes-vous sûr de vouloir supprimer TOUS les avis de cet établissement ? Cette action est irréversible.")) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      
+      const response = await fetch(`/api/reviews/delete-all?establishmentId=${effectiveId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Erreur inconnue' }));
+        throw new Error(errorData.error || `Erreur ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      toast.success(`🗑️ ${result.deleted} avis supprimés avec succès`);
+      
+      // Recharger les données
+      setSummary(null);
+      setReviewsList([]);
+      
+      // Recharger le résumé et la liste
+      const [summaryData, allReviews] = await Promise.all([
+        getReviewsSummary(effectiveId),
+        listAll(effectiveId)
+      ]);
+      
+      setSummary(summaryData);
+      
+      const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
+        authorName: review.author || "Anonyme",
+        rating: review.rating || 0,
+        comment: review.text || "",
+        platform: review.source || "Google",
+        reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
+      }));
+      
+      setReviewsList(mappedRows);
+      
+    } catch (error) {
+      console.error('Error deleting reviews:', error);
+      toast.error(`❌ Erreur lors de la suppression : ${error instanceof Error ? error.message : 'erreur inconnue'}`);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Fallback: read the last selected establishment name from localStorage
   const fallbackName = (() => {
@@ -217,13 +272,26 @@ export function ReviewsVisualPanel({
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="relative">
                 <CardContent className="flex items-center p-4" data-testid="metric-total-reviews">
                   <BarChart3 className="w-8 h-8 text-blue-500 mr-3" />
                   <div>
                     <p className="text-sm text-muted-foreground">Total d'avis</p>
                     <p className="text-2xl font-bold">{summary.total}</p>
                   </div>
+                  {summary.total > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute bottom-1 right-1 h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={handleDeleteAllReviews}
+                      disabled={isDeleting}
+                      data-testid="btn-delete-all-reviews"
+                      title="Supprimer tous les avis"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </div>
