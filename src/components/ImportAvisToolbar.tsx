@@ -10,11 +10,12 @@ import PasteImportPanel from "./PasteImportPanel";
 interface ImportAvisToolbarProps {
   onClose: () => void;
   onFileAnalyzed?: () => void;
+  onImportSuccess?: () => void;
 }
 
 type ActiveTab = "manual" | "csv" | "paste" | "auto";
 
-export default function ImportAvisToolbar({ onClose, onFileAnalyzed }: ImportAvisToolbarProps) {
+export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuccess }: ImportAvisToolbarProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>("paste");
 
   const handleManualReviewSubmit = (review: { firstName: string; lastName: string; rating: number; comment: string }) => {
@@ -64,7 +65,7 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed }: ImportAvi
       case "csv":
         return <ImportCsvPanel onFileAnalyzed={onFileAnalyzed} />;
       case "paste":
-        return <PasteImportPanel onImportBulk={handleBulkImport} onClose={onClose} />;
+        return <PasteImportPanel onImportBulk={handleBulkImport} onClose={onClose} onImportSuccess={onImportSuccess} />;
       case "auto":
         return (
           <div className="text-center py-8 text-muted-foreground">

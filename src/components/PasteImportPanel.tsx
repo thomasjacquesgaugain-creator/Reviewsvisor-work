@@ -2,19 +2,20 @@ import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { parsePastedReviews, ParsedReview } from "@/utils/parsePastedReviews";
-import { Star, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { bulkCreateReviews, ReviewCreate } from "@/services/reviewsService";
 import { useToast } from "@/hooks/use-toast";
+import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
 
 interface PasteImportPanelProps {
   onImportBulk?: (reviews: any[]) => void;
   onClose?: () => void;
+  onImportSuccess?: () => void; // Callback to refresh reviews data
 }
 
-export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportPanelProps) {
+export default function PasteImportPanel({ onImportBulk, onClose, onImportSuccess }: PasteImportPanelProps) {
   const [pastedText, setPastedText] = useState("");
   const [parsedReviews, setParsedReviews] = useState<ParsedReview[]>([]);
   const [showPreview, setShowPreview] = useState(false);
@@ -72,6 +73,10 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
       setParsedReviews([]);
       setPastedText("");
       setShowPreview(false);
+      // Refresh reviews data
+      if (onImportSuccess) {
+        onImportSuccess();
+      }
       // Option : fermer la barre
       if (onClose) {
         onClose();
@@ -88,7 +93,7 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
     } finally {
       setIsImporting(false);
     }
-  }, [currentEstablishment, parsedReviews, onClose]);
+  }, [currentEstablishment, parsedReviews, onClose, onImportSuccess]);
 
   // Calculate valid reviews count based on rating criteria
   const validReviews = useMemo(() => {
@@ -98,20 +103,16 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
 
   const canImport = !isImporting && validReviews.length > 0;
 
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`w-4 h-4 ${
-              star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-            }`}
-          />
-        ))}
-      </div>
-    );
-  };
+  // Convert parsed reviews to table format
+  const reviewsTableData: ReviewsTableRow[] = useMemo(() => {
+    return parsedReviews.map(review => ({
+      authorName: `${review.firstName} ${review.lastName}`.trim() || "Anonyme",
+      rating: review.rating,
+      comment: review.comment || "",
+      platform: review.platform || "unknown",
+      reviewDate: review.reviewDate || null
+    }));
+  }, [parsedReviews]);
 
   return (
     <div data-testid="paste-import-panel" className="space-y-6 relative z-40 pointer-events-auto">
@@ -183,64 +184,12 @@ export default function PasteImportPanel({ onImportBulk, onClose }: PasteImportP
                 Aperçu des avis détectés ({parsedReviews.length} total, {validReviews.length} valides)
               </h4>
               
-              <div className="overflow-x-auto">
-                <table 
-                  data-testid="paste-preview-table"
-                  className="w-full border-collapse border border-border"
-                >
-                  <thead>
-                    <tr className="bg-muted/50">
-                      <th scope="col" className="border border-border px-3 py-2 text-left text-sm font-medium">
-                        Auteur
-                      </th>
-                      <th scope="col" className="border border-border px-3 py-2 text-left text-sm font-medium">
-                        Note
-                      </th>
-                      <th scope="col" className="border border-border px-3 py-2 text-left text-sm font-medium">
-                        Commentaire
-                      </th>
-                      <th scope="col" className="border border-border px-3 py-2 text-left text-sm font-medium">
-                        Source
-                      </th>
-                      <th scope="col" className="border border-border px-3 py-2 text-left text-sm font-medium">
-                        Date
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {parsedReviews.map((review, index) => (
-                      <tr
-                        key={index}
-                        className={!review.isValid ? "border-destructive bg-destructive/5" : ""}
-                      >
-                        <td className="border border-border px-3 py-2 text-sm">
-                          {review.firstName} {review.lastName}
-                        </td>
-                        <td className="border border-border px-3 py-2">
-                          {renderStars(review.rating)}
-                        </td>
-                        <td className="border border-border px-3 py-2 text-sm max-w-md">
-                          <div className="truncate" title={review.comment || "Pas de commentaire"}>
-                            {review.comment ? (
-                              review.comment
-                            ) : (
-                              <span className="text-muted-foreground italic">Pas de commentaire</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="border border-border px-3 py-2">
-                          <Badge variant={review.platform === 'unknown' ? 'secondary' : 'default'}>
-                            {review.platform}
-                          </Badge>
-                        </td>
-                        <td className="border border-border px-3 py-2 text-sm text-muted-foreground">
-                          {review.reviewDate || '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ReviewsTable
+                rows={reviewsTableData}
+                isLoading={false}
+                emptyLabel="Aucun avis détecté"
+                data-testid="paste-preview-table"
+              />
               
               {parsedReviews.some(r => !r.isValid) && (
                 <p className="text-xs text-destructive mt-2">

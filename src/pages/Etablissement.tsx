@@ -29,8 +29,14 @@ export default function EtablissementPage() {
     name: string;
     placeId: string;
   } | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   const currentEstablishment = useCurrentEstablishment();
+
+  // Callback to refresh reviews data after import
+  const handleImportSuccess = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   // ⚠️ Utilise EXACTEMENT ces champs dans Autocomplete pour récupérer phone/website/rating :
   // fields: ['place_id','name','formatted_address','geometry.location','url','website','formatted_phone_number','rating']
@@ -228,7 +234,8 @@ export default function EtablissementPage() {
             <ReviewsVisualPanel 
               establishmentId={visualEstablishment?.id}
               establishmentName={visualEstablishment?.name}
-              onClose={() => setShowReviewsVisual(false)} 
+              onClose={() => setShowReviewsVisual(false)}
+              key={refreshTrigger} // Force re-render on import success
             />
           )}
 
@@ -243,6 +250,7 @@ export default function EtablissementPage() {
                 // TODO: Rafraîchir les données du dashboard
                 console.log("Fichier analysé, rafraîchissement des données...");
               }}
+              onImportSuccess={handleImportSuccess}
             />
           )}
 

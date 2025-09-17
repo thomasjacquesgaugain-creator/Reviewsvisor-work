@@ -5,8 +5,9 @@ import { X, Star, TrendingUp, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-import { getReviewsSummary } from "@/services/reviewsService";
+import { getReviewsSummary, getReviewsList } from "@/services/reviewsService";
 import { STORAGE_KEY } from "@/types/etablissement";
+import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
 interface ReviewsSummary {
   total: number;
   avgRating: number;
@@ -35,29 +36,54 @@ export function ReviewsVisualPanel({
 }: ReviewsVisualPanelProps) {
   const [summary, setSummary] = useState<ReviewsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [reviewsList, setReviewsList] = useState<ReviewsTableRow[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
   const currentEstablishment = useCurrentEstablishment();
   
   // Use props first, fallback to current establishment
   const effectiveId = establishmentId || currentEstablishment?.id || currentEstablishment?.place_id;
   const displayName = establishmentName ?? currentEstablishment?.name ?? "—";
   useEffect(() => {
-    const loadSummary = async () => {
+    const loadData = async () => {
       if (!effectiveId) {
         setIsLoading(false);
+        setIsLoadingReviews(false);
         return;
       }
+      
       try {
         setIsLoading(true);
-        const data = await getReviewsSummary(effectiveId);
-        setSummary(data);
+        setIsLoadingReviews(true);
+        
+        // Load summary and reviews list in parallel
+        const [summaryData, reviewsData] = await Promise.all([
+          getReviewsSummary(effectiveId),
+          getReviewsList(effectiveId, { limit: 50 })
+        ]);
+        
+        setSummary(summaryData);
+        
+        // Map reviews to table format
+        const mappedRows: ReviewsTableRow[] = reviewsData.items.map(review => ({
+          authorName: review.author || "Anonyme",
+          rating: review.rating || 0,
+          comment: review.text || "",
+          platform: review.source || "Google",
+          reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
+        }));
+        
+        setReviewsList(mappedRows);
       } catch (error) {
-        console.error("Error loading reviews summary:", error);
+        console.error("Error loading reviews data:", error);
         setSummary(null);
+        setReviewsList([]);
       } finally {
         setIsLoading(false);
+        setIsLoadingReviews(false);
       }
     };
-    loadSummary();
+    
+    loadData();
   }, [effectiveId]);
 
   // Fallback: read the last selected establishment name from localStorage
@@ -177,6 +203,17 @@ export function ReviewsVisualPanel({
                   </ResponsiveContainer>
                 </div>
               </div>}
+
+            {/* Reviews List */}
+            <div>
+              <h3 className="text-lg font-medium mb-4">Avis de l'établissement</h3>
+              <ReviewsTable
+                rows={reviewsList}
+                isLoading={isLoadingReviews}
+                emptyLabel="Aucun avis enregistré"
+                data-testid="establishment-reviews-table"
+              />
+            </div>
           </>}
       </CardContent>
     </Card>;

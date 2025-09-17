@@ -92,6 +92,37 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
   return { inserted, skipped };
 }
 
+export async function getReviewsList(establishmentId: string, options?: { limit?: number; cursor?: string }) {
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) throw new Error('User not authenticated');
+
+  const limit = options?.limit || 50;
+  let query = supabase
+    .from('reviews')
+    .select('*')
+    .eq('user_id', user.user.id)
+    .eq('place_id', establishmentId)
+    .order('published_at', { ascending: false })
+    .order('inserted_at', { ascending: false })
+    .limit(limit);
+
+  if (options?.cursor) {
+    query = query.gt('id', parseInt(options.cursor));
+  }
+
+  const { data: reviews, error } = await query;
+
+  if (error) {
+    console.error('Error fetching reviews:', error);
+    throw error;
+  }
+
+  return {
+    items: reviews || [],
+    nextCursor: reviews && reviews.length === limit ? reviews[reviews.length - 1].id.toString() : undefined
+  };
+}
+
 export async function getReviewsSummary(establishmentId: string) {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('User not authenticated');
