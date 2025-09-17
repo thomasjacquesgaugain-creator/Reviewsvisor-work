@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { STORAGE_KEY, EVT_SAVED } from "@/types/etablissement";
 
 export interface CurrentEstablishment {
   id: string;
@@ -7,12 +8,27 @@ export interface CurrentEstablishment {
 }
 
 export function useCurrentEstablishment(): CurrentEstablishment | null {
-  const [currentEstablishment, setCurrentEstablishment] = useState<CurrentEstablishment | null>(null);
+  const [currentEstablishment, setCurrentEstablishment] = useState<CurrentEstablishment | null>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const establishment = JSON.parse(stored);
+        return {
+          id: establishment.place_id || establishment.id,
+          name: establishment.name,
+          place_id: establishment.place_id || establishment.id,
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
 
   useEffect(() => {
     const updateFromStorage = () => {
       try {
-        const stored = localStorage.getItem('current-establishment');
+        const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
           const establishment = JSON.parse(stored);
           setCurrentEstablishment({
@@ -34,7 +50,7 @@ export function useCurrentEstablishment(): CurrentEstablishment | null {
 
     // Listen for storage changes
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'current-establishment') {
+      if (e.key === STORAGE_KEY) {
         updateFromStorage();
       }
     };
@@ -45,11 +61,11 @@ export function useCurrentEstablishment(): CurrentEstablishment | null {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('current-establishment-updated', handleCustomEvent);
+    window.addEventListener(EVT_SAVED, handleCustomEvent as EventListener);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('current-establishment-updated', handleCustomEvent);
+      window.removeEventListener(EVT_SAVED, handleCustomEvent as EventListener);
     };
   }, []);
 
