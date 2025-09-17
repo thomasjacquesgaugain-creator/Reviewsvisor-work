@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           created_at: string | null
           formatted_address: string | null
+          icon_type: string | null
           id: string
           lat: number | null
           lng: number | null
@@ -36,6 +37,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           formatted_address?: string | null
+          icon_type?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
@@ -54,6 +56,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           formatted_address?: string | null
+          icon_type?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
@@ -196,6 +199,7 @@ export type Database = {
       reviews: {
         Row: {
           author: string | null
+          dedup_key: string | null
           id: number
           inserted_at: string | null
           language: string | null
@@ -211,6 +215,7 @@ export type Database = {
         }
         Insert: {
           author?: string | null
+          dedup_key?: string | null
           id?: number
           inserted_at?: string | null
           language?: string | null
@@ -226,6 +231,7 @@ export type Database = {
         }
         Update: {
           author?: string | null
+          dedup_key?: string | null
           id?: number
           inserted_at?: string | null
           language?: string | null
