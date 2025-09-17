@@ -1,13 +1,17 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText } from "lucide-react";
+import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-import { getReviewsSummary, listAllReviews, listAll } from "@/services/reviewsService";
+import { getReviewsSummary, listAllReviews, listAll, getReviewsSummaryWithDuplicates, cleanupDuplicateReviews, ReviewsSummaryWithDuplicates } from "@/services/reviewsService";
 import { STORAGE_KEY } from "@/types/etablissement";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+
 interface ReviewsSummary {
   total: number;
   avgRating: number;
@@ -35,10 +39,13 @@ export function ReviewsVisualPanel({
   onClose
 }: ReviewsVisualPanelProps) {
   const [summary, setSummary] = useState<ReviewsSummary | null>(null);
+  const [summaryWithDuplicates, setSummaryWithDuplicates] = useState<ReviewsSummaryWithDuplicates | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [reviewsList, setReviewsList] = useState<ReviewsTableRow[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+  const [isCleaningDuplicates, setIsCleaningDuplicates] = useState(false);
   const currentEstablishment = useCurrentEstablishment();
+  const { toast } = useToast();
   
   // Use props first, fallback to current establishment
   const effectiveId = establishmentId || currentEstablishment?.id || currentEstablishment?.place_id;
@@ -55,13 +62,15 @@ export function ReviewsVisualPanel({
         setIsLoading(true);
         setIsLoadingReviews(true);
         
-        // Load summary and ALL reviews in parallel
-        const [summaryData, allReviews] = await Promise.all([
+        // Load summary, duplicates summary and ALL reviews in parallel
+        const [summaryData, summaryWithDuplicatesData, allReviews] = await Promise.all([
           getReviewsSummary(effectiveId),
+          getReviewsSummaryWithDuplicates(effectiveId),
           listAll(effectiveId)
         ]);
         
         setSummary(summaryData);
+        setSummaryWithDuplicates(summaryWithDuplicatesData);
         
         // Map ALL reviews to table format
         const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
@@ -76,6 +85,7 @@ export function ReviewsVisualPanel({
       } catch (error) {
         console.error("Error loading reviews data:", error);
         setSummary(null);
+        setSummaryWithDuplicates(null);
         setReviewsList([]);
       } finally {
         setIsLoading(false);
@@ -85,6 +95,50 @@ export function ReviewsVisualPanel({
     
     loadData();
   }, [effectiveId]);
+
+  const handleCleanupDuplicates = async () => {
+    if (!effectiveId) return;
+    
+    setIsCleaningDuplicates(true);
+    try {
+      const { deleted } = await cleanupDuplicateReviews(effectiveId);
+      
+      toast({
+        title: "🧹 Nettoyage terminé",
+        description: `${deleted} doublons supprimés`,
+      });
+      
+      // Reload data after cleanup
+      const [summaryData, summaryWithDuplicatesData, allReviews] = await Promise.all([
+        getReviewsSummary(effectiveId),
+        getReviewsSummaryWithDuplicates(effectiveId),
+        listAll(effectiveId)
+      ]);
+      
+      setSummary(summaryData);
+      setSummaryWithDuplicates(summaryWithDuplicatesData);
+      
+      const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
+        authorName: review.author || "Anonyme",
+        rating: review.rating || 0,
+        comment: review.text || "",
+        platform: review.source || "Google",
+        reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
+      }));
+      
+      setReviewsList(mappedRows);
+      
+    } catch (error) {
+      console.error("Error cleaning duplicates:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de nettoyer les doublons",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCleaningDuplicates(false);
+    }
+  };
 
   // Écoute l'évènement envoyé après import pour recharger
   useEffect(() => {
@@ -222,11 +276,38 @@ export function ReviewsVisualPanel({
                   <BarChart3 className="w-8 h-8 text-blue-500 mr-3" />
                   <div>
                     <p className="text-sm text-muted-foreground">Total d'avis</p>
-                    <p className="text-2xl font-bold">{summary.total}</p>
+                    <p className="text-2xl font-bold">{summaryWithDuplicates?.totalUnique || summary?.total || 0}</p>
                   </div>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Duplicates Alert */}
+            {summaryWithDuplicates && summaryWithDuplicates.duplicates > 0 && (
+              <Alert className="mt-4">
+                <AlertDescription className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="destructive">
+                      Doublons détectés : {summaryWithDuplicates.duplicates}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      Ces avis dupliqués n'affectent pas les statistiques
+                    </span>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    data-testid="btn-dedupe"
+                    onClick={handleCleanupDuplicates}
+                    disabled={isCleaningDuplicates}
+                    className="ml-auto"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {isCleaningDuplicates ? "Nettoyage..." : "Nettoyer les doublons"}
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* Stars Distribution */}
             

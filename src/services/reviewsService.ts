@@ -302,39 +302,33 @@ export async function getReviewsSummary(establishmentId: string) {
   uniqueReviews.forEach(r => {
     if (r.rating >= 1 && r.rating <= 5) {
       byStars[Math.floor(r.rating) as keyof typeof byStars]++;
-    }
-  });
+}
 
-  // Group by month (last 12 months, using unique reviews only)
-  const monthCounts: Record<string, { count: number; total: number }> = {};
-  const now = new Date();
+export interface ReviewsSummaryWithDuplicates {
+  totalAll: number;
+  totalUnique: number;
+  duplicates: number;
+  avgRating: number;
+}
+
+export async function getReviewsSummaryWithDuplicates(establishmentId: string): Promise<ReviewsSummaryWithDuplicates> {
+  const response = await fetch(`/api/reviews/summary?establishmentId=${encodeURIComponent(establishmentId)}`);
   
-  uniqueReviews.forEach(r => {
-    if (r.published_at) {
-      const date = new Date(r.published_at);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      
-      if (!monthCounts[monthKey]) {
-        monthCounts[monthKey] = { count: 0, total: 0 };
-      }
-      monthCounts[monthKey].count++;
-      monthCounts[monthKey].total += r.rating || 0;
-    }
+  if (!response.ok) {
+    throw new Error('Failed to fetch reviews summary');
+  }
+  
+  return response.json();
+}
+
+export async function cleanupDuplicateReviews(establishmentId: string): Promise<{ deleted: number }> {
+  const response = await fetch(`/api/reviews/dedupe?establishmentId=${encodeURIComponent(establishmentId)}`, {
+    method: 'DELETE'
   });
-
-  const byMonth = Object.entries(monthCounts)
-    .map(([month, data]) => ({
-      month,
-      count: data.count,
-      avg: data.count > 0 ? data.total / data.count : 0
-    }))
-    .sort((a, b) => a.month.localeCompare(b.month))
-    .slice(-12); // Last 12 months
-
-  return {
-    total,
-    avgRating,
-    byStars,
-    byMonth
-  };
+  
+  if (!response.ok) {
+    throw new Error('Failed to cleanup duplicate reviews');
+  }
+  
+  return response.json();
 }

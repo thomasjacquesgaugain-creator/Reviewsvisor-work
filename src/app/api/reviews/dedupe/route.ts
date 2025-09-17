@@ -142,3 +142,74 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const establishmentId = searchParams.get('establishmentId');
+
+    if (!establishmentId) {
+      return Response.json({ error: 'establishmentId is required' }, { status: 400 });
+    }
+
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Manual cleanup using direct SQL approach since RPC type is not available yet
+    const { data: allReviews, error: fetchError } = await supabase
+      .from('reviews')
+      .select('id, dedup_key, inserted_at')
+      .eq('user_id', user.id)
+      .eq('place_id', establishmentId)
+      .not('dedup_key', 'is', null)
+      .order('inserted_at', { ascending: true });
+
+    if (fetchError) {
+      console.error('Error fetching reviews for cleanup:', fetchError);
+      return Response.json({ error: 'Failed to fetch reviews' }, { status: 500 });
+    }
+
+    let deleted = 0;
+    
+    if (allReviews && allReviews.length > 0) {
+      // Group by dedup_key and keep only the first (oldest) review
+      const reviewsByDedupKey = new Map<string, any[]>();
+      
+      for (const review of allReviews) {
+        if (!reviewsByDedupKey.has(review.dedup_key)) {
+          reviewsByDedupKey.set(review.dedup_key, []);
+        }
+        reviewsByDedupKey.get(review.dedup_key)!.push(review);
+      }
+
+      // Delete duplicates (keep first in each group)
+      for (const [dedupKey, reviews] of reviewsByDedupKey) {
+        if (reviews.length > 1) {
+          // Keep the first (oldest), delete the rest
+          const toDelete = reviews.slice(1);
+          
+          for (const duplicate of toDelete) {
+            const { error: deleteError } = await supabase
+              .from('reviews')
+              .delete()
+              .eq('id', duplicate.id);
+            
+            if (!deleteError) {
+              deleted++;
+            }
+          }
+        }
+      }
+    }
+
+    return Response.json({ deleted });
+
+  } catch (error) {
+    console.error('Unexpected error in DELETE:', error);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
