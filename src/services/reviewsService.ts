@@ -306,3 +306,16 @@ export async function getReviewsSummary(establishmentId: string) {
     byMonth
   };
 }
+
+export async function purgeReviews(establishmentId: string) {
+  const res = await fetch("/api/reviews/purge", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ establishmentId }),
+  });
+  if (!res.ok) {
+    const msg = await res.text();
+    throw new Error(msg || "Échec de la suppression");
+  }
+  return (await res.json()) as { deleted: number };
+}

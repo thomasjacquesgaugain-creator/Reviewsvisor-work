@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-import { getReviewsSummary, listAllReviews, listAll } from "@/services/reviewsService";
+import { getReviewsSummary, listAllReviews, listAll, purgeReviews } from "@/services/reviewsService";
 import { STORAGE_KEY } from "@/types/etablissement";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
 interface ReviewsSummary {
@@ -87,18 +87,7 @@ export function ReviewsVisualPanel({
 
     try {
       setIsPurging(true);
-      const response = await fetch("/api/reviews/purge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ establishmentId: effectiveId }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
-      }
-
-      const { deleted } = await response.json();
+      const { deleted } = await purgeReviews(effectiveId);
       toast({ 
         title: "Avis supprimés", 
         description: `${deleted} avis supprimés` 
