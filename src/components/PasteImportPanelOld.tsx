@@ -39,25 +39,10 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
     setShowPreview(true);
   };
 
-  // Parser simple pour le textarea
-  const parseTextarea = useCallback((raw: string): IncomingReview[] => {
-    const blocks = raw.split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
-    const out: IncomingReview[] = [];
-    for (const b of blocks) {
-      const lines = b.split("\n").map(l => l.trim()).filter(Boolean);
-      if (!lines.length) continue;
-      const author = lines[0] || "Nouveau";
-      const noteLine = lines.find(l => /^[1-5]\s*\/\s*5$/.test(l));
-      const rating = noteLine ? Number(noteLine.match(/[1-5]/)![0]) : 0;
-      const comment = lines.slice(1).join(" ").replace(/\s+/g, " ").trim() || null;
-      out.push({ author, rating, comment, platform: "Google", review_date: null });
-    }
-    return out;
-  }, []);
-
-  const handlePasteImport = useCallback(async () => {
+  const handlePasteImport = useCallback(async (valid?: ParsedReview[]) => {
     const est = currentEstablishment;
-    
+    const list = valid && valid.length ? valid : (parsedReviews || []).filter(r => Number.isFinite(r.rating) && r.rating >= 1 && r.rating <= 5);
+
     if (!est) {
       toast({
         title: "Erreur",
@@ -66,29 +51,7 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
       });
       return;
     }
-
-    // Relire le contenu ACTUEL du textarea
-    const currentText = textareaRef.current?.value || "";
-    if (!currentText.trim()) {
-      toast({
-        title: "Erreur",
-        description: "Aucun texte à importer.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Parser le contenu
-    const parsed = parseTextarea(currentText);
-    
-    if (!parsed.length) {
-      toast({
-        title: "Erreur", 
-        description: "Aucun avis détecté.",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!list.length) return;
 
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
@@ -101,71 +64,70 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
       return;
     }
 
-    // Déduplication locale
-    const batch = dedupeBatch(parsed);
-    
-    if (!batch.length) {
-      sonnerToast.info("Tous les avis collés sont des doublons.");
-      return;
-    }
+    // Préparer les données pour l'API avec déduplication
+    const itemsForAPI = list.map(v => ({
+      author: `${v.firstName} ${v.lastName}`.trim() || "Anonyme",
+      rating: v.rating,
+      comment: v.comment || "",
+      platform: v.platform || "Google",
+      review_date: v.reviewDate || null,
+      user_id: user.id,
+    }));
+
+    // Déduplication en batch avant envoi
+    const deduped = dedupeBatch(itemsForAPI);
 
     setIsImporting(true);
     try {
-      const establishmentId = est.id || est.place_id;
-      const chunkSize = 200;
-      let inserted = 0, duplicates = 0, invalid = 0;
-
-      // Envoi en chunks
-      for (let i = 0; i < batch.length; i += chunkSize) {
-        const slice = batch.slice(i, i + chunkSize).map(({ fp, ...r }) => r);
-        
-        const { data, error } = await supabase.functions.invoke('bulk-import-reviews', {
-          body: { 
-            establishmentId,
-            items: slice,
-            user_id: user.id
-          }
-        });
-
-        if (error) {
-          throw new Error(`Erreur import (chunk ${i / chunkSize + 1}) : ${error.message}`);
+      const { data, error } = await supabase.functions.invoke('bulk-import-reviews', {
+        body: { 
+          establishmentId: est.id || est.place_id,
+          items: deduped,
+          user_id: user.id
         }
+      });
 
-        inserted += data?.inserted ?? 0;
-        duplicates += data?.duplicates ?? 0;
-        invalid += data?.invalid ?? 0;
+      if (error) {
+        throw new Error(error.message || "Erreur lors de l'import");
       }
 
-      // Toast succès détaillé
+      const result = data;
+      // Toast avec rapport détaillé
       sonnerToast.success(
-        `✔ ${inserted} avis importés — ${duplicates} doublons ignorés — ${invalid} invalides`,
-        { 
+        `✔ ${result.inserted} avis importés — ${result.duplicates} doublons ignorés — ${result.invalid} invalides`,
+        {
           duration: 5000,
           action: {
             label: "Détails",
             onClick: () => {
-              console.log("Import terminé:", { inserted, duplicates, invalid });
+              console.log("Rapport d'import:", result);
             }
           }
         }
       );
 
-      // Vidage du textarea
-      if (textareaRef.current) {
-        textareaRef.current.value = "";
-      }
-      setPastedText("");
+      // Log détaillé pour debug
+      console.log("Import terminé:", result);
+
+      // RESET UI
       setParsedReviews([]);
+      setPastedText("");
       setShowPreview(false);
       
-      // Rafraîchissement immédiat
-      openPanel();
-      await refetchList({ cache: "no-store" });
-      await refetchSummary();
+      // OUVRIR le panneau + SCROLL
+      if (onOpenVisualPanel) {
+        onOpenVisualPanel();
+        setTimeout(() => {
+          document.getElementById("reviews-visual-anchor")?.scrollIntoView({ 
+            behavior: "smooth", 
+            block: "start" 
+          });
+        }, 100);
+      }
       
       // SIGNAL de refresh pour le panneau
       window.dispatchEvent(new CustomEvent("reviews:imported", { 
-        detail: { establishmentId } 
+        detail: { establishmentId: est.id || est.place_id } 
       }));
       
       // Refresh reviews data (legacy callback)
@@ -180,14 +142,18 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
     } catch (e: any) {
       toast({
         title: "Erreur d'import",
-        description: e?.message || "Erreur inconnue",
+        description: (
+          <span data-testid="toast-import-error">
+            Échec de l'import des avis: {e?.message || "Erreur inconnue"}
+          </span>
+        ),
         variant: "destructive",
       });
       console.error(e);
     } finally {
       setIsImporting(false);
     }
-  }, [currentEstablishment, parseTextarea, toast, openPanel, refetchList, refetchSummary, onClose, onImportSuccess]);
+  }, [currentEstablishment, parsedReviews, onClose, onImportSuccess, onOpenVisualPanel, toast]);
 
   // Calculate valid reviews count based on current textarea content
   const validReviews = useMemo(() => {
@@ -256,11 +222,11 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
           </Button>
           
           <Button
-            data-testid="BTN-paste-import"
+            data-testid="btn-paste-import"
             type="button"
             className="relative z-50"
             disabled={!canImport}
-            onClick={handlePasteImport}
+            onClick={() => handlePasteImport()}
           >
             {isImporting ? (
               <>
