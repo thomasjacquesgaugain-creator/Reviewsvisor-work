@@ -41,8 +41,6 @@ function simpleHash(text: string): string {
 }
 
 export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCreateResult> {
-  let inserted = 0;
-  let skippedTotal = 0;
   const reasons = {
     duplicate: 0,
     missingRating: 0,
@@ -53,120 +51,146 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('User not authenticated');
 
+  // Step 1: Pre-validate and generate dedupKeys for all reviews
+  const validReviews: Array<ReviewCreate & { dedupKey: string }> = [];
+  let skippedTotal = 0;
+
   for (const review of reviews) {
-    try {
-      // Validate required fields
-      if (!review.establishment_id || !review.establishment_place_id) {
-        reasons.missingEstablishment++;
-        if (sampleSkipped.length < 5) {
-          sampleSkipped.push({
-            reason: 'missing_establishment',
-            snippet: `${review.author_first_name || 'Anonyme'}: ${(review.comment || '').substring(0, 50)}...`
-          });
-        }
-        skippedTotal++;
-        continue;
-      }
-
-      if (!review.rating || review.rating < 1 || review.rating > 5) {
-        reasons.missingRating++;
-        if (sampleSkipped.length < 5) {
-          sampleSkipped.push({
-            reason: 'missing_rating',
-            snippet: `${review.author_first_name || 'Anonyme'}: ${(review.comment || '').substring(0, 50)}...`
-          });
-        }
-        skippedTotal++;
-        continue;
-      }
-
-      // Create hash for deduplication
-      let reviewHash: string;
-      
-      if (review.import_method === "paste" && review.raw_fingerprint) {
-        // Use fingerprint for paste imports to avoid over-deduplication
-        reviewHash = simpleHash(`${review.establishment_id}|${review.raw_fingerprint}`);
-      } else {
-        // Fallback to strict deduplication for other imports
-        const normalizedText = (review.comment || "").toLowerCase().trim();
-        const authorName = `${review.author_first_name || ""} ${review.author_last_name || ""}`.trim();
-        const hashInput = `${review.establishment_id}|${authorName}|${review.review_date || ""}|${review.rating}|${normalizedText}|${review.source || ""}`;
-        reviewHash = simpleHash(hashInput);
-      }
-      
-      // Check if review already exists (by source_review_id which stores our hash)
-      const { data: existingReview } = await supabase
-        .from('reviews')
-        .select('id')
-        .eq('user_id', user.user.id)
-        .eq('source_review_id', reviewHash)
-        .single();
-      
-      if (existingReview) {
-        reasons.duplicate++;
-        if (sampleSkipped.length < 5) {
-          sampleSkipped.push({
-            reason: 'duplicate',
-            snippet: `${review.author_first_name || 'Anonyme'}: ${(review.comment || '').substring(0, 50)}...`
-          });
-        }
-        skippedTotal++;
-        continue;
-      }
-      
-      // Parse review date safely
-      let publishedAt: string | null = null;
-      if (review.review_date) {
-        try {
-          const date = new Date(review.review_date);
-          if (!isNaN(date.getTime()) && review.review_date !== 'Invalid Date') {
-            publishedAt = date.toISOString();
-          }
-        } catch (e) {
-          // Invalid date, keep null
-        }
-      }
-      
-      // Insert new review
-      const { error } = await supabase
-        .from('reviews')
-        .insert({
-          user_id: user.user.id,
-          place_id: review.establishment_place_id,
-          source: review.source,
-          author: `${review.author_first_name} ${review.author_last_name}`.trim() || 'Anonyme',
-          rating: review.rating,
-          text: review.comment || "",
-          published_at: publishedAt,
-          source_review_id: reviewHash,
-          raw: {
-            import_method: review.import_method,
-            import_source_url: review.import_source_url,
-            author_first_name: review.author_first_name,
-            author_last_name: review.author_last_name,
-            establishment_name: review.establishment_name,
-            raw_fingerprint: review.raw_fingerprint
-          }
+    // Validate required fields
+    if (!review.establishment_id || !review.establishment_place_id) {
+      reasons.missingEstablishment++;
+      if (sampleSkipped.length < 5) {
+        sampleSkipped.push({
+          reason: 'missing_establishment',
+          snippet: `${review.author_first_name || 'Anonyme'}: ${(review.comment || '').substring(0, 50)}...`
         });
-      
-      if (error) {
-        console.error('Error inserting review:', error);
-        skippedTotal++;
-      } else {
-        inserted++;
       }
-    } catch (error) {
-      console.error('Error processing review:', error);
       skippedTotal++;
+      continue;
+    }
+
+    if (!review.rating || review.rating < 1 || review.rating > 5) {
+      reasons.missingRating++;
+      if (sampleSkipped.length < 5) {
+        sampleSkipped.push({
+          reason: 'missing_rating',
+          snippet: `${review.author_first_name || 'Anonyme'}: ${(review.comment || '').substring(0, 50)}...`
+        });
+      }
+      skippedTotal++;
+      continue;
+    }
+
+    // Generate dedupKey 
+    let dedupKey: string;
+    if (review.import_method === "paste" && review.raw_fingerprint) {
+      // Use fingerprint for paste imports
+      dedupKey = simpleHash(`${review.establishment_place_id}|${review.raw_fingerprint}`);
+    } else {
+      // Fallback to content-based deduplication
+      const normalizedText = (review.comment || "").toLowerCase().trim();
+      const authorName = `${review.author_first_name || ""} ${review.author_last_name || ""}`.trim();
+      const hashInput = `${review.establishment_place_id}|${authorName}|${review.review_date || ""}|${review.rating}|${normalizedText}|${review.source || ""}`;
+      dedupKey = simpleHash(hashInput);
+    }
+
+    validReviews.push({ ...review, dedupKey });
+  }
+
+  if (validReviews.length === 0) {
+    return { inserted: 0, skipped: skippedTotal, reasons, sampleSkipped };
+  }
+
+  // Step 2: Check for existing dedupKeys to filter duplicates BEFORE insertion
+  const dedupKeys = validReviews.map(r => r.dedupKey);
+  const { data: existingReviews } = await supabase
+    .from('reviews')
+    .select('dedup_key')
+    .eq('user_id', user.user.id)
+    .eq('place_id', validReviews[0].establishment_place_id)
+    .in('dedup_key', dedupKeys);
+
+  const existingKeys = new Set(existingReviews?.map(r => r.dedup_key) || []);
+  const toInsert = validReviews.filter(r => !existingKeys.has(r.dedupKey));
+  
+  // Count duplicates found during pre-filtering
+  const duplicatesCount = validReviews.length - toInsert.length;
+  reasons.duplicate = duplicatesCount;
+  
+  // Add duplicate samples
+  for (const review of validReviews) {
+    if (existingKeys.has(review.dedupKey) && sampleSkipped.length < 5) {
+      sampleSkipped.push({
+        reason: 'duplicate',
+        snippet: `${review.author_first_name || 'Anonyme'}: ${(review.comment || '').substring(0, 50)}...`
+      });
     }
   }
-  
-  return { 
-    inserted, 
-    skipped: skippedTotal,
-    reasons,
-    sampleSkipped
-  };
+
+  skippedTotal += duplicatesCount;
+
+  if (toInsert.length === 0) {
+    return { inserted: 0, skipped: skippedTotal, reasons, sampleSkipped };
+  }
+
+  // Step 3: Bulk insert only unique reviews
+  const reviewsToInsert = toInsert.map(review => {
+    // Parse review date safely
+    let publishedAt: string | null = null;
+    if (review.review_date) {
+      try {
+        const date = new Date(review.review_date);
+        if (!isNaN(date.getTime()) && review.review_date !== 'Invalid Date') {
+          publishedAt = date.toISOString();
+        }
+      } catch (e) {
+        // Invalid date, keep null
+      }
+    }
+
+    return {
+      user_id: user.user.id,
+      place_id: review.establishment_place_id,
+      source: review.source,
+      author: `${review.author_first_name} ${review.author_last_name}`.trim() || 'Anonyme',
+      rating: review.rating,
+      text: review.comment || "",
+      published_at: publishedAt,
+      source_review_id: review.dedupKey, // Keep for backward compatibility
+      dedup_key: review.dedupKey, // New dedup_key column
+      raw: {
+        import_method: review.import_method,
+        import_source_url: review.import_source_url,
+        author_first_name: review.author_first_name,
+        author_last_name: review.author_last_name,
+        establishment_name: review.establishment_name,
+        raw_fingerprint: review.raw_fingerprint
+      }
+    };
+  });
+
+  try {
+    const { data, error } = await supabase
+      .from('reviews')
+      .insert(reviewsToInsert)
+      .select('id');
+
+    if (error) {
+      console.error('Bulk insert error:', error);
+      throw error;
+    }
+
+    const inserted = data?.length || 0;
+    return { 
+      inserted, 
+      skipped: skippedTotal,
+      reasons,
+      sampleSkipped
+    };
+  } catch (error) {
+    console.error('Error in bulk insert:', error);
+    throw error;
+  }
 }
 
 export async function list(establishmentId: string, limit = 500, cursor?: string) {
@@ -241,19 +265,37 @@ export async function getReviewsSummary(establishmentId: string) {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('User not authenticated');
 
-  // Get all reviews for the establishment
+  // Get COUNT DISTINCT for unique reviews count
+  const { data: countData, error: countError } = await supabase
+    .rpc('count_unique_reviews', { 
+      p_place_id: establishmentId, 
+      p_user_id: user.user.id 
+    });
+
+  if (countError) {
+    console.warn('Error fetching unique count, falling back to regular count:', countError);
+  }
+
+  // Get all reviews for ratings calculations (use DISTINCT to avoid duplicates)
   const { data: reviews, error } = await supabase
     .from('reviews')
-    .select('rating, published_at')
+    .select('rating, published_at, dedup_key')
     .eq('user_id', user.user.id)
-    .eq('place_id', establishmentId);
+    .eq('place_id', establishmentId)
+    .order('dedup_key')
+    .order('inserted_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching reviews:', error);
     throw error;
   }
 
-  if (!reviews || reviews.length === 0) {
+  // Remove duplicates by dedup_key (keep first occurrence)
+  const uniqueReviews = reviews ? reviews.filter((review, index, arr) => 
+    !review.dedup_key || arr.findIndex(r => r.dedup_key === review.dedup_key) === index
+  ) : [];
+
+  if (uniqueReviews.length === 0) {
     return {
       total: 0,
       avgRating: 0,
@@ -262,23 +304,23 @@ export async function getReviewsSummary(establishmentId: string) {
     };
   }
 
-  // Calculate metrics
-  const total = reviews.length;
-  const avgRating = reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / total;
+  // Use the count from RPC if available, otherwise use filtered count
+  const total = countData?.[0]?.count || uniqueReviews.length;
+  const avgRating = uniqueReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / uniqueReviews.length;
 
-  // Group by stars
+  // Group by stars (using unique reviews only)
   const byStars = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  reviews.forEach(r => {
+  uniqueReviews.forEach(r => {
     if (r.rating >= 1 && r.rating <= 5) {
       byStars[Math.floor(r.rating) as keyof typeof byStars]++;
     }
   });
 
-  // Group by month (last 12 months)
+  // Group by month (last 12 months, using unique reviews only)
   const monthCounts: Record<string, { count: number; total: number }> = {};
   const now = new Date();
   
-  reviews.forEach(r => {
+  uniqueReviews.forEach(r => {
     if (r.published_at) {
       const date = new Date(r.published_at);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
