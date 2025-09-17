@@ -183,10 +183,11 @@ export function ReviewsVisualPanel({
     try {
       setIsDeleting(true);
       
-      const response = await fetch('/api/reviews/purge', {
+      const response = await fetch('/api/avis/purge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ establishmentId: effectiveId }),
+        cache: 'no-store',
       });
 
       const text = await response.text();
@@ -215,11 +216,12 @@ export function ReviewsVisualPanel({
       });
       setReviewsList([]);
       
-      // Recharger les données depuis le serveur pour être sûr
+      // Recharger les données depuis le serveur avec cache-busting
       try {
+        const cacheBuster = `?t=${Date.now()}`;
         const [summaryData, allReviews] = await Promise.all([
-          getReviewsSummary(effectiveId),
-          listAll(effectiveId)
+          getReviewsSummary(effectiveId + cacheBuster),
+          listAll(effectiveId + cacheBuster)
         ]);
         
         setSummary(summaryData);
@@ -247,6 +249,21 @@ export function ReviewsVisualPanel({
       toast.error(`❌ Erreur lors de la suppression : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Fonction de diagnostic (pour debug)
+  const handleInspect = async () => {
+    if (!effectiveId) return;
+    
+    try {
+      const response = await fetch(`/api/avis/inspect?establishmentId=${effectiveId}`);
+      const data = await response.json();
+      console.log('Inspection results:', data);
+      toast.info('Résultats du diagnostic dans la console');
+    } catch (error) {
+      console.error('Inspect error:', error);
+      toast.error('Erreur lors du diagnostic');
     }
   };
 
@@ -354,18 +371,29 @@ export function ReviewsVisualPanel({
                     <p className="text-2xl font-bold">{summary.total}</p>
                   </div>
                   {summary.total > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute bottom-1 right-1 h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => setShowDeleteDialog(true)}
-                      disabled={isDeleting}
-                      data-testid="btn-purge-reviews"
-                      title="Supprimer tous les avis"
-                      aria-label="Supprimer tous les avis"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute bottom-1 right-8 h-6 w-6 text-muted-foreground hover:text-foreground"
+                        onClick={handleInspect}
+                        title="Diagnostiquer (console)"
+                      >
+                        🔍
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute bottom-1 right-1 h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => setShowDeleteDialog(true)}
+                        disabled={isDeleting}
+                        data-testid="btn-purge-reviews"
+                        title="Supprimer tous les avis"
+                        aria-label="Supprimer tous les avis"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </>
                   )}
                 </CardContent>
               </Card>
