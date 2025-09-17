@@ -16,30 +16,39 @@ export async function GET(request: Request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get detailed summary with duplicates info using raw SQL
+    // Get detailed summary with duplicates info using direct SQL
     const { data: summaryData, error: summaryError } = await supabase
-      .rpc('get_reviews_summary_with_duplicates', {
-        p_place_id: establishmentId,
-        p_user_id: user.id
-      });
+      .from('reviews')
+      .select('rating, dedup_key')
+      .eq('place_id', establishmentId)
+      .eq('user_id', user.id);
 
     if (summaryError) {
       console.error('Error fetching summary:', summaryError);
       return Response.json({ error: 'Failed to fetch summary' }, { status: 500 });
     }
 
-    const result = summaryData?.[0] || {
-      total_all: 0,
-      total_unique: 0,
-      duplicates: 0,
-      avg_rating: 0
-    };
+    if (!summaryData || summaryData.length === 0) {
+      return Response.json({
+        totalAll: 0,
+        totalUnique: 0,
+        duplicates: 0,
+        avgRating: 0
+      });
+    }
+
+    // Calculate summary from the data
+    const totalAll = summaryData.length;
+    const uniqueKeys = new Set(summaryData.map(r => r.dedup_key).filter(Boolean));
+    const totalUnique = uniqueKeys.size;
+    const duplicates = totalAll - totalUnique;
+    const avgRating = summaryData.reduce((sum, r) => sum + (r.rating || 0), 0) / totalAll;
 
     return Response.json({
-      totalAll: result.total_all,
-      totalUnique: result.total_unique,
-      duplicates: result.duplicates,
-      avgRating: result.avg_rating
+      totalAll,
+      totalUnique,
+      duplicates,
+      avgRating: Number(avgRating.toFixed(2))
     });
 
   } catch (error) {
