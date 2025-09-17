@@ -18,7 +18,7 @@ export async function GET(request: Request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Build query with DISTINCT to avoid duplicates even if they exist
+    // Build query
     let query = supabase
       .from('reviews')
       .select('*')

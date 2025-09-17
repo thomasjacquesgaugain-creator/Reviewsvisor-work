@@ -1,22 +1,10 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2 } from "lucide-react";
-import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-import { useReviewsSummary } from "@/hooks/useReviewsSummary";
 import { getReviewsSummary, listAllReviews, listAll } from "@/services/reviewsService";
 import { STORAGE_KEY } from "@/types/etablissement";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
@@ -50,39 +38,11 @@ export function ReviewsVisualPanel({
   const [isLoading, setIsLoading] = useState(true);
   const [reviewsList, setReviewsList] = useState<ReviewsTableRow[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  
   const currentEstablishment = useCurrentEstablishment();
   
   // Use props first, fallback to current establishment
   const effectiveId = establishmentId || currentEstablishment?.id || currentEstablishment?.place_id;
   const displayName = establishmentName ?? currentEstablishment?.name ?? "—";
-  
-  const [bump, setBump] = useState(0);
-  
-  // Hook pour le résumé avec cache-busting
-  const { summary: hookSummary, isLoading: isLoadingSummary, refetch: refetchSummary } = useReviewsSummary(effectiveId, bump);
-  
-  // calcul du total à afficher
-  const rowsLoaded = Array.isArray(reviewsList);
-  const totalFromRows = rowsLoaded ? reviewsList.length : undefined;
-  const totalTile = totalFromRows ?? hookSummary?.totalAll ?? 0;
-  const avgTile = hookSummary?.avgRating ?? null;
-  
-  // Sync summary pour les graphiques
-  useEffect(() => {
-    if (hookSummary) {
-      setSummary(hookSummary as ReviewsSummary);
-    }
-  }, [hookSummary]);
-
-  // quand l'établissement change : on repart propre
-  useEffect(() => {
-    setReviewsList([]);
-    setBump(Date.now());
-  }, [effectiveId]);
-
   useEffect(() => {
     const loadData = async () => {
       if (!effectiveId) {
@@ -92,10 +52,16 @@ export function ReviewsVisualPanel({
       }
       
       try {
+        setIsLoading(true);
         setIsLoadingReviews(true);
         
-        // Load ALL reviews
-        const allReviews = await listAll(effectiveId);
+        // Load summary and ALL reviews in parallel
+        const [summaryData, allReviews] = await Promise.all([
+          getReviewsSummary(effectiveId),
+          listAll(effectiveId)
+        ]);
+        
+        setSummary(summaryData);
         
         // Map ALL reviews to table format
         const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
@@ -109,6 +75,7 @@ export function ReviewsVisualPanel({
         setReviewsList(mappedRows);
       } catch (error) {
         console.error("Error loading reviews data:", error);
+        setSummary(null);
         setReviewsList([]);
       } finally {
         setIsLoading(false);
@@ -117,7 +84,7 @@ export function ReviewsVisualPanel({
     };
     
     loadData();
-  }, [effectiveId, bump]);
+  }, [effectiveId]);
 
   // Écoute l'évènement envoyé après import pour recharger
   useEffect(() => {
@@ -153,107 +120,6 @@ export function ReviewsVisualPanel({
     window.addEventListener("reviews:imported", onImported);
     return () => window.removeEventListener("reviews:imported", onImported);
   }, [effectiveId]);
-
-  // Écouter l'événement de suppression des avis
-  useEffect(() => {
-    const onDeleted = (e: any) => {
-      const id = e?.detail?.establishmentId;
-      if (!id || id !== effectiveId) return;
-      
-      // Recharger complètement les données
-      const loadData = async () => {
-        try {
-          setIsLoading(true);
-          setIsLoadingReviews(true);
-          
-          const [summaryData, allReviews] = await Promise.all([
-            getReviewsSummary(effectiveId!),
-            listAll(effectiveId!)
-          ]);
-          
-          setSummary(summaryData);
-          
-          const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
-            authorName: review.author || "Anonyme",
-            rating: review.rating || 0,
-            comment: review.text || "",
-            platform: review.source || "Google",
-            reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
-          }));
-          
-          setReviewsList(mappedRows);
-        } catch (error) {
-          console.error('Error loading reviews after deletion:', error);
-        } finally {
-          setIsLoading(false);
-          setIsLoadingReviews(false);
-        }
-      };
-      
-      loadData();
-    };
-
-    window.addEventListener("reviews:deleted", onDeleted);
-    return () => window.removeEventListener("reviews:deleted", onDeleted);
-  }, [effectiveId]);
-
-  const handleDeleteAllReviews = async () => {
-    if (!reviewsList?.length) {
-      toast.info("Aucun avis à supprimer.");
-      return;
-    }
-
-    const visibleCount = reviewsList.length;
-
-    try {
-      setIsDeleting(true);
-      
-      // OPTIMISTIC UI : vider la liste immédiatement
-      setReviewsList([]);
-      
-      const response = await fetch('/api/avis/purge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ establishmentId: effectiveId }),
-        cache: 'no-store',
-      });
-
-      const text = await response.text();
-      const json = (() => { 
-        try { 
-          return JSON.parse(text); 
-        } catch { 
-          return {}; 
-        } 
-      })();
-
-      if (!response.ok) {
-        throw new Error(json?.error || text || `HTTP ${response.status}`);
-      }
-
-      const deleted = json?.deleted ?? visibleCount;
-      toast.success(`🗑️ ${deleted} avis supprimés`);
-      
-      // Refetch forcé avec cache-buster
-      setBump(Date.now());
-      await refetchSummary();
-      
-      // Émettre un événement pour notifier la suppression
-      window.dispatchEvent(new CustomEvent("reviews:purged-visible", { 
-        detail: { establishmentId: effectiveId, deletedCount: deleted } 
-      }));
-      
-    } catch (error) {
-      console.error('Delete error:', error);
-      toast.error(`❌ Erreur lors de la suppression : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
-      
-      // En cas d'erreur, recharger pour annuler l'optimistic UI
-      setBump(Date.now());
-      await refetchSummary();
-    } finally {
-      setIsDeleting(false);
-    }
-  };
 
   // Fallback: read the last selected establishment name from localStorage
   const fallbackName = (() => {
@@ -346,34 +212,18 @@ export function ReviewsVisualPanel({
                   <Star className="w-8 h-8 text-yellow-500 mr-3" />
                   <div>
                     <p className="text-sm text-muted-foreground">Note moyenne</p>
-                    <p className="text-2xl font-bold">
-                      {avgTile ? avgTile.toFixed(1) : "—"}/5
-                    </p>
+                    <p className="text-2xl font-bold">{summary.avgRating.toFixed(1)}/5</p>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="relative">
+              <Card>
                 <CardContent className="flex items-center p-4" data-testid="metric-total-reviews">
                   <BarChart3 className="w-8 h-8 text-blue-500 mr-3" />
                   <div>
                     <p className="text-sm text-muted-foreground">Total d'avis</p>
-                    <p className="text-2xl font-bold">{totalTile}</p>
+                    <p className="text-2xl font-bold">{summary.total}</p>
                   </div>
-                  {totalTile > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute bottom-1 right-1 h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => setShowDeleteDialog(true)}
-                      disabled={isDeleting}
-                      data-testid="btn-purge-reviews"
-                      title="Supprimer tous les avis"
-                      aria-label="Supprimer tous les avis"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  )}
                 </CardContent>
               </Card>
             </div>
@@ -409,31 +259,5 @@ export function ReviewsVisualPanel({
             </div>
           </>}
       </CardContent>
-
-      {/* AlertDialog for delete confirmation */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer tous les avis</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer TOUS les avis de « {displayName} » ? 
-              Cette action est irréversible.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                setShowDeleteDialog(false);
-                await handleDeleteAllReviews();
-              }}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? "Suppression..." : "Supprimer"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Card>;
 }

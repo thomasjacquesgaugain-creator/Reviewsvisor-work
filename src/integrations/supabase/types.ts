@@ -18,7 +18,6 @@ export type Database = {
         Row: {
           created_at: string | null
           formatted_address: string | null
-          icon_type: string | null
           id: string
           lat: number | null
           lng: number | null
@@ -37,7 +36,6 @@ export type Database = {
         Insert: {
           created_at?: string | null
           formatted_address?: string | null
-          icon_type?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
@@ -56,7 +54,6 @@ export type Database = {
         Update: {
           created_at?: string | null
           formatted_address?: string | null
-          icon_type?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
@@ -199,8 +196,6 @@ export type Database = {
       reviews: {
         Row: {
           author: string | null
-          dedup_key: string | null
-          fingerprint: string | null
           id: number
           inserted_at: string | null
           language: string | null
@@ -216,8 +211,6 @@ export type Database = {
         }
         Insert: {
           author?: string | null
-          dedup_key?: string | null
-          fingerprint?: string | null
           id?: number
           inserted_at?: string | null
           language?: string | null
@@ -233,8 +226,6 @@ export type Database = {
         }
         Update: {
           author?: string | null
-          dedup_key?: string | null
-          fingerprint?: string | null
           id?: number
           inserted_at?: string | null
           language?: string | null
@@ -650,18 +641,6 @@ export type Database = {
         Args: { "": unknown } | { "": unknown }
         Returns: string
       }
-      cleanup_duplicate_reviews: {
-        Args: { p_place_id: string; p_user_id: string }
-        Returns: {
-          deleted: number
-        }[]
-      }
-      count_unique_reviews: {
-        Args: { p_place_id: string; p_user_id: string }
-        Returns: {
-          count: number
-        }[]
-      }
       disablelongtransactions: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -921,15 +900,6 @@ export type Database = {
         Args: { "": number }
         Returns: string
       }
-      get_reviews_summary_with_duplicates: {
-        Args: { p_place_id: string; p_user_id: string }
-        Returns: {
-          avg_rating: number
-          duplicates: number
-          total_all: number
-          total_unique: number
-        }[]
-      }
       gettransactionid: {
         Args: Record<PropertyKey, never>
         Returns: unknown
@@ -941,12 +911,6 @@ export type Database = {
       gidx_out: {
         Args: { "": unknown }
         Returns: unknown
-      }
-      identify_duplicate_reviews: {
-        Args: { p_place_id: string; p_user_id: string }
-        Returns: {
-          duplicate_id: number
-        }[]
       }
       is_admin: {
         Args: { uid: string }
