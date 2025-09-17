@@ -78,25 +78,55 @@ export async function POST(request: Request) {
       }
     }
 
-    // Step 2: Remove duplicates (keep oldest)
+    // Step 2: Remove duplicates (keep oldest) using direct SQL query
     const { data: duplicatesData, error: duplicatesError } = await supabase
-      .rpc('identify_duplicate_reviews', {
-        p_place_id: establishmentId,
-        p_user_id: user.id
-      });
+      .from('reviews')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('place_id', establishmentId)
+      .not('dedup_key', 'is', null);
 
     let deletedDupes = 0;
     
     if (!duplicatesError && duplicatesData) {
-      // The RPC function should return IDs of duplicate reviews to delete
-      for (const duplicateId of duplicatesData) {
-        const { error: deleteError } = await supabase
-          .from('reviews')
-          .delete()
-          .eq('id', duplicateId);
-        
-        if (!deleteError) {
-          deletedDupes++;
+      // Group by dedup_key and keep only the oldest (first) review
+      const reviewsByDedupKey = new Map<string, any[]>();
+      
+      // Get all reviews with their dedup_key
+      const { data: allReviews, error: allReviewsError } = await supabase
+        .from('reviews')
+        .select('id, dedup_key, inserted_at')
+        .eq('user_id', user.id)
+        .eq('place_id', establishmentId)
+        .not('dedup_key', 'is', null)
+        .order('inserted_at', { ascending: true });
+
+      if (!allReviewsError && allReviews) {
+        // Group by dedup_key
+        for (const review of allReviews) {
+          if (!reviewsByDedupKey.has(review.dedup_key)) {
+            reviewsByDedupKey.set(review.dedup_key, []);
+          }
+          reviewsByDedupKey.get(review.dedup_key)!.push(review);
+        }
+
+        // Delete duplicates (keep first in each group)
+        for (const [dedupKey, reviews] of reviewsByDedupKey) {
+          if (reviews.length > 1) {
+            // Keep the first (oldest), delete the rest
+            const toDelete = reviews.slice(1);
+            
+            for (const duplicate of toDelete) {
+              const { error: deleteError } = await supabase
+                .from('reviews')
+                .delete()
+                .eq('id', duplicate.id);
+              
+              if (!deleteError) {
+                deletedDupes++;
+              }
+            }
+          }
         }
       }
     }

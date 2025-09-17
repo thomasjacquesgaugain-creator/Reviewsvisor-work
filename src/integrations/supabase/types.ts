@@ -918,6 +918,12 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      identify_duplicate_reviews: {
+        Args: { p_place_id: string; p_user_id: string }
+        Returns: {
+          duplicate_id: number
+        }[]
+      }
       is_admin: {
         Args: { uid: string }
         Returns: boolean

@@ -89,7 +89,8 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
       } else {
         // Fallback to strict deduplication for other imports
         const normalizedText = (review.comment || "").toLowerCase().trim();
-        const hashInput = `${review.establishment_id}|${review.author_first_name || ""}|${review.author_last_name || ""}|${review.review_date || ""}|${review.rating}|${normalizedText}`;
+        const authorName = `${review.author_first_name || ""} ${review.author_last_name || ""}`.trim();
+        const hashInput = `${review.establishment_id}|${authorName}|${review.review_date || ""}|${review.rating}|${normalizedText}|${review.source || ""}`;
         reviewHash = simpleHash(hashInput);
       }
       
