@@ -200,6 +200,7 @@ export type Database = {
         Row: {
           author: string | null
           dedup_key: string | null
+          fingerprint: string | null
           id: number
           inserted_at: string | null
           language: string | null
@@ -216,6 +217,7 @@ export type Database = {
         Insert: {
           author?: string | null
           dedup_key?: string | null
+          fingerprint?: string | null
           id?: number
           inserted_at?: string | null
           language?: string | null
@@ -232,6 +234,7 @@ export type Database = {
         Update: {
           author?: string | null
           dedup_key?: string | null
+          fingerprint?: string | null
           id?: number
           inserted_at?: string | null
           language?: string | null

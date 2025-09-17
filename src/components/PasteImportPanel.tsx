@@ -5,10 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { parsePastedReviews, ParsedReview } from "@/utils/parsePastedReviews";
 import { Loader2 } from "lucide-react";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-import { bulkCreateReviews, ReviewCreate } from "@/services/reviewsService";
 import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
+import { dedupeBatch } from "@/lib/reviews/dedupe";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PasteImportPanelProps {
   onImportBulk?: (reviews: any[]) => void;
@@ -48,45 +49,64 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
     }
     if (!list.length) return;
 
-    const payload: ReviewCreate[] = list.map(v => ({
-      establishment_id: est.id || est.place_id,
-      establishment_place_id: est.place_id,
-      establishment_name: est.name,
-      source: v.platform || "pasted",
-      author_first_name: v.firstName || "",
-      author_last_name: v.lastName || "",
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Erreur",
+        description: "Utilisateur non connecté.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Préparer les données pour l'API avec déduplication
+    const itemsForAPI = list.map(v => ({
+      author: `${v.firstName} ${v.lastName}`.trim() || "Anonyme",
       rating: v.rating,
       comment: v.comment || "",
+      platform: v.platform || "Google",
       review_date: v.reviewDate || null,
-      import_method: "paste",
-      import_source_url: (v as any).sourceUrl || null,
-      raw_fingerprint: v.rawFingerprint || undefined,
+      user_id: user.id,
     }));
+
+    // Déduplication en batch avant envoi
+    const deduped = dedupeBatch(itemsForAPI);
 
     setIsImporting(true);
     try {
-      const { inserted, skipped, reasons, sampleSkipped } = await bulkCreateReviews(payload);
+      const response = await fetch("/api/reviews/bulk-import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          establishmentId: est.id || est.place_id,
+          items: deduped
+        }),
+        cache: "no-store",
+      });
+
+      const result = await response.json();
       
-      // TOAST bas-droite avec rapport détaillé
-      const duplicates = reasons?.duplicate || 0;
-      sonnerToast.success(`✅ ${inserted} avis ajoutés. 🔁 Doublons ignorés : ${duplicates + (skipped - duplicates)}`, {
-        duration: 5000,
-        action: {
-          label: "Détails",
-          onClick: () => {
-            console.log("Rapport d'import:", { inserted, skipped, reasons, sampleSkipped });
-            if (sampleSkipped && sampleSkipped.length > 0) {
-              console.table(sampleSkipped);
+      if (!response.ok) {
+        throw new Error(result.error || `HTTP ${response.status}`);
+      }
+
+      // Toast avec rapport détaillé
+      sonnerToast.success(
+        `✔ ${result.inserted} avis importés — ${result.duplicates} doublons ignorés — ${result.invalid} invalides`,
+        {
+          duration: 5000,
+          action: {
+            label: "Détails",
+            onClick: () => {
+              console.log("Rapport d'import:", result);
             }
           }
         }
-      });
+      );
 
       // Log détaillé pour debug
-      console.log("Import terminé:", { inserted, skipped, reasons });
-      if (sampleSkipped && sampleSkipped.length > 0) {
-        console.table(sampleSkipped);
-      }
+      console.log("Import terminé:", result);
 
       // RESET UI
       setParsedReviews([]);
@@ -118,11 +138,13 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
       if (onClose) {
         onClose();
       }
-    } catch (e) {
+    } catch (e: any) {
       toast({
         title: "Erreur d'import",
         description: (
-          <span data-testid="toast-import-error">Échec de l'import des avis.</span>
+          <span data-testid="toast-import-error">
+            Échec de l'import des avis: {e?.message || "Erreur inconnue"}
+          </span>
         ),
         variant: "destructive",
       });
@@ -130,7 +152,7 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
     } finally {
       setIsImporting(false);
     }
-  }, [currentEstablishment, parsedReviews, onClose, onImportSuccess, onOpenVisualPanel]);
+  }, [currentEstablishment, parsedReviews, onClose, onImportSuccess, onOpenVisualPanel, toast]);
 
   // Calculate valid reviews count based on rating criteria
   const validReviews = useMemo(() => {
