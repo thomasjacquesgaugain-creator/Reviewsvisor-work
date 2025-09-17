@@ -65,10 +65,28 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
 
     setIsImporting(true);
     try {
-      const { inserted, skipped } = await bulkCreateReviews(payload);
+      const { inserted, skipped, reasons, sampleSkipped } = await bulkCreateReviews(payload);
       
-      // TOAST bas-droite
-      sonnerToast.success(`✅ ${inserted} avis enregistrés pour ${est.name} (doublons ignorés : ${skipped}).`);
+      // TOAST bas-droite avec rapport détaillé
+      const duplicates = reasons?.duplicate || 0;
+      sonnerToast.success(`✅ ${inserted} avis enregistrés pour ${est.name} (doublons: ${duplicates})`, {
+        duration: 5000,
+        action: {
+          label: "Détails",
+          onClick: () => {
+            console.log("Rapport d'import:", { inserted, skipped, reasons, sampleSkipped });
+            if (sampleSkipped && sampleSkipped.length > 0) {
+              console.table(sampleSkipped);
+            }
+          }
+        }
+      });
+
+      // Log détaillé pour debug
+      console.log("Import terminé:", { inserted, skipped, reasons });
+      if (sampleSkipped && sampleSkipped.length > 0) {
+        console.table(sampleSkipped);
+      }
 
       // RESET UI
       setParsedReviews([]);
@@ -112,7 +130,7 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
     } finally {
       setIsImporting(false);
     }
-  }, [currentEstablishment, parsedReviews, onClose, onImportSuccess]);
+  }, [currentEstablishment, parsedReviews, onClose, onImportSuccess, onOpenVisualPanel]);
 
   // Calculate valid reviews count based on rating criteria
   const validReviews = useMemo(() => {

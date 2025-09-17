@@ -18,6 +18,15 @@ export interface ReviewCreate {
 export interface BulkCreateResult {
   inserted: number;
   skipped: number;
+  reasons?: {
+    duplicate?: number;
+    missingRating?: number;
+    missingEstablishment?: number;
+  };
+  sampleSkipped?: Array<{
+    reason: string;
+    snippet: string;
+  }>;
 }
 
 // Simple hash function for deduplication
@@ -33,10 +42,44 @@ function simpleHash(text: string): string {
 
 export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCreateResult> {
   let inserted = 0;
-  let skipped = 0;
+  let skippedTotal = 0;
+  const reasons = {
+    duplicate: 0,
+    missingRating: 0,
+    missingEstablishment: 0
+  };
+  const sampleSkipped: Array<{ reason: string; snippet: string }> = [];
   
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) throw new Error('User not authenticated');
+
   for (const review of reviews) {
     try {
+      // Validate required fields
+      if (!review.establishment_id || !review.establishment_place_id) {
+        reasons.missingEstablishment++;
+        if (sampleSkipped.length < 5) {
+          sampleSkipped.push({
+            reason: 'missing_establishment',
+            snippet: `${review.author_first_name || 'Anonyme'}: ${(review.comment || '').substring(0, 50)}...`
+          });
+        }
+        skippedTotal++;
+        continue;
+      }
+
+      if (!review.rating || review.rating < 1 || review.rating > 5) {
+        reasons.missingRating++;
+        if (sampleSkipped.length < 5) {
+          sampleSkipped.push({
+            reason: 'missing_rating',
+            snippet: `${review.author_first_name || 'Anonyme'}: ${(review.comment || '').substring(0, 50)}...`
+          });
+        }
+        skippedTotal++;
+        continue;
+      }
+
       // Create hash for deduplication
       let reviewHash: string;
       
@@ -50,72 +93,96 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
         reviewHash = simpleHash(hashInput);
       }
       
-      // Check if review already exists (by hash)
+      // Check if review already exists (by source_review_id which stores our hash)
       const { data: existingReview } = await supabase
         .from('reviews')
         .select('id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .eq('place_id', review.establishment_place_id)
-        .eq('text', review.comment || "")
+        .eq('user_id', user.user.id)
+        .eq('source_review_id', reviewHash)
         .single();
       
       if (existingReview) {
-        skipped++;
+        reasons.duplicate++;
+        if (sampleSkipped.length < 5) {
+          sampleSkipped.push({
+            reason: 'duplicate',
+            snippet: `${review.author_first_name || 'Anonyme'}: ${(review.comment || '').substring(0, 50)}...`
+          });
+        }
+        skippedTotal++;
         continue;
+      }
+      
+      // Parse review date safely
+      let publishedAt: string | null = null;
+      if (review.review_date) {
+        try {
+          const date = new Date(review.review_date);
+          if (!isNaN(date.getTime()) && review.review_date !== 'Invalid Date') {
+            publishedAt = date.toISOString();
+          }
+        } catch (e) {
+          // Invalid date, keep null
+        }
       }
       
       // Insert new review
       const { error } = await supabase
         .from('reviews')
         .insert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: user.user.id,
           place_id: review.establishment_place_id,
           source: review.source,
-          author: `${review.author_first_name} ${review.author_last_name}`.trim(),
+          author: `${review.author_first_name} ${review.author_last_name}`.trim() || 'Anonyme',
           rating: review.rating,
           text: review.comment || "",
-          published_at: review.review_date && review.review_date !== 'Invalid Date' && !isNaN(new Date(review.review_date).getTime()) ? new Date(review.review_date).toISOString() : null,
+          published_at: publishedAt,
           source_review_id: reviewHash,
           raw: {
             import_method: review.import_method,
             import_source_url: review.import_source_url,
             author_first_name: review.author_first_name,
             author_last_name: review.author_last_name,
-            establishment_name: review.establishment_name
+            establishment_name: review.establishment_name,
+            raw_fingerprint: review.raw_fingerprint
           }
         });
       
       if (error) {
         console.error('Error inserting review:', error);
-        skipped++;
+        skippedTotal++;
       } else {
         inserted++;
       }
     } catch (error) {
       console.error('Error processing review:', error);
-      skipped++;
+      skippedTotal++;
     }
   }
   
-  return { inserted, skipped };
+  return { 
+    inserted, 
+    skipped: skippedTotal,
+    reasons,
+    sampleSkipped
+  };
 }
 
-export async function getReviewsList(establishmentId: string, options?: { limit?: number; cursor?: string }) {
+export async function list(establishmentId: string, limit = 500, cursor?: string) {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('User not authenticated');
 
-  const limit = options?.limit || 50;
   let query = supabase
     .from('reviews')
     .select('*')
     .eq('user_id', user.user.id)
     .eq('place_id', establishmentId)
-    .order('published_at', { ascending: false })
+    .order('published_at', { ascending: false, nullsFirst: false })
     .order('inserted_at', { ascending: false })
     .limit(limit);
 
-  if (options?.cursor) {
-    query = query.gt('id', parseInt(options.cursor));
+  if (cursor) {
+    query = query.gt('id', parseInt(cursor));
   }
 
   const { data: reviews, error } = await query;
@@ -129,6 +196,23 @@ export async function getReviewsList(establishmentId: string, options?: { limit?
     items: reviews || [],
     nextCursor: reviews && reviews.length === limit ? reviews[reviews.length - 1].id.toString() : undefined
   };
+}
+
+export async function listAll(establishmentId: string) {
+  let all: any[] = [];
+  let cursor: string | undefined;
+  
+  do {
+    const { items, nextCursor } = await list(establishmentId, 500, cursor);
+    all = all.concat(items || []);
+    cursor = nextCursor;
+  } while (cursor);
+  
+  return all;
+}
+
+export async function getReviewsList(establishmentId: string, options?: { limit?: number; cursor?: string }) {
+  return list(establishmentId, options?.limit || 50, options?.cursor);
 }
 
 export async function listAllReviews(establishmentId: string) {

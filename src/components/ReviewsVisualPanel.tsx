@@ -5,7 +5,7 @@ import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText } from "lu
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-import { getReviewsSummary, listAllReviews } from "@/services/reviewsService";
+import { getReviewsSummary, listAllReviews, listAll } from "@/services/reviewsService";
 import { STORAGE_KEY } from "@/types/etablissement";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
 interface ReviewsSummary {
@@ -58,7 +58,7 @@ export function ReviewsVisualPanel({
         // Load summary and ALL reviews in parallel
         const [summaryData, allReviews] = await Promise.all([
           getReviewsSummary(effectiveId),
-          listAllReviews(effectiveId)
+          listAll(effectiveId)
         ]);
         
         setSummary(summaryData);
@@ -95,7 +95,7 @@ export function ReviewsVisualPanel({
       const loadData = async () => {
         try {
           setIsLoadingReviews(true);
-          const allReviews = await listAllReviews(effectiveId!);
+          const allReviews = await listAll(effectiveId!);
           
           // Map ALL reviews to table format
           const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
