@@ -109,7 +109,7 @@ export function ReviewsVisualPanel({ onClose }: ReviewsVisualPanelProps) {
         ) : !summary || summary.total === 0 ? (
           <div className="text-center py-8">
             <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">Aucun avis enregistré</h3>
+            <h3 className="text-lg font-medium mb-2">{currentEstablishment.name}, 0 avis</h3>
             <p className="text-muted-foreground">
               Aucun avis enregistré pour cet établissement. Importez des avis pour voir les statistiques.
             </p>
