@@ -204,9 +204,9 @@ export function ReviewsVisualPanel({
 
       const deleted = json?.deleted ?? 0;
       
-      toast.success(`🗑️ ${deleted} avis supprimés avec succès`);
+      toast.success(`🗑️ ${deleted} avis supprimés`);
       
-      // Réinitialiser l'état local
+      // Réinitialiser l'état local immédiatement
       setSummary({
         total: 0,
         avgRating: 0,
@@ -215,8 +215,30 @@ export function ReviewsVisualPanel({
       });
       setReviewsList([]);
       
+      // Recharger les données depuis le serveur pour être sûr
+      try {
+        const [summaryData, allReviews] = await Promise.all([
+          getReviewsSummary(effectiveId),
+          listAll(effectiveId)
+        ]);
+        
+        setSummary(summaryData);
+        
+        const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
+          authorName: review.author || "Anonyme",
+          rating: review.rating || 0,
+          comment: review.text || "",
+          platform: review.source || "Google",
+          reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
+        }));
+        
+        setReviewsList(mappedRows);
+      } catch (refreshError) {
+        console.error('Error refreshing data after delete:', refreshError);
+      }
+      
       // Émettre un événement pour notifier la suppression
-      window.dispatchEvent(new CustomEvent("reviews:deleted", { 
+      window.dispatchEvent(new CustomEvent("reviews:purged", { 
         detail: { establishmentId: effectiveId } 
       }));
       

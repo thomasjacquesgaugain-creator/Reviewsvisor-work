@@ -15,49 +15,58 @@ const supabaseAdmin = createClient(
   }
 );
 
-async function resolveEstablishmentId(inputId: string) {
-  // Tente id direct puis place_id
-  let { data: byId } = await supabaseAdmin
+async function resolveCandidates(inputId: string) {
+  // On récupère l'id interne et place_id à partir d'un id ou d'un place_id
+  const candidates = new Set<string>([inputId]);
+  
+  const { data: est1 } = await supabaseAdmin
     .from("establishments")
-    .select("id")
-    .eq("id", inputId)
+    .select("id, place_id")
+    .or(`id.eq.${inputId},place_id.eq.${inputId}`)
     .limit(1);
-  if (byId && byId.length) return byId[0].id;
 
-  let { data: byPlace } = await supabaseAdmin
-    .from("establishments")
-    .select("id")
-    .eq("place_id", inputId)
-    .limit(1);
-  if (byPlace && byPlace.length) return byPlace[0].id;
-
-  return inputId; // fallback
+  if (est1 && est1.length) {
+    candidates.add(est1[0].id);
+    if (est1[0].place_id) candidates.add(est1[0].place_id);
+  }
+  
+  return Array.from(candidates);
 }
 
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
-    let { establishmentId } = body || {};
+    const rawId = body?.establishmentId as string | undefined;
     
-    if (!establishmentId) {
+    if (!rawId) {
       return Response.json({ error: "establishmentId requis" }, { status: 400 });
     }
 
-    establishmentId = await resolveEstablishmentId(establishmentId);
+    const candidates = await resolveCandidates(rawId);
 
-    // Supprime toutes les reviews pour ce place_id avec count exact
-    const { data, error, count } = await supabaseAdmin
+    // Compter avant suppression pour renvoyer un total fiable
+    const { count: toDeleteCount, error: countErr } = await supabaseAdmin
       .from("reviews")
-      .delete()
-      .eq("place_id", establishmentId)
-      .select("id");
-
-    if (error) {
-      console.error("Supabase delete error:", error);
-      throw error;
+      .select("*", { count: "exact", head: true })
+      .in("place_id", candidates);
+      
+    if (countErr) {
+      console.error("Count error:", countErr);
+      throw countErr;
     }
 
-    return Response.json({ deleted: data?.length ?? 0 });
+    // Supprimer toutes les lignes correspondantes (place_id dans les candidats)
+    const { error: delErr } = await supabaseAdmin
+      .from("reviews")
+      .delete()
+      .in("place_id", candidates);
+      
+    if (delErr) {
+      console.error("Delete error:", delErr);
+      throw delErr;
+    }
+
+    return Response.json({ deleted: toDeleteCount ?? 0, candidates });
     
   } catch (err: any) {
     console.error("PURGE ERROR", err);
@@ -65,7 +74,6 @@ export async function POST(req: Request) {
   }
 }
 
-// Fallback DELETE ?establishmentId=...
 export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
   const establishmentId = searchParams.get("establishmentId");
