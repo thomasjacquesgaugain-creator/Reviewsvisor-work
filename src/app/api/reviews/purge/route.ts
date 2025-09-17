@@ -1,16 +1,42 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseAdmin = createClient(
+  "https://zzjmtipdsccxmmoaetlp.supabase.co",
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { 
+    auth: { 
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    } 
+  }
+);
 
 async function resolveEstablishmentId(inputId: string) {
-  // Pour ce projet, on utilise directement le place_id comme identifiant
-  return inputId;
+  // Tente id direct puis place_id
+  let { data: byId } = await supabaseAdmin
+    .from("establishments")
+    .select("id")
+    .eq("id", inputId)
+    .limit(1);
+  if (byId && byId.length) return byId[0].id;
+
+  let { data: byPlace } = await supabaseAdmin
+    .from("establishments")
+    .select("id")
+    .eq("place_id", inputId)
+    .limit(1);
+  if (byPlace && byPlace.length) return byPlace[0].id;
+
+  return inputId; // fallback
 }
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json().catch(() => ({} as any));
+    const body = await req.json().catch(() => ({}));
     let { establishmentId } = body || {};
     
     if (!establishmentId) {
@@ -19,42 +45,28 @@ export async function POST(req: Request) {
 
     establishmentId = await resolveEstablishmentId(establishmentId);
 
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return Response.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
-    // Delete all reviews for this establishment and user
-    const { data, error } = await supabase
-      .from('reviews')
+    // Supprime toutes les reviews pour ce place_id avec count exact
+    const { data, error, count } = await supabaseAdmin
+      .from("reviews")
       .delete()
-      .eq('place_id', establishmentId)
-      .eq('user_id', user.id)
-      .select('id');
+      .eq("place_id", establishmentId)
+      .select("id");
 
     if (error) {
-      console.error('Supabase delete error:', error);
-      return Response.json({ 
-        error: `Erreur base de données: ${error.message}` 
-      }, { status: 500 });
+      console.error("Supabase delete error:", error);
+      throw error;
     }
 
-    const deletedCount = data?.length || 0;
-
-    return Response.json({ deleted: deletedCount });
+    return Response.json({ deleted: data?.length ?? 0 });
     
   } catch (err: any) {
-    console.error('Purge error:', err);
-    return Response.json({ 
-      error: err?.message || "Erreur serveur" 
-    }, { status: 500 });
+    console.error("PURGE ERROR", err);
+    return Response.json({ error: err?.message || "Erreur serveur" }, { status: 500 });
   }
 }
 
+// Fallback DELETE ?establishmentId=...
 export async function DELETE(req: Request) {
-  // fallback DELETE ?establishmentId=...
   const { searchParams } = new URL(req.url);
   const establishmentId = searchParams.get("establishmentId");
   
