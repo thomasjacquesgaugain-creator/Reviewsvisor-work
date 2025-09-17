@@ -183,40 +183,37 @@ export function ReviewsVisualPanel({
     try {
       setIsDeleting(true);
       
-      const response = await fetch(`/api/reviews/delete-all?establishmentId=${effectiveId}`, {
-        method: 'DELETE',
+      const response = await fetch('/api/reviews/purge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ establishmentId: effectiveId }),
       });
 
+      const text = await response.text();
+      const json = (() => { 
+        try { 
+          return JSON.parse(text); 
+        } catch { 
+          return {}; 
+        } 
+      })();
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Erreur inconnue' }));
-        throw new Error(errorData.error || `Erreur ${response.status}`);
+        throw new Error(json?.error || text || `HTTP ${response.status}`);
       }
 
-      const result = await response.json();
+      const deleted = json?.deleted ?? 0;
       
-      toast.success(`🗑️ ${result.deleted} avis supprimés avec succès`);
+      toast.success(`🗑️ ${deleted} avis supprimés avec succès`);
       
-      // Recharger les données
-      setSummary(null);
+      // Réinitialiser l'état local
+      setSummary({
+        total: 0,
+        avgRating: 0,
+        byStars: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+        byMonth: []
+      });
       setReviewsList([]);
-      
-      // Recharger le résumé et la liste
-      const [summaryData, allReviews] = await Promise.all([
-        getReviewsSummary(effectiveId),
-        listAll(effectiveId)
-      ]);
-      
-      setSummary(summaryData);
-      
-      const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
-        authorName: review.author || "Anonyme",
-        rating: review.rating || 0,
-        comment: review.text || "",
-        platform: review.source || "Google",
-        reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
-      }));
-      
-      setReviewsList(mappedRows);
       
       // Émettre un événement pour notifier la suppression
       window.dispatchEvent(new CustomEvent("reviews:deleted", { 
