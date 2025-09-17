@@ -1,60 +1,48 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
-import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
 
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const establishmentId = searchParams.get('establishmentId');
+const admin = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE!,
+  { auth: { persistSession: false } }
+);
 
-    if (!establishmentId) {
-      return Response.json({ error: 'establishmentId is required' }, { status: 400 });
-    }
+async function getSummary(establishmentId: string) {
+  // total exact
+  const { count: total } = await admin
+    .from("reviews")
+    .select("id", { head: true, count: "exact" })
+    .eq("establishment_id", establishmentId);
 
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  // moyenne (si on garde la colonne rating)
+  const { data: ratings } = await admin
+    .from("reviews")
+    .select("rating")
+    .eq("establishment_id", establishmentId)
+    .limit(10000);
 
-    // Get reviews summary directly from the reviews table
-    const { data: reviews, error: reviewsError } = await supabase
-      .from('reviews')
-      .select('rating, dedup_key')
-      .eq('place_id', establishmentId)
-      .eq('user_id', user.id);
-
-    if (reviewsError) {
-      console.error('Error fetching reviews:', reviewsError);
-      return Response.json({ error: 'Failed to fetch reviews' }, { status: 500 });
-    }
-
-    const totalAll = reviews?.length || 0;
-    const uniqueKeys = new Set(reviews?.map(r => r.dedup_key).filter(Boolean) || []);
-    const totalUnique = uniqueKeys.size;
-    const duplicates = totalAll - totalUnique;
-    const avgRating = reviews?.length > 0 
-      ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length 
-      : 0;
-
-    return Response.json({
-      totalAll,
-      totalUnique,
-      duplicates,
-      avgRating: Number(avgRating.toFixed(1))
-    }, {
-      // Empêcher tout cache intermédiaire
-      headers: {
-        "Cache-Control": "no-store, max-age=0, must-revalidate",
-        "CDN-Cache-Control": "no-store",
-        "Vercel-CDN-Cache-Control": "no-store",
-      },
-    });
-
-  } catch (error) {
-    console.error('Unexpected error:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+  let avg = null as number | null;
+  if (ratings?.length) {
+    const sum = ratings.reduce((s, r) => s + (Number(r.rating) || 0), 0);
+    avg = Math.round((sum / ratings.length) * 10) / 10;
   }
+  return { totalAll: total ?? 0, avgRating: avg };
+}
+
+export async function GET(req: Request) {
+  const id = new URL(req.url).searchParams.get("establishmentId");
+  if (!id) return Response.json({ error: "establishmentId requis" }, { status: 400 });
+
+  const data = await getSummary(id);
+  return Response.json(data, {
+    headers: {
+      "Cache-Control": "no-store, max-age=0, must-revalidate",
+      "CDN-Cache-Control": "no-store",
+      "Vercel-CDN-Cache-Control": "no-store"
+    }
+  });
 }

@@ -52,31 +52,36 @@ export function ReviewsVisualPanel({
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [refreshToken, setRefreshToken] = useState(0);
+  
   const currentEstablishment = useCurrentEstablishment();
   
   // Use props first, fallback to current establishment
   const effectiveId = establishmentId || currentEstablishment?.id || currentEstablishment?.place_id;
   const displayName = establishmentName ?? currentEstablishment?.name ?? "—";
   
-  // Hook pour le résumé avec cache-busting
-  const { summary: hookSummary, isLoading: isLoadingSummary, refetch: refetchSummary } = useReviewsSummary(effectiveId, refreshToken);
+  const [bump, setBump] = useState(0);
   
-  // État local optimistic pour la tuile
-  const [localSummary, setLocalSummary] = useState<{ totalAll: number; avgRating: number | null }>({
-    totalAll: 0,
-    avgRating: null,
-  });
-  // Sync quand hookSummary change
+  // Hook pour le résumé avec cache-busting
+  const { summary: hookSummary, isLoading: isLoadingSummary, refetch: refetchSummary } = useReviewsSummary(effectiveId, bump);
+  
+  // calcul du total à afficher
+  const rowsLoaded = Array.isArray(reviewsList);
+  const totalFromRows = rowsLoaded ? reviewsList.length : undefined;
+  const totalTile = totalFromRows ?? hookSummary?.totalAll ?? 0;
+  const avgTile = hookSummary?.avgRating ?? null;
+  
+  // Sync summary pour les graphiques
   useEffect(() => {
     if (hookSummary) {
-      setLocalSummary({ 
-        totalAll: hookSummary.totalAll ?? 0, 
-        avgRating: hookSummary.avgRating ?? null 
-      });
       setSummary(hookSummary as ReviewsSummary);
     }
   }, [hookSummary]);
+
+  // quand l'établissement change : on repart propre
+  useEffect(() => {
+    setReviewsList([]);
+    setBump(Date.now());
+  }, [effectiveId]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -112,7 +117,7 @@ export function ReviewsVisualPanel({
     };
     
     loadData();
-  }, [effectiveId, refreshToken]);
+  }, [effectiveId, bump]);
 
   // Écoute l'évènement envoyé après import pour recharger
   useEffect(() => {
@@ -203,9 +208,8 @@ export function ReviewsVisualPanel({
     try {
       setIsDeleting(true);
       
-      // OPTIMISTIC UI : mise à 0 immédiate
+      // OPTIMISTIC UI : vider la liste immédiatement
       setReviewsList([]);
-      setLocalSummary({ totalAll: 0, avgRating: null });
       
       const response = await fetch('/api/avis/purge', {
         method: 'POST',
@@ -228,27 +232,11 @@ export function ReviewsVisualPanel({
       }
 
       const deleted = json?.deleted ?? visibleCount;
-      
       toast.success(`🗑️ ${deleted} avis supprimés`);
       
       // Refetch forcé avec cache-buster
-      setRefreshToken(Date.now());
+      setBump(Date.now());
       await refetchSummary();
-      
-      // Recharger la liste aussi
-      try {
-        const allReviews = await listAll(effectiveId);
-        const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
-          authorName: review.author || "Anonyme",
-          rating: review.rating || 0,
-          comment: review.text || "",
-          platform: review.source || "Google",
-          reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
-        }));
-        setReviewsList(mappedRows);
-      } catch (refreshError) {
-        console.error('Error refreshing data after delete:', refreshError);
-      }
       
       // Émettre un événement pour notifier la suppression
       window.dispatchEvent(new CustomEvent("reviews:purged-visible", { 
@@ -256,11 +244,11 @@ export function ReviewsVisualPanel({
       }));
       
     } catch (error) {
-      console.error('Purge error:', error);
+      console.error('Delete error:', error);
       toast.error(`❌ Erreur lors de la suppression : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
       
       // En cas d'erreur, recharger pour annuler l'optimistic UI
-      setRefreshToken(Date.now());
+      setBump(Date.now());
       await refetchSummary();
     } finally {
       setIsDeleting(false);
@@ -359,7 +347,7 @@ export function ReviewsVisualPanel({
                   <div>
                     <p className="text-sm text-muted-foreground">Note moyenne</p>
                     <p className="text-2xl font-bold">
-                      {localSummary.avgRating ? localSummary.avgRating.toFixed(1) : "—"}/5
+                      {avgTile ? avgTile.toFixed(1) : "—"}/5
                     </p>
                   </div>
                 </CardContent>
@@ -370,9 +358,9 @@ export function ReviewsVisualPanel({
                   <BarChart3 className="w-8 h-8 text-blue-500 mr-3" />
                   <div>
                     <p className="text-sm text-muted-foreground">Total d'avis</p>
-                    <p className="text-2xl font-bold">{localSummary.totalAll}</p>
+                    <p className="text-2xl font-bold">{totalTile}</p>
                   </div>
-                  {localSummary.totalAll > 0 && (
+                  {totalTile > 0 && (
                     <Button
                       variant="ghost"
                       size="icon"
