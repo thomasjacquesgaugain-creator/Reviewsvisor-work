@@ -8,8 +8,9 @@ import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
-import { dedupeBatch } from "@/lib/reviews/dedupe";
+import { dedupeBatch, type IncomingReview } from "@/lib/reviews/fingerprint";
 import { supabase } from "@/integrations/supabase/client";
+import { useReviewsVisual } from "@/hooks/useReviewsVisual";
 
 interface PasteImportPanelProps {
   onImportBulk?: (reviews: any[]) => void;
@@ -27,6 +28,7 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
   
   const currentEstablishment = useCurrentEstablishment();
   const { toast } = useToast();
+  const { openPanel, refetchList, refetchSummary } = useReviewsVisual();
 
   const handlePreview = () => {
     const currentText = textareaRef.current?.value || "";

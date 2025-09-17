@@ -7,48 +7,39 @@ const supabaseAdmin = createClient(
   { auth: { persistSession: false } }
 )
 
-// Simple hash for fingerprinting
-function simpleHash(s: string): string {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) {
-    h = (h * 31 + s.charCodeAt(i)) | 0;
+// Simple hash for fingerprinting (same as client-side)
+function simpleHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
   }
-  return "h" + (h >>> 0).toString(16);
+  return Math.abs(hash).toString(36);
 }
 
 // Normalize text for fingerprinting
-function norm(s: string): string {
-  return (s || "").toLowerCase()
+function norm(s?: string | null): string {
+  return (s || "")
+    .toLowerCase()
     .replace(/\s+/g, " ")
-    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .replace(/[.,;:!?()«»"']/g, "")
     .trim();
 }
 
-// Generate fingerprint for deduplication
-function makeFingerprint(item: {
-  platform: string;
+// Generate fingerprint for deduplication (same algorithm as client)
+function fingerprint(item: {
+  platform?: string;
   author: string;
   rating: number;
-  comment?: string;
-  review_date?: string | null;
+  comment?: string | null;
 }): string {
-  const p = norm(item.platform);
-  const a = norm(item.author);
-  const r = String(item.rating || 0);
-  const c = norm(item.comment || "");
-  let d = "";
-  
-  if (item.review_date) {
-    const dt = new Date(item.review_date);
-    if (!isNaN(dt.getTime())) {
-      const y = dt.getUTCFullYear();
-      const m = String(dt.getUTCMonth() + 1).padStart(2, "0");
-      const day = String(dt.getUTCDate()).padStart(2, "0");
-      d = `${y}-${m}-${day}`;
-    }
-  }
-  
-  const base = c ? `${p}|${a}|${r}|${c}` : `${p}|${a}|${r}|${d}`;
+  const base = [
+    norm(item.author) || "nouveau",
+    String(item.rating ?? 0),
+    norm(item.comment) || "",
+    norm(item.platform) || "google",
+  ].join("|");
   return simpleHash(base);
 }
 
@@ -79,7 +70,7 @@ Deno.serve(async (req) => {
 
     console.log(`Processing ${items.length} items for establishment ${establishmentId}`);
 
-    // Prepare and validate reviews
+    // Prepare and validate reviews with consistent fingerprinting
     const prepared = items.map((item: any) => ({
       place_id: establishmentId,
       user_id: user_id,
@@ -89,12 +80,11 @@ Deno.serve(async (req) => {
       source: item.platform || "manual",
       source_review_id: item.source_review_id || `manual_${Date.now()}_${Math.random()}`,
       published_at: item.review_date ? new Date(item.review_date).toISOString() : null,
-      fingerprint: makeFingerprint({
+      fingerprint: fingerprint({
         platform: item.platform || "manual",
         author: item.author || "Anonyme",
         rating: Number(item.rating) || 0,
         comment: item.comment || "",
-        review_date: item.review_date || null,
       }),
     })).filter((r: any) => r.rating >= 1 && r.rating <= 5);
 
