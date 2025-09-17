@@ -75,22 +75,19 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
 
     setIsImporting(true);
     try {
-      const response = await fetch("/api/reviews/bulk-import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+      const { data, error } = await supabase.functions.invoke('bulk-import-reviews', {
+        body: { 
           establishmentId: est.id || est.place_id,
-          items: deduped
-        }),
-        cache: "no-store",
+          items: deduped,
+          user_id: user.id
+        }
       });
 
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || `HTTP ${response.status}`);
+      if (error) {
+        throw new Error(error.message || "Erreur lors de l'import");
       }
 
+      const result = data;
       // Toast avec rapport détaillé
       sonnerToast.success(
         `✔ ${result.inserted} avis importés — ${result.duplicates} doublons ignorés — ${result.invalid} invalides`,
