@@ -24,23 +24,31 @@ interface ReviewsSummary {
   }>;
 }
 interface ReviewsVisualPanelProps {
+  establishmentId?: string;
+  establishmentName?: string;
   onClose: () => void;
 }
 export function ReviewsVisualPanel({
+  establishmentId,
+  establishmentName,
   onClose
 }: ReviewsVisualPanelProps) {
   const [summary, setSummary] = useState<ReviewsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const currentEstablishment = useCurrentEstablishment();
+  
+  // Use props first, fallback to current establishment
+  const effectiveId = establishmentId || currentEstablishment?.id || currentEstablishment?.place_id;
+  const displayName = establishmentName ?? currentEstablishment?.name ?? "—";
   useEffect(() => {
     const loadSummary = async () => {
-      if (!currentEstablishment?.id) {
+      if (!effectiveId) {
         setIsLoading(false);
         return;
       }
       try {
         setIsLoading(true);
-        const data = await getReviewsSummary(currentEstablishment.id);
+        const data = await getReviewsSummary(effectiveId);
         setSummary(data);
       } catch (error) {
         console.error("Error loading reviews summary:", error);
@@ -50,7 +58,7 @@ export function ReviewsVisualPanel({
       }
     };
     loadSummary();
-  }, [currentEstablishment?.id]);
+  }, [effectiveId]);
 
   // Fallback: read the last selected establishment name from localStorage
   const fallbackName = (() => {
@@ -64,12 +72,12 @@ export function ReviewsVisualPanel({
     return null;
   })();
 
-  if (!currentEstablishment) {
+  if (!effectiveId && displayName === "—") {
     return <Card className="relative z-20 max-w-4xl mx-auto" data-testid="reviews-visual-panel">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
-            Aperçu visuel des avis
+            Aperçu visuel des avis — {fallbackName || "—"}
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={onClose} data-testid="btn-close-reviews-visual">
             <X className="w-4 h-4" />
@@ -100,9 +108,12 @@ export function ReviewsVisualPanel({
   }] : [];
   return <Card className="relative z-20 max-w-4xl mx-auto" data-testid="reviews-visual-panel">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle 
+          className="flex items-center gap-2"
+          data-testid="reviews-visual-title"
+        >
           <BarChart3 className="w-5 h-5" />
-          Aperçu visuel des avis
+          Aperçu visuel des avis — {displayName}
         </CardTitle>
         <Button variant="ghost" size="sm" onClick={onClose} data-testid="btn-close-reviews-visual">
           <X className="w-4 h-4" />
@@ -119,7 +130,7 @@ export function ReviewsVisualPanel({
             <Skeleton className="h-64" />
           </div> : !summary || summary.total === 0 ? <div className="text-center py-8">
             <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">{currentEstablishment.name}, 0 avis</h3>
+            <h3 className="text-lg font-medium mb-2">{displayName}, 0 avis</h3>
             <p className="text-muted-foreground">
               Aucun avis enregistré pour cet établissement. Importez des avis pour voir les statistiques.
             </p>

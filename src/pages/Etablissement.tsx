@@ -10,6 +10,7 @@ import { Etab } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
 import { Building2, Home, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 
 // TypeScript declarations for Google Maps
 declare global {
@@ -23,6 +24,13 @@ export default function EtablissementPage() {
   const [selected, setSelected] = useState<Etab | null>(null);
   const [showImportBar, setShowImportBar] = useState(false);
   const [showReviewsVisual, setShowReviewsVisual] = useState(false);
+  const [visualEstablishment, setVisualEstablishment] = useState<{
+    id: string;
+    name: string;
+    placeId: string;
+  } | null>(null);
+  
+  const currentEstablishment = useCurrentEstablishment();
 
   // ⚠️ Utilise EXACTEMENT ces champs dans Autocomplete pour récupérer phone/website/rating :
   // fields: ['place_id','name','formatted_address','geometry.location','url','website','formatted_phone_number','rating']
@@ -89,6 +97,13 @@ export default function EtablissementPage() {
         }, 50);
       }
       if (target && (target.closest('[data-testid="btn-analyser-etablissement"]'))) {
+        if (currentEstablishment) {
+          setVisualEstablishment({
+            id: currentEstablishment.id || currentEstablishment.place_id,
+            name: currentEstablishment.name,
+            placeId: currentEstablishment.place_id
+          });
+        }
         setShowReviewsVisual(!showReviewsVisual);
         setTimeout(() => {
           document.getElementById('reviews-visual-anchor')?.scrollIntoView({
@@ -210,7 +225,11 @@ export default function EtablissementPage() {
 
           {/* Reviews Visual Panel */}
           {showReviewsVisual && (
-            <ReviewsVisualPanel onClose={() => setShowReviewsVisual(false)} />
+            <ReviewsVisualPanel 
+              establishmentId={visualEstablishment?.id}
+              establishmentName={visualEstablishment?.name}
+              onClose={() => setShowReviewsVisual(false)} 
+            />
           )}
 
           {/* Anchor pour le scroll vers la barre d'import */}
