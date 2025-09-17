@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +19,7 @@ interface PasteImportPanelProps {
 }
 
 export default function PasteImportPanel({ onImportBulk, onClose, onImportSuccess, onOpenVisualPanel }: PasteImportPanelProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [pastedText, setPastedText] = useState("");
   const [parsedReviews, setParsedReviews] = useState<ParsedReview[]>([]);
   const [showPreview, setShowPreview] = useState(false);
@@ -28,9 +29,10 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
   const { toast } = useToast();
 
   const handlePreview = () => {
-    if (!pastedText.trim()) return;
+    const currentText = textareaRef.current?.value || "";
+    if (!currentText.trim()) return;
     
-    const reviews = parsePastedReviews(pastedText);
+    const reviews = parsePastedReviews(currentText);
     setParsedReviews(reviews);
     setShowPreview(true);
   };
@@ -151,11 +153,15 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
     }
   }, [currentEstablishment, parsedReviews, onClose, onImportSuccess, onOpenVisualPanel, toast]);
 
-  // Calculate valid reviews count based on rating criteria
+  // Calculate valid reviews count based on current textarea content
   const validReviews = useMemo(() => {
-    const source = parsedReviews?.length ? parsedReviews : parsePastedReviews(pastedText || "");
+    const currentText = textareaRef.current?.value || pastedText;
+    if (showPreview && parsedReviews?.length) {
+      return parsedReviews.filter(r => Number.isFinite(r.rating) && r.rating >= 1 && r.rating <= 5);
+    }
+    const source = parsePastedReviews(currentText || "");
     return (source || []).filter(r => Number.isFinite(r.rating) && r.rating >= 1 && r.rating <= 5);
-  }, [parsedReviews, pastedText]);
+  }, [parsedReviews, pastedText, showPreview]);
 
   const canImport = !isImporting && validReviews.length > 0;
 
@@ -186,6 +192,7 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
       <div data-testid="paste-input-wrap" className="relative z-10">
         <div className="space-y-2">
           <Textarea
+            ref={textareaRef}
             data-testid="paste-input"
             placeholder="Collez ici les avis copiés depuis Google Maps ou Tripadvisor..."
             value={pastedText}
@@ -217,7 +224,7 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
             type="button"
             className="relative z-50"
             disabled={!canImport}
-            onClick={() => handlePasteImport(validReviews)}
+            onClick={() => handlePasteImport()}
           >
             {isImporting ? (
               <>
