@@ -123,6 +123,27 @@ export async function getReviewsList(establishmentId: string, options?: { limit?
   };
 }
 
+export async function listAllReviews(establishmentId: string) {
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) throw new Error('User not authenticated');
+
+  // Get ALL reviews for the establishment (no limit)
+  const { data: reviews, error } = await supabase
+    .from('reviews')
+    .select('*')
+    .eq('user_id', user.user.id)
+    .eq('place_id', establishmentId)
+    .order('published_at', { ascending: false })
+    .order('inserted_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching all reviews:', error);
+    throw error;
+  }
+
+  return reviews || [];
+}
+
 export async function getReviewsSummary(establishmentId: string) {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('User not authenticated');

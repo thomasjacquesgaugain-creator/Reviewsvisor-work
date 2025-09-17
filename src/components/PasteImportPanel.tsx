@@ -13,9 +13,10 @@ interface PasteImportPanelProps {
   onImportBulk?: (reviews: any[]) => void;
   onClose?: () => void;
   onImportSuccess?: () => void; // Callback to refresh reviews data
+  onOpenVisualPanel?: () => void; // Callback to open visual panel
 }
 
-export default function PasteImportPanel({ onImportBulk, onClose, onImportSuccess }: PasteImportPanelProps) {
+export default function PasteImportPanel({ onImportBulk, onClose, onImportSuccess, onOpenVisualPanel }: PasteImportPanelProps) {
   const [pastedText, setPastedText] = useState("");
   const [parsedReviews, setParsedReviews] = useState<ParsedReview[]>([]);
   const [showPreview, setShowPreview] = useState(false);
@@ -63,20 +64,38 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
     setIsImporting(true);
     try {
       const { inserted, skipped } = await bulkCreateReviews(payload);
+      
       toast({
-        title: "✅ Import réussi",
+        title: "Avis enregistrés",
         description: (
-          <span data-testid="toast-import-success">{`${inserted} avis enregistrés pour ${est.name} (doublons ignorés : ${skipped}).`}</span>
+          <span data-testid="toast-import-success">
+            ✅ {inserted} avis enregistrés pour {est.name} (doublons ignorés : {skipped}).
+          </span>
         ),
+        duration: 4000
       });
-      // Nettoyage silencieux
+
+      // Reset UI
       setParsedReviews([]);
       setPastedText("");
       setShowPreview(false);
+      
       // Refresh reviews data
       if (onImportSuccess) {
         onImportSuccess();
       }
+      
+      // Open visual panel and scroll to it
+      if (onOpenVisualPanel) {
+        onOpenVisualPanel();
+        setTimeout(() => {
+          document.getElementById("reviews-visual-anchor")?.scrollIntoView({ 
+            behavior: "smooth", 
+            block: "start" 
+          });
+        }, 100);
+      }
+      
       // Option : fermer la barre
       if (onClose) {
         onClose();

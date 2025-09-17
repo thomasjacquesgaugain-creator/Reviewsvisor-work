@@ -11,11 +11,12 @@ interface ImportAvisToolbarProps {
   onClose: () => void;
   onFileAnalyzed?: () => void;
   onImportSuccess?: () => void;
+  onOpenVisualPanel?: () => void;
 }
 
 type ActiveTab = "manual" | "csv" | "paste" | "auto";
 
-export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuccess }: ImportAvisToolbarProps) {
+export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuccess, onOpenVisualPanel }: ImportAvisToolbarProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>("paste");
 
   const handleManualReviewSubmit = (review: { firstName: string; lastName: string; rating: number; comment: string }) => {
@@ -65,7 +66,7 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
       case "csv":
         return <ImportCsvPanel onFileAnalyzed={onFileAnalyzed} />;
       case "paste":
-        return <PasteImportPanel onImportBulk={handleBulkImport} onClose={onClose} onImportSuccess={onImportSuccess} />;
+        return <PasteImportPanel onImportBulk={handleBulkImport} onClose={onClose} onImportSuccess={onImportSuccess} onOpenVisualPanel={onOpenVisualPanel} />;
       case "auto":
         return (
           <div className="text-center py-8 text-muted-foreground">

@@ -38,6 +38,18 @@ export default function EtablissementPage() {
     setRefreshTrigger(prev => prev + 1);
   };
 
+  // Callback to open visual panel after import
+  const handleOpenVisualPanel = () => {
+    if (currentEstablishment) {
+      setVisualEstablishment({
+        id: currentEstablishment.id || currentEstablishment.place_id,
+        name: currentEstablishment.name,
+        placeId: currentEstablishment.place_id
+      });
+      setShowReviewsVisual(true);
+    }
+  };
+
   // ⚠️ Utilise EXACTEMENT ces champs dans Autocomplete pour récupérer phone/website/rating :
   // fields: ['place_id','name','formatted_address','geometry.location','url','website','formatted_phone_number','rating']
   function serializePlace(place: any): Etab {
@@ -251,6 +263,7 @@ export default function EtablissementPage() {
                 console.log("Fichier analysé, rafraîchissement des données...");
               }}
               onImportSuccess={handleImportSuccess}
+              onOpenVisualPanel={handleOpenVisualPanel}
             />
           )}
 
