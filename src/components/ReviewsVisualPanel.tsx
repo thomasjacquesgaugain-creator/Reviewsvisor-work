@@ -6,6 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { getReviewsSummary } from "@/services/reviewsService";
+import { STORAGE_KEY } from "@/types/etablissement";
 interface ReviewsSummary {
   total: number;
   avgRating: number;
@@ -50,6 +51,19 @@ export function ReviewsVisualPanel({
     };
     loadSummary();
   }, [currentEstablishment?.id]);
+
+  // Fallback: read the last selected establishment name from localStorage
+  const fallbackName = (() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const est = JSON.parse(stored);
+        return est?.name as string;
+      }
+    } catch {}
+    return null;
+  })();
+
   if (!currentEstablishment) {
     return <Card className="relative z-20 max-w-4xl mx-auto" data-testid="reviews-visual-panel">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -63,7 +77,7 @@ export function ReviewsVisualPanel({
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-center py-8">
-            Aucun établissement sélectionné
+            {fallbackName || "Aucun établissement sélectionné"}
           </p>
         </CardContent>
       </Card>;
