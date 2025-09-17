@@ -86,6 +86,41 @@ export function ReviewsVisualPanel({
     loadData();
   }, [effectiveId]);
 
+  // Écoute l'évènement envoyé après import pour recharger
+  useEffect(() => {
+    const onImported = (e: any) => {
+      const id = e?.detail?.establishmentId;
+      if (!id || id !== effectiveId) return;
+      
+      const loadData = async () => {
+        try {
+          setIsLoadingReviews(true);
+          const allReviews = await listAllReviews(effectiveId!);
+          
+          // Map ALL reviews to table format
+          const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
+            authorName: review.author || "Anonyme",
+            rating: review.rating || 0,
+            comment: review.text || "",
+            platform: review.source || "Google",
+            reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
+          }));
+          
+          setReviewsList(mappedRows);
+        } catch (error) {
+          console.error('Error loading reviews after import:', error);
+        } finally {
+          setIsLoadingReviews(false);
+        }
+      };
+      
+      loadData();
+    };
+
+    window.addEventListener("reviews:imported", onImported);
+    return () => window.removeEventListener("reviews:imported", onImported);
+  }, [effectiveId]);
+
   // Fallback: read the last selected establishment name from localStorage
   const fallbackName = (() => {
     try {

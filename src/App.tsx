@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthProvider";
+import { Toaster } from "sonner";
 import Protected from "@/components/Protected";
 import SignInForm from "@/components/SignInForm";
 import SignUpForm from "@/components/SignUpForm";
@@ -19,6 +20,7 @@ const App = () => {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <Toaster position="bottom-right" richColors closeButton toastOptions={{ className: "z-[9999]" }} />
         <Routes>
           <Route path="/auth" element={
             <div className="min-h-screen bg-background flex items-center justify-center p-6">

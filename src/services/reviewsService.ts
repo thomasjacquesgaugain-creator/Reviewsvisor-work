@@ -66,7 +66,7 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
           author: `${review.author_first_name} ${review.author_last_name}`.trim(),
           rating: review.rating,
           text: review.comment || "",
-          published_at: review.review_date ? new Date(review.review_date).toISOString() : null,
+          published_at: review.review_date && review.review_date !== 'Invalid Date' && !isNaN(new Date(review.review_date).getTime()) ? new Date(review.review_date).toISOString() : null,
           source_review_id: reviewHash,
           raw: {
             import_method: review.import_method,

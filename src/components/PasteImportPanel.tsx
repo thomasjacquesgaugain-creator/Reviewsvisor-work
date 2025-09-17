@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { bulkCreateReviews, ReviewCreate } from "@/services/reviewsService";
 import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
 
 interface PasteImportPanelProps {
@@ -65,27 +66,15 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
     try {
       const { inserted, skipped } = await bulkCreateReviews(payload);
       
-      toast({
-        title: "Avis enregistrés",
-        description: (
-          <span data-testid="toast-import-success">
-            ✅ {inserted} avis enregistrés pour {est.name} (doublons ignorés : {skipped}).
-          </span>
-        ),
-        duration: 4000
-      });
+      // TOAST bas-droite
+      sonnerToast.success(`✅ ${inserted} avis enregistrés pour ${est.name} (doublons ignorés : ${skipped}).`);
 
-      // Reset UI
+      // RESET UI
       setParsedReviews([]);
       setPastedText("");
       setShowPreview(false);
       
-      // Refresh reviews data
-      if (onImportSuccess) {
-        onImportSuccess();
-      }
-      
-      // Open visual panel and scroll to it
+      // OUVRIR le panneau + SCROLL
       if (onOpenVisualPanel) {
         onOpenVisualPanel();
         setTimeout(() => {
@@ -94,6 +83,16 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
             block: "start" 
           });
         }, 100);
+      }
+      
+      // SIGNAL de refresh pour le panneau
+      window.dispatchEvent(new CustomEvent("reviews:imported", { 
+        detail: { establishmentId: est.id || est.place_id } 
+      }));
+      
+      // Refresh reviews data (legacy callback)
+      if (onImportSuccess) {
+        onImportSuccess();
       }
       
       // Option : fermer la barre
