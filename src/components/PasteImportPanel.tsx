@@ -34,76 +34,66 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
     setShowPreview(true);
   };
 
-  const [importLabel, setImportLabel] = useState("");
+  const handlePasteImport = useCallback(async (valid?: ParsedReview[]) => {
+    const est = currentEstablishment;
+    const list = valid && valid.length ? valid : (parsedReviews || []).filter(r => Number.isFinite(r.rating) && r.rating >= 1 && r.rating <= 5);
 
-  const CHUNK_SIZE = 200;
-  const TIMEOUT_MS = 30000;
-
-  async function bulkPOST(body: any) {
-    const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), TIMEOUT_MS);
-    try {
-      const res = await fetch("/api/reviews/bulk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-        signal: controller.signal,
+    if (!est) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'identifier l'établissement courant.",
+        variant: "destructive",
       });
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(`Bulk failed ${res.status}: ${text}`);
-      }
-      return await res.json(); // { inserted, skipped, reasons? }
-    } finally {
-      clearTimeout(t);
+      return;
     }
-  }
+    if (!list.length) return;
 
-  const handlePasteImport = useCallback(async (reviews: ParsedReview[]) => {
+    const payload: ReviewCreate[] = list.map(v => ({
+      establishment_id: est.id || est.place_id,
+      establishment_place_id: est.place_id,
+      establishment_name: est.name,
+      source: v.platform || "pasted",
+      author_first_name: v.firstName || "",
+      author_last_name: v.lastName || "",
+      rating: v.rating,
+      comment: v.comment || "",
+      review_date: v.reviewDate || null,
+      import_method: "paste",
+      import_source_url: (v as any).sourceUrl || null,
+      raw_fingerprint: v.rawFingerprint || undefined,
+    }));
+
+    setIsImporting(true);
     try {
-      setIsImporting(true);
-      const est = currentEstablishment;
-      const estId = est?.id || est?.place_id;
-      if (!estId) throw new Error("Établissement introuvable.");
-
-      // mapping : accepter commentaire vide; fallback fingerprint
-      const toPayload = (r: ParsedReview) => ({
-        establishmentId: estId,
-        platform: r.platform ?? "Google",
-        authorFirstName: r.firstName ?? null,
-        authorLastName: r.lastName ?? null,
-        rating: r.rating,
-        comment: r.comment ?? "",
-        reviewDate: r.reviewDate ?? null,
-        import_method: "paste",
-        raw_fingerprint: r.rawFingerprint ?? null,
+      const { inserted, skipped, reasons, sampleSkipped } = await bulkCreateReviews(payload);
+      
+      // TOAST bas-droite avec rapport détaillé
+      const duplicates = reasons?.duplicate || 0;
+      sonnerToast.success(`✅ ${inserted} avis ajoutés. 🔁 Doublons ignorés : ${duplicates + (skipped - duplicates)}`, {
+        duration: 5000,
+        action: {
+          label: "Détails",
+          onClick: () => {
+            console.log("Rapport d'import:", { inserted, skipped, reasons, sampleSkipped });
+            if (sampleSkipped && sampleSkipped.length > 0) {
+              console.table(sampleSkipped);
+            }
+          }
+        }
       });
 
-      const all = reviews
-        .filter(r => Number.isFinite(r.rating) && r.rating >= 1 && r.rating <= 5)
-        .map(toPayload);
-
-      if (all.length === 0) throw new Error("Aucun avis valide à importer.");
-
-      // en lots + progression
-      let done = 0, inserted = 0, skipped = 0;
-      for (let i = 0; i < all.length; i += CHUNK_SIZE) {
-        const chunk = all.slice(i, i + CHUNK_SIZE);
-        const { inserted: ins = 0, skipped: sk = 0 } = await bulkPOST({ reviews: chunk });
-        inserted += ins; 
-        skipped += sk; 
-        done += chunk.length;
-        setImportLabel(`Import… ${done}/${all.length}`);
+      // Log détaillé pour debug
+      console.log("Import terminé:", { inserted, skipped, reasons });
+      if (sampleSkipped && sampleSkipped.length > 0) {
+        console.table(sampleSkipped);
       }
 
-      sonnerToast.success(`✅ ${inserted} avis ajoutés • 🔁 doublons ignorés : ${skipped}`);
-
-      // reset + ouverture panneau + refresh
-      setParsedReviews([]); 
-      setPastedText(""); 
-      setImportLabel("");
+      // RESET UI
+      setParsedReviews([]);
+      setPastedText("");
       setShowPreview(false);
       
+      // OUVRIR le panneau + SCROLL
       if (onOpenVisualPanel) {
         onOpenVisualPanel();
         setTimeout(() => {
@@ -114,37 +104,41 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
         }, 100);
       }
       
+      // SIGNAL de refresh pour le panneau
       window.dispatchEvent(new CustomEvent("reviews:imported", { 
-        detail: { establishmentId: estId } 
+        detail: { establishmentId: est.id || est.place_id } 
       }));
-
+      
+      // Refresh reviews data (legacy callback)
       if (onImportSuccess) {
         onImportSuccess();
       }
-
+      
+      // Option : fermer la barre
       if (onClose) {
         onClose();
       }
-
-    } catch (err: any) {
-      console.error("Import error:", err);
-      sonnerToast.error(`❌ Import impossible : ${err?.message ?? "erreur inconnue"}`);
+    } catch (e) {
+      toast({
+        title: "Erreur d'import",
+        description: (
+          <span data-testid="toast-import-error">Échec de l'import des avis.</span>
+        ),
+        variant: "destructive",
+      });
+      console.error(e);
     } finally {
       setIsImporting(false);
-      setImportLabel("");
     }
-  }, [currentEstablishment, onClose, onImportSuccess, onOpenVisualPanel]);
+  }, [currentEstablishment, parsedReviews, onClose, onImportSuccess, onOpenVisualPanel]);
 
   // Calculate valid reviews count based on rating criteria
-  const parsedValidCount = useMemo(() => {
-    return parsedReviews.filter(r => Number.isFinite(r.rating) && r.rating >= 1 && r.rating <= 5).length;
-  }, [parsedReviews]);
-
   const validReviews = useMemo(() => {
-    return parsedReviews.filter(r => Number.isFinite(r.rating) && r.rating >= 1 && r.rating <= 5);
-  }, [parsedReviews]);
+    const source = parsedReviews?.length ? parsedReviews : parsePastedReviews(pastedText || "");
+    return (source || []).filter(r => Number.isFinite(r.rating) && r.rating >= 1 && r.rating <= 5);
+  }, [parsedReviews, pastedText]);
 
-  const canImport = !isImporting && parsedValidCount > 0;
+  const canImport = !isImporting && validReviews.length > 0;
 
   // Convert parsed reviews to table format
   const reviewsTableData: ReviewsTableRow[] = useMemo(() => {
@@ -211,10 +205,8 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Import en cours...
               </>
-            ) : importLabel ? (
-              importLabel
             ) : (
-              `Importer (${parsedValidCount} avis)`
+              `Importer (${validReviews.length} avis)`
             )}
           </Button>
         </div>

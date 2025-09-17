@@ -647,12 +647,6 @@ export type Database = {
         Args: { "": unknown } | { "": unknown }
         Returns: string
       }
-      cleanup_duplicate_reviews: {
-        Args: { p_place_id: string; p_user_id: string }
-        Returns: {
-          deleted: number
-        }[]
-      }
       count_unique_reviews: {
         Args: { p_place_id: string; p_user_id: string }
         Returns: {
@@ -917,15 +911,6 @@ export type Database = {
       get_proj4_from_srid: {
         Args: { "": number }
         Returns: string
-      }
-      get_reviews_summary_with_duplicates: {
-        Args: { p_place_id: string; p_user_id: string }
-        Returns: {
-          avg_rating: number
-          duplicates: number
-          total_all: number
-          total_unique: number
-        }[]
       }
       gettransactionid: {
         Args: Record<PropertyKey, never>

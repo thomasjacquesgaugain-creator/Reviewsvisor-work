@@ -338,32 +338,3 @@ export async function getReviewsSummary(establishmentId: string) {
     byMonth
   };
 }
-
-export interface ReviewsSummaryWithDuplicates {
-  totalAll: number;
-  totalUnique: number;
-  duplicates: number;
-  avgRating: number;
-}
-
-export async function getReviewsSummaryWithDuplicates(establishmentId: string): Promise<ReviewsSummaryWithDuplicates> {
-  const response = await fetch(`/api/reviews/summary?establishmentId=${encodeURIComponent(establishmentId)}`);
-  
-  if (!response.ok) {
-    throw new Error('Failed to fetch reviews summary');
-  }
-  
-  return response.json();
-}
-
-export async function cleanupDuplicateReviews(establishmentId: string): Promise<{ deleted: number }> {
-  const response = await fetch(`/api/reviews/dedupe?establishmentId=${encodeURIComponent(establishmentId)}`, {
-    method: 'DELETE'
-  });
-  
-  if (!response.ok) {
-    throw new Error('Failed to cleanup duplicate reviews');
-  }
-  
-  return response.json();
-}
