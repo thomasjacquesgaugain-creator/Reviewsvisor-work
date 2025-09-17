@@ -302,6 +302,41 @@ export async function getReviewsSummary(establishmentId: string) {
   uniqueReviews.forEach(r => {
     if (r.rating >= 1 && r.rating <= 5) {
       byStars[Math.floor(r.rating) as keyof typeof byStars]++;
+    }
+  });
+
+  // Group by month (last 12 months, using unique reviews only)
+  const monthCounts: Record<string, { count: number; total: number }> = {};
+  const now = new Date();
+  
+  uniqueReviews.forEach(r => {
+    if (r.published_at) {
+      const date = new Date(r.published_at);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!monthCounts[monthKey]) {
+        monthCounts[monthKey] = { count: 0, total: 0 };
+      }
+      monthCounts[monthKey].count++;
+      monthCounts[monthKey].total += r.rating || 0;
+    }
+  });
+
+  const byMonth = Object.entries(monthCounts)
+    .map(([month, data]) => ({
+      month,
+      count: data.count,
+      avg: data.count > 0 ? data.total / data.count : 0
+    }))
+    .sort((a, b) => a.month.localeCompare(b.month))
+    .slice(-12); // Last 12 months
+
+  return {
+    total,
+    avgRating,
+    byStars,
+    byMonth
+  };
 }
 
 export interface ReviewsSummaryWithDuplicates {
