@@ -3,6 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
@@ -40,6 +50,7 @@ export function ReviewsVisualPanel({
   const [reviewsList, setReviewsList] = useState<ReviewsTableRow[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const currentEstablishment = useCurrentEstablishment();
   
   // Use props first, fallback to current establishment
@@ -168,10 +179,6 @@ export function ReviewsVisualPanel({
 
   const handleDeleteAllReviews = async () => {
     if (!effectiveId) return;
-    
-    if (!confirm("Êtes-vous sûr de vouloir supprimer TOUS les avis de cet établissement ? Cette action est irréversible.")) {
-      return;
-    }
 
     try {
       setIsDeleting(true);
@@ -332,10 +339,11 @@ export function ReviewsVisualPanel({
                       variant="ghost"
                       size="icon"
                       className="absolute bottom-1 right-1 h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={handleDeleteAllReviews}
+                      onClick={() => setShowDeleteDialog(true)}
                       disabled={isDeleting}
                       data-testid="btn-delete-all-reviews"
                       title="Supprimer tous les avis"
+                      aria-label="Supprimer tous les avis"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -375,5 +383,31 @@ export function ReviewsVisualPanel({
             </div>
           </>}
       </CardContent>
+
+      {/* AlertDialog for delete confirmation */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer tous les avis</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer TOUS les avis de « {displayName} » ? 
+              Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                setShowDeleteDialog(false);
+                await handleDeleteAllReviews();
+              }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Suppression..." : "Supprimer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>;
 }
