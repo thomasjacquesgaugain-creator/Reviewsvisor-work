@@ -221,8 +221,8 @@ export function ReviewsVisualPanel({
       }));
       
     } catch (error) {
-      console.error('Error deleting reviews:', error);
-      toast.error(`❌ Erreur lors de la suppression : ${error instanceof Error ? error.message : 'erreur inconnue'}`);
+      console.error('Purge error:', error);
+      toast.error(`❌ Erreur lors de la suppression : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     } finally {
       setIsDeleting(false);
     }
@@ -338,7 +338,7 @@ export function ReviewsVisualPanel({
                       className="absolute bottom-1 right-1 h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
                       onClick={() => setShowDeleteDialog(true)}
                       disabled={isDeleting}
-                      data-testid="btn-delete-all-reviews"
+                      data-testid="btn-purge-reviews"
                       title="Supprimer tous les avis"
                       aria-label="Supprimer tous les avis"
                     >

@@ -1,20 +1,20 @@
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
 import { supabase } from "@/integrations/supabase/client";
+
+export const config = { api: { bodyParser: { sizeLimit: "1mb" } } };
 
 async function resolveEstablishmentId(inputId: string) {
   // Pour ce projet, on utilise directement le place_id comme identifiant
   return inputId;
 }
 
-export async function POST(req: Request) {
+export default async function handler(req: any, res: any) {
   try {
-    const body = await req.json().catch(() => ({} as any));
-    let { establishmentId } = body || {};
-    
+    let establishmentId = (req.method === "POST")
+      ? (req.body?.establishmentId as string)
+      : (req.query?.establishmentId as string);
+
     if (!establishmentId) {
-      return Response.json({ error: "establishmentId requis" }, { status: 400 });
+      return res.status(400).json({ error: "establishmentId requis" });
     }
 
     establishmentId = await resolveEstablishmentId(establishmentId);
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
-      return Response.json({ error: 'Non autorisé' }, { status: 401 });
+      return res.status(401).json({ error: 'Non autorisé' });
     }
 
     // Delete all reviews for this establishment and user
@@ -36,33 +36,19 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error('Supabase delete error:', error);
-      return Response.json({ 
+      return res.status(500).json({ 
         error: `Erreur base de données: ${error.message}` 
-      }, { status: 500 });
+      });
     }
 
     const deletedCount = data?.length || 0;
 
-    return Response.json({ deleted: deletedCount });
+    return res.status(200).json({ deleted: deletedCount });
     
   } catch (err: any) {
     console.error('Purge error:', err);
-    return Response.json({ 
+    return res.status(500).json({ 
       error: err?.message || "Erreur serveur" 
-    }, { status: 500 });
+    });
   }
-}
-
-export async function DELETE(req: Request) {
-  // fallback DELETE ?establishmentId=...
-  const { searchParams } = new URL(req.url);
-  const establishmentId = searchParams.get("establishmentId");
-  
-  const fake = new Request(req.url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ establishmentId }),
-  });
-  
-  return POST(fake);
 }
