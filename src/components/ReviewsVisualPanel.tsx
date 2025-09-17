@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,8 +10,6 @@ import { STORAGE_KEY } from "@/types/etablissement";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
 interface ReviewsSummary {
   total: number;
-  totalUnique?: number;
-  duplicates?: number;
   avgRating: number;
   byStars: {
     1: number;
@@ -58,13 +55,11 @@ export function ReviewsVisualPanel({
         setIsLoading(true);
         setIsLoadingReviews(true);
         
-        // Load summary from API and reviews in parallel
-        const [summaryResponse, allReviews] = await Promise.all([
-          fetch(`/api/reviews/summary?establishmentId=${effectiveId}`),
+        // Load summary and ALL reviews in parallel
+        const [summaryData, allReviews] = await Promise.all([
+          getReviewsSummary(effectiveId),
           listAll(effectiveId)
         ]);
-
-        const summaryData = summaryResponse.ok ? await summaryResponse.json() : null;
         
         setSummary(summaryData);
         
@@ -91,41 +86,35 @@ export function ReviewsVisualPanel({
     loadData();
   }, [effectiveId]);
 
-  // Écoute l'évènement envoyé après import pour recharger summary ET liste
+  // Écoute l'évènement envoyé après import pour recharger
   useEffect(() => {
-    const onImported = async (e: any) => {
+    const onImported = (e: any) => {
       const id = e?.detail?.establishmentId;
       if (!id || id !== effectiveId) return;
       
-      try {
-        setIsLoading(true);
-        setIsLoadingReviews(true);
-        
-        // Reload both summary and reviews
-        const [summaryResponse, allReviews] = await Promise.all([
-          fetch(`/api/reviews/summary?establishmentId=${effectiveId}`),
-          listAll(effectiveId!)
-        ]);
-
-        const summaryData = summaryResponse.ok ? await summaryResponse.json() : null;
-        setSummary(summaryData);
-        
-        // Map ALL reviews to table format
-        const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
-          authorName: review.author || "Anonyme",
-          rating: review.rating || 0,
-          comment: review.text || "",
-          platform: review.source || "Google",
-          reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
-        }));
-        
-        setReviewsList(mappedRows);
-      } catch (error) {
-        console.error('Error loading data after import:', error);
-      } finally {
-        setIsLoading(false);
-        setIsLoadingReviews(false);
-      }
+      const loadData = async () => {
+        try {
+          setIsLoadingReviews(true);
+          const allReviews = await listAll(effectiveId!);
+          
+          // Map ALL reviews to table format
+          const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
+            authorName: review.author || "Anonyme",
+            rating: review.rating || 0,
+            comment: review.text || "",
+            platform: review.source || "Google",
+            reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
+          }));
+          
+          setReviewsList(mappedRows);
+        } catch (error) {
+          console.error('Error loading reviews after import:', error);
+        } finally {
+          setIsLoadingReviews(false);
+        }
+      };
+      
+      loadData();
     };
 
     window.addEventListener("reviews:imported", onImported);
@@ -229,24 +218,15 @@ export function ReviewsVisualPanel({
               </Card>
               
               <Card>
-                <CardContent className="flex items-center p-4" data-testid="metric-total-unique">
+                <CardContent className="flex items-center p-4" data-testid="metric-total-reviews">
                   <BarChart3 className="w-8 h-8 text-blue-500 mr-3" />
                   <div>
                     <p className="text-sm text-muted-foreground">Total d'avis</p>
-                    <p className="text-2xl font-bold">{summary.totalUnique ?? summary.total}</p>
+                    <p className="text-2xl font-bold">{summary.total}</p>
                   </div>
                 </CardContent>
               </Card>
             </div>
-
-            {/* Duplicates Badge */}
-            {summary.duplicates && summary.duplicates > 0 && (
-              <div className="flex justify-center">
-                <Badge variant="secondary" data-testid="badge-duplicates">
-                  Doublons détectés : {summary.duplicates}
-                </Badge>
-              </div>
-            )}
 
             {/* Stars Distribution */}
             
