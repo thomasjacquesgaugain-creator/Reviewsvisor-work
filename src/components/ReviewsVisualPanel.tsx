@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText } from "lucide-react";
+import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
@@ -38,11 +39,83 @@ export function ReviewsVisualPanel({
   const [isLoading, setIsLoading] = useState(true);
   const [reviewsList, setReviewsList] = useState<ReviewsTableRow[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+  const [isPurging, setIsPurging] = useState(false);
   const currentEstablishment = useCurrentEstablishment();
+  const { toast } = useToast();
   
   // Use props first, fallback to current establishment
   const effectiveId = establishmentId || currentEstablishment?.id || currentEstablishment?.place_id;
   const displayName = establishmentName ?? currentEstablishment?.name ?? "—";
+
+  // Refetch functions for use by purge operation
+  const refetchData = async () => {
+    if (!effectiveId) return;
+    
+    try {
+      setIsLoading(true);
+      setIsLoadingReviews(true);
+      
+      const [summaryData, allReviews] = await Promise.all([
+        getReviewsSummary(effectiveId),
+        listAll(effectiveId)
+      ]);
+      
+      setSummary(summaryData);
+      
+      const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
+        authorName: review.author || "Anonyme",
+        rating: review.rating || 0,
+        comment: review.text || "",
+        platform: review.source || "Google",
+        reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
+      }));
+      
+      setReviewsList(mappedRows);
+    } catch (error) {
+      console.error("Error loading reviews data:", error);
+      setSummary(null);
+      setReviewsList([]);
+    } finally {
+      setIsLoading(false);
+      setIsLoadingReviews(false);
+    }
+  };
+
+  const handlePurge = async () => {
+    if (!effectiveId) return;
+    if (!confirm("Supprimer tous les avis de cet établissement ?")) return;
+
+    try {
+      setIsPurging(true);
+      const response = await fetch("/api/reviews/purge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ establishmentId: effectiveId }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+
+      const { deleted } = await response.json();
+      toast({ 
+        title: "Avis supprimés", 
+        description: `${deleted} avis supprimés` 
+      });
+
+      // Refetch data to update UI
+      await refetchData();
+    } catch (error: any) {
+      toast({ 
+        title: "Erreur de suppression", 
+        description: error.message ?? "Erreur inconnue", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsPurging(false);
+    }
+  };
   useEffect(() => {
     const loadData = async () => {
       if (!effectiveId) {
@@ -55,7 +128,6 @@ export function ReviewsVisualPanel({
         setIsLoading(true);
         setIsLoadingReviews(true);
         
-        // Load summary and ALL reviews in parallel
         const [summaryData, allReviews] = await Promise.all([
           getReviewsSummary(effectiveId),
           listAll(effectiveId)
@@ -63,7 +135,6 @@ export function ReviewsVisualPanel({
         
         setSummary(summaryData);
         
-        // Map ALL reviews to table format
         const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
           authorName: review.author || "Anonyme",
           rating: review.rating || 0,
@@ -88,33 +159,12 @@ export function ReviewsVisualPanel({
 
   // Écoute l'évènement envoyé après import pour recharger
   useEffect(() => {
-    const onImported = (e: any) => {
+    const onImported = async (e: any) => {
       const id = e?.detail?.establishmentId;
       if (!id || id !== effectiveId) return;
       
-      const loadData = async () => {
-        try {
-          setIsLoadingReviews(true);
-          const allReviews = await listAll(effectiveId!);
-          
-          // Map ALL reviews to table format
-          const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
-            authorName: review.author || "Anonyme",
-            rating: review.rating || 0,
-            comment: review.text || "",
-            platform: review.source || "Google",
-            reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
-          }));
-          
-          setReviewsList(mappedRows);
-        } catch (error) {
-          console.error('Error loading reviews after import:', error);
-        } finally {
-          setIsLoadingReviews(false);
-        }
-      };
-      
-      loadData();
+      // Use the refetch function for consistency
+      await refetchData();
     };
 
     window.addEventListener("reviews:imported", onImported);
@@ -218,12 +268,29 @@ export function ReviewsVisualPanel({
               </Card>
               
               <Card>
-                <CardContent className="flex items-center p-4" data-testid="metric-total-reviews">
-                  <BarChart3 className="w-8 h-8 text-blue-500 mr-3" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total d'avis</p>
-                    <p className="text-2xl font-bold">{summary.total}</p>
+                <CardContent className="flex items-center justify-between p-4" data-testid="metric-total-reviews">
+                  <div className="flex items-center">
+                    <BarChart3 className="w-8 h-8 text-blue-500 mr-3" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total d'avis</p>
+                      <p className="text-2xl font-bold">{summary.total}</p>
+                    </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handlePurge}
+                    disabled={isPurging || summary.total === 0}
+                    data-testid="btn-purge-reviews"
+                    aria-label="Supprimer tous les avis"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    {isPurging ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </Button>
                 </CardContent>
               </Card>
             </div>
