@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Star, TrendingUp, BarChart3 } from "lucide-react";
+import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
@@ -133,17 +133,26 @@ export function ReviewsVisualPanel({
     count: summary.byStars[1]
   }] : [];
   return <Card className="relative z-20 max-w-4xl mx-auto" data-testid="reviews-visual-panel">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle 
-          className="flex items-center gap-2"
-          data-testid="reviews-visual-title"
-        >
-          <BarChart3 className="w-5 h-5" />
-          Aperçu visuel des avis — {displayName}
-        </CardTitle>
-        <Button variant="ghost" size="sm" onClick={onClose} data-testid="btn-close-reviews-visual">
-          <X className="w-4 h-4" />
-        </Button>
+      <CardHeader>
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" aria-hidden="true" />
+              <h3 className="text-xl font-semibold" data-testid="establishment-title">
+                {displayName}
+              </h3>
+            </div>
+            <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+              <MessageSquareText className="h-4 w-4" aria-hidden="true" />
+              <span data-testid="establishment-subtitle">Avis de l'établissement</span>
+            </div>
+          </div>
+
+          {/* Bouton fermer : ne pas modifier la logique existante */}
+          <Button onClick={onClose} variant="ghost" size="icon" data-testid="btn-close-reviews-visual">
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
       </CardHeader>
       
       <CardContent className="space-y-6">
@@ -206,7 +215,6 @@ export function ReviewsVisualPanel({
 
             {/* Reviews List */}
             <div>
-              <h3 className="text-lg font-medium mb-4">Avis de l'établissement</h3>
               <ReviewsTable
                 rows={reviewsList}
                 isLoading={isLoadingReviews}
