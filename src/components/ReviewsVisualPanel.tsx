@@ -6,30 +6,37 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { getReviewsSummary } from "@/services/reviewsService";
-
 interface ReviewsSummary {
   total: number;
   avgRating: number;
-  byStars: { 1: number; 2: number; 3: number; 4: number; 5: number };
-  byMonth: Array<{ month: string; count: number; avg?: number }>;
+  byStars: {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
+  byMonth: Array<{
+    month: string;
+    count: number;
+    avg?: number;
+  }>;
 }
-
 interface ReviewsVisualPanelProps {
   onClose: () => void;
 }
-
-export function ReviewsVisualPanel({ onClose }: ReviewsVisualPanelProps) {
+export function ReviewsVisualPanel({
+  onClose
+}: ReviewsVisualPanelProps) {
   const [summary, setSummary] = useState<ReviewsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const currentEstablishment = useCurrentEstablishment();
-
   useEffect(() => {
     const loadSummary = async () => {
       if (!currentEstablishment?.id) {
         setIsLoading(false);
         return;
       }
-
       try {
         setIsLoading(true);
         const data = await getReviewsSummary(currentEstablishment.id);
@@ -41,24 +48,16 @@ export function ReviewsVisualPanel({ onClose }: ReviewsVisualPanelProps) {
         setIsLoading(false);
       }
     };
-
     loadSummary();
   }, [currentEstablishment?.id]);
-
   if (!currentEstablishment) {
-    return (
-      <Card className="relative z-20 max-w-4xl mx-auto" data-testid="reviews-visual-panel">
+    return <Card className="relative z-20 max-w-4xl mx-auto" data-testid="reviews-visual-panel">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
             Aperçu visuel des avis
           </CardTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onClose}
-            data-testid="btn-close-reviews-visual"
-          >
+          <Button variant="ghost" size="sm" onClick={onClose} data-testid="btn-close-reviews-visual">
             <X className="w-4 h-4" />
           </Button>
         </CardHeader>
@@ -67,55 +66,50 @@ export function ReviewsVisualPanel({ onClose }: ReviewsVisualPanelProps) {
             Aucun établissement sélectionné
           </p>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
-  const starsData = summary ? [
-    { stars: "5 étoiles", count: summary.byStars[5] },
-    { stars: "4 étoiles", count: summary.byStars[4] },
-    { stars: "3 étoiles", count: summary.byStars[3] },
-    { stars: "2 étoiles", count: summary.byStars[2] },
-    { stars: "1 étoile", count: summary.byStars[1] },
-  ] : [];
-
-  return (
-    <Card className="relative z-20 max-w-4xl mx-auto" data-testid="reviews-visual-panel">
+  const starsData = summary ? [{
+    stars: "5 étoiles",
+    count: summary.byStars[5]
+  }, {
+    stars: "4 étoiles",
+    count: summary.byStars[4]
+  }, {
+    stars: "3 étoiles",
+    count: summary.byStars[3]
+  }, {
+    stars: "2 étoiles",
+    count: summary.byStars[2]
+  }, {
+    stars: "1 étoile",
+    count: summary.byStars[1]
+  }] : [];
+  return <Card className="relative z-20 max-w-4xl mx-auto" data-testid="reviews-visual-panel">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <BarChart3 className="w-5 h-5" />
           Aperçu visuel des avis
         </CardTitle>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={onClose}
-          data-testid="btn-close-reviews-visual"
-        >
+        <Button variant="ghost" size="sm" onClick={onClose} data-testid="btn-close-reviews-visual">
           <X className="w-4 h-4" />
         </Button>
       </CardHeader>
       
       <CardContent className="space-y-6">
-        {isLoading ? (
-          <div className="space-y-6">
+        {isLoading ? <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Skeleton className="h-20" />
               <Skeleton className="h-20" />
             </div>
             <Skeleton className="h-64" />
             <Skeleton className="h-64" />
-          </div>
-        ) : !summary || summary.total === 0 ? (
-          <div className="text-center py-8">
+          </div> : !summary || summary.total === 0 ? <div className="text-center py-8">
             <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">{currentEstablishment.name}, 0 avis</h3>
             <p className="text-muted-foreground">
               Aucun avis enregistré pour cet établissement. Importez des avis pour voir les statistiques.
             </p>
-          </div>
-        ) : (
-          <>
+          </div> : <>
             {/* Header Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
@@ -140,24 +134,10 @@ export function ReviewsVisualPanel({ onClose }: ReviewsVisualPanelProps) {
             </div>
 
             {/* Stars Distribution */}
-            <div>
-              <h3 className="text-lg font-medium mb-4">Répartition par étoiles</h3>
-              <div className="h-64" data-testid="chart-stars-distribution">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={starsData} layout="horizontal">
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="stars" type="category" width={80} />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="hsl(var(--primary))" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            
 
             {/* Monthly Trend */}
-            {summary.byMonth.length > 0 && (
-              <div>
+            {summary.byMonth.length > 0 && <div>
                 <h3 className="text-lg font-medium mb-4">Tendance mensuelle (12 derniers mois)</h3>
                 <div className="h-64" data-testid="chart-monthly-trend">
                   <ResponsiveContainer width="100%" height="100%">
@@ -165,36 +145,14 @@ export function ReviewsVisualPanel({ onClose }: ReviewsVisualPanelProps) {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
-                      <Tooltip 
-                        labelFormatter={(value) => `Mois: ${value}`}
-                        formatter={(value, name) => [
-                          value, 
-                          name === 'count' ? 'Nombre d\'avis' : 'Note moyenne'
-                        ]}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="count" 
-                        stroke="hsl(var(--primary))" 
-                        fill="hsl(var(--primary))" 
-                        fillOpacity={0.3}
-                      />
-                      {summary.byMonth.some(m => m.avg) && (
-                        <Line 
-                          type="monotone" 
-                          dataKey="avg" 
-                          stroke="hsl(var(--destructive))" 
-                          strokeWidth={2}
-                        />
-                      )}
+                      <Tooltip labelFormatter={value => `Mois: ${value}`} formatter={(value, name) => [value, name === 'count' ? 'Nombre d\'avis' : 'Note moyenne']} />
+                      <Area type="monotone" dataKey="count" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.3} />
+                      {summary.byMonth.some(m => m.avg) && <Line type="monotone" dataKey="avg" stroke="hsl(var(--destructive))" strokeWidth={2} />}
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
-              </div>
-            )}
-          </>
-        )}
+              </div>}
+          </>}
       </CardContent>
-    </Card>
-  );
+    </Card>;
 }
