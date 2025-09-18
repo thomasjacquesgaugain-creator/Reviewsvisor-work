@@ -1,5 +1,3 @@
-import { AnalyseDashboard } from "@/components/AnalyseDashboard";
-import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,10 +11,7 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
-
 const Dashboard = () => {
-  const [searchParams] = useSearchParams();
-  const etablissementId = searchParams.get('etablissementId');
   const {
     user
   } = useAuth();
@@ -326,18 +321,6 @@ const Dashboard = () => {
     date: "22/07/2025",
     plateforme: "TripAdvisor"
   }];
-
-  // If we have an etablissementId in URL, show analysis dashboard
-  if (etablissementId) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
-          <AnalyseDashboard />
-        </div>
-      </div>
-    );
-  }
-
   return <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <nav className="bg-white border-b border-gray-200">
