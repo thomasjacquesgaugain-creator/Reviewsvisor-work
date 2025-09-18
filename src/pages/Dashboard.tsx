@@ -164,7 +164,7 @@ const Dashboard = () => {
       const {
         data: insightData,
         error
-      } = await supabase.from('review_insights').select('counts, overall_rating, top_issues, top_strengths, positive_ratio, g_meta, last_analyzed_at').eq('place_id', placeId).eq('user_id', user.id).order('last_analyzed_at', {
+      } = await supabase.from('review_insights').select('total_count, avg_rating, top_issues, top_praises, positive_ratio, summary, last_analyzed_at').eq('place_id', placeId).eq('user_id', user.id).order('last_analyzed_at', {
         ascending: false
       }).limit(1).maybeSingle();
       if (error) {
@@ -212,13 +212,13 @@ const Dashboard = () => {
   } = formatDateTime(currentDateTime);
 
   // Map insight data to variables used by UI components
-  const totalAnalyzed = insight?.counts?.google ?? 0;
-  const avgRating = insight?.overall_rating ?? insight?.g_meta?.rating ?? 4.2;
-  const totalReviews = insight?.counts?.google ?? 326;
+  const totalAnalyzed = insight?.total_count ?? 0;
+  const avgRating = insight?.avg_rating ?? 4.2;
+  const totalReviews = insight?.total_count ?? 326;
   const positivePct = insight?.positive_ratio != null ? Math.round(insight.positive_ratio * 100) : 78;
   const negativePct = 100 - positivePct;
   const topIssues = insight?.top_issues ?? [];
-  const topStrengths = insight?.top_strengths ?? [];
+  const topStrengths = insight?.top_praises ?? [];
 
   // Map top issues to Pareto data format
   const paretoData = topIssues.length > 0 ? topIssues.slice(0, 3).map((issue: any, index: number) => {

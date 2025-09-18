@@ -222,11 +222,15 @@ Deno.serve(async (req) => {
         place_id,
         user_id: userId ?? "00000000-0000-0000-0000-000000000000", // fallback
         last_analyzed_at: new Date().toISOString(),
-        counts: { total: stats.total, by_rating: stats.by_rating, positive_pct: stats.positive_pct, negative_pct: stats.negative_pct },
-        overall_rating: stats.overall,
+        total_count: stats.total,
+        avg_rating: stats.overall,
+        positive_ratio: stats.positive_pct / 100,
         top_issues: summary.top_issues,
-        top_strengths: summary.top_strengths,
-        recommendations: summary.recommendations,
+        top_praises: summary.top_strengths,
+        summary: {
+          recommendations: summary.recommendations,
+          analysis_date: new Date().toISOString()
+        }
       });
       if (error) throw new Error(`insights_upsert_failed:${error.message}`);
     }
