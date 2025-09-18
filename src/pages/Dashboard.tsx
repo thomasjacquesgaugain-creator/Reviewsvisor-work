@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info } from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,8 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
+import { runAnalyze } from "@/lib/runAnalyze";
+import { useToast } from "@/hooks/use-toast";
 const Dashboard = () => {
   const {
     user
@@ -29,6 +31,8 @@ const Dashboard = () => {
   const [showParetoPoints, setShowParetoPoints] = useState(false);
   const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { toast } = useToast();
 
   // Établissement sélectionné (depuis localStorage ou store)
   const [selectedEtab, setSelectedEtab] = useState<Etab | null>(null);
@@ -68,6 +72,55 @@ const Dashboard = () => {
   const [insight, setInsight] = useState<any>(null);
   const [isLoadingInsight, setIsLoadingInsight] = useState(false);
 
+  // Function to handle establishment analysis
+  const handleAnalyzeEstablishment = async () => {
+    if (!selectedEtab?.place_id || !user?.id) return;
+    
+    setIsAnalyzing(true);
+    try {
+      const result = await runAnalyze({
+        place_id: selectedEtab.place_id,
+        name: selectedEtab.name,
+        address: selectedEtab.address
+      });
+
+      if (result.ok) {
+        toast({
+          title: "Analyse terminée",
+          description: `${result.counts?.collected || 0} avis analysés avec succès`,
+        });
+        
+        // Refetch insights to update dashboard data
+        await fetchInsights();
+      } else {
+        let errorMessage = "Erreur lors de l'analyse";
+        
+        if (result.error === 'google_fetch_failed') {
+          errorMessage = "Impossible de récupérer les avis Google";
+        } else if (result.error === 'upsert_failed') {
+          errorMessage = "Erreur lors de l'enregistrement des résultats";
+        } else if (result.details) {
+          errorMessage = result.details;
+        }
+
+        toast({
+          title: "Erreur d'analyse",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Analyze error:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur inattendue s'est produite",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
     name: "Service lent",
@@ -103,30 +156,32 @@ const Dashboard = () => {
   }];
 
   // Fetch review insights data
-  useEffect(() => {
-    const fetchInsights = async () => {
-      if (!user?.id || !selectedEstablishment?.place_id) return;
-      setIsLoadingInsight(true);
-      try {
-        const {
-          data: insightData,
-          error
-        } = await supabase.from('review_insights').select('counts, overall_rating, top_issues, top_strengths, positive_ratio, g_meta, last_analyzed_at').eq('place_id', selectedEstablishment.place_id).eq('user_id', user.id).order('last_analyzed_at', {
-          ascending: false
-        }).limit(1).maybeSingle();
-        if (error) {
-          console.error('[dashboard] review_insights error:', error);
-        } else {
-          setInsight(insightData);
-        }
-      } catch (error) {
-        console.error('[dashboard] fetch insights error:', error);
-      } finally {
-        setIsLoadingInsight(false);
+  const fetchInsights = async () => {
+    const placeId = selectedEstablishment?.place_id || selectedEtab?.place_id;
+    if (!user?.id || !placeId) return;
+    setIsLoadingInsight(true);
+    try {
+      const {
+        data: insightData,
+        error
+      } = await supabase.from('review_insights').select('counts, overall_rating, top_issues, top_strengths, positive_ratio, g_meta, last_analyzed_at').eq('place_id', placeId).eq('user_id', user.id).order('last_analyzed_at', {
+        ascending: false
+      }).limit(1).maybeSingle();
+      if (error) {
+        console.error('[dashboard] review_insights error:', error);
+      } else {
+        setInsight(insightData);
       }
-    };
+    } catch (error) {
+      console.error('[dashboard] fetch insights error:', error);
+    } finally {
+      setIsLoadingInsight(false);
+    }
+  };
+
+  useEffect(() => {
     fetchInsights();
-  }, [user?.id, selectedEstablishment?.place_id]);
+  }, [user?.id, selectedEstablishment?.place_id, selectedEtab?.place_id]);
 
   // Mise à jour de l'heure en temps réel
   useEffect(() => {
@@ -451,10 +506,9 @@ const Dashboard = () => {
                   {/* Bouton analyser établissement */}
                   <Button variant="ghost" size="sm" onClick={async () => {
                 if (!selectedEtab?.place_id) return;
-                // TODO: Implémenter l'analyse
-                console.log('Analyser:', selectedEtab.place_id);
-              }} className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto" title="Analyser cet établissement">
-                    <BarChart3 className="w-4 h-4" />
+                await handleAnalyzeEstablishment();
+              }} className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto" title="Analyser cet établissement" disabled={isAnalyzing}>
+                    {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <BarChart3 className="w-4 h-4" />}
                   </Button>
                   
                   {/* Bouton oublier établissement */}
