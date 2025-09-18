@@ -236,6 +236,24 @@ export async function listAllReviews(establishmentId: string) {
   return reviews || [];
 }
 
+export async function deleteAllReviews(establishmentId: string): Promise<number> {
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) throw new Error('User not authenticated');
+
+  const { error, count } = await supabase
+    .from('reviews')
+    .delete({ count: 'exact' })
+    .eq('user_id', user.user.id)
+    .eq('place_id', establishmentId);
+
+  if (error) {
+    console.error('Error deleting reviews:', error);
+    throw error;
+  }
+
+  return count || 0;
+}
+
 export async function getReviewsSummary(establishmentId: string) {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('User not authenticated');

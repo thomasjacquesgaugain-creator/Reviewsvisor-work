@@ -5,9 +5,10 @@ import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2 } 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-import { getReviewsSummary, listAllReviews, listAll } from "@/services/reviewsService";
+import { getReviewsSummary, listAllReviews, listAll, deleteAllReviews } from "@/services/reviewsService";
 import { STORAGE_KEY } from "@/types/etablissement";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
+import { useToast } from "@/hooks/use-toast";
 interface ReviewsSummary {
   total: number;
   avgRating: number;
@@ -38,7 +39,9 @@ export function ReviewsVisualPanel({
   const [isLoading, setIsLoading] = useState(true);
   const [reviewsList, setReviewsList] = useState<ReviewsTableRow[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const currentEstablishment = useCurrentEstablishment();
+  const { toast } = useToast();
   
   // Use props first, fallback to current establishment
   const effectiveId = establishmentId || currentEstablishment?.id || currentEstablishment?.place_id;
@@ -86,35 +89,77 @@ export function ReviewsVisualPanel({
     loadData();
   }, [effectiveId]);
 
+  // Function to reload data
+  const reloadData = async () => {
+    if (!effectiveId) return;
+    
+    try {
+      setIsLoading(true);
+      setIsLoadingReviews(true);
+      
+      // Load summary and ALL reviews in parallel
+      const [summaryData, allReviews] = await Promise.all([
+        getReviewsSummary(effectiveId),
+        listAll(effectiveId)
+      ]);
+      
+      setSummary(summaryData);
+      
+      // Map ALL reviews to table format
+      const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
+        authorName: review.author || "Anonyme",
+        rating: review.rating || 0,
+        comment: review.text || "",
+        platform: review.source || "Google",
+        reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
+      }));
+      
+      setReviewsList(mappedRows);
+    } catch (error) {
+      console.error("Error reloading data:", error);
+    } finally {
+      setIsLoading(false);
+      setIsLoadingReviews(false);
+    }
+  };
+
+  // Function to handle delete all reviews
+  const handleDeleteAllReviews = async () => {
+    if (!effectiveId) return;
+    
+    const confirmDelete = window.confirm("Êtes-vous sûr de vouloir supprimer tous les avis de cet établissement ? Cette action est irréversible.");
+    if (!confirmDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      const deletedCount = await deleteAllReviews(effectiveId);
+      
+      toast({
+        title: "Avis supprimés",
+        description: `${deletedCount} avis supprimés avec succès`,
+      });
+      
+      // Reload the data to update UI
+      await reloadData();
+    } catch (error: any) {
+      console.error('Error deleting reviews:', error);
+      toast({
+        title: "Erreur",
+        description: error.message || "Erreur lors de la suppression des avis",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Écoute l'évènement envoyé après import pour recharger
   useEffect(() => {
     const onImported = (e: any) => {
       const id = e?.detail?.establishmentId;
       if (!id || id !== effectiveId) return;
       
-      const loadData = async () => {
-        try {
-          setIsLoadingReviews(true);
-          const allReviews = await listAll(effectiveId!);
-          
-          // Map ALL reviews to table format
-          const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
-            authorName: review.author || "Anonyme",
-            rating: review.rating || 0,
-            comment: review.text || "",
-            platform: review.source || "Google",
-            reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
-          }));
-          
-          setReviewsList(mappedRows);
-        } catch (error) {
-          console.error('Error loading reviews after import:', error);
-        } finally {
-          setIsLoadingReviews(false);
-        }
-      };
-      
-      loadData();
+      reloadData();
     };
 
     window.addEventListener("reviews:imported", onImported);
@@ -232,8 +277,10 @@ export function ReviewsVisualPanel({
                       size="icon"
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       data-testid="btn-delete-all-reviews"
+                      onClick={handleDeleteAllReviews}
+                      disabled={isDeleting}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
                     </Button>
                   )}
                 </CardContent>
