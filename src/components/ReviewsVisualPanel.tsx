@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText } from "lucide-react";
+import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
@@ -233,7 +233,7 @@ export function ReviewsVisualPanel({
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       data-testid="btn-delete-all-reviews"
                     >
-                      <X className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   )}
                 </CardContent>
