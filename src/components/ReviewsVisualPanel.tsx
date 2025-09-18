@@ -218,12 +218,24 @@ export function ReviewsVisualPanel({
               </Card>
               
               <Card>
-                <CardContent className="flex items-center p-4" data-testid="metric-total-reviews">
-                  <BarChart3 className="w-8 h-8 text-blue-500 mr-3" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total d'avis</p>
-                    <p className="text-2xl font-bold">{summary.total}</p>
+                <CardContent className="flex items-center justify-between p-4" data-testid="metric-total-reviews">
+                  <div className="flex items-center">
+                    <BarChart3 className="w-8 h-8 text-blue-500 mr-3" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total d'avis</p>
+                      <p className="text-2xl font-bold">{summary.total}</p>
+                    </div>
                   </div>
+                  {summary.total > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      data-testid="btn-delete-all-reviews"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </div>
