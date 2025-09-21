@@ -75,6 +75,8 @@ const Dashboard = () => {
   const [realPositiveReviews, setRealPositiveReviews] = useState<any[]>([]);
   const [realNegativeReviews, setRealNegativeReviews] = useState<any[]>([]);
   const [realAutoResponseReviews, setRealAutoResponseReviews] = useState<any[]>([]);
+  const [allRealReviews, setAllRealReviews] = useState<any[]>([]);
+  const [totalRealReviews, setTotalRealReviews] = useState(0);
 
   // Function to handle establishment analysis
   const handleAnalyzeEstablishment = async () => {
@@ -219,6 +221,30 @@ const Dashboard = () => {
       if (!autoResponseError && autoResponseReviews) {
         setRealAutoResponseReviews(autoResponseReviews);
       }
+
+      // Fetch all reviews for the establishment (for history section)
+      const { data: allReviews, error: allReviewsError } = await supabase
+        .from('reviews')
+        .select('author, rating, text, published_at, source')
+        .eq('place_id', placeId)
+        .eq('user_id', user.id)
+        .order('published_at', { ascending: false })
+        .limit(10);
+
+      if (!allReviewsError && allReviews) {
+        setAllRealReviews(allReviews);
+      }
+
+      // Get total count of reviews
+      const { count, error: countError } = await supabase
+        .from('reviews')
+        .select('*', { count: 'exact', head: true })
+        .eq('place_id', placeId)
+        .eq('user_id', user.id);
+
+      if (!countError && count !== null) {
+        setTotalRealReviews(count);
+      }
     } catch (error) {
       console.error('[dashboard] fetch insights error:', error);
     } finally {
@@ -304,7 +330,14 @@ const Dashboard = () => {
     cumulativeStrengths += item.percentage;
     item.cumulative = cumulativeStrengths;
   });
-  const avisExemples = [{
+  // Use real reviews for history section or fallback to default data
+  const avisExemples = allRealReviews.length > 0 ? allRealReviews.slice(0, 3).map((review, index) => ({
+    id: index + 1,
+    auteur: review.author || "Anonyme",
+    note: review.rating || 3,
+    commentaire: review.text || "Pas de commentaire",
+    date: review.published_at ? new Date(review.published_at).toLocaleDateString("fr-FR") : "Date inconnue"
+  })) : [{
     id: 1,
     auteur: "Marie L.",
     note: 5,
@@ -606,10 +639,10 @@ const Dashboard = () => {
             <div className="p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <span className="text-2xl font-bold text-blue-600">65</span>
+                  <span className="text-2xl font-bold text-blue-600">{totalRealReviews}</span>
                   <div>
                     <div className="font-medium">{date} {time}</div>
-                    <div className="text-sm text-gray-500">2h avis</div>
+                    <div className="text-sm text-gray-500">{totalRealReviews} avis</div>
                   </div>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setShowAvis(!showAvis)} className="hover:bg-blue-50">
