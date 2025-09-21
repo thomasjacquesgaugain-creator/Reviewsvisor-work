@@ -74,6 +74,7 @@ const Dashboard = () => {
   const [isLoadingInsight, setIsLoadingInsight] = useState(false);
   const [realPositiveReviews, setRealPositiveReviews] = useState<any[]>([]);
   const [realNegativeReviews, setRealNegativeReviews] = useState<any[]>([]);
+  const [realAutoResponseReviews, setRealAutoResponseReviews] = useState<any[]>([]);
 
   // Function to handle establishment analysis
   const handleAnalyzeEstablishment = async () => {
@@ -204,6 +205,19 @@ const Dashboard = () => {
 
       if (!negativeError && negativeReviews) {
         setRealNegativeReviews(negativeReviews);
+      }
+
+      // Fetch real reviews for auto-response (all ratings, ordered by date)
+      const { data: autoResponseReviews, error: autoResponseError } = await supabase
+        .from('reviews')
+        .select('author, rating, text, published_at, source')
+        .eq('place_id', placeId)
+        .eq('user_id', user.id)
+        .order('published_at', { ascending: false })
+        .limit(3);
+
+      if (!autoResponseError && autoResponseReviews) {
+        setRealAutoResponseReviews(autoResponseReviews);
       }
     } catch (error) {
       console.error('[dashboard] fetch insights error:', error);
@@ -1107,50 +1121,61 @@ const Dashboard = () => {
           </CardHeader>
           {showReponseAuto && <CardContent>
               <div className="space-y-4">
-                <div className="border rounded-lg p-4 bg-gray-50">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-500" />
-                      <span className="font-medium">Sophie M.</span>
-                      <div className="flex items-center ml-2">
-                        {[1, 2, 3, 4, 5].map(star => <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />)}
+                {realAutoResponseReviews.length > 0 ? realAutoResponseReviews.map((review, index) => (
+                  <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-500" />
+                        <span className="font-medium">{review.author || "Anonyme"}</span>
+                        <div className="flex items-center ml-2">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <Star 
+                              key={star} 
+                              className={`w-3 h-3 ${star <= (review.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                            />
+                          ))}
+                        </div>
                       </div>
+                      <Badge variant="outline" className="text-green-600 border-green-600">À valider</Badge>
                     </div>
-                    <Badge variant="outline" className="text-green-600 border-green-600">À valider</Badge>
+                    <p className="text-sm text-gray-700 mb-3">"{review.text || "Pas de commentaire"}"</p>
+                    <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
+                      <p className="text-sm text-gray-600 font-medium mb-1">Réponse automatique proposée :</p>
+                      <p className="text-sm text-gray-700">
+                        {review.rating >= 4 
+                          ? `Merci ${review.author?.split(' ')[0] || 'cher client'} pour votre retour positif ! Nous sommes ravis que vous ayez apprécié votre expérience chez nous. Au plaisir de vous revoir bientôt !`
+                          : `Merci ${review.author?.split(' ')[0] || 'cher client'} pour votre retour. Nous prenons note de vos remarques et nous efforçons continuellement d'améliorer nos services. N'hésitez pas à revenir nous voir.`
+                        }
+                      </p>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
+                      <Button size="sm" variant="outline">Modifier</Button>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-700 mb-3">"Excellent restaurant, service impeccable et plats délicieux !"</p>
-                  <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
-                    <p className="text-sm text-gray-600 font-medium mb-1">Réponse automatique proposée :</p>
-                    <p className="text-sm text-gray-700">"Merci Sophie pour votre retour positif ! Nous sommes ravis que vous ayez apprécié votre expérience chez nous. Au plaisir de vous revoir bientôt !"</p>
-                  </div>
-                  <div className="flex gap-2 mt-3">
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
-                    <Button size="sm" variant="outline">Modifier</Button>
-                  </div>
-                </div>
-
-                <div className="border rounded-lg p-4 bg-gray-50">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-500" />
-                      <span className="font-medium">Thomas R.</span>
-                      <div className="flex items-center ml-2">
-                        {[1, 2].map(star => <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />)}
-                        {[3, 4, 5].map(star => <Star key={star} className="w-3 h-3 text-gray-300" />)}
+                )) : (
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-500" />
+                        <span className="font-medium">Sophie M.</span>
+                        <div className="flex items-center ml-2">
+                          {[1, 2, 3, 4, 5].map(star => <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />)}
+                        </div>
                       </div>
+                      <Badge variant="outline" className="text-green-600 border-green-600">À valider</Badge>
                     </div>
-                    <Badge variant="outline" className="text-orange-600 border-orange-600">À valider</Badge>
+                    <p className="text-sm text-gray-700 mb-3">"Excellent restaurant, service impeccable et plats délicieux !"</p>
+                    <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
+                      <p className="text-sm text-gray-600 font-medium mb-1">Réponse automatique proposée :</p>
+                      <p className="text-sm text-gray-700">"Merci Sophie pour votre retour positif ! Nous sommes ravis que vous ayez apprécié votre expérience chez nous. Au plaisir de vous revoir bientôt !"</p>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
+                      <Button size="sm" variant="outline">Modifier</Button>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-700 mb-3">"Service très lent et plats tièdes à l'arrivée. Déçu de cette expérience."</p>
-                  <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
-                    <p className="text-sm text-gray-600 font-medium mb-1">Réponse automatique proposée :</p>
-                    <p className="text-sm text-gray-700">"Bonjour Thomas, nous vous présentons nos excuses pour cette expérience décevante. Vos remarques sont précieuses et nous allons améliorer nos services. N'hésitez pas à nous recontacter directement."</p>
-                  </div>
-                  <div className="flex gap-2 mt-3">
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
-                    <Button size="sm" variant="outline">Modifier</Button>
-                  </div>
-                </div>
+                )}
               </div>
             </CardContent>}
         </Card>
