@@ -10,7 +10,7 @@ export default function UserMenu() {
       {user ? (
         <>
           <span className="text-sm text-muted-foreground">
-            Connecté : {user.email}
+            Bonjour Thomas Bonder
           </span>
           <Button onClick={signOut} variant="outline" size="sm">
             Se déconnecter
