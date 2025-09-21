@@ -13,6 +13,7 @@ import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etabliss
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
 import { runAnalyze } from "@/lib/runAnalyze";
 import { useToast } from "@/hooks/use-toast";
+import GreetingName from "@/components/GreetingName";
 const Dashboard = () => {
   const {
     user
@@ -402,9 +403,7 @@ const Dashboard = () => {
               </div>
               
               <div className="flex items-center gap-4 ml-auto">
-                <div className="text-gray-700 font-medium">
-                  Bonjour, Yohan Lopes
-                </div>
+                <GreetingName className="text-gray-700 font-medium" />
                 <Button variant="ghost" className="text-gray-600 hover:text-red-600 flex items-center gap-2">
                   <LogOut className="w-4 h-4" />
                   Déconnexion
