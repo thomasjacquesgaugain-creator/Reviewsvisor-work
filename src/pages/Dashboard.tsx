@@ -700,10 +700,16 @@ const Dashboard = () => {
           <Card className="relative">
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center gap-1 mb-2">
-                <span className="text-2xl font-bold text-green-600">{positivePct}%</span>
+                {isLoadingInsight ? (
+                  <Loader2 className="w-6 h-6 text-green-600 animate-spin" />
+                ) : (
+                  <span className="text-2xl font-bold text-green-600">{positivePct}%</span>
+                )}
               </div>
               <p className="text-sm text-gray-600">Avis positifs</p>
-              <p className="text-xs text-gray-500">Note ≥ 4 étoiles</p>
+              <p className="text-xs text-gray-500">
+                {insight ? `Calculé par IA sur ${totalAnalyzed} avis` : "Note ≥ 4 étoiles"}
+              </p>
               <Button variant="ghost" size="sm" onClick={() => setShowAvisPositifs(!showAvisPositifs)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-green-50">
                 {showAvisPositifs ? <ChevronUp className="w-3 h-3 text-green-600" /> : <ChevronDown className="w-3 h-3 text-green-600" />}
               </Button>
@@ -718,8 +724,16 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <div className="text-sm text-gray-500">Avis négatifs</div>
-                  <div className="text-2xl font-bold">{negativePct}%</div>
-                  <div className="text-xs text-gray-400">avis négatifs</div>
+                  <div className="text-2xl font-bold">
+                    {isLoadingInsight ? (
+                      <Loader2 className="w-6 h-6 text-red-600 animate-spin inline" />
+                    ) : (
+                      `${negativePct}%`
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {insight ? `Calculé par IA` : "avis négatifs"}
+                  </div>
                 </div>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setShowAvisNegatifs(!showAvisNegatifs)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-red-50">
