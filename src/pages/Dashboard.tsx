@@ -72,6 +72,8 @@ const Dashboard = () => {
   // Review insights data from Supabase
   const [insight, setInsight] = useState<any>(null);
   const [isLoadingInsight, setIsLoadingInsight] = useState(false);
+  const [realPositiveReviews, setRealPositiveReviews] = useState<any[]>([]);
+  const [realNegativeReviews, setRealNegativeReviews] = useState<any[]>([]);
 
   // Function to handle establishment analysis
   const handleAnalyzeEstablishment = async () => {
@@ -172,6 +174,36 @@ const Dashboard = () => {
         console.error('[dashboard] review_insights error:', error);
       } else {
         setInsight(insightData);
+      }
+
+      // Fetch real positive reviews (rating >= 4)
+      const { data: positiveReviews, error: positiveError } = await supabase
+        .from('reviews')
+        .select('author, rating, text, published_at, source')
+        .eq('place_id', placeId)
+        .eq('user_id', user.id)
+        .gte('rating', 4)
+        .order('rating', { ascending: false })
+        .order('published_at', { ascending: false })
+        .limit(5);
+
+      if (!positiveError && positiveReviews) {
+        setRealPositiveReviews(positiveReviews);
+      }
+
+      // Fetch real negative reviews (rating <= 2)
+      const { data: negativeReviews, error: negativeError } = await supabase
+        .from('reviews')
+        .select('author, rating, text, published_at, source')
+        .eq('place_id', placeId)
+        .eq('user_id', user.id)
+        .lte('rating', 2)
+        .order('rating', { ascending: true })
+        .order('published_at', { ascending: false })
+        .limit(5);
+
+      if (!negativeError && negativeReviews) {
+        setRealNegativeReviews(negativeReviews);
       }
     } catch (error) {
       console.error('[dashboard] fetch insights error:', error);
@@ -302,8 +334,15 @@ const Dashboard = () => {
     note: 4.2
   }];
 
-  // Données pour les 5 meilleurs avis
-  const meilleursAvis = [{
+  // Use real reviews or fallback to default data
+  const meilleursAvis = realPositiveReviews.length > 0 ? realPositiveReviews.map((review, index) => ({
+    id: index + 1,
+    auteur: review.author || "Anonyme",
+    note: review.rating || 5,
+    commentaire: review.text || "Pas de commentaire",
+    date: review.published_at ? new Date(review.published_at).toLocaleDateString("fr-FR") : "Date inconnue",
+    plateforme: review.source || "Google"
+  })) : [{
     id: 1,
     auteur: "Marie L.",
     note: 5,
@@ -340,8 +379,15 @@ const Dashboard = () => {
     plateforme: "Google"
   }];
 
-  // Données pour les 5 pires avis
-  const piresAvis = [{
+  // Use real reviews or fallback to default data
+  const piresAvis = realNegativeReviews.length > 0 ? realNegativeReviews.map((review, index) => ({
+    id: index + 1,
+    auteur: review.author || "Anonyme",
+    note: review.rating || 1,
+    commentaire: review.text || "Pas de commentaire",
+    date: review.published_at ? new Date(review.published_at).toLocaleDateString("fr-FR") : "Date inconnue",
+    plateforme: review.source || "Google"
+  })) : [{
     id: 1,
     auteur: "Marc D.",
     note: 1,
