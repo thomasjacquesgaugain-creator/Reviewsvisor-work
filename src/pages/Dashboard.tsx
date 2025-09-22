@@ -894,41 +894,75 @@ const Dashboard = () => {
                 </div>
                 <ChevronDown className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoChart ? 'rotate-180' : ''}`} onClick={() => setShowParetoChart(!showParetoChart)} />
               </div>
-              <p className="text-sm text-gray-500">Les plus mentionnés par fréquence et pourcentage en priorité</p>
+              <p className="text-sm text-gray-500">
+                {insight ? `Calculé par IA sur ${totalAnalyzed} avis` : "Les plus mentionnés par fréquence et pourcentage en priorité"}
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-red-500" />
-                  <div>
-                    <div className="font-medium">Temps d'attente trop long</div>
-                    <div className="text-sm text-gray-500">25% des avis</div>
+              {isLoadingInsight ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="w-6 h-6 text-red-500 animate-spin" />
+                  <span className="ml-2 text-gray-500">Analyse en cours...</span>
+                </div>
+              ) : topIssues.length > 0 ? (
+                topIssues.slice(0, 3).map((issue, index) => {
+                  const percentage = totalAnalyzed > 0 ? Math.round((issue.mentions || issue.count || 0) / totalAnalyzed * 100) : 0;
+                  const severity = percentage > 20 ? "Critique" : percentage > 10 ? "Moyen" : "Faible";
+                  const bgColor = percentage > 20 ? "bg-red-50" : percentage > 10 ? "bg-yellow-50" : "bg-orange-50";
+                  const iconColor = percentage > 20 ? "text-red-500" : percentage > 10 ? "text-yellow-600" : "text-orange-500";
+                  const badgeColor = percentage > 20 ? "destructive" : percentage > 10 ? "bg-yellow-500 text-white" : "bg-orange-500 text-white";
+                  
+                  return (
+                    <div key={index} className={`flex items-center justify-between p-3 ${bgColor} rounded-lg`}>
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className={`w-4 h-4 ${iconColor}`} />
+                        <div>
+                          <div className="font-medium">{issue.issue || issue.theme || `Problème ${index + 1}`}</div>
+                          <div className="text-sm text-gray-500">{percentage}% des avis</div>
+                        </div>
+                      </div>
+                      <Badge variant={percentage > 20 ? "destructive" : undefined} className={percentage <= 20 ? badgeColor : ""}>
+                        {severity}
+                      </Badge>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-red-500" />
+                      <div>
+                        <div className="font-medium">Temps d'attente trop long</div>
+                        <div className="text-sm text-gray-500">25% des avis</div>
+                      </div>
+                    </div>
+                    <Badge variant="destructive">Critique</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-red-500" />
+                      <div>
+                        <div className="font-medium">Service client insatisfaisant</div>
+                        <div className="text-sm text-gray-500">20% des avis</div>
+                      </div>
+                    </div>
+                    <Badge variant="destructive">Critique</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4 text-yellow-600" />
+                      <div>
+                        <div className="font-medium">Prix trop élevés</div>
+                        <div className="text-sm text-gray-500">15% des avis</div>
+                      </div>
+                    </div>
+                    <Badge className="bg-yellow-500 text-white">Moyen</Badge>
                   </div>
                 </div>
-                <Badge variant="destructive">Critique</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-red-500" />
-                  <div>
-                    <div className="font-medium">Service client insatisfaisant</div>
-                    <div className="text-sm text-gray-500">20% des avis</div>
-                  </div>
-                </div>
-                <Badge variant="destructive">Critique</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-yellow-600" />
-                  <div>
-                    <div className="font-medium">Prix trop élevés</div>
-                    <div className="text-sm text-gray-500">15% des avis</div>
-                  </div>
-                </div>
-                <Badge className="bg-yellow-500 text-white">Moyen</Badge>
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -942,41 +976,69 @@ const Dashboard = () => {
                 </div>
                 <ChevronDown className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoPoints ? 'rotate-180' : ''}`} onClick={() => setShowParetoPoints(!showParetoPoints)} />
               </div>
-              <p className="text-sm text-gray-500">Les points forts les plus mentionnés par vos clients</p>
+              <p className="text-sm text-gray-500">
+                {insight ? `Calculé par IA sur ${totalAnalyzed} avis` : "Les points forts les plus mentionnés par vos clients"}
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <UtensilsCrossed className="w-4 h-4 text-green-500" />
-                  <div>
-                    <div className="font-medium">Qualité exceptionnelle</div>
-                    <div className="text-sm text-gray-500">30% des avis</div>
+              {isLoadingInsight ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="w-6 h-6 text-green-500 animate-spin" />
+                  <span className="ml-2 text-gray-500">Analyse en cours...</span>
+                </div>
+              ) : topStrengths.length > 0 ? (
+                topStrengths.slice(0, 3).map((strength, index) => {
+                  const percentage = totalAnalyzed > 0 ? Math.round((strength.mentions || strength.count || 0) / totalAnalyzed * 100) : 0;
+                  
+                  return (
+                    <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <div>
+                          <div className="font-medium">{strength.strength || strength.theme || `Point fort ${index + 1}`}</div>
+                          <div className="text-sm text-gray-500">{percentage}% des avis</div>
+                        </div>
+                      </div>
+                      <Badge className="bg-green-500 text-white">Force</Badge>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <UtensilsCrossed className="w-4 h-4 text-green-500" />
+                      <div>
+                        <div className="font-medium">Qualité exceptionnelle</div>
+                        <div className="text-sm text-gray-500">30% des avis</div>
+                      </div>
+                    </div>
+                    <Badge className="bg-green-500 text-white">Force</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <div>
+                        <div className="font-medium">Satisfaction générale</div>
+                        <div className="text-sm text-gray-500">25% des avis</div>
+                      </div>
+                    </div>
+                    <Badge className="bg-green-500 text-white">Force</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Wine className="w-4 h-4 text-green-500" />
+                      <div>
+                        <div className="font-medium">Bonne ambiance</div>
+                        <div className="text-sm text-gray-500">20% des avis</div>
+                      </div>
+                    </div>
+                    <Badge className="bg-green-500 text-white">Force</Badge>
                   </div>
                 </div>
-                <Badge className="bg-green-500 text-white">Force</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <div>
-                    <div className="font-medium">Satisfaction générale</div>
-                    <div className="text-sm text-gray-500">25% des avis</div>
-                  </div>
-                </div>
-                <Badge className="bg-green-500 text-white">Force</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Wine className="w-4 h-4 text-green-500" />
-                  <div>
-                    <div className="font-medium">Bonne ambiance</div>
-                    <div className="text-sm text-gray-500">20% des avis</div>
-                  </div>
-                </div>
-                <Badge className="bg-green-500 text-white">Force</Badge>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
