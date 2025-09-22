@@ -97,6 +97,47 @@ function computeStats(rows: ReviewRow[]) {
   };
 }
 
+// Heuristic summarizer used as a fallback when AI is unavailable
+function buildHeuristicSummary(samples: string[]) {
+  const texts = samples.filter(Boolean).map(t => t.toLowerCase());
+  const count = (words: string[]) =>
+    texts.reduce((acc, t) => acc + words.reduce((s, w) => s + (t.includes(w) ? 1 : 0), 0), 0);
+
+  const issues = [
+    { issue: "Service / attente", mentions: count(['attente','long','lent','retard','serveur','serveuse']) },
+    { issue: "Qualité des plats", mentions: count(['froid','mal cuit','sec','gras','fade','qualité','cuisson','produit']) },
+    { issue: "Prix / addition", mentions: count(['cher','prix','addition','facture','coût']) },
+    { issue: "Ambiance / bruit", mentions: count(['bruit','bruyant','musique','ambiance']) },
+    { issue: "Propreté / hygiène", mentions: count(['sale','propreté','hygiène']) },
+  ].filter(i => i.mentions > 0)
+   .sort((a,b) => b.mentions - a.mentions)
+   .slice(0,5);
+
+  const strengths = [
+    { strength: "Accueil / sympathie", mentions: count(['accueil','sympa','gentil','aimable','souriant']) },
+    { strength: "Qualité / goût", mentions: count(['délicieux','excellent','très bon','parfait','succulent','goût']) },
+    { strength: "Rapidité du service", mentions: count(['rapide','efficace']) },
+    { strength: "Ambiance agréable", mentions: count(['agréable','convivial','chaleureux']) },
+    { strength: "Bon rapport qualité/prix", mentions: count(['bon rapport qualité prix','abordable','pas cher']) },
+  ].filter(s => s.mentions > 0)
+   .sort((a,b) => b.mentions - a.mentions)
+   .slice(0,5);
+
+  const recs: string[] = [];
+  if (issues.find(i => i.issue.includes('Service'))) recs.push("Réduisez l'attente et améliorez la coordination en salle");
+  if (issues.find(i => i.issue.includes('Qualité'))) recs.push("Renforcez le contrôle qualité des plats et la régularité des cuissons");
+  if (issues.find(i => i.issue.includes('Prix'))) recs.push("Clarifiez les prix et proposez un menu midi compétitif");
+  if (issues.find(i => i.issue.includes('Ambiance'))) recs.push("Ajustez le volume de la musique et l’acoustique pour réduire le bruit");
+  if (issues.find(i => i.issue.includes('Propreté'))) recs.push("Planifiez des passages de nettoyage plus fréquents pendant le service");
+  if (recs.length === 0) recs.push("Poursuivez vos points forts et collectez plus d’avis textuels pour une analyse plus fine");
+
+  return {
+    top_issues: issues.length ? issues : [{ issue: "Aucun problème récurrent identifié", mentions: 1 }],
+    top_strengths: strengths.length ? strengths : [{ strength: "Satisfaction générale correcte", mentions: 1 }],
+    recommendations: recs.slice(0,3)
+  };
+}
+
 // Claude (Anthropic) summarization - more reliable than OpenAI
 async function summarizeWithClaude(placeName: string, samples: string[]) {
   if (!anthropicKey) {
@@ -252,7 +293,10 @@ serve(async (req) => {
     // 2) Compute stats from existing reviews
     const stats = computeStats(rows);
     const sampleTexts = rows.map(r => r.text ?? "").filter(Boolean).slice(0, 120);
-    const summary = await summarizeWithClaude(name ?? "Cet établissement", sampleTexts);
+    let summary = await summarizeWithClaude(name ?? "Cet établissement", sampleTexts);
+    if (!summary?.top_issues?.length || (summary.top_issues[0]?.issue || "").toLowerCase().includes("erreur d'analyse ia")) {
+      summary = buildHeuristicSummary(sampleTexts);
+    }
 
     // 3) Store insights in database (if not dry run)
     if (!dryRun) {
