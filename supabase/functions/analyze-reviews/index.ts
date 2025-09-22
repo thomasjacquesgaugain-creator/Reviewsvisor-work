@@ -97,41 +97,39 @@ function computeStats(rows: ReviewRow[]) {
   };
 }
 
-// OpenAI summarization
+// OpenAI summarization with retry logic
 async function summarizeWithOpenAI(placeName: string, samples: string[]) {
   if (!openAIKey) {
-    console.warn("OpenAI API key not found, returning mock summary");
+    console.warn("OpenAI API key not found, returning helpful fallback");
     return {
       top_issues: [
-        { issue: "Temps d'attente", mentions: 12 },
-        { issue: "Service lent", mentions: 8 },
-        { issue: "Prix élevé", mentions: 5 }
+        { issue: "Configuration OpenAI requise", mentions: 1 }
       ],
       top_strengths: [
-        { strength: "Nourriture excellente", mentions: 25 },
-        { strength: "Personnel sympathique", mentions: 18 },
-        { strength: "Ambiance agréable", mentions: 15 }
+        { strength: "Clé API manquante", mentions: 1 }
       ],
       recommendations: [
-        "Améliorer la rapidité du service",
-        "Optimiser la gestion de l'attente",
-        "Maintenir la qualité de la nourriture"
+        "Configurez votre clé OpenAI dans les secrets Supabase pour activer l'analyse IA"
       ]
     };
   }
 
   if (!samples.length) {
     return {
-      top_issues: [],
-      top_strengths: [],
-      recommendations: ["Aucun avis textuel disponible pour l'analyse"]
+      top_issues: [
+        { issue: "Données insuffisantes", mentions: 1 }
+      ],
+      top_strengths: [
+        { strength: "Aucun avis textuel trouvé", mentions: 1 }
+      ],
+      recommendations: ["Collectez plus d'avis avec du contenu textuel pour l'analyse"]
     };
   }
 
   const prompt = `Analysez ces avis clients pour ${placeName} et identifiez:
 
 1. Les 5 principales critiques/problèmes mentionnés
-2. Les 5 principales forces/points positifs
+2. Les 5 principales forces/points positifs  
 3. 3 recommandations d'amélioration
 
 Répondez en JSON avec cette structure exacte:
@@ -144,41 +142,114 @@ Répondez en JSON avec cette structure exacte:
 Avis à analyser:
 ${samples.slice(0, 50).join('\n---\n')}`;
 
-  try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${openAIKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
-        max_tokens: 1000,
-        temperature: 0.3,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
+  // Retry logic for rate limiting
+  async function makeOpenAIRequest(retryCount = 0): Promise<any> {
+    const maxRetries = 3;
+    const baseDelay = 2000; // 2 seconds base delay
     
-    if (!content) {
-      throw new Error("Empty response from OpenAI");
-    }
+    try {
+      console.log(`Attempting OpenAI request (attempt ${retryCount + 1}/${maxRetries + 1})`);
+      
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openAIKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [{ role: "user", content: prompt }],
+          response_format: { type: "json_object" },
+          max_tokens: 1000,
+          temperature: 0.3,
+        }),
+      });
 
-    return JSON.parse(content);
+      if (response.status === 429) {
+        // Rate limit error
+        if (retryCount < maxRetries) {
+          const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff
+          console.log(`Rate limited. Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return makeOpenAIRequest(retryCount + 1);
+        } else {
+          throw new Error("RATE_LIMIT_EXCEEDED");
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status} - ${await response.text()}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content;
+      
+      if (!content) {
+        throw new Error("Empty response from OpenAI");
+      }
+
+      console.log("OpenAI analysis completed successfully");
+      return JSON.parse(content);
+      
+    } catch (error) {
+      if (retryCount < maxRetries && (error.message.includes('fetch') || error.message.includes('network'))) {
+        // Network error, retry
+        const delay = baseDelay * Math.pow(2, retryCount);
+        console.log(`Network error. Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return makeOpenAIRequest(retryCount + 1);
+      }
+      throw error;
+    }
+  }
+
+  try {
+    return await makeOpenAIRequest();
   } catch (error) {
-    console.error("Error calling OpenAI:", error);
-    return {
-      top_issues: [{ issue: "Erreur d'analyse IA", mentions: 1 }],
-      top_strengths: [{ strength: "Analyse impossible", mentions: 1 }],
-      recommendations: ["Erreur lors de l'analyse par IA"]
-    };
+    console.error("Error calling OpenAI after retries:", error);
+    
+    // Provide specific error messages based on error type
+    if (error.message === "RATE_LIMIT_EXCEEDED") {
+      return {
+        top_issues: [
+          { issue: "Limite de taux OpenAI atteinte", mentions: 1 }
+        ],
+        top_strengths: [
+          { strength: "Trop de requêtes simultanées", mentions: 1 }
+        ],
+        recommendations: [
+          "Attendez quelques minutes avant de relancer l'analyse",
+          "Vérifiez votre quota OpenAI",
+          "Contactez le support si le problème persiste"
+        ]
+      };
+    } else if (error.message.includes("401") || error.message.includes("authentication")) {
+      return {
+        top_issues: [
+          { issue: "Erreur d'authentification OpenAI", mentions: 1 }
+        ],
+        top_strengths: [
+          { strength: "Clé API invalide", mentions: 1 }
+        ],
+        recommendations: [
+          "Vérifiez que votre clé OpenAI est valide",
+          "Regenerez votre clé API si nécessaire"
+        ]
+      };
+    } else {
+      return {
+        top_issues: [
+          { issue: "Erreur technique de l'analyse", mentions: 1 }
+        ],
+        top_strengths: [
+          { strength: "Service temporairement indisponible", mentions: 1 }
+        ],
+        recommendations: [
+          "Réessayez dans quelques minutes",
+          "Contactez le support si le problème persiste"
+        ]
+      };
+    }
   }
 }
 
