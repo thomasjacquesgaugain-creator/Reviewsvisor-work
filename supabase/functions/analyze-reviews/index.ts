@@ -37,7 +37,7 @@ const supabaseAdmin = createClient(
   { auth: { persistSession: false } }
 );
 
-const openAIKey = env("OPENAI_API_KEY");
+const anthropicKey = env("ANTHROPIC_API_KEY");
 
 // Fetch reviews from Supabase database instead of Google API
 async function fetchReviewsFromDatabase(placeId: string, userId: string): Promise<ReviewRow[]> {
@@ -97,19 +97,19 @@ function computeStats(rows: ReviewRow[]) {
   };
 }
 
-// OpenAI summarization with retry logic
-async function summarizeWithOpenAI(placeName: string, samples: string[]) {
-  if (!openAIKey) {
-    console.warn("OpenAI API key not found, returning helpful fallback");
+// Claude (Anthropic) summarization - more reliable than OpenAI
+async function summarizeWithClaude(placeName: string, samples: string[]) {
+  if (!anthropicKey) {
+    console.warn("Anthropic API key not found, returning helpful fallback");
     return {
       top_issues: [
-        { issue: "Configuration OpenAI requise", mentions: 1 }
+        { issue: "Configuration Anthropic requise", mentions: 1 }
       ],
       top_strengths: [
         { strength: "Clé API manquante", mentions: 1 }
       ],
       recommendations: [
-        "Configurez votre clé OpenAI dans les secrets Supabase pour activer l'analyse IA"
+        "Configurez votre clé Anthropic dans les secrets Supabase pour activer l'analyse IA"
       ]
     };
   }
@@ -142,114 +142,58 @@ Répondez en JSON avec cette structure exacte:
 Avis à analyser:
 ${samples.slice(0, 50).join('\n---\n')}`;
 
-  // Retry logic for rate limiting
-  async function makeOpenAIRequest(retryCount = 0): Promise<any> {
-    const maxRetries = 3;
-    const baseDelay = 2000; // 2 seconds base delay
-    
-    try {
-      console.log(`Attempting OpenAI request (attempt ${retryCount + 1}/${maxRetries + 1})`);
-      
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openAIKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [{ role: "user", content: prompt }],
-          response_format: { type: "json_object" },
-          max_tokens: 1000,
-          temperature: 0.3,
-        }),
-      });
-
-      if (response.status === 429) {
-        // Rate limit error
-        if (retryCount < maxRetries) {
-          const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff
-          console.log(`Rate limited. Retrying in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          return makeOpenAIRequest(retryCount + 1);
-        } else {
-          throw new Error("RATE_LIMIT_EXCEEDED");
-        }
-      }
-
-      if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status} - ${await response.text()}`);
-      }
-
-      const data = await response.json();
-      const content = data.choices[0]?.message?.content;
-      
-      if (!content) {
-        throw new Error("Empty response from OpenAI");
-      }
-
-      console.log("OpenAI analysis completed successfully");
-      return JSON.parse(content);
-      
-    } catch (error) {
-      if (retryCount < maxRetries && (error.message.includes('fetch') || error.message.includes('network'))) {
-        // Network error, retry
-        const delay = baseDelay * Math.pow(2, retryCount);
-        console.log(`Network error. Retrying in ${delay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return makeOpenAIRequest(retryCount + 1);
-      }
-      throw error;
-    }
-  }
-
   try {
-    return await makeOpenAIRequest();
-  } catch (error) {
-    console.error("Error calling OpenAI after retries:", error);
+    console.log("Calling Claude API for analysis");
     
-    // Provide specific error messages based on error type
-    if (error.message === "RATE_LIMIT_EXCEEDED") {
-      return {
-        top_issues: [
-          { issue: "Limite de taux OpenAI atteinte", mentions: 1 }
-        ],
-        top_strengths: [
-          { strength: "Trop de requêtes simultanées", mentions: 1 }
-        ],
-        recommendations: [
-          "Attendez quelques minutes avant de relancer l'analyse",
-          "Vérifiez votre quota OpenAI",
-          "Contactez le support si le problème persiste"
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${anthropicKey}`,
+        "Content-Type": "application/json",
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-3-5-haiku-20241022",
+        max_tokens: 1000,
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
         ]
-      };
-    } else if (error.message.includes("401") || error.message.includes("authentication")) {
-      return {
-        top_issues: [
-          { issue: "Erreur d'authentification OpenAI", mentions: 1 }
-        ],
-        top_strengths: [
-          { strength: "Clé API invalide", mentions: 1 }
-        ],
-        recommendations: [
-          "Vérifiez que votre clé OpenAI est valide",
-          "Regenerez votre clé API si nécessaire"
-        ]
-      };
-    } else {
-      return {
-        top_issues: [
-          { issue: "Erreur technique de l'analyse", mentions: 1 }
-        ],
-        top_strengths: [
-          { strength: "Service temporairement indisponible", mentions: 1 }
-        ],
-        recommendations: [
-          "Réessayez dans quelques minutes",
-          "Contactez le support si le problème persiste"
-        ]
-      };
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Claude API error: ${response.status} - ${await response.text()}`);
     }
+
+    const data = await response.json();
+    const content = data.content[0]?.text;
+    
+    if (!content) {
+      throw new Error("Empty response from Claude");
+    }
+
+    console.log("Claude analysis completed successfully");
+    return JSON.parse(content);
+    
+  } catch (error) {
+    console.error("Error calling Claude:", error);
+    
+    // Provide fallback analysis
+    return {
+      top_issues: [
+        { issue: "Erreur d'analyse IA", mentions: 1 }
+      ],
+      top_strengths: [
+        { strength: "Analyse non disponible", mentions: 1 }
+      ],
+      recommendations: [
+        "Vérifiez votre clé API Anthropic",
+        "Réessayez dans quelques minutes"
+      ]
+    };
   }
 }
 
@@ -308,7 +252,7 @@ serve(async (req) => {
     // 2) Compute stats from existing reviews
     const stats = computeStats(rows);
     const sampleTexts = rows.map(r => r.text ?? "").filter(Boolean).slice(0, 120);
-    const summary = await summarizeWithOpenAI(name ?? "Cet établissement", sampleTexts);
+    const summary = await summarizeWithClaude(name ?? "Cet établissement", sampleTexts);
 
     // 3) Store insights in database (if not dry run)
     if (!dryRun) {
