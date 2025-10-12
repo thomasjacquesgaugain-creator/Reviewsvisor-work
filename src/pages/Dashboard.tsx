@@ -89,6 +89,7 @@ const Dashboard = () => {
   const [editedResponses, setEditedResponses] = useState<Record<string, string>>({});
   const [validatedReviews, setValidatedReviews] = useState<Set<string>>(new Set());
   const [copiedReviews, setCopiedReviews] = useState<Set<string>>(new Set());
+  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -124,8 +125,31 @@ const Dashboard = () => {
     cumulative: 82.3
   }];
 
+  // Fonction pour charger les avis non répondus
+  const loadUnrespondedReviews = async () => {
+    const currentEstab = selectedEtab || selectedEstablishment;
+    if (!user?.id || !currentEstab?.place_id) return;
+    
+    // Charger les avis non répondus
+    const { data: reviewsData, error: reviewsError } = await supabase
+      .from('reviews')
+      .select('*')
+      .eq('place_id', currentEstab.place_id)
+      .eq('user_id', user.id)
+      .is('responded_at', null)
+      .order('published_at', { ascending: false });
+      
+    if (reviewsError) {
+      console.error('[dashboard] reviews error:', reviewsError);
+    } else if (reviewsData) {
+      setRecentReviews(reviewsData.slice(0, 10)); // Charger jusqu'à 10 avis non répondus
+      setCurrentReviewIndex(0); // Réinitialiser l'index
+    }
+  };
+
   // Fetch review insights data
   useEffect(() => {
+    
     const fetchInsights = async () => {
       // Utiliser selectedEtab (localStorage) ou selectedEstablishment (store)
       const currentEstab = selectedEtab || selectedEstablishment;
@@ -200,7 +224,9 @@ const Dashboard = () => {
         setIsLoadingInsight(false);
       }
     };
+    
     fetchInsights();
+    loadUnrespondedReviews();
   }, [user?.id, selectedEstablishment?.place_id, selectedEtab?.place_id]);
 
   // Mise à jour de l'heure en temps réel
@@ -1108,7 +1134,11 @@ const Dashboard = () => {
           {showReponseAuto && <CardContent>
               <div className="space-y-4">
                 {recentReviews.length > 0 ? (
-                  recentReviews.slice(0, 2).map((review: any, index: number) => {
+                  // Afficher seulement l'avis actuel
+                  (() => {
+                    const review = recentReviews[currentReviewIndex];
+                    if (!review) return null;
+                    const index = currentReviewIndex;
                     const rating = review.rating || 0;
                     const isPositive = rating >= 4;
                     const authorName = review.author || 'Anonyme';
@@ -1128,19 +1158,47 @@ const Dashboard = () => {
                     const handleCopy = async () => {
                       try {
                         await navigator.clipboard.writeText(currentResponse);
+                        
+                        // Marquer l'avis comme répondu dans la base de données
+                        const { error: updateError } = await supabase
+                          .from('reviews')
+                          .update({
+                            responded_at: new Date().toISOString(),
+                            ai_response_text: currentResponse
+                          })
+                          .eq('id', review.id);
+                        
+                        if (updateError) {
+                          console.error('Erreur lors de la mise à jour de l\'avis:', updateError);
+                        }
+                        
                         setCopiedReviews(prev => new Set(prev).add(reviewId));
                         toast({
                           title: "Réponse copiée !",
-                          description: "Vous pouvez maintenant la coller où vous voulez",
+                          description: "Avis marqué comme répondu. Passage au suivant...",
                         });
-                        // Réinitialiser l'état "copié" après 2 secondes
+                        
+                        // Passer à l'avis suivant après 1.5 secondes
                         setTimeout(() => {
                           setCopiedReviews(prev => {
                             const newSet = new Set(prev);
                             newSet.delete(reviewId);
                             return newSet;
                           });
-                        }, 2000);
+                          
+                          // Passer à l'avis suivant
+                          if (index < recentReviews.length - 1) {
+                            setCurrentReviewIndex(prev => prev + 1);
+                          } else {
+                            // On est au dernier avis, recharger les avis
+                            toast({
+                              title: "Tous les avis traités !",
+                              description: "Rechargement des avis non répondus...",
+                            });
+                            // Recharger les avis
+                            loadUnrespondedReviews();
+                          }
+                        }, 1500);
                       } catch (err) {
                         toast({
                           title: "Erreur",
@@ -1252,7 +1310,7 @@ const Dashboard = () => {
                         </div>
                       </div>
                     );
-                  })
+                  })()
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <p className="text-sm">Aucun avis récent disponible</p>
