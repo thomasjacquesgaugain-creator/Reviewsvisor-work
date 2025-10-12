@@ -12,6 +12,7 @@ import { Building2, Home, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import GreetingName from "@/components/GreetingName";
+import AutocompleteEtablissementInline from "@/components/AutocompleteEtablissementInline";
 
 // TypeScript declarations for Google Maps
 declare global {
@@ -201,12 +202,22 @@ export default function EtablissementPage() {
             <h2 className="text-xl font-semibold">Rechercher un établissement</h2>
             
             <div className="space-y-2">
-              <input
-                id="places-input"
-                className="w-full border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Rechercher un établissement…"
+              <AutocompleteEtablissementInline
+                onPicked={(place: any) => {
+                  const etab: Etab = {
+                    place_id: place.place_id,
+                    name: place.name ?? "",
+                    address: place.formatted_address ?? place.address ?? "",
+                    lat: place.geometry?.location?.lat ?? place.location?.lat ?? null,
+                    lng: place.geometry?.location?.lng ?? place.location?.lng ?? null,
+                    url: place.url ?? null,
+                    website: place.website ?? null,
+                    phone: place.international_phone_number ?? place.phone ?? null,
+                    rating: place.rating ?? null,
+                  } as any;
+                  setSelected(etab);
+                }}
               />
-              
               {selected && (
                 <div className="inline-flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
                   <span>✅ Sélectionné :</span>
