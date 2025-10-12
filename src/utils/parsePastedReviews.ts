@@ -28,6 +28,38 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
   const reviews: ParsedReview[] = [];
   const lines = rawText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   
+  // Helper functions to reduce false positives when starting a review on a name-only line
+  const NAME_PREPOSITIONS = /^(?:d'|de|du|des|la|le|les|l')$/i;
+
+  const isDateLine = (s: string) => {
+    const datePatterns = [
+      /il y a (\d+) (jour|semaine|mois|an)/i,
+      /Visité en (\w+)/i,
+      /(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre) \d{4}/i,
+      /\d{1,2}\/\d{1,2}\/\d{4}/
+    ];
+    return datePatterns.some(p => p.test(s));
+  };
+
+  const containsPlatform = (s: string) => {
+    const l = s.toLowerCase();
+    return l.includes('avis de google') || l.includes('google') || l.includes('tripadvisor');
+  };
+
+  const hasRating = (s: string) => {
+    return /(?:(?:\b(?:noté|note|rating)\s*:?)?[\s\u00A0]*\d+(?:[\.,]\d+)?\s*(?:\/|sur)\s*5)|(?:(?:[★☆✭✩⭑⭒\uE000-\uF8FF]|\u2B50)[\s\u00A0]*){1,5}|(?:\b[1-5]\s*étoiles?)/i.test(s);
+  };
+
+  const isLikelyReviewStart = (idx: number) => {
+    for (let j = idx; j < Math.min(idx + 5, lines.length); j++) {
+      const s = lines[j];
+      if (hasRating(s) || isDateLine(s) || containsPlatform(s) || s.toLowerCase().includes('local guide') || /\b\d+\s+avis\b/i.test(s)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   let currentReview: Partial<ParsedReview> = {};
   let collectingComment = false;
   let commentLines: string[] = [];
@@ -41,24 +73,40 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
     
     // Detect potential author name (person name pattern, not a metadata line)
     const lower = line.toLowerCase();
+    const words = line.split(/\s+/).filter(p => p.length > 0);
+
     const isMetadata = line.includes('Avis de Google') || 
                        line.includes('Avis deGoogle') ||
                        lower.includes('google') ||
+                       lower.includes('tripadvisor') ||
                        lower.includes('local guide') ||
                        lower.includes('photos') ||
                        lower.includes('avis') ||
+                       lower.includes('répondre') ||
+                       lower.includes('plus') ||
+                       lower.includes('owner') ||
+                       lower.includes('propriétaire') ||
+                       lower.includes('utile') ||
+                       lower.includes('share') ||
+                       lower.includes('like') ||
                        line.includes('il y a') || 
                        line.includes('Visité en');
     
-    const looksLikeName = /^[A-Za-zÀ-ÿ''\-\.\s]{2,80}$/.test(line) && 
+    const firstUpper = words.length > 0 && /^[A-ZÀ-Ý]/.test(words[0]);
+    const wordsLookLikeNames = words.every(w => 
+      /^(?:[A-ZÀ-Ý][A-Za-zÀ-ÿ'’\-.]+|d'|de|du|des|la|le|les|l')$/.test(w)
+    );
+    const looksLikeName = /^[A-Za-zÀ-ÿ'’\-\.\s]{2,80}$/.test(line) && 
                           !line.includes('★') && 
                           !line.includes('⭐') &&
                           !isMetadata &&
-                          line.split(/\s+/).filter(p => p.length > 0).length >= 1 &&
-                          line.split(/\s+/).filter(p => p.length > 0).length <= 5;
+                          words.length >= 1 &&
+                          words.length <= 4 &&
+                          firstUpper &&
+                          wordsLookLikeNames;
     
     // Start new review if we detect a rating OR a likely author name
-    if (ratingMatch || looksLikeName) {
+    if (ratingMatch || (looksLikeName && isLikelyReviewStart(i))) {
       // Save previous review if exists
       if (currentReview.rating || currentReview.firstName) {
         finishCurrentReview(i - 1);
