@@ -4,10 +4,9 @@ export function loadGooglePlaces(): Promise<void> {
   if ((window as any).google?.maps?.places) return Promise.resolve();
   if (loading) return loading;
 
-  // Support both new and legacy env var names
-  const key = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY || import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const key = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
   if (!key) {
-    return Promise.reject(new Error('VITE_GOOGLE_MAPS_BROWSER_KEY manquante'));
+    return Promise.reject(new Error('Clé Google manquante : renseignez VITE_GOOGLE_MAPS_BROWSER_KEY.'));
   }
 
   loading = new Promise((resolve, reject) => {

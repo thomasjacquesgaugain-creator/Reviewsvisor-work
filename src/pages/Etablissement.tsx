@@ -43,6 +43,26 @@ export default function EtablissementPage() {
     }
   };
 
+  // Mapping des erreurs Google Places
+  function mapPlacesStatus(status: string, errorMessage?: string): string | null {
+    const g = (window as any).google;
+    if (!g?.maps?.places) return 'Google Places non chargé';
+    
+    switch (status) {
+      case g.maps.places.PlacesServiceStatus.OK:
+      case g.maps.places.PlacesServiceStatus.ZERO_RESULTS:
+        return null;
+      case g.maps.places.PlacesServiceStatus.REQUEST_DENIED:
+        return 'Clé Google invalide ou non autorisée (référents/API).';
+      case g.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT:
+        return 'Quota dépassé. Réessayez plus tard.';
+      case g.maps.places.PlacesServiceStatus.INVALID_REQUEST:
+        return 'Requête invalide (paramètre manquant).';
+      default:
+        return errorMessage || status || 'Erreur inconnue Google Places';
+    }
+  }
+
   // Fonction pour récupérer les détails d'un lieu
   async function fetchPlaceDetails(placeId: string): Promise<any> {
     await loadGooglePlaces();
@@ -64,10 +84,13 @@ export default function EtablissementPage() {
           ]
         },
         (result: any, status: string) => {
-          if (status === g.maps.places.PlacesServiceStatus.OK && result) {
+          const err = mapPlacesStatus(status);
+          if (err) {
+            reject(new Error(err));
+          } else if (result) {
             resolve(result);
           } else {
-            reject(new Error(status));
+            reject(new Error('Aucun résultat'));
           }
         }
       );
