@@ -36,8 +36,8 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     
-    // Detect rating patterns (supports "X/5", "X sur 5", "X étoiles")
-    const ratingMatch = line.match(/(\d+(?:[,\.]\d+)?)\s*(?:\/|sur)\s*5|★{1,5}|⭐{1,5}|(\b[1-5])\s*étoiles?/i);
+    // Detect rating patterns (supports many forms: "X/5", "X sur 5", "X étoiles", stars symbols including ⭐️ with variation, spaces between stars)
+    const ratingMatch = line.match(/(?:(?:\b(?:noté|note|rating)\s*:?)?\s*(\d+(?:[\.,]\d+)?)\s*(?:\/|sur)\s*5)|(?:(?:★|⭐️?|☆|✭|✩|⭑|⭒)(?:\s?){1,5})|(?:(\b[1-5])\s*étoiles?)/i);
     if (ratingMatch) {
       // Save previous review if exists
       if (currentReview.rating) {
@@ -51,16 +51,17 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
       reviewStartIndex = i; // Mark start of new review block
       
       if (ratingMatch[1]) {
-        // Numeric rating like "4,5/5" or "4.5 sur 5"
+        // Numeric rating like "4,5/5" or "4.5 sur 5" (with optional "Note:" prefix)
         const numRating = parseFloat(ratingMatch[1].replace(',', '.'));
-        currentReview.rating = Math.round(numRating);
+        currentReview.rating = Math.max(1, Math.min(5, Math.round(numRating)));
       } else if (ratingMatch[2]) {
         // "X étoiles"
         currentReview.rating = parseInt(ratingMatch[2], 10);
       } else {
-        // Star rating
-        const stars = ratingMatch[0];
-        currentReview.rating = stars.length;
+        // Star symbols sequence → count actual star glyphs only (ignore spaces/variations)
+        const starsText = ratingMatch[0];
+        const starCount = (starsText.match(/★|⭐️?|☆|✭|✩|⭑|⭒/g) || []).length;
+        currentReview.rating = Math.max(1, Math.min(5, starCount));
       }
       
       // Detect platform - check both the current line and look ahead
