@@ -179,18 +179,8 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
       rawFingerprint: fingerprint
     };
     
-    // Prefer deduplication by rawFingerprint (block-based), fallback to content hash
-    const fp = review.rawFingerprint;
-    const isDuplicate = reviews.some(existing =>
-      (existing.rawFingerprint && fp)
-        ? existing.rawFingerprint === fp
-        : (`${existing.firstName}${existing.lastName}${existing.comment}${existing.reviewDate}`.toLowerCase() ===
-           `${review.firstName}${review.lastName}${review.comment}${review.reviewDate}`.toLowerCase())
-    );
-    
-    if (!isDuplicate) {
-      reviews.push(review);
-    }
+    // Do not deduplicate at parse time; keep all detected reviews and let import layer handle duplicates
+    reviews.push(review);
   }
   
   return reviews;
