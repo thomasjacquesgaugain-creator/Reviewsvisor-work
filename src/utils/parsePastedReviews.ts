@@ -36,8 +36,8 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     
-    // Detect rating patterns
-    const ratingMatch = line.match(/(\d+(?:[,\.]\d+)?)\s*\/\s*5|★{1,5}|⭐{1,5}/);
+    // Detect rating patterns (supports "X/5", "X sur 5", "X étoiles")
+    const ratingMatch = line.match(/(\d+(?:[,\.]\d+)?)\s*(?:\/|sur)\s*5|★{1,5}|⭐{1,5}|(\b[1-5])\s*étoiles?/i);
     if (ratingMatch) {
       // Save previous review if exists
       if (currentReview.rating) {
@@ -51,9 +51,12 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
       reviewStartIndex = i; // Mark start of new review block
       
       if (ratingMatch[1]) {
-        // Numeric rating like "4,5/5" or "4.5/5"
+        // Numeric rating like "4,5/5" or "4.5 sur 5"
         const numRating = parseFloat(ratingMatch[1].replace(',', '.'));
         currentReview.rating = Math.round(numRating);
+      } else if (ratingMatch[2]) {
+        // "X étoiles"
+        currentReview.rating = parseInt(ratingMatch[2], 10);
       } else {
         // Star rating
         const stars = ratingMatch[0];
@@ -175,10 +178,13 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
       rawFingerprint: fingerprint
     };
     
-    // Simple deduplication based on content hash
-    const contentHash = `${review.firstName}${review.lastName}${review.comment}${review.reviewDate}`.toLowerCase();
-    const isDuplicate = reviews.some(existing => 
-      `${existing.firstName}${existing.lastName}${existing.comment}${existing.reviewDate}`.toLowerCase() === contentHash
+    // Prefer deduplication by rawFingerprint (block-based), fallback to content hash
+    const fp = review.rawFingerprint;
+    const isDuplicate = reviews.some(existing =>
+      (existing.rawFingerprint && fp)
+        ? existing.rawFingerprint === fp
+        : (`${existing.firstName}${existing.lastName}${existing.comment}${existing.reviewDate}`.toLowerCase() ===
+           `${review.firstName}${review.lastName}${review.comment}${review.reviewDate}`.toLowerCase())
     );
     
     if (!isDuplicate) {
