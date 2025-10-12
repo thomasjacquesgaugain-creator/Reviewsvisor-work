@@ -110,18 +110,22 @@ const Dashboard = () => {
   // Fetch review insights data
   useEffect(() => {
     const fetchInsights = async () => {
-      if (!user?.id || !selectedEstablishment?.place_id) return;
+      // Utiliser selectedEtab (localStorage) ou selectedEstablishment (store)
+      const currentEstab = selectedEtab || selectedEstablishment;
+      if (!user?.id || !currentEstab?.place_id) return;
+      
       setIsLoadingInsight(true);
       try {
         const {
           data: insightData,
           error
-        } = await supabase.from('review_insights').select('counts, overall_rating, top_issues, top_strengths, positive_ratio, g_meta, last_analyzed_at').eq('place_id', selectedEstablishment.place_id).eq('user_id', user.id).order('last_analyzed_at', {
+        } = await supabase.from('review_insights').select('counts, overall_rating, top_issues, top_strengths, positive_ratio, g_meta, last_analyzed_at').eq('place_id', currentEstab.place_id).eq('user_id', user.id).order('last_analyzed_at', {
           ascending: false
         }).limit(1).maybeSingle();
         if (error) {
           console.error('[dashboard] review_insights error:', error);
         } else {
+          console.log('[dashboard] Insights loaded:', insightData);
           setInsight(insightData);
         }
       } catch (error) {
@@ -131,7 +135,7 @@ const Dashboard = () => {
       }
     };
     fetchInsights();
-  }, [user?.id, selectedEstablishment?.place_id]);
+  }, [user?.id, selectedEstablishment?.place_id, selectedEtab?.place_id]);
 
   // Mise à jour de l'heure en temps réel
   useEffect(() => {
@@ -486,7 +490,20 @@ const Dashboard = () => {
                         
                         if (result.ok) {
                           console.log('Analyse terminée:', result);
-                          window.location.reload();
+                          // Recharger les insights au lieu de recharger toute la page
+                          const { data: insightData } = await supabase
+                            .from('review_insights')
+                            .select('counts, overall_rating, top_issues, top_strengths, positive_ratio, g_meta, last_analyzed_at')
+                            .eq('place_id', selectedEtab.place_id)
+                            .eq('user_id', user?.id)
+                            .order('last_analyzed_at', { ascending: false })
+                            .limit(1)
+                            .maybeSingle();
+                          
+                          if (insightData) {
+                            setInsight(insightData);
+                            console.log('Insights rechargés:', insightData);
+                          }
                         } else {
                           console.error('Erreur d\'analyse:', result.error);
                         }
