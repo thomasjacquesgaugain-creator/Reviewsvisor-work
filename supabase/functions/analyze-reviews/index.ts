@@ -324,7 +324,7 @@ Deno.serve(async (req) => {
       : computeHeuristicThemes(rows);
 
     if (!dryRun) {
-      const { error } = await supabaseAdmin.from("review_insights").upsert({
+      const payload = {
         place_id,
         user_id: userId ?? "00000000-0000-0000-0000-000000000000", // fallback
         last_analyzed_at: new Date().toISOString(),
@@ -351,8 +351,30 @@ Deno.serve(async (req) => {
           negative_pct: stats.negative_pct,
           recommendations: summary.recommendations
         }
-      }, { onConflict: 'place_id,user_id' });
-      if (error) throw new Error(`insights_upsert_failed:${error.message}`);
+      };
+
+      // Upsert manuel sans contrainte unique (update si existe, sinon insert)
+      const { data: existsRows, error: existsErr } = await supabaseAdmin
+        .from('review_insights')
+        .select('place_id')
+        .eq('place_id', place_id)
+        .eq('user_id', payload.user_id)
+        .limit(1);
+      if (existsErr) throw new Error(`insights_select_failed:${existsErr.message}`);
+
+      if (existsRows && existsRows.length > 0) {
+        const { error } = await supabaseAdmin
+          .from('review_insights')
+          .update(payload)
+          .eq('place_id', place_id)
+          .eq('user_id', payload.user_id);
+        if (error) throw new Error(`insights_update_failed:${error.message}`);
+      } else {
+        const { error } = await supabaseAdmin
+          .from('review_insights')
+          .insert(payload);
+        if (error) throw new Error(`insights_insert_failed:${error.message}`);
+      }
     }
 
     return json({
