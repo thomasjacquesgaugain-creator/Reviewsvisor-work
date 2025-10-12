@@ -1,4 +1,4 @@
-import { authHeaders, SUPABASE_URL } from '@/lib/supabaseClient';
+import { authHeaders, SUPABASE_URL, checkSupabaseConfig } from '@/lib/supabaseClient';
 
 export function makePlacesUrls(query: string, placeId?: string, session?: string) {
   const base = `${SUPABASE_URL}/functions/v1/places`;
@@ -37,6 +37,12 @@ export interface PlaceDetails {
 }
 
 export async function fetchPlaceDetails(place_id: string): Promise<PlaceDetails> {
+  // Vérification de la config
+  const configCheck = checkSupabaseConfig();
+  if (!configCheck.valid) {
+    throw new Error(configCheck.error);
+  }
+
   const { details } = makePlacesUrls("", place_id);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
@@ -50,7 +56,18 @@ export async function fetchPlaceDetails(place_id: string): Promise<PlaceDetails>
     clearTimeout(timeout);
     
     const data = await r.json();
-    if (!r.ok) throw new Error(data?.error || `HTTP ${r.status}`);
+    
+    if (!r.ok) {
+      // Détection spécifique des erreurs d'authentification
+      if ((r.status === 401 || r.status === 403) && 
+          (data?.error?.toLowerCase().includes('api key') || 
+           data?.error?.toLowerCase().includes('invalid') ||
+           data?.message?.toLowerCase().includes('api key'))) {
+        throw new Error('Clé Supabase (anon) invalide. Mettez à jour VITE_SUPABASE_ANON_KEY dans Security.');
+      }
+      throw new Error(data?.error || `HTTP ${r.status}`);
+    }
+    
     if (data?.status && data.status !== "OK") {
       throw new Error(data?.error_message || data.status);
     }
