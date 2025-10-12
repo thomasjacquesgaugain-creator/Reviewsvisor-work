@@ -90,6 +90,7 @@ const Dashboard = () => {
   const [validatedReviews, setValidatedReviews] = useState<Set<string>>(new Set());
   const [copiedReviews, setCopiedReviews] = useState<Set<string>>(new Set());
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
+  const [totalUnrespondedReviews, setTotalUnrespondedReviews] = useState(0);
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -131,9 +132,9 @@ const Dashboard = () => {
     if (!user?.id || !currentEstab?.place_id) return;
     
     // Charger les avis non répondus
-    const { data: reviewsData, error: reviewsError } = await supabase
+    const { data: reviewsData, error: reviewsError, count } = await supabase
       .from('reviews')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('place_id', currentEstab.place_id)
       .eq('user_id', user.id)
       .is('responded_at', null)
@@ -144,6 +145,7 @@ const Dashboard = () => {
     } else if (reviewsData) {
       setRecentReviews(reviewsData.slice(0, 10)); // Charger jusqu'à 10 avis non répondus
       setCurrentReviewIndex(0); // Réinitialiser l'index
+      setTotalUnrespondedReviews(count || 0); // Stocker le nombre total
     }
   };
 
@@ -686,17 +688,17 @@ const Dashboard = () => {
           <Card className="relative">
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
-                  <div className="text-sm text-gray-500">Avis négatifs</div>
-                  <div className="text-2xl font-bold">{negativePct}%</div>
-                  <div className="text-xs text-gray-400">avis négatifs</div>
+                  <div className="text-sm text-gray-500">Réponses à faire</div>
+                  <div className="text-2xl font-bold text-purple-600">{totalUnrespondedReviews}</div>
+                  <div className="text-xs text-gray-400">sur {totalReviews} avis</div>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setShowAvisNegatifs(!showAvisNegatifs)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-red-50">
-                {showAvisNegatifs ? <ChevronUp className="w-3 h-3 text-red-600" /> : <ChevronDown className="w-3 h-3 text-red-600" />}
+              <Button variant="ghost" size="sm" onClick={() => setShowReponseAuto(!showReponseAuto)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-purple-50">
+                {showReponseAuto ? <ChevronUp className="w-3 h-3 text-purple-600" /> : <ChevronDown className="w-3 h-3 text-purple-600" />}
               </Button>
             </CardContent>
           </Card>
