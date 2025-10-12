@@ -1,11 +1,9 @@
-import { AnalyseDashboard } from "@/components/AnalyseDashboard";
-import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info } from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,10 +11,10 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
-
+import { runAnalyze } from "@/lib/runAnalyze";
+import { useToast } from "@/hooks/use-toast";
+import GreetingName from "@/components/GreetingName";
 const Dashboard = () => {
-  const [searchParams] = useSearchParams();
-  const etablissementId = searchParams.get('etablissementId');
   const {
     user
   } = useAuth();
@@ -34,6 +32,8 @@ const Dashboard = () => {
   const [showParetoPoints, setShowParetoPoints] = useState(false);
   const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { toast } = useToast();
 
   // Établissement sélectionné (depuis localStorage ou store)
   const [selectedEtab, setSelectedEtab] = useState<Etab | null>(null);
@@ -72,6 +72,60 @@ const Dashboard = () => {
   // Review insights data from Supabase
   const [insight, setInsight] = useState<any>(null);
   const [isLoadingInsight, setIsLoadingInsight] = useState(false);
+  const [realPositiveReviews, setRealPositiveReviews] = useState<any[]>([]);
+  const [realNegativeReviews, setRealNegativeReviews] = useState<any[]>([]);
+  const [realAutoResponseReviews, setRealAutoResponseReviews] = useState<any[]>([]);
+  const [allRealReviews, setAllRealReviews] = useState<any[]>([]);
+  const [totalRealReviews, setTotalRealReviews] = useState(0);
+
+  // Function to handle establishment analysis
+  const handleAnalyzeEstablishment = async () => {
+    if (!selectedEtab?.place_id || !user?.id) return;
+    
+    setIsAnalyzing(true);
+    try {
+      const result = await runAnalyze({
+        place_id: selectedEtab.place_id,
+        name: selectedEtab.name,
+        address: selectedEtab.address
+      });
+
+      if (result.ok) {
+        toast({
+          title: "Analyse terminée",
+          description: `${result.counts?.collected || 0} avis analysés avec succès`,
+        });
+        
+        // Refetch insights to update dashboard data
+        await fetchInsights();
+      } else {
+        let errorMessage = "Erreur lors de l'analyse";
+        
+        if (result.error === 'google_fetch_failed') {
+          errorMessage = "Impossible de récupérer les avis Google";
+        } else if (result.error === 'upsert_failed') {
+          errorMessage = "Erreur lors de l'enregistrement des résultats";
+        } else if (result.details) {
+          errorMessage = result.details;
+        }
+
+        toast({
+          title: "Erreur d'analyse",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Analyze error:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur inattendue s'est produite",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -108,30 +162,99 @@ const Dashboard = () => {
   }];
 
   // Fetch review insights data
-  useEffect(() => {
-    const fetchInsights = async () => {
-      if (!user?.id || !selectedEstablishment?.place_id) return;
-      setIsLoadingInsight(true);
-      try {
-        const {
-          data: insightData,
-          error
-        } = await supabase.from('review_insights').select('counts, overall_rating, top_issues, top_strengths, positive_ratio, g_meta, last_analyzed_at').eq('place_id', selectedEstablishment.place_id).eq('user_id', user.id).order('last_analyzed_at', {
-          ascending: false
-        }).limit(1).maybeSingle();
-        if (error) {
-          console.error('[dashboard] review_insights error:', error);
-        } else {
-          setInsight(insightData);
-        }
-      } catch (error) {
-        console.error('[dashboard] fetch insights error:', error);
-      } finally {
-        setIsLoadingInsight(false);
+  const fetchInsights = async () => {
+    const placeId = selectedEstablishment?.place_id || selectedEtab?.place_id;
+    if (!user?.id || !placeId) return;
+    setIsLoadingInsight(true);
+    try {
+      const {
+        data: insightData,
+        error
+      } = await supabase.from('review_insights').select('total_count, avg_rating, top_issues, top_praises, positive_ratio, summary, last_analyzed_at').eq('place_id', placeId).eq('user_id', user.id).order('last_analyzed_at', {
+        ascending: false
+      }).limit(1).maybeSingle();
+      if (error) {
+        console.error('[dashboard] review_insights error:', error);
+      } else {
+        setInsight(insightData);
       }
-    };
+
+      // Fetch real positive reviews (rating >= 4)
+      const { data: positiveReviews, error: positiveError } = await supabase
+        .from('reviews')
+        .select('author, rating, text, published_at, source')
+        .eq('place_id', placeId)
+        .eq('user_id', user.id)
+        .gte('rating', 4)
+        .order('rating', { ascending: false })
+        .order('published_at', { ascending: false })
+        .limit(5);
+
+      if (!positiveError && positiveReviews) {
+        setRealPositiveReviews(positiveReviews);
+      }
+
+      // Fetch real negative reviews (rating <= 2)
+      const { data: negativeReviews, error: negativeError } = await supabase
+        .from('reviews')
+        .select('author, rating, text, published_at, source')
+        .eq('place_id', placeId)
+        .eq('user_id', user.id)
+        .lte('rating', 2)
+        .order('rating', { ascending: true })
+        .order('published_at', { ascending: false })
+        .limit(5);
+
+      if (!negativeError && negativeReviews) {
+        setRealNegativeReviews(negativeReviews);
+      }
+
+      // Fetch real reviews for auto-response (all ratings, ordered by date)
+      const { data: autoResponseReviews, error: autoResponseError } = await supabase
+        .from('reviews')
+        .select('author, rating, text, published_at, source')
+        .eq('place_id', placeId)
+        .eq('user_id', user.id)
+        .order('published_at', { ascending: false })
+        .limit(3);
+
+      if (!autoResponseError && autoResponseReviews) {
+        setRealAutoResponseReviews(autoResponseReviews);
+      }
+
+      // Fetch all reviews for the establishment (for history section)
+      const { data: allReviews, error: allReviewsError } = await supabase
+        .from('reviews')
+        .select('author, rating, text, published_at, source')
+        .eq('place_id', placeId)
+        .eq('user_id', user.id)
+        .order('published_at', { ascending: false })
+        .limit(10);
+
+      if (!allReviewsError && allReviews) {
+        setAllRealReviews(allReviews);
+      }
+
+      // Get total count of reviews
+      const { count, error: countError } = await supabase
+        .from('reviews')
+        .select('*', { count: 'exact', head: true })
+        .eq('place_id', placeId)
+        .eq('user_id', user.id);
+
+      if (!countError && count !== null) {
+        setTotalRealReviews(count);
+      }
+    } catch (error) {
+      console.error('[dashboard] fetch insights error:', error);
+    } finally {
+      setIsLoadingInsight(false);
+    }
+  };
+
+  useEffect(() => {
     fetchInsights();
-  }, [user?.id, selectedEstablishment?.place_id]);
+  }, [user?.id, selectedEstablishment?.place_id, selectedEtab?.place_id]);
 
   // Mise à jour de l'heure en temps réel
   useEffect(() => {
@@ -162,13 +285,13 @@ const Dashboard = () => {
   } = formatDateTime(currentDateTime);
 
   // Map insight data to variables used by UI components
-  const totalAnalyzed = insight?.counts?.google ?? 0;
-  const avgRating = insight?.overall_rating ?? insight?.g_meta?.rating ?? 4.2;
-  const totalReviews = insight?.counts?.google ?? 326;
+  const totalAnalyzed = insight?.total_count ?? 0;
+  const avgRating = insight?.avg_rating ?? 4.2;
+  const totalReviews = insight?.total_count ?? 326;
   const positivePct = insight?.positive_ratio != null ? Math.round(insight.positive_ratio * 100) : 78;
   const negativePct = 100 - positivePct;
   const topIssues = insight?.top_issues ?? [];
-  const topStrengths = insight?.top_strengths ?? [];
+  const topStrengths = insight?.top_praises ?? [];
 
   // Map top issues to Pareto data format
   const paretoData = topIssues.length > 0 ? topIssues.slice(0, 3).map((issue: any, index: number) => {
@@ -207,7 +330,14 @@ const Dashboard = () => {
     cumulativeStrengths += item.percentage;
     item.cumulative = cumulativeStrengths;
   });
-  const avisExemples = [{
+  // Use real reviews for history section or fallback to default data
+  const avisExemples = allRealReviews.length > 0 ? allRealReviews.slice(0, 3).map((review, index) => ({
+    id: index + 1,
+    auteur: review.author || "Anonyme",
+    note: review.rating || 3,
+    commentaire: review.text || "Pas de commentaire",
+    date: review.published_at ? new Date(review.published_at).toLocaleDateString("fr-FR") : "Date inconnue"
+  })) : [{
     id: 1,
     auteur: "Marie L.",
     note: 5,
@@ -251,8 +381,15 @@ const Dashboard = () => {
     note: 4.2
   }];
 
-  // Données pour les 5 meilleurs avis
-  const meilleursAvis = [{
+  // Use real reviews or fallback to default data
+  const meilleursAvis = realPositiveReviews.length > 0 ? realPositiveReviews.map((review, index) => ({
+    id: index + 1,
+    auteur: review.author || "Anonyme",
+    note: review.rating || 5,
+    commentaire: review.text || "Pas de commentaire",
+    date: review.published_at ? new Date(review.published_at).toLocaleDateString("fr-FR") : "Date inconnue",
+    plateforme: review.source || "Google"
+  })) : [{
     id: 1,
     auteur: "Marie L.",
     note: 5,
@@ -289,8 +426,15 @@ const Dashboard = () => {
     plateforme: "Google"
   }];
 
-  // Données pour les 5 pires avis
-  const piresAvis = [{
+  // Use real reviews or fallback to default data
+  const piresAvis = realNegativeReviews.length > 0 ? realNegativeReviews.map((review, index) => ({
+    id: index + 1,
+    auteur: review.author || "Anonyme",
+    note: review.rating || 1,
+    commentaire: review.text || "Pas de commentaire",
+    date: review.published_at ? new Date(review.published_at).toLocaleDateString("fr-FR") : "Date inconnue",
+    plateforme: review.source || "Google"
+  })) : [{
     id: 1,
     auteur: "Marc D.",
     note: 1,
@@ -326,18 +470,6 @@ const Dashboard = () => {
     date: "22/07/2025",
     plateforme: "TripAdvisor"
   }];
-
-  // If we have an etablissementId in URL, show analysis dashboard
-  if (etablissementId) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
-          <AnalyseDashboard />
-        </div>
-      </div>
-    );
-  }
-
   return <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <nav className="bg-white border-b border-gray-200">
@@ -364,9 +496,7 @@ const Dashboard = () => {
               </div>
               
               <div className="flex items-center gap-4 ml-auto">
-                <div className="text-gray-700 font-medium">
-                  Bonjour, Yohan Lopes
-                </div>
+                <GreetingName className="text-gray-700 font-medium" />
                 <Button variant="ghost" className="text-gray-600 hover:text-red-600 flex items-center gap-2">
                   <LogOut className="w-4 h-4" />
                   Déconnexion
@@ -468,10 +598,9 @@ const Dashboard = () => {
                   {/* Bouton analyser établissement */}
                   <Button variant="ghost" size="sm" onClick={async () => {
                 if (!selectedEtab?.place_id) return;
-                // TODO: Implémenter l'analyse
-                console.log('Analyser:', selectedEtab.place_id);
-              }} className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto" title="Analyser cet établissement">
-                    <BarChart3 className="w-4 h-4" />
+                await handleAnalyzeEstablishment();
+              }} className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto" title="Analyser cet établissement" disabled={isAnalyzing}>
+                    {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <BarChart3 className="w-4 h-4" />}
                   </Button>
                   
                   {/* Bouton oublier établissement */}
@@ -510,10 +639,10 @@ const Dashboard = () => {
             <div className="p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <span className="text-2xl font-bold text-blue-600">65</span>
+                  <span className="text-2xl font-bold text-blue-600">{totalRealReviews}</span>
                   <div>
                     <div className="font-medium">{date} {time}</div>
-                    <div className="text-sm text-gray-500">2h avis</div>
+                    <div className="text-sm text-gray-500">{totalRealReviews} avis</div>
                   </div>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setShowAvis(!showAvis)} className="hover:bg-blue-50">
@@ -571,10 +700,16 @@ const Dashboard = () => {
           <Card className="relative">
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center gap-1 mb-2">
-                <span className="text-2xl font-bold text-green-600">{positivePct}%</span>
+                {isLoadingInsight ? (
+                  <Loader2 className="w-6 h-6 text-green-600 animate-spin" />
+                ) : (
+                  <span className="text-2xl font-bold text-green-600">{positivePct}%</span>
+                )}
               </div>
               <p className="text-sm text-gray-600">Avis positifs</p>
-              <p className="text-xs text-gray-500">Note ≥ 4 étoiles</p>
+              <p className="text-xs text-gray-500">
+                {insight ? `Calculé par IA sur ${totalAnalyzed} avis` : "Note ≥ 4 étoiles"}
+              </p>
               <Button variant="ghost" size="sm" onClick={() => setShowAvisPositifs(!showAvisPositifs)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-green-50">
                 {showAvisPositifs ? <ChevronUp className="w-3 h-3 text-green-600" /> : <ChevronDown className="w-3 h-3 text-green-600" />}
               </Button>
@@ -589,8 +724,16 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <div className="text-sm text-gray-500">Avis négatifs</div>
-                  <div className="text-2xl font-bold">{negativePct}%</div>
-                  <div className="text-xs text-gray-400">avis négatifs</div>
+                  <div className="text-2xl font-bold">
+                    {isLoadingInsight ? (
+                      <Loader2 className="w-6 h-6 text-red-600 animate-spin inline" />
+                    ) : (
+                      `${negativePct}%`
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {insight ? `Calculé par IA` : "avis négatifs"}
+                  </div>
                 </div>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setShowAvisNegatifs(!showAvisNegatifs)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-red-50">
@@ -751,41 +894,75 @@ const Dashboard = () => {
                 </div>
                 <ChevronDown className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoChart ? 'rotate-180' : ''}`} onClick={() => setShowParetoChart(!showParetoChart)} />
               </div>
-              <p className="text-sm text-gray-500">Les plus mentionnés par fréquence et pourcentage en priorité</p>
+              <p className="text-sm text-gray-500">
+                {insight ? `Calculé par IA sur ${totalAnalyzed} avis` : "Les plus mentionnés par fréquence et pourcentage en priorité"}
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-red-500" />
-                  <div>
-                    <div className="font-medium">Temps d'attente trop long</div>
-                    <div className="text-sm text-gray-500">25% des avis</div>
+              {isLoadingInsight ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="w-6 h-6 text-red-500 animate-spin" />
+                  <span className="ml-2 text-gray-500">Analyse en cours...</span>
+                </div>
+              ) : topIssues.length > 0 ? (
+                topIssues.slice(0, 3).map((issue, index) => {
+                  const percentage = totalAnalyzed > 0 ? Math.round((issue.mentions || issue.count || 0) / totalAnalyzed * 100) : 0;
+                  const severity = percentage > 20 ? "Critique" : percentage > 10 ? "Moyen" : "Faible";
+                  const bgColor = percentage > 20 ? "bg-red-50" : percentage > 10 ? "bg-yellow-50" : "bg-orange-50";
+                  const iconColor = percentage > 20 ? "text-red-500" : percentage > 10 ? "text-yellow-600" : "text-orange-500";
+                  const badgeColor = percentage > 20 ? "destructive" : percentage > 10 ? "bg-yellow-500 text-white" : "bg-orange-500 text-white";
+                  
+                  return (
+                    <div key={index} className={`flex items-center justify-between p-3 ${bgColor} rounded-lg`}>
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className={`w-4 h-4 ${iconColor}`} />
+                        <div>
+                          <div className="font-medium">{issue.issue || issue.theme || `Problème ${index + 1}`}</div>
+                          <div className="text-sm text-gray-500">{percentage}% des avis</div>
+                        </div>
+                      </div>
+                      <Badge variant={percentage > 20 ? "destructive" : undefined} className={percentage <= 20 ? badgeColor : ""}>
+                        {severity}
+                      </Badge>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-red-500" />
+                      <div>
+                        <div className="font-medium">Temps d'attente trop long</div>
+                        <div className="text-sm text-gray-500">25% des avis</div>
+                      </div>
+                    </div>
+                    <Badge variant="destructive">Critique</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-red-500" />
+                      <div>
+                        <div className="font-medium">Service client insatisfaisant</div>
+                        <div className="text-sm text-gray-500">20% des avis</div>
+                      </div>
+                    </div>
+                    <Badge variant="destructive">Critique</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4 text-yellow-600" />
+                      <div>
+                        <div className="font-medium">Prix trop élevés</div>
+                        <div className="text-sm text-gray-500">15% des avis</div>
+                      </div>
+                    </div>
+                    <Badge className="bg-yellow-500 text-white">Moyen</Badge>
                   </div>
                 </div>
-                <Badge variant="destructive">Critique</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-red-500" />
-                  <div>
-                    <div className="font-medium">Service client insatisfaisant</div>
-                    <div className="text-sm text-gray-500">20% des avis</div>
-                  </div>
-                </div>
-                <Badge variant="destructive">Critique</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-yellow-600" />
-                  <div>
-                    <div className="font-medium">Prix trop élevés</div>
-                    <div className="text-sm text-gray-500">15% des avis</div>
-                  </div>
-                </div>
-                <Badge className="bg-yellow-500 text-white">Moyen</Badge>
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -799,41 +976,69 @@ const Dashboard = () => {
                 </div>
                 <ChevronDown className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoPoints ? 'rotate-180' : ''}`} onClick={() => setShowParetoPoints(!showParetoPoints)} />
               </div>
-              <p className="text-sm text-gray-500">Les points forts les plus mentionnés par vos clients</p>
+              <p className="text-sm text-gray-500">
+                {insight ? `Calculé par IA sur ${totalAnalyzed} avis` : "Les points forts les plus mentionnés par vos clients"}
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <UtensilsCrossed className="w-4 h-4 text-green-500" />
-                  <div>
-                    <div className="font-medium">Qualité exceptionnelle</div>
-                    <div className="text-sm text-gray-500">30% des avis</div>
+              {isLoadingInsight ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="w-6 h-6 text-green-500 animate-spin" />
+                  <span className="ml-2 text-gray-500">Analyse en cours...</span>
+                </div>
+              ) : topStrengths.length > 0 ? (
+                topStrengths.slice(0, 3).map((strength, index) => {
+                  const percentage = totalAnalyzed > 0 ? Math.round((strength.mentions || strength.count || 0) / totalAnalyzed * 100) : 0;
+                  
+                  return (
+                    <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <div>
+                          <div className="font-medium">{strength.strength || strength.theme || `Point fort ${index + 1}`}</div>
+                          <div className="text-sm text-gray-500">{percentage}% des avis</div>
+                        </div>
+                      </div>
+                      <Badge className="bg-green-500 text-white">Force</Badge>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <UtensilsCrossed className="w-4 h-4 text-green-500" />
+                      <div>
+                        <div className="font-medium">Qualité exceptionnelle</div>
+                        <div className="text-sm text-gray-500">30% des avis</div>
+                      </div>
+                    </div>
+                    <Badge className="bg-green-500 text-white">Force</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <div>
+                        <div className="font-medium">Satisfaction générale</div>
+                        <div className="text-sm text-gray-500">25% des avis</div>
+                      </div>
+                    </div>
+                    <Badge className="bg-green-500 text-white">Force</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Wine className="w-4 h-4 text-green-500" />
+                      <div>
+                        <div className="font-medium">Bonne ambiance</div>
+                        <div className="text-sm text-gray-500">20% des avis</div>
+                      </div>
+                    </div>
+                    <Badge className="bg-green-500 text-white">Force</Badge>
                   </div>
                 </div>
-                <Badge className="bg-green-500 text-white">Force</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <div>
-                    <div className="font-medium">Satisfaction générale</div>
-                    <div className="text-sm text-gray-500">25% des avis</div>
-                  </div>
-                </div>
-                <Badge className="bg-green-500 text-white">Force</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Wine className="w-4 h-4 text-green-500" />
-                  <div>
-                    <div className="font-medium">Bonne ambiance</div>
-                    <div className="text-sm text-gray-500">20% des avis</div>
-                  </div>
-                </div>
-                <Badge className="bg-green-500 text-white">Force</Badge>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -1025,50 +1230,61 @@ const Dashboard = () => {
           </CardHeader>
           {showReponseAuto && <CardContent>
               <div className="space-y-4">
-                <div className="border rounded-lg p-4 bg-gray-50">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-500" />
-                      <span className="font-medium">Sophie M.</span>
-                      <div className="flex items-center ml-2">
-                        {[1, 2, 3, 4, 5].map(star => <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />)}
+                {realAutoResponseReviews.length > 0 ? realAutoResponseReviews.map((review, index) => (
+                  <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-500" />
+                        <span className="font-medium">{review.author || "Anonyme"}</span>
+                        <div className="flex items-center ml-2">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <Star 
+                              key={star} 
+                              className={`w-3 h-3 ${star <= (review.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                            />
+                          ))}
+                        </div>
                       </div>
+                      <Badge variant="outline" className="text-green-600 border-green-600">À valider</Badge>
                     </div>
-                    <Badge variant="outline" className="text-green-600 border-green-600">À valider</Badge>
+                    <p className="text-sm text-gray-700 mb-3">"{review.text || "Pas de commentaire"}"</p>
+                    <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
+                      <p className="text-sm text-gray-600 font-medium mb-1">Réponse automatique proposée :</p>
+                      <p className="text-sm text-gray-700">
+                        {review.rating >= 4 
+                          ? `Merci ${review.author?.split(' ')[0] || 'cher client'} pour votre retour positif ! Nous sommes ravis que vous ayez apprécié votre expérience chez nous. Au plaisir de vous revoir bientôt !`
+                          : `Merci ${review.author?.split(' ')[0] || 'cher client'} pour votre retour. Nous prenons note de vos remarques et nous efforçons continuellement d'améliorer nos services. N'hésitez pas à revenir nous voir.`
+                        }
+                      </p>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
+                      <Button size="sm" variant="outline">Modifier</Button>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-700 mb-3">"Excellent restaurant, service impeccable et plats délicieux !"</p>
-                  <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
-                    <p className="text-sm text-gray-600 font-medium mb-1">Réponse automatique proposée :</p>
-                    <p className="text-sm text-gray-700">"Merci Sophie pour votre retour positif ! Nous sommes ravis que vous ayez apprécié votre expérience chez nous. Au plaisir de vous revoir bientôt !"</p>
-                  </div>
-                  <div className="flex gap-2 mt-3">
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
-                    <Button size="sm" variant="outline">Modifier</Button>
-                  </div>
-                </div>
-
-                <div className="border rounded-lg p-4 bg-gray-50">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-500" />
-                      <span className="font-medium">Thomas R.</span>
-                      <div className="flex items-center ml-2">
-                        {[1, 2].map(star => <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />)}
-                        {[3, 4, 5].map(star => <Star key={star} className="w-3 h-3 text-gray-300" />)}
+                )) : (
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-500" />
+                        <span className="font-medium">Sophie M.</span>
+                        <div className="flex items-center ml-2">
+                          {[1, 2, 3, 4, 5].map(star => <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />)}
+                        </div>
                       </div>
+                      <Badge variant="outline" className="text-green-600 border-green-600">À valider</Badge>
                     </div>
-                    <Badge variant="outline" className="text-orange-600 border-orange-600">À valider</Badge>
+                    <p className="text-sm text-gray-700 mb-3">"Excellent restaurant, service impeccable et plats délicieux !"</p>
+                    <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
+                      <p className="text-sm text-gray-600 font-medium mb-1">Réponse automatique proposée :</p>
+                      <p className="text-sm text-gray-700">"Merci Sophie pour votre retour positif ! Nous sommes ravis que vous ayez apprécié votre expérience chez nous. Au plaisir de vous revoir bientôt !"</p>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
+                      <Button size="sm" variant="outline">Modifier</Button>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-700 mb-3">"Service très lent et plats tièdes à l'arrivée. Déçu de cette expérience."</p>
-                  <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
-                    <p className="text-sm text-gray-600 font-medium mb-1">Réponse automatique proposée :</p>
-                    <p className="text-sm text-gray-700">"Bonjour Thomas, nous vous présentons nos excuses pour cette expérience décevante. Vos remarques sont précieuses et nous allons améliorer nos services. N'hésitez pas à nous recontacter directement."</p>
-                  </div>
-                  <div className="flex gap-2 mt-3">
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
-                    <Button size="sm" variant="outline">Modifier</Button>
-                  </div>
-                </div>
+                )}
               </div>
             </CardContent>}
         </Card>

@@ -5,14 +5,10 @@ import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Tar
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
 
 const Dashboard = () => {
   const [userProfile, setUserProfile] = useState<{ first_name: string; last_name: string } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [recentReviewsCount, setRecentReviewsCount] = useState(0);
-  const [lastReviewDate, setLastReviewDate] = useState<Date | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -33,20 +29,6 @@ const Dashboard = () => {
         };
 
         setUserProfile(profile);
-
-        // Récupérer le nombre d'avis et la date du dernier avis
-        const { data: reviews, error } = await supabase
-          .from('reviews')
-          .select('inserted_at')
-          .eq('user_id', session.user.id)
-          .order('inserted_at', { ascending: false });
-
-        if (!error && reviews) {
-          setRecentReviewsCount(reviews.length);
-          if (reviews.length > 0 && reviews[0].inserted_at) {
-            setLastReviewDate(new Date(reviews[0].inserted_at));
-          }
-        }
       } catch (error) {
         console.error('Error:', error);
       } finally {
@@ -55,29 +37,6 @@ const Dashboard = () => {
     };
 
     getUserProfile();
-
-    // S'abonner aux changements en temps réel
-    const channel = supabase
-      .channel('reviews-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'reviews'
-        },
-        (payload) => {
-          setRecentReviewsCount(prev => prev + 1);
-          if (payload.new.inserted_at) {
-            setLastReviewDate(new Date(payload.new.inserted_at));
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [navigate, toast]);
 
   const handleLogout = async () => {
@@ -204,15 +163,8 @@ const Dashboard = () => {
                         <MessageCircle className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">
-                          {recentReviewsCount} {recentReviewsCount <= 1 ? 'avis' : 'avis'}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {lastReviewDate 
-                            ? `Reçus ${formatDistanceToNow(lastReviewDate, { addSuffix: true, locale: fr })}`
-                            : 'Aucun avis pour le moment'
-                          }
-                        </p>
+                        <p className="font-medium text-gray-900">3 nouveaux avis</p>
+                        <p className="text-sm text-gray-600">Reçus aujourd'hui</p>
                       </div>
                     </CardContent>
                   </Card>

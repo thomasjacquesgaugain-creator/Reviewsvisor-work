@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { HeroSection } from "@/components/HeroSection";
+import { RestaurantInput } from "@/components/RestaurantInput";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 
 const Accueil = () => {
