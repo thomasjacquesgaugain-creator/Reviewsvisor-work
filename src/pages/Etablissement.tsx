@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { loadGoogleMaps } from "@/lib/loadGoogleMaps";
 import MonEtablissementCard from "@/components/MonEtablissementCard";
 import SaveEstablishmentButton from "@/components/SaveEstablishmentButton";
 import SavedEstablishmentsList from "@/components/SavedEstablishmentsList";
@@ -8,17 +7,12 @@ import ImportAvisToolbar from "@/components/ImportAvisToolbar";
 import { ReviewsVisualPanel } from "@/components/ReviewsVisualPanel";
 import { Etab } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
-import { Building2, Home, LogOut } from "lucide-react";
+import { Building2, Home, LogOut, Loader2, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-
-// TypeScript declarations for Google Maps
-declare global {
-  interface Window {
-    google: any;
-    initPlaces: () => void;
-  }
-}
+import { useEstablishmentSearch } from "@/hooks/useEstablishmentSearch";
+import { fetchPlaceDetails } from "@/utils/placesClient";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function EtablissementPage() {
   const [selected, setSelected] = useState<Etab | null>(null);
@@ -30,8 +24,11 @@ export default function EtablissementPage() {
     placeId: string;
   } | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
   
   const currentEstablishment = useCurrentEstablishment();
+  const { q, setQ, results, loading, error } = useEstablishmentSearch();
 
   // Callback to refresh reviews data after import
   const handleImportSuccess = () => {
@@ -50,56 +47,31 @@ export default function EtablissementPage() {
     }
   };
 
-  // ⚠️ Utilise EXACTEMENT ces champs dans Autocomplete pour récupérer phone/website/rating :
-  // fields: ['place_id','name','formatted_address','geometry.location','url','website','formatted_phone_number','rating']
-  function serializePlace(place: any): Etab {
-    return {
-      place_id: place.place_id,
-      name: place.name ?? "",
-      address: place.formatted_address ?? "",
-      lat: place.geometry?.location?.lat() ?? null,
-      lng: place.geometry?.location?.lng() ?? null,
-      url: place.url ?? "",
-      website: place.website ?? "",
-      phone: place.formatted_phone_number ?? "",
-      rating: place.rating ?? null,
-    };
-  }
-
-  // Initialize Google Places autocomplete
-  useEffect(() => {
-    const initPlaces = () => {
-      const input = document.getElementById('places-input') as HTMLInputElement;
-      if (!input || !window.google?.maps?.places) return;
-      
-      const autocomplete = new window.google.maps.places.Autocomplete(input, {
-        types: ['establishment'],
-        fields: ['place_id','name','formatted_address','geometry.location','url','website','formatted_phone_number','rating']
-      });
-
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        if (!place || !place.place_id) return;
-        setSelected(serializePlace(place)); // -> active le bouton + badge vert
-      });
-    };
-
-    // Set up global callback
-    window.initPlaces = initPlaces;
-
-    // Load Google Maps or initialize if already loaded
-    if (window.google?.maps?.places) {
-      initPlaces();
-    } else {
-      loadGoogleMaps()
-        .then(() => {
-          initPlaces();
-        })
-        .catch((e) => {
-          console.error('Erreur de chargement Google Maps:', e);
-        });
+  const handleSelectSuggestion = async (prediction: any) => {
+    setQ(prediction.structured_formatting.main_text);
+    setShowSuggestions(false);
+    setDetailsLoading(true);
+    
+    try {
+      const details = await fetchPlaceDetails(prediction.place_id);
+      const etab: Etab = {
+        place_id: details.place_id,
+        name: details.name,
+        address: details.formatted_address,
+        lat: details.geometry?.location?.lat ?? null,
+        lng: details.geometry?.location?.lng ?? null,
+        url: details.url ?? "",
+        website: details.website ?? "",
+        phone: details.international_phone_number ?? "",
+        rating: details.rating ?? null,
+      };
+      setSelected(etab);
+    } catch (err) {
+      console.error("Erreur lors de la récupération des détails:", err);
+    } finally {
+      setDetailsLoading(false);
     }
-  }, []);
+  };
 
   // Handle import button click and analysis button click and ESC key
   useEffect(() => {
@@ -201,12 +173,60 @@ export default function EtablissementPage() {
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Rechercher un établissement</h2>
             
-            <div className="space-y-2">
-              <input
-                id="places-input"
-                className="w-full border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Rechercher un établissement…"
-              />
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="space-y-2 relative">
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+                  {loading || detailsLoading ? (
+                    <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+                  ) : (
+                    <Search className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </div>
+                
+                <input
+                  value={q}
+                  onChange={(e) => {
+                    setQ(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  className="w-full border border-border rounded-lg pl-11 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Rechercher un établissement…"
+                  autoComplete="off"
+                />
+              </div>
+              
+              {showSuggestions && results.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl max-h-60 overflow-y-auto">
+                  {results.map((prediction) => (
+                    <button
+                      key={prediction.place_id}
+                      type="button"
+                      onClick={() => handleSelectSuggestion(prediction)}
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                    >
+                      <div className="font-medium text-gray-900">
+                        {prediction.structured_formatting.main_text}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {prediction.structured_formatting.secondary_text}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {showSuggestions && results.length === 0 && q.trim().length >= 2 && !loading && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl p-4 text-sm text-gray-500">
+                  Aucun résultat trouvé
+                </div>
+              )}
               
               {selected && (
                 <div className="inline-flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
