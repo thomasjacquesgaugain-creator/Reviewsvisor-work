@@ -282,6 +282,29 @@ Deno.serve(async (req) => {
         author_photo_url: null,
         like_count: null,
       }));
+
+      // Deuxième fallback: utiliser reviews_raw si aucune review en table reviews
+      if (!rows.length) {
+        const { data: rawRows, error: rawErr } = await supabaseAdmin
+          .from("reviews_raw")
+          .select("place_id, rating, text, reviewed_at, author, source_ref, hash")
+          .eq("place_id", place_id);
+        if (rawErr) throw new Error(`fallback_raw_select_failed:${rawErr.message}`);
+        rows = (rawRows ?? []).map((r: any) => ({
+          user_id: userId,
+          place_id: r.place_id,
+          source: "google",
+          remote_id: r.source_ref ?? r.hash ?? crypto.randomUUID(),
+          rating: r.rating ?? null,
+          text: r.text ?? null,
+          language_code: null,
+          published_at: r.reviewed_at ?? null,
+          author_name: r.author ?? null,
+          author_url: null,
+          author_photo_url: null,
+          like_count: null,
+        }));
+      }
     }
 
     // 3) Upsert (service role, RLS bypass) uniquement si on a récupéré Google
