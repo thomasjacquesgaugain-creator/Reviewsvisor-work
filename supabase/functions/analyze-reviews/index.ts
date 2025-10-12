@@ -181,17 +181,41 @@ function computeHeuristicIssuesStrengths(rows: ReviewRow[]) {
   return { issues, strengths };
 }
 
-function buildHeuristicRecommendations(issues: {theme:string;count:number}[]) {
+function buildHeuristicRecommendations(issues: {theme:string;count:number}[], strengths: {theme:string;count:number}[]) {
   const recs: string[] = [];
+  
+  // Recommandations basées sur les problèmes
   for (const it of issues.slice(0,3)) {
-    if (it.theme.toLowerCase().includes('attente')) recs.push("Réduisez l'attente en salle (staffing/prise de commande).");
-    else if (it.theme.toLowerCase().includes('propret')) recs.push("Renforcez les contrôles de propreté et l'entretien régulier.");
-    else if (it.theme.toLowerCase().includes('qualit')) recs.push("Standardisez les recettes et vérifiez les cuissons avant service.");
-    else if (it.theme.toLowerCase().includes('bruit') || it.theme.toLowerCase().includes('ambiance')) recs.push("Ajustez volume et acoustique pour limiter le bruit.");
-    else if (it.theme.toLowerCase().includes('prix')) recs.push("Clarifiez les prix et proposez des menus à bon rapport qualité/prix.");
+    if (it.theme.toLowerCase().includes('attente')) recs.push("Réduisez l'attente en salle en optimisant le staffing et la prise de commande.");
+    else if (it.theme.toLowerCase().includes('propret')) recs.push("Renforcez les contrôles de propreté et l'entretien régulier des locaux.");
+    else if (it.theme.toLowerCase().includes('qualit')) recs.push("Standardisez les recettes et vérifiez systématiquement les cuissons avant service.");
+    else if (it.theme.toLowerCase().includes('bruit') || it.theme.toLowerCase().includes('ambiance')) recs.push("Ajustez le volume sonore et améliorez l'acoustique pour plus de confort.");
+    else if (it.theme.toLowerCase().includes('prix')) recs.push("Clarifiez la carte des prix et proposez des formules à bon rapport qualité/prix.");
+    else if (it.theme.toLowerCase().includes('service')) recs.push("Formez davantage l'équipe sur la qualité du service et l'accueil client.");
   }
-  if (!recs.length) recs.push("Collectez plus d'avis pour des recommandations plus précises.");
-  return recs.slice(0,3);
+  
+  // Recommandations basées sur les forces (capitaliser dessus)
+  for (const st of strengths.slice(0,2)) {
+    if (st.theme.toLowerCase().includes('accueil') || st.theme.toLowerCase().includes('sympathie')) {
+      recs.push("Continuez à valoriser votre accueil chaleureux, c'est un atout clé.");
+    } else if (st.theme.toLowerCase().includes('qualit') || st.theme.toLowerCase().includes('goût')) {
+      recs.push("Maintenez la qualité de vos plats, vos clients l'apprécient particulièrement.");
+    }
+  }
+  
+  // Recommandations génériques si pas assez
+  const generic = [
+    "Demandez régulièrement des retours clients pour identifier de nouvelles opportunités d'amélioration.",
+    "Suivez l'évolution de votre note moyenne et ajustez vos actions en conséquence.",
+    "Répondez systématiquement aux avis négatifs pour montrer votre engagement."
+  ];
+  
+  for (const g of generic) {
+    if (recs.length >= 3) break;
+    recs.push(g);
+  }
+  
+  return recs.slice(0, 5);
 }
 
 // Résumé IA (facultatif si pas de clé)
@@ -231,8 +255,18 @@ Analyse ces avis et retourne strictement ce JSON:
     {"theme": "Rapport qualité/prix", "count": 25},
     {"theme": "Propreté", "count": 20}
   ],
-  "recommendations": ["action 1", "action 2", "action 3"]
+  "recommendations": [
+    "Première recommandation actionnable concrète",
+    "Deuxième recommandation actionnable concrète", 
+    "Troisième recommandation actionnable concrète",
+    "Quatrième recommandation actionnable concrète"
+  ]
 }
+
+INSTRUCTIONS CRITIQUES:
+- Pour "recommendations": génère AU MINIMUM 3 et MAXIMUM 5 recommandations actionnables et concrètes
+- Chaque recommandation doit être spécifique et basée sur les avis analysés
+- Priorise les actions qui auront le plus d'impact sur la satisfaction client
 
 INSTRUCTIONS POUR LES THÉMATIQUES:
 - Identifie les 5-7 thématiques les PLUS mentionnées dans les avis
@@ -377,7 +411,9 @@ Deno.serve(async (req) => {
     const heur = computeHeuristicIssuesStrengths(rows);
     const issuesComputed = (summary?.top_issues && summary.top_issues.length) ? summary.top_issues : heur.issues;
     const strengthsComputed = (summary?.top_strengths && summary.top_strengths.length) ? summary.top_strengths : heur.strengths;
-    const recsComputed = (summary?.recommendations && summary.recommendations.length) ? summary.recommendations : buildHeuristicRecommendations(issuesComputed);
+    const recsComputed = (summary?.recommendations && summary.recommendations.length >= 3) 
+      ? summary.recommendations 
+      : buildHeuristicRecommendations(issuesComputed, strengthsComputed);
 
     if (!dryRun) {
       const payload = {
