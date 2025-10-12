@@ -830,7 +830,7 @@ const Dashboard = () => {
                 topIssues.slice(0, 3).map((issue: any, index: number) => {
                   const severity = issue.severity || (index === 0 ? 'high' : index === 1 ? 'medium' : 'low');
                   const isCritical = severity === 'high';
-                  const mentionCount = issue.count || 0;
+                  const mentionCount = issue.count || issue.mentions || 0;
                   const percentage = totalAnalyzed > 0 && mentionCount > 0 
                     ? Math.round((mentionCount / totalAnalyzed) * 100) 
                     : 0;
@@ -876,7 +876,7 @@ const Dashboard = () => {
             <CardContent className="space-y-4">
               {topStrengths.length > 0 ? (
                 topStrengths.slice(0, 3).map((strength: any, index: number) => {
-                  const mentionCount = strength.count || 0;
+                  const mentionCount = strength.count || strength.mentions || 0;
                   const percentage = totalAnalyzed > 0 && mentionCount > 0 
                     ? Math.round((mentionCount / totalAnalyzed) * 100) 
                     : 0;
