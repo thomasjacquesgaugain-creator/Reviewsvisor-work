@@ -1,6 +1,7 @@
+import { authHeaders, SUPABASE_URL } from '@/lib/supabaseClient';
+
 export function makePlacesUrls(query: string, placeId?: string, session?: string) {
-  const supabaseUrl = "https://zzjmtipdsccxmmoaetlp.supabase.co";
-  const base = `${supabaseUrl}/functions/v1/places`;
+  const base = `${SUPABASE_URL}/functions/v1/places`;
   const token = session || (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()));
   
   const auto = `${base}?type=autocomplete&input=${encodeURIComponent(query)}&sessiontoken=${token}`;
@@ -44,9 +45,7 @@ export async function fetchPlaceDetails(place_id: string): Promise<PlaceDetails>
     const r = await fetch(details, { 
       method: "GET",
       signal: controller.signal,
-      headers: {
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU'
-      }
+      headers: await authHeaders()
     });
     clearTimeout(timeout);
     

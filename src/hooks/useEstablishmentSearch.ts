@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { makePlacesUrls, PlacePrediction } from "@/utils/placesClient";
+import { authHeaders } from "@/lib/supabaseClient";
 
 export function useEstablishmentSearch() {
   const [q, setQ] = useState("");
@@ -34,9 +35,7 @@ export function useEstablishmentSearch() {
         const r = await fetch(auto, {
           method: "GET",
           signal: abortRef.current.signal,
-          headers: {
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU'
-          }
+          headers: await authHeaders()
         });
 
         clearTimeout(timeout);
