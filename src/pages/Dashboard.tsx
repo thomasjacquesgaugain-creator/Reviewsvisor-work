@@ -88,6 +88,7 @@ const Dashboard = () => {
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
   const [editedResponses, setEditedResponses] = useState<Record<string, string>>({});
   const [validatedReviews, setValidatedReviews] = useState<Set<string>>(new Set());
+  const [copiedReviews, setCopiedReviews] = useState<Set<string>>(new Set());
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -1122,14 +1123,24 @@ const Dashboard = () => {
                     const currentResponse = editedResponses[reviewId] || defaultResponse;
                     const isEditing = editingReviewId === reviewId;
                     const isValidated = validatedReviews.has(reviewId);
+                    const isCopied = copiedReviews.has(reviewId);
                     
                     const handleCopy = async () => {
                       try {
                         await navigator.clipboard.writeText(currentResponse);
+                        setCopiedReviews(prev => new Set(prev).add(reviewId));
                         toast({
-                          title: "Copié !",
-                          description: "La réponse a été copiée dans le presse-papiers",
+                          title: "Réponse copiée !",
+                          description: "Vous pouvez maintenant la coller où vous voulez",
                         });
+                        // Réinitialiser l'état "copié" après 2 secondes
+                        setTimeout(() => {
+                          setCopiedReviews(prev => {
+                            const newSet = new Set(prev);
+                            newSet.delete(reviewId);
+                            return newSet;
+                          });
+                        }, 2000);
                       } catch (err) {
                         toast({
                           title: "Erreur",
@@ -1199,11 +1210,20 @@ const Dashboard = () => {
                           ) : isValidated ? (
                             <Button 
                               size="sm" 
-                              className="bg-purple-600 hover:bg-purple-700 text-white gap-2"
+                              className={`${isCopied ? 'bg-green-600 hover:bg-green-700' : 'bg-purple-600 hover:bg-purple-700'} text-white gap-2 transition-all`}
                               onClick={handleCopy}
                             >
-                              <Copy className="w-4 h-4" />
-                              Copier la réponse
+                              {isCopied ? (
+                                <>
+                                  <Check className="w-4 h-4" />
+                                  Réponse copiée !
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-4 h-4" />
+                                  Copier la réponse
+                                </>
+                              )}
                             </Button>
                           ) : (
                             <>
