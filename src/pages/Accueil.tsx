@@ -86,7 +86,7 @@ const Accueil = () => {
         {/* Header */}
         <div className="text-center py-8">
           <h1 className="text-2xl font-medium text-gray-600">
-            Créez votre compte pour commencer
+            Créez votre espace d&apos;analyse
           </h1>
         </div>
 
@@ -95,7 +95,7 @@ const Accueil = () => {
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden">
             <CardContent className="p-8 space-y-6">
               <div className="text-center space-y-2">
-                <h2 className="text-3xl font-bold text-gray-900">Inscription</h2>
+                <h2 className="text-3xl font-bold text-gray-900">Créer un compte</h2>
                 <p className="text-gray-600">Commencez à analyser vos avis clients</p>
               </div>
 
