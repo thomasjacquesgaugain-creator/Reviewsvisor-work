@@ -59,7 +59,7 @@ export const HeroSection = () => {
                 <Button 
                   variant="outline" 
                   className="border-border text-foreground px-8 py-3 rounded-full font-medium"
-                  onClick={() => window.location.href = '/auth?mode=login'}
+                  onClick={() => window.location.href = '/login'}
                 >
                   <span>👤</span>
                   J'ai déjà un compte
