@@ -7,6 +7,7 @@ import SignInForm from "@/components/SignInForm";
 import SignUpForm from "@/components/SignUpForm";
 import Accueil from "./pages/Accueil";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Auth from "./pages/Auth";
 import TableauDeBord from "./pages/TableauDeBord";
 import Dashboard from "./pages/Dashboard";
@@ -38,13 +39,10 @@ const App = () => {
               </div>
             </div>
           } />
-          <Route path="/accueil" element={
-            <Protected>
-              <Accueil />
-            </Protected>
-          } />
+          <Route path="/accueil" element={<Accueil />} />
           <Route path="/" element={<Navigate to="/accueil" replace />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/tableau-de-bord" element={
             <Protected>
               <TableauDeBord />
