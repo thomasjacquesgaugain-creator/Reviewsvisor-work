@@ -72,6 +72,11 @@ const Dashboard = () => {
   // Review insights data from Supabase
   const [insight, setInsight] = useState<any>(null);
   const [isLoadingInsight, setIsLoadingInsight] = useState(false);
+  
+  // Vrais avis récents depuis la base de données
+  const [recentReviews, setRecentReviews] = useState<any[]>([]);
+  const [topReviews, setTopReviews] = useState<any[]>([]);
+  const [worstReviews, setWorstReviews] = useState<any[]>([]);
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -127,6 +132,35 @@ const Dashboard = () => {
         } else {
           console.log('[dashboard] Insights loaded:', insightData);
           setInsight(insightData);
+        }
+        
+        // Charger les vrais avis récents
+        const { data: reviewsData, error: reviewsError } = await supabase
+          .from('reviews')
+          .select('*')
+          .eq('place_id', currentEstab.place_id)
+          .eq('user_id', user.id)
+          .order('published_at', { ascending: false })
+          .limit(10);
+          
+        if (reviewsError) {
+          console.error('[dashboard] reviews error:', reviewsError);
+        } else if (reviewsData) {
+          setRecentReviews(reviewsData.slice(0, 3));
+          
+          // Top 5 meilleurs avis (note >= 4)
+          const bestReviews = reviewsData
+            .filter(r => r.rating && r.rating >= 4)
+            .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+            .slice(0, 5);
+          setTopReviews(bestReviews);
+          
+          // Top 5 pires avis (note <= 2)
+          const badReviews = reviewsData
+            .filter(r => r.rating && r.rating <= 2)
+            .sort((a, b) => (a.rating || 0) - (b.rating || 0))
+            .slice(0, 5);
+          setWorstReviews(badReviews);
         }
       } catch (error) {
         console.error('[dashboard] fetch insights error:', error);
@@ -211,25 +245,12 @@ const Dashboard = () => {
     cumulativeStrengths += item.percentage;
     item.cumulative = cumulativeStrengths;
   });
-  const avisExemples = [{
-    id: 1,
-    auteur: "Marie L.",
-    note: 5,
-    commentaire: "Excellent service, très satisfait !",
-    date: "30/07/2025"
-  }, {
-    id: 2,
-    auteur: "Jean D.",
-    note: 4,
-    commentaire: "Bonne ambiance, plats savoureux",
-    date: "29/07/2025"
-  }, {
-    id: 3,
-    auteur: "Sophie M.",
-    note: 3,
-    commentaire: "Service correct mais un peu d'attente",
-    date: "28/07/2025"
-  }];
+  // Formatter une date pour l'affichage
+  const formatReviewDate = (dateStr: string | null) => {
+    if (!dateStr) return 'Date inconnue';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
 
   // Données pour la courbe de progression de la note
   const courbeNoteData = [{
@@ -253,82 +274,6 @@ const Dashboard = () => {
   }, {
     mois: 'Juil',
     note: 4.2
-  }];
-
-  // Données pour les 5 meilleurs avis
-  const meilleursAvis = [{
-    id: 1,
-    auteur: "Marie L.",
-    note: 5,
-    commentaire: "Excellent service ! L'équipe est très professionnelle et attentionnée. Je recommande vivement !",
-    date: "02/08/2025",
-    plateforme: "Google"
-  }, {
-    id: 2,
-    auteur: "Pierre M.",
-    note: 5,
-    commentaire: "Une expérience parfaite du début à la fin. Qualité exceptionnelle et service irréprochable.",
-    date: "30/07/2025",
-    plateforme: "TripAdvisor"
-  }, {
-    id: 3,
-    auteur: "Sophie D.",
-    note: 5,
-    commentaire: "Magnifique ! Tout était parfait, je reviendrai certainement. Bravo à toute l'équipe !",
-    date: "28/07/2025",
-    plateforme: "Google"
-  }, {
-    id: 4,
-    auteur: "Thomas R.",
-    note: 5,
-    commentaire: "Service de qualité supérieure, personnel très accueillant. Une adresse à retenir absolument.",
-    date: "26/07/2025",
-    plateforme: "Yelp"
-  }, {
-    id: 5,
-    auteur: "Julie C.",
-    note: 5,
-    commentaire: "Parfait en tous points ! Qualité, service, ambiance... tout y est. Félicitations !",
-    date: "25/07/2025",
-    plateforme: "Google"
-  }];
-
-  // Données pour les 5 pires avis
-  const piresAvis = [{
-    id: 1,
-    auteur: "Marc D.",
-    note: 1,
-    commentaire: "Service décevant, temps d'attente très long et personnel peu professionnel.",
-    date: "01/08/2025",
-    plateforme: "Google"
-  }, {
-    id: 2,
-    auteur: "Lisa F.",
-    note: 1,
-    commentaire: "Très mauvaise expérience, qualité insuffisante pour le prix demandé. Je ne recommande pas.",
-    date: "29/07/2025",
-    plateforme: "TripAdvisor"
-  }, {
-    id: 3,
-    auteur: "Ahmed B.",
-    note: 2,
-    commentaire: "Pas à la hauteur des attentes. Service lent et produits de qualité moyenne.",
-    date: "27/07/2025",
-    plateforme: "Yelp"
-  }, {
-    id: 4,
-    auteur: "Claire M.",
-    note: 1,
-    commentaire: "Expérience décevante, personnel désagréable et prestations insuffisantes.",
-    date: "24/07/2025",
-    plateforme: "Google"
-  }, {
-    id: 5,
-    auteur: "David L.",
-    note: 2,
-    commentaire: "Rapport qualité-prix décevant, beaucoup d'améliorations à apporter.",
-    date: "22/07/2025",
-    plateforme: "TripAdvisor"
   }];
 
   // If we have an etablissementId in URL, show analysis dashboard
@@ -504,6 +449,29 @@ const Dashboard = () => {
                             setInsight(insightData);
                             console.log('Insights rechargés:', insightData);
                           }
+                          
+                          // Recharger aussi les avis
+                          const { data: reviewsData } = await supabase
+                            .from('reviews')
+                            .select('*')
+                            .eq('place_id', selectedEtab.place_id)
+                            .eq('user_id', user?.id)
+                            .order('published_at', { ascending: false })
+                            .limit(10);
+                            
+                          if (reviewsData) {
+                            setRecentReviews(reviewsData.slice(0, 3));
+                            const bestReviews = reviewsData
+                              .filter(r => r.rating && r.rating >= 4)
+                              .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+                              .slice(0, 5);
+                            setTopReviews(bestReviews);
+                            const badReviews = reviewsData
+                              .filter(r => r.rating && r.rating <= 2)
+                              .sort((a, b) => (a.rating || 0) - (b.rating || 0))
+                              .slice(0, 5);
+                            setWorstReviews(badReviews);
+                          }
                         } else {
                           console.error('Erreur d\'analyse:', result.error);
                         }
@@ -566,16 +534,22 @@ const Dashboard = () => {
               
               {showAvis && <div className="mt-4 space-y-3 border-t pt-4">
                   <h4 className="font-medium text-gray-700 mb-3">Avis récents :</h4>
-                  {avisExemples.map(avis => <div key={avis.id} className="bg-white p-3 rounded-lg border">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-sm">{avis.auteur}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-yellow-500">{'★'.repeat(avis.note)}</span>
-                          <span className="text-xs text-gray-500">{avis.date}</span>
+                  {recentReviews.length > 0 ? (
+                    recentReviews.map((avis) => (
+                      <div key={avis.id} className="bg-white p-3 rounded-lg border">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-sm">{avis.author || 'Anonyme'}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-yellow-500">{'★'.repeat(Math.round(avis.rating || 0))}</span>
+                            <span className="text-xs text-gray-500">{formatReviewDate(avis.published_at)}</span>
+                          </div>
                         </div>
+                        <p className="text-sm text-gray-600">{avis.text || 'Pas de commentaire'}</p>
                       </div>
-                      <p className="text-sm text-gray-600">{avis.commentaire}</p>
-                    </div>)}
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center py-2">Aucun avis récent disponible</p>
+                  )}
                 </div>}
             </div>
           </CardContent>
@@ -685,20 +659,26 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {piresAvis.map((avis, index) => <div key={avis.id} className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-red-700">#{index + 1}</span>
-                        <span className="font-medium">{avis.auteur}</span>
-                        <span className="text-yellow-500">{'★'.repeat(avis.note)}{'☆'.repeat(5 - avis.note)}</span>
+                {worstReviews.length > 0 ? (
+                  worstReviews.map((avis, index) => (
+                    <div key={avis.id} className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-red-700">#{index + 1}</span>
+                          <span className="font-medium">{avis.author || 'Anonyme'}</span>
+                          <span className="text-yellow-500">{'★'.repeat(Math.round(avis.rating || 0))}{'☆'.repeat(5 - Math.round(avis.rating || 0))}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">{avis.source}</span>
+                          <span className="text-xs text-gray-500">{formatReviewDate(avis.published_at)}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">{avis.plateforme}</span>
-                        <span className="text-xs text-gray-500">{avis.date}</span>
-                      </div>
+                      <p className="text-sm text-gray-700 italic">"{avis.text || 'Pas de commentaire'}"</p>
                     </div>
-                    <p className="text-sm text-gray-700 italic">"{avis.commentaire}"</p>
-                  </div>)}
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-4">Aucun avis négatif trouvé</p>
+                )}
               </div>
             </CardContent>
           </Card>}
@@ -714,20 +694,26 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {meilleursAvis.map((avis, index) => <div key={avis.id} className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-green-700">#{index + 1}</span>
-                        <span className="font-medium">{avis.auteur}</span>
-                        <span className="text-yellow-500">{'★'.repeat(avis.note)}</span>
+                {topReviews.length > 0 ? (
+                  topReviews.map((avis, index) => (
+                    <div key={avis.id} className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-green-700">#{index + 1}</span>
+                          <span className="font-medium">{avis.author || 'Anonyme'}</span>
+                          <span className="text-yellow-500">{'★'.repeat(Math.round(avis.rating || 0))}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">{avis.source}</span>
+                          <span className="text-xs text-gray-500">{formatReviewDate(avis.published_at)}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">{avis.plateforme}</span>
-                        <span className="text-xs text-gray-500">{avis.date}</span>
-                      </div>
+                      <p className="text-sm text-gray-700 italic">"{avis.text || 'Pas de commentaire'}"</p>
                     </div>
-                    <p className="text-sm text-gray-700 italic">"{avis.commentaire}"</p>
-                  </div>)}
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-4">Aucun avis positif trouvé</p>
+                )}
               </div>
             </CardContent>
           </Card>}
