@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info } from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,6 +80,7 @@ const Dashboard = () => {
   
   // Stats par plateforme
   const [platformStats, setPlatformStats] = useState<Record<string, { count: number; avgRating: number }>>({});
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -447,6 +448,7 @@ const Dashboard = () => {
                         return;
                       }
                       
+                      setIsAnalyzing(true);
                       try {
                         console.log('Démarrage de l\'analyse pour:', selectedEtab.place_id);
                         const { runAnalyze } = await import('@/lib/runAnalyze');
@@ -461,7 +463,7 @@ const Dashboard = () => {
                           // Recharger les insights au lieu de recharger toute la page
                           const { data: insightData } = await supabase
                             .from('review_insights')
-                            .select('total_count, avg_rating, top_issues, top_praises, positive_ratio, last_analyzed_at, summary')
+                            .select('total_count, avg_rating, top_issues, top_praises, positive_ratio, last_analyzed_at, summary, themes')
                             .eq('place_id', selectedEtab.place_id)
                             .eq('user_id', user?.id)
                             .order('last_analyzed_at', { ascending: false })
@@ -519,12 +521,19 @@ const Dashboard = () => {
                         }
                       } catch (error) {
                         console.error('Erreur lors de l\'analyse:', error);
+                      } finally {
+                        setIsAnalyzing(false);
                       }
                     }} 
+                    disabled={isAnalyzing}
                     className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto" 
                     title="Analyser cet établissement"
                   >
-                    <BarChart3 className="w-4 h-4" />
+                    {isAnalyzing ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <BarChart3 className="w-4 h-4" />
+                    )}
                   </Button>
                   
                   {/* Bouton oublier établissement */}
