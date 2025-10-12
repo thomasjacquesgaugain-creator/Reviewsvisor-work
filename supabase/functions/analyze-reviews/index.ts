@@ -138,10 +138,19 @@ Analyse ces avis et retourne strictement ce JSON:
     {"theme": "Autre point fort", "count": nombre_estimé_occurrences},
     {"theme": "Troisième point fort", "count": nombre_estimé_occurrences}
   ],
+  "themes": [
+    {"theme": "Cuisine/Qualité des plats", "count": nombre_avis_mentionnant_cuisine},
+    {"theme": "Service/Accueil", "count": nombre_avis_mentionnant_service},
+    {"theme": "Ambiance/Atmosphère", "count": nombre_avis_mentionnant_ambiance},
+    {"theme": "Rapport qualité-prix", "count": nombre_avis_mentionnant_prix}
+  ],
   "recommendations": ["action 1", "action 2", "action 3"]
 }
 
-IMPORTANT: Pour chaque problème et point fort, estime combien de fois il est mentionné dans les ${totalReviews} avis (pas seulement dans l'échantillon). Le count doit être un nombre entre 1 et ${totalReviews}.`
+IMPORTANT: 
+- Pour top_issues et top_strengths, estime combien de fois chaque point est mentionné dans les ${totalReviews} avis
+- Pour themes, identifie 4-6 thématiques principales et compte combien d'avis mentionnent chaque thématique
+- Les counts doivent être des nombres entre 1 et ${totalReviews}`
     }
   ];
 
@@ -163,10 +172,11 @@ IMPORTANT: Pour chaque problème et point fort, estime combien de fois il est me
     return {
       top_issues: (j.top_issues ?? []).slice(0, 3),
       top_strengths: (j.top_strengths ?? []).slice(0, 3),
+      themes: (j.themes ?? []).slice(0, 6),
       recommendations: (j.recommendations ?? []).slice(0, 3)
     };
   } catch {
-    return { top_issues: [], top_strengths: [], recommendations: [] };
+    return { top_issues: [], top_strengths: [], themes: [], recommendations: [] };
   }
 }
 
@@ -239,6 +249,10 @@ Deno.serve(async (req) => {
         top_praises: summary.top_strengths.map((strength: any, idx: number) => ({ 
           theme: strength.theme || strength,
           count: strength.count || 0
+        })),
+        themes: summary.themes.map((theme: any) => ({
+          theme: theme.theme,
+          count: theme.count || 0
         })),
         summary: {
           total: stats.total,
