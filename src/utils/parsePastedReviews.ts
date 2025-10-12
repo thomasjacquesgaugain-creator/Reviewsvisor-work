@@ -60,21 +60,33 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
         currentReview.rating = stars.length;
       }
       
-      // Detect platform
-      if (line.toLowerCase().includes('google') || rawText.toLowerCase().includes('avis de google')) {
-        currentReview.platform = 'Google';
-      } else if (line.toLowerCase().includes('tripadvisor')) {
-        currentReview.platform = 'Tripadvisor';
-      } else {
-        currentReview.platform = 'unknown';
+      // Detect platform - check both the current line and look ahead
+      let detectedPlatform = 'unknown';
+      
+      // Check current line and next few lines for platform indicators
+      for (let j = i; j < Math.min(i + 5, lines.length); j++) {
+        const checkLine = lines[j].toLowerCase();
+        if (checkLine.includes('avis de google') || checkLine.includes('google')) {
+          detectedPlatform = 'Google';
+          break;
+        } else if (checkLine.includes('tripadvisor')) {
+          detectedPlatform = 'Tripadvisor';
+          break;
+        }
       }
+      
+      currentReview.platform = detectedPlatform;
       continue;
     }
     
     // Detect author name (usually appears after rating)
     if (currentReview.rating && !currentReview.firstName && !collectingComment) {
-      // Skip lines that look like metadata
-      if (line.includes('Avis de Google') || line.includes('il y a') || line.includes('Visité en')) {
+      // Skip lines that look like metadata or platform indicators
+      if (line.includes('Avis de Google') || 
+          line.includes('Avis deGoogle') ||
+          line.toLowerCase().includes('google') ||
+          line.includes('il y a') || 
+          line.includes('Visité en')) {
         continue;
       }
       
@@ -122,8 +134,10 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
     
     // Collect comment lines
     if (collectingComment) {
-      // Skip obvious metadata lines
+      // Skip obvious metadata lines and platform indicators
       if (!line.includes('Avis de Google') && 
+          !line.includes('Avis deGoogle') &&
+          !line.toLowerCase().includes('google') &&
           !line.includes('il y a') && 
           !line.includes('Visité en') &&
           !line.match(/^\d+\/\d+\/\d+$/)) {
