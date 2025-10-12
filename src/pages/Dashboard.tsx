@@ -830,6 +830,10 @@ const Dashboard = () => {
                 topIssues.slice(0, 3).map((issue: any, index: number) => {
                   const severity = issue.severity || (index === 0 ? 'high' : index === 1 ? 'medium' : 'low');
                   const isCritical = severity === 'high';
+                  const mentionCount = issue.count || 0;
+                  const percentage = totalAnalyzed > 0 && mentionCount > 0 
+                    ? Math.round((mentionCount / totalAnalyzed) * 100) 
+                    : 0;
                   
                   return (
                     <div key={index} className={`flex items-center justify-between p-3 ${isCritical ? 'bg-red-50' : 'bg-yellow-50'} rounded-lg`}>
@@ -838,7 +842,7 @@ const Dashboard = () => {
                         <div>
                           <div className="font-medium">{issue.theme || issue.issue || 'Problème non spécifié'}</div>
                           <div className="text-sm text-gray-500">
-                            {issue.count ? `Mentionné ${issue.count} fois` : 'Identifié par l\'IA'}
+                            {percentage > 0 ? `${percentage}% des avis` : 'Identifié par l\'IA'}
                           </div>
                         </div>
                       </div>
@@ -871,20 +875,27 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {topStrengths.length > 0 ? (
-                topStrengths.slice(0, 3).map((strength: any, index: number) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                      <div>
-                        <div className="font-medium">{strength.theme || strength.strength || 'Point fort non spécifié'}</div>
-                        <div className="text-sm text-gray-500">
-                          {strength.count ? `Mentionné ${strength.count} fois` : 'Identifié par l\'IA'}
+                topStrengths.slice(0, 3).map((strength: any, index: number) => {
+                  const mentionCount = strength.count || 0;
+                  const percentage = totalAnalyzed > 0 && mentionCount > 0 
+                    ? Math.round((mentionCount / totalAnalyzed) * 100) 
+                    : 0;
+                  
+                  return (
+                    <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <div>
+                          <div className="font-medium">{strength.theme || strength.strength || 'Point fort non spécifié'}</div>
+                          <div className="text-sm text-gray-500">
+                            {percentage > 0 ? `${percentage}% des avis` : 'Identifié par l\'IA'}
+                          </div>
                         </div>
                       </div>
+                      <Badge className="bg-green-500 text-white">Force</Badge>
                     </div>
-                    <Badge className="bg-green-500 text-white">Force</Badge>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="text-center py-4 text-gray-500">
                   <p className="text-sm">Aucun point fort identifié</p>
