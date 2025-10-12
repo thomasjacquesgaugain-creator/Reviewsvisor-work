@@ -37,7 +37,7 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
     const line = lines[i];
     
     // Detect rating patterns (supports many forms: "X/5", "X sur 5", "X étoiles", stars symbols including ⭐️ with variation, spaces between stars)
-    const ratingMatch = line.match(/(?:(?:\b(?:noté|note|rating)\s*:?)?\s*(\d+(?:[\.,]\d+)?)\s*(?:\/|sur)\s*5)|(?:(?:★|⭐️?|☆|✭|✩|⭑|⭒)(?:\s?){1,5})|(?:(\b[1-5])\s*étoiles?)/i);
+    const ratingMatch = line.match(/(?:(?:\b(?:noté|note|rating)\s*:?)?[\s\u00A0]*(\d+(?:[\.,]\d+)?)\s*(?:\/|sur)\s*5)|(?:(?:[★☆✭✩⭑⭒]|⭐️?)[\s\u00A0]*){1,5}|(?:(\b[1-5])\s*étoiles?)/i);
     if (ratingMatch) {
       // Save previous review if exists
       if (currentReview.rating) {
