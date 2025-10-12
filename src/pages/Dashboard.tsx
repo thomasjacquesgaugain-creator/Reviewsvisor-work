@@ -119,7 +119,7 @@ const Dashboard = () => {
         const {
           data: insightData,
           error
-        } = await supabase.from('review_insights').select('counts, overall_rating, top_issues, top_strengths, positive_ratio, g_meta, last_analyzed_at').eq('place_id', currentEstab.place_id).eq('user_id', user.id).order('last_analyzed_at', {
+        } = await supabase.from('review_insights').select('total_count, avg_rating, top_issues, top_praises, positive_ratio, last_analyzed_at, summary').eq('place_id', currentEstab.place_id).eq('user_id', user.id).order('last_analyzed_at', {
           ascending: false
         }).limit(1).maybeSingle();
         if (error) {
@@ -166,13 +166,13 @@ const Dashboard = () => {
   } = formatDateTime(currentDateTime);
 
   // Map insight data to variables used by UI components
-  const totalAnalyzed = insight?.g_meta?.user_ratings_total ?? insight?.counts?.google ?? 0;
-  const avgRating = insight?.overall_rating ?? insight?.g_meta?.rating ?? 4.2;
-  const totalReviews = insight?.counts?.google ?? 326;
+  const totalAnalyzed = insight?.total_count ?? 0;
+  const avgRating = insight?.avg_rating ?? 4.2;
+  const totalReviews = insight?.total_count ?? 0;
   const positivePct = insight?.positive_ratio != null ? Math.round(insight.positive_ratio * 100) : 78;
   const negativePct = 100 - positivePct;
   const topIssues = insight?.top_issues ?? [];
-  const topStrengths = insight?.top_strengths ?? [];
+  const topStrengths = insight?.top_praises ?? [];
 
   // Map top issues to Pareto data format
   const paretoData = topIssues.length > 0 ? topIssues.slice(0, 3).map((issue: any, index: number) => {
@@ -493,7 +493,7 @@ const Dashboard = () => {
                           // Recharger les insights au lieu de recharger toute la page
                           const { data: insightData } = await supabase
                             .from('review_insights')
-                            .select('counts, overall_rating, top_issues, top_strengths, positive_ratio, g_meta, last_analyzed_at')
+                            .select('total_count, avg_rating, top_issues, top_praises, positive_ratio, last_analyzed_at, summary')
                             .eq('place_id', selectedEtab.place_id)
                             .eq('user_id', user?.id)
                             .order('last_analyzed_at', { ascending: false })
@@ -553,7 +553,7 @@ const Dashboard = () => {
             <div className="p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <span className="text-2xl font-bold text-blue-600">{insight?.g_meta?.user_ratings_total ?? insight?.counts?.google ?? 0}</span>
+                  <span className="text-2xl font-bold text-blue-600">{insight?.total_count ?? 0}</span>
                   <div>
                     <div className="font-medium">{date} {time}</div>
                     <div className="text-sm text-gray-500">2h avis</div>
