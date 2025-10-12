@@ -1,5 +1,4 @@
 import { AnalyseDashboard } from "@/components/AnalyseDashboard";
-import { AnalyzeEstablishmentButton } from "@/components/AnalyzeEstablishmentButton";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -467,11 +466,39 @@ const Dashboard = () => {
                 {/* Icônes en bas à droite */}
                 <div className="absolute bottom-0 right-0 flex gap-1">
                   {/* Bouton analyser établissement */}
-                  <AnalyzeEstablishmentButton 
-                    place_id={selectedEtab.place_id}
-                    name={selectedEtab.name}
-                    address={selectedEtab.address}
-                  />
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={async () => {
+                      if (!selectedEtab?.place_id) {
+                        console.error('Place ID manquant');
+                        return;
+                      }
+                      
+                      try {
+                        console.log('Démarrage de l\'analyse pour:', selectedEtab.place_id);
+                        const { runAnalyze } = await import('@/lib/runAnalyze');
+                        const result = await runAnalyze({
+                          place_id: selectedEtab.place_id,
+                          name: selectedEtab.name,
+                          address: selectedEtab.address
+                        });
+                        
+                        if (result.ok) {
+                          console.log('Analyse terminée:', result);
+                          window.location.reload();
+                        } else {
+                          console.error('Erreur d\'analyse:', result.error);
+                        }
+                      } catch (error) {
+                        console.error('Erreur lors de l\'analyse:', error);
+                      }
+                    }} 
+                    className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto" 
+                    title="Analyser cet établissement"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                  </Button>
                   
                   {/* Bouton oublier établissement */}
                   <Button variant="ghost" size="sm" onClick={() => {
