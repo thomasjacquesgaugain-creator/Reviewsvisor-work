@@ -7,7 +7,6 @@ import SignInForm from "@/components/SignInForm";
 import SignUpForm from "@/components/SignUpForm";
 import Accueil from "./pages/Accueil";
 import Login from "./pages/Login";
-import Auth from "./pages/Auth";
 import TableauDeBord from "./pages/TableauDeBord";
 import Dashboard from "./pages/Dashboard";
 import Etablissement from "./pages/Etablissement";
