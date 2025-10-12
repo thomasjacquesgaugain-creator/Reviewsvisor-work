@@ -163,7 +163,7 @@ const Dashboard = () => {
                         <MessageCircle className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">3 nouveaux avis</p>
+                        <p className="font-medium text-gray-900">97 nouveaux avis ajouté</p>
                         <p className="text-sm text-gray-600">Reçus aujourd'hui</p>
                       </div>
                     </CardContent>
