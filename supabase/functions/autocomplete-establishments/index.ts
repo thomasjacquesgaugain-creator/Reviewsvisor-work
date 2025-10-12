@@ -24,7 +24,9 @@ serve(async (req) => {
   }
 
   try {
-    const { input, sessionToken } = await req.json();
+    const url = new URL(req.url);
+    const input = url.searchParams.get('input') || url.searchParams.get('q') || url.searchParams.get('query');
+    const sessionToken = url.searchParams.get('sessionToken');
     
     if (!input || input.trim().length < 2) {
       return new Response(
