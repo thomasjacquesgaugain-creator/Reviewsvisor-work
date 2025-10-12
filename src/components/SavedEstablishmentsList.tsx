@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { Etab, STORAGE_KEY_LIST, STORAGE_KEY, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
 import EstablishmentItem from "./EstablishmentItem";
+import { useToast } from "@/hooks/use-toast";
 
 import { supabase } from "@/integrations/supabase/client";
 
 export default function SavedEstablishmentsList() {
   const [establishments, setEstablishments] = useState<Etab[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   // Charger la liste au montage (local + base de données)
   useEffect(() => {
@@ -71,6 +73,62 @@ export default function SavedEstablishmentsList() {
     window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));
   };
 
+  // Supprimer un établissement
+  const handleDeleteEstablishment = async (etab: Etab) => {
+    try {
+      // 1) Supprimer de la base de données si connecté
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (!authError && user) {
+        const { error: deleteError } = await supabase
+          .from("establishments")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("place_id", etab.place_id);
+        
+        if (deleteError) {
+          console.error("Erreur lors de la suppression:", deleteError);
+          toast({
+            title: "Erreur",
+            description: "Impossible de supprimer l'établissement",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // 2) Mettre à jour l'état local
+      const updatedList = establishments.filter(e => e.place_id !== etab.place_id);
+      setEstablishments(updatedList);
+      
+      // 3) Mettre à jour localStorage
+      localStorage.setItem(STORAGE_KEY_LIST, JSON.stringify(updatedList));
+      
+      // 4) Si c'était l'établissement sélectionné, le retirer aussi
+      const currentSelected = localStorage.getItem(STORAGE_KEY);
+      if (currentSelected) {
+        const selected = JSON.parse(currentSelected);
+        if (selected.place_id === etab.place_id) {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      }
+      
+      // 5) Notifier la suppression
+      window.dispatchEvent(new CustomEvent(EVT_LIST_UPDATED, { detail: updatedList }));
+      
+      toast({
+        title: "Établissement supprimé",
+        description: `"${etab.name}" a été supprimé avec succès`,
+      });
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return <div className="text-muted-foreground">Chargement...</div>;
   }
@@ -91,6 +149,7 @@ export default function SavedEstablishmentsList() {
             key={etab.place_id}
             etab={etab}
             onSelect={handleSelectEstablishment}
+            onDelete={handleDeleteEstablishment}
           />
         ))}
       </div>

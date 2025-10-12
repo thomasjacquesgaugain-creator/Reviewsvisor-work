@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Building2, Phone, MapPin } from "lucide-react";
+import { Building2, Phone, MapPin, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Etab } from "@/types/etablissement";
@@ -8,9 +8,10 @@ import { getPlaceDetails, normalizePhoneNumber, PlaceDetailsResponse } from "@/s
 interface EstablishmentItemProps {
   etab: Etab;
   onSelect: (etab: Etab) => void;
+  onDelete?: (etab: Etab) => void;
 }
 
-export default function EstablishmentItem({ etab, onSelect }: EstablishmentItemProps) {
+export default function EstablishmentItem({ etab, onSelect, onDelete }: EstablishmentItemProps) {
   const [placeDetails, setPlaceDetails] = useState<PlaceDetailsResponse | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
@@ -42,6 +43,13 @@ export default function EstablishmentItem({ etab, onSelect }: EstablishmentItemP
     }
   };
 
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete && confirm(`Voulez-vous vraiment supprimer "${etab.name}" ?`)) {
+      onDelete(etab);
+    }
+  };
+
   return (
     <TooltipProvider>
       <div
@@ -69,6 +77,19 @@ export default function EstablishmentItem({ etab, onSelect }: EstablishmentItemP
             )}
           </div>
         </div>
+        
+        {/* Icône de suppression en bas à droite */}
+        {onDelete && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            className="absolute bottom-1 right-1 h-6 w-6 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
+            title="Supprimer cet établissement"
+          >
+            <Trash2 className="w-3 h-3" />
+          </Button>
+        )}
       </div>
     </TooltipProvider>
   );
