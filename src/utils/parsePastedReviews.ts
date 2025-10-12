@@ -40,7 +40,7 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
     const ratingMatch = line.match(/(\d+(?:[,\.]\d+)?)\s*\/\s*5|★{1,5}|⭐{1,5}/);
     if (ratingMatch) {
       // Save previous review if exists
-      if (currentReview.rating && currentReview.firstName) {
+      if (currentReview.rating) {
         finishCurrentReview(i - 1);
       }
       
@@ -80,19 +80,23 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
     }
     
     // Detect author name (usually appears after rating)
-    if (currentReview.rating && !currentReview.firstName && !collectingComment) {
+    if (currentReview.rating && !currentReview.firstName) {
       // Skip lines that look like metadata or platform indicators
+      const lower = line.toLowerCase();
       if (line.includes('Avis de Google') || 
           line.includes('Avis deGoogle') ||
-          line.toLowerCase().includes('google') ||
+          lower.includes('google') ||
+          lower.includes('local guide') ||
+          lower.includes('photos') ||
+          lower.includes('avis') ||
           line.includes('il y a') || 
           line.includes('Visité en')) {
         continue;
       }
       
-      // Check if line looks like a name (2-3 words, no numbers)
-      if (/^[A-Za-zÀ-ÿ\s]{2,50}$/.test(line) && !line.includes('★') && !line.includes('⭐')) {
-        const nameParts = line.split(' ').filter(part => part.length > 0);
+      // Check if line looks like a name (allow hyphens/apostrophes/dots)
+      if (/^[A-Za-zÀ-ÿ'’\-\.\s]{1,80}$/.test(line) && !line.includes('★') && !line.includes('⭐')) {
+        const nameParts = line.split(/\s+/).filter(part => part.length > 0);
         if (nameParts.length >= 1) {
           if (nameParts.length === 1) {
             currentReview.firstName = nameParts[0];
@@ -127,8 +131,8 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
       }
     }
     
-    // Start collecting comment if we have basic info
-    if (currentReview.rating && currentReview.firstName) {
+    // Start collecting comment once rating is known (even if author is missing)
+    if (currentReview.rating) {
       collectingComment = true;
     }
     
@@ -152,7 +156,7 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
   }
   
   // Don't forget the last review
-  if (currentReview.rating && currentReview.firstName) {
+  if (currentReview.rating) {
     finishCurrentReview(lines.length - 1);
   }
   
@@ -161,13 +165,13 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
     const rawBlock = lines.slice(reviewStartIndex, endIndex + 1).join("\n");
     const fingerprint = simpleHash(normSpaces(rawBlock));
     const review: ParsedReview = {
-      firstName: currentReview.firstName || '',
+      firstName: currentReview.firstName || 'Anonyme',
       lastName: currentReview.lastName || '',
       rating: currentReview.rating || 1,
       comment: commentLines.join(' ').trim(),
       platform: currentReview.platform || 'unknown',
       reviewDate: currentReview.reviewDate || '',
-      isValid: !!(currentReview.firstName && currentReview.rating),
+      isValid: !!(currentReview.rating),
       rawFingerprint: fingerprint
     };
     
