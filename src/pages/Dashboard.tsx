@@ -166,7 +166,7 @@ const Dashboard = () => {
   } = formatDateTime(currentDateTime);
 
   // Map insight data to variables used by UI components
-  const totalAnalyzed = insight?.counts?.google ?? 0;
+  const totalAnalyzed = insight?.g_meta?.user_ratings_total ?? insight?.counts?.google ?? 0;
   const avgRating = insight?.overall_rating ?? insight?.g_meta?.rating ?? 4.2;
   const totalReviews = insight?.counts?.google ?? 326;
   const positivePct = insight?.positive_ratio != null ? Math.round(insight.positive_ratio * 100) : 78;
@@ -553,7 +553,7 @@ const Dashboard = () => {
             <div className="p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <span className="text-2xl font-bold text-blue-600">65</span>
+                  <span className="text-2xl font-bold text-blue-600">{insight?.g_meta?.user_ratings_total ?? insight?.counts?.google ?? 0}</span>
                   <div>
                     <div className="font-medium">{date} {time}</div>
                     <div className="text-sm text-gray-500">2h avis</div>
