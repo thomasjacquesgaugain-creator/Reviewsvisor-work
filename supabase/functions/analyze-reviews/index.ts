@@ -139,18 +139,22 @@ Analyse ces avis et retourne strictement ce JSON:
     {"theme": "Troisième point fort", "count": nombre_estimé_occurrences}
   ],
   "themes": [
-    {"theme": "Cuisine/Qualité des plats", "count": nombre_avis_mentionnant_cuisine},
-    {"theme": "Service/Accueil", "count": nombre_avis_mentionnant_service},
-    {"theme": "Ambiance/Atmosphère", "count": nombre_avis_mentionnant_ambiance},
-    {"theme": "Rapport qualité-prix", "count": nombre_avis_mentionnant_prix}
+    {"theme": "Service", "count": 45},
+    {"theme": "Cuisine", "count": 67},
+    {"theme": "Ambiance", "count": 30},
+    {"theme": "Rapport qualité/prix", "count": 25},
+    {"theme": "Propreté", "count": 20}
   ],
   "recommendations": ["action 1", "action 2", "action 3"]
 }
 
-IMPORTANT: 
-- Pour top_issues et top_strengths, estime combien de fois chaque point est mentionné dans les ${totalReviews} avis
-- Pour themes, identifie 4-6 thématiques principales et compte combien d'avis mentionnent chaque thématique
-- Les counts doivent être des nombres entre 1 et ${totalReviews}`
+INSTRUCTIONS POUR LES THÉMATIQUES:
+- Identifie les 5-7 thématiques les PLUS mentionnées dans les avis
+- Utilise des noms simples et clairs: "Service", "Cuisine", "Ambiance", "Propreté", "Rapport qualité/prix", "Cadre", "Emplacement", "Parking", etc.
+- Pour chaque thématique, compte combien d'avis (sur ${totalReviews}) en parlent
+- Un avis peut mentionner plusieurs thématiques
+- Le count doit être un nombre entier réaliste entre 5 et ${totalReviews}
+- Exemple: si 45 avis sur ${totalReviews} parlent du service, retourne {"theme": "Service", "count": 45}`
     }
   ];
 
