@@ -826,38 +826,34 @@ const Dashboard = () => {
               <p className="text-sm text-gray-500">Les plus mentionnés par fréquence et pourcentage en priorité</p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-red-500" />
-                  <div>
-                    <div className="font-medium">Temps d'attente trop long</div>
-                    <div className="text-sm text-gray-500">25% des avis</div>
-                  </div>
+              {topIssues.length > 0 ? (
+                topIssues.slice(0, 3).map((issue: any, index: number) => {
+                  const severity = issue.severity || (index === 0 ? 'high' : index === 1 ? 'medium' : 'low');
+                  const isCritical = severity === 'high';
+                  
+                  return (
+                    <div key={index} className={`flex items-center justify-between p-3 ${isCritical ? 'bg-red-50' : 'bg-yellow-50'} rounded-lg`}>
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className={`w-4 h-4 ${isCritical ? 'text-red-500' : 'text-yellow-600'}`} />
+                        <div>
+                          <div className="font-medium">{issue.theme || issue.issue || 'Problème non spécifié'}</div>
+                          <div className="text-sm text-gray-500">
+                            {issue.count ? `Mentionné ${issue.count} fois` : 'Identifié par l\'IA'}
+                          </div>
+                        </div>
+                      </div>
+                      <Badge variant={isCritical ? 'destructive' : 'default'} className={!isCritical ? 'bg-yellow-500 text-white' : ''}>
+                        {isCritical ? 'Critique' : 'Moyen'}
+                      </Badge>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  <p className="text-sm">Aucun problème identifié</p>
+                  <p className="text-xs mt-1">Analysez votre établissement pour voir les problèmes</p>
                 </div>
-                <Badge variant="destructive">Critique</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-red-500" />
-                  <div>
-                    <div className="font-medium">Service client insatisfaisant</div>
-                    <div className="text-sm text-gray-500">20% des avis</div>
-                  </div>
-                </div>
-                <Badge variant="destructive">Critique</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-yellow-600" />
-                  <div>
-                    <div className="font-medium">Prix trop élevés</div>
-                    <div className="text-sm text-gray-500">15% des avis</div>
-                  </div>
-                </div>
-                <Badge className="bg-yellow-500 text-white">Moyen</Badge>
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -874,38 +870,27 @@ const Dashboard = () => {
               <p className="text-sm text-gray-500">Les points forts les plus mentionnés par vos clients</p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <UtensilsCrossed className="w-4 h-4 text-green-500" />
-                  <div>
-                    <div className="font-medium">Qualité exceptionnelle</div>
-                    <div className="text-sm text-gray-500">30% des avis</div>
+              {topStrengths.length > 0 ? (
+                topStrengths.slice(0, 3).map((strength: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <div>
+                        <div className="font-medium">{strength.theme || strength.strength || 'Point fort non spécifié'}</div>
+                        <div className="text-sm text-gray-500">
+                          {strength.count ? `Mentionné ${strength.count} fois` : 'Identifié par l\'IA'}
+                        </div>
+                      </div>
+                    </div>
+                    <Badge className="bg-green-500 text-white">Force</Badge>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  <p className="text-sm">Aucun point fort identifié</p>
+                  <p className="text-xs mt-1">Analysez votre établissement pour voir les points forts</p>
                 </div>
-                <Badge className="bg-green-500 text-white">Force</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <div>
-                    <div className="font-medium">Satisfaction générale</div>
-                    <div className="text-sm text-gray-500">25% des avis</div>
-                  </div>
-                </div>
-                <Badge className="bg-green-500 text-white">Force</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Wine className="w-4 h-4 text-green-500" />
-                  <div>
-                    <div className="font-medium">Bonne ambiance</div>
-                    <div className="text-sm text-gray-500">20% des avis</div>
-                  </div>
-                </div>
-                <Badge className="bg-green-500 text-white">Force</Badge>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
