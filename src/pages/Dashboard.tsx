@@ -1029,49 +1029,45 @@ const Dashboard = () => {
           </CardHeader>
           {showThematiques && <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <UtensilsCrossed className="w-4 h-4 text-purple-500" />
-                    <div>
-                      <div className="font-medium">Cuisine</div>
-                      <div className="text-sm text-gray-500">35% des avis</div>
-                    </div>
-                  </div>
-                  <Badge className="bg-purple-500 text-white">Thématique</Badge>
-                </div>
+                {insight?.themes && insight.themes.length > 0 ? (
+                  insight.themes.map((theme: any, index: number) => {
+                    const totalReviews = insight?.total_count || 1;
+                    const percentage = ((theme.count || theme.score || 0) / totalReviews * 100).toFixed(0);
+                    
+                    // Choose icon based on theme name
+                    const getThemeIcon = (themeName: string) => {
+                      const name = themeName.toLowerCase();
+                      if (name.includes('cuisine') || name.includes('plat') || name.includes('nourriture')) {
+                        return <UtensilsCrossed className="w-4 h-4 text-purple-500" />;
+                      } else if (name.includes('service') || name.includes('personnel') || name.includes('accueil')) {
+                        return <Users className="w-4 h-4 text-purple-500" />;
+                      } else if (name.includes('ambiance') || name.includes('atmosphère') || name.includes('décor')) {
+                        return <Wine className="w-4 h-4 text-purple-500" />;
+                      } else if (name.includes('emplacement') || name.includes('localisation') || name.includes('lieu')) {
+                        return <MapPin className="w-4 h-4 text-purple-500" />;
+                      }
+                      return <BarChart3 className="w-4 h-4 text-purple-500" />;
+                    };
 
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-purple-500" />
-                    <div>
-                      <div className="font-medium">Service</div>
-                      <div className="text-sm text-gray-500">30% des avis</div>
-                    </div>
+                    return (
+                      <div key={index} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          {getThemeIcon(theme.theme)}
+                          <div>
+                            <div className="font-medium">{theme.theme}</div>
+                            <div className="text-sm text-gray-500">{percentage}% des avis</div>
+                          </div>
+                        </div>
+                        <Badge className="bg-purple-500 text-white">Thématique</Badge>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    <p className="text-sm">Aucune thématique identifiée</p>
+                    <p className="text-xs mt-1">Analysez votre établissement pour voir les thématiques</p>
                   </div>
-                  <Badge className="bg-purple-500 text-white">Thématique</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Wine className="w-4 h-4 text-purple-500" />
-                    <div>
-                      <div className="font-medium">Ambiance</div>
-                      <div className="text-sm text-gray-500">25% des avis</div>
-                    </div>
-                  </div>
-                  <Badge className="bg-purple-500 text-white">Thématique</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-purple-500" />
-                    <div>
-                      <div className="font-medium">Emplacement</div>
-                      <div className="text-sm text-gray-500">10% des avis</div>
-                    </div>
-                  </div>
-                  <Badge className="bg-purple-500 text-white">Thématique</Badge>
-                </div>
+                )}
               </div>
             </CardContent>}
         </Card>
