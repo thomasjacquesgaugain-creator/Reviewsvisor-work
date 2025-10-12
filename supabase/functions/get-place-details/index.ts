@@ -35,20 +35,9 @@ serve(async (req) => {
   }
 
   try {
-    // Parse request body for POST requests
-    let placeId = '';
-    let sessionToken = '';
-    
-    if (req.method === 'POST') {
-      const body = await req.json();
-      placeId = body.placeId || '';
-      sessionToken = body.sessionToken || '';
-    } else {
-      // Fallback to URL params for GET requests
-      const url = new URL(req.url);
-      placeId = url.searchParams.get('placeId') || '';
-      sessionToken = url.searchParams.get('sessionToken') || '';
-    }
+    const url = new URL(req.url);
+    const placeId = url.searchParams.get('placeId') || '';
+    const sessionToken = url.searchParams.get('sessionToken') || '';
     
     if (!placeId) {
       return new Response(

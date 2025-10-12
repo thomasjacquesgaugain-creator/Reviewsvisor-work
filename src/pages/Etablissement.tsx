@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Building2, Home, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-import GreetingName from "@/components/GreetingName";
 
 // TypeScript declarations for Google Maps
 declare global {
@@ -180,7 +179,9 @@ export default function EtablissementPage() {
               </div>
               
               <div className="flex items-center gap-4 ml-auto">
-                <GreetingName className="text-gray-700 font-medium" />
+                <div className="text-gray-700 font-medium">
+                  Bonjour, Yohan Lopes
+                </div>
                 <Button variant="ghost" className="text-gray-600 hover:text-red-600 flex items-center gap-2">
                   <LogOut className="w-4 h-4" />
                   Déconnexion

@@ -1,11 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building, MapPin, Phone, Globe, Star, Users, ExternalLink } from "lucide-react";
+import { Building, MapPin, Phone, Globe, Star, Users, ExternalLink, LineChart, Loader2 } from "lucide-react";
 import { EstablishmentData } from "@/services/establishments";
 import { useEffect, useState } from "react";
 import { getPlaceDetails, normalizePhoneNumber, PlaceDetailsResponse } from "@/services/placeDetails";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface EstablishmentCardProps {
   establishment: EstablishmentData | null;
@@ -15,6 +18,9 @@ interface EstablishmentCardProps {
 export default function EstablishmentCard({ establishment, isLoading }: EstablishmentCardProps) {
   const [placeDetails, setPlaceDetails] = useState<PlaceDetailsResponse | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [analyzingEstablishment, setAnalyzingEstablishment] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Fetch place details when establishment changes
   useEffect(() => {
@@ -26,6 +32,49 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
         .finally(() => setLoadingDetails(false));
     }
   }, [establishment?.place_id, placeDetails]);
+
+  const handleAnalyzeEstablishment = async () => {
+    if (!establishment?.place_id) return;
+    
+    setAnalyzingEstablishment(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-establishment', {
+        body: { etablissementId: establishment.place_id }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.empty) {
+        toast({
+          title: "Aucun avis",
+          description: data.message || "Aucun avis à analyser pour cet établissement.",
+          variant: "default"
+        });
+        return;
+      }
+
+      if (data?.analyse) {
+        toast({
+          title: "Analyse terminée",
+          description: "L'analyse de l'établissement a été réalisée avec succès.",
+          variant: "default"
+        });
+        navigate(`/dashboard?etablissementId=${establishment.place_id}`);
+      }
+    } catch (error) {
+      console.error('Error analyzing establishment:', error);
+      toast({
+        title: "Erreur",
+        description: "Échec de l'analyse de l'établissement.",
+        variant: "destructive"
+      });
+    } finally {
+      setAnalyzingEstablishment(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -130,6 +179,27 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
                   </TooltipContent>
                 </Tooltip>
               )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0 rounded-xl"
+                    onClick={handleAnalyzeEstablishment}
+                    disabled={analyzingEstablishment || !establishment.place_id}
+                    aria-label="Analyser cet établissement"
+                  >
+                    {analyzingEstablishment ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <LineChart className="w-4 h-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Analyser cet établissement</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </CardTitle>
         </CardHeader>
