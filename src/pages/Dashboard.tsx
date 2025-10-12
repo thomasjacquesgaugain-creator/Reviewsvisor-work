@@ -77,6 +77,9 @@ const Dashboard = () => {
   const [recentReviews, setRecentReviews] = useState<any[]>([]);
   const [topReviews, setTopReviews] = useState<any[]>([]);
   const [worstReviews, setWorstReviews] = useState<any[]>([]);
+  
+  // Stats par plateforme
+  const [platformStats, setPlatformStats] = useState<Record<string, { count: number; avgRating: number }>>({});
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -161,6 +164,27 @@ const Dashboard = () => {
             .sort((a, b) => (a.rating || 0) - (b.rating || 0))
             .slice(0, 5);
           setWorstReviews(badReviews);
+          
+          // Calculer les stats par plateforme
+          const statsByPlatform: Record<string, { count: number; totalRating: number; avgRating: number }> = {};
+          reviewsData.forEach(review => {
+            const source = review.source || 'unknown';
+            if (!statsByPlatform[source]) {
+              statsByPlatform[source] = { count: 0, totalRating: 0, avgRating: 0 };
+            }
+            statsByPlatform[source].count++;
+            if (review.rating) {
+              statsByPlatform[source].totalRating += review.rating;
+            }
+          });
+          
+          // Calculer les moyennes
+          Object.keys(statsByPlatform).forEach(source => {
+            const stat = statsByPlatform[source];
+            stat.avgRating = stat.count > 0 ? stat.totalRating / stat.count : 0;
+          });
+          
+          setPlatformStats(statsByPlatform);
         }
       } catch (error) {
         console.error('[dashboard] fetch insights error:', error);
@@ -472,6 +496,26 @@ const Dashboard = () => {
                               .slice(0, 5);
                             setWorstReviews(badReviews);
                           }
+                          
+                          // Recalculer les stats par plateforme
+                          if (reviewsData) {
+                            const statsByPlatform: Record<string, { count: number; totalRating: number; avgRating: number }> = {};
+                            reviewsData.forEach(review => {
+                              const source = review.source || 'unknown';
+                              if (!statsByPlatform[source]) {
+                                statsByPlatform[source] = { count: 0, totalRating: 0, avgRating: 0 };
+                              }
+                              statsByPlatform[source].count++;
+                              if (review.rating) {
+                                statsByPlatform[source].totalRating += review.rating;
+                              }
+                            });
+                            Object.keys(statsByPlatform).forEach(source => {
+                              const stat = statsByPlatform[source];
+                              stat.avgRating = stat.count > 0 ? stat.totalRating / stat.count : 0;
+                            });
+                            setPlatformStats(statsByPlatform);
+                          }
                         } else {
                           console.error('Erreur d\'analyse:', result.error);
                         }
@@ -726,44 +770,45 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                      <span className="text-red-600 font-bold">G</span>
-                    </div>
-                    <div>
-                      <div className="font-medium">Google My Business</div>
-                      <div className="text-sm text-gray-500">142 avis • 4.3 étoiles</div>
-                    </div>
+                {Object.entries(platformStats).length > 0 ? (
+                  Object.entries(platformStats).map(([source, stats]) => {
+                    // Configuration des plateformes
+                    const platformConfig: Record<string, { name: string; color: string; initial: string }> = {
+                      google: { name: 'Google', color: 'bg-red-100 text-red-600', initial: 'G' },
+                      yelp: { name: 'Yelp', color: 'bg-yellow-100 text-yellow-600', initial: 'Y' },
+                      tripadvisor: { name: 'TripAdvisor', color: 'bg-green-100 text-green-600', initial: 'T' },
+                      facebook: { name: 'Facebook', color: 'bg-blue-100 text-blue-600', initial: 'F' },
+                    };
+                    
+                    const config = platformConfig[source.toLowerCase()] || { 
+                      name: source.charAt(0).toUpperCase() + source.slice(1), 
+                      color: 'bg-gray-100 text-gray-600', 
+                      initial: source.charAt(0).toUpperCase() 
+                    };
+                    
+                    return (
+                      <div key={source} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${config.color}`}>
+                            <span className="font-bold">{config.initial}</span>
+                          </div>
+                          <div>
+                            <div className="font-medium">{config.name}</div>
+                            <div className="text-sm text-gray-500">
+                              {stats.count} avis • {stats.avgRating.toFixed(1)} étoiles
+                            </div>
+                          </div>
+                        </div>
+                        <Badge className="bg-green-100 text-green-700">Connecté</Badge>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    <p className="text-sm">Aucune plateforme connectée</p>
+                    <p className="text-xs mt-1">Analysez votre établissement pour voir les plateformes</p>
                   </div>
-                  <Badge className="bg-green-100 text-green-700">Connecté</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                      <span className="text-green-600 font-bold">T</span>
-                    </div>
-                    <div>
-                      <div className="font-medium">TripAdvisor</div>
-                      <div className="text-sm text-gray-500">98 avis • 4.1 étoiles</div>
-                    </div>
-                  </div>
-                  <Badge className="bg-green-100 text-green-700">Connecté</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                      <span className="text-yellow-600 font-bold">Y</span>
-                    </div>
-                    <div>
-                      <div className="font-medium">Yelp</div>
-                      <div className="text-sm text-gray-500">86 avis • 4.0 étoiles</div>
-                    </div>
-                  </div>
-                  <Badge className="bg-green-100 text-green-700">Connecté</Badge>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>}
