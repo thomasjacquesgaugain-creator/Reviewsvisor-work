@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2 } from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,10 +13,12 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
+import { useToast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const etablissementId = searchParams.get('etablissementId');
+  const { toast } = useToast();
   const {
     user
   } = useAuth();
@@ -85,6 +87,7 @@ const Dashboard = () => {
   // États pour l'édition des réponses automatiques
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
   const [editedResponses, setEditedResponses] = useState<Record<string, string>>({});
+  const [validatedReviews, setValidatedReviews] = useState<Set<string>>(new Set());
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -1118,6 +1121,23 @@ const Dashboard = () => {
                     
                     const currentResponse = editedResponses[reviewId] || defaultResponse;
                     const isEditing = editingReviewId === reviewId;
+                    const isValidated = validatedReviews.has(reviewId);
+                    
+                    const handleCopy = async () => {
+                      try {
+                        await navigator.clipboard.writeText(currentResponse);
+                        toast({
+                          title: "Copié !",
+                          description: "La réponse a été copiée dans le presse-papiers",
+                        });
+                      } catch (err) {
+                        toast({
+                          title: "Erreur",
+                          description: "Impossible de copier la réponse",
+                          variant: "destructive",
+                        });
+                      }
+                    };
                     
                     return (
                       <div key={reviewId} className="border rounded-lg p-4 bg-gray-50">
@@ -1134,8 +1154,8 @@ const Dashboard = () => {
                               ))}
                             </div>
                           </div>
-                          <Badge variant="outline" className={isPositive ? "text-green-600 border-green-600" : "text-orange-600 border-orange-600"}>
-                            À valider
+                          <Badge variant="outline" className={isValidated ? "text-green-600 border-green-600" : isPositive ? "text-green-600 border-green-600" : "text-orange-600 border-orange-600"}>
+                            {isValidated ? "Validé" : "À valider"}
                           </Badge>
                         </div>
                         <p className="text-sm text-gray-700 mb-3">"{reviewText.substring(0, 150)}{reviewText.length > 150 ? '...' : ''}"</p>
@@ -1176,9 +1196,25 @@ const Dashboard = () => {
                                 Annuler
                               </Button>
                             </>
+                          ) : isValidated ? (
+                            <Button 
+                              size="sm" 
+                              className="bg-purple-600 hover:bg-purple-700 text-white gap-2"
+                              onClick={handleCopy}
+                            >
+                              <Copy className="w-4 h-4" />
+                              Copier la réponse
+                            </Button>
                           ) : (
                             <>
-                              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
+                              <Button 
+                                size="sm" 
+                                className="bg-green-600 hover:bg-green-700 text-white gap-2"
+                                onClick={() => setValidatedReviews(prev => new Set(prev).add(reviewId))}
+                              >
+                                <Check className="w-4 h-4" />
+                                Valider
+                              </Button>
                               <Button 
                                 size="sm" 
                                 variant="outline"
