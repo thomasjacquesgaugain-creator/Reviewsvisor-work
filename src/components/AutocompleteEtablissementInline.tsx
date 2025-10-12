@@ -32,7 +32,7 @@ export default function AutocompleteEtablissementInline({
 
   // Suggestions en temps réel
   useEffect(() => {
-    if (!debounced.trim() || debounced.length < 2) { 
+    if (!debounced.trim()) { 
       setList([]); 
       setErr(null); 
       return; 
@@ -41,45 +41,30 @@ export default function AutocompleteEtablissementInline({
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
-    const timeout = setTimeout(() => ctrl.abort(), 10000);
     setLoading(true);
     setErr(null);
 
-    const url = `https://zzjmtipdsccxmmoaetlp.supabase.co/functions/v1/autocomplete-establishments?input=${encodeURIComponent(debounced)}&sessionToken=${encodeURIComponent(tokenRef.current)}`;
-
-    fetch(url, {
-      method: 'GET',
-      signal: ctrl.signal,
-      headers: {
-        'accept': 'application/json',
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU'
-      }
-    })
-      .then(async res => {
-        clearTimeout(timeout);
-        if (ctrl.signal.aborted) return;
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
+    supabase.functions
+      .invoke('autocomplete-establishments', {
+        body: { 
+          input: debounced, 
+          sessionToken: tokenRef.current 
+        }
       })
-      .then(data => {
+      .then(({ data, error }) => {
         if (ctrl.signal.aborted) return;
+        if (error) throw error;
         setList(data?.suggestions ?? []);
       })
       .catch(e => { 
-        clearTimeout(timeout);
-        if (!ctrl.signal.aborted && e.name !== 'AbortError') {
-          setErr(e.name === 'AbortError' ? "Requête trop longue" : "Erreur de suggestions");
+        if (!ctrl.signal.aborted) {
+          setErr("Erreur de suggestions");
           console.error('Autocomplete error:', e);
         }
       })
       .finally(() => {
         if (!ctrl.signal.aborted) setLoading(false);
       });
-
-    return () => {
-      ctrl.abort();
-      clearTimeout(timeout);
-    };
   }, [debounced]);
 
   // Fermer si clic extérieur
@@ -97,37 +82,24 @@ export default function AutocompleteEtablissementInline({
     const usedToken = tokenRef.current;
     tokenRef.current = Math.random().toString(36).slice(2) + Date.now().toString(36);
     
-    const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 10000);
-    
     try {
       // Call saveSelectedPlace first
       const { saveSelectedPlace } = await import('@/services/establishments');
       await saveSelectedPlace(placeId);
 
       // Then get place details
-      const url = `https://zzjmtipdsccxmmoaetlp.supabase.co/functions/v1/get-place-details?placeId=${encodeURIComponent(placeId)}&sessionToken=${encodeURIComponent(usedToken)}`;
-      
-      const res = await fetch(url, {
-        method: 'GET',
-        signal: ctrl.signal,
-        headers: {
-          'accept': 'application/json',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU'
+      const { data, error } = await supabase.functions.invoke('get-place-details', {
+        body: { 
+          placeId: placeId, 
+          sessionToken: usedToken 
         }
       });
       
-      clearTimeout(timeout);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      
-      const data = await res.json();
+      if (error) throw error;
       onPicked?.(data?.result);
     } catch (e) {
-      clearTimeout(timeout);
-      if (e instanceof Error && e.name !== 'AbortError') {
-        setErr(e.name === 'AbortError' ? "Requête trop longue" : "Erreur de récupération des détails");
-        console.error('Place details error:', e);
-      }
+      setErr("Erreur de récupération des détails");
+      console.error('Place details error:', e);
     } finally {
       setLoading(false);
     }

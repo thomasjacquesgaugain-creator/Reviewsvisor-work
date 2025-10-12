@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthCtx>({
 
 export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -40,9 +40,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signOut = async () => {
+  async function signOut() {
     await supabase.auth.signOut();
-  };
+  }
 
   return (
     <AuthContext.Provider value={{ 
@@ -54,4 +54,4 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
-};
+}

@@ -66,48 +66,31 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
       return;
     }
 
-    const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 10000);
-    
     const fetchSuggestions = async () => {
       setLoading(true);
       setError(null);
       
       try {
-        const url = `https://zzjmtipdsccxmmoaetlp.supabase.co/functions/v1/autocomplete-establishments?input=${encodeURIComponent(debouncedQuery)}&sessionToken=${encodeURIComponent(sessionToken)}`;
-        
-        const res = await fetch(url, {
-          method: 'GET',
-          signal: ctrl.signal,
-          headers: {
-            'accept': 'application/json',
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU'
+        const { data, error } = await supabase.functions.invoke('autocomplete-establishments', {
+          body: { 
+            input: debouncedQuery,
+            sessionToken 
           }
         });
-        
-        clearTimeout(timeout);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        
-        const data = await res.json();
+
+        if (error) throw error;
+
         setSuggestions(data.suggestions || []);
       } catch (err) {
-        clearTimeout(timeout);
-        if (err instanceof Error && err.name !== 'AbortError') {
-          console.error('Erreur autocomplétion:', err);
-          setError(err.name === 'AbortError' ? "Requête trop longue" : "Erreur lors de la recherche");
-          setSuggestions([]);
-        }
+        console.error('Erreur autocomplétion:', err);
+        setError("Erreur lors de la recherche");
+        setSuggestions([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchSuggestions();
-    
-    return () => {
-      ctrl.abort();
-      clearTimeout(timeout);
-    };
   }, [debouncedQuery, sessionToken]);
 
   // Fermer la liste si clic à l'extérieur
@@ -125,28 +108,18 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
 
   // Récupérer les détails d'un établissement
   const getPlaceDetails = async (placeId: string) => {
-    const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 10000);
-    
     setLoading(true);
     setError(null);
     
     try {
-      const url = `https://zzjmtipdsccxmmoaetlp.supabase.co/functions/v1/get-place-details?placeId=${encodeURIComponent(placeId)}&sessionToken=${encodeURIComponent(sessionToken)}`;
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        signal: ctrl.signal,
+      const response = await fetch(`https://njtvgofnlumfxwtxdnaw.supabase.co/functions/v1/get-place-details?placeId=${encodeURIComponent(placeId)}&sessionToken=${encodeURIComponent(sessionToken)}`, {
         headers: {
-          'accept': 'application/json',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU'
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qdHZnb2ZubHVtZnh3dHhkbmF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzMDMyNDYsImV4cCI6MjA3MTg3OTI0Nn0.RkTu7XG28ToVsDe8nOw_76H1Qwhf3etT7GJx1vS_GHM`,
         }
       });
 
-      clearTimeout(timeout);
-      
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        throw new Error('Erreur lors de la récupération des détails');
       }
 
       const data = await response.json();
@@ -158,11 +131,8 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
         setError("Aucun détail trouvé pour cet établissement");
       }
     } catch (err) {
-      clearTimeout(timeout);
-      if (err instanceof Error && err.name !== 'AbortError') {
-        console.error('Erreur détails:', err);
-        setError(err.name === 'AbortError' ? "Requête trop longue" : "Impossible de récupérer les détails");
-      }
+      console.error('Erreur détails:', err);
+      setError("Impossible de récupérer les détails");
     } finally {
       setLoading(false);
     }

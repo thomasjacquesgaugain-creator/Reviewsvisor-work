@@ -36,13 +36,12 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const placeId = url.searchParams.get('placeId') || url.searchParams.get('place_id');
-    const sessionToken = url.searchParams.get('sessionToken');
+    const placeId = url.searchParams.get('placeId') || '';
+    const sessionToken = url.searchParams.get('sessionToken') || '';
     
     if (!placeId) {
-      console.error('Missing placeId parameter');
       return new Response(
-        JSON.stringify({ error: 'Missing placeId parameter' }),
+        JSON.stringify({ error: 'Missing placeId' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
