@@ -132,17 +132,35 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
     }
   }, [currentEstablishment, parsedReviews, onClose, onImportSuccess, onOpenVisualPanel]);
 
-  // Calculate valid reviews count based on rating criteria
+  // Calculate valid reviews count based on rating criteria AND deduplicate by rawFingerprint
   const validReviews = useMemo(() => {
     const source = parsedReviews?.length ? parsedReviews : parsePastedReviews(pastedText || "");
-    return (source || []).filter(r => Number.isFinite(r.rating) && r.rating >= 1 && r.rating <= 5);
+    const filtered = (source || []).filter(r => Number.isFinite(r.rating) && r.rating >= 1 && r.rating <= 5);
+    
+    // Deduplicate by rawFingerprint
+    const seen = new Set<string>();
+    return filtered.filter(r => {
+      const fp = r.rawFingerprint || '';
+      if (seen.has(fp)) return false;
+      seen.add(fp);
+      return true;
+    });
   }, [parsedReviews, pastedText]);
 
   const canImport = !isImporting && validReviews.length > 0;
 
-  // Convert parsed reviews to table format
+  // Convert parsed reviews to table format, deduplicated
   const reviewsTableData: ReviewsTableRow[] = useMemo(() => {
-    return parsedReviews.map(review => ({
+    // Deduplicate parsedReviews by rawFingerprint before display
+    const seen = new Set<string>();
+    const deduped = parsedReviews.filter(r => {
+      const fp = r.rawFingerprint || '';
+      if (seen.has(fp)) return false;
+      seen.add(fp);
+      return true;
+    });
+    
+    return deduped.map(review => ({
       authorName: `${review.firstName} ${review.lastName}`.trim() || "Anonyme",
       rating: review.rating,
       comment: review.comment || "",
@@ -218,7 +236,7 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
           <Card>
             <CardContent className="p-4">
               <h4 className="font-medium mb-4">
-                Aperçu des avis détectés ({parsedReviews.length} total, {validReviews.length} valides)
+                Aperçu des avis détectés ({reviewsTableData.length} uniques, {validReviews.length} valides)
               </h4>
               
               <ReviewsTable
