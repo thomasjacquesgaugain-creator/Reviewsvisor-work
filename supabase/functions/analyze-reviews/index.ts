@@ -52,7 +52,9 @@ const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE, {
 async function fetchAllGoogleReviews(placeId: string) {
   if (!GOOGLE_KEY) throw new Error("missing_google_key");
 
-  const base = `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}/reviews`;
+  // Places API v1 nécessite le nom de ressource: places/{placeId}
+  const id = encodeURIComponent(placeId.replace(/^places\//, ""));
+  const base = `https://places.googleapis.com/v1/places/${id}/reviews`;
   const headers: HeadersInit = {
     "X-Goog-Api-Key": GOOGLE_KEY,
     // on liste les champs utiles (field mask obligatoire en v1)
