@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { loadGoogleMaps } from "@/lib/loadGoogleMaps";
+import { loadGooglePlaces } from "@/lib/loadGooglePlaces";
 import MonEtablissementCard from "@/components/MonEtablissementCard";
 import SaveEstablishmentButton from "@/components/SaveEstablishmentButton";
 import SavedEstablishmentsList from "@/components/SavedEstablishmentsList";
@@ -11,15 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Building2, Home, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-import GreetingName from "@/components/GreetingName";
-
-// TypeScript declarations for Google Maps
-declare global {
-  interface Window {
-    google: any;
-    initPlaces: () => void;
-  }
-}
 
 export default function EtablissementPage() {
   const [selected, setSelected] = useState<Etab | null>(null);
@@ -31,6 +22,7 @@ export default function EtablissementPage() {
     placeId: string;
   } | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [placesError, setPlacesError] = useState<string | null>(null);
   
   const currentEstablishment = useCurrentEstablishment();
 
@@ -51,55 +43,88 @@ export default function EtablissementPage() {
     }
   };
 
-  // ⚠️ Utilise EXACTEMENT ces champs dans Autocomplete pour récupérer phone/website/rating :
-  // fields: ['place_id','name','formatted_address','geometry.location','url','website','formatted_phone_number','rating']
+  // Fonction pour récupérer les détails d'un lieu
+  async function fetchPlaceDetails(placeId: string): Promise<any> {
+    await loadGooglePlaces();
+    const g = (window as any).google;
+    const service = new g.maps.places.PlacesService(document.createElement('div'));
+    
+    return new Promise((resolve, reject) => {
+      service.getDetails(
+        {
+          placeId,
+          fields: [
+            'place_id',
+            'name',
+            'formatted_address',
+            'international_phone_number',
+            'website',
+            'rating',
+            'geometry'
+          ]
+        },
+        (result: any, status: string) => {
+          if (status === g.maps.places.PlacesServiceStatus.OK && result) {
+            resolve(result);
+          } else {
+            reject(new Error(status));
+          }
+        }
+      );
+    });
+  }
+
+  // Fonction pour sérialiser un lieu Google Places
   function serializePlace(place: any): Etab {
     return {
-      place_id: place.place_id,
-      name: place.name ?? "",
-      address: place.formatted_address ?? "",
+      place_id: place.place_id || "",
+      name: place.name || "",
+      address: place.formatted_address || "",
       lat: place.geometry?.location?.lat() ?? null,
       lng: place.geometry?.location?.lng() ?? null,
-      url: place.url ?? "",
-      website: place.website ?? "",
-      phone: place.formatted_phone_number ?? "",
+      website: place.website || "",
+      phone: place.international_phone_number || "",
       rating: place.rating ?? null,
     };
   }
 
   // Initialize Google Places autocomplete
   useEffect(() => {
-    const initPlaces = () => {
+    const initPlaces = async () => {
       const input = document.getElementById('places-input') as HTMLInputElement;
-      if (!input || !window.google?.maps?.places) return;
-      
-      const autocomplete = new window.google.maps.places.Autocomplete(input, {
-        types: ['establishment'],
-        fields: ['place_id','name','formatted_address','geometry.location','url','website','formatted_phone_number','rating']
-      });
+      if (!input) return;
 
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        if (!place || !place.place_id) return;
-        setSelected(serializePlace(place)); // -> active le bouton + badge vert
-      });
+      try {
+        setPlacesError(null);
+        await loadGooglePlaces();
+        const g = (window as any).google;
+        
+        const autocomplete = new g.maps.places.Autocomplete(input, {
+          types: ['establishment'],
+          componentRestrictions: { country: 'fr' },
+          fields: [
+            'place_id',
+            'name',
+            'formatted_address',
+            'international_phone_number',
+            'website',
+            'rating',
+            'geometry'
+          ]
+        });
+
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          if (!place || !place.place_id) return;
+          setSelected(serializePlace(place));
+        });
+      } catch (error: any) {
+        console.error('Erreur de chargement Google Places:', error);
+        setPlacesError(error?.message || 'Erreur Google Places');
+      }
     };
 
-    // Set up global callback
-    window.initPlaces = initPlaces;
-
-    // Load Google Maps or initialize if already loaded
-    if (window.google?.maps?.places) {
-      initPlaces();
-    } else {
-      loadGoogleMaps()
-        .then(() => {
-          initPlaces();
-        })
-        .catch((e) => {
-          console.error('Erreur de chargement Google Maps:', e);
-        });
-    }
+    initPlaces();
   }, []);
 
   // Handle import button click and analysis button click and ESC key
@@ -180,7 +205,9 @@ export default function EtablissementPage() {
               </div>
               
               <div className="flex items-center gap-4 ml-auto">
-                <GreetingName className="text-gray-700 font-medium" />
+                <div className="text-gray-700 font-medium">
+                  Bonjour, Yohan Lopes
+                </div>
                 <Button variant="ghost" className="text-gray-600 hover:text-red-600 flex items-center gap-2">
                   <LogOut className="w-4 h-4" />
                   Déconnexion
@@ -206,6 +233,16 @@ export default function EtablissementPage() {
                 className="w-full border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Rechercher un établissement…"
               />
+              
+              {placesError && (
+                <div className="text-sm text-destructive">
+                  {placesError}
+                </div>
+              )}
+              
+              <div className="text-xs text-muted-foreground">
+                Powered by Google
+              </div>
               
               {selected && (
                 <div className="inline-flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">

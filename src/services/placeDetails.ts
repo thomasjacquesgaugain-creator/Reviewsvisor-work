@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { loadGooglePlaces } from "@/lib/loadGooglePlaces";
 
 export interface PlaceDetailsResponse {
   phone: string | null;
@@ -8,23 +8,28 @@ export interface PlaceDetailsResponse {
 
 export async function getPlaceDetails(placeId: string): Promise<PlaceDetailsResponse> {
   try {
-    const { data, error } = await supabase.functions.invoke('get-place-details', {
-      body: { placeId }
+    await loadGooglePlaces();
+    const g = (window as any).google;
+    const svc = new g.maps.places.PlacesService(document.createElement('div'));
+
+    const result: any = await new Promise((resolve, reject) => {
+      svc.getDetails(
+        {
+          placeId,
+          fields: [
+            'place_id',
+            'url',
+            'formatted_phone_number',
+            'international_phone_number'
+          ]
+        },
+        (res: any, status: string) => {
+          if (status === g.maps.places.PlacesServiceStatus.OK && res) resolve(res);
+          else if (status === g.maps.places.PlacesServiceStatus.REQUEST_DENIED) reject(new Error('Clé Google invalide ou non autorisée. Vérifiez VITE_GOOGLE_MAPS_BROWSER_KEY et ses restrictions.'));
+          else reject(new Error(status));
+        }
+      );
     });
-
-    if (error) {
-      console.error('Error fetching place details:', error);
-      throw error;
-    }
-
-    const result = data?.result;
-    if (!result) {
-      return {
-        phone: null,
-        phoneIntl: null,
-        mapsUrl: `https://www.google.com/maps/place/?q=place_id:${placeId}`
-      };
-    }
 
     return {
       phone: result.formatted_phone_number || null,
@@ -43,5 +48,5 @@ export async function getPlaceDetails(placeId: string): Promise<PlaceDetailsResp
 
 export function normalizePhoneNumber(phone: string): string {
   // Remove spaces, dots, and dashes for tel: link
-  return phone.replace(/[\s.-]/g, '');
+  return phone.replace(/\s|\.|-/g, '');
 }

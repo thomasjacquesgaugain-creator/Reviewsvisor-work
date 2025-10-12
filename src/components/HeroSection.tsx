@@ -51,7 +51,7 @@ export const HeroSection = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Button 
                   className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-full font-medium"
-                  onClick={() => window.location.href = '/auth'}
+                  onClick={() => window.location.href = '/login?mode=signup'}
                 >
                   <span>✨</span>
                   Commencer gratuitement maintenant
@@ -59,10 +59,10 @@ export const HeroSection = () => {
                 <Button 
                   variant="outline" 
                   className="border-border text-foreground px-8 py-3 rounded-full font-medium"
-                  onClick={() => window.location.href = '/auth?mode=login'}
+                  onClick={() => window.location.href = '/login'}
                 >
                   <span>👤</span>
-                  J'ai déjà un compte
+                  J&apos;ai déjà un compte
                 </Button>
               </div>
 
