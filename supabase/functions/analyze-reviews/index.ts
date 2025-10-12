@@ -202,6 +202,9 @@ function computeHeuristicIssuesStrengths(rows: ReviewRow[]) {
   }
   
   issues = issues.slice(0, 3);
+  
+  console.log(`[computeHeuristicIssuesStrengths] Issues trouvés: ${issues.length}`, issues);
+  
   const strengths = Object.entries(posAgg).map(([theme,count])=>({theme, count})).sort((a,b)=>b.count-a.count).slice(0,3);
   
   // Garantir au moins 3 points forts
@@ -215,6 +218,8 @@ function computeHeuristicIssuesStrengths(rows: ReviewRow[]) {
       if (!strengths.find(s => s.theme === gs.theme)) strengths.push(gs);
     }
   }
+  
+  console.log(`[computeHeuristicIssuesStrengths] Retour final - Issues: ${issues.length}, Strengths: ${strengths.length}`);
   
   return { issues, strengths };
 }
@@ -448,8 +453,16 @@ Deno.serve(async (req) => {
       ? summary.themes
       : computeHeuristicThemes(rows);
     const heur = computeHeuristicIssuesStrengths(rows);
-    const issuesComputed = (summary?.top_issues && summary.top_issues.length) ? summary.top_issues : heur.issues;
-    const strengthsComputed = (summary?.top_strengths && summary.top_strengths.length) ? summary.top_strengths : heur.strengths;
+    
+    // Garantir au moins 3 problèmes et 3 points forts
+    const issuesComputed = (summary?.top_issues && summary.top_issues.length >= 3) 
+      ? summary.top_issues 
+      : heur.issues;
+    const strengthsComputed = (summary?.top_strengths && summary.top_strengths.length >= 3) 
+      ? summary.top_strengths 
+      : heur.strengths;
+    
+    console.log(`[analyze] Issues computed: ${issuesComputed.length}, Strengths computed: ${strengthsComputed.length}`);
     const recsComputed = (summary?.recommendations && summary.recommendations.length >= 3) 
       ? summary.recommendations 
       : buildHeuristicRecommendations(issuesComputed, strengthsComputed);
