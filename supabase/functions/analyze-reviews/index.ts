@@ -108,6 +108,40 @@ function computeStats(rows: ReviewRow[]) {
   return { total, by_rating, positive_pct, negative_pct, overall: avg };
 }
 
+// Heuristic theming if AI is unavailable or returns empty
+function computeHeuristicThemes(rows: ReviewRow[]) {
+  const themes: Record<string, number> = {
+    'Service': 0,
+    'Cuisine': 0,
+    'Ambiance': 0,
+    'Propreté': 0,
+    'Rapport qualité/prix': 0,
+    'Rapidité': 0,
+    'Emplacement': 0,
+  };
+  const dict: Record<string, string[]> = {
+    'Service': ['service','serveur','serveuse','accueil','personnel'],
+    'Cuisine': ['cuisine','plat','plats','nourriture','repas','goût','qualité','cuisson','menu'],
+    'Ambiance': ['ambiance','atmosphère','musique','bruit','calme','décor'],
+    'Propreté': ['propreté','sale','propre','hygiène','toilettes'],
+    'Rapport qualité/prix': ['prix','cher','coût','bon marché','rapport','addition','facture'],
+    'Rapidité': ['rapide','attente','lent','vite','délai'],
+    'Emplacement': ['emplacement','localisation','situation','parking'],
+  };
+  for (const r of rows) {
+    const t = (r.text ?? '').toLowerCase();
+    if (!t) continue;
+    for (const [label, keys] of Object.entries(dict)) {
+      if (keys.some(k => t.includes(k))) themes[label]++;
+    }
+  }
+  return Object.entries(themes)
+    .map(([theme, count]) => ({ theme, count }))
+    .filter(x => x.count > 0)
+    .sort((a,b) => b.count - a.count)
+    .slice(0, 6);
+}
+
 // Résumé IA (facultatif si pas de clé)
 async function summarizeWithOpenAI(placeName: string, samples: string[], totalReviews: number) {
   if (!OPENAI_KEY) {
@@ -201,31 +235,57 @@ Deno.serve(async (req) => {
     const { place_id, name, dryRun = false } = await req.json().catch(()=>({}));
     if (!place_id) return json({ ok:false, error:"missing_place_id" }, 400);
 
-    // 1) Fetch Google Reviews (pagination)
-    const gReviews = await fetchAllGoogleReviews(place_id);
-
-    // 2) Map en rows pour upsert
-    const rows: ReviewRow[] = gReviews.map((r: any) => {
-      // r.name ressemble à: "places/ChIJ.../reviews/abc123"
-      const remote_id = String(r.name ?? "").split("/").pop() ?? crypto.randomUUID();
-      return {
-        user_id: userId,
-        place_id,
-        source: "google",
-        remote_id,
+    // 1) Récupération des avis Google (avec fallback BDD en cas d'échec)
+    let rows: ReviewRow[] = [];
+    let fetchedFrom: "google" | "database" = "google";
+    try {
+      const gReviews = await fetchAllGoogleReviews(place_id);
+      // 2) Map en rows pour upsert
+      rows = gReviews.map((r: any) => {
+        // r.name ressemble à: "places/ChIJ.../reviews/abc123"
+        const remote_id = String(r.name ?? "").split("/").pop() ?? crypto.randomUUID();
+        return {
+          user_id: userId,
+          place_id,
+          source: "google",
+          remote_id,
+          rating: r.rating ?? null,
+          text: r.text?.text ?? null,
+          language_code: null,
+          published_at: r.publishTime ?? null,
+          author_name: r.authorAttribution?.displayName ?? null,
+          author_url: r.authorAttribution?.uri ?? null,
+          author_photo_url: r.authorAttribution?.photoUri ?? null,
+          like_count: null,
+        };
+      });
+    } catch (err) {
+      console.warn("google_fetch_failed, fallback to database:", err);
+      fetchedFrom = "database";
+      const { data: existing, error: exErr } = await supabaseAdmin
+        .from("reviews")
+        .select("user_id, place_id, source, source_review_id, rating, text, language, published_at, author, url")
+        .eq("place_id", place_id)
+        .eq("user_id", userId ?? "00000000-0000-0000-0000-000000000000");
+      if (exErr) throw new Error(`fallback_select_failed:${exErr.message}`);
+      rows = (existing ?? []).map((r: any) => ({
+        user_id: r.user_id,
+        place_id: r.place_id,
+        source: (r.source ?? "google"),
+        remote_id: r.source_review_id ?? crypto.randomUUID(),
         rating: r.rating ?? null,
-        text: r.text?.text ?? null,
-        language_code: null,
-        published_at: r.publishTime ?? null,
-        author_name: r.authorAttribution?.displayName ?? null,
-        author_url: r.authorAttribution?.uri ?? null,
-        author_photo_url: r.authorAttribution?.photoUri ?? null,
+        text: r.text ?? null,
+        language_code: r.language ?? null,
+        published_at: r.published_at ?? null,
+        author_name: r.author ?? null,
+        author_url: r.url ?? null,
+        author_photo_url: null,
         like_count: null,
-      };
-    });
+      }));
+    }
 
-    // 3) Upsert (service role, RLS bypass)
-    if (!dryRun && rows.length) {
+    // 3) Upsert (service role, RLS bypass) uniquement si on a récupéré Google
+    if (!dryRun && rows.length && fetchedFrom === "google") {
       const { error } = await supabaseAdmin.from("reviews")
         .upsert(rows, { onConflict: "source,remote_id" })
         .select("id");
@@ -236,6 +296,9 @@ Deno.serve(async (req) => {
     const stats = computeStats(rows);
     const sampleTexts = rows.map(r => r.text ?? "").filter(Boolean).slice(0, 120);
     const summary = await summarizeWithOpenAI(name ?? "Cet établissement", sampleTexts, rows.length);
+    const themesComputed = (summary?.themes && summary.themes.length)
+      ? summary.themes
+      : computeHeuristicThemes(rows);
 
     if (!dryRun) {
       const { error } = await supabaseAdmin.from("review_insights").upsert({
@@ -254,7 +317,7 @@ Deno.serve(async (req) => {
           theme: strength.theme || strength,
           count: strength.count || 0
         })),
-        themes: summary.themes.map((theme: any) => ({
+        themes: themesComputed.map((theme: any) => ({
           theme: theme.theme,
           count: theme.count || 0
         })),
