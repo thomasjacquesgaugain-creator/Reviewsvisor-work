@@ -37,7 +37,7 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
     const line = lines[i];
     
     // Detect rating patterns (supports many forms: "X/5", "X sur 5", "X étoiles", stars symbols including ⭐️ with variation, spaces between stars)
-    const ratingMatch = line.match(/(?:(?:\b(?:noté|note|rating)\s*:?)?[\s\u00A0]*(\d+(?:[\.,]\d+)?)\s*(?:\/|sur)\s*5)|(?:(?:[★☆✭✩⭑⭒]|⭐️?)[\s\u00A0]*){1,5}|(?:(\b[1-5])\s*étoiles?)/i);
+    const ratingMatch = line.match(/(?:(?:\b(?:noté|note|rating)\s*:?)?[\s\u00A0]*(\d+(?:[\.,]\d+)?)\s*(?:\/|sur)\s*5)|(?:(?:[★☆✭✩⭑⭒\uE000-\uF8FF]|\u2B50)[\s\u00A0]*){1,5}|(?:(\b[1-5])\s*étoiles?)/i);
     if (ratingMatch) {
       // Save previous review if exists
       if (currentReview.rating) {
@@ -60,7 +60,7 @@ export function parsePastedReviews(rawText: string): ParsedReview[] {
       } else {
         // Star symbols sequence → count actual star glyphs only (ignore spaces/variations)
         const starsText = ratingMatch[0];
-        const starCount = (starsText.match(/★|⭐️?|☆|✭|✩|⭑|⭒/g) || []).length;
+        const starCount = (starsText.match(/[★☆✭✩⭑⭒\uE000-\uF8FF\u2B50]/g) || []).length;
         currentReview.rating = Math.max(1, Math.min(5, starCount));
       }
       
