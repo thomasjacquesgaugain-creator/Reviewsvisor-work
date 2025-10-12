@@ -18,7 +18,6 @@ export type Database = {
         Row: {
           created_at: string | null
           formatted_address: string | null
-          icon_type: string | null
           id: string
           lat: number | null
           lng: number | null
@@ -37,7 +36,6 @@ export type Database = {
         Insert: {
           created_at?: string | null
           formatted_address?: string | null
-          icon_type?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
@@ -56,7 +54,6 @@ export type Database = {
         Update: {
           created_at?: string | null
           formatted_address?: string | null
-          icon_type?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
@@ -166,7 +163,7 @@ export type Database = {
           top_praises: Json | null
           total_count: number | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           avg_rating?: number | null
@@ -179,7 +176,7 @@ export type Database = {
           top_praises?: Json | null
           total_count?: number | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           avg_rating?: number | null
@@ -192,15 +189,13 @@ export type Database = {
           top_praises?: Json | null
           total_count?: number | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
       reviews: {
         Row: {
           author: string | null
-          dedup_key: string | null
-          fingerprint: string | null
           id: number
           inserted_at: string | null
           language: string | null
@@ -216,8 +211,6 @@ export type Database = {
         }
         Insert: {
           author?: string | null
-          dedup_key?: string | null
-          fingerprint?: string | null
           id?: number
           inserted_at?: string | null
           language?: string | null
@@ -233,8 +226,6 @@ export type Database = {
         }
         Update: {
           author?: string | null
-          dedup_key?: string | null
-          fingerprint?: string | null
           id?: number
           inserted_at?: string | null
           language?: string | null
@@ -358,27 +349,6 @@ export type Database = {
           url?: string | null
           user_id?: string
           website?: string | null
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
         }
         Relationships: []
       }
@@ -671,18 +641,6 @@ export type Database = {
         Args: { "": unknown } | { "": unknown }
         Returns: string
       }
-      cleanup_duplicate_reviews: {
-        Args: { p_place_id: string; p_user_id: string }
-        Returns: {
-          deleted: number
-        }[]
-      }
-      count_unique_reviews: {
-        Args: { p_place_id: string; p_user_id: string }
-        Returns: {
-          count: number
-        }[]
-      }
       disablelongtransactions: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -942,15 +900,6 @@ export type Database = {
         Args: { "": number }
         Returns: string
       }
-      get_reviews_summary_with_duplicates: {
-        Args: { p_place_id: string; p_user_id: string }
-        Returns: {
-          avg_rating: number
-          duplicates: number
-          total_all: number
-          total_unique: number
-        }[]
-      }
       gettransactionid: {
         Args: Record<PropertyKey, never>
         Returns: unknown
@@ -962,19 +911,6 @@ export type Database = {
       gidx_out: {
         Args: { "": unknown }
         Returns: unknown
-      }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      identify_duplicate_reviews: {
-        Args: { p_place_id: string; p_user_id: string }
-        Returns: {
-          duplicate_id: number
-        }[]
       }
       is_admin: {
         Args: { uid: string }
@@ -2271,7 +2207,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "worker" | "user"
+      [_ in never]: never
     }
     CompositeTypes: {
       geometry_dump: {
@@ -2406,8 +2342,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      app_role: ["admin", "moderator", "worker", "user"],
-    },
+    Enums: {},
   },
 } as const

@@ -35,19 +35,9 @@ serve(async (req) => {
   }
 
   try {
-    // Try to get placeId from body first (for POST requests), then from URL params (for GET requests)
-    let placeId = '';
-    let sessionToken = '';
-    
-    if (req.method === 'POST') {
-      const body = await req.json();
-      placeId = body.placeId || '';
-      sessionToken = body.sessionToken || '';
-    } else {
-      const url = new URL(req.url);
-      placeId = url.searchParams.get('placeId') || '';
-      sessionToken = url.searchParams.get('sessionToken') || '';
-    }
+    const url = new URL(req.url);
+    const placeId = url.searchParams.get('placeId') || '';
+    const sessionToken = url.searchParams.get('sessionToken') || '';
     
     if (!placeId) {
       return new Response(
