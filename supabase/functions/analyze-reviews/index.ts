@@ -142,6 +142,58 @@ function computeHeuristicThemes(rows: ReviewRow[]) {
     .slice(0, 6);
 }
 
+// Heuristic extraction for issues and strengths
+function computeHeuristicIssuesStrengths(rows: ReviewRow[]) {
+  const negatives: Record<string, string[]> = {
+    'Service / attente': ['attente','lent','lente','retard','ralenti','trop long','patienter'],
+    'Ambiance / bruit': ['bruit','bruyant','fort','musique forte','tapage'],
+    'Propreté': ['sale','propreté','sales','malpropre','hygiène'],
+    'Qualité des plats': ['froid','pas bon','mauvais','sec','cru','trop cuit','fade'],
+    'Prix': ['cher','trop cher','prix élevés','coûteux']
+  };
+  const positives: Record<string, string[]> = {
+    'Accueil / sympathie': ['accueil','sympa','gentil','chaleureux','aimable','souriant'],
+    'Qualité / goût': ['délicieux','excellent','très bon','goût','savoureux','parfait'],
+    'Rapidité du service': ['rapide','vite','efficace'],
+    'Ambiance agréable': ['ambiance','agréable','cosy','chaleureuse','calme'],
+    'Bon rapport qualité/prix': ['bon rapport','prix correct','pas cher','raisonnable']
+  };
+  const countMatches = (text: string, dict: Record<string,string[]>) => {
+    const counts: Record<string, number> = {};
+    const t = text.toLowerCase();
+    for (const [label, keys] of Object.entries(dict)) {
+      if (keys.some(k => t.includes(k))) counts[label] = (counts[label] ?? 0) + 1;
+    }
+    return counts;
+  };
+  const negAgg: Record<string, number> = {};
+  const posAgg: Record<string, number> = {};
+  for (const r of rows) {
+    const t = (r.text ?? '').toLowerCase();
+    if (!t) continue;
+    const n = countMatches(t, negatives);
+    const p = countMatches(t, positives);
+    for (const [k,v] of Object.entries(n)) negAgg[k] = (negAgg[k]??0)+v;
+    for (const [k,v] of Object.entries(p)) posAgg[k] = (posAgg[k]??0)+v;
+  }
+  const issues = Object.entries(negAgg).map(([theme,count])=>({theme, count})).sort((a,b)=>b.count-a.count).slice(0,3);
+  const strengths = Object.entries(posAgg).map(([theme,count])=>({theme, count})).sort((a,b)=>b.count-a.count).slice(0,3);
+  return { issues, strengths };
+}
+
+function buildHeuristicRecommendations(issues: {theme:string;count:number}[]) {
+  const recs: string[] = [];
+  for (const it of issues.slice(0,3)) {
+    if (it.theme.toLowerCase().includes('attente')) recs.push("Réduisez l'attente en salle (staffing/prise de commande).");
+    else if (it.theme.toLowerCase().includes('propret')) recs.push("Renforcez les contrôles de propreté et l'entretien régulier.");
+    else if (it.theme.toLowerCase().includes('qualit')) recs.push("Standardisez les recettes et vérifiez les cuissons avant service.");
+    else if (it.theme.toLowerCase().includes('bruit') || it.theme.toLowerCase().includes('ambiance')) recs.push("Ajustez volume et acoustique pour limiter le bruit.");
+    else if (it.theme.toLowerCase().includes('prix')) recs.push("Clarifiez les prix et proposez des menus à bon rapport qualité/prix.");
+  }
+  if (!recs.length) recs.push("Collectez plus d'avis pour des recommandations plus précises.");
+  return recs.slice(0,3);
+}
+
 // Résumé IA (facultatif si pas de clé)
 async function summarizeWithOpenAI(placeName: string, samples: string[], totalReviews: number) {
   if (!OPENAI_KEY) {
@@ -322,6 +374,10 @@ Deno.serve(async (req) => {
     const themesComputed = (summary?.themes && summary.themes.length)
       ? summary.themes
       : computeHeuristicThemes(rows);
+    const heur = computeHeuristicIssuesStrengths(rows);
+    const issuesComputed = (summary?.top_issues && summary.top_issues.length) ? summary.top_issues : heur.issues;
+    const strengthsComputed = (summary?.top_strengths && summary.top_strengths.length) ? summary.top_strengths : heur.strengths;
+    const recsComputed = (summary?.recommendations && summary.recommendations.length) ? summary.recommendations : buildHeuristicRecommendations(issuesComputed);
 
     if (!dryRun) {
       const payload = {
@@ -331,14 +387,14 @@ Deno.serve(async (req) => {
         total_count: stats.total,
         avg_rating: stats.overall,
         positive_ratio: stats.positive_pct / 100,
-        top_issues: summary.top_issues.map((issue: any, idx: number) => ({ 
+        top_issues: (issuesComputed || []).map((issue: any, idx: number) => ({ 
           theme: issue.theme || issue,
-          count: issue.count || 0,
+          count: issue.count || issue.mentions || 0,
           severity: idx < 1 ? 'high' : 'medium' 
         })),
-        top_praises: summary.top_strengths.map((strength: any, idx: number) => ({ 
-          theme: strength.theme || strength,
-          count: strength.count || 0
+        top_praises: (strengthsComputed || []).map((strength: any) => ({ 
+          theme: strength.theme || strength.strength || strength,
+          count: strength.count || strength.mentions || 0
         })),
         themes: themesComputed.map((theme: any) => ({
           theme: theme.theme,
@@ -349,7 +405,7 @@ Deno.serve(async (req) => {
           by_rating: stats.by_rating,
           positive_pct: stats.positive_pct,
           negative_pct: stats.negative_pct,
-          recommendations: summary.recommendations
+          recommendations: recsComputed
         }
       };
 
