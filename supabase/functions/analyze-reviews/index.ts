@@ -109,61 +109,65 @@ function computeStats(rows: ReviewRow[]) {
 }
 
 // Résumé IA (facultatif si pas de clé)
-async function summarizeWithOpenAI(placeName: string, samples: string[]) {
+async function summarizeWithOpenAI(placeName: string, samples: string[], totalReviews: number) {
   if (!OPENAI_KEY) {
     return { top_issues: [], top_strengths: [], recommendations: [] };
   }
 
-  // Petits lots pour éviter les tokens
-  const chunks: string[][] = [];
-  for (let i = 0; i < samples.length; i += 10) chunks.push(samples.slice(i, i + 10));
-
-  // Merge des résumés
-  let issues: string[] = [];
-  let strengths: string[] = [];
-  let recos: string[] = [];
-
-  for (const chunk of chunks) {
-    const prompt = [
-      { role: "system", content: "Tu es un analyste qui synthétise des avis clients en français. Réponds exclusivement en JSON." },
-      { role: "user", content:
+  // Analyse globale de tous les avis
+  const allText = samples.join("\n");
+  
+  const prompt = [
+    { role: "system", content: "Tu es un analyste qui synthétise des avis clients en français. Réponds exclusivement en JSON." },
+    { role: "user", content:
 `Établissement: ${placeName}
-Avis (échantillon):
-${chunk.map((t,i)=>`${i+1}. ${t}`).join("\n")}
+Total d'avis analysés: ${totalReviews}
 
-Retourne strictement ce JSON:
+Avis:
+${samples.slice(0, 100).map((t,i)=>`${i+1}. ${t}`).join("\n")}
+
+Analyse ces avis et retourne strictement ce JSON:
 {
-  "top_issues": ["..."],       // 3 problèmes les plus récurrents (phrases courtes)
-  "top_strengths": ["..."],    // 3 points forts
-  "recommendations": ["..."]   // 3 actions concrètes
-}`
-      }
-    ];
+  "top_issues": [
+    {"theme": "Nom du problème", "count": nombre_estimé_occurrences},
+    {"theme": "Autre problème", "count": nombre_estimé_occurrences},
+    {"theme": "Troisième problème", "count": nombre_estimé_occurrences}
+  ],
+  "top_strengths": [
+    {"theme": "Point fort", "count": nombre_estimé_occurrences},
+    {"theme": "Autre point fort", "count": nombre_estimé_occurrences},
+    {"theme": "Troisième point fort", "count": nombre_estimé_occurrences}
+  ],
+  "recommendations": ["action 1", "action 2", "action 3"]
+}
 
-    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { "content-type": "application/json", "authorization": `Bearer ${OPENAI_KEY}` },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        temperature: 0.2,
-        response_format: { type: "json_object" },
-        messages: prompt
-      })
-    });
+IMPORTANT: Pour chaque problème et point fort, estime combien de fois il est mentionné dans les ${totalReviews} avis (pas seulement dans l'échantillon). Le count doit être un nombre entre 1 et ${totalReviews}.`
+    }
+  ];
 
-    const data = await resp.json();
-    const txt = data.choices?.[0]?.message?.content ?? "{}";
-    try {
-      const j = JSON.parse(txt);
-      issues.push(...(j.top_issues ?? []));
-      strengths.push(...(j.top_strengths ?? []));
-      recos.push(...(j.recommendations ?? []));
-    } catch {}
+  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "content-type": "application/json", "authorization": `Bearer ${OPENAI_KEY}` },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      messages: prompt
+    })
+  });
+
+  const data = await resp.json();
+  const txt = data.choices?.[0]?.message?.content ?? "{}";
+  try {
+    const j = JSON.parse(txt);
+    return {
+      top_issues: (j.top_issues ?? []).slice(0, 3),
+      top_strengths: (j.top_strengths ?? []).slice(0, 3),
+      recommendations: (j.recommendations ?? []).slice(0, 3)
+    };
+  } catch {
+    return { top_issues: [], top_strengths: [], recommendations: [] };
   }
-
-  // Dédupliquer et tronquer à 3
-  const uniq = (arr: string[]) => [...new Set(arr.map(s=>s.trim()))].filter(Boolean).slice(0,3);
-  return { top_issues: uniq(issues), top_strengths: uniq(strengths), recommendations: uniq(recos) };
 }
 
 Deno.serve(async (req) => {
@@ -217,7 +221,7 @@ Deno.serve(async (req) => {
     // 4) Stats + IA
     const stats = computeStats(rows);
     const sampleTexts = rows.map(r => r.text ?? "").filter(Boolean).slice(0, 120);
-    const summary = await summarizeWithOpenAI(name ?? "Cet établissement", sampleTexts);
+    const summary = await summarizeWithOpenAI(name ?? "Cet établissement", sampleTexts, rows.length);
 
     if (!dryRun) {
       const { error } = await supabaseAdmin.from("review_insights").upsert({
@@ -227,14 +231,14 @@ Deno.serve(async (req) => {
         total_count: stats.total,
         avg_rating: stats.overall,
         positive_ratio: stats.positive_pct / 100,
-        top_issues: summary.top_issues.map((issue, idx) => ({ 
-          theme: issue, 
-          count: 0, 
+        top_issues: summary.top_issues.map((issue: any, idx: number) => ({ 
+          theme: issue.theme || issue,
+          count: issue.count || 0,
           severity: idx < 1 ? 'high' : 'medium' 
         })),
-        top_praises: summary.top_strengths.map((strength, idx) => ({ 
-          theme: strength, 
-          count: 0 
+        top_praises: summary.top_strengths.map((strength: any, idx: number) => ({ 
+          theme: strength.theme || strength,
+          count: strength.count || 0
         })),
         summary: {
           total: stats.total,
