@@ -143,8 +143,7 @@ const Dashboard = () => {
           .select('*')
           .eq('place_id', currentEstab.place_id)
           .eq('user_id', user.id)
-          .order('published_at', { ascending: false })
-          .limit(10);
+          .order('published_at', { ascending: false });
           
         if (reviewsError) {
           console.error('[dashboard] reviews error:', reviewsError);
@@ -480,8 +479,7 @@ const Dashboard = () => {
                             .select('*')
                             .eq('place_id', selectedEtab.place_id)
                             .eq('user_id', user?.id)
-                            .order('published_at', { ascending: false })
-                            .limit(10);
+                            .order('published_at', { ascending: false });
                             
                           if (reviewsData) {
                             setRecentReviews(reviewsData.slice(0, 3));
