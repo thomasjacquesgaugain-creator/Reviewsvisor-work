@@ -108,7 +108,7 @@ const Login = () => {
         {/* Header */}
         <div className="text-center py-8">
           <h1 className="text-2xl font-medium text-gray-600">
-            {isSignUp ? "Créez votre compte" : "Connectez-vous à votre espace d'analyse"}
+            {isSignUp ? "Créez votre espace d'analyse" : "Connectez-vous à votre espace d'analyse"}
           </h1>
         </div>
 
@@ -118,11 +118,11 @@ const Login = () => {
             <CardContent className="p-8 space-y-6">
               <div className="text-center space-y-2">
                 <h2 className="text-3xl font-bold text-gray-900">
-                  {isSignUp ? "Inscription" : "Connexion"}
+                  {isSignUp ? "Créer un compte" : "Connexion"}
                 </h2>
                 <p className="text-gray-600">
                   {isSignUp 
-                    ? "Créez votre compte pour commencer" 
+                    ? "Commencez à analyser vos avis clients" 
                     : "Accédez à vos analyses d'avis clients"
                   }
                 </p>
