@@ -22,6 +22,7 @@ export default function EtablissementPage() {
     placeId: string;
   } | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [placesError, setPlacesError] = useState<string | null>(null);
   
   const currentEstablishment = useCurrentEstablishment();
 
@@ -94,6 +95,7 @@ export default function EtablissementPage() {
       if (!input) return;
 
       try {
+        setPlacesError(null);
         await loadGooglePlaces();
         const g = (window as any).google;
         
@@ -116,8 +118,9 @@ export default function EtablissementPage() {
           if (!place || !place.place_id) return;
           setSelected(serializePlace(place));
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erreur de chargement Google Places:', error);
+        setPlacesError(error?.message || 'Erreur Google Places');
       }
     };
 
@@ -230,6 +233,12 @@ export default function EtablissementPage() {
                 className="w-full border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Rechercher un établissement…"
               />
+              
+              {placesError && (
+                <div className="text-sm text-destructive">
+                  {placesError}
+                </div>
+              )}
               
               <div className="text-xs text-muted-foreground">
                 Powered by Google
