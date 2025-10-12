@@ -995,18 +995,19 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span>Améliorer le service</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span>Être attentif aux retours clients</span>
-              </div>
-            </div>
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-              <div className="font-medium text-blue-900">Correction réussie</div>
-              <div className="text-sm text-blue-700">Redirection vers votre dashboard</div>
+              {insight?.summary?.recommendations && insight.summary.recommendations.length > 0 ? (
+                insight.summary.recommendations.map((recommendation: string, index: number) => (
+                  <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span className="text-sm text-gray-700">{recommendation}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  <p className="text-sm">Aucune recommandation disponible</p>
+                  <p className="text-xs mt-1">Analysez votre établissement pour obtenir des recommandations</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
