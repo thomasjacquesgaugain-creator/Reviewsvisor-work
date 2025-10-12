@@ -128,7 +128,7 @@ const Dashboard = () => {
         const {
           data: insightData,
           error
-        } = await supabase.from('review_insights').select('total_count, avg_rating, top_issues, top_praises, positive_ratio, last_analyzed_at, summary').eq('place_id', currentEstab.place_id).eq('user_id', user.id).order('last_analyzed_at', {
+        } = await supabase.from('review_insights').select('total_count, avg_rating, top_issues, top_praises, positive_ratio, last_analyzed_at, summary, themes').eq('place_id', currentEstab.place_id).eq('user_id', user.id).order('last_analyzed_at', {
           ascending: false
         }).limit(1).maybeSingle();
         if (error) {
