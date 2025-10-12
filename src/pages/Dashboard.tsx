@@ -81,6 +81,10 @@ const Dashboard = () => {
   // Stats par plateforme
   const [platformStats, setPlatformStats] = useState<Record<string, { count: number; avgRating: number }>>({});
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
+  // États pour l'édition des réponses automatiques
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [editedResponses, setEditedResponses] = useState<Record<string, string>>({});
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -1105,14 +1109,18 @@ const Dashboard = () => {
                     const isPositive = rating >= 4;
                     const authorName = review.author || 'Anonyme';
                     const reviewText = review.text || 'Pas de commentaire';
+                    const reviewId = review.id || `review-${index}`;
                     
                     // Générer une réponse automatique simple basée sur le rating
-                    const autoResponse = isPositive
+                    const defaultResponse = isPositive
                       ? `Merci ${authorName.split(' ')[0]} pour votre retour positif ! Nous sommes ravis que vous ayez apprécié votre expérience chez nous. Au plaisir de vous revoir bientôt !`
                       : `Bonjour ${authorName.split(' ')[0]}, nous vous présentons nos excuses pour cette expérience décevante. Vos remarques sont précieuses et nous allons améliorer nos services. N'hésitez pas à nous recontacter directement.`;
                     
+                    const currentResponse = editedResponses[reviewId] || defaultResponse;
+                    const isEditing = editingReviewId === reviewId;
+                    
                     return (
-                      <div key={review.id || index} className="border rounded-lg p-4 bg-gray-50">
+                      <div key={reviewId} className="border rounded-lg p-4 bg-gray-50">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-gray-500" />
@@ -1133,11 +1141,58 @@ const Dashboard = () => {
                         <p className="text-sm text-gray-700 mb-3">"{reviewText.substring(0, 150)}{reviewText.length > 150 ? '...' : ''}"</p>
                         <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
                           <p className="text-sm text-gray-600 font-medium mb-1">Réponse automatique proposée :</p>
-                          <p className="text-sm text-gray-700">{autoResponse}</p>
+                          {isEditing ? (
+                            <textarea
+                              value={currentResponse}
+                              onChange={(e) => setEditedResponses(prev => ({ ...prev, [reviewId]: e.target.value }))}
+                              className="w-full text-sm text-gray-700 border rounded p-2 min-h-[80px] focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          ) : (
+                            <p className="text-sm text-gray-700">{currentResponse}</p>
+                          )}
                         </div>
                         <div className="flex gap-2 mt-3">
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
-                          <Button size="sm" variant="outline">Modifier</Button>
+                          {isEditing ? (
+                            <>
+                              <Button 
+                                size="sm" 
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => setEditingReviewId(null)}
+                              >
+                                Enregistrer
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => {
+                                  setEditedResponses(prev => {
+                                    const newResponses = { ...prev };
+                                    delete newResponses[reviewId];
+                                    return newResponses;
+                                  });
+                                  setEditingReviewId(null);
+                                }}
+                              >
+                                Annuler
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingReviewId(reviewId);
+                                  if (!editedResponses[reviewId]) {
+                                    setEditedResponses(prev => ({ ...prev, [reviewId]: defaultResponse }));
+                                  }
+                                }}
+                              >
+                                Modifier
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
                     );
