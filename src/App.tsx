@@ -14,6 +14,8 @@ import NotFound from "./pages/NotFound";
 import DebugEnv from "./pages/DebugEnv";
 import DebugReviews from "./pages/DebugReviews";
 import DebugInsights from "./pages/DebugInsights";
+import GoogleCallback from "./pages/GoogleCallback";
+import Parametres from "./pages/Parametres";
 
 const App = () => {
   return (
@@ -52,6 +54,12 @@ const App = () => {
           <Route path="/debug/insights" element={
             <Protected>
               <DebugInsights />
+            </Protected>
+          } />
+          <Route path="/google-callback" element={<GoogleCallback />} />
+          <Route path="/parametres" element={
+            <Protected>
+              <Parametres />
             </Protected>
           } />
           <Route path="*" element={<NotFound />} />
