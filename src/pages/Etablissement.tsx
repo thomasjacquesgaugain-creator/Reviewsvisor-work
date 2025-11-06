@@ -6,6 +6,8 @@ import SavedEstablishmentsList from "@/components/SavedEstablishmentsList";
 import { AnalyzeEstablishmentButton } from "@/components/AnalyzeEstablishmentButton";
 import ImportAvisToolbar from "@/components/ImportAvisToolbar";
 import { ReviewsVisualPanel } from "@/components/ReviewsVisualPanel";
+import { ConnectGoogleButton } from "@/components/ConnectGoogleButton";
+import { OAuthDiagnostic } from "@/components/OAuthDiagnostic";
 import { Etab } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
 import { Building2, Home, LogOut } from "lucide-react";
@@ -295,6 +297,19 @@ export default function EtablissementPage() {
           >
             <h2 className="text-xl font-semibold mb-3">🏢 Mon Établissement</h2>
             <MonEtablissementCard />
+            
+            {/* Bouton connecter Google OAuth */}
+            <div className="mt-4">
+              <ConnectGoogleButton 
+                onSuccess={() => {
+                  console.log("Google OAuth connecté avec succès");
+                  setRefreshTrigger(prev => prev + 1);
+                }}
+              />
+            </div>
+
+            {/* Diagnostic OAuth */}
+            <OAuthDiagnostic />
           </section>
 
           {/* Anchor for reviews visual panel */}
