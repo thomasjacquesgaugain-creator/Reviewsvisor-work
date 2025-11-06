@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, CheckCircle2, XCircle, RefreshCw, Unplug } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, RefreshCw, Unplug, TrendingUp, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, subDays, eachDayOfInterval, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface GoogleConnection {
   id: string;
@@ -27,18 +28,45 @@ interface ImportLog {
   status: string;
 }
 
+interface DailyImportStats {
+  date: string;
+  imported: number;
+  updated: number;
+  total: number;
+}
+
+interface SourceDistribution {
+  name: string;
+  value: number;
+}
+
+interface RatingDistribution {
+  rating: string;
+  count: number;
+}
+
 export default function ParametresPage() {
   const { user } = useAuth();
   const [googleConnection, setGoogleConnection] = useState<GoogleConnection | null>(null);
   const [lastImport, setLastImport] = useState<ImportLog | null>(null);
+  const [allImports, setAllImports] = useState<ImportLog[]>([]);
+  const [dailyStats, setDailyStats] = useState<DailyImportStats[]>([]);
+  const [sourceDistribution, setSourceDistribution] = useState<SourceDistribution[]>([]);
+  const [ratingDistribution, setRatingDistribution] = useState<RatingDistribution[]>([]);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [avgRating, setAvgRating] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   useEffect(() => {
     if (user) {
       loadGoogleConnection();
       loadLastImport();
+      loadAllImports();
+      loadReviewsStats();
     }
   }, [user]);
 
@@ -79,6 +107,114 @@ export default function ParametresPage() {
     }
   };
 
+  const loadAllImports = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('import_logs')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('started_at', { ascending: false })
+        .limit(50);
+
+      if (!error && data) {
+        setAllImports(data);
+        calculateDailyStats(data);
+      }
+    } catch (error) {
+      console.error('Erreur chargement imports:', error);
+    }
+  };
+
+  const calculateDailyStats = (imports: ImportLog[]) => {
+    const last30Days = eachDayOfInterval({
+      start: subDays(new Date(), 29),
+      end: new Date()
+    });
+
+    const statsMap = new Map<string, { imported: number; updated: number }>();
+
+    imports.forEach(imp => {
+      const dateKey = format(startOfDay(new Date(imp.started_at)), 'yyyy-MM-dd');
+      const existing = statsMap.get(dateKey) || { imported: 0, updated: 0 };
+      statsMap.set(dateKey, {
+        imported: existing.imported + (imp.inserted_count || 0),
+        updated: existing.updated + (imp.updated_count || 0)
+      });
+    });
+
+    const stats = last30Days.map(date => {
+      const dateKey = format(date, 'yyyy-MM-dd');
+      const stat = statsMap.get(dateKey) || { imported: 0, updated: 0 };
+      return {
+        date: format(date, 'd MMM', { locale: fr }),
+        imported: stat.imported,
+        updated: stat.updated,
+        total: stat.imported + stat.updated
+      };
+    });
+
+    setDailyStats(stats);
+  };
+
+  const loadReviewsStats = async () => {
+    try {
+      // Récupérer tous les avis de l'utilisateur
+      const { data: reviews, error } = await supabase
+        .from('reviews')
+        .select('source, rating')
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setTotalReviews(reviews?.length || 0);
+
+      // Calculer distribution par source
+      const sourceMap = new Map<string, number>();
+      let totalRating = 0;
+      let ratingCount = 0;
+
+      reviews?.forEach(review => {
+        const source = review.source || 'unknown';
+        sourceMap.set(source, (sourceMap.get(source) || 0) + 1);
+
+        if (review.rating) {
+          totalRating += Number(review.rating);
+          ratingCount++;
+        }
+      });
+
+      const sourceDist: SourceDistribution[] = Array.from(sourceMap.entries()).map(([name, value]) => ({
+        name: name === 'google' ? 'Google' :
+              name === 'pasted' ? 'Collé' :
+              name === 'csv' ? 'CSV' :
+              name === 'manual' ? 'Manuel' : name,
+        value
+      }));
+
+      setSourceDistribution(sourceDist);
+      setAvgRating(ratingCount > 0 ? totalRating / ratingCount : 0);
+
+      // Calculer distribution des notes
+      const ratingMap = new Map<number, number>();
+      reviews?.forEach(review => {
+        if (review.rating) {
+          const rating = Math.round(Number(review.rating));
+          ratingMap.set(rating, (ratingMap.get(rating) || 0) + 1);
+        }
+      });
+
+      const ratingDist: RatingDistribution[] = [1, 2, 3, 4, 5].map(rating => ({
+        rating: `${rating}★`,
+        count: ratingMap.get(rating) || 0
+      }));
+
+      setRatingDistribution(ratingDist);
+
+    } catch (error) {
+      console.error('Erreur chargement stats:', error);
+    }
+  };
+
   const handleForceSync = async () => {
     setIsSyncing(true);
     try {
@@ -92,6 +228,8 @@ export default function ParametresPage() {
       // Recharger les logs après 2 secondes
       setTimeout(() => {
         loadLastImport();
+        loadAllImports();
+        loadReviewsStats();
       }, 2000);
     } catch (error) {
       console.error('Erreur sync:', error);
@@ -144,6 +282,187 @@ export default function ParametresPage() {
       </div>
 
       <div className="space-y-6">
+        {/* Statistiques globales */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total avis</CardTitle>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalReviews}</div>
+              <p className="text-xs text-muted-foreground">
+                Tous vos avis importés
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Note moyenne</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{avgRating.toFixed(1)} ★</div>
+              <p className="text-xs text-muted-foreground">
+                Sur {totalReviews} avis
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Imports réussis</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {allImports.filter(i => i.status === 'success').length}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Sur {allImports.length} tentatives
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Graphiques */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Évolution temporelle */}
+          <Card className="col-span-full">
+            <CardHeader>
+              <CardTitle>Évolution des imports (30 derniers jours)</CardTitle>
+              <CardDescription>
+                Nombre d'avis importés et mis à jour par jour
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={dailyStats}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 12 }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="imported" 
+                    stroke="#3b82f6" 
+                    name="Nouveaux"
+                    strokeWidth={2}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="updated" 
+                    stroke="#10b981" 
+                    name="Mis à jour"
+                    strokeWidth={2}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Distribution par source */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Répartition par source</CardTitle>
+              <CardDescription>
+                D'où proviennent vos avis
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={sourceDistribution}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {sourceDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Distribution des notes */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Distribution des notes</CardTitle>
+              <CardDescription>
+                Répartition par nombre d'étoiles
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={ratingDistribution}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="rating" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#3b82f6" name="Nombre d'avis" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Historique des imports */}
+        {allImports.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Historique des imports</CardTitle>
+              <CardDescription>
+                Les {Math.min(10, allImports.length)} derniers imports
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {allImports.slice(0, 10).map((imp) => (
+                  <div 
+                    key={imp.id} 
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant={imp.status === 'success' ? 'default' : 'destructive'}>
+                          {imp.status === 'success' ? 'Réussi' : 'Erreur'}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {format(new Date(imp.started_at), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+                        </span>
+                      </div>
+                      <div className="text-sm">
+                        <span className="font-medium text-green-600">{imp.inserted_count} nouveaux</span>
+                        {' · '}
+                        <span className="font-medium text-blue-600">{imp.updated_count} mis à jour</span>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {imp.place_id.substring(0, 12)}...
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Separator className="my-8" />
+
         {/* Connexion Google */}
         <Card>
           <CardHeader>
