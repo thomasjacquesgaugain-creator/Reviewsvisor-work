@@ -23,9 +23,18 @@ serve(async (req) => {
 
     const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID');
     const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET');
-    const REDIRECT_URI = `${Deno.env.get('SUPABASE_URL')}/functions/v1/google-oauth-callback`;
+    const REDIRECT_URI = 'https://auth.lovable.so/oauth/callback';
+
+    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+      console.error('❌ Missing OAuth credentials');
+      return new Response(
+        JSON.stringify({ error: 'Configuration OAuth manquante' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     console.log('🔄 Échange du code OAuth contre des tokens...');
+    console.log('📍 Redirect URI:', REDIRECT_URI);
 
     // Échanger le code contre des tokens
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -33,10 +42,11 @@ serve(async (req) => {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         code,
-        client_id: GOOGLE_CLIENT_ID!,
-        client_secret: GOOGLE_CLIENT_SECRET!,
+        client_id: GOOGLE_CLIENT_ID,
+        client_secret: GOOGLE_CLIENT_SECRET,
         redirect_uri: REDIRECT_URI,
         grant_type: 'authorization_code',
+        access_type: 'offline',
       }),
     });
 
@@ -50,9 +60,15 @@ serve(async (req) => {
     }
 
     const tokens = await tokenResponse.json();
-    const { access_token, refresh_token, expires_in } = tokens;
+    const { access_token, refresh_token, expires_in, scope } = tokens;
 
     console.log('✅ Tokens obtenus avec succès');
+    console.log('🔑 Token details:', { 
+      hasAccessToken: !!access_token,
+      hasRefreshToken: !!refresh_token,
+      expiresIn: expires_in,
+      scope
+    });
 
     // Récupérer l'utilisateur depuis le header Authorization
     const authHeader = req.headers.get('Authorization');
@@ -82,7 +98,7 @@ serve(async (req) => {
     // Calculer l'expiration du token
     const expiresAt = new Date(Date.now() + expires_in * 1000);
 
-    // UPSERT dans google_connections
+    // UPSERT dans google_connections with scope
     const { error: dbError } = await supabaseClient
       .from('google_connections')
       .upsert({
@@ -91,6 +107,7 @@ serve(async (req) => {
         access_token,
         refresh_token,
         token_expires_at: expiresAt.toISOString(),
+        scope: scope || 'openid email profile https://www.googleapis.com/auth/business.manage',
         updated_at: new Date().toISOString(),
       }, {
         onConflict: 'user_id,provider'

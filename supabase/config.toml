@@ -5,6 +5,9 @@ verify_jwt = false
 
 [functions.google-oauth-callback]
 
+[functions.google-oauth-init]
+verify_jwt = false
+
 [functions.google-business-accounts]
 
 [functions.google-business-locations]

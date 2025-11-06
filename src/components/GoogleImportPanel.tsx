@@ -51,19 +51,38 @@ export default function GoogleImportPanel({ onImportSuccess, onClose }: GoogleIm
 
     try {
       const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-      const redirectUri = `${window.location.origin}/google-callback`;
       
-      // Scope pour Google Business Profile API
-      const scope = 'https://www.googleapis.com/auth/business.manage';
+      if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
+        toast.error("Configuration Google OAuth manquante");
+        setIsConnecting(false);
+        return;
+      }
+
+      // OAuth scopes for Google Business Profile API
+      const scopes = [
+        'openid',
+        'email', 
+        'profile',
+        'https://www.googleapis.com/auth/business.manage'
+      ].join(' ');
+      
+      const redirectUri = 'https://auth.lovable.so/oauth/callback';
+      const state = btoa(JSON.stringify({ 
+        userId: user.id,
+        timestamp: Date.now(),
+        returnUrl: window.location.href
+      }));
       
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${GOOGLE_CLIENT_ID}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `response_type=code&` +
-        `scope=${encodeURIComponent(scope)}&` +
+        `scope=${encodeURIComponent(scopes)}&` +
         `access_type=offline&` +
         `prompt=consent&` +
-        `state=${user.id}`;
+        `state=${encodeURIComponent(state)}`;
+
+      console.log('🔐 Opening OAuth popup with redirect:', redirectUri);
 
       // Ouvrir popup OAuth
       const width = 500;
