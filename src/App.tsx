@@ -16,6 +16,8 @@ import DebugReviews from "./pages/DebugReviews";
 import DebugInsights from "./pages/DebugInsights";
 import GoogleCallback from "./pages/GoogleCallback";
 import Parametres from "./pages/Parametres";
+import Billing from "./pages/Billing";
+import AdminUsers from "./pages/admin/Users";
 
 const App = () => {
   return (
@@ -60,6 +62,16 @@ const App = () => {
           <Route path="/parametres" element={
             <Protected>
               <Parametres />
+            </Protected>
+          } />
+          <Route path="/billing" element={
+            <Protected>
+              <Billing />
+            </Protected>
+          } />
+          <Route path="/admin/users" element={
+            <Protected>
+              <AdminUsers />
             </Protected>
           } />
           <Route path="*" element={<NotFound />} />

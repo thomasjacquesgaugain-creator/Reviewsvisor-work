@@ -16,6 +16,9 @@ export type Database = {
     Tables: {
       establishments: {
         Row: {
+          category: string | null
+          city: string | null
+          country: string | null
           created_at: string | null
           formatted_address: string | null
           google_account_id: string | null
@@ -25,11 +28,15 @@ export type Database = {
           lat: number | null
           lng: number | null
           name: string
+          organization_id: string | null
           phone: string | null
           place_id: string
+          postal_code: string | null
           rating: number | null
+          rating_avg_cached: number | null
           raw: Json | null
           source: string
+          timezone: string | null
           types: Json | null
           updated_at: string | null
           user_id: string
@@ -37,6 +44,9 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          category?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
           formatted_address?: string | null
           google_account_id?: string | null
@@ -46,11 +56,15 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           name: string
+          organization_id?: string | null
           phone?: string | null
           place_id: string
+          postal_code?: string | null
           rating?: number | null
+          rating_avg_cached?: number | null
           raw?: Json | null
           source?: string
+          timezone?: string | null
           types?: Json | null
           updated_at?: string | null
           user_id: string
@@ -58,6 +72,9 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          category?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
           formatted_address?: string | null
           google_account_id?: string | null
@@ -67,18 +84,30 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           name?: string
+          organization_id?: string | null
           phone?: string | null
           place_id?: string
+          postal_code?: string | null
           rating?: number | null
+          rating_avg_cached?: number | null
           raw?: Json | null
           source?: string
+          timezone?: string | null
           types?: Json | null
           updated_at?: string | null
           user_id?: string
           user_ratings_total?: number | null
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "establishments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       établissements: {
         Row: {
@@ -126,6 +155,7 @@ export type Database = {
           id: string
           provider: string
           refresh_token: string | null
+          scope: string | null
           token_expires_at: string | null
           updated_at: string
           user_id: string
@@ -136,6 +166,7 @@ export type Database = {
           id?: string
           provider?: string
           refresh_token?: string | null
+          scope?: string | null
           token_expires_at?: string | null
           updated_at?: string
           user_id: string
@@ -146,6 +177,7 @@ export type Database = {
           id?: string
           provider?: string
           refresh_token?: string | null
+          scope?: string | null
           token_expires_at?: string | null
           updated_at?: string
           user_id?: string
@@ -188,6 +220,62 @@ export type Database = {
           status?: string
           updated_count?: number | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      organization_members: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_user_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -423,6 +511,62 @@ export type Database = {
           srtext?: string | null
         }
         Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          current_period_end: string
+          current_period_start: string
+          id: string
+          organization_id: string | null
+          plan_code: string
+          provider: string | null
+          provider_customer_id: string | null
+          provider_subscription_id: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          organization_id?: string | null
+          plan_code?: string
+          provider?: string | null
+          provider_customer_id?: string | null
+          provider_subscription_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          organization_id?: string | null
+          plan_code?: string
+          provider?: string | null
+          provider_customer_id?: string | null
+          provider_subscription_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_establishment: {
         Row: {
@@ -713,6 +857,7 @@ export type Database = {
             }
             Returns: string
           }
+      check_expired_subscriptions: { Args: never; Returns: undefined }
       cleanup_duplicate_reviews: {
         Args: { p_place_id: string; p_user_id: string }
         Returns: {
