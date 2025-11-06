@@ -82,8 +82,17 @@ export default function ParametresPage() {
   const handleForceSync = async () => {
     setIsSyncing(true);
     try {
-      // TODO: Implémenter la synchronisation forcée
-      toast.info("Fonctionnalité de synchronisation manuelle en cours de développement");
+      // Appeler la fonction de synchronisation manuelle
+      const { data, error } = await supabase.functions.invoke('google-sync-cron');
+      
+      if (error) throw error;
+      
+      toast.success("Synchronisation lancée avec succès");
+      
+      // Recharger les logs après 2 secondes
+      setTimeout(() => {
+        loadLastImport();
+      }, 2000);
     } catch (error) {
       console.error('Erreur sync:', error);
       toast.error("Erreur lors de la synchronisation");
@@ -268,21 +277,42 @@ export default function ParametresPage() {
           </Card>
         )}
 
-        {/* Synchronisation automatique (Phase 3 - À venir) */}
-        <Card className="opacity-60">
+        {/* Synchronisation automatique */}
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Synchronisation automatique</span>
-              <Badge variant="outline">À venir</Badge>
+              <Badge variant="default">Actif</Badge>
             </CardTitle>
             <CardDescription>
               Importation automatique des nouveaux avis toutes les 6 heures
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Cette fonctionnalité sera disponible prochainement. Elle permettra d'importer automatiquement vos nouveaux avis sans action de votre part.
-            </p>
+          <CardContent className="space-y-4">
+            <div className="text-sm space-y-2">
+              <p className="text-muted-foreground">
+                La synchronisation automatique est configurée pour s'exécuter toutes les 6 heures (0:00, 6:00, 12:00, 18:00).
+              </p>
+              <p className="text-muted-foreground">
+                Elle rafraîchit automatiquement vos tokens Google expirés et importe les nouveaux avis sans action de votre part.
+              </p>
+            </div>
+
+            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+              <h4 className="font-medium text-sm">Fonctionnalités :</h4>
+              <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Rafraîchissement automatique des tokens expirés</li>
+                <li>Import incrémental (uniquement nouveaux avis)</li>
+                <li>Traçabilité complète dans l'historique</li>
+                <li>Gestion d'erreur avec retry automatique</li>
+              </ul>
+            </div>
+
+            {googleConnection && (
+              <p className="text-xs text-muted-foreground">
+                ℹ️ Pour configurer le cron job, consultez le fichier <code className="bg-muted px-1 py-0.5 rounded">CRON_SETUP.md</code>
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

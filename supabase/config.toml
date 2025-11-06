@@ -10,3 +10,6 @@ verify_jwt = false
 [functions.google-business-locations]
 
 [functions.google-business-reviews]
+
+[functions.google-sync-cron]
+verify_jwt = false
