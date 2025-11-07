@@ -274,7 +274,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
-    // Auth utilisateur (si dispo)
+    // SECURITY: Require authentication
     const auth = req.headers.get("Authorization") ?? "";
     let userId: string | null = null;
     if (auth.toLowerCase().startsWith("bearer ")) {
@@ -282,6 +282,11 @@ Deno.serve(async (req) => {
         const { data } = await supabaseAdmin.auth.getUser(auth.split(" ")[1]);
         userId = data.user?.id ?? null;
       } catch {}
+    }
+
+    // Reject unauthenticated requests
+    if (!userId) {
+      return json({ ok: false, error: "authentication_required" }, 401);
     }
 
     const { place_id, name, dryRun = false } = await req.json().catch(()=>({}));
@@ -382,12 +387,12 @@ Deno.serve(async (req) => {
     if (!dryRun) {
       const payload = {
         place_id,
-        user_id: userId ?? "00000000-0000-0000-0000-000000000000", // fallback
+        user_id: userId, // Authentication now required - no fallback
         last_analyzed_at: new Date().toISOString(),
         total_count: stats.total,
         avg_rating: stats.overall,
         positive_ratio: stats.positive_pct / 100,
-        top_issues: (issuesComputed || []).map((issue: any, idx: number) => ({ 
+        top_issues: (issuesComputed || []).map((issue: any, idx: number) => ({
           theme: issue.theme || issue,
           count: issue.count || issue.mentions || 0,
           severity: idx < 1 ? 'high' : 'medium' 
