@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import ManualReviewPanel from "./ManualReviewPanel";
 import ImportCsvPanel from "./ImportCsvPanel";
 import PasteImportPanel from "./PasteImportPanel";
+import GoogleImportButton from "./GoogleImportButton";
 
 interface ImportAvisToolbarProps {
   onClose: () => void;
@@ -69,12 +70,8 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
         return <PasteImportPanel onImportBulk={handleBulkImport} onClose={onClose} onImportSuccess={onImportSuccess} onOpenVisualPanel={onOpenVisualPanel} />;
       case "auto":
         return (
-          <div className="text-center py-8 text-muted-foreground">
-            <Zap className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium mb-2">Récupération automatique</p>
-            <p className="text-sm">
-              Connexion à Google/Tripadvisor/Google Maps à venir…
-            </p>
+          <div className="py-6">
+            <GoogleImportButton onSuccess={onImportSuccess} />
           </div>
         );
       default:

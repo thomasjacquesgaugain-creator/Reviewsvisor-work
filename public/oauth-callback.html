@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Google OAuth Callback</title>
+</head>
+<body>
+  <script>
+    // Extract authorization code from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const error = urlParams.get('error');
+
+    if (code) {
+      // Send code back to opener window
+      if (window.opener) {
+        window.opener.postMessage(
+          { type: 'oauth-callback', code },
+          window.location.origin
+        );
+      }
+    } else if (error) {
+      console.error('OAuth error:', error);
+      if (window.opener) {
+        window.opener.postMessage(
+          { type: 'oauth-error', error },
+          window.location.origin
+        );
+      }
+    }
+
+    // Close popup after a short delay
+    setTimeout(() => {
+      window.close();
+    }, 1000);
+  </script>
+  <p>Authentification en cours...</p>
+</body>
+</html>
