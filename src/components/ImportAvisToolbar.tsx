@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { X, Edit3, Upload, Zap, Clipboard } from "lucide-react";
+import { X, Upload, Zap, Clipboard } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import ManualReviewPanel from "./ManualReviewPanel";
 import ImportCsvPanel from "./ImportCsvPanel";
 import PasteImportPanel from "./PasteImportPanel";
 import GoogleImportButton from "./GoogleImportButton";
@@ -15,7 +14,7 @@ interface ImportAvisToolbarProps {
   onOpenVisualPanel?: () => void;
 }
 
-type ActiveTab = "manual" | "csv" | "paste" | "auto";
+type ActiveTab = "csv" | "paste" | "auto";
 
 export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuccess, onOpenVisualPanel }: ImportAvisToolbarProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>("paste");
@@ -34,12 +33,6 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
   };
 
   const tabs = [
-    {
-      id: "manual" as const,
-      label: "Saisie manuelle",
-      icon: Edit3,
-      testId: "tab-manuel"
-    },
     {
       id: "csv" as const,
       label: "Import CSV",
@@ -62,8 +55,6 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case "manual":
-        return <ManualReviewPanel onSubmit={handleManualReviewSubmit} />;
       case "csv":
         return <ImportCsvPanel onFileAnalyzed={onFileAnalyzed} />;
       case "paste":
