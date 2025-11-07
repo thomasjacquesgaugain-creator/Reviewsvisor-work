@@ -94,16 +94,12 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
       }
       
       // Check if review already exists (by source_review_id which stores our hash)
-      const { data: existingReview, error: checkError } = await supabase
+      const { data: existingReview } = await supabase
         .from('reviews')
         .select('id')
         .eq('user_id', user.user.id)
         .eq('source_review_id', reviewHash)
-        .maybeSingle();
-      
-      if (checkError) {
-        console.error('Error checking for duplicate:', checkError);
-      }
+        .single();
       
       if (existingReview) {
         reasons.duplicate++;

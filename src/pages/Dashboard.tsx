@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Check } from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,12 +13,10 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
-import { useToast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const etablissementId = searchParams.get('etablissementId');
-  const { toast } = useToast();
   const {
     user
   } = useAuth();
@@ -87,10 +85,6 @@ const Dashboard = () => {
   // États pour l'édition des réponses automatiques
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
   const [editedResponses, setEditedResponses] = useState<Record<string, string>>({});
-  const [validatedReviews, setValidatedReviews] = useState<Set<string>>(new Set());
-  const [copiedReviews, setCopiedReviews] = useState<Set<string>>(new Set());
-  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
-  const [totalUnrespondedReviews, setTotalUnrespondedReviews] = useState(0);
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -126,32 +120,8 @@ const Dashboard = () => {
     cumulative: 82.3
   }];
 
-  // Fonction pour charger les avis non répondus
-  const loadUnrespondedReviews = async () => {
-    const currentEstab = selectedEtab || selectedEstablishment;
-    if (!user?.id || !currentEstab?.place_id) return;
-    
-    // Charger les avis non répondus
-    const { data: reviewsData, error: reviewsError, count } = await supabase
-      .from('reviews')
-      .select('*', { count: 'exact' })
-      .eq('place_id', currentEstab.place_id)
-      .eq('user_id', user.id)
-      .is('responded_at', null)
-      .order('published_at', { ascending: false });
-      
-    if (reviewsError) {
-      console.error('[dashboard] reviews error:', reviewsError);
-    } else if (reviewsData) {
-      setRecentReviews(reviewsData.slice(0, 10)); // Charger jusqu'à 10 avis non répondus
-      setCurrentReviewIndex(0); // Réinitialiser l'index
-      setTotalUnrespondedReviews(count || 0); // Stocker le nombre total
-    }
-  };
-
   // Fetch review insights data
   useEffect(() => {
-    
     const fetchInsights = async () => {
       // Utiliser selectedEtab (localStorage) ou selectedEstablishment (store)
       const currentEstab = selectedEtab || selectedEstablishment;
@@ -226,9 +196,7 @@ const Dashboard = () => {
         setIsLoadingInsight(false);
       }
     };
-    
     fetchInsights();
-    loadUnrespondedReviews();
   }, [user?.id, selectedEstablishment?.place_id, selectedEtab?.place_id]);
 
   // Mise à jour de l'heure en temps réel
@@ -686,12 +654,17 @@ const Dashboard = () => {
           </Card>
 
           <Card className="relative">
-            <CardContent className="p-6 text-center">
-              <div className="flex items-center justify-center gap-1 mb-2">
-                <span className="text-2xl font-bold text-red-600">{negativePct}%</span>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">Avis négatifs</div>
+                  <div className="text-2xl font-bold">{negativePct}%</div>
+                  <div className="text-xs text-gray-400">avis négatifs</div>
+                </div>
               </div>
-              <p className="text-sm text-gray-600">Avis négatifs</p>
-              <p className="text-xs text-gray-500">Note ≤ 2 étoiles</p>
               <Button variant="ghost" size="sm" onClick={() => setShowAvisNegatifs(!showAvisNegatifs)} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-red-50">
                 {showAvisNegatifs ? <ChevronUp className="w-3 h-3 text-red-600" /> : <ChevronDown className="w-3 h-3 text-red-600" />}
               </Button>
@@ -1131,11 +1104,7 @@ const Dashboard = () => {
           {showReponseAuto && <CardContent>
               <div className="space-y-4">
                 {recentReviews.length > 0 ? (
-                  // Afficher seulement l'avis actuel
-                  (() => {
-                    const review = recentReviews[currentReviewIndex];
-                    if (!review) return null;
-                    const index = currentReviewIndex;
+                  recentReviews.slice(0, 2).map((review: any, index: number) => {
                     const rating = review.rating || 0;
                     const isPositive = rating >= 4;
                     const authorName = review.author || 'Anonyme';
@@ -1149,61 +1118,6 @@ const Dashboard = () => {
                     
                     const currentResponse = editedResponses[reviewId] || defaultResponse;
                     const isEditing = editingReviewId === reviewId;
-                    const isValidated = validatedReviews.has(reviewId);
-                    const isCopied = copiedReviews.has(reviewId);
-                    
-                    const handleCopy = async () => {
-                      try {
-                        await navigator.clipboard.writeText(currentResponse);
-                        
-                        // Marquer l'avis comme répondu dans la base de données
-                        const { error: updateError } = await supabase
-                          .from('reviews')
-                          .update({
-                            responded_at: new Date().toISOString(),
-                            ai_response_text: currentResponse
-                          })
-                          .eq('id', review.id);
-                        
-                        if (updateError) {
-                          console.error('Erreur lors de la mise à jour de l\'avis:', updateError);
-                        }
-                        
-                        setCopiedReviews(prev => new Set(prev).add(reviewId));
-                        toast({
-                          title: "Réponse copiée !",
-                          description: "Avis marqué comme répondu. Passage au suivant...",
-                        });
-                        
-                        // Passer à l'avis suivant après 1.5 secondes
-                        setTimeout(() => {
-                          setCopiedReviews(prev => {
-                            const newSet = new Set(prev);
-                            newSet.delete(reviewId);
-                            return newSet;
-                          });
-                          
-                          // Passer à l'avis suivant
-                          if (index < recentReviews.length - 1) {
-                            setCurrentReviewIndex(prev => prev + 1);
-                          } else {
-                            // On est au dernier avis, recharger les avis
-                            toast({
-                              title: "Tous les avis traités !",
-                              description: "Rechargement des avis non répondus...",
-                            });
-                            // Recharger les avis
-                            loadUnrespondedReviews();
-                          }
-                        }, 1500);
-                      } catch (err) {
-                        toast({
-                          title: "Erreur",
-                          description: "Impossible de copier la réponse",
-                          variant: "destructive",
-                        });
-                      }
-                    };
                     
                     return (
                       <div key={reviewId} className="border rounded-lg p-4 bg-gray-50">
@@ -1220,8 +1134,8 @@ const Dashboard = () => {
                               ))}
                             </div>
                           </div>
-                          <Badge variant="outline" className={isValidated ? "text-green-600 border-green-600" : isPositive ? "text-green-600 border-green-600" : "text-orange-600 border-orange-600"}>
-                            {isValidated ? "Validé" : "À valider"}
+                          <Badge variant="outline" className={isPositive ? "text-green-600 border-green-600" : "text-orange-600 border-orange-600"}>
+                            À valider
                           </Badge>
                         </div>
                         <p className="text-sm text-gray-700 mb-3">"{reviewText.substring(0, 150)}{reviewText.length > 150 ? '...' : ''}"</p>
@@ -1262,34 +1176,9 @@ const Dashboard = () => {
                                 Annuler
                               </Button>
                             </>
-                          ) : isValidated ? (
-                            <Button 
-                              size="sm" 
-                              className={`${isCopied ? 'bg-green-600 hover:bg-green-700' : 'bg-purple-600 hover:bg-purple-700'} text-white gap-2 transition-all`}
-                              onClick={handleCopy}
-                            >
-                              {isCopied ? (
-                                <>
-                                  <Check className="w-4 h-4" />
-                                  Réponse copiée !
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-4 h-4" />
-                                  Copier la réponse
-                                </>
-                              )}
-                            </Button>
                           ) : (
                             <>
-                              <Button 
-                                size="sm" 
-                                className="bg-green-600 hover:bg-green-700 text-white gap-2"
-                                onClick={() => setValidatedReviews(prev => new Set(prev).add(reviewId))}
-                              >
-                                <Check className="w-4 h-4" />
-                                Valider
-                              </Button>
+                              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
                               <Button 
                                 size="sm" 
                                 variant="outline"
@@ -1307,7 +1196,7 @@ const Dashboard = () => {
                         </div>
                       </div>
                     );
-                  })()
+                  })
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <p className="text-sm">Aucun avis récent disponible</p>

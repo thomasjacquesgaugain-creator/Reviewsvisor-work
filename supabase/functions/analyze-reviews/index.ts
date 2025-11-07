@@ -145,22 +145,19 @@ function computeHeuristicThemes(rows: ReviewRow[]) {
 // Heuristic extraction for issues and strengths
 function computeHeuristicIssuesStrengths(rows: ReviewRow[]) {
   const negatives: Record<string, string[]> = {
-    'Service / attente': ['attente','lent','lente','retard','ralenti','trop long','patienter','long'],
-    'Ambiance / bruit': ['bruit','bruyant','fort','musique forte','tapage','sonore'],
-    'Propreté': ['sale','propreté','sales','malpropre','hygiène','propre'],
-    'Qualité des plats': ['froid','pas bon','mauvais','sec','cru','trop cuit','fade','tiède','raté'],
-    'Prix élevé': ['cher','trop cher','prix élevés','coûteux','onéreux'],
-    'Portions': ['petite portion','portion','insuffisant','pas assez'],
-    'Disponibilité': ['rupture','plus','manque','indisponible']
+    'Service / attente': ['attente','lent','lente','retard','ralenti','trop long','patienter'],
+    'Ambiance / bruit': ['bruit','bruyant','fort','musique forte','tapage'],
+    'Propreté': ['sale','propreté','sales','malpropre','hygiène'],
+    'Qualité des plats': ['froid','pas bon','mauvais','sec','cru','trop cuit','fade'],
+    'Prix': ['cher','trop cher','prix élevés','coûteux']
   };
   const positives: Record<string, string[]> = {
-    'Accueil / sympathie': ['accueil','sympa','gentil','chaleureux','aimable','souriant','agréable'],
-    'Qualité / goût': ['délicieux','excellent','très bon','bon','goût','savoureux','parfait','top'],
-    'Rapidité du service': ['rapide','vite','efficace','prompt'],
-    'Ambiance agréable': ['ambiance','agréable','cosy','chaleureuse','calme','sympathique'],
-    'Bon rapport qualité/prix': ['bon rapport','prix correct','pas cher','raisonnable','abordable']
+    'Accueil / sympathie': ['accueil','sympa','gentil','chaleureux','aimable','souriant'],
+    'Qualité / goût': ['délicieux','excellent','très bon','goût','savoureux','parfait'],
+    'Rapidité du service': ['rapide','vite','efficace'],
+    'Ambiance agréable': ['ambiance','agréable','cosy','chaleureuse','calme'],
+    'Bon rapport qualité/prix': ['bon rapport','prix correct','pas cher','raisonnable']
   };
-  
   const countMatches = (text: string, dict: Record<string,string[]>) => {
     const counts: Record<string, number> = {};
     const t = text.toLowerCase();
@@ -169,14 +166,8 @@ function computeHeuristicIssuesStrengths(rows: ReviewRow[]) {
     }
     return counts;
   };
-  
   const negAgg: Record<string, number> = {};
   const posAgg: Record<string, number> = {};
-  
-  // Compter les avis négatifs (1-2 étoiles) et positifs (4-5 étoiles)
-  const lowRatedCount = rows.filter(r => (r.rating ?? 0) <= 2).length;
-  const highRatedCount = rows.filter(r => (r.rating ?? 0) >= 4).length;
-  
   for (const r of rows) {
     const t = (r.text ?? '').toLowerCase();
     if (!t) continue;
@@ -185,80 +176,22 @@ function computeHeuristicIssuesStrengths(rows: ReviewRow[]) {
     for (const [k,v] of Object.entries(n)) negAgg[k] = (negAgg[k]??0)+v;
     for (const [k,v] of Object.entries(p)) posAgg[k] = (posAgg[k]??0)+v;
   }
-  
-  let issues = Object.entries(negAgg).map(([theme,count])=>({theme, count})).sort((a,b)=>b.count-a.count);
-  
-  // Garantir au moins 3 problèmes
-  if (issues.length < 3) {
-    const genericIssues = [
-      { theme: "Points d'amélioration identifiés", count: lowRatedCount },
-      { theme: "Satisfaction globale à optimiser", count: Math.max(1, Math.floor(rows.length * 0.2)) },
-      { theme: "Expérience client à perfectionner", count: Math.max(1, Math.floor(rows.length * 0.15)) }
-    ];
-    for (const gi of genericIssues) {
-      if (issues.length >= 3) break;
-      if (!issues.find(i => i.theme === gi.theme)) issues.push(gi);
-    }
-  }
-  
-  issues = issues.slice(0, 3);
-  
-  console.log(`[computeHeuristicIssuesStrengths] Issues trouvés: ${issues.length}`, issues);
-  
+  const issues = Object.entries(negAgg).map(([theme,count])=>({theme, count})).sort((a,b)=>b.count-a.count).slice(0,3);
   const strengths = Object.entries(posAgg).map(([theme,count])=>({theme, count})).sort((a,b)=>b.count-a.count).slice(0,3);
-  
-  // Garantir au moins 3 points forts
-  if (strengths.length < 3) {
-    const genericStrengths = [
-      { theme: "Satisfaction globale des clients", count: highRatedCount },
-      { theme: "Expérience positive", count: Math.max(1, Math.floor(rows.length * 0.3)) }
-    ];
-    for (const gs of genericStrengths) {
-      if (strengths.length >= 3) break;
-      if (!strengths.find(s => s.theme === gs.theme)) strengths.push(gs);
-    }
-  }
-  
-  console.log(`[computeHeuristicIssuesStrengths] Retour final - Issues: ${issues.length}, Strengths: ${strengths.length}`);
-  
   return { issues, strengths };
 }
 
-function buildHeuristicRecommendations(issues: {theme:string;count:number}[], strengths: {theme:string;count:number}[]) {
+function buildHeuristicRecommendations(issues: {theme:string;count:number}[]) {
   const recs: string[] = [];
-  
-  // Recommandations basées sur les problèmes
   for (const it of issues.slice(0,3)) {
-    if (it.theme.toLowerCase().includes('attente')) recs.push("Réduisez l'attente en salle en optimisant le staffing et la prise de commande.");
-    else if (it.theme.toLowerCase().includes('propret')) recs.push("Renforcez les contrôles de propreté et l'entretien régulier des locaux.");
-    else if (it.theme.toLowerCase().includes('qualit')) recs.push("Standardisez les recettes et vérifiez systématiquement les cuissons avant service.");
-    else if (it.theme.toLowerCase().includes('bruit') || it.theme.toLowerCase().includes('ambiance')) recs.push("Ajustez le volume sonore et améliorez l'acoustique pour plus de confort.");
-    else if (it.theme.toLowerCase().includes('prix')) recs.push("Clarifiez la carte des prix et proposez des formules à bon rapport qualité/prix.");
-    else if (it.theme.toLowerCase().includes('service')) recs.push("Formez davantage l'équipe sur la qualité du service et l'accueil client.");
+    if (it.theme.toLowerCase().includes('attente')) recs.push("Réduisez l'attente en salle (staffing/prise de commande).");
+    else if (it.theme.toLowerCase().includes('propret')) recs.push("Renforcez les contrôles de propreté et l'entretien régulier.");
+    else if (it.theme.toLowerCase().includes('qualit')) recs.push("Standardisez les recettes et vérifiez les cuissons avant service.");
+    else if (it.theme.toLowerCase().includes('bruit') || it.theme.toLowerCase().includes('ambiance')) recs.push("Ajustez volume et acoustique pour limiter le bruit.");
+    else if (it.theme.toLowerCase().includes('prix')) recs.push("Clarifiez les prix et proposez des menus à bon rapport qualité/prix.");
   }
-  
-  // Recommandations basées sur les forces (capitaliser dessus)
-  for (const st of strengths.slice(0,2)) {
-    if (st.theme.toLowerCase().includes('accueil') || st.theme.toLowerCase().includes('sympathie')) {
-      recs.push("Continuez à valoriser votre accueil chaleureux, c'est un atout clé.");
-    } else if (st.theme.toLowerCase().includes('qualit') || st.theme.toLowerCase().includes('goût')) {
-      recs.push("Maintenez la qualité de vos plats, vos clients l'apprécient particulièrement.");
-    }
-  }
-  
-  // Recommandations génériques si pas assez
-  const generic = [
-    "Demandez régulièrement des retours clients pour identifier de nouvelles opportunités d'amélioration.",
-    "Suivez l'évolution de votre note moyenne et ajustez vos actions en conséquence.",
-    "Répondez systématiquement aux avis négatifs pour montrer votre engagement."
-  ];
-  
-  for (const g of generic) {
-    if (recs.length >= 3) break;
-    recs.push(g);
-  }
-  
-  return recs.slice(0, 5);
+  if (!recs.length) recs.push("Collectez plus d'avis pour des recommandations plus précises.");
+  return recs.slice(0,3);
 }
 
 // Résumé IA (facultatif si pas de clé)
@@ -298,19 +231,8 @@ Analyse ces avis et retourne strictement ce JSON:
     {"theme": "Rapport qualité/prix", "count": 25},
     {"theme": "Propreté", "count": 20}
   ],
-  "recommendations": [
-    "Première recommandation actionnable concrète",
-    "Deuxième recommandation actionnable concrète", 
-    "Troisième recommandation actionnable concrète",
-    "Quatrième recommandation actionnable concrète"
-  ]
+  "recommendations": ["action 1", "action 2", "action 3"]
 }
-
-INSTRUCTIONS CRITIQUES:
-- Pour "top_issues": génère EXACTEMENT 3 problèmes, même s'il faut en inventer de génériques
-- Pour "recommendations": génère AU MINIMUM 3 et MAXIMUM 5 recommandations actionnables et concrètes
-- Chaque recommandation doit être spécifique et basée sur les avis analysés
-- Priorise les actions qui auront le plus d'impact sur la satisfaction client
 
 INSTRUCTIONS POUR LES THÉMATIQUES:
 - Identifie les 5-7 thématiques les PLUS mentionnées dans les avis
@@ -453,19 +375,9 @@ Deno.serve(async (req) => {
       ? summary.themes
       : computeHeuristicThemes(rows);
     const heur = computeHeuristicIssuesStrengths(rows);
-    
-    // Garantir au moins 3 problèmes et 3 points forts
-    const issuesComputed = (summary?.top_issues && summary.top_issues.length >= 3) 
-      ? summary.top_issues 
-      : heur.issues;
-    const strengthsComputed = (summary?.top_strengths && summary.top_strengths.length >= 3) 
-      ? summary.top_strengths 
-      : heur.strengths;
-    
-    console.log(`[analyze] Issues computed: ${issuesComputed.length}, Strengths computed: ${strengthsComputed.length}`);
-    const recsComputed = (summary?.recommendations && summary.recommendations.length >= 3) 
-      ? summary.recommendations 
-      : buildHeuristicRecommendations(issuesComputed, strengthsComputed);
+    const issuesComputed = (summary?.top_issues && summary.top_issues.length) ? summary.top_issues : heur.issues;
+    const strengthsComputed = (summary?.top_strengths && summary.top_strengths.length) ? summary.top_strengths : heur.strengths;
+    const recsComputed = (summary?.recommendations && summary.recommendations.length) ? summary.recommendations : buildHeuristicRecommendations(issuesComputed);
 
     if (!dryRun) {
       const payload = {

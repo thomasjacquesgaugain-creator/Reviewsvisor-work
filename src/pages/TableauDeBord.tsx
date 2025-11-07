@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, MessageSquare } from "lucide-react";
+import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -12,9 +12,7 @@ const Dashboard = () => {
   const [userProfile, setUserProfile] = useState<{ first_name: string; last_name: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [recentReviewsCount, setRecentReviewsCount] = useState(0);
-  const [unrespondedReviewsCount, setUnrespondedReviewsCount] = useState(0);
   const [lastReviewDate, setLastReviewDate] = useState<Date | null>(null);
-  const [ratingIncrease, setRatingIncrease] = useState<number>(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -48,35 +46,6 @@ const Dashboard = () => {
           if (reviews.length > 0 && reviews[0].inserted_at) {
             setLastReviewDate(new Date(reviews[0].inserted_at));
           }
-        }
-
-        // Récupérer le nombre d'avis non répondus
-        const { data: unrespondedReviews, error: unrespondedError } = await supabase
-          .from('reviews')
-          .select('id', { count: 'exact' })
-          .eq('user_id', session.user.id)
-          .is('responded_at', null);
-
-        if (!unrespondedError && unrespondedReviews) {
-          setUnrespondedReviewsCount(unrespondedReviews.length);
-        }
-
-        // Calculer l'augmentation de la note moyenne
-        const { data: allReviews } = await supabase
-          .from('reviews')
-          .select('rating, inserted_at')
-          .eq('user_id', session.user.id)
-          .order('inserted_at', { ascending: true });
-
-        if (allReviews && allReviews.length > 1) {
-          const firstMonthReviews = allReviews.slice(0, Math.min(10, Math.floor(allReviews.length / 2)));
-          const recentReviews = allReviews.slice(-10);
-          
-          const initialAvg = firstMonthReviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / firstMonthReviews.length;
-          const currentAvg = recentReviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / recentReviews.length;
-          
-          const increase = ((currentAvg - initialAvg) / initialAvg) * 100;
-          setRatingIncrease(Math.round(increase));
         }
       } catch (error) {
         console.error('Error:', error);
@@ -248,14 +217,14 @@ const Dashboard = () => {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 border rounded-xl">
+                  <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200 border rounded-xl">
                     <CardContent className="p-4 flex items-center gap-3">
-                      <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center border-2 border-purple-300 shadow-md">
-                        <MessageSquare className="w-5 h-5 text-white" />
+                      <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center border-2 border-green-300 shadow-md">
+                        <ArrowUp className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{unrespondedReviewsCount} avis à répondre</p>
-                        <p className="text-sm text-gray-600">Réponses automatiques en attente</p>
+                        <p className="font-medium text-gray-900">Note augmentée de 0,3</p>
+                        <p className="text-sm text-gray-600">Cette semaine</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -272,14 +241,14 @@ const Dashboard = () => {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200 border rounded-xl">
+                  <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 border rounded-xl">
                     <CardContent className="p-4 flex items-center gap-3">
-                      <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center border-2 border-green-300 shadow-md">
-                        <ArrowUp className="w-5 h-5 text-white" />
+                      <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center border-2 border-purple-300 shadow-md">
+                        <TrendingUp className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">Note augmentée de {ratingIncrease > 0 ? '+' : ''}{ratingIncrease}%</p>
-                        <p className="text-sm text-gray-600">Depuis la création du compte</p>
+                        <p className="font-medium text-gray-900">+15% satisfaction</p>
+                        <p className="text-sm text-gray-600">Par rapport au mois dernier</p>
                       </div>
                     </CardContent>
                   </Card>

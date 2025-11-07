@@ -2,17 +2,3 @@ project_id = "zzjmtipdsccxmmoaetlp"
 
 [functions.analyze-reviews]
 verify_jwt = false
-
-[functions.google-oauth-callback]
-
-[functions.google-oauth-init]
-verify_jwt = false
-
-[functions.google-business-accounts]
-
-[functions.google-business-locations]
-
-[functions.google-business-reviews]
-
-[functions.google-sync-cron]
-verify_jwt = false
