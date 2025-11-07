@@ -30,18 +30,20 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
   const [locations, setLocations] = useState<Location[]>([]);
   const [accountId, setAccountId] = useState<string>("");
 
-  const initiateGoogleOAuth = () => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (!clientId) {
-      toast({
-        title: "Configuration manquante",
-        description: "La clé Google Client ID n'est pas configurée",
-        variant: "destructive",
-      });
-      return;
-    }
+  const initiateGoogleOAuth = async () => {
+    setLoading(true);
+    try {
+      // Fetch client ID from edge function
+      const { data: configData, error: configError } = await supabase.functions.invoke(
+        'google-client-config'
+      );
 
-    const redirectUri = 'https://auth.lovable.so/oauth/callback';
+      if (configError || !configData?.clientId) {
+        throw new Error('Configuration Google manquante');
+      }
+
+      const clientId = configData.clientId;
+      const redirectUri = 'https://auth.lovable.so/oauth/callback';
     const scope = [
       'openid',
       'email',
@@ -49,34 +51,45 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       'https://www.googleapis.com/auth/business.manage',
     ].join(' ');
 
-    const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-    authUrl.searchParams.set('client_id', clientId);
-    authUrl.searchParams.set('redirect_uri', redirectUri);
-    authUrl.searchParams.set('response_type', 'code');
-    authUrl.searchParams.set('scope', scope);
-    authUrl.searchParams.set('access_type', 'offline');
-    authUrl.searchParams.set('prompt', 'consent');
+      const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+      authUrl.searchParams.set('client_id', clientId);
+      authUrl.searchParams.set('redirect_uri', redirectUri);
+      authUrl.searchParams.set('response_type', 'code');
+      authUrl.searchParams.set('scope', scope);
+      authUrl.searchParams.set('access_type', 'offline');
+      authUrl.searchParams.set('prompt', 'consent');
 
-    // Open popup
-    const popup = window.open(
-      authUrl.toString(),
-      'googleOAuth',
-      'width=600,height=700,left=200,top=100'
-    );
+      setLoading(false);
 
-    // Listen for OAuth callback
-    const handleMessage = async (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      
-      if (event.data.type === 'oauth-callback' && event.data.code) {
-        window.removeEventListener('message', handleMessage);
-        popup?.close();
+      // Open popup
+      const popup = window.open(
+        authUrl.toString(),
+        'googleOAuth',
+        'width=600,height=700,left=200,top=100'
+      );
+
+      // Listen for OAuth callback
+      const handleMessage = async (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return;
         
-        await handleOAuthCallback(event.data.code);
-      }
-    };
+        if (event.data.type === 'oauth-callback' && event.data.code) {
+          window.removeEventListener('message', handleMessage);
+          popup?.close();
+          
+          await handleOAuthCallback(event.data.code);
+        }
+      };
 
-    window.addEventListener('message', handleMessage);
+      window.addEventListener('message', handleMessage);
+    } catch (error: any) {
+      console.error('Error initiating OAuth:', error);
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de démarrer l'authentification",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
   };
 
   const handleOAuthCallback = async (code: string) => {
