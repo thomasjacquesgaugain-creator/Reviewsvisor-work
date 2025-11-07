@@ -39,7 +39,12 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       );
 
       if (configError || !configData?.clientId) {
-        throw new Error('Configuration Google manquante');
+        toast({
+          title: "Configuration OAuth incomplète",
+          description: "Ajoutez GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET dans Paramètres → Variables.",
+          variant: "destructive",
+        });
+        throw new Error('Configuration OAuth incomplète');
       }
 
       const clientId = configData.clientId;
