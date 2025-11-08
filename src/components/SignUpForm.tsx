@@ -44,6 +44,22 @@ export default function SignUpForm() {
       return;
     }
 
+    // Upsert profile data
+    if (data.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: data.user.id,
+          first_name: firstName,
+          last_name: lastName,
+          updated_at: new Date().toISOString()
+        });
+
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+      }
+    }
+
     toast({
       title: "Compte créé !",
       description: "Vérifiez votre boîte mail pour confirmer votre compte."
@@ -58,6 +74,18 @@ export default function SignUpForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="votre@email.com"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          required
+        />
+      </div>
+      
+      <div className="space-y-2">
         <Label htmlFor="firstName">Prénom</Label>
         <Input
           id="firstName"
@@ -66,8 +94,6 @@ export default function SignUpForm() {
           onChange={e => setFirstName(e.target.value)}
           required
           maxLength={80}
-          pattern="[A-Za-zÀ-ÿ\s\-]+"
-          title="Uniquement des lettres, espaces et tirets"
         />
       </div>
       
@@ -80,20 +106,6 @@ export default function SignUpForm() {
           onChange={e => setLastName(e.target.value)}
           required
           maxLength={80}
-          pattern="[A-Za-zÀ-ÿ\s\-]+"
-          title="Uniquement des lettres, espaces et tirets"
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="votre@email.com"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          required
         />
       </div>
       
