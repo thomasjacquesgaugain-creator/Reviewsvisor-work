@@ -283,8 +283,11 @@ export type Database = {
         Row: {
           created_at: string
           current_establishment_id: string | null
+          display_name: string | null
+          first_name: string | null
           full_name: string | null
           id: string
+          last_name: string | null
           phone: string | null
           role: string
           updated_at: string
@@ -293,8 +296,11 @@ export type Database = {
         Insert: {
           created_at?: string
           current_establishment_id?: string | null
+          display_name?: string | null
+          first_name?: string | null
           full_name?: string | null
           id?: string
+          last_name?: string | null
           phone?: string | null
           role?: string
           updated_at?: string
@@ -303,8 +309,11 @@ export type Database = {
         Update: {
           created_at?: string
           current_establishment_id?: string | null
+          display_name?: string | null
+          first_name?: string | null
           full_name?: string | null
           id?: string
+          last_name?: string | null
           phone?: string | null
           role?: string
           updated_at?: string
