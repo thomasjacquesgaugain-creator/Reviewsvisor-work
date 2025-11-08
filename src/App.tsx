@@ -34,27 +34,26 @@ const App = () => {
               <Dashboard />
             </Protected>
           } />
-          {/* Routes masquées - code conservé pour OAuth et backend */}
-          {/* <Route path="/etablissement" element={
+          <Route path="/etablissement" element={
             <Protected>
               <Etablissement />
             </Protected>
-          } /> */}
-          {/* <Route path="/debug/env" element={
+          } />
+          <Route path="/debug/env" element={
             <Protected>
               <DebugEnv />
             </Protected>
-          } /> */}
-          {/* <Route path="/debug/reviews" element={
+          } />
+          <Route path="/debug/reviews" element={
             <Protected>
               <DebugReviews />
             </Protected>
-          } /> */}
-          {/* <Route path="/debug/insights" element={
+          } />
+          <Route path="/debug/insights" element={
             <Protected>
               <DebugInsights />
             </Protected>
-          } /> */}
+          } />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
