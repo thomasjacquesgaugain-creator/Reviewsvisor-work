@@ -5,13 +5,26 @@ import type { Session, User } from "@supabase/supabase-js";
 type AuthCtx = {
   session: Session | null;
   user: User | null;
+  displayName: string;
   loading: boolean;
   signOut: () => Promise<void>;
 };
 
+function getDisplayName(user: User | null): string {
+  if (!user) return "";
+  const m = user.user_metadata ?? {};
+  const full =
+    m.full_name ||
+    m.name ||
+    [m.given_name, m.family_name].filter(Boolean).join(" ").trim();
+  const emailFallback = (user.email || "").split("@")[0];
+  return (full || emailFallback || "").trim();
+}
+
 const AuthContext = createContext<AuthCtx>({ 
   session: null, 
-  user: null, 
+  user: null,
+  displayName: "",
   loading: true, 
   signOut: async () => {} 
 });
@@ -44,10 +57,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await supabase.auth.signOut();
   };
 
+  const user = session?.user ?? null;
+
   return (
     <AuthContext.Provider value={{ 
       session, 
-      user: session?.user ?? null, 
+      user,
+      displayName: getDisplayName(user),
       loading, 
       signOut 
     }}>

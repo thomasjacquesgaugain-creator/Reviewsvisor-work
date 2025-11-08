@@ -18,7 +18,10 @@ const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const etablissementId = searchParams.get('etablissementId');
   const {
-    user
+    user,
+    displayName,
+    loading,
+    signOut
   } = useAuth();
   const {
     selectedEstablishment
@@ -342,9 +345,9 @@ const Dashboard = () => {
               
               <div className="flex items-center gap-4 ml-auto">
                 <div className="text-gray-700 font-medium">
-                  Bonjour, Yohan Lopes
+                  {loading ? "Bonjour..." : displayName ? `Bonjour, ${displayName}` : <Link to="/login">Se connecter</Link>}
                 </div>
-                <Button variant="ghost" className="text-gray-600 hover:text-red-600 flex items-center gap-2">
+                <Button variant="ghost" className="text-gray-600 hover:text-red-600 flex items-center gap-2" onClick={signOut}>
                   <LogOut className="w-4 h-4" />
                   Déconnexion
                 </Button>

@@ -12,8 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Building2, Home, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
+import { useAuth } from "@/contexts/AuthProvider";
 
 export default function EtablissementPage() {
+  const { displayName, loading, signOut } = useAuth();
   const [selected, setSelected] = useState<Etab | null>(null);
   const [showImportBar, setShowImportBar] = useState(false);
   const [showReviewsVisual, setShowReviewsVisual] = useState(false);
@@ -230,9 +232,9 @@ export default function EtablissementPage() {
               
               <div className="flex items-center gap-4 ml-auto">
                 <div className="text-gray-700 font-medium">
-                  Bonjour, Yohan Lopes
+                  {loading ? "Bonjour..." : displayName ? `Bonjour, ${displayName}` : <Link to="/login">Se connecter</Link>}
                 </div>
-                <Button variant="ghost" className="text-gray-600 hover:text-red-600 flex items-center gap-2">
+                <Button variant="ghost" className="text-gray-600 hover:text-red-600 flex items-center gap-2" onClick={signOut}>
                   <LogOut className="w-4 h-4" />
                   Déconnexion
                 </Button>
