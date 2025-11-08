@@ -1,3 +1,4 @@
+import { AppNavbar } from "@/components/navbar/AppNavbar";
 import { AnalyseDashboard } from "@/components/AnalyseDashboard";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -319,43 +320,7 @@ const Dashboard = () => {
   }
 
   return <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <img src="/lovable-uploads/62ee8352-36cc-4657-89b4-5c00321ab74c.png" alt="Analytics Logo" className="w-8 h-8" />
-              <span className="text-xl font-bold text-gray-900">analytique</span>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-6">
-                <Link to="/tableau-de-bord" className="text-gray-600 hover:text-blue-600 flex items-center gap-2">
-                  <Home className="w-4 h-4" />
-                  Accueil
-                </Link>
-                <Button variant="ghost" className="text-blue-600 font-medium flex items-center gap-2">
-                  Dashboard
-                </Button>
-                <Link to="/etablissement" className="text-gray-600 hover:text-blue-600 flex items-center gap-2">
-                  <Building2 className="w-4 h-4" />
-                  Établissement
-                </Link>
-              </div>
-              
-              <div className="flex items-center gap-4 ml-auto">
-                <div className="text-gray-700 font-medium">
-                  {loading ? "Bonjour..." : displayName ? `Bonjour, ${displayName}` : <Link to="/login">Se connecter</Link>}
-                </div>
-                <Button variant="ghost" className="text-gray-600 hover:text-red-600 flex items-center gap-2" onClick={signOut}>
-                  <LogOut className="w-4 h-4" />
-                  Déconnexion
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <AppNavbar />
 
       {/* Main content */}
       <div className="container mx-auto px-4 py-8">
