@@ -9,7 +9,8 @@ import { useNavigate } from "react-router-dom";
 export default function SignUpForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -24,7 +25,10 @@ export default function SignUpForm() {
       email,
       password,
       options: { 
-        data: { full_name: fullName },
+        data: { 
+          first_name: firstName,
+          last_name: lastName
+        },
         emailRedirectTo: redirectUrl
       }
     });
@@ -54,13 +58,30 @@ export default function SignUpForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="fullName">Nom complet</Label>
+        <Label htmlFor="firstName">Prénom</Label>
         <Input
-          id="fullName"
-          placeholder="Votre nom complet"
-          value={fullName}
-          onChange={e => setFullName(e.target.value)}
+          id="firstName"
+          placeholder="Votre prénom"
+          value={firstName}
+          onChange={e => setFirstName(e.target.value)}
           required
+          maxLength={80}
+          pattern="[A-Za-zÀ-ÿ\s\-]+"
+          title="Uniquement des lettres, espaces et tirets"
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="lastName">Nom</Label>
+        <Input
+          id="lastName"
+          placeholder="Votre nom"
+          value={lastName}
+          onChange={e => setLastName(e.target.value)}
+          required
+          maxLength={80}
+          pattern="[A-Za-zÀ-ÿ\s\-]+"
+          title="Uniquement des lettres, espaces et tirets"
         />
       </div>
       

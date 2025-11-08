@@ -2,6 +2,13 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
 
+type Profile = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  display_name: string | null;
+};
+
 type AuthCtx = {
   session: Session | null;
   user: User | null;
@@ -10,15 +17,28 @@ type AuthCtx = {
   signOut: () => Promise<void>;
 };
 
-function getDisplayName(user: User | null): string {
+function getDisplayName(user: User | null, profile: Profile | null): string {
   if (!user) return "";
+  
+  // Priority 1: profiles.display_name
+  if (profile?.display_name) return profile.display_name;
+  
+  // Priority 2: user_metadata first_name + last_name
   const m = user.user_metadata ?? {};
-  const full =
-    m.full_name ||
-    m.name ||
-    [m.given_name, m.family_name].filter(Boolean).join(" ").trim();
+  const metaFullName = [m.first_name, m.last_name].filter(Boolean).join(" ").trim();
+  if (metaFullName) return metaFullName;
+  
+  // Priority 3: user_metadata.name or full_name
+  if (m.name) return m.name;
+  if (m.full_name) return m.full_name;
+  
+  // Priority 4: given_name + family_name (Google OAuth)
+  const oauthName = [m.given_name, m.family_name].filter(Boolean).join(" ").trim();
+  if (oauthName) return oauthName;
+  
+  // Priority 5: email fallback
   const emailFallback = (user.email || "").split("@")[0];
-  return (full || emailFallback || "").trim();
+  return emailFallback || "";
 }
 
 const AuthContext = createContext<AuthCtx>({ 
@@ -33,6 +53,7 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,6 +61,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
+        
+        // Fetch profile when user logs in
+        if (session?.user) {
+          setTimeout(() => {
+            fetchProfile(session.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+        }
+        
         setLoading(false);
       }
     );
@@ -47,11 +78,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
+      
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, display_name')
+        .eq('id', userId)
+        .single();
+      
+      if (!error && data) {
+        setProfile(data);
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+    }
+  };
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -63,7 +115,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     <AuthContext.Provider value={{ 
       session, 
       user,
-      displayName: getDisplayName(user),
+      displayName: getDisplayName(user, profile),
       loading, 
       signOut 
     }}>
