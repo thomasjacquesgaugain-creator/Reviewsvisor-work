@@ -34,16 +34,16 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
 
   const tabs = [
     {
-      id: "csv" as const,
-      label: "Import CSV",
-      icon: Upload,
-      testId: "tab-csv"
-    },
-    {
       id: "paste" as const,
       label: "Coller des avis",
       icon: Clipboard,
       testId: "tab-paste"
+    },
+    {
+      id: "csv" as const,
+      label: "Import CSV",
+      icon: Upload,
+      testId: "tab-csv"
     },
     {
       id: "auto" as const,
