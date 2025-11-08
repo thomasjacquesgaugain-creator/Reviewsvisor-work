@@ -165,21 +165,6 @@ const Login = () => {
               </div>
 
               <form className="space-y-6" onSubmit={handleSubmit}>
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                    Email
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="votre@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
-                    required
-                  />
-                </div>
-
                 {isSignUp && (
                   <>
                     <div className="space-y-2">
@@ -221,6 +206,22 @@ const Login = () => {
                     </div>
                   </>
                 )}
+
+                <div className="space-y-2">
+                  <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="votre@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
+                    required
+                  />
+                </div>
+
 
                 <div className="space-y-2">
                   <label htmlFor="password" className="text-sm font-medium text-gray-700">
