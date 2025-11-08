@@ -18,27 +18,39 @@ type AuthCtx = {
 };
 
 function getDisplayName(user: User | null, profile: Profile | null): string {
-  if (!user) return "";
+  if (!user) return "Invité";
   
   // Priority 1: profiles.display_name
-  if (profile?.display_name) return profile.display_name;
+  if (profile?.display_name?.trim()) {
+    return profile.display_name.trim();
+  }
   
   // Priority 2: user_metadata first_name + last_name
   const m = user.user_metadata ?? {};
-  const metaFullName = [m.first_name, m.last_name].filter(Boolean).join(" ").trim();
-  if (metaFullName) return metaFullName;
+  const firstName = m.first_name?.trim() || "";
+  const lastName = m.last_name?.trim() || "";
   
-  // Priority 3: user_metadata.name or full_name
-  if (m.name) return m.name;
-  if (m.full_name) return m.full_name;
+  if (firstName || lastName) {
+    return `${firstName} ${lastName}`.trim();
+  }
+  
+  // Priority 3: user_metadata.name or full_name (OAuth)
+  if (m.name?.trim()) return m.name.trim();
+  if (m.full_name?.trim()) return m.full_name.trim();
   
   // Priority 4: given_name + family_name (Google OAuth)
-  const oauthName = [m.given_name, m.family_name].filter(Boolean).join(" ").trim();
-  if (oauthName) return oauthName;
+  const givenName = m.given_name?.trim() || "";
+  const familyName = m.family_name?.trim() || "";
+  if (givenName || familyName) {
+    return `${givenName} ${familyName}`.trim();
+  }
   
   // Priority 5: email fallback
-  const emailFallback = (user.email || "").split("@")[0];
-  return emailFallback || "";
+  if (user.email) {
+    return user.email.split("@")[0];
+  }
+  
+  return "Invité";
 }
 
 const AuthContext = createContext<AuthCtx>({ 
@@ -93,7 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, first_name, last_name, display_name, full_name')
         .eq('id', userId)
         .maybeSingle();
       
@@ -102,11 +114,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           id: data.id,
           first_name: data.first_name || null,
           last_name: data.last_name || null,
-          display_name: data.display_name || null
+          display_name: data.display_name || data.full_name || null
         });
+      } else if (!data) {
+        // Pas de profil, on reste avec les métadonnées uniquement
+        setProfile(null);
       }
     } catch (err) {
-      console.error('Error fetching profile:', err);
+      console.error('Erreur lors de la récupération du profil:', err);
+      setProfile(null);
     }
   };
 
