@@ -26,144 +26,142 @@ function normSpaces(s: string): string {
 
 export function parsePastedReviews(rawText: string): ParsedReview[] {
   const reviews: ParsedReview[] = [];
-  const lines = rawText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  const lines = rawText.split('\n').map(line => line.trim());
   
-  let currentReview: Partial<ParsedReview> = {};
-  let collectingComment = false;
-  let commentLines: string[] = [];
-  let reviewStartIndex = 0; // Track where current review block starts
+  // Lignes à ignorer complètement
+  const skipPatterns = [
+    /^Afficher tous les avis/i,
+    /^Avis de Google/i,
+    /^Voir plus$/i,
+    /^Nouveau$/i,
+    /^Traduire/i,
+    /^\d+ avis$/i,
+    /^\d+ reviews?$/i,
+    /^Plus$/i,
+    /^…$/,
+    /^Afficher l'avis original/i,
+    /^Afficher en français/i
+  ];
   
-  for (let i = 0; i < lines.length; i++) {
+  function shouldSkipLine(line: string): boolean {
+    if (!line || line.length === 0) return true;
+    return skipPatterns.some(pattern => pattern.test(line));
+  }
+  
+  let i = 0;
+  while (i < lines.length) {
     const line = lines[i];
     
-    // Detect rating patterns
-    const ratingMatch = line.match(/(\d+(?:[,\.]\d+)?)\s*\/\s*5|★{1,5}|⭐{1,5}/);
-    if (ratingMatch) {
-      // Save previous review if exists
-      if (currentReview.rating && currentReview.firstName) {
-        finishCurrentReview(i - 1);
-      }
-      
-      // Start new review
-      currentReview = {};
-      collectingComment = false;
-      commentLines = [];
-      reviewStartIndex = i; // Mark start of new review block
-      
-      if (ratingMatch[1]) {
-        // Numeric rating like "4,5/5" or "4.5/5"
-        const numRating = parseFloat(ratingMatch[1].replace(',', '.'));
-        currentReview.rating = Math.round(numRating);
-      } else {
-        // Star rating
-        const stars = ratingMatch[0];
-        currentReview.rating = stars.length;
-      }
-      
-      // Detect platform
-      if (line.toLowerCase().includes('google') || rawText.toLowerCase().includes('avis de google')) {
-        currentReview.platform = 'Google';
-      } else if (line.toLowerCase().includes('tripadvisor')) {
-        currentReview.platform = 'Tripadvisor';
-      } else {
-        currentReview.platform = 'unknown';
-      }
+    if (shouldSkipLine(line)) {
+      i++;
       continue;
     }
     
-    // Detect author name (usually appears after rating)
-    if (currentReview.rating && !currentReview.firstName && !collectingComment) {
-      // Skip lines that look like metadata
-      if (line.includes('Avis de Google') || line.includes('il y a') || line.includes('Visité en')) {
+    // Détection du nom de l'auteur (début d'un avis)
+    // Un nom est généralement une chaîne sans chiffres, 2-50 caractères
+    const isNameLine = /^[A-Za-zÀ-ÿ\s'-]{2,50}$/.test(line) && 
+                       !line.includes('★') && 
+                       !line.includes('⭐') &&
+                       !/\d/.test(line);
+    
+    if (!isNameLine) {
+      i++;
+      continue;
+    }
+    
+    // On a potentiellement trouvé un nom d'auteur
+    const authorName = line;
+    const reviewStartIndex = i;
+    i++; // Passer à la ligne suivante
+    
+    // La ligne suivante devrait contenir la notation
+    if (i >= lines.length) break;
+    
+    const ratingLine = lines[i];
+    const starsMatch = ratingLine.match(/★+|⭐+/);
+    
+    if (!starsMatch) {
+      // Pas de notation trouvée, ce n'était pas un avis
+      continue;
+    }
+    
+    const rating = starsMatch[0].length;
+    i++; // Passer après la ligne de notation
+    
+    // Collecter les lignes de commentaire jusqu'à "Visité en" ou fin/nouveau nom
+    const commentLines: string[] = [];
+    let visitedMonth = '';
+    
+    while (i < lines.length) {
+      const commentLine = lines[i];
+      
+      if (shouldSkipLine(commentLine)) {
+        i++;
         continue;
       }
       
-      // Check if line looks like a name (2-3 words, no numbers)
-      if (/^[A-Za-zÀ-ÿ\s]{2,50}$/.test(line) && !line.includes('★') && !line.includes('⭐')) {
-        const nameParts = line.split(' ').filter(part => part.length > 0);
-        if (nameParts.length >= 1) {
-          if (nameParts.length === 1) {
-            currentReview.firstName = nameParts[0];
-            currentReview.lastName = '';
-          } else {
-            currentReview.firstName = nameParts.slice(0, -1).join(' ');
-            currentReview.lastName = nameParts[nameParts.length - 1];
-          }
-        }
-        continue;
-      }
-    }
-    
-    // Detect date patterns
-    if (currentReview.rating && !currentReview.reviewDate) {
-      const datePatterns = [
-        /il y a (\d+) (jour|semaine|mois|an)/i,
-        /Visité en (\w+)/i,
-        /(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre) \d{4}/i,
-        /\d{1,2}\/\d{1,2}\/\d{4}/
-      ];
-      
-      for (const pattern of datePatterns) {
-        if (pattern.test(line)) {
-          currentReview.reviewDate = line;
-          break;
-        }
+      // Détecter "Visité en [mois]" qui marque la fin de l'avis
+      const visitedMatch = commentLine.match(/^Visité en (\w+)$/i);
+      if (visitedMatch) {
+        visitedMonth = visitedMatch[1];
+        i++;
+        break;
       }
       
-      if (currentReview.reviewDate) {
-        continue;
+      // Détecter si on arrive à un nouveau nom (début du prochain avis)
+      const isNextName = /^[A-Za-zÀ-ÿ\s'-]{2,50}$/.test(commentLine) && 
+                         !commentLine.includes('★') && 
+                         !commentLine.includes('⭐') &&
+                         !/\d/.test(commentLine);
+      
+      if (isNextName && i > reviewStartIndex + 2) {
+        // C'est probablement le début du prochain avis
+        break;
       }
+      
+      // Nettoyer et ajouter la ligne au commentaire
+      const cleanLine = commentLine
+        .replace(/…Plus$|\.\.\.Plus$/i, '')
+        .replace(/^il y a .*$/i, '')
+        .trim();
+      
+      if (cleanLine.length > 0 && !/^il y a \d+ (jour|semaine|mois|an)/i.test(cleanLine)) {
+        commentLines.push(cleanLine);
+      }
+      
+      i++;
     }
     
-    // Start collecting comment if we have basic info
-    if (currentReview.rating && currentReview.firstName) {
-      collectingComment = true;
-    }
+    // Créer l'avis parsé
+    const nameParts = authorName.split(' ').filter(part => part.length > 0);
+    const firstName = nameParts.length === 1 ? nameParts[0] : nameParts.slice(0, -1).join(' ');
+    const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
     
-    // Collect comment lines
-    if (collectingComment) {
-      // Skip obvious metadata lines
-      if (!line.includes('Avis de Google') && 
-          !line.includes('il y a') && 
-          !line.includes('Visité en') &&
-          !line.match(/^\d+\/\d+\/\d+$/)) {
-        
-        // Remove "...Plus" suffix
-        const cleanLine = line.replace(/…Plus$|\.\.\.Plus$/, '').trim();
-        if (cleanLine.length > 0) {
-          commentLines.push(cleanLine);
-        }
-      }
-    }
-  }
-  
-  // Don't forget the last review
-  if (currentReview.rating && currentReview.firstName) {
-    finishCurrentReview(lines.length - 1);
-  }
-  
-  function finishCurrentReview(endIndex: number) {
-    // Calculate fingerprint from raw text block
-    const rawBlock = lines.slice(reviewStartIndex, endIndex + 1).join("\n");
+    const comment = commentLines.join(' ').trim();
+    const reviewDate = visitedMonth ? `Visité en ${visitedMonth}` : '';
+    
+    // Générer un fingerprint
+    const rawBlock = `${authorName}\n${rating}\n${comment}\n${reviewDate}`;
     const fingerprint = simpleHash(normSpaces(rawBlock));
+    
     const review: ParsedReview = {
-      firstName: currentReview.firstName || '',
-      lastName: currentReview.lastName || '',
-      rating: currentReview.rating || 1,
-      comment: commentLines.join(' ').trim(),
-      platform: currentReview.platform || 'unknown',
-      reviewDate: currentReview.reviewDate || '',
-      isValid: !!(currentReview.firstName && currentReview.rating),
+      firstName,
+      lastName,
+      rating,
+      comment,
+      platform: 'Google',
+      reviewDate,
+      isValid: !!(firstName && rating >= 1 && rating <= 5),
       rawFingerprint: fingerprint
     };
     
-    // Simple deduplication based on content hash
-    const contentHash = `${review.firstName}${review.lastName}${review.comment}${review.reviewDate}`.toLowerCase();
+    // Déduplication
+    const contentHash = `${firstName}${lastName}${comment}${reviewDate}`.toLowerCase();
     const isDuplicate = reviews.some(existing => 
       `${existing.firstName}${existing.lastName}${existing.comment}${existing.reviewDate}`.toLowerCase() === contentHash
     );
     
-    if (!isDuplicate) {
+    if (!isDuplicate && review.isValid) {
       reviews.push(review);
     }
   }
