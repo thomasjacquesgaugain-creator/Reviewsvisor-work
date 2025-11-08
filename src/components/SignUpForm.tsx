@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { User, UserCircle } from "lucide-react";
 
 export default function SignUpForm() {
   const [email, setEmail] = useState("");
@@ -150,20 +151,24 @@ export default function SignUpForm() {
       
       <div className="space-y-2">
         <Label htmlFor="firstName">Prénom</Label>
-        <Input
-          id="firstName"
-          placeholder="Votre prénom"
-          autoComplete="given-name"
-          value={firstName}
-          onChange={e => {
-            setFirstName(e.target.value);
-            setErrors(prev => ({ ...prev, firstName: "" }));
-          }}
-          aria-invalid={!!errors.firstName}
-          aria-describedby={errors.firstName ? "firstName-error" : undefined}
-          required
-          maxLength={80}
-        />
+        <div className="relative">
+          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="firstName"
+            placeholder="Votre prénom"
+            autoComplete="given-name"
+            value={firstName}
+            onChange={e => {
+              setFirstName(e.target.value);
+              setErrors(prev => ({ ...prev, firstName: "" }));
+            }}
+            aria-invalid={!!errors.firstName}
+            aria-describedby={errors.firstName ? "firstName-error" : undefined}
+            required
+            maxLength={80}
+            className="pl-10"
+          />
+        </div>
         {errors.firstName && (
           <p id="firstName-error" className="text-sm text-destructive">{errors.firstName}</p>
         )}
@@ -171,20 +176,24 @@ export default function SignUpForm() {
       
       <div className="space-y-2">
         <Label htmlFor="lastName">Nom</Label>
-        <Input
-          id="lastName"
-          placeholder="Votre nom"
-          autoComplete="family-name"
-          value={lastName}
-          onChange={e => {
-            setLastName(e.target.value);
-            setErrors(prev => ({ ...prev, lastName: "" }));
-          }}
-          aria-invalid={!!errors.lastName}
-          aria-describedby={errors.lastName ? "lastName-error" : undefined}
-          required
-          maxLength={80}
-        />
+        <div className="relative">
+          <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="lastName"
+            placeholder="Votre nom"
+            autoComplete="family-name"
+            value={lastName}
+            onChange={e => {
+              setLastName(e.target.value);
+              setErrors(prev => ({ ...prev, lastName: "" }));
+            }}
+            aria-invalid={!!errors.lastName}
+            aria-describedby={errors.lastName ? "lastName-error" : undefined}
+            required
+            maxLength={80}
+            className="pl-10"
+          />
+        </div>
         {errors.lastName && (
           <p id="lastName-error" className="text-sm text-destructive">{errors.lastName}</p>
         )}
