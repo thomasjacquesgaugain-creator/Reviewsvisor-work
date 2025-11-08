@@ -130,12 +130,7 @@ const Dashboard = () => {
                     Dashboard
                   </Button>
                 </Link>
-                <Link to="/etablissement">
-                  <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
-                    <Building className="w-4 h-4" />
-                    Établissement
-                  </Button>
-                </Link>
+                {/* Lien /etablissement masqué */}
                 <div className="flex items-center gap-2 text-gray-700">
                   <span>Bonjour, {displayName}</span>
                 </div>
@@ -173,10 +168,10 @@ const Dashboard = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                <Link to="/etablissement">
+                <Link to="/dashboard">
                   <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
-                    <Building className="w-5 h-5 mr-2" />
-                    Établissement
+                    <BarChart3 className="w-5 h-5 mr-2" />
+                    Analyser mes avis
                   </Button>
                 </Link>
                 <Link to="/dashboard">
