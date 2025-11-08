@@ -93,12 +93,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, display_name')
+        .select('*')
         .eq('id', userId)
         .maybeSingle();
       
       if (!error && data) {
-        setProfile(data as Profile);
+        setProfile({
+          id: data.id,
+          first_name: data.first_name || null,
+          last_name: data.last_name || null,
+          display_name: data.display_name || null
+        });
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
