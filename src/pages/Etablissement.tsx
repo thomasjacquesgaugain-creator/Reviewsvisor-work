@@ -247,8 +247,8 @@ export default function EtablissementPage() {
         <h1 className="text-3xl font-bold mb-8">Établissement</h1>
         
         <div className="space-y-6">
-          {/* Google OAuth Debug Panel */}
-          <GoogleOAuthDebugPanel />
+          {/* Google OAuth Debug Panel - masqué mais code conservé */}
+          {/* <GoogleOAuthDebugPanel /> */}
           
           {/* Section de recherche d'établissement */}
           <div className="space-y-4">
