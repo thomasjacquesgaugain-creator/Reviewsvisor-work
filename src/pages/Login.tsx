@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, AlertTriangle, User, UserCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +13,8 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -42,10 +44,24 @@ const Login = () => {
           return;
         }
 
-        const { error } = await supabase.auth.signUp({
+        if (!firstName.trim() || !lastName.trim()) {
+          toast({
+            title: "Erreur",
+            description: "Veuillez remplir votre prénom et nom.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
+            data: {
+              first_name: firstName.trim(),
+              last_name: lastName.trim()
+            },
             emailRedirectTo: `${window.location.origin}/tableau-de-bord`
           }
         });
@@ -57,11 +73,31 @@ const Login = () => {
             variant: "destructive",
           });
         } else {
+          // Upsert dans profiles
+          if (data.user) {
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .upsert({
+                id: data.user.id,
+                user_id: data.user.id,
+                first_name: firstName.trim(),
+                last_name: lastName.trim(),
+                full_name: `${firstName.trim()} ${lastName.trim()}`,
+                updated_at: new Date().toISOString()
+              }, { 
+                onConflict: 'id'
+              });
+
+            if (profileError) {
+              console.error('Erreur profil:', profileError);
+            }
+          }
+
           toast({
             title: "Inscription réussie",
-            description: "Vérifiez votre email pour confirmer votre compte.",
+            description: "Bienvenue ! Vous pouvez maintenant utiliser l'application.",
           });
-          setIsSignUp(false);
+          navigate('/tableau-de-bord');
         }
       } else {
         // Connexion
@@ -143,6 +179,48 @@ const Login = () => {
                     required
                   />
                 </div>
+
+                {isSignUp && (
+                  <>
+                    <div className="space-y-2">
+                      <label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+                        Prénom
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <Input
+                          id="firstName"
+                          type="text"
+                          placeholder="Votre prénom"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          className="h-12 pl-12 pr-4 bg-gray-50 border-gray-200 rounded-xl"
+                          autoComplete="given-name"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                        Nom
+                      </label>
+                      <div className="relative">
+                        <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <Input
+                          id="lastName"
+                          type="text"
+                          placeholder="Votre nom"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          className="h-12 pl-12 pr-4 bg-gray-50 border-gray-200 rounded-xl"
+                          autoComplete="family-name"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="space-y-2">
                   <label htmlFor="password" className="text-sm font-medium text-gray-700">
