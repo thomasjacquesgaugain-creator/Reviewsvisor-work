@@ -165,107 +165,164 @@ const Login = () => {
               </div>
 
               <form className="space-y-6" onSubmit={handleSubmit}>
-                {isSignUp && (
+                {isSignUp ? (
                   <>
-                    <div className="space-y-2">
-                      <label htmlFor="firstName" className="text-sm font-medium text-gray-700">
-                        Prénom
-                      </label>
-                      <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                          id="firstName"
-                          type="text"
-                          placeholder="Votre prénom"
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          className="h-12 pl-12 pr-4 bg-gray-50 border-gray-200 rounded-xl"
-                          autoComplete="given-name"
-                          required
-                        />
-                      </div>
-                    </div>
+                    {/* Grille 2 colonnes pour desktop */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Colonne gauche : Email, Mot de passe, Confirmer */}
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                            Email
+                          </label>
+                          <Input
+                            id="email"
+                            type="email"
+                            placeholder="votre@email.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
+                            autoComplete="email"
+                            required
+                          />
+                        </div>
 
-                    <div className="space-y-2">
-                      <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
-                        Nom
-                      </label>
-                      <div className="relative">
-                        <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                          id="lastName"
-                          type="text"
-                          placeholder="Votre nom"
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          className="h-12 pl-12 pr-4 bg-gray-50 border-gray-200 rounded-xl"
-                          autoComplete="family-name"
-                          required
-                        />
+                        <div className="space-y-2">
+                          <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                            Mot de passe
+                          </label>
+                          <div className="relative">
+                            <Input
+                              id="password"
+                              type={showPassword ? "text" : "password"}
+                              placeholder="Votre mot de passe"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              className="h-12 px-4 pr-12 bg-gray-50 border-gray-200 rounded-xl"
+                              autoComplete="new-password"
+                              required
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                              {showPassword ? (
+                                <EyeOff className="w-5 h-5" />
+                              ) : (
+                                <Eye className="w-5 h-5" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+                            Confirmer le mot de passe
+                          </label>
+                          <Input
+                            id="confirmPassword"
+                            type="password"
+                            placeholder="Confirmez votre mot de passe"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
+                            autoComplete="new-password"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {/* Colonne droite : Prénom, Nom */}
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+                            Prénom
+                          </label>
+                          <div className="relative">
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                            <Input
+                              id="firstName"
+                              type="text"
+                              placeholder="Votre prénom"
+                              value={firstName}
+                              onChange={(e) => setFirstName(e.target.value)}
+                              className="h-12 pl-12 pr-4 bg-gray-50 border-gray-200 rounded-xl"
+                              autoComplete="given-name"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                            Nom
+                          </label>
+                          <div className="relative">
+                            <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                            <Input
+                              id="lastName"
+                              type="text"
+                              placeholder="Votre nom"
+                              value={lastName}
+                              onChange={(e) => setLastName(e.target.value)}
+                              className="h-12 pl-12 pr-4 bg-gray-50 border-gray-200 rounded-xl"
+                              autoComplete="family-name"
+                              required
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </>
-                )}
+                ) : (
+                  <>
+                    {/* Mode connexion : une seule colonne */}
+                    <div className="space-y-2">
+                      <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                        Email
+                      </label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="votre@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
+                        autoComplete="email"
+                        required
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                    Email
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="votre@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
-                    required
-                  />
-                </div>
-
-
-                <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-medium text-gray-700">
-                    Mot de passe
-                  </label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Votre mot de passe"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 px-4 pr-12 bg-gray-50 border-gray-200 rounded-xl"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {isSignUp && (
-                  <div className="space-y-2">
-                    <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
-                      Confirmer le mot de passe
-                    </label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="Confirmez votre mot de passe"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
-                      required
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                        Mot de passe
+                      </label>
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Votre mot de passe"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="h-12 px-4 pr-12 bg-gray-50 border-gray-200 rounded-xl"
+                          autoComplete="current-password"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-5 h-5" />
+                          ) : (
+                            <Eye className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </>
                 )}
 
                 <Button 
