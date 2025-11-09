@@ -24,7 +24,105 @@ function normSpaces(s: string): string {
   return (s || "").trim().replace(/\s+/g, " ").toLowerCase();
 }
 
+// Mapping for starRating from Google Business Profile JSON
+const starRatingMap: Record<string, number> = {
+  'FIVE': 5,
+  'FOUR': 4,
+  'THREE': 3,
+  'TWO': 2,
+  'ONE': 1
+};
+
+function extractOriginalText(comment: string): string {
+  if (!comment) return '';
+  
+  // Look for "(Original)" marker
+  const originalIndex = comment.indexOf('(Original)');
+  if (originalIndex !== -1) {
+    // Extract everything after "(Original)"
+    let text = comment.substring(originalIndex + '(Original)'.length).trim();
+    // Clean up escaped characters
+    text = text.replace(/\\u0027/g, "'");
+    text = text.replace(/\\n/g, ' ');
+    text = text.replace(/\s+/g, ' ');
+    return text;
+  }
+  
+  // If no "(Original)" marker, return the whole comment cleaned
+  let text = comment.trim();
+  text = text.replace(/\\u0027/g, "'");
+  text = text.replace(/\\n/g, ' ');
+  text = text.replace(/\s+/g, ' ');
+  return text;
+}
+
+function parseJsonFormat(rawText: string): ParsedReview[] {
+  try {
+    const data = JSON.parse(rawText);
+    const reviews: ParsedReview[] = [];
+    
+    if (!data.reviews || !Array.isArray(data.reviews)) {
+      return [];
+    }
+    
+    for (const review of data.reviews) {
+      if (!review.reviewer?.displayName) continue;
+      
+      const displayName = review.reviewer.displayName;
+      const nameParts = displayName.split(' ').filter((part: string) => part.length > 0);
+      const firstName = nameParts.length === 1 ? nameParts[0] : nameParts.slice(0, -1).join(' ');
+      const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+      
+      const rating = starRatingMap[review.starRating] || 0;
+      const comment = extractOriginalText(review.comment || '');
+      
+      // Extract date (YYYY-MM-DD)
+      let reviewDate = '';
+      if (review.createTime) {
+        const dateMatch = review.createTime.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (dateMatch) {
+          reviewDate = dateMatch[1];
+        }
+      }
+      
+      // Generate fingerprint
+      const rawBlock = `${displayName}\n${rating}\n${comment}\n${reviewDate}`;
+      const fingerprint = simpleHash(normSpaces(rawBlock));
+      
+      const parsedReview: ParsedReview = {
+        firstName,
+        lastName,
+        rating,
+        comment,
+        platform: 'Google',
+        reviewDate,
+        isValid: !!(firstName && rating >= 1 && rating <= 5),
+        rawFingerprint: fingerprint
+      };
+      
+      if (parsedReview.isValid) {
+        reviews.push(parsedReview);
+      }
+    }
+    
+    return reviews;
+  } catch (error) {
+    // Not valid JSON, return empty array
+    return [];
+  }
+}
+
 export function parsePastedReviews(rawText: string): ParsedReview[] {
+  // Try JSON format first
+  const trimmedText = rawText.trim();
+  if (trimmedText.startsWith('{') || trimmedText.startsWith('[')) {
+    const jsonReviews = parseJsonFormat(rawText);
+    if (jsonReviews.length > 0) {
+      return jsonReviews;
+    }
+  }
+  
+  // Fallback to plain text parsing
   const reviews: ParsedReview[] = [];
   const lines = rawText.split('\n').map(line => line.trim());
   
