@@ -1047,9 +1047,23 @@ const Dashboard = () => {
           {showThematiques && <CardContent>
               <div className="space-y-4">
                 {insight?.themes && insight.themes.length > 0 ? (
-                  insight.themes.map((theme: any, index: number) => {
+                  (() => {
                     const totalReviews = insight?.total_count || 1;
-                    const percentage = ((theme.count || theme.score || 0) / totalReviews * 100).toFixed(0);
+                    
+                    // Calculer les pourcentages bruts
+                    const themesWithPercentages = insight.themes.map((theme: any) => ({
+                      ...theme,
+                      rawPercentage: ((theme.count || 0) / totalReviews) * 100
+                    }));
+                    
+                    // Calculer la somme totale pour normalisation
+                    const totalPercentage = themesWithPercentages.reduce((sum: number, t: any) => sum + t.rawPercentage, 0);
+                    
+                    // Normaliser pour que la somme fasse 100%
+                    const themesNormalized = themesWithPercentages.map((theme: any) => ({
+                      ...theme,
+                      percentage: totalPercentage > 0 ? Math.round((theme.rawPercentage / totalPercentage) * 100) : 0
+                    }));
                     
                     // Choose icon based on theme name
                     const getThemeIcon = (themeName: string) => {
@@ -1066,19 +1080,19 @@ const Dashboard = () => {
                       return <BarChart3 className="w-4 h-4 text-purple-500" />;
                     };
 
-                    return (
+                    return themesNormalized.map((theme: any, index: number) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
                         <div className="flex items-center gap-2">
                           {getThemeIcon(theme.theme)}
                           <div>
                             <div className="font-medium">{theme.theme}</div>
-                            <div className="text-sm text-gray-500">{percentage}% des avis</div>
+                            <div className="text-sm text-gray-500">{theme.percentage}% des avis</div>
                           </div>
                         </div>
                         <Badge className="bg-purple-500 text-white">Thématique</Badge>
                       </div>
-                    );
-                  })
+                    ));
+                  })()
                 ) : (
                   <div className="text-center py-4 text-gray-500">
                     <p className="text-sm">Aucune thématique identifiée</p>
