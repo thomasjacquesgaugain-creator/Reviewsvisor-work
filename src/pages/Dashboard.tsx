@@ -5,16 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2 } from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
 
 const Dashboard = () => {
+  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const etablissementId = searchParams.get('etablissementId');
   const {
@@ -1154,48 +1156,65 @@ const Dashboard = () => {
                             <p className="text-sm text-gray-700">{currentResponse}</p>
                           )}
                         </div>
-                        <div className="flex gap-2 mt-3">
-                          {isEditing ? (
-                            <>
-                              <Button 
-                                size="sm" 
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                                onClick={() => setEditingReviewId(null)}
-                              >
-                                Enregistrer
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => {
-                                  setEditedResponses(prev => {
-                                    const newResponses = { ...prev };
-                                    delete newResponses[reviewId];
-                                    return newResponses;
-                                  });
-                                  setEditingReviewId(null);
-                                }}
-                              >
-                                Annuler
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => {
-                                  setEditingReviewId(reviewId);
-                                  if (!editedResponses[reviewId]) {
-                                    setEditedResponses(prev => ({ ...prev, [reviewId]: defaultResponse }));
-                                  }
-                                }}
-                              >
-                                Modifier
-                              </Button>
-                            </>
-                          )}
+                        <div className="flex gap-2 mt-3 items-center justify-between">
+                          <div className="flex gap-2">
+                            {isEditing ? (
+                              <>
+                                <Button 
+                                  size="sm" 
+                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                  onClick={() => setEditingReviewId(null)}
+                                >
+                                  Enregistrer
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditedResponses(prev => {
+                                      const newResponses = { ...prev };
+                                      delete newResponses[reviewId];
+                                      return newResponses;
+                                    });
+                                    setEditingReviewId(null);
+                                  }}
+                                >
+                                  Annuler
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditingReviewId(reviewId);
+                                    if (!editedResponses[reviewId]) {
+                                      setEditedResponses(prev => ({ ...prev, [reviewId]: defaultResponse }));
+                                    }
+                                  }}
+                                >
+                                  Modifier
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                          <Button 
+                            size="icon" 
+                            variant="ghost"
+                            className="h-8 w-8"
+                            onClick={() => {
+                              navigator.clipboard.writeText(currentResponse);
+                              toast({
+                                title: "Copié !",
+                                description: "La réponse a été copiée dans le presse-papier.",
+                              });
+                            }}
+                            title="Copier la réponse"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     );
