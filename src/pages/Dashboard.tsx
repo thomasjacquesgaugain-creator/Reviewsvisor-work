@@ -9,14 +9,13 @@ import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, 
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
 
 const Dashboard = () => {
-  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const etablissementId = searchParams.get('etablissementId');
   const {
@@ -1206,8 +1205,7 @@ const Dashboard = () => {
                             className="h-8 w-8"
                             onClick={() => {
                               navigator.clipboard.writeText(currentResponse);
-                              toast({
-                                title: "Copié !",
+                              toast.success("Copié !", {
                                 description: "La réponse a été copiée dans le presse-papier.",
                               });
                             }}
