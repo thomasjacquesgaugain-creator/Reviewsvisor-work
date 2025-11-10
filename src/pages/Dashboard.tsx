@@ -1110,18 +1110,44 @@ const Dashboard = () => {
                       return <BarChart3 className="w-4 h-4 text-purple-500" />;
                     };
 
+                    const SentimentBadges: React.FC<{ positivePct?: number; negativePct?: number; className?: string }> = ({ positivePct, negativePct, className }) => {
+                      const clampPct = (n?: number) => {
+                        if (typeof n !== "number" || isNaN(n)) return 0;
+                        return Math.max(0, Math.min(100, Math.round(n)));
+                      };
+                      const p = clampPct(positivePct);
+                      const n = clampPct(negativePct);
+                      return (
+                        <div className={`flex items-center gap-2 ${className ?? ""}`}>
+                          <span
+                            title="Positifs"
+                            className="inline-flex items-center justify-center min-w-[48px] h-9 px-3 rounded-xl text-sm font-semibold shadow-sm bg-green-50 text-green-600"
+                          >
+                            {p}%
+                          </span>
+                          <span
+                            title="Négatifs"
+                            className="inline-flex items-center justify-center min-w-[48px] h-9 px-3 rounded-xl text-sm font-semibold shadow-sm bg-red-50 text-red-600"
+                          >
+                            {n}%
+                          </span>
+                        </div>
+                      );
+                    };
+
                     return themesNormalized.map((theme: any, index: number) => (
                       <div key={index} className="p-3 bg-purple-50 rounded-lg">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                           {getThemeIcon(theme.theme)}
                           <div className="flex-1">
                             <div className="font-medium">{theme.theme}</div>
                             <div className="text-sm text-gray-500">{theme.percentage}% des avis</div>
-                            <div className="text-sm text-gray-600 mt-1">
-                              <span className="text-green-600">Positifs : {theme.positivePercent}%</span>
-                              <span className="mx-2">—</span>
-                              <span className="text-red-600">Négatifs : {theme.negativePercent}%</span>
-                            </div>
+                          </div>
+                          <div className="ml-auto">
+                            <SentimentBadges
+                              positivePct={theme.positivePercent}
+                              negativePct={theme.negativePercent}
+                            />
                           </div>
                         </div>
                       </div>
