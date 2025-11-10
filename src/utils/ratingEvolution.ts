@@ -1,5 +1,7 @@
-import { format, eachMonthOfInterval, startOfMonth, endOfMonth, isAfter, isBefore, parseISO } from 'date-fns';
+import { format, eachMonthOfInterval, eachWeekOfInterval, eachDayOfInterval, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, startOfYear, endOfYear, eachYearOfInterval, isAfter, isBefore, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+
+export type Granularity = 'jour' | 'semaine' | 'mois' | 'année';
 
 interface Review {
   rating: number | null;
@@ -17,11 +19,13 @@ interface RatingDataPoint {
  * Calcule l'évolution de la note moyenne depuis la date d'enregistrement
  * @param reviews - Tous les avis de l'établissement
  * @param registrationDate - Date d'enregistrement de l'établissement
- * @returns Série temporelle avec la note moyenne par mois
+ * @param granularity - Granularité de l'agrégation (jour, semaine, mois, année)
+ * @returns Série temporelle avec la note moyenne par période
  */
 export function getRatingEvolution(
   reviews: Review[],
-  registrationDate: string | Date
+  registrationDate: string | Date,
+  granularity: Granularity = 'mois'
 ): RatingDataPoint[] {
   // Convertir la date d'enregistrement en objet Date
   const startDate = typeof registrationDate === 'string' 
@@ -37,11 +41,11 @@ export function getRatingEvolution(
   
   // Si aucun avis, retourner une courbe plate à 0
   if (validReviews.length === 0) {
-    const months = eachMonthOfInterval({ start: startDate, end: today });
-    return months.map(month => ({
-      mois: format(month, 'MMM', { locale: fr }),
+    const periods = getPeriods(startDate, today, granularity);
+    return periods.map(period => ({
+      mois: formatPeriodLabel(period, granularity),
       note: 0,
-      fullDate: format(month, 'yyyy-MM-dd'),
+      fullDate: format(period, 'yyyy-MM-dd'),
     }));
   }
   
@@ -58,16 +62,16 @@ export function getRatingEvolution(
     ? sortedReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / sortedReviews.length
     : 0;
   
-  // Générer tous les mois entre la date d'enregistrement et aujourd'hui
-  const months = eachMonthOfInterval({ start: startDate, end: today });
+  // Générer toutes les périodes entre la date d'enregistrement et aujourd'hui
+  const periods = getPeriods(startDate, today, granularity);
   
-  // Pour chaque mois, calculer la moyenne des avis jusqu'à ce point
-  const dataPoints: RatingDataPoint[] = months.map(month => {
-    const monthEnd = endOfMonth(month);
+  // Pour chaque période, calculer la moyenne des avis jusqu'à ce point
+  const dataPoints: RatingDataPoint[] = periods.map(period => {
+    const periodEnd = getPeriodEnd(period, granularity);
     
-    // Filtrer tous les avis publiés avant ou pendant ce mois
+    // Filtrer tous les avis publiés avant ou pendant cette période
     const reviewsUpToMonth = sortedReviews.filter(r => {
-      return isBefore(r.date, monthEnd) || r.date.getTime() === monthEnd.getTime();
+      return isBefore(r.date, periodEnd) || r.date.getTime() === periodEnd.getTime();
     });
     
     // Calculer la moyenne
@@ -78,13 +82,64 @@ export function getRatingEvolution(
     }
     
     return {
-      mois: format(month, 'MMM', { locale: fr }),
+      mois: formatPeriodLabel(period, granularity),
       note: Number(avgRating.toFixed(2)),
-      fullDate: format(month, 'yyyy-MM-dd'),
+      fullDate: format(period, 'yyyy-MM-dd'),
     };
   });
   
   return dataPoints;
+}
+
+/**
+ * Génère les périodes selon la granularité
+ */
+function getPeriods(start: Date, end: Date, granularity: Granularity): Date[] {
+  switch (granularity) {
+    case 'jour':
+      return eachDayOfInterval({ start, end });
+    case 'semaine':
+      return eachWeekOfInterval({ start, end }, { weekStartsOn: 1 });
+    case 'année':
+      return eachYearOfInterval({ start, end });
+    case 'mois':
+    default:
+      return eachMonthOfInterval({ start, end });
+  }
+}
+
+/**
+ * Obtient la fin de la période
+ */
+function getPeriodEnd(date: Date, granularity: Granularity): Date {
+  switch (granularity) {
+    case 'jour':
+      return endOfDay(date);
+    case 'semaine':
+      return endOfWeek(date, { weekStartsOn: 1 });
+    case 'année':
+      return endOfYear(date);
+    case 'mois':
+    default:
+      return endOfMonth(date);
+  }
+}
+
+/**
+ * Formate le label de la période
+ */
+function formatPeriodLabel(date: Date, granularity: Granularity): string {
+  switch (granularity) {
+    case 'jour':
+      return format(date, 'dd MMM', { locale: fr });
+    case 'semaine':
+      return format(date, "'S'w", { locale: fr });
+    case 'année':
+      return format(date, 'yyyy', { locale: fr });
+    case 'mois':
+    default:
+      return format(date, 'MMM', { locale: fr });
+  }
 }
 
 /**

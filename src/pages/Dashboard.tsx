@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy } from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
-import { getRatingEvolution, formatRegistrationDate } from "@/utils/ratingEvolution";
+import { getRatingEvolution, formatRegistrationDate, Granularity } from "@/utils/ratingEvolution";
 
 const Dashboard = () => {
   const [searchParams] = useSearchParams();
@@ -37,7 +37,7 @@ const Dashboard = () => {
   const [showReponseAuto, setShowReponseAuto] = useState(false);
   const [showParetoChart, setShowParetoChart] = useState(false);
   const [showParetoPoints, setShowParetoPoints] = useState(false);
-  const [periodeAnalyse, setPeriodeAnalyse] = useState("mois");
+  const [granularityEvolution, setGranularityEvolution] = useState<Granularity>("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
   // Établissement sélectionné (depuis localStorage ou store)
@@ -322,8 +322,8 @@ const Dashboard = () => {
       return [];
     }
     
-    return getRatingEvolution(allReviewsForChart, establishmentCreatedAt);
-  }, [allReviewsForChart, establishmentCreatedAt]);
+    return getRatingEvolution(allReviewsForChart, establishmentCreatedAt, granularityEvolution);
+  }, [allReviewsForChart, establishmentCreatedAt, granularityEvolution]);
 
   // If we have an etablissementId in URL, show analysis dashboard
   if (etablissementId) {
@@ -580,16 +580,6 @@ const Dashboard = () => {
               <div>
                 <CardTitle className="text-lg">Historique des analyses</CardTitle>
               </div>
-              <Select value={periodeAnalyse} onValueChange={setPeriodeAnalyse}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white">
-                  <SelectItem value="jour">Jour</SelectItem>
-                  <SelectItem value="semaine">Semaine</SelectItem>
-                  <SelectItem value="mois">Mois</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             <p className="text-sm text-gray-500 mt-2">Les analyses précédentes et terminées. Les résultats</p>
           </CardHeader>
@@ -698,33 +688,57 @@ const Dashboard = () => {
         {/* Courbe de progression de la note */}
         {showCourbeNote && <Card className="mb-8">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-500" />
-                Évolution de la note moyenne
-              </CardTitle>
-              <p className="text-sm text-gray-600">Progression de votre note depuis l'enregistrement de l'établissement</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Star className="w-5 h-5 text-yellow-500" />
+                    Évolution de la note moyenne
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Progression de votre note depuis l'enregistrement de l'établissement — par {granularityEvolution}</p>
+                </div>
+                <Select value={granularityEvolution} onValueChange={(value) => setGranularityEvolution(value as Granularity)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white z-50">
+                    <SelectItem value="jour">Jour</SelectItem>
+                    <SelectItem value="semaine">Semaine</SelectItem>
+                    <SelectItem value="mois">Mois</SelectItem>
+                    <SelectItem value="année">Année</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </CardHeader>
             <CardContent>
               {courbeNoteData.length > 0 ? (
                 <>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={courbeNoteData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="mois" />
-                        <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
-                        <Tooltip formatter={value => [`${value}/5`, 'Note moyenne']} />
-                        <Line type="monotone" dataKey="note" stroke="#eab308" strokeWidth={3} dot={{
-                      fill: '#eab308',
-                      strokeWidth: 2,
-                      r: 4
-                    }} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <p className="text-sm text-gray-500 mt-4">
-                    Date d'enregistrement : {establishmentCreatedAt ? formatRegistrationDate(establishmentCreatedAt) : 'Inconnue'}
-                  </p>
+                  {courbeNoteData.length < 2 ? (
+                    <div className="text-center py-8">
+                      <p className="text-sm text-gray-500">Données limitées pour cette granularité</p>
+                      <p className="text-xs text-gray-400 mt-1">Sélectionnez une période plus large ou attendez plus d'avis</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={courbeNoteData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="mois" />
+                            <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
+                            <Tooltip formatter={value => [`${value}/5`, 'Note moyenne']} />
+                            <Line type="monotone" dataKey="note" stroke="#eab308" strokeWidth={3} dot={{
+                          fill: '#eab308',
+                          strokeWidth: 2,
+                          r: 4
+                        }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-4">
+                        Date d'enregistrement : {establishmentCreatedAt ? formatRegistrationDate(establishmentCreatedAt) : 'Inconnue'}
+                      </p>
+                    </>
+                  )}
                 </>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-8">
