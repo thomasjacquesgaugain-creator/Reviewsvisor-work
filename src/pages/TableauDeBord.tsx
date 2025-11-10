@@ -254,12 +254,10 @@ const Dashboard = () => {
                   <Card 
                     className={`border rounded-xl ${
                       !ratingEvolution 
-                        ? 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200'
-                        : ratingEvolution.status === 'increase' 
-                          ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200'
-                          : ratingEvolution.status === 'decrease'
-                            ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200'
-                            : 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200'
+                        ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200'
+                        : ratingEvolution.status === 'decrease'
+                          ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200'
+                          : 'bg-gradient-to-r from-green-50 to-green-100 border-green-200'
                     }`}
                     title={
                       ratingEvolution 
@@ -271,22 +269,18 @@ const Dashboard = () => {
                       <div 
                         className={`w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-md ${
                           !ratingEvolution
-                            ? 'bg-gray-600 border-gray-300'
-                            : ratingEvolution.status === 'increase'
-                              ? 'bg-green-600 border-green-300'
-                              : ratingEvolution.status === 'decrease'
-                                ? 'bg-red-600 border-red-300'
-                                : 'bg-gray-600 border-gray-300'
+                            ? 'bg-green-600 border-green-300'
+                            : ratingEvolution.status === 'decrease'
+                              ? 'bg-red-600 border-red-300'
+                              : 'bg-green-600 border-green-300'
                         }`}
                       >
                         {!ratingEvolution ? (
-                          <Minus className="w-5 h-5 text-white" />
-                        ) : ratingEvolution.status === 'increase' ? (
                           <ArrowUp className="w-5 h-5 text-white" />
                         ) : ratingEvolution.status === 'decrease' ? (
                           <ArrowDownRight className="w-5 h-5 text-white" />
                         ) : (
-                          <Minus className="w-5 h-5 text-white" />
+                          <ArrowUp className="w-5 h-5 text-white" />
                         )}
                       </div>
                       <div>
