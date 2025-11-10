@@ -162,60 +162,45 @@ const Dashboard = () => {
 
       <div className="relative z-10">
         {/* Navigation */}
-        <nav className="w-full border-b bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-          <div className="max-w-7xl mx-auto px-4 md:px-6">
-            <div className="flex items-center justify-between h-14">
-              {/* Logo et navigation gauche */}
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <img 
-                    src="/lovable-uploads/08f62503-65d7-4681-8ddf-00f4efb00ffa.png" 
-                    alt="Analytique logo" 
-                    className="w-8 h-8"
-                  />
-                  <span className="text-xl font-bold text-gray-900">analytique</span>
-                </div>
-                
-                <div className="hidden md:flex items-center gap-4">
-                  <Link to="/tableau-de-bord" className="text-blue-600 font-medium hover:underline flex items-center gap-2">
-                    <Home className="w-4 h-4" />
-                    Accueil
-                  </Link>
-                  <Link to="/dashboard">
-                    <Button variant="ghost" className="text-gray-700 flex items-center gap-1 h-9">
-                      <BarChart3 className="w-4 h-4" />
-                      Dashboard
-                    </Button>
-                  </Link>
-                  <Link to="/etablissement">
-                    <Button variant="ghost" className="text-gray-700 flex items-center gap-1 h-9">
-                      <Building className="w-4 h-4" />
-                      Établissement
-                    </Button>
-                  </Link>
-                </div>
+        <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-200">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <img 
+                  src="/lovable-uploads/08f62503-65d7-4681-8ddf-00f4efb00ffa.png" 
+                  alt="Analytique logo" 
+                  className="w-8 h-8"
+                />
+                <span className="text-xl font-bold text-gray-900">analytique</span>
               </div>
               
-              {/* Actions droite */}
-              <div className="flex items-center gap-3 md:gap-4">
-                <span className="text-sm md:text-base text-gray-700">Bonjour, {displayName}</span>
-                <Link to="/etablissement" className="hidden md:inline-block">
-                  <Button variant="outline" className="text-gray-700 h-9">
+              <div className="flex items-center gap-4">
+                <Link to="/tableau-de-bord" className="text-blue-600 font-medium hover:underline flex items-center gap-2">
+                  <Home className="w-4 h-4" />
+                  Accueil
+                </Link>
+                <Link to="/dashboard">
+                  <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
+                    <BarChart3 className="w-4 h-4" />
+                    Dashboard
+                  </Button>
+                </Link>
+                <Link to="/etablissement">
+                  <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
+                    <Building className="w-4 h-4" />
                     Établissement
                   </Button>
                 </Link>
-                <Link to="/dashboard" className="hidden md:inline-block">
-                  <Button variant="outline" className="text-gray-700 h-9">
-                    Voir mon dashboard
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-2 text-gray-700">
+                  <span>Bonjour, {displayName}</span>
+                </div>
                 <Button 
                   variant="ghost" 
-                  className="text-gray-700 flex items-center gap-1 h-9"
+                  className="text-gray-700 flex items-center gap-1"
                   onClick={handleLogout}
                 >
                   <LogOut className="w-4 h-4" />
-                  <span className="hidden md:inline">Déconnexion</span>
+                  Déconnexion
                 </Button>
               </div>
             </div>
@@ -223,10 +208,19 @@ const Dashboard = () => {
         </nav>
 
         {/* Main content */}
-        <div className="container mx-auto px-4 pt-4 pb-2">
+        <div className="container mx-auto px-4 py-16">
+          {/* Header */}
+          <div className="text-center space-y-4 mb-12">
+            <h1 className="text-5xl font-bold text-gray-900">
+              <span className="text-blue-600">analytique</span>
+            </h1>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Analysez automatiquement vos avis clients pour identifier les problèmes prioritaires et améliorer la satisfaction de votre établissement.
+            </p>
+          </div>
 
           {/* Welcome card */}
-          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-8">
+          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-16">
             <CardContent className="p-8 text-center space-y-6">
               <h2 className="text-2xl font-bold text-gray-900">Bienvenue, {displayName} !</h2>
               <p className="text-gray-600">
@@ -251,7 +245,7 @@ const Dashboard = () => {
             </Card>
 
             {/* Notifications section */}
-            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-8">
+            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-16">
               <CardContent className="p-8">
                 <div className="flex items-center gap-2 mb-6">
                   <Bell className="w-5 h-5 text-blue-600" />
