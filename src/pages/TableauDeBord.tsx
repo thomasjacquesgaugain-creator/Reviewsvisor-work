@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, CheckCircle } from "lucide-react";
+import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, CheckCircle, ArrowDownRight, Minus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { getBaselineScore, formatDelta, getEvolutionStatus } from "@/utils/baselineScore";
+import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 
 const Dashboard = () => {
   const [userProfile, setUserProfile] = useState<{ first_name: string; last_name: string } | null>(null);
@@ -14,8 +16,10 @@ const Dashboard = () => {
   const [recentReviewsCount, setRecentReviewsCount] = useState(0);
   const [lastReviewDate, setLastReviewDate] = useState<Date | null>(null);
   const [validatedResponsesCount, setValidatedResponsesCount] = useState(0);
+  const [avgRating, setAvgRating] = useState<number>(0);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const currentEstablishment = useCurrentEstablishment();
 
   useEffect(() => {
     const getUserProfile = async () => {
@@ -38,7 +42,7 @@ const Dashboard = () => {
         // Récupérer le nombre d'avis et la date du dernier avis
         const { data: reviews, error } = await supabase
           .from('reviews')
-          .select('inserted_at')
+          .select('inserted_at, rating')
           .eq('user_id', session.user.id)
           .order('inserted_at', { ascending: false });
 
@@ -46,6 +50,14 @@ const Dashboard = () => {
           setRecentReviewsCount(reviews.length);
           if (reviews.length > 0 && reviews[0].inserted_at) {
             setLastReviewDate(new Date(reviews[0].inserted_at));
+          }
+          
+          // Calculer la moyenne des notes
+          const ratingsWithValue = reviews.filter(r => r.rating !== null && r.rating !== undefined);
+          if (ratingsWithValue.length > 0) {
+            const sum = ratingsWithValue.reduce((acc, r) => acc + (r.rating || 0), 0);
+            const average = sum / ratingsWithValue.length;
+            setAvgRating(average);
           }
         }
       } catch (error) {
@@ -97,6 +109,27 @@ const Dashboard = () => {
   const displayName = userProfile 
     ? `${userProfile.first_name} ${userProfile.last_name}` 
     : "Utilisateur";
+
+  // Calcul de l'évolution de la note depuis l'enregistrement
+  const ratingEvolution = useMemo(() => {
+    if (!currentEstablishment?.id || avgRating === 0) {
+      return null;
+    }
+    
+    const baseline = getBaselineScore(currentEstablishment.id, avgRating);
+    const delta = avgRating - baseline.score;
+    const status = getEvolutionStatus(delta);
+    const formattedDelta = formatDelta(delta);
+    
+    return {
+      delta,
+      formattedDelta,
+      status,
+      baseline: baseline.score,
+      baselineDate: baseline.date,
+    };
+  }, [currentEstablishment?.id, avgRating]);
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Background with organic shapes */}
@@ -218,14 +251,58 @@ const Dashboard = () => {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200 border rounded-xl">
+                  <Card 
+                    className={`border rounded-xl ${
+                      !ratingEvolution 
+                        ? 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200'
+                        : ratingEvolution.status === 'increase' 
+                          ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200'
+                          : ratingEvolution.status === 'decrease'
+                            ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200'
+                            : 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200'
+                    }`}
+                    title={
+                      ratingEvolution 
+                        ? `Baseline : ${ratingEvolution.baseline.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} fixée le ${format(new Date(ratingEvolution.baselineDate), 'dd/MM/yyyy', { locale: fr })}`
+                        : undefined
+                    }
+                  >
                     <CardContent className="p-4 flex items-center gap-3">
-                      <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center border-2 border-green-300 shadow-md">
-                        <ArrowUp className="w-5 h-5 text-white" />
+                      <div 
+                        className={`w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-md ${
+                          !ratingEvolution
+                            ? 'bg-gray-600 border-gray-300'
+                            : ratingEvolution.status === 'increase'
+                              ? 'bg-green-600 border-green-300'
+                              : ratingEvolution.status === 'decrease'
+                                ? 'bg-red-600 border-red-300'
+                                : 'bg-gray-600 border-gray-300'
+                        }`}
+                      >
+                        {!ratingEvolution ? (
+                          <Minus className="w-5 h-5 text-white" />
+                        ) : ratingEvolution.status === 'increase' ? (
+                          <ArrowUp className="w-5 h-5 text-white" />
+                        ) : ratingEvolution.status === 'decrease' ? (
+                          <ArrowDownRight className="w-5 h-5 text-white" />
+                        ) : (
+                          <Minus className="w-5 h-5 text-white" />
+                        )}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">Note augmentée de 0,3</p>
-                        <p className="text-sm text-gray-600">Cette semaine</p>
+                        <p className="font-medium text-gray-900">
+                          {!ratingEvolution 
+                            ? 'Note'
+                            : ratingEvolution.status === 'increase'
+                              ? `Augmentée de ${ratingEvolution.formattedDelta}`
+                              : ratingEvolution.status === 'decrease'
+                                ? `Baisse de ${ratingEvolution.formattedDelta}`
+                                : `Stable (${ratingEvolution.formattedDelta})`
+                          }
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {!ratingEvolution ? 'En attente de données' : 'depuis l\'enregistrement'}
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
