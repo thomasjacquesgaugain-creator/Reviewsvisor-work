@@ -7,14 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
-import { analyzeAllReviews, calculateTop3Problems, calculateTop3Strengths } from "@/utils/aspectSentimentAnalysis";
 
 const Dashboard = () => {
   const [searchParams] = useSearchParams();
@@ -82,7 +81,6 @@ const Dashboard = () => {
   const [recentReviews, setRecentReviews] = useState<any[]>([]);
   const [topReviews, setTopReviews] = useState<any[]>([]);
   const [worstReviews, setWorstReviews] = useState<any[]>([]);
-  const [allReviews, setAllReviews] = useState<any[]>([]);
   
   // Stats par plateforme
   const [platformStats, setPlatformStats] = useState<Record<string, { count: number; avgRating: number }>>({});
@@ -159,7 +157,6 @@ const Dashboard = () => {
         if (reviewsError) {
           console.error('[dashboard] reviews error:', reviewsError);
         } else if (reviewsData) {
-          setAllReviews(reviewsData);
           setRecentReviews(reviewsData.slice(0, 3));
           
           // Top 5 meilleurs avis (note >= 4)
@@ -234,23 +231,10 @@ const Dashboard = () => {
     time
   } = formatDateTime(currentDateTime);
 
-  // Analyse NLP des aspects et sentiments
-  const aspectAnalysis = useMemo(() => {
-    return analyzeAllReviews(allReviews);
-  }, [allReviews]);
-
-  const top3Problems = useMemo(() => {
-    return calculateTop3Problems(aspectAnalysis);
-  }, [aspectAnalysis]);
-
-  const top3Strengths = useMemo(() => {
-    return calculateTop3Strengths(aspectAnalysis);
-  }, [aspectAnalysis]);
-
   // Map insight data to variables used by UI components
-  const totalAnalyzed = insight?.total_count ?? allReviews.length;
+  const totalAnalyzed = insight?.total_count ?? 0;
   const avgRating = insight?.avg_rating ?? 4.2;
-  const totalReviews = insight?.total_count ?? allReviews.length;
+  const totalReviews = insight?.total_count ?? 0;
   const positivePct = insight?.positive_ratio != null ? Math.round(insight.positive_ratio * 100) : 78;
   const negativePct = 100 - positivePct;
   const topIssues = insight?.top_issues ?? [];
@@ -859,24 +843,28 @@ const Dashboard = () => {
               <p className="text-sm text-gray-500">Les plus mentionnés par fréquence et pourcentage en priorité</p>
             </CardHeader>
             <CardContent className="space-y-4">
-              {top3Problems.length > 0 ? (
-                top3Problems.map((problem: any, index: number) => {
-                  const isCritical = problem.normalizedPct >= 50;
-                  const isModerate = problem.normalizedPct >= 30 && problem.normalizedPct < 50;
+              {topIssues.length > 0 ? (
+                topIssues.slice(0, 3).map((issue: any, index: number) => {
+                  const severity = issue.severity || (index === 0 ? 'high' : index === 1 ? 'medium' : 'low');
+                  const isCritical = severity === 'high';
+                  const mentionCount = issue.count || issue.mentions || 0;
+                  const percentage = totalAnalyzed > 0 && mentionCount > 0 
+                    ? Math.round((mentionCount / totalAnalyzed) * 100) 
+                    : 0;
                   
                   return (
-                    <div key={index} className={`flex items-center justify-between p-3 ${isCritical ? 'bg-red-50' : isModerate ? 'bg-yellow-50' : 'bg-orange-50'} rounded-lg`}>
+                    <div key={index} className={`flex items-center justify-between p-3 ${isCritical ? 'bg-red-50' : 'bg-yellow-50'} rounded-lg`}>
                       <div className="flex items-center gap-2">
-                        <AlertTriangle className={`w-4 h-4 ${isCritical ? 'text-red-500' : isModerate ? 'text-yellow-600' : 'text-orange-500'}`} />
+                        <AlertTriangle className={`w-4 h-4 ${isCritical ? 'text-red-500' : 'text-yellow-600'}`} />
                         <div>
-                          <div className="font-medium">{problem.theme}</div>
+                          <div className="font-medium">{issue.theme || issue.issue || 'Problème non spécifié'}</div>
                           <div className="text-sm text-gray-500">
-                            {problem.normalizedPct}% des problèmes
+                            {percentage > 0 ? `${percentage}% des avis` : 'Identifié par l\'IA'}
                           </div>
                         </div>
                       </div>
-                      <Badge variant={isCritical ? 'destructive' : 'default'} className={isModerate ? 'bg-yellow-500 text-white' : !isCritical ? 'bg-orange-500 text-white' : ''}>
-                        {isCritical ? 'Critique' : isModerate ? 'Moyen' : 'Faible'}
+                      <Badge variant={isCritical ? 'destructive' : 'default'} className={!isCritical ? 'bg-yellow-500 text-white' : ''}>
+                        {isCritical ? 'Critique' : 'Moyen'}
                       </Badge>
                     </div>
                   );
@@ -903,16 +891,21 @@ const Dashboard = () => {
               <p className="text-sm text-gray-500">Les points forts les plus mentionnés par vos clients</p>
             </CardHeader>
             <CardContent className="space-y-4">
-              {top3Strengths.length > 0 ? (
-                top3Strengths.map((strength: any, index: number) => {
+              {topStrengths.length > 0 ? (
+                topStrengths.slice(0, 3).map((strength: any, index: number) => {
+                  const mentionCount = strength.count || strength.mentions || 0;
+                  const percentage = totalAnalyzed > 0 && mentionCount > 0 
+                    ? Math.round((mentionCount / totalAnalyzed) * 100) 
+                    : 0;
+                  
                   return (
                     <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-green-500" />
                         <div>
-                          <div className="font-medium">{strength.theme}</div>
+                          <div className="font-medium">{strength.theme || strength.strength || 'Point fort non spécifié'}</div>
                           <div className="text-sm text-gray-500">
-                            {strength.normalizedPct}% de vos points forts
+                            {percentage > 0 ? `${percentage}% des avis` : 'Identifié par l\'IA'}
                           </div>
                         </div>
                       </div>
@@ -1053,57 +1046,54 @@ const Dashboard = () => {
           </CardHeader>
           {showThematiques && <CardContent>
               <div className="space-y-4">
-                {Object.keys(aspectAnalysis).length > 0 ? (
+                {insight?.themes && insight.themes.length > 0 ? (
                   (() => {
-                    // Utiliser l'analyse NLP des aspects
-                    const aspectsArray = ['Cuisine', 'Service', 'Rapidité', 'Ambiance'];
+                    const totalReviews = insight?.total_count || 1;
                     
-                    // Calculer volume total des mentions
-                    const totalMentions = aspectsArray.reduce((sum, aspect) => 
-                      sum + aspectAnalysis[aspect].totalCount, 0
-                    );
-                    
-                    // Créer les données normalisées
-                    const themesWithPercentages = aspectsArray.map(aspect => {
-                      const data = aspectAnalysis[aspect];
-                      const rawPercentage = totalMentions > 0 
-                        ? (data.totalCount / totalMentions) * 100 
-                        : 0;
+                    // Calculer les pourcentages bruts
+                    const themesWithPercentages = insight.themes.map((theme: any) => {
+                      const themeCount = theme.count || 0;
+                      const rawPercentage = (themeCount / totalReviews) * 100;
+                      
+                      // Calculer positifs et négatifs pour cette thématique
+                      // On suppose que theme.reviews contient les avis de cette thématique
+                      // Sinon, on utilise recentReviews pour estimer
+                      let positiveCount = 0;
+                      let negativeCount = 0;
+                      
+                      if (theme.reviews && Array.isArray(theme.reviews)) {
+                        theme.reviews.forEach((review: any) => {
+                          const rating = review.rating || 0;
+                          if (rating >= 4) positiveCount++;
+                          else if (rating <= 2) negativeCount++;
+                        });
+                      } else {
+                        // Estimation basée sur la proportion globale
+                        const globalPositiveRatio = insight?.positive_ratio || 0.7;
+                        positiveCount = Math.round(themeCount * globalPositiveRatio);
+                        negativeCount = Math.round(themeCount * (1 - globalPositiveRatio));
+                      }
+                      
+                      const totalCounted = positiveCount + negativeCount;
+                      const positivePercent = totalCounted > 0 ? Math.round((positiveCount / totalCounted) * 100) : 0;
+                      const negativePercent = totalCounted > 0 ? Math.round((negativeCount / totalCounted) * 100) : 0;
                       
                       return {
-                        theme: aspect,
-                        count: data.totalCount,
+                        ...theme,
                         rawPercentage,
-                        positivePercent: data.positivePct,
-                        negativePercent: data.negativePct
+                        positivePercent,
+                        negativePercent
                       };
                     });
                     
                     // Calculer la somme totale pour normalisation
-                    const totalPercentage = themesWithPercentages.reduce((sum: number, t: any) => 
-                      sum + t.rawPercentage, 0
-                    );
+                    const totalPercentage = themesWithPercentages.reduce((sum: number, t: any) => sum + t.rawPercentage, 0);
                     
                     // Normaliser pour que la somme fasse 100%
-                    const themesNormalized = themesWithPercentages.map((theme: any, index: number) => {
-                      if (index < 3) {
-                        return {
-                          ...theme,
-                          percentage: totalPercentage > 0 
-                            ? Math.floor((theme.rawPercentage / totalPercentage) * 100) 
-                            : 0
-                        };
-                      } else {
-                        // Le dernier = 100 - somme des 3 premiers
-                        const sumFirst3 = themesWithPercentages.slice(0, 3).reduce((sum, t) => 
-                          sum + Math.floor((t.rawPercentage / totalPercentage) * 100), 0
-                        );
-                        return {
-                          ...theme,
-                          percentage: 100 - sumFirst3
-                        };
-                      }
-                    });
+                    const themesNormalized = themesWithPercentages.map((theme: any) => ({
+                      ...theme,
+                      percentage: totalPercentage > 0 ? Math.round((theme.rawPercentage / totalPercentage) * 100) : 0
+                    }));
                     
                     // Choose icon based on theme name
                     const getThemeIcon = (themeName: string) => {
