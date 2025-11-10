@@ -7,13 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
+import { getRatingEvolution, formatRegistrationDate } from "@/utils/ratingEvolution";
 
 const Dashboard = () => {
   const [searchParams] = useSearchParams();
@@ -81,6 +82,8 @@ const Dashboard = () => {
   const [recentReviews, setRecentReviews] = useState<any[]>([]);
   const [topReviews, setTopReviews] = useState<any[]>([]);
   const [worstReviews, setWorstReviews] = useState<any[]>([]);
+  const [allReviewsForChart, setAllReviewsForChart] = useState<any[]>([]);
+  const [establishmentCreatedAt, setEstablishmentCreatedAt] = useState<string | null>(null);
   
   // Stats par plateforme
   const [platformStats, setPlatformStats] = useState<Record<string, { count: number; avgRating: number }>>({});
@@ -158,6 +161,7 @@ const Dashboard = () => {
           console.error('[dashboard] reviews error:', reviewsError);
         } else if (reviewsData) {
           setRecentReviews(reviewsData.slice(0, 3));
+          setAllReviewsForChart(reviewsData);
           
           // Top 5 meilleurs avis (note >= 4)
           const bestReviews = reviewsData
@@ -193,6 +197,33 @@ const Dashboard = () => {
           });
           
           setPlatformStats(statsByPlatform);
+        }
+
+        // Récupérer la date de création de l'établissement
+        const { data: establishmentData, error: estError } = await supabase
+          .from('establishments')
+          .select('created_at')
+          .eq('place_id', currentEstab.place_id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (!estError && establishmentData) {
+          setEstablishmentCreatedAt(establishmentData.created_at);
+        } else {
+          // Fallback: utiliser la date du plus ancien avis ou aujourd'hui
+          if (reviewsData && reviewsData.length > 0) {
+            const oldestReview = reviewsData
+              .filter(r => r.published_at || r.inserted_at)
+              .sort((a, b) => {
+                const dateA = new Date(a.published_at || a.inserted_at || '');
+                const dateB = new Date(b.published_at || b.inserted_at || '');
+                return dateA.getTime() - dateB.getTime();
+              })[0];
+            
+            if (oldestReview) {
+              setEstablishmentCreatedAt(oldestReview.published_at || oldestReview.inserted_at);
+            }
+          }
         }
       } catch (error) {
         console.error('[dashboard] fetch insights error:', error);
@@ -284,29 +315,15 @@ const Dashboard = () => {
     return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
-  // Données pour la courbe de progression de la note
-  const courbeNoteData = [{
-    mois: 'Jan',
-    note: 3.8
-  }, {
-    mois: 'Fév',
-    note: 3.9
-  }, {
-    mois: 'Mar',
-    note: 4.0
-  }, {
-    mois: 'Avr',
-    note: 3.7
-  }, {
-    mois: 'Mai',
-    note: 4.1
-  }, {
-    mois: 'Juin',
-    note: 4.2
-  }, {
-    mois: 'Juil',
-    note: 4.2
-  }];
+  // Calculer l'évolution de la note depuis l'enregistrement
+  const courbeNoteData = useMemo(() => {
+    if (!establishmentCreatedAt || allReviewsForChart.length === 0) {
+      // Pas de données : retourner une courbe vide ou par défaut
+      return [];
+    }
+    
+    return getRatingEvolution(allReviewsForChart, establishmentCreatedAt);
+  }, [allReviewsForChart, establishmentCreatedAt]);
 
   // If we have an etablissementId in URL, show analysis dashboard
   if (etablissementId) {
@@ -685,25 +702,35 @@ const Dashboard = () => {
                 <Star className="w-5 h-5 text-yellow-500" />
                 Évolution de la note moyenne
               </CardTitle>
-              <p className="text-sm text-gray-600">Progression de votre note depuis la création du compte</p>
+              <p className="text-sm text-gray-600">Progression de votre note depuis l'enregistrement de l'établissement</p>
             </CardHeader>
             <CardContent>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={courbeNoteData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="mois" />
-                    <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
-                    <Tooltip formatter={value => [`${value}/5`, 'Note moyenne']} />
-                    <Line type="monotone" dataKey="note" stroke="#eab308" strokeWidth={3} dot={{
-                  fill: '#eab308',
-                  strokeWidth: 2,
-                  r: 4
-                }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <p className="text-sm text-gray-500 mt-4">Date de création du compte: 09/09/2025</p>
+              {courbeNoteData.length > 0 ? (
+                <>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={courbeNoteData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="mois" />
+                        <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
+                        <Tooltip formatter={value => [`${value}/5`, 'Note moyenne']} />
+                        <Line type="monotone" dataKey="note" stroke="#eab308" strokeWidth={3} dot={{
+                      fill: '#eab308',
+                      strokeWidth: 2,
+                      r: 4
+                    }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-4">
+                    Date d'enregistrement : {establishmentCreatedAt ? formatRegistrationDate(establishmentCreatedAt) : 'Inconnue'}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-8">
+                  Aucune donnée disponible pour afficher l'évolution de la note
+                </p>
+              )}
             </CardContent>
           </Card>}
 
