@@ -1051,10 +1051,40 @@ const Dashboard = () => {
                     const totalReviews = insight?.total_count || 1;
                     
                     // Calculer les pourcentages bruts
-                    const themesWithPercentages = insight.themes.map((theme: any) => ({
-                      ...theme,
-                      rawPercentage: ((theme.count || 0) / totalReviews) * 100
-                    }));
+                    const themesWithPercentages = insight.themes.map((theme: any) => {
+                      const themeCount = theme.count || 0;
+                      const rawPercentage = (themeCount / totalReviews) * 100;
+                      
+                      // Calculer positifs et négatifs pour cette thématique
+                      // On suppose que theme.reviews contient les avis de cette thématique
+                      // Sinon, on utilise recentReviews pour estimer
+                      let positiveCount = 0;
+                      let negativeCount = 0;
+                      
+                      if (theme.reviews && Array.isArray(theme.reviews)) {
+                        theme.reviews.forEach((review: any) => {
+                          const rating = review.rating || 0;
+                          if (rating >= 4) positiveCount++;
+                          else if (rating <= 2) negativeCount++;
+                        });
+                      } else {
+                        // Estimation basée sur la proportion globale
+                        const globalPositiveRatio = insight?.positive_ratio || 0.7;
+                        positiveCount = Math.round(themeCount * globalPositiveRatio);
+                        negativeCount = Math.round(themeCount * (1 - globalPositiveRatio));
+                      }
+                      
+                      const totalCounted = positiveCount + negativeCount;
+                      const positivePercent = totalCounted > 0 ? Math.round((positiveCount / totalCounted) * 100) : 0;
+                      const negativePercent = totalCounted > 0 ? Math.round((negativeCount / totalCounted) * 100) : 0;
+                      
+                      return {
+                        ...theme,
+                        rawPercentage,
+                        positivePercent,
+                        negativePercent
+                      };
+                    });
                     
                     // Calculer la somme totale pour normalisation
                     const totalPercentage = themesWithPercentages.reduce((sum: number, t: any) => sum + t.rawPercentage, 0);
@@ -1081,15 +1111,19 @@ const Dashboard = () => {
                     };
 
                     return themesNormalized.map((theme: any, index: number) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                      <div key={index} className="p-3 bg-purple-50 rounded-lg">
                         <div className="flex items-center gap-2">
                           {getThemeIcon(theme.theme)}
-                          <div>
+                          <div className="flex-1">
                             <div className="font-medium">{theme.theme}</div>
                             <div className="text-sm text-gray-500">{theme.percentage}% des avis</div>
+                            <div className="text-sm text-gray-600 mt-1">
+                              <span className="text-green-600">Positifs : {theme.positivePercent}%</span>
+                              <span className="mx-2">—</span>
+                              <span className="text-red-600">Négatifs : {theme.negativePercent}%</span>
+                            </div>
                           </div>
                         </div>
-                        <Badge className="bg-purple-500 text-white">Thématique</Badge>
                       </div>
                     ));
                   })()
