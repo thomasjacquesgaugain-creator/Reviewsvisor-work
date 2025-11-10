@@ -7,7 +7,130 @@ interface BaselineData {
   date: string;
 }
 
+interface BaselineSatisfactionData {
+  percentage: number;
+  date: string;
+}
+
 const BASELINE_PREFIX = 'baselineScore::';
+const BASELINE_SATISFACTION_PREFIX = 'baselineSatisfaction::';
+
+// Mots-clés pour la détection de sentiment
+const POSITIVE_KEYWORDS = [
+  'très bon', 'excellent', 'top', 'impeccable', 'rapide', 'accueillant',
+  'sympa', 'je recommande', 'super', 'génial', 'parfait', 'délicieux',
+  'formidable', 'extraordinaire', 'magnifique', 'incroyable', 'merveilleux'
+];
+
+const NEGATIVE_KEYWORDS = [
+  'décevant', 'mauvais', 'lent', 'pas bon', 'froid', 'cher pour ce que',
+  'horrible', 'médiocre', 'nul', 'catastrophe', 'déçu', 'inadmissible'
+];
+
+/**
+ * Détermine si un avis est positif
+ */
+function isPositiveReview(review: any): boolean {
+  // Basé sur la note
+  if (review.rating >= 4) return true;
+  
+  // Basé sur le texte si disponible
+  if (review.text) {
+    const text = review.text.toLowerCase();
+    if (POSITIVE_KEYWORDS.some(keyword => text.includes(keyword))) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
+ * Détermine si un avis est négatif
+ */
+function isNegativeReview(review: any): boolean {
+  // Basé sur la note
+  if (review.rating <= 2) return true;
+  
+  // Basé sur le texte si disponible
+  if (review.text) {
+    const text = review.text.toLowerCase();
+    if (NEGATIVE_KEYWORDS.some(keyword => text.includes(keyword))) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
+ * Calcule le pourcentage de satisfaction à partir des avis
+ */
+export function computeSatisfactionPct(reviews: any[]): number {
+  if (!reviews || reviews.length === 0) return 0;
+  
+  let positiveCount = 0;
+  let totalCount = 0;
+  
+  reviews.forEach(review => {
+    // Ignorer les avis neutres sans contenu clair
+    if (review.rating === 3 && !review.text) {
+      return;
+    }
+    
+    totalCount++;
+    
+    if (isPositiveReview(review)) {
+      positiveCount++;
+    }
+  });
+  
+  if (totalCount === 0) return 0;
+  
+  return Math.round((positiveCount / totalCount) * 100);
+}
+
+/**
+ * Récupère ou initialise la baseline de satisfaction pour un établissement
+ */
+export function ensureBaselineSatisfaction(
+  establishmentId: string,
+  currentSatisfactionPct: number
+): BaselineSatisfactionData {
+  const key = `${BASELINE_SATISFACTION_PREFIX}${establishmentId}`;
+  
+  try {
+    const stored = localStorage.getItem(key);
+    
+    if (stored) {
+      const baseline: BaselineSatisfactionData = JSON.parse(stored);
+      return baseline;
+    }
+    
+    // Pas de baseline → initialiser avec le taux actuel
+    const newBaseline: BaselineSatisfactionData = {
+      percentage: currentSatisfactionPct,
+      date: new Date().toISOString(),
+    };
+    
+    localStorage.setItem(key, JSON.stringify(newBaseline));
+    return newBaseline;
+  } catch (error) {
+    console.error('Error managing baseline satisfaction:', error);
+    return {
+      percentage: currentSatisfactionPct,
+      date: new Date().toISOString(),
+    };
+  }
+}
+
+/**
+ * Calcule le delta de satisfaction (toujours >= 0)
+ */
+export function computeSatisfactionDelta(current: number, baseline: number): number {
+  const delta = current - baseline;
+  return Math.max(0, delta); // Ne jamais afficher de valeur négative
+}
 
 /**
  * Récupère ou initialise la baseline pour un établissement

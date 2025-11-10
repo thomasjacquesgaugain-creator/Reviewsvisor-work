@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow, format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { getBaselineScore, formatDelta, getEvolutionStatus } from "@/utils/baselineScore";
+import { getBaselineScore, formatDelta, getEvolutionStatus, computeSatisfactionPct, ensureBaselineSatisfaction, computeSatisfactionDelta } from "@/utils/baselineScore";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 
 const Dashboard = () => {
@@ -17,6 +17,7 @@ const Dashboard = () => {
   const [lastReviewDate, setLastReviewDate] = useState<Date | null>(null);
   const [validatedResponsesCount, setValidatedResponsesCount] = useState(0);
   const [avgRating, setAvgRating] = useState<number>(0);
+  const [allReviews, setAllReviews] = useState<any[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
   const currentEstablishment = useCurrentEstablishment();
@@ -42,12 +43,14 @@ const Dashboard = () => {
         // Récupérer le nombre d'avis et la date du dernier avis
         const { data: reviews, error } = await supabase
           .from('reviews')
-          .select('inserted_at, rating')
+          .select('inserted_at, rating, text')
           .eq('user_id', session.user.id)
           .order('inserted_at', { ascending: false });
 
         if (!error && reviews) {
           setRecentReviewsCount(reviews.length);
+          setAllReviews(reviews);
+          
           if (reviews.length > 0 && reviews[0].inserted_at) {
             setLastReviewDate(new Date(reviews[0].inserted_at));
           }
@@ -117,6 +120,24 @@ const Dashboard = () => {
       baselineDate: baseline.date,
     };
   }, [currentEstablishment?.id, avgRating]);
+
+  // Calcul de l'évolution de la satisfaction depuis l'enregistrement
+  const satisfactionEvolution = useMemo(() => {
+    if (!currentEstablishment?.id || allReviews.length === 0) {
+      return null;
+    }
+    
+    const currentSatisfactionPct = computeSatisfactionPct(allReviews);
+    const baseline = ensureBaselineSatisfaction(currentEstablishment.id, currentSatisfactionPct);
+    const delta = computeSatisfactionDelta(currentSatisfactionPct, baseline.percentage);
+    
+    return {
+      delta,
+      currentPct: currentSatisfactionPct,
+      baselinePct: baseline.percentage,
+      baselineDate: baseline.date,
+    };
+  }, [currentEstablishment?.id, allReviews]);
 
   if (loading) {
     return (
@@ -313,14 +334,28 @@ const Dashboard = () => {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 border rounded-xl">
+                  <Card 
+                    className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 border rounded-xl"
+                    title={
+                      satisfactionEvolution 
+                        ? `Baseline : ${satisfactionEvolution.baselinePct}% fixée le ${format(new Date(satisfactionEvolution.baselineDate), 'dd/MM/yyyy', { locale: fr })}`
+                        : undefined
+                    }
+                  >
                     <CardContent className="p-4 flex items-center gap-3">
                       <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center border-2 border-purple-300 shadow-md">
-                        <TrendingUp className="w-5 h-5 text-white" />
+                        <ArrowUp className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">+15% satisfaction</p>
-                        <p className="text-sm text-gray-600">Par rapport au mois dernier</p>
+                        <p className="font-medium text-gray-900">
+                          {!satisfactionEvolution 
+                            ? 'Satisfaction'
+                            : `Satisfaction +${satisfactionEvolution.delta}%`
+                          }
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {!satisfactionEvolution ? 'En attente d\'avis' : 'depuis l\'enregistrement'}
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
