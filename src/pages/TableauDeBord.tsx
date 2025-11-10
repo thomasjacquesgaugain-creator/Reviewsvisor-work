@@ -98,19 +98,7 @@ const Dashboard = () => {
     navigate('/');
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Chargement...</div>
-      </div>
-    );
-  }
-
-  const displayName = userProfile 
-    ? `${userProfile.first_name} ${userProfile.last_name}` 
-    : "Utilisateur";
-
-  // Calcul de l'évolution de la note depuis l'enregistrement
+  // Calcul de l'évolution de la note depuis l'enregistrement (avant le return conditionnel)
   const ratingEvolution = useMemo(() => {
     if (!currentEstablishment?.id || avgRating === 0) {
       return null;
@@ -129,6 +117,18 @@ const Dashboard = () => {
       baselineDate: baseline.date,
     };
   }, [currentEstablishment?.id, avgRating]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Chargement...</div>
+      </div>
+    );
+  }
+
+  const displayName = userProfile 
+    ? `${userProfile.first_name} ${userProfile.last_name}` 
+    : "Utilisateur";
 
   return (
     <div className="min-h-screen relative overflow-hidden">
