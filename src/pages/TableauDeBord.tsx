@@ -10,6 +10,7 @@ import { fr } from "date-fns/locale";
 import { getBaselineScore, formatDelta, getEvolutionStatus, computeSatisfactionPct, ensureBaselineSatisfaction, computeSatisfactionDelta } from "@/utils/baselineScore";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { getReponsesStats } from "@/lib/reponses";
+import { SubscriptionCard } from "@/components/SubscriptionCard";
 
 const Dashboard = () => {
   const [userProfile, setUserProfile] = useState<{ first_name: string; last_name: string } | null>(null);
@@ -389,6 +390,11 @@ const Dashboard = () => {
                 </div>
               </CardContent>
             </Card>
+
+          {/* Subscription Card */}
+          <div className="max-w-3xl mx-auto mb-16">
+            <SubscriptionCard />
+          </div>
 
           {/* Feature cards */}
           <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">

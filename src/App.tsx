@@ -14,6 +14,8 @@ import NotFound from "./pages/NotFound";
 import DebugEnv from "./pages/DebugEnv";
 import DebugReviews from "./pages/DebugReviews";
 import DebugInsights from "./pages/DebugInsights";
+import BillingSuccess from "./pages/BillingSuccess";
+import BillingCancel from "./pages/BillingCancel";
 
 const App = () => {
   return (
@@ -54,6 +56,8 @@ const App = () => {
               <DebugInsights />
             </Protected>
           } />
+          <Route path="/billing/success" element={<BillingSuccess />} />
+          <Route path="/billing/cancel" element={<BillingCancel />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
