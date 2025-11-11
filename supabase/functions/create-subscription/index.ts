@@ -26,7 +26,10 @@ serve(async (req) => {
     const priceId = Deno.env.get("STRIPE_PRICE_ID");
     if (!priceId) throw new Error("STRIPE_PRICE_ID is not set");
 
-    logStep("Stripe keys verified");
+    logStep("Stripe keys verified", { 
+      priceIdPreview: priceId?.substring(0, 10) + "...",
+      priceIdLength: priceId?.length 
+    });
 
     const { email } = await req.json();
     if (!email) throw new Error("Email is required");
