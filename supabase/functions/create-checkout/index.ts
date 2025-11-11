@@ -25,23 +25,41 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    // Get email from request body (for non-authenticated users) or from auth
+    const body = await req.json().catch(() => ({}));
+    const emailFromBody = body.email;
+    
+    let userEmail = emailFromBody;
+    
+    // Try to get authenticated user if available
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (authHeader) {
+      try {
+        const token = authHeader.replace("Bearer ", "");
+        const { data } = await supabaseClient.auth.getUser(token);
+        if (data.user?.email) {
+          userEmail = data.user.email;
+          logStep("User authenticated", { email: userEmail });
+        }
+      } catch (e) {
+        logStep("No valid auth, using email from body");
+      }
+    }
     
-    const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
-    
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    if (!userEmail) throw new Error("Email is required");
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     
+    const priceId = Deno.env.get("STRIPE_PRICE_ID");
+    if (!priceId) throw new Error("STRIPE_PRICE_ID is not set");
+    
+    logStep("Config verified", { priceId });
+    
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
     // Check if customer already exists
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
     let customerId;
     
     if (customers.data.length > 0) {
@@ -55,24 +73,18 @@ serve(async (req) => {
     
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+      customer_email: customerId ? undefined : userEmail,
       line_items: [
         {
-          price: "price_1SSHpnGkt979eNWBKvpEzYwT",
+          price: priceId,
           quantity: 1,
         },
       ],
       mode: "subscription",
       allow_promotion_codes: true,
       billing_address_collection: "auto",
-      automatic_tax: { enabled: true },
-      subscription_data: {
-        metadata: {
-          userId: user.id,
-        },
-      },
-      success_url: `${origin}/onboarding?checkout=success`,
-      cancel_url: `${origin}/onboarding?checkout=cancel`,
+      success_url: `${origin}/billing/success`,
+      cancel_url: `${origin}/billing/cancel`,
     });
 
     logStep("Checkout session created", { sessionId: session.id, url: session.url });

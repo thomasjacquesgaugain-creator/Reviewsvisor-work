@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export const STRIPE_PUBLIC_KEY = "pk_live_51S0PSRGkt979eNWBtbxPd6e8SJM9ZYEIhvlwJ4uibz46iiCUc8zL8ZLsgPzKBx0WMLyg9u6ZWMZhWtJOKEIBnLa300kGR8bI0w";
+
 export type SubscriptionStatus = {
   subscribed: boolean;
   product_id?: string | null;
@@ -9,7 +11,7 @@ export type SubscriptionStatus = {
 export const STRIPE_PRODUCTS = {
   pro: {
     product_id: "prod_TP61gPRU9UTdMY",
-    price_id: "price_1SSHpnGkt979eNWBKvpEzYwT",
+    price_id: "price_1SSJ0sGkt979eNWBhN9cZmG2",
     name: "Abonnement Pro",
     price: "14,99€/mois",
   },
@@ -31,9 +33,12 @@ export async function checkSubscription(): Promise<SubscriptionStatus> {
   }
 }
 
-export async function createCheckoutSession(): Promise<string | null> {
+export async function createCheckoutSession(email?: string): Promise<string | null> {
   try {
-    const { data, error } = await supabase.functions.invoke<{ url: string }>("create-checkout");
+    const body = email ? { email } : {};
+    const { data, error } = await supabase.functions.invoke<{ url: string }>("create-checkout", {
+      body,
+    });
 
     if (error) {
       console.error("Error creating checkout session:", error);
