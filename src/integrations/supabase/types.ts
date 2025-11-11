@@ -331,6 +331,7 @@ export type Database = {
       }
       reponses: {
         Row: {
+          avis_id: string | null
           created_at: string
           establishment_id: string
           id: string
@@ -341,6 +342,7 @@ export type Database = {
           validated_at: string
         }
         Insert: {
+          avis_id?: string | null
           created_at?: string
           establishment_id: string
           id?: string
@@ -351,6 +353,7 @@ export type Database = {
           validated_at?: string
         }
         Update: {
+          avis_id?: string | null
           created_at?: string
           establishment_id?: string
           id?: string

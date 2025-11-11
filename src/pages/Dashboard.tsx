@@ -15,6 +15,7 @@ import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
 import { getRatingEvolution, formatRegistrationDate, Granularity } from "@/utils/ratingEvolution";
+import { validateReponse } from "@/lib/reponses";
 
 const Dashboard = () => {
   const [searchParams] = useSearchParams();
@@ -93,6 +94,7 @@ const Dashboard = () => {
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
   const [editedResponses, setEditedResponses] = useState<Record<string, string>>({});
   const [validatedReviews, setValidatedReviews] = useState<Set<number>>(new Set());
+  const [isValidatingReview, setIsValidatingReview] = useState<Record<number, boolean>>({});
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -1321,37 +1323,28 @@ const Dashboard = () => {
                               <>
                                 <Button 
                                   size="sm" 
-                                  className="bg-green-600 hover:bg-green-700 text-white"
-                                  disabled={validatedReviews.has(reviewId)}
+                                  className={validatedReviews.has(reviewId) ? "bg-green-600 hover:bg-green-700 text-white" : "bg-blue-600 hover:bg-blue-700 text-white"}
+                                  disabled={validatedReviews.has(reviewId) || isValidatingReview[reviewId]}
                                   onClick={async () => {
                                     try {
                                       if (!user || !selectedEtab) return;
                                       
-                                      // Sauvegarder dans Supabase
-                                      const { error } = await supabase
-                                        .from('reponses')
-                                        .insert({
-                                          review_id: reviewId.toString(),
-                                          establishment_id: selectedEtab.place_id,
-                                          response_text: currentResponse,
-                                          user_id: user.id,
-                                          status: 'validated'
-                                        });
+                                      setIsValidatingReview(prev => ({ ...prev, [reviewId]: true }));
                                       
-                                      if (error) {
-                                        console.error('Error saving response:', error);
-                                        toast.error('Échec de l\'enregistrement', {
-                                          description: 'Une erreur est survenue lors de la validation.'
-                                        });
-                                        return;
-                                      }
+                                      // Utiliser le module reponses.ts
+                                      await validateReponse({
+                                        avisId: reviewId.toString(),
+                                        responseText: currentResponse,
+                                        establishmentId: selectedEtab.place_id,
+                                        userId: user.id
+                                      });
                                       
                                       // Mettre à jour l'état local
                                       setValidatedReviews(prev => new Set([...prev, reviewId]));
                                       
                                       // Afficher le toast de succès
                                       toast.success('Réponse validée', {
-                                        description: 'Votre réponse a été enregistrée.',
+                                        description: 'La réponse a bien été enregistrée.',
                                         duration: 3000
                                       });
                                       
@@ -1359,15 +1352,23 @@ const Dashboard = () => {
                                       window.dispatchEvent(new CustomEvent('response-validated', {
                                         detail: { placeId: selectedEtab.place_id }
                                       }));
-                                    } catch (error) {
-                                      console.error('Validation error:', error);
+                                    } catch (error: any) {
+                                      console.error('validateReponse', error);
                                       toast.error('Échec de l\'enregistrement', {
-                                        description: 'Une erreur est survenue.'
+                                        description: error.message || 'Une erreur est survenue.',
+                                        duration: 4000
                                       });
+                                    } finally {
+                                      setIsValidatingReview(prev => ({ ...prev, [reviewId]: false }));
                                     }
                                   }}
                                 >
-                                  {validatedReviews.has(reviewId) ? (
+                                  {isValidatingReview[reviewId] ? (
+                                    <>
+                                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                      Validation...
+                                    </>
+                                  ) : validatedReviews.has(reviewId) ? (
                                     <>
                                       <CheckCircle className="w-4 h-4 mr-1" />
                                       Validé

@@ -9,6 +9,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getBaselineScore, formatDelta, getEvolutionStatus, computeSatisfactionPct, ensureBaselineSatisfaction, computeSatisfactionDelta } from "@/utils/baselineScore";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
+import { getReponsesStats } from "@/lib/reponses";
 
 const Dashboard = () => {
   const [userProfile, setUserProfile] = useState<{ first_name: string; last_name: string } | null>(null);
@@ -64,21 +65,11 @@ const Dashboard = () => {
             setAvgRating(average);
           }
 
-          // Si un établissement est sélectionné, compter ses avis
+          // Si un établissement est sélectionné, utiliser getReponsesStats
           if (currentEstablishment?.place_id) {
-            const establishmentReviews = reviews.filter(r => r.place_id === currentEstablishment.place_id);
-            setTotalReviewsForEstablishment(establishmentReviews.length);
-
-            // Charger les réponses validées pour cet établissement
-            const { count: validatedCount } = await supabase
-              .from('reponses')
-              .select('*', { count: 'exact', head: true })
-              .eq('establishment_id', currentEstablishment.place_id)
-              .eq('status', 'validated');
-            
-            if (validatedCount !== null) {
-              setValidatedResponsesCount(validatedCount);
-            }
+            const stats = await getReponsesStats(currentEstablishment.place_id, session.user.id);
+            setValidatedResponsesCount(stats.validated);
+            setTotalReviewsForEstablishment(stats.total);
           }
         }
       } catch (error) {
@@ -116,15 +107,10 @@ const Dashboard = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const { count: validatedCount } = await supabase
-        .from('reponses')
-        .select('*', { count: 'exact', head: true })
-        .eq('establishment_id', currentEstablishment.place_id)
-        .eq('status', 'validated');
-      
-      if (validatedCount !== null) {
-        setValidatedResponsesCount(validatedCount);
-      }
+      // Utiliser getReponsesStats pour mettre à jour
+      const stats = await getReponsesStats(currentEstablishment.place_id, session.user.id);
+      setValidatedResponsesCount(stats.validated);
+      setTotalReviewsForEstablishment(stats.total);
     };
 
     window.addEventListener('response-validated', handleResponseValidated);
