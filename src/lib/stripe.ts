@@ -11,7 +11,7 @@ export const STRIPE_PRODUCTS = {
     product_id: "prod_TP61gPRU9UTdMY",
     price_id: "price_1SSHpnGkt979eNWBKvpEzYwT",
     name: "Abonnement Pro",
-    price: "29€/mois",
+    price: "14,99€/mois",
   },
 };
 

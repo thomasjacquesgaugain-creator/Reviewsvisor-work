@@ -82,7 +82,7 @@ export function SubscriptionCard() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-3xl font-bold">
+        <div className="text-3xl font-bold text-primary">
             {STRIPE_PRODUCTS.pro.price}
           </div>
           <ul className="space-y-2">
