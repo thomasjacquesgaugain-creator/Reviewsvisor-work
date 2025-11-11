@@ -1,77 +1,54 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Loader2, CreditCard, UserPlus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { createCheckoutSession } from "@/lib/stripe";
-import SignUpForm from "@/components/SignUpForm";
 import { supabase } from "@/integrations/supabase/client";
+import { CheckCircle2 } from "lucide-react";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
-export default function Onboarding() {
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || "");
+
+function PaymentForm() {
+  const stripe = useStripe();
+  const elements = useElements();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [checkingSubscription, setCheckingSubscription] = useState(true);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [clientSecret, setClientSecret] = useState("");
 
-  useEffect(() => {
-    checkExistingSubscription();
-    
-    const checkoutStatus = searchParams.get("checkout");
-    if (checkoutStatus === "success") {
-      setCurrentStep(2);
-      setHasActiveSubscription(true);
+  const handleCreateSubscription = async () => {
+    if (!email) {
       toast({
-        title: "Paiement réussi !",
-        description: "Votre abonnement est actif. Créez votre compte pour continuer.",
-      });
-    } else if (checkoutStatus === "cancel") {
-      toast({
-        title: "Paiement annulé",
-        description: "Vous pouvez réessayer quand vous le souhaitez.",
+        title: "Email requis",
+        description: "Veuillez saisir votre adresse email",
         variant: "destructive",
       });
+      return;
     }
-  }, [searchParams]);
 
-  const checkExistingSubscription = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: subscriptions } = await supabase
-          .from("subscriptions")
-          .select("*")
-          .eq("user_id", session.user.id)
-          .in("status", ["active", "trialing"])
-          .limit(1);
-
-        if (subscriptions && subscriptions.length > 0) {
-          setHasActiveSubscription(true);
-          setCurrentStep(2);
-        }
-      }
-    } catch (error) {
-      console.error("Error checking subscription:", error);
-    } finally {
-      setCheckingSubscription(false);
-    }
-  };
-
-  const handleSubscribe = async () => {
     setLoading(true);
     try {
-      const url = await createCheckoutSession();
-      if (url) {
-        window.location.href = url;
-      }
+      const { data, error } = await supabase.functions.invoke("create-subscription", {
+        body: { email },
+      });
+
+      if (error) throw error;
+
+      setClientSecret(data.clientSecret);
+      toast({
+        title: "Prêt pour le paiement",
+        description: "Veuillez saisir vos informations de carte bancaire",
+      });
     } catch (error) {
+      console.error("Error creating subscription:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de créer la session de paiement",
+        description: "Impossible de créer l'abonnement. Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {
@@ -79,142 +56,148 @@ export default function Onboarding() {
     }
   };
 
-  if (checkingSubscription) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!clientSecret) {
+      await handleCreateSubscription();
+      return;
+    }
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          receipt_email: email,
+        },
+        redirect: "if_required",
+      });
+
+      if (error) {
+        toast({
+          title: "Erreur de paiement",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else if (paymentIntent && paymentIntent.status === "succeeded") {
+        localStorage.setItem("subscribed_email", email);
+        localStorage.setItem("subscribed_ok", "1");
+        
+        toast({
+          title: "Paiement réussi !",
+          description: "Votre abonnement est actif. Créez maintenant votre compte.",
+        });
+
+        navigate("/onboarding/signup");
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur inattendue est survenue. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20 py-12">
-      <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto">
-          {/* Stepper */}
-          <div className="mb-8">
-            <div className="flex items-center justify-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
-                  currentStep >= 1 ? "border-primary bg-primary text-primary-foreground" : "border-muted"
-                }`}>
-                  {hasActiveSubscription && currentStep >= 2 ? (
-                    <CheckCircle2 className="h-5 w-5" />
-                  ) : (
-                    <CreditCard className="h-5 w-5" />
-                  )}
-                </div>
-                <span className={`font-medium ${currentStep >= 1 ? "text-foreground" : "text-muted-foreground"}`}>
-                  1. Abonnement
-                </span>
-              </div>
-              <div className={`h-0.5 w-16 ${currentStep >= 2 ? "bg-primary" : "bg-muted"}`} />
-              <div className="flex items-center gap-2">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
-                  currentStep >= 2 ? "border-primary bg-primary text-primary-foreground" : "border-muted"
-                }`}>
-                  <UserPlus className="h-5 w-5" />
-                </div>
-                <span className={`font-medium ${currentStep >= 2 ? "text-foreground" : "text-muted-foreground"}`}>
-                  2. Créer un compte
-                </span>
-              </div>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="votre@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={!!clientSecret}
+          required
+        />
+      </div>
+
+      {clientSecret && (
+        <div className="space-y-2">
+          <Label>Informations de paiement</Label>
+          <div className="border rounded-md p-3 bg-background">
+            <PaymentElement />
+          </div>
+        </div>
+      )}
+
+      <Button type="submit" className="w-full" disabled={loading || !stripe}>
+        {loading ? "Traitement..." : "Continuer – 14,99€/mois"}
+      </Button>
+
+      <p className="text-sm text-center text-muted-foreground">
+        <a href="/login" className="underline hover:text-foreground">
+          J'ai déjà un compte
+        </a>
+      </p>
+    </form>
+  );
+}
+
+const Onboarding = () => {
+  const [clientSecret, setClientSecret] = useState("");
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Abonnement Pro</CardTitle>
+          <CardDescription>Accédez à toutes les fonctionnalités premium</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Pricing info */}
+          <div className="bg-primary/5 rounded-lg p-4 text-center">
+            <div className="text-4xl font-bold text-primary">14,99 €</div>
+            <div className="text-sm text-muted-foreground">par mois</div>
+          </div>
+
+          {/* Benefits */}
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+              <span className="text-sm">Analyses illimitées d'établissements</span>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+              <span className="text-sm">Réponses automatiques aux avis</span>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+              <span className="text-sm">Statistiques avancées</span>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+              <span className="text-sm">Support prioritaire</span>
             </div>
           </div>
 
-          {/* Step 1: Subscription */}
-          {currentStep === 1 && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Abonnement Pro</CardTitle>
-                  <Badge variant="secondary">Mensuel</Badge>
-                </div>
-                <CardDescription>
-                  Débloquez toutes les fonctionnalités pour gérer vos avis clients
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="text-center py-4">
-                  <div className="text-4xl font-bold text-primary mb-2">14,99€</div>
-                  <div className="text-muted-foreground">par mois</div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Analyses illimitées d'établissements</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Réponses automatiques aux avis</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Statistiques avancées</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Support prioritaire</span>
-                  </div>
-                </div>
-
-                <Button 
-                  onClick={handleSubscribe} 
-                  className="w-full" 
-                  size="lg"
-                  disabled={loading}
-                >
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Continuer - 14,99€/mois
-                </Button>
-
-                <div className="text-center text-sm">
-                  <button
-                    onClick={() => navigate("/login")}
-                    className="text-primary hover:underline"
-                  >
-                    J'ai déjà un compte
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 2: Create Account */}
-          {currentStep === 2 && (
-            <div className="space-y-6">
-              {hasActiveSubscription && (
-                <Card className="border-primary/50 bg-primary/5">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="h-6 w-6 text-primary" />
-                      <div>
-                        <div className="font-semibold">Abonnement actif</div>
-                        <div className="text-sm text-muted-foreground">
-                          Votre abonnement Pro est validé
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Créer un compte</CardTitle>
-                  <CardDescription>
-                    Complétez votre inscription pour accéder à votre tableau de bord
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <SignUpForm />
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </div>
-      </div>
+          {/* Payment Form */}
+          <Elements 
+            stripe={stripePromise} 
+            options={{ 
+              clientSecret: clientSecret || undefined,
+              appearance: {
+                theme: 'stripe',
+              }
+            }}
+          >
+            <PaymentForm />
+          </Elements>
+        </CardContent>
+      </Card>
     </div>
   );
-}
+};
+
+export default Onboarding;

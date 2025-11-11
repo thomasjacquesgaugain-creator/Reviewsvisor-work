@@ -78,19 +78,18 @@ serve(async (req) => {
           // Get subscription details
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           
-          // Store in subscriptions table (without user_id for now)
+          // Store in subscriptions table
           const { error: insertError } = await supabaseClient
             .from("subscriptions")
             .upsert({
-              provider: "stripe",
-              provider_customer_id: customerId,
-              provider_subscription_id: subscriptionId,
+              email: customerEmail || "",
+              stripe_customer_id: customerId,
+              stripe_subscription_id: subscriptionId,
               status: subscription.status,
               current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
               updated_at: new Date().toISOString(),
             }, {
-              onConflict: "provider_subscription_id"
+              onConflict: "stripe_subscription_id"
             });
 
           if (insertError) {
@@ -110,53 +109,95 @@ serve(async (req) => {
               await supabaseClient
                 .from("subscriptions")
                 .update({ user_id: user.id })
-                .eq("provider_subscription_id", subscriptionId);
-              
-              await supabaseClient
-                .from("profiles")
-                .update({ stripe_customer_id: customerId })
-                .eq("user_id", user.id);
+                .eq("stripe_subscription_id", subscriptionId);
             }
           }
         }
         break;
       }
 
+      case "invoice.payment_succeeded": {
+        logStep("Processing invoice.payment_succeeded");
+        const invoice = event.data.object as Stripe.Invoice;
+        
+        if (invoice.subscription) {
+          const subscription = await stripe.subscriptions.retrieve(
+            invoice.subscription as string
+          );
+
+          logStep("Retrieved subscription from invoice", { 
+            subscriptionId: subscription.id,
+            status: subscription.status 
+          });
+
+          const { error: upsertError } = await supabaseClient
+            .from('subscriptions')
+            .upsert({
+              stripe_customer_id: subscription.customer as string,
+              stripe_subscription_id: subscription.id,
+              status: subscription.status,
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              updated_at: new Date().toISOString(),
+            }, {
+              onConflict: 'stripe_subscription_id'
+            });
+
+          if (upsertError) {
+            logStep("Error upserting subscription", { error: upsertError });
+          } else {
+            logStep("Subscription upserted successfully");
+          }
+        }
+        break;
+      }
+
+      case "customer.subscription.created":
       case "customer.subscription.updated": {
+        logStep(`Processing ${event.type}`);
         const subscription = event.data.object as Stripe.Subscription;
-        logStep("Subscription updated", {
+        logStep("Subscription details", { 
           subscriptionId: subscription.id,
-          status: subscription.status,
+          status: subscription.status 
         });
 
-        await supabaseClient
-          .from("subscriptions")
-          .update({
+        const { error: upsertError } = await supabaseClient
+          .from('subscriptions')
+          .upsert({
+            stripe_customer_id: subscription.customer as string,
+            stripe_subscription_id: subscription.id,
             status: subscription.status,
             current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            cancel_at_period_end: subscription.cancel_at_period_end,
             updated_at: new Date().toISOString(),
-          })
-          .eq("provider_subscription_id", subscription.id);
+          }, {
+            onConflict: 'stripe_subscription_id'
+          });
 
-        logStep("Subscription updated in database");
+        if (upsertError) {
+          logStep("Error upserting subscription", { error: upsertError });
+        } else {
+          logStep("Subscription upserted successfully");
+        }
         break;
       }
 
       case "customer.subscription.deleted": {
+        logStep("Processing customer.subscription.deleted");
         const subscription = event.data.object as Stripe.Subscription;
         logStep("Subscription deleted", { subscriptionId: subscription.id });
 
-        await supabaseClient
+        const { error: updateError } = await supabaseClient
           .from("subscriptions")
           .update({
             status: "canceled",
             updated_at: new Date().toISOString(),
           })
-          .eq("provider_subscription_id", subscription.id);
+          .eq("stripe_subscription_id", subscription.id);
 
-        logStep("Subscription marked as canceled");
+        if (updateError) {
+          logStep("Error updating subscription status", { error: updateError });
+        } else {
+          logStep("Subscription marked as canceled");
+        }
         break;
       }
 

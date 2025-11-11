@@ -17,6 +17,7 @@ import DebugInsights from "./pages/DebugInsights";
 import BillingSuccess from "./pages/BillingSuccess";
 import BillingCancel from "./pages/BillingCancel";
 import Onboarding from "./pages/Onboarding";
+import OnboardingSignup from "./pages/OnboardingSignup";
 
 const App = () => {
   return (
@@ -60,6 +61,7 @@ const App = () => {
           <Route path="/billing/success" element={<BillingSuccess />} />
           <Route path="/billing/cancel" element={<BillingCancel />} />
           <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/onboarding/signup" element={<OnboardingSignup />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

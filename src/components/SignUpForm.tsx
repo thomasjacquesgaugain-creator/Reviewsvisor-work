@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { User, UserCircle } from "lucide-react";
 
-export default function SignUpForm() {
+interface SignUpFormProps {
+  prefilledEmail?: string;
+}
+
+export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -17,6 +21,12 @@ export default function SignUpForm() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (prefilledEmail) {
+      setEmail(prefilledEmail);
+    }
+  }, [prefilledEmail]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -104,23 +114,19 @@ export default function SignUpForm() {
           console.error('Erreur lors de la mise à jour du profil:', profileError);
         }
 
-        // 3. Link subscription if exists (by email match)
-        const { data: subscriptions } = await supabase
-          .from("subscriptions")
-          .select("*")
-          .is("user_id", null);
+        // 3. Link subscription by email
+        const { error: subError } = await supabase
+          .from('subscriptions')
+          .update({ user_id: data.user.id })
+          .or(`user_id.is.null,email.eq.${email.trim()}`);
 
-        if (subscriptions && subscriptions.length > 0) {
-          // Find subscription by matching Stripe customer email
-          for (const sub of subscriptions) {
-            if (sub.provider_customer_id) {
-              await supabase
-                .from("subscriptions")
-                .update({ user_id: data.user.id })
-                .eq("provider_subscription_id", sub.provider_subscription_id);
-            }
-          }
+        if (subError) {
+          console.error('Erreur lors du lien de l\'abonnement:', subError);
         }
+
+        // Clean up local storage
+        localStorage.removeItem("subscribed_ok");
+        localStorage.removeItem("subscribed_email");
       }
 
       toast({
@@ -160,6 +166,7 @@ export default function SignUpForm() {
           aria-invalid={!!errors.email}
           aria-describedby={errors.email ? "email-error" : undefined}
           required
+          disabled={!!prefilledEmail}
         />
         {errors.email && (
           <p id="email-error" className="text-sm text-destructive">{errors.email}</p>
