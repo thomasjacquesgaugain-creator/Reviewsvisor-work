@@ -329,6 +329,44 @@ export type Database = {
           },
         ]
       }
+      responses: {
+        Row: {
+          created_at: string
+          establishment_id: string
+          id: string
+          review_id: number
+          status: string
+          user_id: string
+          validated_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          establishment_id: string
+          id?: string
+          review_id: number
+          status?: string
+          user_id: string
+          validated_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          establishment_id?: string
+          id?: string
+          review_id?: number
+          status?: string
+          user_id?: string
+          validated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "responses_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: true
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_insights: {
         Row: {
           avg_rating: number | null

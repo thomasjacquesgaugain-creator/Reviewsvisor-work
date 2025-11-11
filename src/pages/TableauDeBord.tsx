@@ -17,6 +17,7 @@ const Dashboard = () => {
   const [lastReviewDate, setLastReviewDate] = useState<Date | null>(null);
   const [validatedResponsesCount, setValidatedResponsesCount] = useState(0);
   const [avgRating, setAvgRating] = useState<number>(0);
+  const [totalReviewsForEstablishment, setTotalReviewsForEstablishment] = useState(0);
   const [allReviews, setAllReviews] = useState<any[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -43,7 +44,7 @@ const Dashboard = () => {
         // Récupérer le nombre d'avis et la date du dernier avis
         const { data: reviews, error } = await supabase
           .from('reviews')
-          .select('inserted_at, rating, text')
+          .select('inserted_at, rating, text, place_id')
           .eq('user_id', session.user.id)
           .order('inserted_at', { ascending: false });
 
@@ -61,6 +62,23 @@ const Dashboard = () => {
             const sum = ratingsWithValue.reduce((acc, r) => acc + (r.rating || 0), 0);
             const average = sum / ratingsWithValue.length;
             setAvgRating(average);
+          }
+
+          // Si un établissement est sélectionné, compter ses avis
+          if (currentEstablishment?.place_id) {
+            const establishmentReviews = reviews.filter(r => r.place_id === currentEstablishment.place_id);
+            setTotalReviewsForEstablishment(establishmentReviews.length);
+
+            // Charger les réponses validées pour cet établissement
+            const { data: responsesData } = await supabase
+              .from('responses')
+              .select('review_id')
+              .eq('user_id', session.user.id)
+              .eq('status', 'validated');
+            
+            if (responsesData) {
+              setValidatedResponsesCount(responsesData.length);
+            }
           }
         }
       } catch (error) {
@@ -91,10 +109,31 @@ const Dashboard = () => {
       )
       .subscribe();
 
+    // Écouter les validations de réponses
+    const handleResponseValidated = async () => {
+      if (!currentEstablishment?.place_id) return;
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: responsesData } = await supabase
+        .from('responses')
+        .select('review_id')
+        .eq('user_id', session.user.id)
+        .eq('status', 'validated');
+      
+      if (responsesData) {
+        setValidatedResponsesCount(responsesData.length);
+      }
+    };
+
+    window.addEventListener('response-validated', handleResponseValidated);
+
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener('response-validated', handleResponseValidated);
     };
-  }, [navigate, toast]);
+  }, [navigate, toast, currentEstablishment?.place_id]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -328,7 +367,9 @@ const Dashboard = () => {
                         <CheckCircle className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{validatedResponsesCount}/{recentReviewsCount} réponses</p>
+                        <p className="font-medium text-gray-900">
+                          {validatedResponsesCount}/{totalReviewsForEstablishment || recentReviewsCount} réponses
+                        </p>
                         <p className="text-sm text-gray-600">Validées</p>
                       </div>
                     </CardContent>

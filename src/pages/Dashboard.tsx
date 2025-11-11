@@ -92,6 +92,7 @@ const Dashboard = () => {
   // États pour l'édition des réponses automatiques
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
   const [editedResponses, setEditedResponses] = useState<Record<string, string>>({});
+  const [validatedReviews, setValidatedReviews] = useState<Set<number>>(new Set());
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -224,6 +225,17 @@ const Dashboard = () => {
               setEstablishmentCreatedAt(oldestReview.published_at || oldestReview.inserted_at);
             }
           }
+        }
+
+        // Charger les réponses validées
+        const { data: responsesData } = await supabase
+          .from('responses')
+          .select('review_id')
+          .eq('user_id', user.id)
+          .eq('status', 'validated');
+        
+        if (responsesData) {
+          setValidatedReviews(new Set(responsesData.map(r => r.review_id)));
         }
       } catch (error) {
         console.error('[dashboard] fetch insights error:', error);
@@ -1253,9 +1265,16 @@ const Dashboard = () => {
                               ))}
                             </div>
                           </div>
-                          <Badge variant="outline" className={isPositive ? "text-green-600 border-green-600" : "text-orange-600 border-orange-600"}>
-                            À valider
-                          </Badge>
+                          {validatedReviews.has(reviewId) ? (
+                            <Badge variant="outline" className="text-green-600 border-green-600 bg-green-50">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Validé
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className={isPositive ? "text-green-600 border-green-600" : "text-orange-600 border-orange-600"}>
+                              À valider
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-sm text-gray-700 mb-3">"{reviewText.substring(0, 150)}{reviewText.length > 150 ? '...' : ''}"</p>
                         <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
@@ -1298,7 +1317,65 @@ const Dashboard = () => {
                               </>
                             ) : (
                               <>
-                                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">Valider</Button>
+                                <Button 
+                                  size="sm" 
+                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                  disabled={validatedReviews.has(reviewId)}
+                                  onClick={async () => {
+                                    try {
+                                      if (!user || !selectedEtab) return;
+                                      
+                                      // Sauvegarder dans Supabase
+                                      const { error } = await supabase
+                                        .from('responses')
+                                        .upsert({
+                                          review_id: reviewId,
+                                          establishment_id: selectedEstablishment?.id || '',
+                                          user_id: user.id,
+                                          status: 'validated',
+                                          validated_at: new Date().toISOString()
+                                        }, {
+                                          onConflict: 'review_id'
+                                        });
+                                      
+                                      if (error) {
+                                        console.error('Error saving response:', error);
+                                        toast.error('Échec de l\'enregistrement', {
+                                          description: 'Une erreur est survenue lors de la validation.'
+                                        });
+                                        return;
+                                      }
+                                      
+                                      // Mettre à jour l'état local
+                                      setValidatedReviews(prev => new Set([...prev, reviewId]));
+                                      
+                                      // Afficher le toast de succès
+                                      toast.success('Réponse validée', {
+                                        description: 'Votre réponse a été enregistrée.',
+                                        duration: 3000
+                                      });
+                                      
+                                      // Déclencher l'événement pour mettre à jour le compteur
+                                      window.dispatchEvent(new CustomEvent('response-validated', {
+                                        detail: { placeId: selectedEtab.place_id }
+                                      }));
+                                    } catch (error) {
+                                      console.error('Validation error:', error);
+                                      toast.error('Échec de l\'enregistrement', {
+                                        description: 'Une erreur est survenue.'
+                                      });
+                                    }
+                                  }}
+                                >
+                                  {validatedReviews.has(reviewId) ? (
+                                    <>
+                                      <CheckCircle className="w-4 h-4 mr-1" />
+                                      Validé
+                                    </>
+                                  ) : (
+                                    'Valider'
+                                  )}
+                                </Button>
                                 <Button 
                                   size="sm" 
                                   variant="outline"
