@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { HeroSection } from "@/components/HeroSection";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
-import { SignupSection } from "@/components/SignupSection";
 
 const Accueil = () => {
   const [analysisData, setAnalysisData] = useState<{ name: string; url: string } | null>(null);
@@ -13,7 +12,6 @@ const Accueil = () => {
   return (
     <div className="min-h-screen">
       <HeroSection />
-      <SignupSection />
       {analysisData && (
         <AnalyticsDashboard restaurantData={analysisData} />
       )}
