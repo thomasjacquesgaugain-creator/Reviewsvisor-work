@@ -4,30 +4,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2 } from "lucide-react";
-import { loadStripe } from "@stripe/stripe-js";
+import { loadStripe, Stripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || "");
+import { toast } from "sonner";
 
 function PaymentForm() {
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [clientSecret, setClientSecret] = useState("");
 
   const handleCreateSubscription = async () => {
     if (!email) {
-      toast({
-        title: "Email requis",
-        description: "Veuillez saisir votre adresse email",
-        variant: "destructive",
-      });
+      toast.error("Veuillez saisir votre adresse email");
       return;
     }
 
@@ -40,17 +33,10 @@ function PaymentForm() {
       if (error) throw error;
 
       setClientSecret(data.clientSecret);
-      toast({
-        title: "Prêt pour le paiement",
-        description: "Veuillez saisir vos informations de carte bancaire",
-      });
+      toast.success("Prêt pour le paiement - Saisissez vos informations de carte");
     } catch (error) {
       console.error("Error creating subscription:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de créer l'abonnement. Veuillez réessayer.",
-        variant: "destructive",
-      });
+      toast.error("Le paiement n'a pas pu être validé.");
     } finally {
       setLoading(false);
     }
@@ -80,30 +66,22 @@ function PaymentForm() {
       });
 
       if (error) {
-        toast({
-          title: "Erreur de paiement",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else if (paymentIntent && paymentIntent.status === "succeeded") {
+        console.error("Payment error:", error);
+        toast.error("Le paiement n'a pas pu être validé.");
+        setLoading(false);
+        return;
+      }
+      
+      if (paymentIntent && paymentIntent.status === "succeeded") {
         localStorage.setItem("subscribed_email", email);
         localStorage.setItem("subscribed_ok", "1");
         
-        toast({
-          title: "Paiement réussi !",
-          description: "Votre abonnement est actif. Créez maintenant votre compte.",
-        });
-
+        toast.success("Paiement réussi ! Créez maintenant votre compte.");
         navigate("/onboarding/signup");
       }
     } catch (error) {
       console.error("Payment error:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur inattendue est survenue. Veuillez réessayer.",
-        variant: "destructive",
-      });
-    } finally {
+      toast.error("Le paiement n'a pas pu être validé.");
       setLoading(false);
     }
   };
@@ -146,7 +124,40 @@ function PaymentForm() {
 }
 
 const Onboarding = () => {
-  const [clientSecret, setClientSecret] = useState("");
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
+  const [clientSecret] = useState("");
+
+  useEffect(() => {
+    const initStripe = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("get-stripe-config");
+        
+        if (error || !data?.publicKey) {
+          console.error("Failed to load Stripe config:", error);
+          toast.error("Erreur de configuration");
+          return;
+        }
+
+        setStripePromise(loadStripe(data.publicKey));
+      } catch (err) {
+        console.error("Error initializing Stripe:", err);
+        toast.error("Erreur de configuration");
+      }
+    };
+
+    initStripe();
+  }, []);
+
+  if (!stripePromise) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
