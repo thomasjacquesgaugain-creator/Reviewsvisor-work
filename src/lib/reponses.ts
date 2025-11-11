@@ -46,7 +46,7 @@ export async function getReponsesStats(establishmentId?: string, userId?: string
 }
 
 /**
- * Valide une réponse à un avis
+ * Valide une réponse à un avis avec upsert
  * @param params - { avisId: string, contenu: string, etablissementId: string, userId: string }
  */
 export async function validateReponse(params: {
@@ -64,16 +64,18 @@ export async function validateReponse(params: {
     throw new Error("Vous devez être connecté pour valider une réponse");
   }
 
-  // Insert avec les bonnes colonnes qui respectent les policies RLS
+  // Upsert pour éviter les doublons (contrainte unique sur avis_id, etablissement_id)
   const { error } = await supabase
     .from('reponses')
-    .insert({
+    .upsert({
       avis_id: avisId,
       contenu: contenu,
       statut: 'valide',
       validated_at: new Date().toISOString(),
       user_id: userId,
       etablissement_id: etablissementId
+    }, {
+      onConflict: 'avis_id,etablissement_id'
     });
 
   if (error) {
@@ -82,10 +84,6 @@ export async function validateReponse(params: {
     // Messages d'erreur personnalisés
     if (error.message.includes('row-level security') || error.message.includes('WITH CHECK')) {
       throw new Error("Enregistrement refusé par la sécurité des lignes (RLS). Assurez-vous que user_id = auth.uid() et que l'établissement courant est correct.");
-    }
-    
-    if (error.code === '23505') { // Duplicate key
-      throw new Error("Cette réponse a déjà été validée.");
     }
     
     throw new Error(error.message || "Erreur lors de la validation de la réponse");

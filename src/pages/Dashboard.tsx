@@ -95,6 +95,9 @@ const Dashboard = () => {
   const [editedResponses, setEditedResponses] = useState<Record<string, string>>({});
   const [validatedReviews, setValidatedReviews] = useState<Set<number>>(new Set());
   const [isValidatingReview, setIsValidatingReview] = useState<Record<number, boolean>>({});
+  
+  // Liste des avis à valider (filtrés pour exclure les validés)
+  const [pendingReviews, setPendingReviews] = useState<any[]>([]);
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -229,7 +232,7 @@ const Dashboard = () => {
           }
         }
 
-        // Charger les réponses validées
+        // Charger les réponses validées et construire la liste des avis à valider
         if (currentEstab?.place_id && user?.id) {
           const { data: responsesData } = await supabase
             .from('reponses')
@@ -239,7 +242,14 @@ const Dashboard = () => {
             .eq('statut', 'valide');
           
           if (responsesData) {
-            setValidatedReviews(new Set(responsesData.map(r => parseInt(r.avis_id))));
+            const validatedSet = new Set(responsesData.map(r => parseInt(r.avis_id)));
+            setValidatedReviews(validatedSet);
+            
+            // Filtrer les avis pour exclure ceux déjà validés
+            if (reviewsData) {
+              const pending = reviewsData.filter(review => !validatedSet.has(review.id));
+              setPendingReviews(pending);
+            }
           }
         }
       } catch (error) {
@@ -1239,8 +1249,8 @@ const Dashboard = () => {
           </CardHeader>
           {showReponseAuto && <CardContent>
               <div className="space-y-4">
-                {recentReviews.length > 0 ? (
-                  recentReviews.slice(0, 2).map((review: any, index: number) => {
+                {pendingReviews.length > 0 ? (
+                  pendingReviews.slice(0, 5).map((review: any, index: number) => {
                     const rating = review.rating || 0;
                     const isPositive = rating >= 4;
                     const authorName = review.author || 'Anonyme';
@@ -1256,7 +1266,7 @@ const Dashboard = () => {
                     const isEditing = editingReviewId === reviewId;
                     
                     return (
-                      <div key={reviewId} className="border rounded-lg p-4 bg-gray-50">
+                      <div key={reviewId} className="border rounded-lg p-4 bg-gray-50 transition-all duration-300">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-gray-500" />
@@ -1270,16 +1280,9 @@ const Dashboard = () => {
                               ))}
                             </div>
                           </div>
-                          {validatedReviews.has(reviewId) ? (
-                            <Badge variant="outline" className="text-green-600 border-green-600 bg-green-50">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Validé
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className={isPositive ? "text-green-600 border-green-600" : "text-orange-600 border-orange-600"}>
-                              À valider
-                            </Badge>
-                          )}
+                          <Badge variant="outline" className={isPositive ? "text-green-600 border-green-600" : "text-orange-600 border-orange-600"}>
+                            À valider
+                          </Badge>
                         </div>
                         <p className="text-sm text-gray-700 mb-3">"{reviewText.substring(0, 150)}{reviewText.length > 150 ? '...' : ''}"</p>
                         <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
@@ -1324,8 +1327,8 @@ const Dashboard = () => {
                               <>
                                 <Button 
                                   size="sm" 
-                                  className={validatedReviews.has(reviewId) ? "bg-green-600 hover:bg-green-700 text-white" : "bg-blue-600 hover:bg-blue-700 text-white"}
-                                  disabled={validatedReviews.has(reviewId) || isValidatingReview[reviewId]}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                                  disabled={isValidatingReview[reviewId]}
                                   onClick={async () => {
                                     try {
                                       if (!user?.id || !selectedEtab?.place_id) {
@@ -1346,7 +1349,10 @@ const Dashboard = () => {
                                         userId: user.id
                                       });
                                       
-                                      // Mettre à jour l'état local
+                                      // Optimistic update : retirer la carte de la liste
+                                      setPendingReviews(prev => prev.filter(r => r.id !== reviewId));
+                                      
+                                      // Marquer comme validée localement
                                       setValidatedReviews(prev => new Set([...prev, reviewId]));
                                       
                                       // Afficher le toast de succès
@@ -1374,11 +1380,6 @@ const Dashboard = () => {
                                     <>
                                       <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                                       Validation...
-                                    </>
-                                  ) : validatedReviews.has(reviewId) ? (
-                                    <>
-                                      <CheckCircle className="w-4 h-4 mr-1" />
-                                      Validée
                                     </>
                                   ) : (
                                     'Valider'
@@ -1419,8 +1420,9 @@ const Dashboard = () => {
                   })
                 ) : (
                   <div className="text-center py-8 text-gray-500">
-                    <p className="text-sm">Aucun avis récent disponible</p>
-                    <p className="text-xs mt-1">Les avis s'afficheront ici une fois collectés</p>
+                    <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
+                    <p className="text-lg font-medium text-gray-900">Plus d'avis à valider 🎉</p>
+                    <p className="text-sm mt-1">Toutes les réponses ont été validées !</p>
                   </div>
                 )}
               </div>
