@@ -52,9 +52,12 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     
     const priceId = Deno.env.get("STRIPE_PRICE_ID");
-    if (!priceId) throw new Error("STRIPE_PRICE_ID is not set");
+    if (!priceId) {
+      logStep("ERROR: STRIPE_PRICE_ID not found in environment");
+      throw new Error("STRIPE_PRICE_ID is not set");
+    }
     
-    logStep("Config verified", { priceId });
+    logStep("Config verified", { priceId, priceIdLength: priceId.length });
     
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
