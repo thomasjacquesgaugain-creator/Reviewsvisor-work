@@ -13,29 +13,50 @@ const Onboarding = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
+
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email) {
+    const trimmedEmail = email.trim();
+    
+    // Validation
+    if (!trimmedEmail) {
       toast.error("Veuillez saisir votre adresse email");
       return;
     }
 
+    if (!validateEmail(trimmedEmail)) {
+      toast.error("Format d'email invalide");
+      return;
+    }
+
     setLoading(true);
+    
     try {
-      // Store email for later signup
-      sessionStorage.setItem("onboarding_email", email);
+      console.log("Creating checkout session for:", trimmedEmail);
       
-      const url = await createCheckoutSession(email);
-      if (url) {
-        window.location.href = url;
-      } else {
-        toast.error("Impossible de créer la session de paiement");
+      // Store email for later use
+      sessionStorage.setItem("onboarding_email", trimmedEmail);
+      
+      // Create checkout session
+      const url = await createCheckoutSession(trimmedEmail);
+      
+      if (!url) {
+        throw new Error("No checkout URL returned");
       }
+
+      console.log("Redirecting to Stripe Checkout:", url);
+      
+      // Redirect to Stripe Checkout
+      window.location.href = url;
+      
     } catch (error) {
-      console.error("Error creating checkout:", error);
-      toast.error("Une erreur est survenue. Veuillez réessayer.");
-    } finally {
+      console.error("Checkout error:", error);
+      toast.error("Le paiement n'a pas pu être initialisé. Réessayez.");
       setLoading(false);
     }
   };
@@ -84,7 +105,9 @@ const Onboarding = () => {
                 placeholder="votre@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
                 required
+                autoComplete="email"
               />
             </div>
 
@@ -92,7 +115,7 @@ const Onboarding = () => {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Redirection...
+                  Redirection vers Stripe...
                 </>
               ) : (
                 "Continuer – 14,99€/mois"
