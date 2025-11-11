@@ -58,41 +58,104 @@ serve(async (req) => {
       payment_behavior: "default_incomplete",
       payment_settings: {
         save_default_payment_method: "on_subscription",
+        payment_method_types: ["card"],
       },
       expand: ["latest_invoice.payment_intent", "pending_setup_intent"],
     });
 
     logStep("Subscription created", { subscriptionId: subscription.id });
 
-    // Get client secret from payment intent
-    const invoice = subscription.latest_invoice as Stripe.Invoice;
-    logStep("Invoice retrieved", { 
-      hasInvoice: !!invoice,
-      invoiceId: invoice?.id 
-    });
-    
-    const paymentIntent = invoice && typeof (invoice as any).payment_intent !== 'string'
-      ? (invoice as any).payment_intent as Stripe.PaymentIntent
-      : undefined;
-    const setupIntent = typeof subscription.pending_setup_intent !== 'string'
-      ? subscription.pending_setup_intent as Stripe.SetupIntent
-      : undefined;
+    // Get client secret from payment or setup intent with robust fallbacks
+    const latestInvoiceRaw = subscription.latest_invoice as any;
+    const invoiceId = typeof latestInvoiceRaw === 'string' ? latestInvoiceRaw : latestInvoiceRaw?.id;
 
-    logStep("PaymentIntent/SetupIntent status", {
+    logStep("Invoice reference", { hasInvoice: !!latestInvoiceRaw, invoiceId });
+
+    let paymentIntent: Stripe.PaymentIntent | undefined =
+      latestInvoiceRaw && typeof latestInvoiceRaw.payment_intent !== 'string'
+        ? (latestInvoiceRaw.payment_intent as Stripe.PaymentIntent)
+        : undefined;
+
+    let setupIntent: Stripe.SetupIntent | undefined =
+      typeof subscription.pending_setup_intent !== 'string'
+        ? (subscription.pending_setup_intent as Stripe.SetupIntent)
+        : undefined;
+
+    logStep("Initial intents", {
       hasPaymentIntent: !!paymentIntent,
-      paymentIntentId: paymentIntent?.id,
-      paymentIntentStatus: paymentIntent?.status,
       hasSetupIntent: !!setupIntent,
-      setupIntentId: setupIntent?.id,
-      setupIntentStatus: setupIntent?.status,
     });
-    
+
+    // Fallback 1: Explicitly retrieve the invoice and expand the payment_intent
+    if (!paymentIntent && invoiceId) {
+      try {
+        const retrievedInvoice = await stripe.invoices.retrieve(invoiceId, {
+          expand: ["payment_intent"],
+        } as any);
+        logStep("Retrieved invoice from API", { retrievedInvoiceId: retrievedInvoice.id });
+        if (retrievedInvoice && typeof (retrievedInvoice as any).payment_intent !== 'string') {
+          paymentIntent = (retrievedInvoice as any).payment_intent as Stripe.PaymentIntent;
+          logStep("PaymentIntent found via retrieved invoice", { paymentIntentId: paymentIntent?.id, status: paymentIntent?.status });
+        }
+      } catch (e) {
+        logStep("Failed retrieving invoice for PI", { message: (e as Error).message });
+      }
+    }
+
+    // Fallback 2: List payment intents for the customer and match by invoice
+    if (!paymentIntent && invoiceId) {
+      try {
+        const pis = await stripe.paymentIntents.list({ customer: customerId, limit: 10 });
+        paymentIntent = pis.data.find((pi) => {
+          const inv = pi.invoice as string | undefined;
+          return inv === invoiceId;
+        });
+        if (paymentIntent) {
+          logStep("PaymentIntent matched via list", { paymentIntentId: paymentIntent.id, status: paymentIntent.status });
+        }
+      } catch (e) {
+        logStep("Failed listing PaymentIntents", { message: (e as Error).message });
+      }
+    }
+
+    // Fallback 3: Re-retrieve subscription to get pending_setup_intent
+    if (!paymentIntent && !setupIntent) {
+      try {
+        const sub = await stripe.subscriptions.retrieve(subscription.id, { expand: ["pending_setup_intent"] } as any);
+        if (typeof sub.pending_setup_intent !== 'string') {
+          setupIntent = sub.pending_setup_intent as Stripe.SetupIntent;
+          logStep("SetupIntent found via subscription retrieve", { setupIntentId: setupIntent?.id, status: setupIntent?.status });
+        }
+      } catch (e) {
+        logStep("Failed retrieving subscription for SetupIntent", { message: (e as Error).message });
+      }
+    }
+
+    // Fallback 4: Create a SetupIntent to collect a payment method if none exists
+    if (!paymentIntent && !setupIntent) {
+      try {
+        const createdSetupIntent = await stripe.setupIntents.create({
+          customer: customerId,
+          usage: "off_session",
+          payment_method_types: ["card"],
+          metadata: {
+            subscription_id: subscription.id,
+            invoice_id: invoiceId || "",
+          },
+        });
+        setupIntent = createdSetupIntent;
+        logStep("Created SetupIntent as fallback", { setupIntentId: setupIntent.id, status: setupIntent.status });
+      } catch (e) {
+        logStep("Failed creating SetupIntent fallback", { message: (e as Error).message });
+      }
+    }
+
     const clientSecret = paymentIntent?.client_secret || setupIntent?.client_secret;
     if (!clientSecret) {
-      throw new Error("Failed to get client_secret from payment or setup intent");
+      throw new Error("Failed to get client_secret from payment or setup intent (after fallbacks)");
     }
-    
-    logStep("Client secret retrieved successfully");
+
+    logStep("Client secret resolved successfully");
 
     // Initialize Supabase client
     const supabaseClient = createClient(
