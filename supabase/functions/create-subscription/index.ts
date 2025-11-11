@@ -59,7 +59,7 @@ serve(async (req) => {
       payment_settings: {
         save_default_payment_method: "on_subscription",
       },
-      expand: ["latest_invoice.payment_intent"],
+      expand: ["latest_invoice.payment_intent", "pending_setup_intent"],
     });
 
     logStep("Subscription created", { subscriptionId: subscription.id });
@@ -71,16 +71,25 @@ serve(async (req) => {
       invoiceId: invoice?.id 
     });
     
-    const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
-    logStep("PaymentIntent retrieved", { 
+    const paymentIntent = invoice && typeof (invoice as any).payment_intent !== 'string'
+      ? (invoice as any).payment_intent as Stripe.PaymentIntent
+      : undefined;
+    const setupIntent = typeof subscription.pending_setup_intent !== 'string'
+      ? subscription.pending_setup_intent as Stripe.SetupIntent
+      : undefined;
+
+    logStep("PaymentIntent/SetupIntent status", {
       hasPaymentIntent: !!paymentIntent,
       paymentIntentId: paymentIntent?.id,
-      status: paymentIntent?.status 
+      paymentIntentStatus: paymentIntent?.status,
+      hasSetupIntent: !!setupIntent,
+      setupIntentId: setupIntent?.id,
+      setupIntentStatus: setupIntent?.status,
     });
     
-    const clientSecret = paymentIntent?.client_secret;
+    const clientSecret = paymentIntent?.client_secret || setupIntent?.client_secret;
     if (!clientSecret) {
-      throw new Error("Failed to get client_secret from payment intent");
+      throw new Error("Failed to get client_secret from payment or setup intent");
     }
     
     logStep("Client secret retrieved successfully");
