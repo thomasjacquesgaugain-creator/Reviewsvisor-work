@@ -102,7 +102,24 @@ export default function SignUpForm() {
 
         if (profileError) {
           console.error('Erreur lors de la mise à jour du profil:', profileError);
-          // On ne bloque pas l'inscription même si l'upsert échoue
+        }
+
+        // 3. Link subscription if exists (by email match)
+        const { data: subscriptions } = await supabase
+          .from("subscriptions")
+          .select("*")
+          .is("user_id", null);
+
+        if (subscriptions && subscriptions.length > 0) {
+          // Find subscription by matching Stripe customer email
+          for (const sub of subscriptions) {
+            if (sub.provider_customer_id) {
+              await supabase
+                .from("subscriptions")
+                .update({ user_id: data.user.id })
+                .eq("provider_subscription_id", sub.provider_subscription_id);
+            }
+          }
         }
       }
 

@@ -64,14 +64,15 @@ serve(async (req) => {
       ],
       mode: "subscription",
       allow_promotion_codes: true,
+      billing_address_collection: "auto",
       automatic_tax: { enabled: true },
       subscription_data: {
         metadata: {
           userId: user.id,
         },
       },
-      success_url: `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/billing/cancel`,
+      success_url: `${origin}/onboarding?checkout=success`,
+      cancel_url: `${origin}/onboarding?checkout=cancel`,
     });
 
     logStep("Checkout session created", { sessionId: session.id, url: session.url });

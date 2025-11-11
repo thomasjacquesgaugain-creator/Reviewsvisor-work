@@ -16,6 +16,7 @@ import DebugReviews from "./pages/DebugReviews";
 import DebugInsights from "./pages/DebugInsights";
 import BillingSuccess from "./pages/BillingSuccess";
 import BillingCancel from "./pages/BillingCancel";
+import Onboarding from "./pages/Onboarding";
 
 const App = () => {
   return (
@@ -58,6 +59,7 @@ const App = () => {
           } />
           <Route path="/billing/success" element={<BillingSuccess />} />
           <Route path="/billing/cancel" element={<BillingCancel />} />
+          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
