@@ -51,12 +51,7 @@ export const HeroSection = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Button 
                   className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-full font-medium"
-                  onClick={() => {
-                    const inscriptionSection = document.getElementById('inscription');
-                    if (inscriptionSection) {
-                      inscriptionSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }}
+                  onClick={() => window.location.href = '/login?mode=signup'}
                 >
                   <span>✨</span>
                   Commencer gratuitement maintenant
