@@ -228,14 +228,16 @@ const Dashboard = () => {
         }
 
         // Charger les réponses validées
-        const { data: responsesData } = await supabase
-          .from('responses')
-          .select('review_id')
-          .eq('user_id', user.id)
-          .eq('status', 'validated');
-        
-        if (responsesData) {
-          setValidatedReviews(new Set(responsesData.map(r => r.review_id)));
+        if (currentEstab?.place_id) {
+          const { data: responsesData } = await supabase
+            .from('reponses')
+            .select('review_id')
+            .eq('establishment_id', currentEstab.place_id)
+            .eq('status', 'validated');
+          
+          if (responsesData) {
+            setValidatedReviews(new Set(responsesData.map(r => parseInt(r.review_id))));
+          }
         }
       } catch (error) {
         console.error('[dashboard] fetch insights error:', error);
@@ -1327,15 +1329,13 @@ const Dashboard = () => {
                                       
                                       // Sauvegarder dans Supabase
                                       const { error } = await supabase
-                                        .from('responses')
-                                        .upsert({
-                                          review_id: reviewId,
-                                          establishment_id: selectedEstablishment?.id || '',
+                                        .from('reponses')
+                                        .insert({
+                                          review_id: reviewId.toString(),
+                                          establishment_id: selectedEtab.place_id,
+                                          response_text: currentResponse,
                                           user_id: user.id,
-                                          status: 'validated',
-                                          validated_at: new Date().toISOString()
-                                        }, {
-                                          onConflict: 'review_id'
+                                          status: 'validated'
                                         });
                                       
                                       if (error) {

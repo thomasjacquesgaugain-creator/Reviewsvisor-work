@@ -70,14 +70,14 @@ const Dashboard = () => {
             setTotalReviewsForEstablishment(establishmentReviews.length);
 
             // Charger les réponses validées pour cet établissement
-            const { data: responsesData } = await supabase
-              .from('responses')
-              .select('review_id')
-              .eq('user_id', session.user.id)
+            const { count: validatedCount } = await supabase
+              .from('reponses')
+              .select('*', { count: 'exact', head: true })
+              .eq('establishment_id', currentEstablishment.place_id)
               .eq('status', 'validated');
             
-            if (responsesData) {
-              setValidatedResponsesCount(responsesData.length);
+            if (validatedCount !== null) {
+              setValidatedResponsesCount(validatedCount);
             }
           }
         }
@@ -116,14 +116,14 @@ const Dashboard = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const { data: responsesData } = await supabase
-        .from('responses')
-        .select('review_id')
-        .eq('user_id', session.user.id)
+      const { count: validatedCount } = await supabase
+        .from('reponses')
+        .select('*', { count: 'exact', head: true })
+        .eq('establishment_id', currentEstablishment.place_id)
         .eq('status', 'validated');
       
-      if (responsesData) {
-        setValidatedResponsesCount(responsesData.length);
+      if (validatedCount !== null) {
+        setValidatedResponsesCount(validatedCount);
       }
     };
 
