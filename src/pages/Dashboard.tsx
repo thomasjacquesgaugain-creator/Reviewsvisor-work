@@ -230,15 +230,16 @@ const Dashboard = () => {
         }
 
         // Charger les réponses validées
-        if (currentEstab?.place_id) {
+        if (currentEstab?.place_id && user?.id) {
           const { data: responsesData } = await supabase
             .from('reponses')
-            .select('review_id')
-            .eq('establishment_id', currentEstab.place_id)
-            .eq('status', 'validated');
+            .select('avis_id')
+            .eq('etablissement_id', currentEstab.place_id)
+            .eq('user_id', user.id)
+            .eq('statut', 'valide');
           
           if (responsesData) {
-            setValidatedReviews(new Set(responsesData.map(r => parseInt(r.review_id))));
+            setValidatedReviews(new Set(responsesData.map(r => parseInt(r.avis_id))));
           }
         }
       } catch (error) {
@@ -1327,15 +1328,21 @@ const Dashboard = () => {
                                   disabled={validatedReviews.has(reviewId) || isValidatingReview[reviewId]}
                                   onClick={async () => {
                                     try {
-                                      if (!user || !selectedEtab) return;
+                                      if (!user?.id || !selectedEtab?.place_id) {
+                                        toast.error('Erreur', {
+                                          description: 'Utilisateur ou établissement non défini',
+                                          duration: 4000
+                                        });
+                                        return;
+                                      }
                                       
                                       setIsValidatingReview(prev => ({ ...prev, [reviewId]: true }));
                                       
-                                      // Utiliser le module reponses.ts
+                                      // Utiliser le module reponses.ts avec les bons paramètres
                                       await validateReponse({
                                         avisId: reviewId.toString(),
-                                        responseText: currentResponse,
-                                        establishmentId: selectedEtab.place_id,
+                                        contenu: currentResponse,
+                                        etablissementId: selectedEtab.place_id,
                                         userId: user.id
                                       });
                                       
@@ -1343,7 +1350,7 @@ const Dashboard = () => {
                                       setValidatedReviews(prev => new Set([...prev, reviewId]));
                                       
                                       // Afficher le toast de succès
-                                      toast.success('Réponse validée', {
+                                      toast.success('Réponse validée et enregistrée ✅', {
                                         description: 'La réponse a bien été enregistrée.',
                                         duration: 3000
                                       });
@@ -1371,7 +1378,7 @@ const Dashboard = () => {
                                   ) : validatedReviews.has(reviewId) ? (
                                     <>
                                       <CheckCircle className="w-4 h-4 mr-1" />
-                                      Validé
+                                      Validée
                                     </>
                                   ) : (
                                     'Valider'

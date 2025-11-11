@@ -331,37 +331,37 @@ export type Database = {
       }
       reponses: {
         Row: {
-          avis_id: string | null
-          created_at: string
-          establishment_id: string
+          avis_id: string
+          contenu: string | null
+          created_at: string | null
+          etablissement_id: string
           id: string
-          response_text: string
-          review_id: string
-          status: string
+          statut: string
+          updated_at: string | null
           user_id: string
-          validated_at: string
+          validated_at: string | null
         }
         Insert: {
-          avis_id?: string | null
-          created_at?: string
-          establishment_id: string
+          avis_id: string
+          contenu?: string | null
+          created_at?: string | null
+          etablissement_id: string
           id?: string
-          response_text: string
-          review_id: string
-          status?: string
+          statut?: string
+          updated_at?: string | null
           user_id: string
-          validated_at?: string
+          validated_at?: string | null
         }
         Update: {
-          avis_id?: string | null
-          created_at?: string
-          establishment_id?: string
+          avis_id?: string
+          contenu?: string | null
+          created_at?: string | null
+          etablissement_id?: string
           id?: string
-          response_text?: string
-          review_id?: string
-          status?: string
+          statut?: string
+          updated_at?: string | null
           user_id?: string
-          validated_at?: string
+          validated_at?: string | null
         }
         Relationships: []
       }

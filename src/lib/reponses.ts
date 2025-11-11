@@ -8,29 +8,31 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export async function getReponsesStats(establishmentId?: string, userId?: string): Promise<{ validated: number; total: number }> {
   try {
+    if (!establishmentId || !userId) {
+      return { validated: 0, total: 0 };
+    }
+
     // Récupérer le nombre de réponses validées
     const { count: validatedCount, error: validatedError } = await supabase
       .from('reponses')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'validated')
-      .eq('establishment_id', establishmentId || '')
-      .eq('user_id', userId || '');
+      .eq('statut', 'valide')
+      .eq('etablissement_id', establishmentId)
+      .eq('user_id', userId);
 
     if (validatedError) {
       console.error('Error fetching validated responses:', validatedError);
-      throw new Error(validatedError.message);
     }
 
     // Récupérer le nombre total d'avis pour cet établissement
     const { count: totalCount, error: totalError } = await supabase
       .from('reviews')
       .select('*', { count: 'exact', head: true })
-      .eq('place_id', establishmentId || '')
-      .eq('user_id', userId || '');
+      .eq('place_id', establishmentId)
+      .eq('user_id', userId);
 
     if (totalError) {
       console.error('Error fetching total reviews:', totalError);
-      throw new Error(totalError.message);
     }
 
     return {
@@ -45,33 +47,47 @@ export async function getReponsesStats(establishmentId?: string, userId?: string
 
 /**
  * Valide une réponse à un avis
- * @param params - { avisId: string, responseText: string, establishmentId: string, userId: string }
+ * @param params - { avisId: string, contenu: string, etablissementId: string, userId: string }
  */
 export async function validateReponse(params: {
   avisId: string;
-  responseText: string;
-  establishmentId: string;
+  contenu: string;
+  etablissementId: string;
   userId: string;
 }): Promise<void> {
-  const { avisId, responseText, establishmentId, userId } = params;
+  const { avisId, contenu, etablissementId, userId } = params;
 
+  // Vérifier que l'utilisateur est authentifié
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("Vous devez être connecté pour valider une réponse");
+  }
+
+  // Insert avec les bonnes colonnes qui respectent les policies RLS
   const { error } = await supabase
     .from('reponses')
-    .upsert(
-      {
-        avis_id: avisId,
-        review_id: avisId,
-        establishment_id: establishmentId,
-        response_text: responseText,
-        user_id: userId,
-        status: 'validated',
-        validated_at: new Date().toISOString()
-      },
-      { onConflict: 'avis_id' }
-    );
+    .insert({
+      avis_id: avisId,
+      contenu: contenu,
+      statut: 'valide',
+      validated_at: new Date().toISOString(),
+      user_id: userId,
+      etablissement_id: etablissementId
+    });
 
   if (error) {
     console.error('validateReponse error:', error);
+    
+    // Messages d'erreur personnalisés
+    if (error.message.includes('row-level security') || error.message.includes('WITH CHECK')) {
+      throw new Error("Enregistrement refusé par la sécurité des lignes (RLS). Assurez-vous que user_id = auth.uid() et que l'établissement courant est correct.");
+    }
+    
+    if (error.code === '23505') { // Duplicate key
+      throw new Error("Cette réponse a déjà été validée.");
+    }
+    
     throw new Error(error.message || "Erreur lors de la validation de la réponse");
   }
 }

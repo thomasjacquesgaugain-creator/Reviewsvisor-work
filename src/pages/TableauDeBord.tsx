@@ -66,7 +66,7 @@ const Dashboard = () => {
           }
 
           // Si un établissement est sélectionné, utiliser getReponsesStats
-          if (currentEstablishment?.place_id) {
+          if (currentEstablishment?.place_id && session.user.id) {
             const stats = await getReponsesStats(currentEstablishment.place_id, session.user.id);
             setValidatedResponsesCount(stats.validated);
             setTotalReviewsForEstablishment(stats.total);
