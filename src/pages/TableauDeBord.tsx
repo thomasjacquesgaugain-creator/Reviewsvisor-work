@@ -194,10 +194,10 @@ const Dashboard = () => {
               <div className="flex items-center gap-2">
                 <img 
                   src="/lovable-uploads/08f62503-65d7-4681-8ddf-00f4efb00ffa.png" 
-                  alt="Analytique logo" 
+                  alt="Logo Reviewsvisor" 
                   className="w-8 h-8"
                 />
-                <span className="text-xl font-bold text-gray-900">analytique</span>
+                <span className="text-xl font-bold text-gray-900">Reviewsvisor</span>
               </div>
               
               <div className="flex items-center gap-4">
@@ -238,7 +238,7 @@ const Dashboard = () => {
           {/* Header */}
           <div className="text-center space-y-4 mb-12">
             <h1 className="text-5xl font-bold text-gray-900">
-              <span className="text-blue-600">analytique</span>
+              <span className="text-blue-600">Reviewsvisor</span>
             </h1>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
               Analysez automatiquement vos avis clients pour identifier les problèmes prioritaires et améliorer la satisfaction de votre établissement.

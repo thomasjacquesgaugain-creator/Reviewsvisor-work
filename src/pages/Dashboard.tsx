@@ -369,8 +369,8 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <img src="/lovable-uploads/62ee8352-36cc-4657-89b4-5c00321ab74c.png" alt="Analytics Logo" className="w-8 h-8" />
-              <span className="text-xl font-bold text-gray-900">analytique</span>
+              <img src="/lovable-uploads/62ee8352-36cc-4657-89b4-5c00321ab74c.png" alt="Logo Reviewsvisor" className="w-8 h-8" />
+              <span className="text-xl font-bold text-gray-900">Reviewsvisor</span>
             </div>
             
             <div className="flex items-center gap-4">
