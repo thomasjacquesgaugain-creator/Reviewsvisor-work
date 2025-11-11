@@ -2,63 +2,32 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { SignUpForm } from "@/components/SignUpForm";
+import SignUpForm from "@/components/SignUpForm";
 import { CheckCircle2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const OnboardingSignup = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [verifying, setVerifying] = useState(true);
   const [subscribedEmail, setSubscribedEmail] = useState("");
 
   useEffect(() => {
-    const checkSubscription = async () => {
+    const checkSubscription = () => {
       const subscribed = localStorage.getItem("subscribed_ok");
       const email = localStorage.getItem("subscribed_email");
 
       if (subscribed !== "1" || !email) {
-        toast({
-          title: "Accès refusé",
-          description: "Vous devez d'abord souscrire à l'abonnement",
-          variant: "destructive",
-        });
+        toast.error("Accès refusé - Vous devez d'abord souscrire à l'abonnement");
         navigate("/onboarding");
         return;
       }
 
-      // Optional: verify subscription in database
-      try {
-        const { data, error } = await supabase
-          .from("subscriptions")
-          .select("status")
-          .eq("email", email)
-          .in("status", ["trialing", "active"])
-          .single();
-
-        if (error || !data) {
-          toast({
-            title: "Vérification échouée",
-            description: "Impossible de vérifier votre abonnement. Veuillez réessayer.",
-            variant: "destructive",
-          });
-          navigate("/onboarding");
-          return;
-        }
-
-        setSubscribedEmail(email);
-        setVerifying(false);
-      } catch (error) {
-        console.error("Error verifying subscription:", error);
-        // Allow to continue anyway if local storage is set
-        setSubscribedEmail(email);
-        setVerifying(false);
-      }
+      setSubscribedEmail(email);
+      setVerifying(false);
     };
 
     checkSubscription();
-  }, [navigate, toast]);
+  }, [navigate]);
 
   if (verifying) {
     return (
