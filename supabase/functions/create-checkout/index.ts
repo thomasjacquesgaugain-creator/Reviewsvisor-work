@@ -84,9 +84,10 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      allow_promotion_codes: true,
+      payment_method_types: ["card"],
       billing_address_collection: "auto",
-      success_url: `${origin}/billing/success`,
+      allow_promotion_codes: false,
+      success_url: `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/billing/cancel`,
     });
 
@@ -101,7 +102,7 @@ serve(async (req) => {
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: 400,
     });
   }
 });

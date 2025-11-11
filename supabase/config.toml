@@ -3,6 +3,9 @@ project_id = "zzjmtipdsccxmmoaetlp"
 [functions.create-checkout]
 verify_jwt = false
 
+[functions.stripe-webhook]
+verify_jwt = false
+
 [functions.analyze-reviews]
 verify_jwt = false
 
