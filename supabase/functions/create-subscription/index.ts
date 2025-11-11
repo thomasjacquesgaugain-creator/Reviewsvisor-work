@@ -66,8 +66,24 @@ serve(async (req) => {
 
     // Get client secret from payment intent
     const invoice = subscription.latest_invoice as Stripe.Invoice;
-    const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
-    const clientSecret = paymentIntent.client_secret;
+    logStep("Invoice retrieved", { 
+      hasInvoice: !!invoice,
+      invoiceId: invoice?.id 
+    });
+    
+    const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
+    logStep("PaymentIntent retrieved", { 
+      hasPaymentIntent: !!paymentIntent,
+      paymentIntentId: paymentIntent?.id,
+      status: paymentIntent?.status 
+    });
+    
+    const clientSecret = paymentIntent?.client_secret;
+    if (!clientSecret) {
+      throw new Error("Failed to get client_secret from payment intent");
+    }
+    
+    logStep("Client secret retrieved successfully");
 
     // Initialize Supabase client
     const supabaseClient = createClient(
