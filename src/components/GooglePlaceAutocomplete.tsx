@@ -114,7 +114,7 @@ export default function GooglePlaceAutocomplete({
           if (error instanceof Error && error.message.includes('VITE_GOOGLE_MAPS_API_KEY')) {
             setApiError('Clé API Google Maps manquante. Veuillez configurer VITE_GOOGLE_MAPS_API_KEY.');
           } else {
-            setApiError('Erreur de chargement de Google Maps. Veuillez réessayer.');
+            setApiError('Erreur de chargement de Google Maps. Vérifiez VITE_GOOGLE_MAPS_BROWSER_KEY/VITE_GOOGLE_MAPS_API_KEY et les restrictions de domaines.');
           }
         }
       }

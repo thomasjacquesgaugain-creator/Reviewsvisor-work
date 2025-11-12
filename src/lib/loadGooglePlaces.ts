@@ -4,17 +4,17 @@ export function loadGooglePlaces(): Promise<void> {
   if ((window as any).google?.maps?.places) return Promise.resolve();
   if (loading) return loading;
 
-  const key = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
+  const key = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY || import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   if (!key) {
-    console.error('❌ Clé Google Maps manquante : VITE_GOOGLE_MAPS_BROWSER_KEY non définie');
-    return Promise.reject(new Error('Clé Google Maps manquante. Vérifiez votre configuration.'));
+    console.error('❌ Clé Google Maps manquante : ni VITE_GOOGLE_MAPS_BROWSER_KEY ni VITE_GOOGLE_MAPS_API_KEY définie');
+    return Promise.reject(new Error('Clé Google Maps manquante. Vérifiez votre configuration (front).'));
   }
 
-  console.log('🔑 Chargement Google Maps avec clé:', key.substring(0, 10) + '...');
+  console.log('🔑 Chargement Google Maps', { origin: window.location.origin, keyPrefix: key.substring(0, 10) + '...' });
 
   loading = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&language=fr&region=FR`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&language=fr&region=FR&loading=async`;
     script.async = true;
     script.defer = true;
     script.onload = () => {
@@ -23,8 +23,9 @@ export function loadGooglePlaces(): Promise<void> {
     };
     script.onerror = (error) => {
       console.error('❌ Échec chargement Google Maps:', error);
+      console.error('Origine:', window.location.origin);
       console.error('Vérifiez que votre domaine est autorisé dans Google Cloud Console');
-      console.error('Domaines à ajouter: https://reviewsvisor.fr/*, https://www.reviewsvisor.fr/*');
+      console.error('Domaines à ajouter: https://reviewsvisor.fr/*, https://www.reviewsvisor.fr/*, https://*.lovable.dev/*, https://*.lovable.app/*, https://lovable.dev/*, https://auth.lovable.so/*');
       reject(new Error('Échec chargement Google Maps. Vérifiez les restrictions de votre clé API.'));
     };
     document.head.appendChild(script);
