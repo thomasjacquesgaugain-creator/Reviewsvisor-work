@@ -122,8 +122,13 @@ export default function EtablissementPage() {
 
       try {
         setPlacesError(null);
+        console.log('🔍 Initialisation de l\'autocomplete Google Places...');
         await loadGooglePlaces();
         const g = (window as any).google;
+        
+        if (!g?.maps?.places) {
+          throw new Error('Google Maps Places API non disponible');
+        }
         
         const autocomplete = new g.maps.places.Autocomplete(input, {
           types: ['establishment'],
@@ -142,11 +147,24 @@ export default function EtablissementPage() {
         autocomplete.addListener('place_changed', () => {
           const place = autocomplete.getPlace();
           if (!place || !place.place_id) return;
+          console.log('✅ Établissement sélectionné:', place.name);
           setSelected(serializePlace(place));
         });
+        
+        console.log('✅ Autocomplete initialisé avec succès');
       } catch (error: any) {
-        console.error('Erreur de chargement Google Places:', error);
-        setPlacesError(error?.message || 'Erreur Google Places');
+        console.error('❌ Erreur de chargement Google Places:', error);
+        let errorMsg = 'Erreur Google Maps. ';
+        
+        if (error?.message?.includes('manquante')) {
+          errorMsg += 'Clé API manquante dans la configuration.';
+        } else if (error?.message?.includes('Échec')) {
+          errorMsg += 'Vérifiez que votre domaine est autorisé dans Google Cloud Console (https://reviewsvisor.fr/*)';
+        } else {
+          errorMsg += error?.message || 'Erreur inconnue';
+        }
+        
+        setPlacesError(errorMsg);
       }
     };
 

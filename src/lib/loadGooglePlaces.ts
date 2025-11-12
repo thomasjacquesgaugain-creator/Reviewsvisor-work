@@ -6,16 +6,27 @@ export function loadGooglePlaces(): Promise<void> {
 
   const key = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
   if (!key) {
-    return Promise.reject(new Error('Clé Google manquante : renseignez VITE_GOOGLE_MAPS_BROWSER_KEY.'));
+    console.error('❌ Clé Google Maps manquante : VITE_GOOGLE_MAPS_BROWSER_KEY non définie');
+    return Promise.reject(new Error('Clé Google Maps manquante. Vérifiez votre configuration.'));
   }
+
+  console.log('🔑 Chargement Google Maps avec clé:', key.substring(0, 10) + '...');
 
   loading = new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&language=fr&region=FR`;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Échec chargement Google Maps JS'));
+    script.onload = () => {
+      console.log('✅ Google Maps chargé avec succès');
+      resolve();
+    };
+    script.onerror = (error) => {
+      console.error('❌ Échec chargement Google Maps:', error);
+      console.error('Vérifiez que votre domaine est autorisé dans Google Cloud Console');
+      console.error('Domaines à ajouter: https://reviewsvisor.fr/*, https://www.reviewsvisor.fr/*');
+      reject(new Error('Échec chargement Google Maps. Vérifiez les restrictions de votre clé API.'));
+    };
     document.head.appendChild(script);
   });
 
