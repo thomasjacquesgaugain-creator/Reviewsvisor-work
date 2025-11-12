@@ -20,7 +20,7 @@ serve(async (req) => {
       )
     }
 
-    const GOOGLE_KEY = Deno.env.get('GOOGLE_MAPS_KEY')
+    const GOOGLE_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY')
     
     // 1) Geocode city
     let loc = null
