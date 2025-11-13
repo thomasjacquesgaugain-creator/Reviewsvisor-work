@@ -19,7 +19,18 @@ export function loadGooglePlaces(): Promise<void> {
     script.defer = true;
     script.onload = () => {
       console.log('✅ Google Maps chargé avec succès');
-      resolve();
+      
+      // Attendre que google.maps.places soit vraiment disponible
+      const checkPlaces = () => {
+        if ((window as any).google?.maps?.places) {
+          console.log('✅ Google Places API disponible');
+          resolve();
+        } else {
+          console.log('⏳ En attente de Google Places API...');
+          setTimeout(checkPlaces, 50);
+        }
+      };
+      checkPlaces();
     };
     script.onerror = (error) => {
       console.error('❌ Échec chargement Google Maps:', error);
