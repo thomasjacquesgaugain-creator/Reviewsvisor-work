@@ -38,9 +38,9 @@ serve(async (req) => {
       );
     }
 
-    const googleMapsApiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
+    const googleMapsApiKey = Deno.env.get('CLE_API_GOOGLE_MAPS');
     if (!googleMapsApiKey) {
-      console.error('Google Maps API key not found');
+      console.error('CLE_API_GOOGLE_MAPS not found');
       return new Response(
         JSON.stringify({ error: 'Google Maps API key not configured' }),
         { 

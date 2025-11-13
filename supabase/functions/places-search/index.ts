@@ -94,11 +94,11 @@ serve(async (req) => {
       );
     }
 
-    const googlePlacesApiKey = Deno.env.get('GOOGLE_MAPS_KEY');
+    const googlePlacesApiKey = Deno.env.get('CLE_API_GOOGLE_MAPS');
     if (!googlePlacesApiKey) {
-      console.error('Google Places API key not found');
+      console.error('CLE_API_GOOGLE_MAPS not found');
       return new Response(
-        JSON.stringify({ error: 'Google Places API key not configured' }),
+        JSON.stringify({ error: 'Google Maps API key not configured' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
