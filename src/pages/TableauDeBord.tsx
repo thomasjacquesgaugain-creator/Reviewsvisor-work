@@ -206,18 +206,20 @@ const Dashboard = () => {
                     <Home className="w-4 h-4" />
                     Accueil
                   </Link>
-                  <Link to="/dashboard">
-                    <Button variant="ghost" className="text-gray-700 flex items-center gap-2">
-                      <BarChart3 className="w-4 h-4" />
-                      Dashboard
-                    </Button>
-                  </Link>
-                  <Link to="/etablissement">
-                    <Button variant="ghost" className="text-gray-700 flex items-center gap-2">
-                      <Building className="w-4 h-4" />
-                      Établissement
-                    </Button>
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link to="/dashboard">
+                      <Button variant="ghost" className="text-gray-700 flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4" />
+                        Dashboard
+                      </Button>
+                    </Link>
+                    <Link to="/etablissement">
+                      <Button variant="ghost" className="text-gray-700 flex items-center gap-2">
+                        <Building className="w-4 h-4" />
+                        Établissement
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-2 text-gray-700">
