@@ -191,7 +191,7 @@ const Dashboard = () => {
         <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-200">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 w-fit">
+              <div className="flex items-center gap-1 w-fit">
                 <img 
                   src="/lovable-uploads/08f62503-65d7-4681-8ddf-00f4efb00ffa.png" 
                   alt="Logo Reviewsvisor" 
