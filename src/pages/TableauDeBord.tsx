@@ -200,19 +200,19 @@ const Dashboard = () => {
                 <span className="text-[0.95rem] font-bold text-gray-900 whitespace-nowrap">Reviewsvisor</span>
               </div>
               
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-6">
                 <Link to="/tableau-de-bord" className="text-blue-600 font-medium hover:underline flex items-center gap-2">
                   <Home className="w-4 h-4" />
                   Accueil
                 </Link>
                 <Link to="/dashboard">
-                  <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
+                  <Button variant="ghost" className="text-gray-700 flex items-center gap-2">
                     <BarChart3 className="w-4 h-4" />
                     Dashboard
                   </Button>
                 </Link>
                 <Link to="/etablissement">
-                  <Button variant="ghost" className="text-gray-700 flex items-center gap-1">
+                  <Button variant="ghost" className="text-gray-700 flex items-center gap-2">
                     <Building className="w-4 h-4" />
                     Établissement
                   </Button>
@@ -222,7 +222,7 @@ const Dashboard = () => {
                 </div>
                 <Button 
                   variant="ghost" 
-                  className="text-gray-700 flex items-center gap-1"
+                  className="text-gray-700 flex items-center gap-2"
                   onClick={handleLogout}
                 >
                   <LogOut className="w-4 h-4" />
