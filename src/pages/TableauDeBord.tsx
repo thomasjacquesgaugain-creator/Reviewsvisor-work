@@ -217,17 +217,19 @@ const Dashboard = () => {
                     Établissement
                   </Button>
                 </Link>
-                <div className="flex items-center gap-2 text-gray-700">
-                  <span>Bonjour, {displayName}</span>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <span>Bonjour, {displayName}</span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    className="text-gray-700 flex items-center gap-2"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Déconnexion
+                  </Button>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  className="text-gray-700 flex items-center gap-2"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="w-4 h-4" />
-                  Déconnexion
-                </Button>
               </div>
             </div>
           </div>
