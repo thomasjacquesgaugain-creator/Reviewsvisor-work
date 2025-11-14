@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Home, BarChart3, Building, LogOut } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 interface NavBarProps {
@@ -10,6 +10,7 @@ interface NavBarProps {
 
 export const NavBar = ({ displayName, variant = "default" }: NavBarProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -19,6 +20,10 @@ export const NavBar = ({ displayName, variant = "default" }: NavBarProps) => {
   const navClassName = variant === "transparent" 
     ? "bg-white/80 backdrop-blur-sm border-b border-gray-200"
     : "bg-white border-b border-gray-200";
+
+  const isAccueil = location.pathname === "/tableau-de-bord";
+  const isDashboard = location.pathname === "/dashboard";
+  const isEtablissement = location.pathname === "/etablissement";
 
   return (
     <nav className={navClassName}>
@@ -35,19 +40,34 @@ export const NavBar = ({ displayName, variant = "default" }: NavBarProps) => {
           
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-4">
-              <Link to="/tableau-de-bord" className="text-blue-600 font-medium hover:underline flex items-center gap-2">
+              <Link 
+                to="/tableau-de-bord" 
+                className={`font-medium hover:underline flex items-center gap-2 ${
+                  isAccueil ? "text-blue-600" : "text-gray-700"
+                }`}
+              >
                 <Home className="w-4 h-4" />
                 Accueil
               </Link>
               <div className="flex items-center gap-0">
                 <Link to="/dashboard">
-                  <Button variant="ghost" className="text-gray-700 flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    className={`flex items-center gap-2 ${
+                      isDashboard ? "text-blue-600" : "text-gray-700"
+                    }`}
+                  >
                     <BarChart3 className="w-4 h-4" />
                     Dashboard
                   </Button>
                 </Link>
                 <Link to="/etablissement">
-                  <Button variant="ghost" className="text-gray-700 flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    className={`flex items-center gap-2 ${
+                      isEtablissement ? "text-blue-600" : "text-gray-700"
+                    }`}
+                  >
                     <Building className="w-4 h-4" />
                     Établissement
                   </Button>
