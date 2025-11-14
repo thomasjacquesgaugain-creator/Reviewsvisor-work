@@ -349,11 +349,6 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-          {/* Subscription Card */}
-          <div className="max-w-3xl mx-auto mb-16">
-            <SubscriptionCard />
-          </div>
-
           {/* Feature cards */}
           <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
