@@ -201,22 +201,24 @@ const Dashboard = () => {
               </div>
               
               <div className="flex items-center gap-4">
-                <Link to="/tableau-de-bord" className="text-blue-600 font-medium hover:underline flex items-center gap-2">
-                  <Home className="w-4 h-4" />
-                  Accueil
-                </Link>
-                <Link to="/dashboard">
-                  <Button variant="ghost" className="text-gray-700 flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4" />
-                    Dashboard
-                  </Button>
-                </Link>
-                <Link to="/etablissement">
-                  <Button variant="ghost" className="text-gray-700 flex items-center gap-2">
-                    <Building className="w-4 h-4" />
-                    Établissement
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-4">
+                  <Link to="/tableau-de-bord" className="text-blue-600 font-medium hover:underline flex items-center gap-2">
+                    <Home className="w-4 h-4" />
+                    Accueil
+                  </Link>
+                  <Link to="/dashboard">
+                    <Button variant="ghost" className="text-gray-700 flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4" />
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Link to="/etablissement">
+                    <Button variant="ghost" className="text-gray-700 flex items-center gap-2">
+                      <Building className="w-4 h-4" />
+                      Établissement
+                    </Button>
+                  </Link>
+                </div>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-2 text-gray-700">
                     <span>Bonjour, {displayName}</span>
