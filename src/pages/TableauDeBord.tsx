@@ -200,7 +200,7 @@ const Dashboard = () => {
                 <span className="text-[0.95rem] font-bold text-gray-900 whitespace-nowrap">Reviewsvisor</span>
               </div>
               
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <div className="flex items-center gap-4">
                   <Link to="/tableau-de-bord" className="text-blue-600 font-medium hover:underline flex items-center gap-2">
                     <Home className="w-4 h-4" />
