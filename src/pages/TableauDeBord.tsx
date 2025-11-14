@@ -11,6 +11,7 @@ import { getBaselineScore, formatDelta, getEvolutionStatus, computeSatisfactionP
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { getReponsesStats } from "@/lib/reponses";
 import { SubscriptionCard } from "@/components/SubscriptionCard";
+import { NavBar } from "@/components/NavBar";
 
 const Dashboard = () => {
   const [userProfile, setUserProfile] = useState<{ first_name: string; last_name: string } | null>(null);
@@ -188,56 +189,7 @@ const Dashboard = () => {
 
       <div className="relative z-10">
         {/* Navigation */}
-        <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-200">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-0 w-fit">
-                <img 
-                  src="/lovable-uploads/08f62503-65d7-4681-8ddf-00f4efb00ffa.png" 
-                  alt="Logo Reviewsvisor" 
-                  className="w-8 h-8 flex-shrink-0"
-                />
-                <span className="text-[1.05rem] font-bold text-gray-900 whitespace-nowrap">Reviewsvisor</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-4">
-                  <Link to="/tableau-de-bord" className="text-blue-600 font-medium hover:underline flex items-center gap-2">
-                    <Home className="w-4 h-4" />
-                    Accueil
-                  </Link>
-                  <div className="flex items-center gap-0">
-                    <Link to="/dashboard">
-                      <Button variant="ghost" className="text-gray-700 flex items-center gap-2">
-                        <BarChart3 className="w-4 h-4" />
-                        Dashboard
-                      </Button>
-                    </Link>
-                    <Link to="/etablissement">
-                      <Button variant="ghost" className="text-gray-700 flex items-center gap-2">
-                        <Building className="w-4 h-4" />
-                        Établissement
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <span>Bonjour, {displayName}</span>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    className="text-gray-700 flex items-center gap-2"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Déconnexion
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </nav>
+        <NavBar displayName={displayName} variant="transparent" />
 
         {/* Main content */}
         <div className="container mx-auto px-4 py-16">
