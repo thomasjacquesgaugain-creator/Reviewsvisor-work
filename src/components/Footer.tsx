@@ -73,16 +73,6 @@ export function Footer() {
                   Créer un compte
                 </Link>
               </li>
-              <li>
-                <Link to="/dashboard" className="text-white hover:underline hover:opacity-80 transition-all">
-                  Tableau de bord
-                </Link>
-              </li>
-              <li>
-                <Link to="/onboarding" className="text-white hover:underline hover:opacity-80 transition-all">
-                  Abonnement Pro
-                </Link>
-              </li>
             </ul>
           </div>
         </div>
