@@ -13,7 +13,7 @@ import { Building2, Home, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { useAuth } from "@/contexts/AuthProvider";
-import { NavBar } from "@/components/NavBar";
+
 
 export default function EtablissementPage() {
   const { displayName, loading, signOut } = useAuth();
@@ -225,9 +225,6 @@ export default function EtablissementPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <NavBar displayName={displayName || "Utilisateur"} />
-
       {/* Main content */}
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Établissement</h1>

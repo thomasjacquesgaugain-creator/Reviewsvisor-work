@@ -1,19 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Home, BarChart3, Building, LogOut } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthProvider";
 
 interface NavBarProps {
-  displayName: string;
   variant?: "default" | "transparent";
 }
 
-export const NavBar = ({ displayName, variant = "default" }: NavBarProps) => {
+export const NavBar = ({ variant = "default" }: NavBarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, displayName, signOut } = useAuth();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     navigate('/');
   };
 
@@ -75,17 +75,27 @@ export const NavBar = ({ displayName, variant = "default" }: NavBarProps) => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 text-gray-700">
-                <span>Bonjour, {displayName}</span>
-              </div>
-              <Button 
-                variant="ghost" 
-                className="text-gray-700 flex items-center gap-2"
-                onClick={handleLogout}
-              >
-                <LogOut className="w-4 h-4" />
-                Déconnexion
-              </Button>
+              {user ? (
+                <>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <span>Bonjour, {displayName}</span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    className="text-gray-700 flex items-center gap-2"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Déconnexion
+                  </Button>
+                </>
+              ) : (
+                <Link to="/login">
+                  <Button variant="ghost" className="text-gray-700">
+                    Se connecter
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
