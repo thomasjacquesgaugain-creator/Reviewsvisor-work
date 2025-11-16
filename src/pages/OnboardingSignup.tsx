@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import SignUpForm from "@/components/SignUpForm";
 import { CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { StepHeader } from "@/components/StepHeader";
 
 const OnboardingSignup = () => {
   const navigate = useNavigate();
@@ -44,6 +45,7 @@ const OnboardingSignup = () => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <StepHeader currentStep={2} />
           <div className="flex justify-center mb-2">
             <Badge variant="default" className="gap-1">
               <CheckCircle2 className="h-3 w-3" />
