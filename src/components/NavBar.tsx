@@ -35,7 +35,7 @@ export const NavBar = ({ displayName, variant = "default" }: NavBarProps) => {
               alt="Logo Reviewsvisor" 
               className="w-8 h-8 flex-shrink-0"
             />
-            <span className="text-[1.05rem] font-bold text-gray-900 whitespace-nowrap">Reviewsvisor</span>
+            <span className="text-[1.05rem] font-bold text-gray-900 whitespace-nowrap" translate="no">Reviewsvisor</span>
           </div>
           
           <div className="flex items-center gap-2">

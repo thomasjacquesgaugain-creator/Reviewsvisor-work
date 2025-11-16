@@ -133,7 +133,7 @@ export const HeroSection = () => {
                 <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
                   <span className="text-xl">💡</span>
                 </div>
-                <h2 className="text-2xl font-bold">Pourquoi Reviewsvisor fonctionne ?</h2>
+                <h2 className="text-2xl font-bold">Pourquoi <span translate="no">Reviewsvisor</span> fonctionne ?</h2>
               </div>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -155,7 +155,7 @@ export const HeroSection = () => {
                     <div>
                       <h3 className="text-lg font-semibold mb-2">Résultat immédiat</h3>
                       <p className="text-blue-100 text-sm leading-relaxed">
-                        Chaque utilisateur qui utilise Reviewsvisor voit sa note augmenter de 0.5 à 1 point en moyenne chaque semaine.
+                        Chaque utilisateur qui utilise <span translate="no">Reviewsvisor</span> voit sa note augmenter de 0.5 à 1 point en moyenne chaque semaine.
                       </p>
                     </div>
                   </div>
@@ -167,7 +167,7 @@ export const HeroSection = () => {
                     <div>
                       <h3 className="text-lg font-semibold mb-2">Précision chirurgicale</h3>
                       <p className="text-blue-100 text-sm leading-relaxed">
-                        Reviewsvisor analyse chaque mot, chaque émotion, chaque nuance pour vous donner des insights précis.
+                        <span translate="no">Reviewsvisor</span> analyse chaque mot, chaque émotion, chaque nuance pour vous donner des insights précis.
                       </p>
                     </div>
                   </div>

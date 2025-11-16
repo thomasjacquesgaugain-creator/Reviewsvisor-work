@@ -196,7 +196,7 @@ const Dashboard = () => {
           {/* Header */}
           <div className="text-center space-y-4 mb-12">
             <h1 className="text-5xl font-bold text-gray-900">
-              <span className="text-blue-600">Reviewsvisor</span>
+              <span className="text-blue-600" translate="no">Reviewsvisor</span>
             </h1>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
               Analysez automatiquement vos avis clients pour identifier les problèmes prioritaires et améliorer la satisfaction de votre établissement.

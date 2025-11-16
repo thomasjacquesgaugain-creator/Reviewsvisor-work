@@ -8,7 +8,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           {/* Colonne 1 - Reviewsvisor */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Reviewsvisor</h3>
+            <h3 className="text-white font-bold text-lg mb-4" translate="no">Reviewsvisor</h3>
             <ul className="space-y-3">
               <li>
                 <Link to="/a-propos" className="text-white hover:underline hover:opacity-80 transition-all">
@@ -90,7 +90,7 @@ export function Footer() {
         {/* Séparateur */}
         <div className="border-t border-white/20 pt-8">
           <p className="text-center text-sm text-white">
-            © 2025 Reviewsvisor. Tous droits réservés.
+            © 2025 <span translate="no">Reviewsvisor</span>. Tous droits réservés.
           </p>
         </div>
       </div>
