@@ -64,11 +64,12 @@ const Onboarding = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <StepHeader currentStep={1} />
-          <CardTitle className="text-2xl font-bold">Abonnement Pro</CardTitle>
-          <CardDescription>Accédez à toutes les fonctionnalités premium</CardDescription>
+      <div className="w-full max-w-md">
+        <StepHeader currentStep={1} />
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Abonnement Pro</CardTitle>
+            <CardDescription>Accédez à toutes les fonctionnalités premium</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Pricing info */}
@@ -131,7 +132,8 @@ const Onboarding = () => {
             </p>
           </form>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };

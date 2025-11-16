@@ -43,24 +43,26 @@ const OnboardingSignup = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <StepHeader currentStep={2} />
-          <div className="flex justify-center mb-2">
-            <Badge variant="default" className="gap-1">
-              <CheckCircle2 className="h-3 w-3" />
-              Abonnement actif
-            </Badge>
-          </div>
-          <CardTitle className="text-2xl font-bold">Créer mon compte</CardTitle>
-          <CardDescription>
-            Complétez votre inscription pour accéder à votre tableau de bord
-          </CardDescription>
+      <div className="w-full max-w-md">
+        <StepHeader currentStep={2} />
+        <Card>
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-2">
+              <Badge variant="default" className="gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                Abonnement actif
+              </Badge>
+            </div>
+            <CardTitle className="text-2xl font-bold">Créer mon compte</CardTitle>
+            <CardDescription>
+              Complétez votre inscription pour accéder à votre tableau de bord
+            </CardDescription>
         </CardHeader>
         <CardContent>
           <SignUpForm prefilledEmail={subscribedEmail} />
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };
