@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
 
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
     const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
-    const redirectUri = 'https://auth.lovable.so/oauth/callback';
+    const redirectUri = Deno.env.get('AUTH_REDIRECT') || 'https://reviewsvisor.fr/api/auth/callback/google';
 
     if (!clientId || !clientSecret) {
       throw new Error('Google OAuth credentials not configured');

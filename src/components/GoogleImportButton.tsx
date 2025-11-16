@@ -48,7 +48,7 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       }
 
       const clientId = configData.clientId;
-      const redirectUri = 'https://auth.lovable.so/oauth/callback';
+      const redirectUri = 'https://reviewsvisor.fr/api/auth/callback/google';
     const scope = [
       'openid',
       'email',
