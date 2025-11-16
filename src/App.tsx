@@ -21,6 +21,7 @@ import BillingCancel from "./pages/BillingCancel";
 import Onboarding from "./pages/Onboarding";
 import OnboardingSignup from "./pages/OnboardingSignup";
 import GoogleOAuthCallback from "./pages/GoogleOAuthCallback";
+import Contact from "./pages/Contact";
 
 const App = () => {
   return (
@@ -32,6 +33,7 @@ const App = () => {
             <Route path="/accueil" element={<Accueil />} />
             <Route path="/" element={<Navigate to="/accueil" replace />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/tableau-de-bord" element={
               <Protected>
                 <TableauDeBord />
