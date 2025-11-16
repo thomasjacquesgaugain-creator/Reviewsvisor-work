@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createCheckoutSession } from "@/lib/stripe";
+import { StepHeader } from "@/components/StepHeader";
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -65,6 +66,7 @@ const Onboarding = () => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <StepHeader currentStep={1} />
           <CardTitle className="text-2xl font-bold">Abonnement Pro</CardTitle>
           <CardDescription>Accédez à toutes les fonctionnalités premium</CardDescription>
         </CardHeader>
