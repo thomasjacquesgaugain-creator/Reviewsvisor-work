@@ -18,6 +18,7 @@ import BillingSuccess from "./pages/BillingSuccess";
 import BillingCancel from "./pages/BillingCancel";
 import Onboarding from "./pages/Onboarding";
 import OnboardingSignup from "./pages/OnboardingSignup";
+import GoogleOAuthCallback from "./pages/GoogleOAuthCallback";
 
 const App = () => {
   return (

@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    { "source": "/api/auth/callback/google", "destination": "/api/auth/callback/google/index.html" },
+    { "source": "/api/auth/callback/google/", "destination": "/api/auth/callback/google/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/api/auth/callback/google",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    }
+  ]
+}

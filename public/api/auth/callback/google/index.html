@@ -58,6 +58,7 @@
     async function handleOAuthCallback() {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
+      const state = urlParams.get('state');
       const error = urlParams.get('error');
       const messageEl = document.getElementById('message');
 
@@ -80,7 +81,7 @@
       }
 
       try {
-        // Get session from localStorage
+        // Get session from localStorage (created by Supabase auth in the app)
         const supabaseSession = localStorage.getItem('sb-zzjmtipdsccxmmoaetlp-auth-token');
         if (!supabaseSession) {
           throw new Error('Session utilisateur non trouvée');
@@ -103,11 +104,11 @@
             'Authorization': `Bearer ${accessToken}`,
             'apikey': SUPABASE_ANON_KEY
           },
-          body: JSON.stringify({ code })
+          body: JSON.stringify({ code, state })
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorData = await response.json().catch(() => ({}));
           throw new Error(errorData.error || 'Erreur lors de l\'échange du code');
         }
 
@@ -121,22 +122,22 @@
         setTimeout(() => {
           // Redirect to etablissement page
           window.location.href = '/etablissement';
-        }, 1000);
+        }, 800);
 
       } catch (err) {
         console.error('Callback error:', err);
-        messageEl.innerHTML = '<span class="error">❌ ' + err.message + '</span>';
+        messageEl.innerHTML = '<span class="error">❌ ' + (err && err.message ? err.message : 'Erreur inconnue') + '</span>';
         
         if (window.opener) {
           window.opener.postMessage({ 
             type: 'oauth-error', 
-            error: err.message 
+            error: (err && err.message) || 'unknown' 
           }, window.location.origin);
         }
 
         setTimeout(() => {
           window.close();
-        }, 3000);
+        }, 2000);
       }
     }
 
