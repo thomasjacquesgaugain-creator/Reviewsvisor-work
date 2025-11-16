@@ -191,6 +191,8 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
   const importReviews = async (accId: string, locationId: string) => {
     setLoading(true);
     try {
+      console.log('🚀 Starting import with:', { accountId: accId, locationId, placeId });
+      
       const { data, error } = await supabase.functions.invoke('google-business-reviews', {
         body: {
           accountId: accId,
@@ -199,20 +201,34 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
         },
       });
 
+      console.log('📦 Import response:', data, error);
+
       if (error) throw error;
 
-      toast({
-        title: "Import réussi",
-        description: `${data.total} avis importés (${data.inserted} nouveaux, ${data.updated} mis à jour)`,
-      });
+      if (data.total === 0) {
+        toast({
+          title: "Aucun avis trouvé",
+          description: "Aucun avis Google n'a été trouvé pour cet établissement.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Import réussi",
+          description: `${data.total} avis importés (${data.inserted} nouveaux, ${data.updated} mis à jour)`,
+        });
+      }
 
       setShowLocationSelector(false);
+      
+      // Trigger reviews:imported event to refresh the UI
+      window.dispatchEvent(new CustomEvent('reviews:imported'));
+      
       onSuccess?.();
     } catch (error: any) {
-      console.error('Error importing reviews:', error);
+      console.error('❌ Error importing reviews:', error);
       toast({
-        title: "Erreur",
-        description: error.message || "Échec de l'import des avis",
+        title: "Erreur d'import",
+        description: error.message || "Échec de l'import des avis. Vérifiez les logs de la console.",
         variant: "destructive",
       });
     } finally {

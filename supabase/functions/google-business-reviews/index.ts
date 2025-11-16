@@ -13,7 +13,14 @@ Deno.serve(async (req) => {
   try {
     const { accountId, locationId, placeId } = await req.json();
     
+    console.log('📥 Import request received:', {
+      accountId,
+      locationId: locationId?.substring(0, 30) + '...',
+      placeId
+    });
+    
     if (!accountId || !locationId) {
+      console.error('❌ Missing required parameters');
       throw new Error('Account ID and Location ID are required');
     }
 
@@ -32,8 +39,11 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
+      console.error('❌ User auth failed:', userError);
       throw new Error('Unauthorized');
     }
+
+    console.log('✅ User authenticated:', user.id);
 
     // Get access token
     const { data: connection, error: connError } = await supabase
@@ -44,8 +54,11 @@ Deno.serve(async (req) => {
       .single();
 
     if (connError || !connection) {
+      console.error('❌ Google connection not found for user:', user.id, connError);
       throw new Error('Google connection not found');
     }
+
+    console.log('✅ Access token retrieved');
 
     // Fetch reviews with pagination
     const allReviews: any[] = [];
@@ -59,6 +72,8 @@ Deno.serve(async (req) => {
         url.searchParams.set('pageToken', nextPageToken);
       }
 
+      console.log('🔍 Fetching reviews from:', url.pathname);
+
       const response = await fetch(url.toString(), {
         headers: {
           'Authorization': `Bearer ${connection.access_token}`,
@@ -67,23 +82,49 @@ Deno.serve(async (req) => {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        console.error('Failed to fetch reviews:', error);
-        throw new Error('Failed to fetch reviews');
+        const errorText = await response.text();
+        console.error('❌ Google API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        });
+        throw new Error(`Failed to fetch reviews: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log('📦 Response from Google:', {
+        hasReviews: !!data.reviews,
+        reviewsCount: data.reviews?.length || 0,
+        hasNextPage: !!data.nextPageToken
+      });
+
       if (data.reviews) {
         allReviews.push(...data.reviews);
       }
       nextPageToken = data.nextPageToken || null;
     } while (nextPageToken);
 
-    console.log(`Fetched ${allReviews.length} reviews from Google Business`);
+    console.log(`✅ Fetched ${allReviews.length} reviews from Google Business`);
 
     // Upsert reviews to database
     let insertedCount = 0;
     let updatedCount = 0;
+
+    if (allReviews.length === 0) {
+      console.log('⚠️ No reviews to import from Google Business');
+      return new Response(
+        JSON.stringify({
+          success: true,
+          total: 0,
+          inserted: 0,
+          updated: 0,
+          message: 'Aucun avis Google trouvé pour cet établissement'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`💾 Starting to insert ${allReviews.length} reviews into database...`);
 
     for (const review of allReviews) {
       const reviewData = {
@@ -106,6 +147,13 @@ Deno.serve(async (req) => {
         raw: review,
       };
 
+      // Check if review already exists
+      const { data: existing } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('review_id_ext', reviewData.review_id_ext)
+        .single();
+
       const { error: upsertError } = await supabase
         .from('reviews')
         .upsert(reviewData, {
@@ -113,24 +161,18 @@ Deno.serve(async (req) => {
         });
 
       if (upsertError) {
-        console.error('Failed to upsert review:', upsertError);
+        console.error('❌ Failed to upsert review:', upsertError);
         continue;
       }
 
-      // Check if it was an insert or update (simple heuristic)
-      const { count } = await supabase
-        .from('reviews')
-        .select('*', { count: 'exact', head: true })
-        .eq('review_id_ext', reviewData.review_id_ext);
-      
-      if (count === 1) {
-        insertedCount++;
-      } else {
+      if (existing) {
         updatedCount++;
+      } else {
+        insertedCount++;
       }
     }
 
-    console.log(`Import complete: ${insertedCount} inserted, ${updatedCount} updated`);
+    console.log(`✅ Import complete: ${insertedCount} inserted, ${updatedCount} updated`);
 
     return new Response(
       JSON.stringify({
@@ -142,9 +184,12 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error importing reviews:', error);
+    console.error('❌ Error importing reviews:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: 'Vérifiez les logs pour plus de détails'
+      }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
