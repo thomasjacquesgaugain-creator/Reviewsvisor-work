@@ -34,7 +34,7 @@ export default function GoogleOAuthDebugPanel() {
       }
 
       const clientId = configData?.clientId || 'NON CONFIGURÉ';
-      const redirectUri = 'https://auth.lovable.so/oauth/callback';
+      const redirectUri = 'https://reviewsvisor.fr/api/auth/callback/google';
       const scope = [
         'openid',
         'email',
@@ -80,7 +80,7 @@ export default function GoogleOAuthDebugPanel() {
       setDebugInfo({
         clientId: 'ERREUR',
         clientIdSource: 'Impossible de charger',
-        redirectUri: 'https://auth.lovable.so/oauth/callback',
+        redirectUri: 'https://reviewsvisor.fr/api/auth/callback/google',
         scope: 'N/A',
         authUrl: 'N/A',
         callbackRedirectUri: 'N/A',

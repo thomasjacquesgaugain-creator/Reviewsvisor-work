@@ -36,7 +36,7 @@ export function loadGooglePlaces(): Promise<void> {
       console.error('❌ Échec chargement Google Maps:', error);
       console.error('Origine:', window.location.origin);
       console.error('Vérifiez que votre domaine est autorisé dans Google Cloud Console');
-      console.error('Domaines à ajouter: https://reviewsvisor.fr/*, https://www.reviewsvisor.fr/*, https://*.lovable.dev/*, https://*.lovable.app/*, https://lovable.dev/*, https://auth.lovable.so/*');
+      console.error('Domaines à ajouter: https://reviewsvisor.fr/*, https://www.reviewsvisor.fr/*, https://reviewsvisor.lovable.app/*, https://*.lovable.dev/*, https://*.lovable.app/*, https://lovable.dev/*');
       reject(new Error('Échec chargement Google Maps. Vérifiez les restrictions de votre clé API.'));
     };
     document.head.appendChild(script);
