@@ -9,6 +9,16 @@ import { getReviewsSummary, listAllReviews, listAll, deleteAllReviews } from "@/
 import { STORAGE_KEY } from "@/types/etablissement";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 interface ReviewsSummary {
   total: number;
   avgRating: number;
@@ -40,6 +50,7 @@ export function ReviewsVisualPanel({
   const [reviewsList, setReviewsList] = useState<ReviewsTableRow[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const currentEstablishment = useCurrentEstablishment();
   const { toast } = useToast();
   
@@ -127,9 +138,6 @@ export function ReviewsVisualPanel({
   const handleDeleteAllReviews = async () => {
     if (!effectiveId) return;
     
-    const confirmDelete = window.confirm("Êtes-vous sûr de vouloir supprimer tous les avis de cet établissement ? Cette action est irréversible.");
-    if (!confirmDelete) return;
-    
     try {
       setIsDeleting(true);
       const deletedCount = await deleteAllReviews(effectiveId);
@@ -141,13 +149,15 @@ export function ReviewsVisualPanel({
       
       // Reload the data to update UI
       await reloadData();
+      setShowDeleteDialog(false);
     } catch (error: any) {
       console.error('Error deleting reviews:', error);
       toast({
         title: "Erreur",
-        description: error.message || "Erreur lors de la suppression des avis",
+        description: error.message || "La suppression des avis a échoué, veuillez réessayer",
         variant: "destructive",
       });
+      setShowDeleteDialog(false);
     } finally {
       setIsDeleting(false);
     }
@@ -277,8 +287,9 @@ export function ReviewsVisualPanel({
                       size="icon"
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       data-testid="btn-delete-all-reviews"
-                      onClick={handleDeleteAllReviews}
+                      onClick={() => setShowDeleteDialog(true)}
                       disabled={isDeleting}
+                      title="Supprimer tous les avis"
                     >
                       <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
                     </Button>
@@ -318,5 +329,25 @@ export function ReviewsVisualPanel({
             </div>
           </>}
       </CardContent>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Voulez-vous vraiment supprimer tous les avis de cet établissement ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAllReviews}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>;
 }
