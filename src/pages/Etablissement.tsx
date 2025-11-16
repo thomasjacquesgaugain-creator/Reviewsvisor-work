@@ -313,6 +313,8 @@ export default function EtablissementPage() {
               }}
               onImportSuccess={handleImportSuccess}
               onOpenVisualPanel={handleOpenVisualPanel}
+              placeId={currentEstablishment?.place_id || selected?.place_id}
+              establishmentName={currentEstablishment?.name || selected?.name}
             />
           )}
 

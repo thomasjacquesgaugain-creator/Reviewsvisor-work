@@ -12,12 +12,14 @@ interface ImportAvisToolbarProps {
   onFileAnalyzed?: () => void;
   onImportSuccess?: () => void;
   onOpenVisualPanel?: () => void;
+  placeId?: string;
+  establishmentName?: string;
 }
 
 type ActiveTab = "csv" | "paste" | "auto";
 
-export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuccess, onOpenVisualPanel }: ImportAvisToolbarProps) {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("paste");
+export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuccess, onOpenVisualPanel, placeId, establishmentName }: ImportAvisToolbarProps) {
+  const [activeTab, setActiveTab] = useState<ActiveTab>("auto"); // Start with auto tab for Google import
 
   const handleManualReviewSubmit = (review: { firstName: string; lastName: string; rating: number; comment: string }) => {
     // Pour l'instant, simple log
@@ -62,7 +64,12 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
       case "auto":
         return (
           <div className="py-6">
-            <GoogleImportButton onSuccess={onImportSuccess} />
+            <p className="text-sm text-gray-600 mb-4">
+              {placeId 
+                ? `Importation automatique des avis Google pour "${establishmentName || 'cet établissement'}"`
+                : "Sélectionnez un établissement pour importer les avis Google"}
+            </p>
+            <GoogleImportButton onSuccess={onImportSuccess} placeId={placeId} />
           </div>
         );
       default:
