@@ -61,6 +61,7 @@ const App = () => {
           } />
           <Route path="/billing/success" element={<BillingSuccess />} />
           <Route path="/billing/cancel" element={<BillingCancel />} />
+          <Route path="/api/auth/callback/google" element={<GoogleOAuthCallback />} />
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/onboarding/signup" element={<OnboardingSignup />} />
           <Route path="*" element={<NotFound />} />
