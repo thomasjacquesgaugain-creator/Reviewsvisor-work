@@ -167,43 +167,74 @@ const Dashboard = () => {
         if (reviewsError) {
           console.error('[dashboard] reviews error:', reviewsError);
         } else if (reviewsData) {
-          setRecentReviews(reviewsData.slice(0, 3));
-          setAllReviewsForChart(reviewsData);
-          
-          // Top 5 meilleurs avis (note >= 4)
-          const bestReviews = reviewsData
-            .filter(r => r.rating && r.rating >= 4)
-            .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-            .slice(0, 5);
-          setTopReviews(bestReviews);
-          
-          // Top 5 pires avis (note <= 2)
-          const badReviews = reviewsData
-            .filter(r => r.rating && r.rating <= 2)
-            .sort((a, b) => (a.rating || 0) - (b.rating || 0))
-            .slice(0, 5);
-          setWorstReviews(badReviews);
-          
-          // Calculer les stats par plateforme
-          const statsByPlatform: Record<string, { count: number; totalRating: number; avgRating: number }> = {};
-          reviewsData.forEach(review => {
-            const source = review.source || 'unknown';
-            if (!statsByPlatform[source]) {
-              statsByPlatform[source] = { count: 0, totalRating: 0, avgRating: 0 };
+          // Si pas d'avis, réinitialiser tous les états
+          if (reviewsData.length === 0) {
+            setRecentReviews([]);
+            setAllReviewsForChart([]);
+            setTopReviews([]);
+            setWorstReviews([]);
+            setPlatformStats({});
+            setPendingReviews([]);
+            // Reset insight si plus d'avis
+            setInsight(null);
+          } else {
+            setRecentReviews(reviewsData.slice(0, 3));
+            setAllReviewsForChart(reviewsData);
+            
+            // Top 5 meilleurs avis (note >= 4)
+            const bestReviews = reviewsData
+              .filter(r => r.rating && r.rating >= 4)
+              .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+              .slice(0, 5);
+            setTopReviews(bestReviews);
+            
+            // Top 5 pires avis (note <= 2)
+            const badReviews = reviewsData
+              .filter(r => r.rating && r.rating <= 2)
+              .sort((a, b) => (a.rating || 0) - (b.rating || 0))
+              .slice(0, 5);
+            setWorstReviews(badReviews);
+            
+            // Calculer les stats par plateforme
+            const statsByPlatform: Record<string, { count: number; totalRating: number; avgRating: number }> = {};
+            reviewsData.forEach(review => {
+              const source = review.source || 'google';
+              if (!statsByPlatform[source]) {
+                statsByPlatform[source] = { count: 0, totalRating: 0, avgRating: 0 };
+              }
+              statsByPlatform[source].count++;
+              if (review.rating) {
+                statsByPlatform[source].totalRating += review.rating;
+              }
+            });
+            
+            // Calculer les moyennes
+            Object.keys(statsByPlatform).forEach(source => {
+              const stat = statsByPlatform[source];
+              stat.avgRating = stat.count > 0 ? stat.totalRating / stat.count : 0;
+            });
+            
+            setPlatformStats(statsByPlatform);
+            
+            // Charger les réponses validées et construire la liste des avis à valider
+            if (currentEstab?.place_id && user?.id) {
+              const { data: responsesData } = await supabase
+                .from('reponses')
+                .select('avis_id')
+                .eq('etablissement_id', currentEstab.place_id)
+                .eq('user_id', user.id)
+                .eq('statut', 'valide');
+              
+              if (responsesData) {
+                const validatedSet = new Set(responsesData.map(r => parseInt(r.avis_id)));
+                setValidatedReviews(validatedSet);
+                
+                // Filtrer les avis pour exclure ceux déjà validés
+                const pending = reviewsData.filter(review => !validatedSet.has(review.id));
+                setPendingReviews(pending);
+              }
             }
-            statsByPlatform[source].count++;
-            if (review.rating) {
-              statsByPlatform[source].totalRating += review.rating;
-            }
-          });
-          
-          // Calculer les moyennes
-          Object.keys(statsByPlatform).forEach(source => {
-            const stat = statsByPlatform[source];
-            stat.avgRating = stat.count > 0 ? stat.totalRating / stat.count : 0;
-          });
-          
-          setPlatformStats(statsByPlatform);
+          }
         }
 
         // Récupérer la date de création de l'établissement
@@ -232,27 +263,6 @@ const Dashboard = () => {
             }
           }
         }
-
-        // Charger les réponses validées et construire la liste des avis à valider
-        if (currentEstab?.place_id && user?.id) {
-          const { data: responsesData } = await supabase
-            .from('reponses')
-            .select('avis_id')
-            .eq('etablissement_id', currentEstab.place_id)
-            .eq('user_id', user.id)
-            .eq('statut', 'valide');
-          
-          if (responsesData) {
-            const validatedSet = new Set(responsesData.map(r => parseInt(r.avis_id)));
-            setValidatedReviews(validatedSet);
-            
-            // Filtrer les avis pour exclure ceux déjà validés
-            if (reviewsData) {
-              const pending = reviewsData.filter(review => !validatedSet.has(review.id));
-              setPendingReviews(pending);
-            }
-          }
-        }
       } catch (error) {
         console.error('[dashboard] fetch insights error:', error);
       } finally {
@@ -260,6 +270,17 @@ const Dashboard = () => {
       }
     };
     fetchInsights();
+    
+    // Listen to reviews:imported event to reload data
+    const handleReviewsImported = () => {
+      fetchInsights();
+    };
+    
+    window.addEventListener('reviews:imported', handleReviewsImported);
+    
+    return () => {
+      window.removeEventListener('reviews:imported', handleReviewsImported);
+    };
   }, [user?.id, selectedEstablishment?.place_id, selectedEtab?.place_id]);
 
   // Mise à jour de l'heure en temps réel
@@ -291,13 +312,15 @@ const Dashboard = () => {
   } = formatDateTime(currentDateTime);
 
   // Map insight data to variables used by UI components
+  // Utiliser 0 ou des valeurs par défaut quand il n'y a pas d'avis
+  const hasReviews = allReviewsForChart.length > 0;
   const totalAnalyzed = insight?.total_count ?? 0;
-  const avgRating = insight?.avg_rating ?? 4.2;
-  const totalReviews = insight?.total_count ?? 0;
-  const positivePct = insight?.positive_ratio != null ? Math.round(insight.positive_ratio * 100) : 78;
-  const negativePct = 100 - positivePct;
-  const topIssues = insight?.top_issues ?? [];
-  const topStrengths = insight?.top_praises ?? [];
+  const avgRating = hasReviews ? (insight?.avg_rating ?? 0) : 0;
+  const totalReviews = hasReviews ? (insight?.total_count ?? 0) : 0;
+  const positivePct = hasReviews && insight?.positive_ratio != null ? Math.round(insight.positive_ratio * 100) : 0;
+  const negativePct = hasReviews ? (100 - positivePct) : 0;
+  const topIssues = hasReviews ? (insight?.top_issues ?? []) : [];
+  const topStrengths = hasReviews ? (insight?.top_praises ?? []) : [];
 
   // Map top issues to Pareto data format
   const paretoData = topIssues.length > 0 ? topIssues.slice(0, 3).map((issue: any, index: number) => {
@@ -877,7 +900,13 @@ const Dashboard = () => {
               <p className="text-sm text-gray-500">Les plus mentionnés par fréquence et pourcentage en priorité</p>
             </CardHeader>
             <CardContent className="space-y-4">
-              {topIssues.length > 0 ? (
+              {!hasReviews ? (
+                <div className="text-center py-8 text-gray-500">
+                  <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                  <p className="text-sm font-medium">Aucun avis disponible</p>
+                  <p className="text-xs mt-1">Importez des avis pour voir les problèmes identifiés</p>
+                </div>
+              ) : topIssues.length > 0 ? (
                 topIssues.slice(0, 3).map((issue: any, index: number) => {
                   const severity = issue.severity || (index === 0 ? 'high' : index === 1 ? 'medium' : 'low');
                   const isCritical = severity === 'high';
@@ -925,7 +954,13 @@ const Dashboard = () => {
               <p className="text-sm text-gray-500">Les points forts les plus mentionnés par vos clients</p>
             </CardHeader>
             <CardContent className="space-y-4">
-              {topStrengths.length > 0 ? (
+              {!hasReviews ? (
+                <div className="text-center py-8 text-gray-500">
+                  <CheckCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                  <p className="text-sm font-medium">Aucun avis disponible</p>
+                  <p className="text-xs mt-1">Importez des avis pour voir les points forts identifiés</p>
+                </div>
+              ) : topStrengths.length > 0 ? (
                 topStrengths.slice(0, 3).map((strength: any, index: number) => {
                   const mentionCount = strength.count || strength.mentions || 0;
                   const percentage = totalAnalyzed > 0 && mentionCount > 0 
