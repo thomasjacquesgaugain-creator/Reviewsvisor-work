@@ -2,15 +2,7 @@ import { Mail } from "lucide-react";
 
 export default function Contact() {
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
-          <a href="/" className="text-2xl font-bold text-primary" translate="no">
-            Reviewsvisor
-          </a>
-        </div>
-      </nav>
-      
+    <div className="min-h-screen bg-background">      
       <main className="container mx-auto px-4 py-16">
         <div className="max-w-2xl mx-auto text-center">
           <div className="mb-8">

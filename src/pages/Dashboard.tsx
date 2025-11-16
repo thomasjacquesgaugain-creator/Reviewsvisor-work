@@ -16,7 +16,7 @@ import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etabliss
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
 import { getRatingEvolution, formatRegistrationDate, Granularity } from "@/utils/ratingEvolution";
 import { validateReponse } from "@/lib/reponses";
-import { NavBar } from "@/components/NavBar";
+
 
 const Dashboard = () => {
   const [searchParams] = useSearchParams();
@@ -388,9 +388,6 @@ const Dashboard = () => {
   }
 
   return <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <NavBar displayName={displayName || "Utilisateur"} />
-
       {/* Main content */}
       <div className="container mx-auto px-4 py-8">
         {/* Header */}

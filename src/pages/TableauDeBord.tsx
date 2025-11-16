@@ -11,7 +11,7 @@ import { getBaselineScore, formatDelta, getEvolutionStatus, computeSatisfactionP
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { getReponsesStats } from "@/lib/reponses";
 import { SubscriptionCard } from "@/components/SubscriptionCard";
-import { NavBar } from "@/components/NavBar";
+
 
 const Dashboard = () => {
   const [userProfile, setUserProfile] = useState<{ first_name: string; last_name: string } | null>(null);
@@ -188,9 +188,6 @@ const Dashboard = () => {
       </div>
 
       <div className="relative z-10">
-        {/* Navigation */}
-        <NavBar displayName={displayName} variant="transparent" />
-
         {/* Main content */}
         <div className="container mx-auto px-4 py-16">
           {/* Header */}
