@@ -4,37 +4,144 @@
   <meta charset="UTF-8">
   <title>Google OAuth Callback</title>
   <meta name="robots" content="noindex,nofollow">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+      max-width: 400px;
+    }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .error {
+      color: #dc2626;
+      margin-top: 1rem;
+    }
+    .success {
+      color: #16a34a;
+      margin-top: 1rem;
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <div class="spinner"></div>
+    <p id="message">Connexion à Google Business en cours...</p>
+  </div>
+  
   <script>
-    // Extract authorization code from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const error = urlParams.get('error');
+    const SUPABASE_URL = 'https://zzjmtipdsccxmmoaetlp.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU';
 
-    if (code) {
-      // Send code back to opener window
-      if (window.opener) {
-        window.opener.postMessage(
-          { type: 'oauth-callback', code },
-          window.location.origin
-        );
+    async function handleOAuthCallback() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const error = urlParams.get('error');
+      const messageEl = document.getElementById('message');
+
+      if (error) {
+        console.error('OAuth error:', error);
+        messageEl.innerHTML = '<span class="error">❌ Erreur OAuth: ' + error + '</span>';
+        setTimeout(() => {
+          if (window.opener) {
+            window.opener.postMessage({ type: 'oauth-error', error }, window.location.origin);
+          }
+          window.close();
+        }, 2000);
+        return;
       }
-    } else if (error) {
-      console.error('OAuth error:', error);
-      if (window.opener) {
-        window.opener.postMessage(
-          { type: 'oauth-error', error },
-          window.location.origin
-        );
+
+      if (!code) {
+        messageEl.innerHTML = '<span class="error">❌ Code d\'autorisation manquant</span>';
+        setTimeout(() => window.close(), 2000);
+        return;
+      }
+
+      try {
+        // Get session from localStorage
+        const supabaseSession = localStorage.getItem('sb-zzjmtipdsccxmmoaetlp-auth-token');
+        if (!supabaseSession) {
+          throw new Error('Session utilisateur non trouvée');
+        }
+
+        const session = JSON.parse(supabaseSession);
+        const accessToken = session?.access_token;
+        
+        if (!accessToken) {
+          throw new Error('Token d\'accès non trouvé');
+        }
+
+        messageEl.textContent = 'Échange du code d\'autorisation...';
+
+        // Call the Edge Function to exchange code for tokens
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/google-oauth-callback`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+            'apikey': SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({ code })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erreur lors de l\'échange du code');
+        }
+
+        messageEl.innerHTML = '<span class="success">✅ Connexion réussie!</span>';
+        
+        // Notify opener and redirect
+        if (window.opener) {
+          window.opener.postMessage({ type: 'oauth-success' }, window.location.origin);
+        }
+
+        setTimeout(() => {
+          // Redirect to etablissement page
+          window.location.href = '/etablissement';
+        }, 1000);
+
+      } catch (err) {
+        console.error('Callback error:', err);
+        messageEl.innerHTML = '<span class="error">❌ ' + err.message + '</span>';
+        
+        if (window.opener) {
+          window.opener.postMessage({ 
+            type: 'oauth-error', 
+            error: err.message 
+          }, window.location.origin);
+        }
+
+        setTimeout(() => {
+          window.close();
+        }, 3000);
       }
     }
 
-    // Close popup after a short delay
-    setTimeout(() => {
-      window.close();
-    }, 800);
+    // Run on page load
+    handleOAuthCallback();
   </script>
-  <p>Authentification en cours...</p>
 </body>
 </html>
