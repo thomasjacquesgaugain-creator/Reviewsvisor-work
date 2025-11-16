@@ -6,7 +6,7 @@ import SavedEstablishmentsList from "@/components/SavedEstablishmentsList";
 import { AnalyzeEstablishmentButton } from "@/components/AnalyzeEstablishmentButton";
 import ImportAvisToolbar from "@/components/ImportAvisToolbar";
 import { ReviewsVisualPanel } from "@/components/ReviewsVisualPanel";
-import GoogleOAuthDebugPanel from "@/components/GoogleOAuthDebugPanel";
+
 import { Etab } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
 import { Building2, Home, LogOut } from "lucide-react";
@@ -233,9 +233,6 @@ export default function EtablissementPage() {
         <h1 className="text-3xl font-bold mb-8">Établissement</h1>
         
         <div className="space-y-6">
-          {/* Google OAuth Debug Panel */}
-          <GoogleOAuthDebugPanel />
-          
           {/* Section de recherche d'établissement */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Rechercher un établissement</h2>

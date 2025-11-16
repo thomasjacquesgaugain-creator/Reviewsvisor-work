@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import DebugEnv from "./pages/DebugEnv";
 import DebugReviews from "./pages/DebugReviews";
 import DebugInsights from "./pages/DebugInsights";
+import DebugPage from "./pages/Debug";
 import BillingSuccess from "./pages/BillingSuccess";
 import BillingCancel from "./pages/BillingCancel";
 import Onboarding from "./pages/Onboarding";
@@ -59,6 +60,7 @@ const App = () => {
               <DebugInsights />
             </Protected>
           } />
+          <Route path="/debug" element={<DebugPage />} />
           <Route path="/billing/success" element={<BillingSuccess />} />
           <Route path="/billing/cancel" element={<BillingCancel />} />
           <Route path="/api/auth/callback/google" element={<GoogleOAuthCallback />} />
