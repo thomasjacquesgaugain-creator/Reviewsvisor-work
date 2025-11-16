@@ -28,9 +28,9 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
   return (
     <nav className={navClassName}>
       <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-8">
           {/* Logo à gauche */}
-          <div className="flex items-center gap-0 w-fit">
+          <div className="flex items-center gap-0 w-fit flex-shrink-0">
             <img 
               src="/lovable-uploads/08f62503-65d7-4681-8ddf-00f4efb00ffa.png" 
               alt="Logo Reviewsvisor" 
@@ -39,11 +39,11 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
             <span className="text-[1.05rem] font-bold text-gray-900 whitespace-nowrap" translate="no">Reviewsvisor</span>
           </div>
           
-          {/* Navigation au centre */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-4">
+          {/* Navigation au centre - étalée horizontalement */}
+          <div className="flex items-center gap-6 flex-1 justify-center">
             <Link 
               to="/tableau-de-bord" 
-              className={`font-medium hover:underline flex items-center gap-2 ${
+              className={`font-medium hover:underline flex items-center gap-2 whitespace-nowrap ${
                 isAccueil ? "text-blue-600" : "text-gray-700"
               }`}
             >
@@ -53,7 +53,7 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
             <Link to="/dashboard">
               <Button 
                 variant="ghost" 
-                className={`flex items-center gap-2 ${
+                className={`flex items-center gap-2 whitespace-nowrap ${
                   isDashboard ? "text-blue-600" : "text-gray-700"
                 }`}
               >
@@ -64,7 +64,7 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
             <Link to="/etablissement">
               <Button 
                 variant="ghost" 
-                className={`flex items-center gap-2 ${
+                className={`flex items-center gap-2 whitespace-nowrap ${
                   isEtablissement ? "text-blue-600" : "text-gray-700"
                 }`}
               >
@@ -75,15 +75,15 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
           </div>
           
           {/* Utilisateur et déconnexion à droite */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {user ? (
               <>
                 <div className="flex items-center gap-2 text-gray-700">
-                  <span>Bonjour, {displayName}</span>
+                  <span className="whitespace-nowrap">Bonjour, {displayName}</span>
                 </div>
                 <Button 
                   variant="ghost" 
-                  className="text-gray-700 flex items-center gap-2"
+                  className="text-gray-700 flex items-center gap-2 whitespace-nowrap"
                   onClick={handleLogout}
                 >
                   <LogOut className="w-4 h-4" />
@@ -92,7 +92,7 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
               </>
             ) : (
               <Link to="/login">
-                <Button variant="ghost" className="text-gray-700">
+                <Button variant="ghost" className="text-gray-700 whitespace-nowrap">
                   Se connecter
                 </Button>
               </Link>
