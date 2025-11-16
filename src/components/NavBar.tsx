@@ -29,6 +29,7 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
     <nav className={navClassName}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
+          {/* Logo à gauche */}
           <div className="flex items-center gap-0 w-fit">
             <img 
               src="/lovable-uploads/08f62503-65d7-4681-8ddf-00f4efb00ffa.png" 
@@ -38,65 +39,64 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
             <span className="text-[1.05rem] font-bold text-gray-900 whitespace-nowrap" translate="no">Reviewsvisor</span>
           </div>
           
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-4">
-              <Link 
-                to="/tableau-de-bord" 
-                className={`font-medium hover:underline flex items-center gap-2 ${
-                  isAccueil ? "text-blue-600" : "text-gray-700"
+          {/* Navigation au centre */}
+          <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-4">
+            <Link 
+              to="/tableau-de-bord" 
+              className={`font-medium hover:underline flex items-center gap-2 ${
+                isAccueil ? "text-blue-600" : "text-gray-700"
+              }`}
+            >
+              <Home className="w-4 h-4" />
+              Accueil
+            </Link>
+            <Link to="/dashboard">
+              <Button 
+                variant="ghost" 
+                className={`flex items-center gap-2 ${
+                  isDashboard ? "text-blue-600" : "text-gray-700"
                 }`}
               >
-                <Home className="w-4 h-4" />
-                Accueil
+                <BarChart3 className="w-4 h-4" />
+                Dashboard
+              </Button>
+            </Link>
+            <Link to="/etablissement">
+              <Button 
+                variant="ghost" 
+                className={`flex items-center gap-2 ${
+                  isEtablissement ? "text-blue-600" : "text-gray-700"
+                }`}
+              >
+                <Building className="w-4 h-4" />
+                Établissement
+              </Button>
+            </Link>
+          </div>
+          
+          {/* Utilisateur et déconnexion à droite */}
+          <div className="flex items-center gap-2">
+            {user ? (
+              <>
+                <div className="flex items-center gap-2 text-gray-700">
+                  <span>Bonjour, {displayName}</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  className="text-gray-700 flex items-center gap-2"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-4 h-4" />
+                  Déconnexion
+                </Button>
+              </>
+            ) : (
+              <Link to="/login">
+                <Button variant="ghost" className="text-gray-700">
+                  Se connecter
+                </Button>
               </Link>
-              <div className="flex items-center gap-0">
-                <Link to="/dashboard">
-                  <Button 
-                    variant="ghost" 
-                    className={`flex items-center gap-2 ${
-                      isDashboard ? "text-blue-600" : "text-gray-700"
-                    }`}
-                  >
-                    <BarChart3 className="w-4 h-4" />
-                    Dashboard
-                  </Button>
-                </Link>
-                <Link to="/etablissement">
-                  <Button 
-                    variant="ghost" 
-                    className={`flex items-center gap-2 ${
-                      isEtablissement ? "text-blue-600" : "text-gray-700"
-                    }`}
-                  >
-                    <Building className="w-4 h-4" />
-                    Établissement
-                  </Button>
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {user ? (
-                <>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <span>Bonjour, {displayName}</span>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    className="text-gray-700 flex items-center gap-2"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Déconnexion
-                  </Button>
-                </>
-              ) : (
-                <Link to="/login">
-                  <Button variant="ghost" className="text-gray-700">
-                    Se connecter
-                  </Button>
-                </Link>
-              )}
-            </div>
+            )}
           </div>
         </div>
       </div>
