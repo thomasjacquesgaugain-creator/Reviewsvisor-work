@@ -4,7 +4,7 @@ interface StepHeaderProps {
 
 export function StepHeader({ currentStep }: StepHeaderProps) {
   return (
-    <div className="flex items-center gap-2 mb-6">
+    <div className="flex items-center justify-center gap-2 mb-4">
       {/* Step 1 */}
       <span 
         className={`text-sm ${
@@ -32,3 +32,4 @@ export function StepHeader({ currentStep }: StepHeaderProps) {
     </div>
   );
 }
+
