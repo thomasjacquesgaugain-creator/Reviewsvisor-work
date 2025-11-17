@@ -198,6 +198,27 @@ All colors MUST be HSL.
   object-fit: contain;
 }
 
+.apropos-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: var(--foreground);
+}
+
+.apropos-brand {
+  color: #2563eb;
+}
+
+.apropos-logo {
+  height: 30px;
+  width: 30px;
+  object-fit: contain;
+}
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;

@@ -7,8 +7,10 @@ const APropos = () => {
     <div className="min-h-screen flex flex-col">
       <main className="flex-1 py-16 px-4">
         <div className="max-w-[800px] mx-auto">
-          <h1 className="text-4xl font-bold text-foreground mb-8 text-center">
-            À propos de Reviewsvisor
+          <h1 className="apropos-title">
+            À propos de 
+            <span className="apropos-brand">Reviewsvisor</span>
+            <img src={logoReviewsvisor} alt="Logo Reviewsvisor" className="apropos-logo" />
           </h1>
           
           <div className="text-foreground/90 leading-relaxed space-y-6 text-lg">
