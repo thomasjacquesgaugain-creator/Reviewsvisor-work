@@ -1,3 +1,5 @@
+import logoReviewsvisor from "@/assets/logo-reviewsvisor.png";
+
 const Fonctionnalites = () => {
   return (
     <div className="min-h-screen flex flex-col">
@@ -5,8 +7,10 @@ const Fonctionnalites = () => {
         <section className="py-5 pb-0">
           <div className="relative z-1">
             <div className="max-w-[800px] mx-auto">
-              <h1 className="text-4xl md:text-5xl font-bold mb-8 text-center text-foreground">
-                ⭐ Fonctionnalités de Reviewsvisor
+              <h1 className="apropos-title">
+                ⭐️ Fonctionnalités de 
+                <span className="apropos-brand">Reviewsvisor</span>
+                <img src={logoReviewsvisor} alt="Logo Reviewsvisor" className="apropos-logo" />
               </h1>
               
               <div className="text-foreground/90 leading-relaxed space-y-6 text-lg mb-2">
