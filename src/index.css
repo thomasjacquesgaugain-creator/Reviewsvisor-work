@@ -243,7 +243,6 @@ All colors MUST be HSL.
 
 .apropos-bar {
   width: 26px;
-  border-radius: 999px;
 }
 
 .bar-green  { height: 90px;  background-color: #22c55e; }
