@@ -6,7 +6,7 @@ const APropos = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1 pt-6 pb-16 px-4">
-        <section className="py-5 pb-24">
+        <section className="py-5 pb-8">
           <div className="relative z-1">
             <div className="max-w-[800px] mx-auto">
               <h1 className="apropos-title">
