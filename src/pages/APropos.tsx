@@ -49,7 +49,7 @@ const APropos = () => {
               </marker>
             </defs>
             <path
-              d="M 0 180 Q 100 160, 200 100 T 380 40"
+              d="M 0 195 Q 80 140, 160 80 T 280 60 Q 340 70, 400 90"
               stroke="#ef4444"
               strokeWidth="4"
               fill="none"
