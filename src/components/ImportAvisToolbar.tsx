@@ -58,7 +58,7 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
   const renderTabContent = () => {
     switch (activeTab) {
       case "csv":
-        return <ImportCsvPanel onFileAnalyzed={onFileAnalyzed} />;
+        return <ImportCsvPanel onFileAnalyzed={onFileAnalyzed} placeId={placeId} />;
       case "paste":
         return <PasteImportPanel onImportBulk={handleBulkImport} onClose={onClose} onImportSuccess={onImportSuccess} onOpenVisualPanel={onOpenVisualPanel} />;
       case "auto":
