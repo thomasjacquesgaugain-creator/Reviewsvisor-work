@@ -19,6 +19,11 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
   const isDashboard = location.pathname === "/dashboard";
   const isEtablissement = location.pathname === "/etablissement";
 
+  // Ne pas afficher la navbar si l'utilisateur n'est pas connecté
+  if (!user) {
+    return null;
+  }
+
   return (
     <header className="rv-navbar">
       <div className="rv-navbar-inner">
