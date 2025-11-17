@@ -15,7 +15,7 @@ const APropos = () => {
                 <img src={logoReviewsvisor} alt="Logo Reviewsvisor" className="apropos-logo" />
               </h1>
               
-              <div className="text-foreground/90 leading-relaxed space-y-6 text-lg">
+              <div className="text-foreground/90 leading-relaxed space-y-4 text-lg mb-4">
                 <p className="intro-line">
                   <span className="text-blue">Reviewsvisor</span> est une plateforme d'analyse intelligente des avis clients.
                 </p>
