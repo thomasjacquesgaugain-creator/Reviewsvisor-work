@@ -35,17 +35,17 @@ const APropos = () => {
                 <h2 className="text-2xl font-bold mt-8 mb-3 text-foreground">Notre mission</h2>
                 
                 <p>
-                  Chez Reviewsvisor, notre objectif est simple : aider chaque établissement à comprendre ce que ressentent réellement ses clients. Nous croyons que chaque avis contient une opportunité d'évolution, et que les données bien analysées peuvent devenir un véritable moteur de croissance.
+                  Chez <span className="text-blue">Reviewsvisor</span>, notre objectif est simple : aider chaque établissement à comprendre ce que ressentent réellement ses clients. Nous croyons que chaque avis contient une opportunité d'évolution, et que les données bien analysées peuvent devenir un véritable moteur de croissance.
                 </p>
 
-                <h2 className="text-2xl font-bold mt-8 mb-3 text-foreground">Pourquoi nous avons créé Reviewsvisor</h2>
+                <h2 className="text-2xl font-bold mt-8 mb-3 text-foreground">Pourquoi nous avons créé <span className="text-blue">Reviewsvisor</span></h2>
                 
                 <p>
                   Les restaurateurs, hôteliers et commerçants reçoivent chaque jour des avis, mais ont rarement le temps de les analyser en profondeur. Les plateformes sont nombreuses, les commentaires s'accumulent, et il devient difficile d'identifier rapidement ce qui fonctionne… ou ce qui doit être amélioré.
                 </p>
 
                 <p>
-                  C'est pour résoudre ce problème que Reviewsvisor a été conçu :<br />
+                  C'est pour résoudre ce problème que <span className="text-blue">Reviewsvisor</span> a été conçu :<br />
                   👉 Un outil simple,<br />
                   👉 Une analyse intelligente,<br />
                   👉 Une vision claire,<br />
@@ -55,17 +55,17 @@ const APropos = () => {
                 <h2 className="text-2xl font-bold mt-8 mb-3 text-foreground">Notre technologie</h2>
                 
                 <p>
-                  Reviewsvisor utilise un modèle d'analyse avancé capable de comprendre le ton, l'émotion et les sujets importants dans chaque commentaire. L'outil identifie automatiquement les tendances, détecte les points forts récurrents et met en avant les axes d'amélioration prioritaires.
+                  <span className="text-blue">Reviewsvisor</span> utilise un modèle d'analyse avancé capable de comprendre le ton, l'émotion et les sujets importants dans chaque commentaire. L'outil identifie automatiquement les tendances, détecte les points forts récurrents et met en avant les axes d'amélioration prioritaires.
                 </p>
 
                 <p>
-                  Plus qu'un simple tableau de bord, Reviewsvisor est un véritable assistant d'amélioration continue pour votre établissement.
+                  Plus qu'un simple tableau de bord, <span className="text-blue">Reviewsvisor</span> est un véritable assistant d'amélioration continue pour votre établissement.
                 </p>
 
                 <h2 className="text-2xl font-bold mt-8 mb-3 text-foreground">Une plateforme pensée pour vous</h2>
                 
                 <p>
-                  Que vous soyez un restaurant, un hôtel ou un commerce, Reviewsvisor s'adapte à votre quotidien. Notre interface a été conçue pour être intuitive, rapide et efficace, même pour les utilisateurs les moins technophiles.
+                  Que vous soyez un restaurant, un hôtel ou un commerce, <span className="text-blue">Reviewsvisor</span> s'adapte à votre quotidien. Notre interface a été conçue pour être intuitive, rapide et efficace, même pour les utilisateurs les moins technophiles.
                 </p>
               </div>
             </div>
