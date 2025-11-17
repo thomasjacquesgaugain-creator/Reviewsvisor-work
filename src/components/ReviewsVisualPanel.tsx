@@ -8,7 +8,7 @@ import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { getReviewsSummary, listAllReviews, listAll, deleteAllReviews } from "@/services/reviewsService";
 import { STORAGE_KEY } from "@/types/etablissement";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
-import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,7 +52,6 @@ export function ReviewsVisualPanel({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const currentEstablishment = useCurrentEstablishment();
-  const { toast } = useToast();
   
   // Use props first, fallback to current establishment
   const effectiveId = establishmentId || currentEstablishment?.id || currentEstablishment?.place_id;
@@ -142,9 +141,9 @@ export function ReviewsVisualPanel({
       setIsDeleting(true);
       await deleteAllReviews(effectiveId);
       
-      toast({
-        title: "Suppression réussie",
-        description: "Tous les avis de l'établissement ont été supprimés avec succès.",
+      // Toast rouge en bas à droite (même système que import CSV/JSON)
+      sonnerToast.error("Tous les avis de l'établissement ont été supprimés.", {
+        duration: 5000,
       });
       
       // Reload the data to update UI
@@ -152,10 +151,10 @@ export function ReviewsVisualPanel({
       setShowDeleteDialog(false);
     } catch (error: any) {
       console.error('Error deleting reviews:', error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la suppression des avis.",
-        variant: "destructive",
+      
+      // Toast d'erreur rouge en bas à droite
+      sonnerToast.error("Une erreur est survenue lors de la suppression des avis.", {
+        duration: 5000,
       });
       setShowDeleteDialog(false);
     } finally {
