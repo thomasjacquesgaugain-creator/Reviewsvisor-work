@@ -1,10 +1,8 @@
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import logoReviewsvisor from "@/assets/logo-reviewsvisor.png";
-
 const APropos = () => {
-  return (
-    <div className="min-h-screen flex flex-col">
+  return <div className="min-h-screen flex flex-col">
       <main className="flex-1 py-16 px-4">
         <div className="max-w-[800px] mx-auto">
           <h1 className="apropos-title">
@@ -14,11 +12,7 @@ const APropos = () => {
           </h1>
           
           <div className="text-foreground/90 leading-relaxed space-y-6 text-lg">
-            <p className="intro-line">
-              <span className="text-blue">Reviewsvisor</span>
-              <img src={logoReviewsvisor} alt="Logo Reviewsvisor" className="rv-inline-logo" />
-              est une plateforme d'analyse intelligente des avis clients.
-            </p>
+            
             
             <p>
               <span className="text-green">Un outil, une centralisation</span> pour votre établissement qui transforme <span className="text-green">vos retours en conception</span>.
@@ -34,8 +28,6 @@ const APropos = () => {
           </div>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default APropos;
