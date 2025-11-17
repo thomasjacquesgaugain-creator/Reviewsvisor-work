@@ -149,7 +149,7 @@ const Login = () => {
         </div>
 
         {/* Login Card */}
-        <div className="container mx-auto px-4 max-w-md mb-16 pb-10">
+        <div className="container mx-auto px-4 max-w-md mb-12 pb-6">
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden">
             <CardContent className="p-8 space-y-6">
               <div className="text-center space-y-2">
