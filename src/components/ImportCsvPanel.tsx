@@ -251,11 +251,6 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
       setSelectedFile(null);
       onFileAnalyzed?.();
       
-      // Redirection vers le dashboard
-      setTimeout(() => {
-        navigate('/tableau-de-bord');
-      }, 1500);
-      
     } catch (error) {
       console.error('Erreur lors de l\'import/analyse:', error);
       const errorMsg = error instanceof Error ? error.message : "Une erreur est survenue pendant l'analyse. Veuillez réessayer plus tard.";
