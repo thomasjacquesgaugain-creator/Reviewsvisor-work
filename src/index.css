@@ -220,35 +220,19 @@ All colors MUST be HSL.
   margin-top: 8px;
 }
 
-.apropos-section {
-  position: relative;
-  padding: 20px 0 90px;
-}
-
 .apropos-content {
-  position: relative;
-  z-index: 1;
+  margin-bottom: 8px;
+  padding-bottom: 0;
+  padding-top: 20px;
 }
 
-.apropos-bars {
-  position: absolute;
-  right: 8%;
-  bottom: -65px;
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  pointer-events: none;
-  z-index: 0;
+.apropos-content p:last-of-type {
+  margin-bottom: 0;
 }
 
-.apropos-bar {
-  width: 26px;
+footer {
+  margin-top: 8px !important;
 }
-
-.bar-green  { height: 90px;  background-color: #22c55e; }
-.bar-pink   { height: 130px; background-color: #ec4899; }
-.bar-blue   { height: 160px; background-color: #3b82f6; }
-.bar-violet { height: 110px; background-color: #8b5cf6; }
 
 
 
