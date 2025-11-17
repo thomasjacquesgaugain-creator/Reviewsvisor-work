@@ -17,6 +17,8 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+  const [successMessage, setSuccessMessage] = useState<string | undefined>();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -117,7 +119,11 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
   };
 
   const handleAnalyze = async () => {
+    setError(undefined);
+    setSuccessMessage(undefined);
+    
     if (!selectedFile) {
+      setError("Veuillez d'abord importer un fichier CSV ou JSON avant de lancer l'analyse.");
       toast({
         title: "Fichier manquant",
         description: "Veuillez d'abord importer un fichier CSV ou JSON avant de lancer l'analyse.",
@@ -127,6 +133,7 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
     }
     
     if (!placeId) {
+      setError("Aucun établissement sélectionné.");
       toast({
         title: "Erreur",
         description: "Aucun établissement sélectionné.",
@@ -191,9 +198,12 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
         name: establishment.name,
       });
       
+      const successMsg = `${result.inserted} avis importés avec succès${result.skipped > 0 ? `, ${result.skipped} doublons ignorés` : ""}.`;
+      setSuccessMessage(successMsg);
+      
       toast({
         title: "Import et analyse terminés",
-        description: `${result.inserted} avis importés avec succès${result.skipped > 0 ? `, ${result.skipped} doublons ignorés` : ""}. Analyse en cours...`,
+        description: successMsg + " Analyse en cours...",
       });
       
       setSelectedFile(null);
@@ -206,9 +216,11 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
       
     } catch (error) {
       console.error('Erreur lors de l\'import/analyse:', error);
+      const errorMsg = error instanceof Error ? error.message : "Une erreur est survenue pendant l'analyse. Veuillez réessayer plus tard.";
+      setError(errorMsg);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue pendant l'analyse. Veuillez réessayer plus tard.",
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
@@ -298,6 +310,18 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
       >
         {isUploading ? "Analyse en cours..." : "Analyser le fichier importé"}
       </Button>
+      
+      {error && (
+        <p className="text-sm text-red-600 mt-2">
+          {error}
+        </p>
+      )}
+      
+      {successMessage && (
+        <p className="text-sm text-green-600 mt-2">
+          {successMessage}
+        </p>
+      )}
     </div>
   );
 }
