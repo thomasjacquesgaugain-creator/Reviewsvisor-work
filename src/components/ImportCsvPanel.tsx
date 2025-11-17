@@ -3,22 +3,28 @@ import { Upload, File, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { bulkCreateReviews } from "@/services/reviewsService";
 
 interface ImportCsvPanelProps {
   onFileAnalyzed?: () => void;
+  placeId?: string;
 }
 
-export default function ImportCsvPanel({ onFileAnalyzed }: ImportCsvPanelProps) {
+export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPanelProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const { toast } = useToast();
 
   const handleFileSelect = useCallback((file: File) => {
-    if (file.type !== "text/csv" && !file.name.endsWith(".csv")) {
+    const isCSV = file.type === "text/csv" || file.name.endsWith(".csv");
+    const isJSON = file.type === "application/json" || file.name.endsWith(".json");
+    
+    if (!isCSV && !isJSON) {
       toast({
         title: "Format de fichier invalide",
-        description: "Veuillez sélectionner un fichier CSV.",
+        description: "Veuillez sélectionner un fichier CSV ou JSON.",
         variant: "destructive",
       });
       return;
@@ -46,33 +52,122 @@ export default function ImportCsvPanel({ onFileAnalyzed }: ImportCsvPanelProps) 
     }
   }, [handleFileSelect]);
 
+  const parseGoogleTakeoutJSON = async (file: File): Promise<any[]> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string;
+          const data = JSON.parse(content);
+          
+          if (!data.reviews || !Array.isArray(data.reviews)) {
+            reject(new Error("Le fichier JSON ne correspond pas au format d'export Google Reviews attendu."));
+            return;
+          }
+          
+          const reviews = data.reviews.map((review: any) => ({
+            text: review.comment || "",
+            rating: review.starRating || 0,
+            published_at: review.createTime || new Date().toISOString(),
+            source: "google",
+            author_name: review.reviewer?.displayName || "Anonyme",
+          }));
+          
+          resolve(reviews);
+        } catch (error) {
+          reject(new Error("Le fichier JSON ne correspond pas au format d'export Google Reviews attendu."));
+        }
+      };
+      reader.onerror = () => reject(new Error("Erreur de lecture du fichier"));
+      reader.readAsText(file);
+    });
+  };
+
   const handleAnalyze = async () => {
     if (!selectedFile) return;
+    if (!placeId) {
+      toast({
+        title: "Erreur",
+        description: "Aucun établissement sélectionné.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", selectedFile);
+      const isJSON = selectedFile.name.endsWith(".json");
       
-      const response = await fetch("/api/reviews/import-csv", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
+      if (isJSON) {
+        // Parse JSON Google Takeout
+        const reviews = await parseGoogleTakeoutJSON(selectedFile);
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          throw new Error("Utilisateur non authentifié");
+        }
+        
+        // Get establishment info
+        const { data: establishment } = await supabase
+          .from("establishments")
+          .select("id, name")
+          .eq("place_id", placeId)
+          .eq("user_id", user.id)
+          .single();
+        
+        if (!establishment) {
+          throw new Error("Établissement non trouvé");
+        }
+        
+        const reviewsToCreate = reviews.map(review => {
+          const nameParts = review.author_name.split(" ");
+          return {
+            establishment_id: establishment.id,
+            establishment_place_id: placeId,
+            establishment_name: establishment.name,
+            source: "google",
+            author_first_name: nameParts[0] || "",
+            author_last_name: nameParts.slice(1).join(" ") || "",
+            rating: review.rating,
+            comment: review.text,
+            review_date: review.published_at,
+            import_method: "json_upload",
+          };
+        });
+        
+        const result = await bulkCreateReviews(reviewsToCreate);
+        
         toast({
-          title: "Analyse terminée",
-          description: "Votre fichier CSV a été importé et analysé avec succès.",
+          title: "Import terminé",
+          description: `${result.inserted} avis importés avec succès${result.skipped > 0 ? `, ${result.skipped} doublons ignorés` : ""}.`,
         });
         setSelectedFile(null);
         onFileAnalyzed?.();
       } else {
-        throw new Error("Erreur lors de l'analyse");
+        // CSV - comportement existant
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        
+        const response = await fetch("/api/reviews/import-csv", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          toast({
+            title: "Analyse terminée",
+            description: "Votre fichier CSV a été importé et analysé avec succès.",
+          });
+          setSelectedFile(null);
+          onFileAnalyzed?.();
+        } else {
+          throw new Error("Erreur lors de l'analyse");
+        }
       }
     } catch (error) {
       toast({
         title: "Erreur d'analyse",
-        description: "Une erreur est survenue lors de l'analyse du fichier.",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de l'analyse du fichier.",
         variant: "destructive",
       });
     } finally {
@@ -84,7 +179,7 @@ export default function ImportCsvPanel({ onFileAnalyzed }: ImportCsvPanelProps) 
     <div className="space-y-4">
       <div className="space-y-2">
         <label className="text-sm font-medium">
-          Fichier CSV (colonnes : avis, source, date)
+          Fichier CSV ou JSON Google Takeout
         </label>
         
         <div
@@ -102,7 +197,7 @@ export default function ImportCsvPanel({ onFileAnalyzed }: ImportCsvPanelProps) 
         >
           <input
             type="file"
-            accept=".csv"
+            accept=".csv,.json"
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) handleFileSelect(file);
@@ -134,7 +229,7 @@ export default function ImportCsvPanel({ onFileAnalyzed }: ImportCsvPanelProps) 
               <Upload className="w-8 h-8 mx-auto text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">
-                  Déposez votre fichier CSV ici ou{" "}
+                  Déposez votre fichier CSV ou JSON ici ou{" "}
                   <label
                     htmlFor="csv-file-input"
                     className="text-primary cursor-pointer hover:underline"
@@ -143,7 +238,7 @@ export default function ImportCsvPanel({ onFileAnalyzed }: ImportCsvPanelProps) 
                   </label>
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Format CSV uniquement, maximum 10MB
+                  CSV ou JSON (Google Takeout), maximum 10MB
                 </p>
               </div>
             </div>
@@ -151,7 +246,7 @@ export default function ImportCsvPanel({ onFileAnalyzed }: ImportCsvPanelProps) 
         </div>
         
         <p className="text-xs text-muted-foreground">
-          Format attendu : première colonne = texte de l'avis
+          CSV : première colonne = texte de l'avis | JSON : format Google Takeout (reviews.json)
         </p>
       </div>
 
