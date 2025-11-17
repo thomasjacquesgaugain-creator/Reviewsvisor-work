@@ -250,6 +250,16 @@ All colors MUST be HSL.
 .bar-blue   { height: 160px; background-color: #3b82f6; }
 .bar-violet { height: 110px; background-color: #8b5cf6; }
 
+.apropos-arrow {
+  position: absolute;
+  left: 5%;
+  bottom: -65px;
+  width: 400px;
+  height: 200px;
+  pointer-events: none;
+  z-index: 0;
+}
+
 
 
   .dark {
