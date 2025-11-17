@@ -8,6 +8,7 @@ import { bulkCreateReviews } from "@/services/reviewsService";
 import { runAnalyze } from "@/lib/runAnalyze";
 import { useNavigate } from "react-router-dom";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
+import { toast as sonnerToast } from "sonner";
 
 interface ImportCsvPanelProps {
   onFileAnalyzed?: () => void;
@@ -109,9 +110,9 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
             const parsedReview = {
               text: review.comment || "",
               rating: rating,
-              published_at: review.createTime || new Date().toISOString(),
-              source: "google",
-              author_name: review.reviewer?.displayName || "Anonyme",
+              author_name: review.reviewerName || "Anonyme",
+              published_at: review.publishedAtDate ? new Date(review.publishedAtDate).toISOString() : null,
+              source: "Google"
             };
             
             if (index === 0) {
@@ -141,21 +142,37 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
           const content = e.target?.result as string;
           const lines = content.split('\n').filter(line => line.trim());
           
-          const reviews = lines.map((line, index) => {
-            const columns = line.split(',').map(col => col.trim().replace(/^["']|["']$/g, ''));
+          if (lines.length < 2) {
+            reject(new Error("Le fichier CSV est vide ou invalide"));
+            return;
+          }
+
+          const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+          const reviews = lines.slice(1).map(line => {
+            const values = line.split(',').map(v => v.trim());
+            const review: any = {};
             
+            headers.forEach((header, index) => {
+              if (header.includes('rating') || header.includes('note')) {
+                review.rating = parseFloat(values[index]) || 0;
+              } else if (header.includes('text') || header.includes('comment') || header.includes('avis')) {
+                review.text = values[index] || "";
+              } else if (header.includes('author') || header.includes('name') || header.includes('nom')) {
+                review.author_name = values[index] || "Anonyme";
+              } else if (header.includes('date')) {
+                review.published_at = values[index] || null;
+              }
+            });
+
             return {
-              text: columns[0] || "",
-              rating: columns[3] ? parseInt(columns[3]) : 3,
-              published_at: columns[2] || new Date().toISOString(),
-              source: columns[1] || "csv",
-              author_name: `Client ${index + 1}`,
+              ...review,
+              source: "CSV"
             };
           });
-          
+
           resolve(reviews);
         } catch (error) {
-          reject(new Error("Erreur lors de la lecture du fichier CSV."));
+          reject(new Error("Erreur lors de la lecture du fichier CSV"));
         }
       };
       reader.onerror = () => reject(new Error("Erreur de lecture du fichier"));
@@ -164,14 +181,10 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
   };
 
   const handleAnalyze = async () => {
-    setError(undefined);
-    setSuccessMessage(undefined);
-    
     if (!selectedFile) {
-      setError("Veuillez d'abord importer un fichier CSV ou JSON avant de lancer l'analyse.");
       toast({
-        title: "Fichier manquant",
-        description: "Veuillez d'abord importer un fichier CSV ou JSON avant de lancer l'analyse.",
+        title: "Erreur",
+        description: "Veuillez sélectionner un fichier.",
         variant: "destructive",
       });
       return;
@@ -188,6 +201,9 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
     }
 
     setIsUploading(true);
+    setError(undefined);
+    setSuccessMessage(undefined);
+
     try {
       const isJSON = selectedFile.name.endsWith(".json");
       let reviews: any[];
@@ -240,12 +256,10 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
         name: establishmentName,
       });
       
-      const successMsg = `Avis importés et associés à l’établissement ${establishmentName}.`;
-      setSuccessMessage(successMsg);
-      
-      toast({
-        title: "Import et analyse terminés",
-        description: successMsg,
+      // TOAST bas-droite avec rapport détaillé (même format que "Coller des avis")
+      const duplicates = result.reasons?.duplicate || 0;
+      sonnerToast.success(`✅ ${result.inserted} avis enregistrés pour ${establishmentName} (doublons: ${duplicates})`, {
+        duration: 5000,
       });
       
       setSelectedFile(null);
@@ -253,12 +267,12 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
       
     } catch (error) {
       console.error('Erreur lors de l\'import/analyse:', error);
-      const errorMsg = error instanceof Error ? error.message : "Une erreur est survenue pendant l'analyse. Veuillez réessayer plus tard.";
+      const errorMsg = error instanceof Error ? error.message : "Une erreur est survenue lors de l'import des avis. Veuillez vérifier votre fichier.";
       setError(errorMsg);
-      toast({
-        title: "Erreur",
-        description: errorMsg,
-        variant: "destructive",
+      
+      // Toast d'erreur rouge en bas à droite
+      sonnerToast.error(errorMsg, {
+        duration: 5000,
       });
     } finally {
       setIsUploading(false);
@@ -267,97 +281,95 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <label className="text-sm font-medium">
-          Fichier CSV ou JSON Google Takeout
-        </label>
-        
-        <div
-          className={cn(
-            "border-2 border-dashed rounded-xl p-6 text-center transition-colors",
-            isDragOver ? "border-primary bg-primary/5" : "border-border",
-            "hover:border-primary/50"
-          )}
-          onDrop={handleDrop}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsDragOver(true);
-          }}
-          onDragLeave={() => setIsDragOver(false)}
-        >
-          <input
-            type="file"
-            accept=".csv,.json"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleFileSelect(file);
-            }}
-            className="hidden"
-            id="csv-file-input"
-          />
-          
-          {selectedFile ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-center gap-2 text-green-600">
-                <File className="w-5 h-5" />
-                <span className="font-medium">{selectedFile.name}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedFile(null)}
-                  className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Taille: {(selectedFile.size / 1024).toFixed(1)} KB
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <Upload className="w-8 h-8 mx-auto text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">
-                  Déposez votre fichier CSV ou JSON ici ou{" "}
-                  <label
-                    htmlFor="csv-file-input"
-                    className="text-primary cursor-pointer hover:underline"
-                  >
-                    choisissez un fichier
-                  </label>
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  CSV ou JSON (Google Takeout), maximum 10MB
+      <div
+        className={cn(
+          "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
+          isDragOver ? "border-primary bg-primary/5" : "border-border",
+          selectedFile && "bg-muted/50"
+        )}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragOver(true);
+        }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={handleDrop}
+      >
+        {!selectedFile ? (
+          <>
+            <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-lg font-medium mb-2">
+              Glissez-déposez votre fichier ici
+            </p>
+            <p className="text-sm text-muted-foreground mb-4">
+              ou cliquez pour sélectionner un fichier CSV ou JSON
+            </p>
+            <input
+              type="file"
+              accept=".csv,.json"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileSelect(file);
+              }}
+              className="hidden"
+              id="file-upload"
+            />
+            <Button
+              variant="outline"
+              onClick={() => document.getElementById("file-upload")?.click()}
+            >
+              Sélectionner un fichier
+            </Button>
+          </>
+        ) : (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <File className="h-8 w-8 text-primary" />
+              <div className="text-left">
+                <p className="font-medium">{selectedFile.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {(selectedFile.size / 1024).toFixed(2)} KB
                 </p>
               </div>
             </div>
-          )}
-        </div>
-        
-        <p className="text-xs text-muted-foreground">
-          CSV : première colonne = texte de l'avis | JSON : format Google Takeout (reviews.json)
-        </p>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSelectedFile(null)}
+              disabled={isUploading}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
-      <Button
-        onClick={handleAnalyze}
-        disabled={!selectedFile || isUploading}
-        className="w-full h-12 text-base font-semibold"
-      >
-        {isUploading ? "Analyse en cours..." : "Analyser le fichier importé"}
-      </Button>
-      
-      {error && (
-        <p className="text-sm text-red-600 mt-2">
-          {error}
-        </p>
+      {selectedFile && (
+        <Button
+          className="w-full"
+          onClick={handleAnalyze}
+          disabled={isUploading || !activeEstablishment}
+        >
+          {isUploading ? (
+            <>
+              <Upload className="mr-2 h-4 w-4 animate-spin" />
+              Import en cours...
+            </>
+          ) : (
+            "Analyser le fichier importé"
+          )}
+        </Button>
       )}
-      
+
+      {error && (
+        <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
+          {error}
+        </div>
+      )}
+
       {successMessage && (
-        <p className="text-sm text-green-600 mt-2">
+        <div className="bg-green-50 text-green-700 p-3 rounded-md text-sm">
           {successMessage}
-        </p>
+        </div>
       )}
     </div>
   );
