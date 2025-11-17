@@ -8,7 +8,7 @@ const Fonctionnalites = () => {
           <div className="relative z-1">
             <div className="max-w-[800px] mx-auto">
               <h1 className="apropos-title">
-                ⭐️ Fonctionnalités de 
+                Fonctionnalités de 
                 <span className="apropos-brand">Reviewsvisor</span>
                 <img src={logoReviewsvisor} alt="Logo Reviewsvisor" className="apropos-logo" />
               </h1>
