@@ -28,19 +28,19 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
   return (
     <nav className={navClassName}>
       <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between gap-8">
-          {/* Logo à gauche */}
-          <div className="flex items-center gap-0 w-fit flex-shrink-0">
+        <div className="flex items-center justify-between">
+          {/* SECTION 1 - Logo à gauche */}
+          <div className="flex items-center gap-0">
             <img 
               src="/lovable-uploads/08f62503-65d7-4681-8ddf-00f4efb00ffa.png" 
               alt="Logo Reviewsvisor" 
-              className="w-8 h-8 flex-shrink-0"
+              className="w-8 h-8"
             />
             <span className="text-[1.05rem] font-bold text-gray-900 whitespace-nowrap" translate="no">Reviewsvisor</span>
           </div>
           
-          {/* Navigation au centre - étalée horizontalement */}
-          <div className="flex items-center gap-6 flex-1 justify-center">
+          {/* SECTION 2 - Navigation centrée mais étalée */}
+          <div className="flex items-center justify-center gap-8">
             <Link to="/tableau-de-bord">
               <Button 
                 variant="ghost" 
@@ -76,13 +76,11 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
             </Link>
           </div>
           
-          {/* Utilisateur et déconnexion à droite */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          {/* SECTION 3 - Utilisateur et déconnexion à droite */}
+          <div className="flex items-center gap-2">
             {user ? (
               <>
-                <div className="flex items-center gap-2 text-gray-700">
-                  <span className="whitespace-nowrap">Bonjour, {displayName}</span>
-                </div>
+                <span className="text-gray-700 whitespace-nowrap">Bonjour, {displayName}</span>
                 <Button 
                   variant="ghost" 
                   className="text-gray-700 flex items-center gap-2 whitespace-nowrap"
