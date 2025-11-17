@@ -220,6 +220,42 @@ All colors MUST be HSL.
   margin-top: 8px;
 }
 
+.apropos-wrapper {
+  position: relative;
+  overflow: hidden;
+  padding: 48px 0;
+}
+
+.apropos-bars {
+  position: absolute;
+  right: 40px;
+  bottom: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.apropos-bar {
+  width: 18px;
+  border-radius: 999px;
+  background: linear-gradient(to top, #2563eb, #22c55e);
+}
+
+.apropos-bar.bar1 { height: 60px; }
+.apropos-bar.bar2 { height: 95px; }
+.apropos-bar.bar3 { height: 130px; }
+.apropos-bar.bar4 { height: 80px; }
+
+.apropos-wrapper h1,
+.apropos-wrapper p {
+  position: relative;
+  z-index: 1;
+}
+
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
