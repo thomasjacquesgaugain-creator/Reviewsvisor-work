@@ -12,15 +12,15 @@ const APropos = () => {
           
           <div className="text-foreground/90 leading-relaxed space-y-6 text-lg">
             <p>
-              Reviewsvisor est une plateforme d'analyse intelligente des avis clients.
+              <span className="text-blue">Reviewsvisor</span> est une plateforme d'analyse intelligente des avis clients.
             </p>
             
             <p>
-              Un outil, une centralisation pour votre établissement qui transforme vos retours en conception.
+              <span className="text-green">Un outil, une centralisation</span> pour votre établissement qui transforme <span className="text-green">vos retours en conception</span>.
             </p>
             
             <p>
-              Notre technologie transforme vos avis clients en insights précis pour vous aider à améliorer l'expérience, augmenter votre note en ligne et optimiser vos services au sein de votre établissement, vos avis deviennent maintenant une source de croissance.
+              Notre technologie transforme vos avis clients en insights précis pour vous aider à améliorer l'expérience, augmenter votre note en ligne et optimiser vos services au sein de votre établissement, <span className="text-green">vos avis deviennent maintenant une source de croissance</span>.
             </p>
             
             <p>

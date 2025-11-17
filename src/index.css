@@ -176,6 +176,16 @@ All colors MUST be HSL.
   background-color: #dc2626;
 }
 
+.text-blue {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.text-green {
+  color: #16a34a;
+  font-weight: 600;
+}
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
