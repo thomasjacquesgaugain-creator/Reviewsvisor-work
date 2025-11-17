@@ -41,14 +41,16 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
           
           {/* Navigation au centre - étalée horizontalement */}
           <div className="flex items-center gap-6 flex-1 justify-center">
-            <Link 
-              to="/tableau-de-bord" 
-              className={`font-medium hover:underline flex items-center gap-2 whitespace-nowrap ${
-                isAccueil ? "text-blue-600" : "text-gray-700"
-              }`}
-            >
-              <Home className="w-4 h-4" />
-              Accueil
+            <Link to="/tableau-de-bord">
+              <Button 
+                variant="ghost" 
+                className={`flex items-center gap-2 whitespace-nowrap ${
+                  isAccueil ? "text-blue-600" : "text-gray-700"
+                }`}
+              >
+                <Home className="w-4 h-4" />
+                Accueil
+              </Button>
             </Link>
             <Link to="/dashboard">
               <Button 
