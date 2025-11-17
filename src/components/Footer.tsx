@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Shield, Cookie, FileText } from "lucide-react";
+import { Mail, Shield, Cookie, FileText, HelpCircle } from "lucide-react";
 
 export function Footer() {
   return (
@@ -19,6 +19,12 @@ export function Footer() {
                 <Link to="/contact" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
                   <Mail className="h-4 w-4" />
                   Contact
+                </Link>
+              </li>
+              <li>
+                <Link to="/aide" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
+                  <HelpCircle className="h-4 w-4" />
+                  Aide
                 </Link>
               </li>
               <li>

@@ -24,6 +24,7 @@ import GoogleOAuthCallback from "./pages/GoogleOAuthCallback";
 import Contact from "./pages/Contact";
 import APropos from "./pages/APropos";
 import Fonctionnalites from "./pages/Fonctionnalites";
+import Aide from "./pages/Aide";
 
 const ScrollToTop = () => {
   const location = useLocation();
@@ -52,6 +53,7 @@ const App = () => {
             <Route path="/contact" element={<Contact />} />
             <Route path="/a-propos" element={<APropos />} />
             <Route path="/fonctionnalites" element={<Fonctionnalites />} />
+            <Route path="/aide" element={<Aide />} />
             <Route path="/tableau-de-bord" element={
               <Protected>
                 <TableauDeBord />
