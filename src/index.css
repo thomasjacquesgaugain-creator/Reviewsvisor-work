@@ -69,7 +69,111 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
-  }
+}
+
+/* Reviewsvisor Navbar Styles */
+.rv-navbar {
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.rv-navbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.rv-navbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.rv-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 18px;
+  text-decoration: none;
+  color: #111827;
+}
+
+.rv-logo-icon {
+  font-size: 20px;
+}
+
+.rv-logo-text {
+  font-family: inherit;
+}
+
+.rv-navbar-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+}
+
+.rv-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  text-decoration: none;
+  color: #111827;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.2s;
+}
+
+.rv-nav-link:hover {
+  color: #2563eb;
+}
+
+.rv-nav-link.active {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.rv-nav-icon {
+  font-size: 16px;
+}
+
+.rv-navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  white-space: nowrap;
+}
+
+.rv-user-text {
+  font-size: 14px;
+  color: #111827;
+}
+
+.rv-logout-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  text-decoration: none;
+  color: #111827;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.2s;
+}
+
+.rv-logout-link:hover {
+  color: #ef4444;
+}
 
   .dark {
     --background: 222.2 84% 4.9%;
