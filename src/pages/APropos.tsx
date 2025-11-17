@@ -6,8 +6,8 @@ const APropos = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1 pt-6 pb-16 px-4">
-        <section className="apropos-section">
-          <div className="apropos-content">
+        <section className="py-5 pb-24">
+          <div className="relative z-1">
             <div className="max-w-[800px] mx-auto">
               <h1 className="apropos-title">
                 À propos de 
@@ -33,13 +33,6 @@ const APropos = () => {
                 </p>
               </div>
             </div>
-          </div>
-          
-          <div className="apropos-bars">
-            <div className="apropos-bar bar-green"></div>
-            <div className="apropos-bar bar-pink"></div>
-            <div className="apropos-bar bar-blue"></div>
-            <div className="apropos-bar bar-violet"></div>
           </div>
         </section>
       </main>
