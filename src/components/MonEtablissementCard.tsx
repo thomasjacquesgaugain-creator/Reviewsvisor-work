@@ -3,13 +3,15 @@ import { Etab, STORAGE_KEY, EVT_SAVED } from "../types/etablissement";
 import { Trash2, BarChart3, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { runAnalyze } from "@/lib/runAnalyze";
-import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
+import { deleteAllReviews } from "@/services/reviewsService";
+import { supabase } from "@/integrations/supabase/client";
 
 
 export default function MonEtablissementCard() {
   const [etab, setEtab] = useState<Etab | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // 1) Lire ce qui est déjà enregistré (au chargement)
   useEffect(() => {
@@ -26,10 +28,45 @@ export default function MonEtablissementCard() {
     return () => window.removeEventListener(EVT_SAVED, onSaved);
   }, []);
 
-  // Fonction pour oublier l'établissement
-  const handleForgetEstablishment = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    setEtab(null);
+  // Fonction pour supprimer l'établissement et tous ses avis
+  const handleDeleteEstablishment = async () => {
+    if (!etab?.place_id) return;
+
+    setIsDeleting(true);
+    try {
+      // 1. Supprimer tous les avis associés
+      await deleteAllReviews(etab.place_id);
+
+      // 2. Supprimer l'établissement de la base de données
+      const { data: user } = await supabase.auth.getUser();
+      if (user.user) {
+        await supabase
+          .from('establishments')
+          .delete()
+          .eq('user_id', user.user.id)
+          .eq('place_id', etab.place_id);
+      }
+
+      // 3. Supprimer du localStorage
+      localStorage.removeItem(STORAGE_KEY);
+
+      // 4. Toast rouge en bas à droite (même système que import)
+      sonnerToast.error("L'établissement et tous ses avis ont été supprimés.", {
+        duration: 5000,
+      });
+
+      // 5. Mettre à jour l'état local
+      setEtab(null);
+    } catch (error) {
+      console.error('Erreur lors de la suppression de l\'établissement:', error);
+      
+      // Toast d'erreur rouge en bas à droite
+      sonnerToast.error("Impossible de supprimer l'établissement. Veuillez réessayer.", {
+        duration: 5000,
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Fonction pour analyser l'établissement
@@ -45,22 +82,17 @@ export default function MonEtablissementCard() {
       });
 
       if (result.ok) {
-        toast({
-          title: "Analyse terminée",
-          description: `${result.counts?.collected || 0} avis analysés avec succès`,
+        sonnerToast.success(`${result.counts?.collected || 0} avis analysés avec succès`, {
+          duration: 5000,
         });
       } else {
-        toast({
-          title: "Erreur d'analyse",
-          description: "Erreur lors de l'analyse",
-          variant: "destructive",
+        sonnerToast.error("Erreur lors de l'analyse", {
+          duration: 5000,
         });
       }
     } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Une erreur inattendue s'est produite",
-        variant: "destructive",
+      sonnerToast.error("Une erreur inattendue s'est produite", {
+        duration: 5000,
       });
     } finally {
       setIsAnalyzing(false);
@@ -115,15 +147,16 @@ export default function MonEtablissementCard() {
           <BarChart3 className={`w-4 h-4 ${isAnalyzing ? 'animate-spin' : ''}`} />
         </Button>
         
-        {/* Bouton oublier établissement */}
+        {/* Bouton supprimer établissement */}
         <Button
           variant="ghost"
           size="sm"
-          onClick={handleForgetEstablishment}
-          className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
-          title="Oublier cet établissement"
+          onClick={handleDeleteEstablishment}
+          disabled={isDeleting}
+          className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto disabled:opacity-50"
+          title="Supprimer l'établissement et tous ses avis"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
         </Button>
       </div>
     </div>
