@@ -15,8 +15,8 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
     navigate('/');
   };
 
-  const isAccueil = location.pathname === "/accueil" || location.pathname === "/";
-  const isDashboard = location.pathname === "/tableau-de-bord";
+  const isAccueil = location.pathname === "/tableau-de-bord";
+  const isDashboard = location.pathname === "/dashboard";
   const isEtablissement = location.pathname === "/etablissement";
 
   return (
@@ -32,11 +32,11 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
 
         {/* Centre : liens avec icônes */}
         <nav className="rv-navbar-center">
-          <Link to="/accueil" className={`rv-nav-link ${isAccueil ? "active" : ""}`}>
+          <Link to="/tableau-de-bord" className={`rv-nav-link ${isAccueil ? "active" : ""}`}>
             <span className="rv-nav-icon">🏠</span>
             <span>Accueil</span>
           </Link>
-          <Link to="/tableau-de-bord" className={`rv-nav-link ${isDashboard ? "active" : ""}`}>
+          <Link to="/dashboard" className={`rv-nav-link ${isDashboard ? "active" : ""}`}>
             <span className="rv-nav-icon">📈</span>
             <span>Dashboard</span>
           </Link>
