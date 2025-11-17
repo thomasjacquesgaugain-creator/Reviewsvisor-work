@@ -158,16 +158,14 @@ All colors MUST be HSL.
 }
 
 .rv-logout-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   background-color: #ef4444;
   color: white;
-  padding: 8px 14px;
+  padding: 8px 16px;
   border-radius: 8px;
   font-size: 14px;
-  text-decoration: none;
   font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
   border: none;
   cursor: pointer;
   font-family: inherit;
@@ -176,10 +174,6 @@ All colors MUST be HSL.
 
 .rv-logout-btn:hover {
   background-color: #dc2626;
-}
-
-.rv-logout-icon {
-  font-size: 16px;
 }
 
   .dark {
