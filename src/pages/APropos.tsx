@@ -29,13 +29,13 @@ const APropos = () => {
                 </p>
                 
                 <p>
-                  Restaurants, hôtels, commerces : prenez les meilleures décisions grâce à vos propres données.
+                  Restaurants, hôtels, commerces : <span className="text-green">prenez les meilleures décisions grâce à vos propres données</span>.
                 </p>
 
                 <h2 className="text-2xl font-bold mt-8 mb-3 text-foreground">Notre mission</h2>
                 
                 <p>
-                  Chez <span className="text-blue">Reviewsvisor</span>, notre objectif est simple : aider chaque établissement à comprendre ce que ressentent réellement ses clients. Nous croyons que chaque avis contient une opportunité d'évolution, et que les données bien analysées peuvent devenir un véritable moteur de croissance.
+                  Chez <span className="text-blue">Reviewsvisor</span>, notre objectif est simple : aider chaque établissement à comprendre ce que ressentent réellement ses clients. Nous croyons que chaque <span className="text-green">avis contient une opportunité d'évolution</span>, et que les données bien analysées peuvent devenir un véritable <span className="text-green">moteur de croissance</span>.
                 </p>
 
                 <h2 className="text-2xl font-bold mt-8 mb-3 text-foreground">Pourquoi nous avons créé <span className="text-blue">Reviewsvisor</span></h2>
@@ -59,7 +59,7 @@ const APropos = () => {
                 </p>
 
                 <p>
-                  Plus qu'un simple tableau de bord, <span className="text-blue">Reviewsvisor</span> est un véritable assistant d'amélioration continue pour votre établissement.
+                  Plus qu'un simple tableau de bord, <span className="text-blue">Reviewsvisor</span> est un véritable <span className="text-green">assistant d'amélioration continue</span> pour votre établissement.
                 </p>
 
                 <h2 className="text-2xl font-bold mt-8 mb-3 text-foreground">Une plateforme pensée pour vous</h2>
