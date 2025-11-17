@@ -5,8 +5,8 @@ import logoReviewsvisor from "@/assets/logo-reviewsvisor.png";
 const APropos = () => {
   return (
     <div className="min-h-screen flex flex-col">
-      <main className="flex-1 pt-6 pb-8 px-4">
-        <section className="py-5 pb-4">
+      <main className="flex-1 pt-6 pb-4 px-4">
+        <section className="py-5 pb-2">
           <div className="relative z-1">
             <div className="max-w-[800px] mx-auto">
               <h1 className="apropos-title">
