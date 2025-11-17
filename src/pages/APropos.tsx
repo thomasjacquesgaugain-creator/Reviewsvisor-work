@@ -45,7 +45,7 @@ const APropos = () => {
           
           {/* Flèche rouge à gauche */}
           <div className="trading-arrow">
-            <TrendingUp className="text-red-500" size={32} strokeWidth={3} />
+            <TrendingUp className="text-red-500" size={56} strokeWidth={3} />
           </div>
         </section>
       </main>
