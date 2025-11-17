@@ -62,6 +62,26 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
     }
   }, [handleFileSelect]);
 
+  // Mapping pour convertir les notes textuelles en nombres
+  const convertStarRating = (starRating: any): number => {
+    if (typeof starRating === 'number') return starRating;
+    
+    const ratingMap: Record<string, number> = {
+      'FIVE': 5,
+      'FOUR': 4,
+      'THREE': 3,
+      'TWO': 2,
+      'ONE': 1,
+    };
+    
+    if (typeof starRating === 'string') {
+      const upperRating = starRating.toUpperCase();
+      return ratingMap[upperRating] || 3; // Par défaut 3 étoiles si non reconnu
+    }
+    
+    return 3; // Par défaut 3 étoiles
+  };
+
   const parseGoogleTakeoutJSON = async (file: File): Promise<any[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -70,21 +90,41 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
           const content = e.target?.result as string;
           const data = JSON.parse(content);
           
+          console.log('📄 Structure du fichier JSON importé:', data);
+          console.log('📊 Clés disponibles:', Object.keys(data));
+          
           if (!data.reviews || !Array.isArray(data.reviews)) {
             reject(new Error("Le fichier JSON ne correspond pas au format Google Takeout attendu (reviews.json)."));
             return;
           }
           
-          const reviews = data.reviews.map((review: any) => ({
-            text: review.comment || "",
-            rating: review.starRating || 0,
-            published_at: review.createTime || new Date().toISOString(),
-            source: "google",
-            author_name: review.reviewer?.displayName || "Anonyme",
-          }));
+          console.log(`📝 Nombre d'avis trouvés dans le fichier: ${data.reviews.length}`);
           
+          if (data.reviews.length > 0) {
+            console.log('🔍 Exemple d\'avis (premier):', data.reviews[0]);
+          }
+          
+          const reviews = data.reviews.map((review: any, index: number) => {
+            const rating = convertStarRating(review.starRating);
+            const parsedReview = {
+              text: review.comment || "",
+              rating: rating,
+              published_at: review.createTime || new Date().toISOString(),
+              source: "google",
+              author_name: review.reviewer?.displayName || "Anonyme",
+            };
+            
+            if (index === 0) {
+              console.log('✅ Avis normalisé (premier):', parsedReview);
+            }
+            
+            return parsedReview;
+          });
+          
+          console.log(`✨ Total d'avis normalisés: ${reviews.length}`);
           resolve(reviews);
         } catch (error) {
+          console.error('❌ Erreur lors du parsing JSON:', error);
           reject(new Error("Le fichier JSON ne correspond pas au format Google Takeout attendu (reviews.json)."));
         }
       };
@@ -152,6 +192,10 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
       const isJSON = selectedFile.name.endsWith(".json");
       let reviews: any[];
       
+      // Déterminer le nom de l'établissement dès le début
+      const establishmentName = currentEstablishment?.name || "Établissement";
+      const establishmentIdForService = currentEstablishment?.id || activeEstablishment;
+      
       // Parse le fichier selon son type
       if (isJSON) {
         reviews = await parseGoogleTakeoutJSON(selectedFile);
@@ -159,9 +203,13 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
         reviews = await parseCSV(selectedFile);
       }
       
-      // Déterminer l'établissement à utiliser sans requête DB si déjà chargé
-      const establishmentName = currentEstablishment?.name || "Établissement";
-      const establishmentIdForService = currentEstablishment?.id || activeEstablishment;
+      // Validation : vérifier qu'il y a au moins un avis
+      if (!reviews || reviews.length === 0) {
+        throw new Error("Le fichier ne contient aucun avis reconnu. Vérifiez que vous importez bien le fichier reviews.json de Google.");
+      }
+      
+      console.log(`📦 Avis à importer: ${reviews.length} avis pour l'établissement "${establishmentName}"`);
+      console.log('📋 Premiers avis:', reviews.slice(0, 3));
 
       // Préparer les avis pour l'import
       const reviewsToCreate = reviews.map(review => {
