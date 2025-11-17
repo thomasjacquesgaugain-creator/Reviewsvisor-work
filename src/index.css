@@ -250,6 +250,23 @@ All colors MUST be HSL.
 .bar-blue   { height: 160px; background-color: #3b82f6; }
 .bar-violet { height: 110px; background-color: #8b5cf6; }
 
+/* Flèche trading animée */
+.trading-arrow {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  animation: trading-movement 3s ease-in-out infinite;
+}
+
+@keyframes trading-movement {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-60px);
+  }
+}
+
 
 
   .dark {
