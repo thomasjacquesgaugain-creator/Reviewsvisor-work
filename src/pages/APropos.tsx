@@ -5,9 +5,9 @@ import logoReviewsvisor from "@/assets/logo-reviewsvisor.png";
 const APropos = () => {
   return (
     <div className="min-h-screen flex flex-col">
-      <main className="flex-1 py-16 px-4">
-        <div className="max-w-[800px] mx-auto">
-          <section className="apropos-wrapper">
+      <div className="apropos-background">
+        <main className="flex-1 py-16 px-4">
+          <div className="max-w-[800px] mx-auto">
             <h1 className="apropos-title">
               À propos de 
               <span className="apropos-brand">Reviewsvisor</span>
@@ -31,16 +31,9 @@ const APropos = () => {
                 Restaurants, hôtels, commerces : prenez les meilleures décisions grâce à vos propres données.
               </p>
             </div>
-
-            <div className="apropos-bars">
-              <div className="apropos-bar bar1"></div>
-              <div className="apropos-bar bar2"></div>
-              <div className="apropos-bar bar3"></div>
-              <div className="apropos-bar bar4"></div>
-            </div>
-          </section>
-        </div>
-      </main>
+          </div>
+        </main>
+      </div>
     </div>
   );
 };
