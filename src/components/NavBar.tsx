@@ -32,17 +32,17 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
 
         {/* Centre : liens avec icônes */}
         <nav className="rv-navbar-center">
-          <Link to="/tableau-de-bord" className={`rv-nav-link ${isAccueil ? "active" : ""}`}>
+          <Link to="/accueil" className={`rv-nav-link ${location.pathname === "/accueil" ? "active" : ""}`}>
             <span className="rv-nav-icon">🏠</span>
             <span>Accueil</span>
           </Link>
-          <Link to="/dashboard" className={`rv-nav-link ${isDashboard ? "active" : ""}`}>
-            <span className="rv-nav-icon">📈</span>
-            <span>Dashboard</span>
+          <Link to="/fonctionnalites" className={`rv-nav-link ${location.pathname === "/fonctionnalites" ? "active" : ""}`}>
+            <span className="rv-nav-icon">⭐</span>
+            <span>Fonctionnalités</span>
           </Link>
-          <Link to="/etablissement" className={`rv-nav-link ${isEtablissement ? "active" : ""}`}>
-            <span className="rv-nav-icon">🏢</span>
-            <span>Établissement</span>
+          <Link to="/a-propos" className={`rv-nav-link ${location.pathname === "/a-propos" ? "active" : ""}`}>
+            <span className="rv-nav-icon">ℹ️</span>
+            <span>À propos</span>
           </Link>
         </nav>
 
