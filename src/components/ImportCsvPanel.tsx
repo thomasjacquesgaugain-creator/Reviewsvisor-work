@@ -231,6 +231,8 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
       // Import des avis dans la base de données
       const result = await bulkCreateReviews(reviewsToCreate);
       
+      console.log(`✅ Résultat de l'import: ${result.inserted} insérés, ${result.skipped} ignorés`);
+      
       // Lancer l'analyse des avis
       console.log('Lancement de l\'analyse pour place_id:', activeEstablishment);
       await runAnalyze({ 
