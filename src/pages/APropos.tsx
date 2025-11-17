@@ -34,13 +34,13 @@ const APropos = () => {
               </div>
             </div>
           </div>
-        </section>
-        
-        <section className="apropos-bars-strip">
-          <div className="apropos-bar bar-green"></div>
-          <div className="apropos-bar bar-pink"></div>
-          <div className="apropos-bar bar-blue"></div>
-          <div className="apropos-bar bar-violet"></div>
+          
+          <div className="apropos-bars">
+            <div className="apropos-bar bar-green"></div>
+            <div className="apropos-bar bar-pink"></div>
+            <div className="apropos-bar bar-blue"></div>
+            <div className="apropos-bar bar-violet"></div>
+          </div>
         </section>
       </main>
     </div>
