@@ -220,46 +220,36 @@ All colors MUST be HSL.
   margin-top: 8px;
 }
 
-.apropos-background {
+.apropos-section {
   position: relative;
-  min-height: 100vh;
-  padding: 60px 0;
+  padding: 60px 0 90px;
 }
 
-.apropos-background::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.18;
-  background-image:
-    repeating-linear-gradient(
-      to right,
-      rgba(239, 68, 68, 0.8),
-      rgba(239, 68, 68, 0.8) 12px,
-      transparent 12px,
-      transparent 32px,
-      rgba(168, 85, 247, 0.8) 32px,
-      rgba(168, 85, 247, 0.8) 44px,
-      transparent 44px,
-      transparent 64px,
-      rgba(249, 115, 22, 0.8) 64px,
-      rgba(249, 115, 22, 0.8) 76px,
-      transparent 76px,
-      transparent 96px,
-      rgba(244, 114, 182, 0.8) 96px,
-      rgba(244, 114, 182, 0.8) 108px,
-      transparent 108px,
-      transparent 128px
-    );
-}
-
-.apropos-background h1,
-.apropos-background p {
+.apropos-content {
   position: relative;
   z-index: 1;
 }
+
+.apropos-bars {
+  position: absolute;
+  right: 8%;
+  bottom: 40px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.apropos-bar {
+  width: 26px;
+  border-radius: 999px;
+}
+
+.bar-green  { height: 90px;  background-color: #22c55e; }
+.bar-pink   { height: 130px; background-color: #ec4899; }
+.bar-blue   { height: 160px; background-color: #3b82f6; }
+.bar-violet { height: 110px; background-color: #8b5cf6; }
 
 
 
