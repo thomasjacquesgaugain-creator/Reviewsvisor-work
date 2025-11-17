@@ -41,11 +41,11 @@ const APropos = () => {
             <div className="apropos-bar bar-pink"></div>
             <div className="apropos-bar bar-blue"></div>
             <div className="apropos-bar bar-violet"></div>
-            
-            {/* Flèche rouge animée */}
-            <div className="trading-arrow">
-              <TrendingUp className="text-red-500" size={32} strokeWidth={3} />
-            </div>
+          </div>
+          
+          {/* Flèche rouge à gauche */}
+          <div className="trading-arrow">
+            <TrendingUp className="text-red-500" size={32} strokeWidth={3} />
           </div>
         </section>
       </main>
