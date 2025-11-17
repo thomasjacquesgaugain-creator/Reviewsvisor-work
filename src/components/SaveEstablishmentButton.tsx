@@ -1,5 +1,6 @@
 import { Etab, STORAGE_KEY, STORAGE_KEY_LIST, EVT_SAVED, EVT_LIST_UPDATED } from "../types/etablissement";
 import { supabase } from "@/integrations/supabase/client";
+import { toast as sonnerToast } from "sonner";
 
 export default function SaveEstablishmentButton({
   selected,
@@ -32,7 +33,11 @@ export default function SaveEstablishmentButton({
     if (authErr || !user) {
       // pas connecté : on garde localStorage et on informe
       window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: selected }));
-      alert("Établissement enregistré localement. Connecte-toi pour le lier à ton compte.");
+      
+      // Toast bleu pour info
+      sonnerToast.info("Établissement enregistré localement. Connectez-vous pour le lier à votre compte.", {
+        duration: 5000,
+      });
       return;
     }
 
@@ -53,7 +58,12 @@ export default function SaveEstablishmentButton({
 
     if (userEstabError || etabError) {
       console.error("Erreur sauvegarde:", { userEstabError, etabError });
-      alert("Erreur sauvegarde distante. Conservé localement.");
+      
+      // Toast rouge en bas à droite
+      sonnerToast.error("Impossible d'enregistrer l'établissement.", {
+        duration: 5000,
+      });
+      
       window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: selected }));
       return;
     }
@@ -61,8 +71,10 @@ export default function SaveEstablishmentButton({
     // 4) Notifier toute l'app
     window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: selected }));
 
-    // 5) Feedback de succès
-    alert("Établissement enregistré avec succès!");
+    // 5) Toast bleu de succès en bas à droite
+    sonnerToast.success("L'établissement a bien été enregistré.", {
+      duration: 5000,
+    });
   }
 
   return (
