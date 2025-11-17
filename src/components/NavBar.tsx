@@ -52,7 +52,6 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
             <>
               <span className="rv-user-text">Bonjour, {displayName}</span>
               <button onClick={handleLogout} className="rv-logout-btn">
-                <span className="rv-logout-icon">⎋</span>
                 Déconnexion
               </button>
             </>
