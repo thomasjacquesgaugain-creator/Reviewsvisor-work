@@ -250,6 +250,42 @@ All colors MUST be HSL.
 .bar-blue   { height: 160px; background-color: #3b82f6; }
 .bar-violet { height: 110px; background-color: #8b5cf6; }
 
+.apropos-arrow {
+  position: absolute;
+  bottom: 80px; /* juste au-dessus du footer bleu */
+  left: 0;
+  width: 50%;
+  height: 120px; /* hauteur contrôlée pour ne jamais dépasser la grande barre */
+  pointer-events: none;
+}
+
+.apropos-arrow::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: red;
+  opacity: 0.8;
+  transform-origin: bottom left;
+  transform: rotate(25deg); /* angle vers le centre */
+}
+
+.apropos-arrow::after {
+  content: "";
+  position: absolute;
+  bottom: 85px; /* même angle, positionne la pointe au bout */
+  left: calc(50% - 6px);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 14px solid red; /* pointe vers le haut */
+  transform: rotate(25deg);
+  opacity: 0.9;
+}
+
 
 
   .dark {
