@@ -250,14 +250,6 @@ All colors MUST be HSL.
 .bar-blue   { height: 160px; background-color: #3b82f6; }
 .bar-violet { height: 110px; background-color: #8b5cf6; }
 
-/* Flèche trading fixe */
-.trading-arrow {
-  position: absolute;
-  left: 20px;
-  bottom: -20px;
-  z-index: 10;
-}
-
 
 
   .dark {

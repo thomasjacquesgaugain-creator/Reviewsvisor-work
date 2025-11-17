@@ -1,7 +1,6 @@
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import logoReviewsvisor from "@/assets/logo-reviewsvisor.png";
-import { TrendingUp } from "lucide-react";
 
 const APropos = () => {
   return (
@@ -41,11 +40,6 @@ const APropos = () => {
             <div className="apropos-bar bar-pink"></div>
             <div className="apropos-bar bar-blue"></div>
             <div className="apropos-bar bar-violet"></div>
-          </div>
-          
-          {/* Flèche rouge à gauche */}
-          <div className="trading-arrow">
-            <TrendingUp className="text-red-500" size={56} strokeWidth={3} />
           </div>
         </section>
       </main>
