@@ -41,11 +41,8 @@ const APropos = () => {
             <div className="apropos-bar bar-blue"></div>
             <div className="apropos-bar bar-violet"></div>
           </div>
-          
-          <div className="apropos-arrow"></div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 };
