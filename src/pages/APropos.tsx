@@ -55,7 +55,7 @@ const APropos = () => {
                 <h2 className="text-2xl font-bold mt-8 mb-3 text-foreground">Notre technologie</h2>
                 
                 <p>
-                  <span className="text-blue">Reviewsvisor</span> utilise un modèle d'analyse avancé capable de comprendre le ton, l'émotion et les sujets importants dans chaque commentaire. L'outil identifie automatiquement les tendances, détecte les points forts récurrents et met en avant les axes d'amélioration prioritaires.
+                  <span className="text-blue">Reviewsvisor</span> utilise un modèle d'analyse avancé capable de comprendre le ton, l'émotion et les sujets importants dans chaque commentaire. L'outil identifie automatiquement les tendances, détecte les points forts récurrents et met en avant les <span className="text-green">axes d'amélioration prioritaires</span>.
                 </p>
 
                 <p>
