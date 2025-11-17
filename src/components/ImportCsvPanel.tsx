@@ -3,7 +3,7 @@ import { Upload, File, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+
 import { bulkCreateReviews } from "@/services/reviewsService";
 import { runAnalyze } from "@/lib/runAnalyze";
 import { useNavigate } from "react-router-dom";
@@ -159,30 +159,17 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
         reviews = await parseCSV(selectedFile);
       }
       
-      // Récupérer les infos utilisateur et établissement
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("Utilisateur non authentifié");
-      }
-      
-      const { data: establishment } = await supabase
-        .from("establishments")
-        .select("id, name")
-        .eq("place_id", activeEstablishment)
-        .eq("user_id", user.id)
-        .single();
-      
-      if (!establishment) {
-        throw new Error("Établissement non trouvé");
-      }
-      
+      // Déterminer l'établissement à utiliser sans requête DB si déjà chargé
+      const establishmentName = currentEstablishment?.name || "Établissement";
+      const establishmentIdForService = currentEstablishment?.id || activeEstablishment;
+
       // Préparer les avis pour l'import
       const reviewsToCreate = reviews.map(review => {
-        const nameParts = review.author_name.split(" ");
+        const nameParts = (review.author_name || "").split(" ");
         return {
-          establishment_id: establishment.id,
-          establishment_place_id: activeEstablishment,
-          establishment_name: establishment.name,
+          establishment_id: establishmentIdForService!,
+          establishment_place_id: activeEstablishment!,
+          establishment_name: establishmentName,
           source: review.source || (isJSON ? "google" : "csv"),
           author_first_name: nameParts[0] || "",
           author_last_name: nameParts.slice(1).join(" ") || "",
@@ -200,15 +187,15 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
       console.log('Lancement de l\'analyse pour place_id:', activeEstablishment);
       await runAnalyze({ 
         place_id: activeEstablishment,
-        name: establishment.name,
+        name: establishmentName,
       });
       
-      const successMsg = `${result.inserted} avis importés avec succès${result.skipped > 0 ? `, ${result.skipped} doublons ignorés` : ""}.`;
+      const successMsg = `Avis importés et associés à l’établissement ${establishmentName}.`;
       setSuccessMessage(successMsg);
       
       toast({
         title: "Import et analyse terminés",
-        description: successMsg + " Analyse en cours...",
+        description: successMsg,
       });
       
       setSelectedFile(null);
