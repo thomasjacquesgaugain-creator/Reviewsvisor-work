@@ -140,11 +140,11 @@ export function ReviewsVisualPanel({
     
     try {
       setIsDeleting(true);
-      const deletedCount = await deleteAllReviews(effectiveId);
+      await deleteAllReviews(effectiveId);
       
       toast({
-        title: "Avis supprimés",
-        description: `${deletedCount} avis supprimés avec succès`,
+        title: "Suppression réussie",
+        description: "Tous les avis de l'établissement ont été supprimés avec succès.",
       });
       
       // Reload the data to update UI
@@ -154,7 +154,7 @@ export function ReviewsVisualPanel({
       console.error('Error deleting reviews:', error);
       toast({
         title: "Erreur",
-        description: error.message || "La suppression des avis a échoué, veuillez réessayer",
+        description: "Une erreur est survenue lors de la suppression des avis.",
         variant: "destructive",
       });
       setShowDeleteDialog(false);
