@@ -40,7 +40,7 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
           </div>
           
           {/* SECTION 2 - Navigation centrée mais étalée */}
-          <div className="flex items-center justify-center gap-8">
+          <div className="flex items-center justify-center gap-4">
             <Link to="/tableau-de-bord">
               <Button 
                 variant="ghost" 
