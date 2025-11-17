@@ -252,9 +252,10 @@ All colors MUST be HSL.
 
 /* Flèche trading fixe */
 .trading-arrow {
-  position: absolute;
-  left: 0;
-  bottom: 0;
+  position: fixed;
+  left: 10px;
+  bottom: 80px;
+  z-index: 10;
 }
 
 
