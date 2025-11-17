@@ -29,10 +29,10 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
       <div className="rv-navbar-inner">
         {/* Gauche : logo */}
         <div className="rv-navbar-left">
-          <Link to="/accueil" className="rv-logo">
+          <div className="rv-logo cursor-default select-none">
             <span className="rv-logo-icon">📊</span>
             <span className="rv-logo-text">Reviewsvisor</span>
-          </Link>
+          </div>
         </div>
 
         {/* Centre : liens avec icônes */}
