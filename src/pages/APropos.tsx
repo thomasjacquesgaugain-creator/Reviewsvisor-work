@@ -41,6 +41,21 @@ const APropos = () => {
             <div className="apropos-bar bar-blue"></div>
             <div className="apropos-bar bar-violet"></div>
           </div>
+          
+          <svg className="apropos-arrow" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                <polygon points="0 0, 10 3, 0 6" fill="#ef4444" />
+              </marker>
+            </defs>
+            <path
+              d="M 0 180 Q 100 160, 200 100 T 380 40"
+              stroke="#ef4444"
+              strokeWidth="4"
+              fill="none"
+              markerEnd="url(#arrowhead)"
+            />
+          </svg>
         </section>
       </main>
     </div>
