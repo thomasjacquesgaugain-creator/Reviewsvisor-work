@@ -1,5 +1,6 @@
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
+import logoReviewsvisor from "@/assets/logo-reviewsvisor.png";
 
 const APropos = () => {
   return (
@@ -11,8 +12,10 @@ const APropos = () => {
           </h1>
           
           <div className="text-foreground/90 leading-relaxed space-y-6 text-lg">
-            <p>
-              <span className="text-blue">Reviewsvisor</span> est une plateforme d'analyse intelligente des avis clients.
+            <p className="intro-line">
+              <span className="text-blue">Reviewsvisor</span>
+              <img src={logoReviewsvisor} alt="Logo Reviewsvisor" className="rv-inline-logo" />
+              est une plateforme d'analyse intelligente des avis clients.
             </p>
             
             <p>
