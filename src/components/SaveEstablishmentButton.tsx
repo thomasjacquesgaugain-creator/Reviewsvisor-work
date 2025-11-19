@@ -46,7 +46,9 @@ export default function SaveEstablishmentButton({
 
     // 4) Sauvegarder l'établissement principal dans user_establishment
     const userEstabPayload = { user_id: user.id, ...selected };
-    const { error: userEstabError } = await (supabase as any).from("user_establishment").upsert(userEstabPayload);
+    const { error: userEstabError } = await supabase.from("user_establishment").upsert(userEstabPayload, {
+      onConflict: 'user_id,place_id'
+    });
     
     if (userEstabError) {
       console.error("❌ [SaveEstablishmentButton] Erreur sauvegarde user_establishment:", userEstabError);
@@ -68,7 +70,9 @@ export default function SaveEstablishmentButton({
       telephone: selected.phone || null,
       type: "Restaurant"
     };
-    const { error: etabError } = await (supabase as any).from("établissements").upsert(etablissementPayload);
+    const { error: etabError } = await supabase.from("établissements").upsert(etablissementPayload, {
+      onConflict: 'user_id,place_id'
+    });
     
     if (etabError) {
       console.error("❌ [SaveEstablishmentButton] Erreur sauvegarde établissements:", etabError);
