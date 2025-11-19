@@ -12,23 +12,42 @@ serve(async (req) => {
   }
 
   try {
+    // Vérifier le header d'autorisation
+    const authHeader = req.headers.get('Authorization');
+    console.log('Auth header présent:', !!authHeader);
+    
+    if (!authHeader) {
+      console.error('Missing Authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Non authentifié - header manquant' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Créer le client Supabase avec le token
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
+          headers: { Authorization: authHeader },
         },
       }
     );
 
+    // Vérifier l'utilisateur
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    console.log('User check - error:', userError, 'user:', !!user);
+    
     if (userError || !user) {
+      console.error('Auth error:', userError);
       return new Response(
-        JSON.stringify({ error: 'Non authentifié' }),
+        JSON.stringify({ error: 'Non authentifié - utilisateur invalide', details: userError?.message }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    console.log('User authenticated:', user.id);
 
     const { placeId } = await req.json();
 
