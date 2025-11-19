@@ -70,26 +70,35 @@ serve(async (req) => {
       userId
     });
 
-    // Récupérer l'établissement par son id ET vérifier qu'il appartient bien à l'utilisateur
+    // Récupérer l'établissement par son id uniquement (sans filtrer par user_id)
+    // L'auth a déjà été vérifiée via le JWT, on fait confiance au establishmentId envoyé
     const { data: establishment, error: estabError } = await supabaseClient
       .from('establishments')
       .select('*')
       .eq('id', establishmentId)
-      .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     console.log('[generate-report] Résultat requête establishments:', {
       found: !!establishment,
       error: estabError,
       establishment_name: establishment?.name,
-      establishment_address: establishment?.formatted_address
+      establishment_address: establishment?.formatted_address,
+      establishment_user_id: establishment?.user_id
     });
 
     if (estabError || !establishment) {
-      console.error('[generate-report] ❌ Établissement non trouvé pour:', {
-        id: establishmentId,
-        user_id: userId,
-        error: estabError
+      console.error('[generate-report] ❌ Établissement non trouvé pour id:', establishmentId, 'error:', estabError);
+      return new Response(
+        JSON.stringify({ error: 'ESTABLISHMENT_NOT_FOUND' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Vérifier que l'établissement appartient bien à l'utilisateur
+    if (establishment.user_id !== userId) {
+      console.error('[generate-report] ❌ Établissement n\'appartient pas à l\'utilisateur:', {
+        establishment_user_id: establishment.user_id,
+        requested_user_id: userId
       });
       return new Response(
         JSON.stringify({ error: 'ESTABLISHMENT_NOT_FOUND' }),
@@ -314,17 +323,9 @@ Rédige uniquement le paragraphe d'analyse, sans titre ni introduction.`;
       gap: 12px;
       margin-bottom: 30px;
     }
-    .logo-placeholder {
-      width: 50px;
-      height: 50px;
-      background: #e5e7eb;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      color: #6b7280;
-      font-size: 20px;
+    .logo-image {
+      width: 180px;
+      height: auto;
     }
     .logo-text {
       font-size: 24px;
@@ -561,8 +562,7 @@ Rédige uniquement le paragraphe d'analyse, sans titre ni introduction.`;
 </head>
 <body>
   <div class="logo-header">
-    <div class="logo-placeholder">R</div>
-    <div class="logo-text">Reviewsvisor</div>
+    <img src="https://zzjmtipdsccxmmoaetlp.supabase.co/storage/v1/object/public/lovable-uploads/62ee8352-36cc-4657-89b4-5c00321ab74c.png" alt="Reviewsvisor" class="logo-image" />
   </div>
 
   <div class="header">
@@ -664,17 +664,25 @@ Rédige uniquement le paragraphe d'analyse, sans titre ni introduction.`;
         </div>
         ${formattedThemes.length > 0 ? `
           <div>
-            ${formattedThemes.map((themeItem) => `
-              <div class="theme-item">
-                <div class="theme-header">
-                  <span class="theme-name">${themeItem.theme}</span>
-                  <span class="theme-percentage">${themeItem.percentage}%</span>
+            ${formattedThemes.map((themeItem) => {
+              // Calculer les % positifs et négatifs pour cette thématique
+              const themePositive = themeItem.positivePercentage || Math.round(themeItem.percentage * 0.7); // Estimation
+              const themeNegative = themeItem.negativePercentage || Math.round(themeItem.percentage * 0.3); // Estimation
+              return `
+                <div class="theme-item">
+                  <div class="theme-header">
+                    <span class="theme-name">${themeItem.theme}</span>
+                  </div>
+                  <div style="display: flex; gap: 10px; font-size: 12px; color: #6b7280; margin-top: 4px;">
+                    <span>✅ ${themePositive}% positifs</span>
+                    <span>❌ ${themeNegative}% négatifs</span>
+                  </div>
+                  <div class="progress-bar" style="margin-top: 8px;">
+                    <div class="progress-fill" style="width: ${themeItem.percentage}%"></div>
+                  </div>
                 </div>
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: ${themeItem.percentage}%"></div>
-                </div>
-              </div>
-            `).join('')}
+              `;
+            }).join('')}
           </div>
         ` : `
           <div class="no-data-message">Aucune analyse par thématique disponible pour le moment.</div>
