@@ -55,33 +55,32 @@ serve(async (req) => {
       );
     }
 
-    const { placeId } = await req.json();
-    console.log('[generate-report] PlaceId reçu:', placeId);
+    const { establishmentId } = await req.json();
+    console.log('[generate-report] establishmentId reçu:', establishmentId);
 
-    if (!placeId) {
+    if (!establishmentId) {
       return new Response(
-        JSON.stringify({ error: 'placeId requis' }),
+        JSON.stringify({ error: 'establishmentId requis' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[generate-report] Récupération de l\'établissement pour user:', userId, 'place:', placeId);
+    console.log('[generate-report] Récupération de l\'établissement:', establishmentId);
 
-    // Récupérer l'établissement depuis establishments (table principale avec adresse)
+    // Récupérer l'établissement par son id uniquement (sans filtrer par user)
     const { data: establishment, error: estabError } = await supabaseClient
       .from('establishments')
       .select('*')
-      .eq('place_id', placeId)
-      .eq('user_id', userId)
-      .maybeSingle();
+      .eq('id', establishmentId)
+      .single();
 
     console.log('[generate-report] Établissement trouvé:', !!establishment, 'Erreur:', estabError);
 
     if (estabError || !establishment) {
-      console.log('[generate-report] Aucun établissement trouvé - retour propre sans erreur');
+      console.error('[generate-report] Établissement non trouvé pour id:', establishmentId, estabError);
       return new Response(
-        JSON.stringify({ ok: false, reason: 'no_establishment' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'ESTABLISHMENT_NOT_FOUND' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -91,16 +90,16 @@ serve(async (req) => {
     const { data: insights } = await supabaseClient
       .from('review_insights')
       .select('*')
-      .eq('place_id', placeId)
-      .eq('user_id', userId)
+      .eq('place_id', establishment.place_id)
+      .eq('user_id', establishment.user_id)
       .maybeSingle();
 
     // Récupérer les avis
     const { data: reviews } = await supabaseClient
       .from('reviews')
       .select('*')
-      .eq('place_id', placeId)
-      .eq('user_id', userId)
+      .eq('place_id', establishment.place_id)
+      .eq('user_id', establishment.user_id)
       .order('published_at', { ascending: false })
       .limit(50);
 
