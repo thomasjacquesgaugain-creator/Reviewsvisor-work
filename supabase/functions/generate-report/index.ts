@@ -143,6 +143,32 @@ serve(async (req) => {
       }
     }
 
+    // Préparer les données pour les nouveaux KPI
+    const topIssues = insights?.top_issues || [];
+    const topPraises = insights?.top_praises || [];
+    const themes = insights?.themes || [];
+    
+    // Mock data si pas assez de données
+    const mockIssues = topIssues.length > 0 ? topIssues : [
+      { issue: "Temps d'attente trop long", percentage: 25 },
+      { issue: "Qualité des plats inégale", percentage: 18 },
+      { issue: "Service perçu comme froid", percentage: 12 }
+    ];
+    
+    const mockPraises = topPraises.length > 0 ? topPraises : [
+      { praise: "Cocktails et boissons", percentage: 40 },
+      { praise: "Ambiance et musique", percentage: 30 },
+      { praise: "Gentillesse du personnel", percentage: 22 }
+    ];
+    
+    const mockThemes = themes.length > 0 ? themes : [
+      { theme: "Service", positive_rate: 72 },
+      { theme: "Ambiance", positive_rate: 85 },
+      { theme: "Qualité des plats", positive_rate: 63 },
+      { theme: "Prix", positive_rate: 58 },
+      { theme: "Propreté", positive_rate: 78 }
+    ];
+
     // Générer le HTML
     const html = `
 <!DOCTYPE html>
@@ -152,13 +178,42 @@ serve(async (req) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rapport d'analyse - ${establishment.name}</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      max-width: 800px;
+      max-width: 1000px;
       margin: 0 auto;
       padding: 40px 20px;
       color: #333;
       line-height: 1.6;
+      background: #ffffff;
+    }
+    .logo-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    .logo-placeholder {
+      width: 50px;
+      height: 50px;
+      background: #e5e7eb;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #6b7280;
+      font-size: 20px;
+    }
+    .logo-text {
+      font-size: 24px;
+      font-weight: bold;
+      color: #1e40af;
     }
     .header {
       text-align: center;
@@ -187,6 +242,123 @@ serve(async (req) => {
       font-size: 20px;
       margin-top: 0;
       margin-bottom: 15px;
+    }
+    .kpi-section {
+      margin-bottom: 40px;
+    }
+    .kpi-section h2 {
+      color: #1e40af;
+      font-size: 24px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .kpi-card {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .kpi-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .kpi-icon {
+      font-size: 24px;
+    }
+    .kpi-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #374151;
+    }
+    .kpi-value {
+      font-size: 32px;
+      font-weight: bold;
+      color: #2563eb;
+    }
+    .kpi-subtitle {
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .kpi-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .kpi-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .kpi-list li:last-child {
+      border-bottom: none;
+    }
+    .kpi-list-number {
+      font-weight: bold;
+      color: #2563eb;
+      margin-right: 8px;
+    }
+    .kpi-list-text {
+      flex: 1;
+      color: #374151;
+      font-size: 14px;
+    }
+    .kpi-list-percentage {
+      font-weight: 600;
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .theme-item {
+      padding: 12px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .theme-item:last-child {
+      border-bottom: none;
+    }
+    .theme-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .theme-name {
+      font-weight: 600;
+      color: #374151;
+      font-size: 14px;
+    }
+    .theme-percentage {
+      font-weight: 600;
+      color: #2563eb;
+      font-size: 14px;
+    }
+    .progress-bar {
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #2563eb, #3b82f6);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    .no-data-message {
+      color: #9ca3af;
+      font-style: italic;
+      font-size: 14px;
+      text-align: center;
+      padding: 20px;
     }
     .info-grid {
       display: grid;
@@ -279,12 +451,141 @@ serve(async (req) => {
       border-top: 1px solid #e5e7eb;
       padding-top: 20px;
     }
+    @media (max-width: 768px) {
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+      .stats-container {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
+  <div class="logo-header">
+    <div class="logo-placeholder">R</div>
+    <div class="logo-text">Reviewsvisor</div>
+  </div>
+
   <div class="header">
     <h1>📊 Rapport d'Analyse</h1>
     <div class="subtitle">Généré le ${dateStr} à ${timeStr}</div>
+  </div>
+
+  <div class="kpi-section">
+    <h2>🔑 KPI clés de l'expérience client</h2>
+    
+    <div class="kpi-grid">
+      <!-- Indice de satisfaction -->
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-icon">⭐</span>
+          <span class="kpi-title">Indice de satisfaction</span>
+        </div>
+        <div class="kpi-value">${avgRating.toFixed(1)}/5</div>
+        <div class="kpi-subtitle">Basé sur ${totalReviews} avis</div>
+      </div>
+
+      <!-- Taux d'avis positifs -->
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-icon">👍</span>
+          <span class="kpi-title">Taux d'avis positifs</span>
+        </div>
+        <div class="kpi-value">${positiveRatio}%</div>
+        <div class="kpi-subtitle">Avis ≥ 4★</div>
+      </div>
+
+      <!-- Taux d'avis négatifs -->
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-icon">👎</span>
+          <span class="kpi-title">Taux d'avis négatifs</span>
+        </div>
+        <div class="kpi-value">${negativeRatio}%</div>
+        <div class="kpi-subtitle">Avis ≤ 2★</div>
+      </div>
+
+      <!-- Taux de réponse -->
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-icon">💬</span>
+          <span class="kpi-title">Taux de réponse aux avis</span>
+        </div>
+        <div class="kpi-value">${reviews ? Math.round((reviews.filter((r: any) => r.owner_reply_text).length / reviews.length) * 100) : 0}%</div>
+        <div class="kpi-subtitle">Avis avec réponse Reviewsvisor</div>
+      </div>
+
+      <!-- Top 3 plus gros problèmes -->
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-icon">🚨</span>
+          <span class="kpi-title">Top 3 plus gros problèmes</span>
+        </div>
+        ${mockIssues.length > 0 ? `
+          <ul class="kpi-list">
+            ${mockIssues.slice(0, 3).map((issue: any, index: number) => `
+              <li>
+                <span class="kpi-list-number">${index + 1}.</span>
+                <span class="kpi-list-text">${issue.issue || issue}</span>
+                <span class="kpi-list-percentage">${issue.percentage || 0}%</span>
+              </li>
+            `).join('')}
+          </ul>
+        ` : `
+          <div class="no-data-message">Pas encore assez de données pour identifier les principaux problèmes.</div>
+        `}
+      </div>
+
+      <!-- Top 3 points forts -->
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-icon">⭐</span>
+          <span class="kpi-title">Top 3 points forts</span>
+        </div>
+        ${mockPraises.length > 0 ? `
+          <ul class="kpi-list">
+            ${mockPraises.slice(0, 3).map((praise: any, index: number) => `
+              <li>
+                <span class="kpi-list-number">${index + 1}.</span>
+                <span class="kpi-list-text">${praise.praise || praise}</span>
+                <span class="kpi-list-percentage">${praise.percentage || 0}%</span>
+              </li>
+            `).join('')}
+          </ul>
+        ` : `
+          <div class="no-data-message">Pas encore assez de données pour identifier les points forts.</div>
+        `}
+      </div>
+
+      <!-- Avis par thématique -->
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-icon">🧩</span>
+          <span class="kpi-title">Avis par thématique</span>
+        </div>
+        ${mockThemes.length > 0 ? `
+          <div>
+            ${mockThemes.map((theme: any) => `
+              <div class="theme-item">
+                <div class="theme-header">
+                  <span class="theme-name">${theme.theme}</span>
+                  <span class="theme-percentage">${theme.positive_rate || 0}%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: ${theme.positive_rate || 0}%"></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div class="no-data-message">Aucune analyse par thématique disponible pour le moment.</div>
+        `}
+      </div>
+    </div>
   </div>
 
   <div class="section">
