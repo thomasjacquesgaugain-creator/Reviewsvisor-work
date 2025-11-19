@@ -45,10 +45,9 @@ export default function SaveEstablishmentButton({
     }
 
     // 4) Sauvegarder l'établissement principal dans user_establishment
+    // Note: user_id est la clé primaire, donc upsert met à jour l'établissement principal de l'utilisateur
     const userEstabPayload = { user_id: user.id, ...selected };
-    const { error: userEstabError } = await supabase.from("user_establishment").upsert(userEstabPayload, {
-      onConflict: 'user_id,place_id'
-    });
+    const { error: userEstabError } = await supabase.from("user_establishment").upsert(userEstabPayload);
     
     if (userEstabError) {
       console.error("❌ [SaveEstablishmentButton] Erreur sauvegarde user_establishment:", userEstabError);
@@ -62,6 +61,7 @@ export default function SaveEstablishmentButton({
     console.log("✅ [SaveEstablishmentButton] user_establishment saved successfully");
 
     // 5) Sauvegarder aussi dans la table établissements pour la liste
+    // Note: contrainte unique sur (user_id, place_id) empêche les doublons
     const etablissementPayload = {
       user_id: user.id,
       place_id: selected.place_id,
@@ -71,7 +71,8 @@ export default function SaveEstablishmentButton({
       type: "Restaurant"
     };
     const { error: etabError } = await supabase.from("établissements").upsert(etablissementPayload, {
-      onConflict: 'user_id,place_id'
+      onConflict: 'user_id,place_id',
+      ignoreDuplicates: false
     });
     
     if (etabError) {
