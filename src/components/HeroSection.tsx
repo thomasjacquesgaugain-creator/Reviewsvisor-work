@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Brain, Target, TrendingUp, CheckCircle, Zap, Shield } from "lucide-react";
-import logoHeader from "@/assets/reviewsvisor-logo-header.png";
+import logoHeader from "@/assets/reviewsvisor-logo-blue.png";
 
 export const HeroSection = () => {
   return (
