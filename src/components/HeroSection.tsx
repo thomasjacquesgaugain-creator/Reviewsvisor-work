@@ -40,8 +40,8 @@ export const HeroSection = () => {
           <img 
             src={logoHeader} 
             alt="Reviewsvisor Logo" 
-            className="h-[110px] w-auto"
-            style={{ background: 'transparent' }}
+            className="w-[140px] h-[140px]"
+            style={{ background: 'transparent', border: 'none' }}
           />
           <span className="text-[#2563eb] text-[42px] font-bold leading-none">
             Reviewsvisor
