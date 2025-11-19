@@ -489,7 +489,7 @@ const Dashboard = () => {
                     setIsDownloadingReport(false);
                   }
                 }}
-                className="flex items-center gap-2 text-primary"
+                className="flex items-center gap-2"
               >
                 {isDownloadingReport ? (
                   <>
@@ -498,7 +498,7 @@ const Dashboard = () => {
                   </>
                 ) : (
                   <>
-                    <Download className="w-4 h-4" />
+                    <Download className="w-4 h-4 text-primary" />
                     Télécharger le rapport
                   </>
                 )}
