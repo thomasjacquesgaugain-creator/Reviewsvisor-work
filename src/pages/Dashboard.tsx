@@ -517,7 +517,7 @@ const Dashboard = () => {
                   </>
                 ) : (
                   <>
-                    <Download className="w-4 h-4" />
+                    <Download className="w-4 h-4 text-primary" />
                     Télécharger le rapport
                   </>
                 )}
