@@ -47,8 +47,8 @@ const App = () => {
         <Toaster position="bottom-right" richColors closeButton toastOptions={{ className: "z-[9999]" }} />
         <AppLayout>
           <Routes>
-            <Route path="/accueil" element={<Accueil />} />
-            <Route path="/" element={<Navigate to="/accueil" replace />} />
+            <Route path="/" element={<Accueil />} />
+            <Route path="/accueil" element={<Navigate to="/" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/a-propos" element={<APropos />} />
