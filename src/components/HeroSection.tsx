@@ -35,14 +35,15 @@ export const HeroSection = () => {
           </div>
         </div>
 
-        {/* Brand header */}
-        <div className="flex items-center justify-center gap-3 py-6">
+        {/* Brand header - Large version */}
+        <div className="flex items-center justify-center gap-4 py-6">
           <img 
             src={logoHeader} 
             alt="Reviewsvisor Logo" 
-            className="w-10 h-10"
+            className="h-[110px] w-auto"
+            style={{ background: 'transparent' }}
           />
-          <span className="text-[#2563eb] text-[32px] font-bold">
+          <span className="text-[#2563eb] text-[42px] font-bold leading-none">
             Reviewsvisor
           </span>
         </div>
