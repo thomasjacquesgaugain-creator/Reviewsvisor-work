@@ -105,6 +105,9 @@ const Dashboard = () => {
   
   // État pour le téléchargement du rapport
   const [isDownloadingReport, setIsDownloadingReport] = useState(false);
+  
+  // ID de l'établissement dans la base de données
+  const [establishmentDbId, setEstablishmentDbId] = useState<string | null>(null);
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -243,16 +246,17 @@ const Dashboard = () => {
           }
         }
 
-        // Récupérer la date de création de l'établissement
+        // Récupérer la date de création et l'id de l'établissement
         const { data: establishmentData, error: estError } = await supabase
           .from('establishments')
-          .select('created_at')
+          .select('id, created_at')
           .eq('place_id', currentEstab.place_id)
           .eq('user_id', user.id)
           .maybeSingle();
         
         if (!estError && establishmentData) {
           setEstablishmentCreatedAt(establishmentData.created_at);
+          setEstablishmentDbId(establishmentData.id);
         } else {
           // Fallback: utiliser la date du plus ancien avis ou aujourd'hui
           if (reviewsData && reviewsData.length > 0) {
@@ -408,9 +412,9 @@ const Dashboard = () => {
               <Button
                 variant="outline"
                 onClick={async () => {
-                  if (!selectedEtab?.place_id) {
+                  if (!establishmentDbId) {
                     toast.error('Erreur', {
-                      description: 'Veuillez d\'abord sélectionner un établissement.',
+                      description: 'Cet établissement n\'est pas encore enregistré dans votre compte.',
                     });
                     return;
                   }
@@ -435,7 +439,7 @@ const Dashboard = () => {
                           Authorization: `Bearer ${session.access_token}`,
                         },
                         body: JSON.stringify({
-                          placeId: selectedEtab.place_id,
+                          establishmentId: establishmentDbId,
                         }),
                       }
                     );
@@ -444,9 +448,9 @@ const Dashboard = () => {
 
                     if (contentType && contentType.includes('application/json')) {
                       const json = await response.json();
-                      if (!json.ok) {
-                        if (json.reason === 'no_establishment') {
-                          toast.info('Établissement non trouvé', {
+                      if (json.error) {
+                        if (json.error === 'ESTABLISHMENT_NOT_FOUND') {
+                          toast.error('Établissement non trouvé', {
                             description: 'Cet établissement n\'est pas encore enregistré dans votre compte.',
                           });
                         } else if (json.reason === 'no_data') {
