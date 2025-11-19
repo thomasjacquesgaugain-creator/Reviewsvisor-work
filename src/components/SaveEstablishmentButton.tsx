@@ -93,7 +93,11 @@ export default function SaveEstablishmentButton({
     sonnerToast("Établissement enregistré", {
       description: "Les informations ont bien été sauvegardées.",
       duration: 5000,
-      className: "bg-blue-600 text-white border border-blue-700 shadow-lg",
+      classNames: {
+        toast: "!bg-blue-600 !text-white !border !border-blue-700 !shadow-lg",
+        title: "!text-white",
+        description: "!text-blue-100",
+      },
     });
   }
 
