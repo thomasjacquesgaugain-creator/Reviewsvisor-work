@@ -607,7 +607,7 @@ Rédige uniquement le paragraphe d'analyse, sans titre ni introduction.`;
 </head>
 <body>
   <div class="logo-header">
-    <img src="https://zzjmtipdsccxmmoaetlp.supabase.co/storage/v1/object/public/lovable-uploads/62ee8352-36cc-4657-89b4-5c00321ab74c.png" alt="Reviewsvisor Logo" class="logo-image" />
+    <img src="https://zzjmtipdsccxmmoaetlp.supabase.co/storage/v1/object/public/reviewsvisor-logo.png" alt="Reviewsvisor Logo" class="logo-image" />
     <span class="logo-text">Reviewsvisor</span>
   </div>
 
