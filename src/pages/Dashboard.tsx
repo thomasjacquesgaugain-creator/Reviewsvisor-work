@@ -457,16 +457,16 @@ const Dashboard = () => {
                       if (data.ok === false) {
                         console.log('ℹ️ Pas de rapport disponible:', data.reason);
                         if (data.reason === 'no_establishment') {
-                          toast.error('Établissement non trouvé', {
+                          toast.info('Établissement non trouvé', {
                             description: 'Cet établissement n\'est pas encore enregistré dans votre compte.',
                           });
                         } else if (data.reason === 'no_data') {
-                          toast.error('Aucun rapport disponible', {
-                            description: 'Aucune donnée d\'analyse n\'est encore disponible pour cet établissement.',
+                          toast.info('Aucun rapport disponible', {
+                            description: 'Aucune analyse n\'est encore disponible pour cet établissement. Importez ou analysez des avis pour générer un rapport.',
                           });
                         } else {
-                          toast.error('Aucun rapport disponible', {
-                            description: 'Aucun rapport n\'est encore disponible pour cet établissement.',
+                          toast.info('Aucun rapport disponible', {
+                            description: 'Aucun rapport n\'est encore disponible pour cet établissement pour le moment.',
                           });
                         }
                         return; // Arrêter ici sans lever d'exception

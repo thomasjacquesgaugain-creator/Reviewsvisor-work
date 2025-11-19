@@ -67,9 +67,9 @@ serve(async (req) => {
 
     console.log('[generate-report] Récupération de l\'établissement pour user:', userId, 'place:', placeId);
 
-    // Récupérer l'établissement (RLS filtrera automatiquement par user_id)
+    // Récupérer l'établissement depuis user_establishment (table utilisée par le reste de l'app)
     const { data: establishment, error: estabError } = await supabaseClient
-      .from('establishments')
+      .from('user_establishment')
       .select('*')
       .eq('place_id', placeId)
       .eq('user_id', userId)
