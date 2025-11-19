@@ -36,20 +36,17 @@ export const HeroSection = () => {
         </div>
 
         {/* Brand header */}
-        <div className="bg-white py-4 mt-4">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <img 
-                src={logoHeader} 
-                alt="Reviewsvisor Logo" 
-                className="w-8 h-auto"
-              />
-              <span className="text-[#2563EB] text-lg font-semibold">
-                Reviewsvisor
-              </span>
-            </div>
-          </div>
+        <div className="flex items-center justify-center gap-3 py-6">
+          <img 
+            src={logoHeader} 
+            alt="Reviewsvisor Logo" 
+            className="w-10 h-10"
+          />
+          <span className="text-[#2563eb] text-[32px] font-bold">
+            Reviewsvisor
+          </span>
         </div>
+
 
         {/* Main hero card */}
         <div className="container mx-auto px-4 py-16">
