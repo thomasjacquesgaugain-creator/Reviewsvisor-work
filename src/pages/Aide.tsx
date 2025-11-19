@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import AiAssistance from "@/components/AiAssistance";
 
 const Aide = () => {
   return (
@@ -21,6 +22,8 @@ const Aide = () => {
               <p className="text-center text-foreground/80 text-lg mb-12 max-w-[700px] mx-auto">
                 Trouvez des réponses rapides à vos questions et découvrez comment utiliser <span className="text-blue">Reviewsvisor</span> efficacement.
               </p>
+
+              <AiAssistance />
 
               <div className="mb-12">
                 <h2 className="text-2xl font-bold mb-6 text-foreground">Questions fréquentes</h2>
