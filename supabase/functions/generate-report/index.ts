@@ -12,6 +12,7 @@ serve(async (req) => {
   }
 
   try {
+    console.log('[generate-report] ========== DÉBUT ==========');
     console.log('[generate-report] Starting request processing');
     
     // Récupérer le token JWT depuis le header
@@ -29,7 +30,6 @@ serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     
     // Créer un client Supabase avec le token utilisateur
-    // Les RLS policies vont automatiquement filtrer par user_id
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -40,15 +40,14 @@ serve(async (req) => {
       }
     );
 
-    // Extraire le user_id du JWT sans faire d'appel à auth.getUser()
-    // qui ne fonctionne pas bien dans les edge functions
+    // Extraire le user_id du JWT
     let userId: string;
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       userId = payload.sub;
-      console.log('[generate-report] User ID extrait du JWT:', userId);
+      console.log('[generate-report] ✅ User ID extrait du JWT:', userId);
     } catch (e) {
-      console.error('[generate-report] Erreur lors du parsing du JWT:', e);
+      console.error('[generate-report] ❌ Erreur lors du parsing du JWT:', e);
       return new Response(
         JSON.stringify({ error: 'Token invalide. Veuillez vous reconnecter.' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -56,35 +55,51 @@ serve(async (req) => {
     }
 
     const { establishmentId } = await req.json();
-    console.log('[generate-report] establishmentId reçu:', establishmentId);
+    console.log('[generate-report] 📥 Payload reçu - establishmentId:', establishmentId);
 
     if (!establishmentId) {
+      console.error('[generate-report] ❌ establishmentId manquant dans le payload');
       return new Response(
         JSON.stringify({ error: 'establishmentId requis' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[generate-report] Récupération de l\'établissement:', establishmentId);
+    console.log('[generate-report] 🔍 Recherche établissement avec:', {
+      establishmentId,
+      userId
+    });
 
-    // Récupérer l'établissement par son id uniquement (sans filtrer par user)
+    // Récupérer l'établissement par son id ET vérifier qu'il appartient bien à l'utilisateur
     const { data: establishment, error: estabError } = await supabaseClient
       .from('establishments')
       .select('*')
       .eq('id', establishmentId)
+      .eq('user_id', userId)
       .single();
 
-    console.log('[generate-report] Établissement trouvé:', !!establishment, 'Erreur:', estabError);
+    console.log('[generate-report] Résultat requête establishments:', {
+      found: !!establishment,
+      error: estabError,
+      establishment_name: establishment?.name,
+      establishment_address: establishment?.formatted_address
+    });
 
     if (estabError || !establishment) {
-      console.error('[generate-report] Établissement non trouvé pour id:', establishmentId, estabError);
+      console.error('[generate-report] ❌ Établissement non trouvé pour:', {
+        id: establishmentId,
+        user_id: userId,
+        error: estabError
+      });
       return new Response(
         JSON.stringify({ error: 'ESTABLISHMENT_NOT_FOUND' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[generate-report] Récupération des insights et avis');
+    console.log('[generate-report] ✅ Établissement trouvé:', establishment.name);
+
+    console.log('[generate-report] 📊 Récupération des insights et avis pour place_id:', establishment.place_id);
 
     // Récupérer les insights
     const { data: insights } = await supabaseClient
@@ -103,17 +118,20 @@ serve(async (req) => {
       .order('published_at', { ascending: false })
       .limit(50);
 
-    console.log('[generate-report] Insights:', !!insights, 'Reviews count:', reviews?.length || 0);
+    console.log('[generate-report] Données récupérées:', {
+      insights: !!insights,
+      reviews_count: reviews?.length || 0
+    });
 
     if (!insights && (!reviews || reviews.length === 0)) {
-      console.log('[generate-report] Aucune donnée disponible - retour propre sans erreur');
+      console.log('[generate-report] ⚠️ Aucune donnée d\'analyse disponible');
       return new Response(
-        JSON.stringify({ ok: false, reason: 'no_data' }),
+        JSON.stringify({ error: 'Aucune analyse disponible pour cet établissement' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[generate-report] Génération du HTML du rapport');
+    console.log('[generate-report] 📝 Génération du HTML du rapport');
     const now = new Date();
     const dateStr = now.toLocaleDateString('fr-FR', { 
       weekday: 'long', 
@@ -719,7 +737,8 @@ Rédige uniquement le paragraphe d'analyse, sans titre ni introduction.`;
 </html>
     `;
 
-    console.log('[generate-report] HTML généré avec succès');
+    console.log('[generate-report] ✅ HTML généré avec succès');
+    console.log('[generate-report] ========== FIN ==========');
 
     return new Response(html, {
       status: 200,
@@ -731,7 +750,7 @@ Rédige uniquement le paragraphe d'analyse, sans titre ni introduction.`;
     });
 
   } catch (error) {
-    console.error('[generate-report] Erreur globale:', error);
+    console.error('[generate-report] ❌ Erreur globale:', error);
     return new Response(
       JSON.stringify({ 
         error: 'Erreur lors de la génération du rapport', 
