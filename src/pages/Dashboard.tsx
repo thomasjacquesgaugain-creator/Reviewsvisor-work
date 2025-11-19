@@ -99,6 +99,9 @@ const Dashboard = () => {
   
   // Liste des avis à valider (filtrés pour exclure les validés)
   const [pendingReviews, setPendingReviews] = useState<any[]>([]);
+  
+  // Index de l'avis actuellement affiché dans le module "Réponse automatique" (mode file d'attente)
+  const [currentReviewIndex, setCurrentReviewIndex] = useState<number>(0);
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -1247,13 +1250,18 @@ const Dashboard = () => {
           </CardHeader>
           {showReponseAuto && <CardContent>
               <div className="space-y-4">
+                {/* Mode file d'attente : afficher un seul avis à la fois */}
                 {pendingReviews.length > 0 ? (
-                  pendingReviews.slice(0, 5).map((review: any, index: number) => {
+                  (() => {
+                    // Avis actuellement affiché basé sur currentReviewIndex
+                    const review = pendingReviews[currentReviewIndex];
+                    if (!review) return null;
+                    
                     const rating = review.rating || 0;
                     const isPositive = rating >= 4;
                     const authorName = review.author || 'Anonyme';
                     const reviewText = review.text || 'Pas de commentaire';
-                    const reviewId = review.id || `review-${index}`;
+                    const reviewId = review.id || `review-${currentReviewIndex}`;
                     
                     // Générer une réponse automatique simple basée sur le rating
                     const defaultResponse = isPositive
@@ -1347,9 +1355,6 @@ const Dashboard = () => {
                                         userId: user.id
                                       });
                                       
-                                      // Optimistic update : retirer la carte de la liste
-                                      setPendingReviews(prev => prev.filter(r => r.id !== reviewId));
-                                      
                                       // Marquer comme validée localement
                                       setValidatedReviews(prev => new Set([...prev, reviewId]));
                                       
@@ -1363,6 +1368,22 @@ const Dashboard = () => {
                                       window.dispatchEvent(new CustomEvent('response-validated', {
                                         detail: { placeId: selectedEtab.place_id }
                                       }));
+                                      
+                                      // LOGIQUE FILE D'ATTENTE : passer au prochain avis
+                                      // Retirer l'avis validé de la liste
+                                      setPendingReviews(prev => prev.filter(r => r.id !== reviewId));
+                                      
+                                      // Si on a retiré l'avis et qu'il reste d'autres avis, on garde le même index
+                                      // (l'avis suivant prendra la place de celui qu'on vient de retirer)
+                                      // Sinon, réinitialiser l'index à 0
+                                      if (pendingReviews.length - 1 === 0) {
+                                        setCurrentReviewIndex(0);
+                                      } else if (currentReviewIndex >= pendingReviews.length - 1) {
+                                        // Si on était sur le dernier, revenir au premier
+                                        setCurrentReviewIndex(0);
+                                      }
+                                      // Sinon, on garde currentReviewIndex inchangé car le suivant prend la place
+                                      
                                     } catch (error: any) {
                                       console.error('validateReponse', error);
                                       toast.error('Échec de l\'enregistrement', {
@@ -1415,12 +1436,12 @@ const Dashboard = () => {
                         </div>
                       </div>
                     );
-                  })
+                  })()
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
-                    <p className="text-lg font-medium text-gray-900">Plus d'avis à valider 🎉</p>
-                    <p className="text-sm mt-1">Toutes les réponses ont été validées !</p>
+                    <p className="text-lg font-medium text-gray-900">🎉 Vous avez traité toutes les réponses automatiques.</p>
+                    <p className="text-sm mt-1">Aucun avis en attente de validation pour le moment.</p>
                   </div>
                 )}
               </div>
