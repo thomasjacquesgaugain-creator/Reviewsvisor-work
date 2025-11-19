@@ -300,3 +300,25 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Style du bouton Télécharger le rapport */
+.download-report-btn {
+  background-color: #2563eb !important;
+  color: white !important;
+  border: none !important;
+  padding: 10px 18px !important;
+  border-radius: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-weight: 600 !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.download-report-btn:hover {
+  background-color: #1e4fc9 !important;
+}
+
+.download-report-btn svg {
+  stroke: white !important;
+}

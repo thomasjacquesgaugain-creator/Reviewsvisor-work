@@ -425,7 +425,7 @@ const Dashboard = () => {
             {/* Bouton Télécharger le rapport */}
             {(selectedEtab || selectedEstablishment) && (
               <Button
-                variant="outline"
+                className="download-report-btn"
                 onClick={async () => {
                   console.log('[Dashboard] 🔘 Clic sur Télécharger le rapport');
                   console.log('[Dashboard] État actuel:', {
@@ -502,37 +502,32 @@ const Dashboard = () => {
                       throw new Error(`HTTP error! status: ${response.status}`);
                     }
 
-                    // Récupérer le HTML de la réponse
-                    const htmlText = await response.text();
-                    
-                    // Créer un Blob avec le bon type MIME pour HTML
-                    const htmlBlob = new Blob([htmlText], { type: 'text/html' });
-                    const url = URL.createObjectURL(htmlBlob);
-                    
-                    // Télécharger le fichier HTML
-                    const a = document.createElement('a');
-                    a.href = url;
-                    const etablissementName = selectedEtab.name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-                    a.download = `rapport-${etablissementName}-${new Date().toISOString().split('T')[0]}.html`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
+                    const htmlContent = await response.text();
+                    console.log('[Dashboard] ✅ HTML reçu, longueur:', htmlContent.length);
 
-                    console.log('[Dashboard] ✅ Rapport téléchargé avec succès');
-                    toast.success('Rapport généré', {
-                      description: 'Le rapport a été téléchargé avec succès.',
+                    const blob = new Blob([htmlContent], { type: 'text/html' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    const filename = `rapport-${(selectedEtab?.name || selectedEstablishment?.name || 'etablissement').toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.html`;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+
+                    toast.success('Rapport téléchargé', {
+                      description: `Le rapport a été téléchargé avec succès.`,
                     });
                   } catch (error) {
-                    console.error('[Dashboard] ❌ Erreur inattendue lors de la génération du rapport:', error);
+                    console.error('[Dashboard] ❌ Erreur téléchargement:', error);
                     toast.error('Erreur', {
-                      description: 'Une erreur est survenue lors de la génération du rapport.',
+                      description: 'Une erreur est survenue lors du téléchargement du rapport.',
                     });
                   } finally {
                     setIsDownloadingReport(false);
                   }
                 }}
-                className="flex items-center gap-2"
               >
                 {isDownloadingReport ? (
                   <>
@@ -541,7 +536,7 @@ const Dashboard = () => {
                   </>
                 ) : (
                   <>
-                    <Download className="w-4 h-4 text-primary" />
+                    <Download className="w-4 h-4" />
                     Télécharger le rapport
                   </>
                 )}
