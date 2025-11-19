@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar } from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar, Download } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,6 +102,9 @@ const Dashboard = () => {
   
   // Index de l'avis actuellement affiché dans le module "Réponse automatique" (mode file d'attente)
   const [currentReviewIndex, setCurrentReviewIndex] = useState<number>(0);
+  
+  // État pour le téléchargement du rapport
+  const [isDownloadingReport, setIsDownloadingReport] = useState(false);
 
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
@@ -395,9 +398,79 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <BarChart3 className="w-6 h-6 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard d'analyse</h1>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-6 h-6 text-blue-600" />
+              <h1 className="text-2xl font-bold text-gray-900">Dashboard d'analyse</h1>
+            </div>
+            {/* Bouton Télécharger le rapport */}
+            {(selectedEtab || selectedEstablishment) && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isDownloadingReport}
+                onClick={async () => {
+                  const currentEstab = selectedEtab || selectedEstablishment;
+                  if (!currentEstab?.place_id || !user?.id) {
+                    toast.error('Erreur', {
+                      description: 'Établissement ou utilisateur non défini',
+                    });
+                    return;
+                  }
+
+                  setIsDownloadingReport(true);
+                  try {
+                    const { data, error } = await supabase.functions.invoke('generate-report', {
+                      body: { placeId: currentEstab.place_id }
+                    });
+
+                    if (error) {
+                      console.error('Report generation error:', error);
+                      toast.error('Aucun rapport disponible', {
+                        description: 'Aucun rapport disponible pour cet établissement.',
+                      });
+                      return;
+                    }
+
+                    // Le backend renvoie du HTML
+                    // Créer un blob et télécharger
+                    const blob = new Blob([data], { type: 'text/html' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `rapport-${currentEstab.name.replace(/[^a-z0-9]/gi, '-')}-${new Date().toISOString().split('T')[0]}.html`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+
+                    toast.success('Rapport téléchargé', {
+                      description: 'Le rapport a été généré et téléchargé avec succès.',
+                    });
+                  } catch (err) {
+                    console.error('Download error:', err);
+                    toast.error('Erreur', {
+                      description: 'Erreur lors du téléchargement du rapport.',
+                    });
+                  } finally {
+                    setIsDownloadingReport(false);
+                  }
+                }}
+                className="flex items-center gap-2"
+              >
+                {isDownloadingReport ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Génération...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Télécharger le rapport
+                  </>
+                )}
+              </Button>
+            )}
           </div>
           <div className="flex items-center gap-2 text-gray-600">
             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
