@@ -78,10 +78,10 @@ serve(async (req) => {
     console.log('[generate-report] Établissement trouvé:', !!establishment, 'Erreur:', estabError);
 
     if (estabError || !establishment) {
-      console.error('[generate-report] Erreur établissement:', estabError);
+      console.log('[generate-report] Aucun établissement trouvé - retour propre sans erreur');
       return new Response(
-        JSON.stringify({ error: 'Établissement non trouvé ou accès non autorisé' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ ok: false, reason: 'no_establishment' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -107,9 +107,10 @@ serve(async (req) => {
     console.log('[generate-report] Insights:', !!insights, 'Reviews count:', reviews?.length || 0);
 
     if (!insights && (!reviews || reviews.length === 0)) {
+      console.log('[generate-report] Aucune donnée disponible - retour propre sans erreur');
       return new Response(
-        JSON.stringify({ error: 'Aucune donnée disponible pour générer le rapport' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ ok: false, reason: 'no_data' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

@@ -446,27 +446,41 @@ const Dashboard = () => {
                       }
                     );
 
-                    if (!response.ok) {
-                      const errorData = await response.json().catch(() => ({}));
-                      console.error('❌ Erreur génération rapport:', response.status, errorData);
+                    console.log('📡 Réponse reçue, status:', response.status, 'content-type:', response.headers.get('content-type'));
+
+                    // Vérifier si c'est un JSON (cas d'erreur ou no_data)
+                    const contentType = response.headers.get('content-type');
+                    if (contentType?.includes('application/json')) {
+                      const data = await response.json();
                       
-                      if (response.status === 401) {
-                        toast.error('Session expirée', {
-                          description: 'Veuillez vous reconnecter pour télécharger le rapport.',
-                        });
-                      } else if (response.status === 404) {
-                        toast.error('Aucune donnée disponible', {
-                          description: 'Aucun rapport disponible pour cet établissement.',
-                        });
-                      } else {
-                        toast.error('Erreur', {
-                          description: errorData.error || 'Erreur lors de la génération du rapport.',
-                        });
+                      // Cas où il n'y a pas de rapport disponible (gestion propre, pas une erreur)
+                      if (data.ok === false) {
+                        console.log('ℹ️ Pas de rapport disponible:', data.reason);
+                        if (data.reason === 'no_establishment') {
+                          toast.error('Établissement non trouvé', {
+                            description: 'Cet établissement n\'est pas encore enregistré dans votre compte.',
+                          });
+                        } else if (data.reason === 'no_data') {
+                          toast.error('Aucun rapport disponible', {
+                            description: 'Aucune donnée d\'analyse n\'est encore disponible pour cet établissement.',
+                          });
+                        } else {
+                          toast.error('Aucun rapport disponible', {
+                            description: 'Aucun rapport n\'est encore disponible pour cet établissement.',
+                          });
+                        }
+                        return; // Arrêter ici sans lever d'exception
                       }
+                      
+                      // Cas d'erreur réelle (ex: erreur serveur)
+                      console.error('❌ Erreur API:', data);
+                      toast.error('Erreur', {
+                        description: data.error || 'Une erreur est survenue lors de la génération du rapport.',
+                      });
                       return;
                     }
 
-                    // Récupérer le HTML
+                    // Cas nominal: on a reçu du HTML
                     const html = await response.text();
                     console.log('✅ Rapport HTML reçu, taille:', html.length);
 
@@ -485,10 +499,11 @@ const Dashboard = () => {
                       description: 'Le rapport a été généré et téléchargé avec succès.',
                     });
                   } catch (error) {
-                    console.error('❌ Erreur téléchargement rapport:', error);
+                    console.error('❌ Erreur inattendue lors de la génération du rapport:', error);
                     toast.error('Erreur', {
-                      description: 'Une erreur est survenue lors du téléchargement.',
+                      description: 'Une erreur est survenue lors de la génération du rapport.',
                     });
+                    // Ne pas re-throw l'erreur pour éviter le popup noir global
                   } finally {
                     setIsDownloadingReport(false);
                   }
