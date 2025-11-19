@@ -267,6 +267,12 @@ const Dashboard = () => {
           setEstablishmentDbId(establishmentData.id);
           console.log('[Dashboard] ✅ Établissement ID récupéré:', establishmentData.id);
         } else {
+          console.warn('[Dashboard] ⚠️ Établissement non trouvé dans la base pour:', {
+            place_id: currentEstab.place_id,
+            user_id: user.id,
+            error: estError
+          });
+          setEstablishmentDbId(null);
           // Fallback: utiliser la date du plus ancien avis ou aujourd'hui
           if (reviewsData && reviewsData.length > 0) {
             const oldestReview = reviewsData
