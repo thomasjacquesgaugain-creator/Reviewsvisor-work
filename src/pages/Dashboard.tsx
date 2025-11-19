@@ -434,10 +434,12 @@ const Dashboard = () => {
                     place_id: selectedEtab?.place_id
                   });
 
-                  if (!establishmentDbId) {
-                    console.error('[Dashboard] ❌ establishmentDbId manquant');
+                  const placeId = selectedEtab?.place_id || selectedEstablishment?.place_id;
+                  
+                  if (!placeId) {
+                    console.error('[Dashboard] ❌ place_id manquant');
                     toast.error('Erreur', {
-                      description: 'Cet établissement n\'est pas encore enregistré dans votre compte.',
+                      description: 'Impossible de générer le rapport : établissement introuvable.',
                     });
                     return;
                   }
@@ -455,7 +457,10 @@ const Dashboard = () => {
 
                     const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-report`;
                     console.log('[Dashboard] 📡 Appel API:', apiUrl);
-                    console.log('[Dashboard] Payload:', { establishmentId: establishmentDbId });
+                    console.log('[Dashboard] Payload:', { 
+                      establishmentId: establishmentDbId,
+                      placeId: placeId
+                    });
 
                     const response = await fetch(apiUrl, {
                       method: 'POST',
@@ -465,6 +470,7 @@ const Dashboard = () => {
                       },
                       body: JSON.stringify({
                         establishmentId: establishmentDbId,
+                        placeId: placeId,
                       }),
                     });
 
