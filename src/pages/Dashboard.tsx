@@ -435,7 +435,7 @@ const Dashboard = () => {
                           Authorization: `Bearer ${session.access_token}`,
                         },
                         body: JSON.stringify({
-                          establishment_id: selectedEtab.place_id,
+                          placeId: selectedEtab.place_id,
                         }),
                       }
                     );
