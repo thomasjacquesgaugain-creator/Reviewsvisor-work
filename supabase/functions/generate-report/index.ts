@@ -67,9 +67,9 @@ serve(async (req) => {
 
     console.log('[generate-report] Récupération de l\'établissement pour user:', userId, 'place:', placeId);
 
-    // Récupérer l'établissement depuis user_establishment (table utilisée par le reste de l'app)
+    // Récupérer l'établissement depuis establishments (table principale avec adresse)
     const { data: establishment, error: estabError } = await supabaseClient
-      .from('user_establishment')
+      .from('establishments')
       .select('*')
       .eq('place_id', placeId)
       .eq('user_id', userId)
@@ -131,17 +131,6 @@ serve(async (req) => {
     const avgRating = insights?.avg_rating || 0;
     const positiveRatio = insights?.positive_ratio ? Math.round(insights.positive_ratio * 100) : 0;
     const negativeRatio = 100 - positiveRatio;
-
-    // Analyse du sentiment global
-    let sentimentAnalysis = "Aucune analyse disponible";
-    if (insights?.summary && typeof insights.summary === 'object') {
-      const summary = insights.summary as any;
-      if (summary.global_sentiment) {
-        sentimentAnalysis = summary.global_sentiment;
-      } else if (summary.overview) {
-        sentimentAnalysis = summary.overview;
-      }
-    }
 
     // Préparer les données pour les nouveaux KPI
     const topIssues = insights?.top_issues || [];
@@ -214,6 +203,69 @@ serve(async (req) => {
         { theme: "Ambiance", percentage: 85 },
         { theme: "Rapport qualité/prix", percentage: 48 }
       ];
+    }
+
+    // Génération de l'analyse IA des statistiques globales
+    console.log('[generate-report] Génération de l\'analyse IA');
+    let aiAnalysis = "Analyse en cours...";
+    
+    try {
+      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+      if (!LOVABLE_API_KEY) {
+        console.error('[generate-report] LOVABLE_API_KEY non configurée');
+        aiAnalysis = "L'analyse IA n'est pas disponible pour le moment.";
+      } else {
+        const topIssuesText = formattedIssues.map((i, idx) => `${idx + 1}. ${i.label} (${i.percentage}%)`).join(', ');
+        const topPraisesText = formattedPraises.map((p, idx) => `${idx + 1}. ${p.label} (${p.percentage}%)`).join(', ');
+        
+        const prompt = `Tu es un expert en analyse de satisfaction client pour les restaurants et établissements. 
+Rédige un paragraphe analytique et professionnel (150-200 mots) résumant la performance de l'établissement "${establishment.name}" basé sur ces données :
+
+- Note moyenne : ${avgRating.toFixed(1)}/5
+- Nombre total d'avis analysés : ${totalReviews}
+- Taux d'avis positifs (≥4★) : ${positiveRatio}%
+- Taux d'avis négatifs (≤2★) : ${negativeRatio}%
+- Top 3 problèmes identifiés : ${topIssuesText || 'Aucun problème majeur identifié'}
+- Top 3 points forts : ${topPraisesText || 'Points forts à identifier'}
+
+Ton analyse doit :
+1. Commencer par un constat général sur la satisfaction client
+2. Mettre en avant les points forts de l'établissement
+3. Identifier les axes d'amélioration prioritaires
+4. Être factuelle, claire et constructive
+5. Ne pas utiliser de formatage markdown, juste du texte simple
+
+Rédige uniquement le paragraphe d'analyse, sans titre ni introduction.`;
+
+        const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [
+              { role: 'system', content: 'Tu es un expert en analyse de satisfaction client.' },
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.7,
+            max_tokens: 500,
+          }),
+        });
+
+        if (aiResponse.ok) {
+          const aiData = await aiResponse.json();
+          aiAnalysis = aiData.choices?.[0]?.message?.content || "L'analyse n'a pas pu être générée.";
+          console.log('[generate-report] Analyse IA générée avec succès');
+        } else {
+          console.error('[generate-report] Erreur API IA:', await aiResponse.text());
+          aiAnalysis = "L'analyse IA n'a pas pu être générée pour le moment.";
+        }
+      }
+    } catch (error) {
+      console.error('[generate-report] Erreur lors de la génération de l\'analyse IA:', error);
+      aiAnalysis = "Une erreur s'est produite lors de la génération de l'analyse.";
     }
 
     // Générer le HTML
@@ -430,35 +482,14 @@ serve(async (req) => {
       color: #111827;
       font-size: 16px;
     }
-    .stats-container {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-      margin: 20px 0;
-    }
-    .stat-box {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      text-align: center;
-      border: 1px solid #e5e7eb;
-    }
-    .stat-value {
-      font-size: 32px;
-      font-weight: bold;
-      color: #2563eb;
-      margin-bottom: 5px;
-    }
-    .stat-label {
-      font-size: 14px;
-      color: #6b7280;
-    }
-    .sentiment-box {
-      background: white;
-      padding: 15px;
+    .ai-analysis-box {
+      background: #f9fafb;
+      padding: 20px;
       border-radius: 8px;
       border: 1px solid #e5e7eb;
-      margin: 15px 0;
+      line-height: 1.8;
+      color: #374151;
+      font-size: 15px;
     }
     .review-item {
       background: white;
@@ -650,27 +681,9 @@ serve(async (req) => {
   </div>
 
   <div class="section">
-    <h2>📈 Statistiques globales</h2>
-    <div class="stats-container">
-      <div class="stat-box">
-        <div class="stat-value">${totalReviews}</div>
-        <div class="stat-label">Avis analysés</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value">${avgRating.toFixed(1)}</div>
-        <div class="stat-label">Note moyenne</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value">${positiveRatio}%</div>
-        <div class="stat-label">Avis positifs</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <h2>💭 Analyse du sentiment global</h2>
-    <div class="sentiment-box">
-      ${sentimentAnalysis}
+    <h2>📊 Analyse des statistiques globales</h2>
+    <div class="ai-analysis-box">
+      ${aiAnalysis}
     </div>
   </div>
 
