@@ -10,7 +10,11 @@ export default function SaveEstablishmentButton({
   disabled?: boolean;
 }) {
   async function handleSave() {
-    if (!selected) return;
+    console.log("🔵 [SaveEstablishmentButton] handleSave called with selected:", selected);
+    if (!selected) {
+      console.log("❌ [SaveEstablishmentButton] No establishment selected");
+      return;
+    }
 
     // 1) Sauvegarde locale principale (pour "Mon Établissement")
     localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
@@ -45,13 +49,15 @@ export default function SaveEstablishmentButton({
     const { error: userEstabError } = await (supabase as any).from("user_establishment").upsert(userEstabPayload);
     
     if (userEstabError) {
-      console.error("Erreur sauvegarde user_establishment:", userEstabError);
+      console.error("❌ [SaveEstablishmentButton] Erreur sauvegarde user_establishment:", userEstabError);
       sonnerToast.error("Impossible d'enregistrer l'établissement", {
         description: "Veuillez réessayer.",
         duration: 5000,
       });
       return;
     }
+    
+    console.log("✅ [SaveEstablishmentButton] user_establishment saved successfully");
 
     // 5) Sauvegarder aussi dans la table établissements pour la liste
     const etablissementPayload = {
@@ -65,17 +71,20 @@ export default function SaveEstablishmentButton({
     const { error: etabError } = await (supabase as any).from("établissements").upsert(etablissementPayload);
     
     if (etabError) {
-      console.error("Erreur sauvegarde établissements:", etabError);
+      console.error("❌ [SaveEstablishmentButton] Erreur sauvegarde établissements:", etabError);
       sonnerToast.error("Impossible d'enregistrer l'établissement", {
         description: "Veuillez réessayer.",
         duration: 5000,
       });
       return;
     }
+    
+    console.log("✅ [SaveEstablishmentButton] établissements saved successfully");
 
     // 6) Succès : notifier l'app et afficher toast bleu de confirmation
     window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: selected }));
     
+    console.log("✅ [SaveEstablishmentButton] SUCCESS - Showing success toast");
     sonnerToast.success("Établissement enregistré", {
       description: "Les informations ont bien été sauvegardées.",
       duration: 5000,
