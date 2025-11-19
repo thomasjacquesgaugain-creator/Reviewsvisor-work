@@ -54,52 +54,95 @@ serve(async (req) => {
       );
     }
 
-    const { establishmentId } = await req.json();
-    console.log('[generate-report] 📥 Payload reçu - establishmentId:', establishmentId);
+    const { establishmentId, placeId } = await req.json();
+    console.log('[generate-report] 📥 Payload reçu:', { establishmentId, placeId });
 
-    if (!establishmentId) {
-      console.error('[generate-report] ❌ establishmentId manquant dans le payload');
+    if (!establishmentId && !placeId) {
+      console.error('[generate-report] ❌ Ni establishmentId ni placeId fourni');
       return new Response(
-        JSON.stringify({ error: 'establishmentId requis' }),
+        JSON.stringify({ error: 'establishmentId ou placeId requis' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[generate-report] 🔍 Recherche établissement avec:', {
-      establishmentId,
-      userId
-    });
+    console.log('[generate-report] 🔍 Recherche établissement...');
 
-    // Récupérer l'établissement par son id uniquement (sans filtrer par user_id)
-    // L'auth a déjà été vérifiée via le JWT, on fait confiance au establishmentId envoyé
-    const { data: establishment, error: estabError } = await supabaseClient
-      .from('establishments')
-      .select('*')
-      .eq('id', establishmentId)
-      .maybeSingle();
+    // Essayer d'abord par ID, sinon par place_id
+    let establishment: any = null;
+    
+    if (establishmentId) {
+      console.log('[generate-report] Tentative de récupération par ID:', establishmentId);
+      const { data, error } = await supabaseClient
+        .from('establishments')
+        .select('*')
+        .eq('id', establishmentId)
+        .maybeSingle();
+      
+      if (!error && data) {
+        establishment = data;
+        console.log('[generate-report] ✅ Établissement trouvé par ID');
+      }
+    }
+    
+    // Si pas trouvé par ID, chercher par place_id
+    if (!establishment && placeId) {
+      console.log('[generate-report] Tentative de récupération par place_id:', placeId);
+      const { data, error } = await supabaseClient
+        .from('establishments')
+        .select('*')
+        .eq('place_id', placeId)
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (!error && data) {
+        establishment = data;
+        console.log('[generate-report] ✅ Établissement trouvé par place_id');
+      } else if (!data) {
+        // L'établissement n'existe pas dans la table, créons-le
+        console.log('[generate-report] ⚠️ Établissement non trouvé, création automatique...');
+        
+        // Récupérer le nom depuis les avis existants
+        const { data: firstReview } = await supabaseClient
+          .from('reviews')
+          .select('*')
+          .eq('place_id', placeId)
+          .eq('user_id', userId)
+          .limit(1)
+          .maybeSingle();
+        
+        const establishmentName = firstReview?.raw?.establishment_name || 
+                                  firstReview?.raw?.name || 
+                                  'Établissement';
+        
+        const { data: newEstab, error: createError } = await supabaseClient
+          .from('establishments')
+          .insert({
+            place_id: placeId,
+            user_id: userId,
+            name: establishmentName,
+            source: 'dashboard',
+          })
+          .select()
+          .single();
+        
+        if (!createError && newEstab) {
+          establishment = newEstab;
+          console.log('[generate-report] ✅ Nouvel établissement créé:', newEstab.id);
+        }
+      }
+    }
 
-    console.log('[generate-report] Résultat requête establishments:', {
-      found: !!establishment,
-      error: estabError,
-      establishment_name: establishment?.name,
-      establishment_address: establishment?.formatted_address,
-      establishment_user_id: establishment?.user_id
-    });
-
-    if (estabError || !establishment) {
-      console.error('[generate-report] ❌ Établissement non trouvé pour id:', establishmentId, 'error:', estabError);
+    if (!establishment) {
+      console.error('[generate-report] ❌ Établissement non trouvé après toutes les tentatives');
       return new Response(
         JSON.stringify({ error: 'ESTABLISHMENT_NOT_FOUND' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Vérifier que l'établissement appartient bien à l'utilisateur
+    // Vérifier que l'établissement appartient à l'utilisateur
     if (establishment.user_id !== userId) {
-      console.error('[generate-report] ❌ Établissement n\'appartient pas à l\'utilisateur:', {
-        establishment_user_id: establishment.user_id,
-        requested_user_id: userId
-      });
+      console.error('[generate-report] ❌ Établissement n\'appartient pas à l\'utilisateur');
       return new Response(
         JSON.stringify({ error: 'ESTABLISHMENT_NOT_FOUND' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
