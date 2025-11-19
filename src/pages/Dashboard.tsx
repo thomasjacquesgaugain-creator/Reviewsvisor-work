@@ -254,9 +254,18 @@ const Dashboard = () => {
           .eq('user_id', user.id)
           .maybeSingle();
         
+        console.log('[Dashboard] Récupération établissement:', {
+          place_id: currentEstab.place_id,
+          user_id: user.id,
+          found: !!establishmentData,
+          error: estError,
+          data: establishmentData
+        });
+        
         if (!estError && establishmentData) {
           setEstablishmentCreatedAt(establishmentData.created_at);
           setEstablishmentDbId(establishmentData.id);
+          console.log('[Dashboard] ✅ Établissement ID récupéré:', establishmentData.id);
         } else {
           // Fallback: utiliser la date du plus ancien avis ou aujourd'hui
           if (reviewsData && reviewsData.length > 0) {
@@ -412,7 +421,15 @@ const Dashboard = () => {
               <Button
                 variant="outline"
                 onClick={async () => {
+                  console.log('[Dashboard] 🔘 Clic sur Télécharger le rapport');
+                  console.log('[Dashboard] État actuel:', {
+                    establishmentDbId,
+                    selectedEtab: selectedEtab?.name,
+                    place_id: selectedEtab?.place_id
+                  });
+
                   if (!establishmentDbId) {
+                    console.error('[Dashboard] ❌ establishmentDbId manquant');
                     toast.error('Erreur', {
                       description: 'Cet établissement n\'est pas encore enregistré dans votre compte.',
                     });
@@ -430,19 +447,22 @@ const Dashboard = () => {
                       return;
                     }
 
-                    const response = await fetch(
-                      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-report`,
-                      {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          Authorization: `Bearer ${session.access_token}`,
-                        },
-                        body: JSON.stringify({
-                          establishmentId: establishmentDbId,
-                        }),
-                      }
-                    );
+                    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-report`;
+                    console.log('[Dashboard] 📡 Appel API:', apiUrl);
+                    console.log('[Dashboard] Payload:', { establishmentId: establishmentDbId });
+
+                    const response = await fetch(apiUrl, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${session.access_token}`,
+                      },
+                      body: JSON.stringify({
+                        establishmentId: establishmentDbId,
+                      }),
+                    });
+
+                    console.log('[Dashboard] 📥 Réponse API:', response.status, response.statusText);
 
                     const contentType = response.headers.get('Content-Type');
 
@@ -487,15 +507,15 @@ const Dashboard = () => {
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
 
+                    console.log('[Dashboard] ✅ Rapport téléchargé avec succès');
                     toast.success('Rapport généré', {
                       description: 'Le rapport a été téléchargé avec succès.',
                     });
                   } catch (error) {
-                    console.error('❌ Erreur inattendue lors de la génération du rapport:', error);
+                    console.error('[Dashboard] ❌ Erreur inattendue lors de la génération du rapport:', error);
                     toast.error('Erreur', {
                       description: 'Une erreur est survenue lors de la génération du rapport.',
                     });
-                    // Ne pas re-throw l'erreur pour éviter le popup noir global
                   } finally {
                     setIsDownloadingReport(false);
                   }
