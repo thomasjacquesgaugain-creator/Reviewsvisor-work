@@ -101,7 +101,7 @@ serve(async (req) => {
         // L'établissement n'existe pas dans la table, créons-le
         console.log('[generate-report] ⚠️ Établissement non trouvé, création automatique...');
         
-        // Récupérer le nom depuis les avis existants
+        // Récupérer les infos depuis le premier avis
         const { data: firstReview } = await supabaseClient
           .from('reviews')
           .select('*')
