@@ -90,9 +90,10 @@ export default function SaveEstablishmentButton({
     window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: selected }));
     
     console.log("✅ [SaveEstablishmentButton] SUCCESS - Showing success toast");
-    sonnerToast.success("Établissement enregistré", {
+    sonnerToast("Établissement enregistré", {
       description: "Les informations ont bien été sauvegardées.",
       duration: 5000,
+      className: "bg-blue-600 text-white border-blue-700",
     });
   }
 
