@@ -424,11 +424,13 @@ const Dashboard = () => {
                     const { data: { session } } = await supabase.auth.getSession();
                     
                     if (!session?.access_token) {
-                      toast.error('Non authentifié', {
-                        description: 'Veuillez vous reconnecter.',
+                      toast.error('Session expirée', {
+                        description: 'Veuillez vous reconnecter pour télécharger le rapport.',
                       });
                       return;
                     }
+
+                    console.log('📥 Téléchargement du rapport pour:', currentEstab.place_id);
 
                     // Appel direct avec fetch pour mieux contrôler les headers
                     const response = await fetch(
@@ -446,10 +448,14 @@ const Dashboard = () => {
 
                     if (!response.ok) {
                       const errorData = await response.json().catch(() => ({}));
-                      console.error('Report generation error:', errorData);
+                      console.error('❌ Erreur génération rapport:', response.status, errorData);
                       
-                      if (response.status === 404) {
-                        toast.error('Aucun rapport disponible', {
+                      if (response.status === 401) {
+                        toast.error('Session expirée', {
+                          description: 'Veuillez vous reconnecter pour télécharger le rapport.',
+                        });
+                      } else if (response.status === 404) {
+                        toast.error('Aucune donnée disponible', {
                           description: 'Aucun rapport disponible pour cet établissement.',
                         });
                       } else {
@@ -462,6 +468,7 @@ const Dashboard = () => {
 
                     // Récupérer le HTML
                     const html = await response.text();
+                    console.log('✅ Rapport HTML reçu, taille:', html.length);
 
                     // Créer un blob et télécharger
                     const blob = new Blob([html], { type: 'text/html' });
@@ -477,10 +484,10 @@ const Dashboard = () => {
                     toast.success('Rapport téléchargé', {
                       description: 'Le rapport a été généré et téléchargé avec succès.',
                     });
-                  } catch (err) {
-                    console.error('Download error:', err);
+                  } catch (error) {
+                    console.error('❌ Erreur téléchargement rapport:', error);
                     toast.error('Erreur', {
-                      description: 'Erreur lors du téléchargement du rapport.',
+                      description: 'Une erreur est survenue lors du téléchargement.',
                     });
                   } finally {
                     setIsDownloadingReport(false);

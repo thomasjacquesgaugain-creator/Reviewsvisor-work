@@ -12,44 +12,51 @@ serve(async (req) => {
   }
 
   try {
-    // Vérifier le header d'autorisation
-    const authHeader = req.headers.get('Authorization');
-    console.log('Auth header présent:', !!authHeader);
+    console.log('[generate-report] Starting request processing');
     
-    if (!authHeader) {
-      console.error('Missing Authorization header');
+    // Récupérer le token JWT depuis le header
+    const authHeader = req.headers.get('Authorization');
+    console.log('[generate-report] Auth header présent:', !!authHeader);
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('[generate-report] Missing or invalid Authorization header');
       return new Response(
-        JSON.stringify({ error: 'Non authentifié - header manquant' }),
+        JSON.stringify({ error: 'Veuillez vous reconnecter pour télécharger le rapport' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Créer le client Supabase avec le token
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Créer un client Supabase avec le token utilisateur
+    // Les RLS policies vont automatiquement filtrer par user_id
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: authHeader },
+          headers: { Authorization: `Bearer ${token}` },
         },
       }
     );
 
-    // Vérifier l'utilisateur
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    console.log('User check - error:', userError, 'user:', !!user);
-    
-    if (userError || !user) {
-      console.error('Auth error:', userError);
+    // Extraire le user_id du JWT sans faire d'appel à auth.getUser()
+    // qui ne fonctionne pas bien dans les edge functions
+    let userId: string;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      userId = payload.sub;
+      console.log('[generate-report] User ID extrait du JWT:', userId);
+    } catch (e) {
+      console.error('[generate-report] Erreur lors du parsing du JWT:', e);
       return new Response(
-        JSON.stringify({ error: 'Non authentifié - utilisateur invalide', details: userError?.message }),
+        JSON.stringify({ error: 'Token invalide. Veuillez vous reconnecter.' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    console.log('User authenticated:', user.id);
 
     const { placeId } = await req.json();
+    console.log('[generate-report] PlaceId reçu:', placeId);
 
     if (!placeId) {
       return new Response(
@@ -58,27 +65,34 @@ serve(async (req) => {
       );
     }
 
-    // Récupérer l'établissement
+    console.log('[generate-report] Récupération de l\'établissement pour user:', userId, 'place:', placeId);
+
+    // Récupérer l'établissement (RLS filtrera automatiquement par user_id)
     const { data: establishment, error: estabError } = await supabaseClient
       .from('establishments')
       .select('*')
       .eq('place_id', placeId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .maybeSingle();
 
+    console.log('[generate-report] Établissement trouvé:', !!establishment, 'Erreur:', estabError);
+
     if (estabError || !establishment) {
+      console.error('[generate-report] Erreur établissement:', estabError);
       return new Response(
-        JSON.stringify({ error: 'Établissement non trouvé' }),
+        JSON.stringify({ error: 'Établissement non trouvé ou accès non autorisé' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log('[generate-report] Récupération des insights et avis');
 
     // Récupérer les insights
     const { data: insights } = await supabaseClient
       .from('review_insights')
       .select('*')
       .eq('place_id', placeId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .maybeSingle();
 
     // Récupérer les avis
@@ -86,9 +100,11 @@ serve(async (req) => {
       .from('reviews')
       .select('*')
       .eq('place_id', placeId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .order('published_at', { ascending: false })
       .limit(50);
+
+    console.log('[generate-report] Insights:', !!insights, 'Reviews count:', reviews?.length || 0);
 
     if (!insights && (!reviews || reviews.length === 0)) {
       return new Response(
@@ -97,7 +113,7 @@ serve(async (req) => {
       );
     }
 
-    // Générer le HTML du rapport
+    console.log('[generate-report] Génération du HTML du rapport');
     const now = new Date();
     const dateStr = now.toLocaleDateString('fr-FR', { 
       weekday: 'long', 
@@ -342,19 +358,28 @@ serve(async (req) => {
 </html>
     `;
 
+    console.log('[generate-report] HTML généré avec succès');
+
     return new Response(html, {
+      status: 200,
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
-        'Content-Disposition': `attachment; filename="rapport-${establishment.name.replace(/[^a-z0-9]/gi, '-')}-${now.toISOString().split('T')[0]}.html"`,
+        'Content-Disposition': `attachment; filename="rapport-${establishment.name.replace(/[^a-z0-9]/gi, '_')}-${now.toISOString().split('T')[0]}.html"`,
       },
     });
 
   } catch (error) {
-    console.error('Error generating report:', error);
+    console.error('[generate-report] Erreur globale:', error);
     return new Response(
-      JSON.stringify({ error: 'Erreur lors de la génération du rapport' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        error: 'Erreur lors de la génération du rapport', 
+        details: error instanceof Error ? error.message : 'Erreur inconnue' 
+      }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
     );
   }
 });
