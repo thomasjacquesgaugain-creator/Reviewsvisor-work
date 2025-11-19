@@ -363,20 +363,16 @@ Rédige uniquement le paragraphe d'analyse, sans titre ni introduction.`;
     .logo-header {
       display: flex;
       align-items: center;
-      justify-content: flex-start;
-      gap: 12px;
-      padding: 25px 0 0 25px;
+      gap: 10px;
       margin-bottom: 20px;
-      background: #ffffff;
     }
     .logo-image {
-      height: 40px;
-      width: auto;
+      height: 32px;
     }
     .logo-text {
-      font-size: 20px;
-      font-weight: bold;
-      color: #1E6BFF;
+      font-size: 22px;
+      font-weight: 600;
+      color: #2563eb;
     }
     .header {
       text-align: center;
