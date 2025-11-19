@@ -148,26 +148,73 @@ serve(async (req) => {
     const topPraises = insights?.top_praises || [];
     const themes = insights?.themes || [];
     
-    // Mock data si pas assez de données
-    const mockIssues = topIssues.length > 0 ? topIssues : [
-      { issue: "Temps d'attente trop long", percentage: 25 },
-      { issue: "Qualité des plats inégale", percentage: 18 },
-      { issue: "Service perçu comme froid", percentage: 12 }
-    ];
+    // Formater les données des problèmes
+    let formattedIssues = [];
+    if (Array.isArray(topIssues) && topIssues.length > 0) {
+      formattedIssues = topIssues.slice(0, 3).map((item: any) => {
+        if (typeof item === 'object' && item !== null) {
+          return {
+            label: item.theme || item.issue || item.name || 'Problème non défini',
+            percentage: item.count || item.percentage || 0
+          };
+        }
+        return { label: String(item), percentage: 0 };
+      });
+    }
     
-    const mockPraises = topPraises.length > 0 ? topPraises : [
-      { praise: "Cocktails et boissons", percentage: 40 },
-      { praise: "Ambiance et musique", percentage: 30 },
-      { praise: "Gentillesse du personnel", percentage: 22 }
-    ];
+    // Formater les données des points forts
+    let formattedPraises = [];
+    if (Array.isArray(topPraises) && topPraises.length > 0) {
+      formattedPraises = topPraises.slice(0, 3).map((item: any) => {
+        if (typeof item === 'object' && item !== null) {
+          return {
+            label: item.theme || item.praise || item.name || 'Point fort',
+            percentage: item.count || item.percentage || 0
+          };
+        }
+        return { label: String(item), percentage: 0 };
+      });
+    }
     
-    const mockThemes = themes.length > 0 ? themes : [
-      { theme: "Service", positive_rate: 72 },
-      { theme: "Ambiance", positive_rate: 85 },
-      { theme: "Qualité des plats", positive_rate: 63 },
-      { theme: "Prix", positive_rate: 58 },
-      { theme: "Propreté", positive_rate: 78 }
-    ];
+    // Formater les thématiques
+    let formattedThemes = [];
+    if (Array.isArray(themes) && themes.length > 0) {
+      formattedThemes = themes.map((item: any) => {
+        if (typeof item === 'object' && item !== null) {
+          return {
+            theme: item.theme || item.name || 'Thématique',
+            percentage: item.count || item.percentage || 0
+          };
+        }
+        return { theme: String(item), percentage: 0 };
+      });
+    }
+    
+    // Si pas de données, utiliser des valeurs mock
+    if (formattedIssues.length === 0) {
+      formattedIssues = [
+        { label: "Service / attente", percentage: 25 },
+        { label: "Qualité des plats", percentage: 18 },
+        { label: "Prix", percentage: 12 }
+      ];
+    }
+    
+    if (formattedPraises.length === 0) {
+      formattedPraises = [
+        { label: "Qualité / goût", percentage: 40 },
+        { label: "Ambiance agréable", percentage: 30 }
+      ];
+    }
+    
+    if (formattedThemes.length === 0) {
+      formattedThemes = [
+        { theme: "Rapidité", percentage: 72 },
+        { theme: "Cuisine", percentage: 65 },
+        { theme: "Service", percentage: 58 },
+        { theme: "Ambiance", percentage: 85 },
+        { theme: "Rapport qualité/prix", percentage: 48 }
+      ];
+    }
 
     // Générer le HTML
     const html = `

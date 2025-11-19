@@ -466,11 +466,18 @@ const Dashboard = () => {
                       throw new Error(`HTTP error! status: ${response.status}`);
                     }
 
-                    const blob = await response.blob();
-                    const url = URL.createObjectURL(blob);
+                    // Récupérer le HTML de la réponse
+                    const htmlText = await response.text();
+                    
+                    // Créer un Blob avec le bon type MIME pour HTML
+                    const htmlBlob = new Blob([htmlText], { type: 'text/html' });
+                    const url = URL.createObjectURL(htmlBlob);
+                    
+                    // Télécharger le fichier HTML
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `rapport-${selectedEtab.place_id}-${new Date().toISOString().split('T')[0]}.pdf`;
+                    const etablissementName = selectedEtab.name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+                    a.download = `rapport-${etablissementName}-${new Date().toISOString().split('T')[0]}.html`;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
