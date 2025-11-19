@@ -40,44 +40,46 @@ export default function SaveEstablishmentButton({
       return;
     }
 
-    // 4) Sauvegarde en base de données avec gestion d'erreur
-    try {
-      // Sauvegarder l'établissement principal dans user_establishment
-      const userEstabPayload = { user_id: user.id, ...selected };
-      const { error: userEstabError } = await (supabase as any).from("user_establishment").upsert(userEstabPayload);
-      
-      if (userEstabError) throw userEstabError;
-
-      // Sauvegarder aussi dans la table établissements pour la liste
-      const etablissementPayload = {
-        user_id: user.id,
-        place_id: selected.place_id,
-        nom: selected.name,
-        adresse: selected.address,
-        telephone: selected.phone || null,
-        type: "Restaurant"
-      };
-      const { error: etabError } = await (supabase as any).from("établissements").upsert(etablissementPayload);
-      
-      if (etabError) throw etabError;
-
-      // Succès : notifier l'app et afficher toast de confirmation
-      window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: selected }));
-      
-      sonnerToast.success("Établissement enregistré", {
-        description: "L'établissement a bien été enregistré.",
-        duration: 5000,
-      });
-    } catch (error) {
-      console.error("Erreur sauvegarde:", error);
-      
-      window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: selected }));
-      
+    // 4) Sauvegarder l'établissement principal dans user_establishment
+    const userEstabPayload = { user_id: user.id, ...selected };
+    const { error: userEstabError } = await (supabase as any).from("user_establishment").upsert(userEstabPayload);
+    
+    if (userEstabError) {
+      console.error("Erreur sauvegarde user_establishment:", userEstabError);
       sonnerToast.error("Impossible d'enregistrer l'établissement", {
         description: "Veuillez réessayer.",
         duration: 5000,
       });
+      return;
     }
+
+    // 5) Sauvegarder aussi dans la table établissements pour la liste
+    const etablissementPayload = {
+      user_id: user.id,
+      place_id: selected.place_id,
+      nom: selected.name,
+      adresse: selected.address,
+      telephone: selected.phone || null,
+      type: "Restaurant"
+    };
+    const { error: etabError } = await (supabase as any).from("établissements").upsert(etablissementPayload);
+    
+    if (etabError) {
+      console.error("Erreur sauvegarde établissements:", etabError);
+      sonnerToast.error("Impossible d'enregistrer l'établissement", {
+        description: "Veuillez réessayer.",
+        duration: 5000,
+      });
+      return;
+    }
+
+    // 6) Succès : notifier l'app et afficher toast bleu de confirmation
+    window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: selected }));
+    
+    sonnerToast.success("Établissement enregistré", {
+      description: "Les informations ont bien été sauvegardées.",
+      duration: 5000,
+    });
   }
 
   return (
