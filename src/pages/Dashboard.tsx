@@ -407,96 +407,77 @@ const Dashboard = () => {
             {(selectedEtab || selectedEstablishment) && (
               <Button
                 variant="outline"
-                size="sm"
-                disabled={isDownloadingReport}
                 onClick={async () => {
-                  const currentEstab = selectedEtab || selectedEstablishment;
-                  if (!currentEstab?.place_id || !user?.id) {
+                  if (!selectedEtab?.place_id) {
                     toast.error('Erreur', {
-                      description: 'Établissement ou utilisateur non défini',
+                      description: 'Veuillez d\'abord sélectionner un établissement.',
                     });
                     return;
                   }
 
                   setIsDownloadingReport(true);
+
                   try {
-                    // Récupérer le token de session actuel
                     const { data: { session } } = await supabase.auth.getSession();
-                    
                     if (!session?.access_token) {
-                      toast.error('Session expirée', {
-                        description: 'Veuillez vous reconnecter pour télécharger le rapport.',
+                      toast.error('Erreur d\'authentification', {
+                        description: 'Votre session a expiré. Veuillez vous reconnecter.',
                       });
                       return;
                     }
 
-                    console.log('📥 Téléchargement du rapport pour:', currentEstab.place_id);
-
-                    // Appel direct avec fetch pour mieux contrôler les headers
                     const response = await fetch(
-                      `https://zzjmtipdsccxmmoaetlp.supabase.co/functions/v1/generate-report`,
+                      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-report`,
                       {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${session.access_token}`,
-                          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU',
+                          Authorization: `Bearer ${session.access_token}`,
                         },
-                        body: JSON.stringify({ placeId: currentEstab.place_id }),
+                        body: JSON.stringify({
+                          establishment_id: selectedEtab.place_id,
+                        }),
                       }
                     );
 
-                    console.log('📡 Réponse reçue, status:', response.status, 'content-type:', response.headers.get('content-type'));
+                    const contentType = response.headers.get('Content-Type');
 
-                    // Vérifier si c'est un JSON (cas d'erreur ou no_data)
-                    const contentType = response.headers.get('content-type');
-                    if (contentType?.includes('application/json')) {
-                      const data = await response.json();
-                      
-                      // Cas où il n'y a pas de rapport disponible (gestion propre, pas une erreur)
-                      if (data.ok === false) {
-                        console.log('ℹ️ Pas de rapport disponible:', data.reason);
-                        if (data.reason === 'no_establishment') {
+                    if (contentType && contentType.includes('application/json')) {
+                      const json = await response.json();
+                      if (!json.ok) {
+                        if (json.reason === 'no_establishment') {
                           toast.info('Établissement non trouvé', {
                             description: 'Cet établissement n\'est pas encore enregistré dans votre compte.',
                           });
-                        } else if (data.reason === 'no_data') {
+                        } else if (json.reason === 'no_data') {
                           toast.info('Aucun rapport disponible', {
-                            description: 'Aucune analyse n\'est encore disponible pour cet établissement. Importez ou analysez des avis pour générer un rapport.',
+                            description: 'Aucune analyse n\'est encore disponible pour cet établissement. Importez des avis pour générer un rapport.',
                           });
                         } else {
-                          toast.info('Aucun rapport disponible', {
-                            description: 'Aucun rapport n\'est encore disponible pour cet établissement pour le moment.',
+                          toast.error('Erreur', {
+                            description: json.error || 'Une erreur est survenue lors de la génération du rapport.',
                           });
                         }
-                        return; // Arrêter ici sans lever d'exception
+                        return;
                       }
-                      
-                      // Cas d'erreur réelle (ex: erreur serveur)
-                      console.error('❌ Erreur API:', data);
-                      toast.error('Erreur', {
-                        description: data.error || 'Une erreur est survenue lors de la génération du rapport.',
-                      });
-                      return;
                     }
 
-                    // Cas nominal: on a reçu du HTML
-                    const html = await response.text();
-                    console.log('✅ Rapport HTML reçu, taille:', html.length);
+                    if (!response.ok) {
+                      throw new Error(`HTTP error! status: ${response.status}`);
+                    }
 
-                    // Créer un blob et télécharger
-                    const blob = new Blob([html], { type: 'text/html' });
-                    const url = window.URL.createObjectURL(blob);
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `rapport-${currentEstab.name.replace(/[^a-z0-9]/gi, '-')}-${new Date().toISOString().split('T')[0]}.html`;
+                    a.download = `rapport-${selectedEtab.place_id}-${new Date().toISOString().split('T')[0]}.pdf`;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
+                    URL.revokeObjectURL(url);
 
-                    toast.success('Rapport téléchargé', {
-                      description: 'Le rapport a été généré et téléchargé avec succès.',
+                    toast.success('Rapport généré', {
+                      description: 'Le rapport a été téléchargé avec succès.',
                     });
                   } catch (error) {
                     console.error('❌ Erreur inattendue lors de la génération du rapport:', error);
@@ -508,7 +489,7 @@ const Dashboard = () => {
                     setIsDownloadingReport(false);
                   }
                 }}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 text-primary"
               >
                 {isDownloadingReport ? (
                   <>
@@ -517,7 +498,7 @@ const Dashboard = () => {
                   </>
                 ) : (
                   <>
-                    <Download className="w-4 h-4 text-primary" />
+                    <Download className="w-4 h-4" />
                     Télécharger le rapport
                   </>
                 )}
