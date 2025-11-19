@@ -572,13 +572,13 @@ serve(async (req) => {
           <span class="kpi-icon">🚨</span>
           <span class="kpi-title">Top 3 plus gros problèmes</span>
         </div>
-        ${mockIssues.length > 0 ? `
+        ${formattedIssues.length > 0 ? `
           <ul class="kpi-list">
-            ${mockIssues.slice(0, 3).map((issue: any, index: number) => `
+            ${formattedIssues.map((issue, index) => `
               <li>
                 <span class="kpi-list-number">${index + 1}.</span>
-                <span class="kpi-list-text">${issue.issue || issue}</span>
-                <span class="kpi-list-percentage">${issue.percentage || 0}%</span>
+                <span class="kpi-list-text">${issue.label}</span>
+                <span class="kpi-list-percentage">${issue.percentage}%</span>
               </li>
             `).join('')}
           </ul>
@@ -593,13 +593,13 @@ serve(async (req) => {
           <span class="kpi-icon">⭐</span>
           <span class="kpi-title">Top 3 points forts</span>
         </div>
-        ${mockPraises.length > 0 ? `
+        ${formattedPraises.length > 0 ? `
           <ul class="kpi-list">
-            ${mockPraises.slice(0, 3).map((praise: any, index: number) => `
+            ${formattedPraises.map((praise, index) => `
               <li>
                 <span class="kpi-list-number">${index + 1}.</span>
-                <span class="kpi-list-text">${praise.praise || praise}</span>
-                <span class="kpi-list-percentage">${praise.percentage || 0}%</span>
+                <span class="kpi-list-text">${praise.label}</span>
+                <span class="kpi-list-percentage">${praise.percentage}%</span>
               </li>
             `).join('')}
           </ul>
@@ -614,16 +614,16 @@ serve(async (req) => {
           <span class="kpi-icon">🧩</span>
           <span class="kpi-title">Avis par thématique</span>
         </div>
-        ${mockThemes.length > 0 ? `
+        ${formattedThemes.length > 0 ? `
           <div>
-            ${mockThemes.map((theme: any) => `
+            ${formattedThemes.map((themeItem) => `
               <div class="theme-item">
                 <div class="theme-header">
-                  <span class="theme-name">${theme.theme}</span>
-                  <span class="theme-percentage">${theme.positive_rate || 0}%</span>
+                  <span class="theme-name">${themeItem.theme}</span>
+                  <span class="theme-percentage">${themeItem.percentage}%</span>
                 </div>
                 <div class="progress-bar">
-                  <div class="progress-fill" style="width: ${theme.positive_rate || 0}%"></div>
+                  <div class="progress-fill" style="width: ${themeItem.percentage}%"></div>
                 </div>
               </div>
             `).join('')}
