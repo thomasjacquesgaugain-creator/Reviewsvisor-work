@@ -6,6 +6,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Fonction pour convertir une image en base64
+async function imageToBase64(imageUrl: string): Promise<string> {
+  try {
+    const response = await fetch(imageUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    return `data:image/png;base64,${base64}`;
+  } catch (error) {
+    console.error('[generate-report] Erreur conversion logo en base64:', error);
+    // Retourner un pixel transparent en cas d'erreur
+    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -184,6 +198,12 @@ serve(async (req) => {
     }
 
     console.log('[generate-report] 📝 Génération du HTML du rapport');
+    
+    // Convertir le logo en base64
+    const logoUrl = 'https://zzjmtipdsccxmmoaetlp.supabase.co/storage/v1/object/public/lovable-uploads/62ee8352-36cc-4657-89b4-5c00321ab74c.png';
+    const logoBase64 = await imageToBase64(logoUrl);
+    console.log('[generate-report] Logo converti en base64');
+    
     const now = new Date();
     const dateStr = now.toLocaleDateString('fr-FR', { 
       weekday: 'long', 
@@ -363,11 +383,13 @@ Rédige uniquement le paragraphe d'analyse, sans titre ni introduction.`;
     .logo-header {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 20px;
     }
-    .logo-image {
-      height: 32px;
+    .logo-header img {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
     }
     .logo-text {
       font-size: 22px;
@@ -604,7 +626,7 @@ Rédige uniquement le paragraphe d'analyse, sans titre ni introduction.`;
 </head>
 <body>
   <div class="logo-header">
-    <img src="https://zzjmtipdsccxmmoaetlp.supabase.co/storage/v1/object/public/lovable-uploads/62ee8352-36cc-4657-89b4-5c00321ab74c.png" alt="Reviewsvisor Logo" class="logo-image" />
+    <img src="${logoBase64}" alt="Reviewsvisor Logo" width="28" height="28" style="border-radius: 6px;" />
     <span class="logo-text">Reviewsvisor</span>
   </div>
 
