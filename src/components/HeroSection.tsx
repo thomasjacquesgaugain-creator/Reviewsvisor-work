@@ -36,7 +36,7 @@ export const HeroSection = () => {
         </div>
 
         {/* Brand header - Large version */}
-        <div className="flex items-center justify-center py-6">
+        <div className="flex items-center justify-center pt-6 pb-2">
           <img 
             src={logoHeader} 
             alt="Reviewsvisor Logo" 
@@ -50,7 +50,7 @@ export const HeroSection = () => {
 
 
         {/* Main hero card */}
-        <div className="container mx-auto px-4 py-16">
+        <div className="container mx-auto px-4 pt-6 pb-16">
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-12">
             <CardContent className="p-8 text-center space-y-6">
               <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
