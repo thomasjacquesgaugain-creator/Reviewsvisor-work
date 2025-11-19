@@ -420,21 +420,51 @@ const Dashboard = () => {
 
                   setIsDownloadingReport(true);
                   try {
-                    const { data, error } = await supabase.functions.invoke('generate-report', {
-                      body: { placeId: currentEstab.place_id }
-                    });
-
-                    if (error) {
-                      console.error('Report generation error:', error);
-                      toast.error('Aucun rapport disponible', {
-                        description: 'Aucun rapport disponible pour cet établissement.',
+                    // Récupérer le token de session actuel
+                    const { data: { session } } = await supabase.auth.getSession();
+                    
+                    if (!session?.access_token) {
+                      toast.error('Non authentifié', {
+                        description: 'Veuillez vous reconnecter.',
                       });
                       return;
                     }
 
-                    // Le backend renvoie du HTML
+                    // Appel direct avec fetch pour mieux contrôler les headers
+                    const response = await fetch(
+                      `https://zzjmtipdsccxmmoaetlp.supabase.co/functions/v1/generate-report`,
+                      {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${session.access_token}`,
+                          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU',
+                        },
+                        body: JSON.stringify({ placeId: currentEstab.place_id }),
+                      }
+                    );
+
+                    if (!response.ok) {
+                      const errorData = await response.json().catch(() => ({}));
+                      console.error('Report generation error:', errorData);
+                      
+                      if (response.status === 404) {
+                        toast.error('Aucun rapport disponible', {
+                          description: 'Aucun rapport disponible pour cet établissement.',
+                        });
+                      } else {
+                        toast.error('Erreur', {
+                          description: errorData.error || 'Erreur lors de la génération du rapport.',
+                        });
+                      }
+                      return;
+                    }
+
+                    // Récupérer le HTML
+                    const html = await response.text();
+
                     // Créer un blob et télécharger
-                    const blob = new Blob([data], { type: 'text/html' });
+                    const blob = new Blob([html], { type: 'text/html' });
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
