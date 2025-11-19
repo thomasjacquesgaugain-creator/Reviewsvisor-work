@@ -109,6 +109,10 @@ const Dashboard = () => {
   // ID de l'établissement dans la base de données
   const [establishmentDbId, setEstablishmentDbId] = useState<string | null>(null);
 
+  // État pour la génération des réponses IA
+  const [isGeneratingResponse, setIsGeneratingResponse] = useState<Record<string, boolean>>({});
+  const [aiGeneratedResponses, setAiGeneratedResponses] = useState<Record<string, string>>({});
+
   // Mocked data for Pareto charts (will be updated below after variables are declared)
   const defaultParetoData = [{
     name: "Service lent",
@@ -1407,13 +1411,90 @@ const Dashboard = () => {
                     const reviewText = review.text || 'Pas de commentaire';
                     const reviewId = review.id || `review-${currentReviewIndex}`;
                     
-                    // Générer une réponse automatique simple basée sur le rating
+                    // Fonction pour générer une réponse IA personnalisée
+                    const generateAiResponse = async (reviewId: string) => {
+                      setIsGeneratingResponse(prev => ({ ...prev, [reviewId]: true }));
+                      
+                      try {
+                        const { data: { session } } = await supabase.auth.getSession();
+                        if (!session?.access_token) {
+                          toast.error('Session expirée', {
+                            description: 'Veuillez vous reconnecter.',
+                          });
+                          return;
+                        }
+
+                        const response = await fetch(
+                          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-review-response`,
+                          {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${session.access_token}`,
+                            },
+                            body: JSON.stringify({
+                              review: {
+                                text: review.text,
+                                rating: review.rating,
+                                author: review.author || review.author_name,
+                                published_at: review.published_at,
+                                language: review.language || review.language_code,
+                              },
+                              establishment: {
+                                name: selectedEtab?.name || selectedEstablishment?.name || 'votre établissement',
+                                formatted_address: selectedEtab?.address || selectedEstablishment?.formatted_address || '',
+                                category: 'restaurant',
+                                city: '',
+                              },
+                            }),
+                          }
+                        );
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                          if (response.status === 429) {
+                            toast.error('Trop de requêtes', {
+                              description: 'Veuillez patienter quelques instants avant de réessayer.',
+                            });
+                          } else if (response.status === 402) {
+                            toast.error('Crédits insuffisants', {
+                              description: 'Veuillez recharger vos crédits IA.',
+                            });
+                          } else {
+                            toast.error('Erreur', {
+                              description: data.error || 'Impossible de générer la réponse.',
+                            });
+                          }
+                          return;
+                        }
+
+                        if (data.response) {
+                          setAiGeneratedResponses(prev => ({ ...prev, [reviewId]: data.response }));
+                          setEditedResponses(prev => ({ ...prev, [reviewId]: data.response }));
+                          toast.success('Réponse générée', {
+                            description: 'Vous pouvez la modifier avant de valider.',
+                          });
+                        }
+                      } catch (error) {
+                        console.error('Erreur génération réponse IA:', error);
+                        toast.error('Erreur', {
+                          description: 'Une erreur est survenue lors de la génération.',
+                        });
+                      } finally {
+                        setIsGeneratingResponse(prev => ({ ...prev, [reviewId]: false }));
+                      }
+                    };
+                    
+                    // Réponse par défaut simple (utilisée uniquement si aucune réponse IA n'a été générée)
                     const defaultResponse = isPositive
                       ? `Merci ${authorName.split(' ')[0]} pour votre retour positif ! Nous sommes ravis que vous ayez apprécié votre expérience chez nous. Au plaisir de vous revoir bientôt !`
                       : `Bonjour ${authorName.split(' ')[0]}, nous vous présentons nos excuses pour cette expérience décevante. Vos remarques sont précieuses et nous allons améliorer nos services. N'hésitez pas à nous recontacter directement.`;
                     
-                    const currentResponse = editedResponses[reviewId] || defaultResponse;
+                    const currentResponse = editedResponses[reviewId] || aiGeneratedResponses[reviewId] || defaultResponse;
                     const isEditing = editingReviewId === reviewId;
+                    const hasAiResponse = !!aiGeneratedResponses[reviewId];
+                    const isGenerating = isGeneratingResponse[reviewId];
                     
                     return (
                       <div key={reviewId} className="border rounded-lg p-4 bg-gray-50 transition-all duration-300">
@@ -1475,6 +1556,27 @@ const Dashboard = () => {
                               </>
                             ) : (
                               <>
+                                {!hasAiResponse && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    className="border-purple-600 text-purple-600 hover:bg-purple-50"
+                                    disabled={isGenerating}
+                                    onClick={() => generateAiResponse(reviewId)}
+                                  >
+                                    {isGenerating ? (
+                                      <>
+                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                        Génération IA...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Lightbulb className="w-3 h-3 mr-1" />
+                                        Générer avec IA
+                                      </>
+                                    )}
+                                  </Button>
+                                )}
                                 <Button 
                                   size="sm" 
                                   className="bg-blue-600 hover:bg-blue-700 text-white"
