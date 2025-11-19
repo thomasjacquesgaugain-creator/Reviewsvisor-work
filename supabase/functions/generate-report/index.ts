@@ -363,8 +363,9 @@ Rédige uniquement le paragraphe d'analyse, sans titre ni introduction.`;
     .logo-header {
       display: flex;
       align-items: center;
+      justify-content: flex-start;
       gap: 12px;
-      padding: 20px;
+      padding: 25px 0 0 25px;
       margin-bottom: 20px;
       background: #ffffff;
     }
@@ -374,8 +375,8 @@ Rédige uniquement le paragraphe d'analyse, sans titre ni introduction.`;
     }
     .logo-text {
       font-size: 20px;
-      font-weight: 600;
-      color: #2563eb;
+      font-weight: bold;
+      color: #1E6BFF;
     }
     .header {
       text-align: center;
@@ -607,7 +608,7 @@ Rédige uniquement le paragraphe d'analyse, sans titre ni introduction.`;
 </head>
 <body>
   <div class="logo-header">
-    <img src="https://zzjmtipdsccxmmoaetlp.supabase.co/storage/v1/object/public/reviewsvisor-logo.png" alt="Reviewsvisor Logo" class="logo-image" />
+    <img src="https://zzjmtipdsccxmmoaetlp.supabase.co/storage/v1/object/public/lovable-uploads/62ee8352-36cc-4657-89b4-5c00321ab74c.png" alt="Reviewsvisor Logo" class="logo-image" />
     <span class="logo-text">Reviewsvisor</span>
   </div>
 
