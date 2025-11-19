@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Brain, Target, TrendingUp, CheckCircle, Zap, Shield } from "lucide-react";
+import logoHeader from "@/assets/reviewsvisor-logo-header.png";
 
 export const HeroSection = () => {
   return (
@@ -30,6 +31,22 @@ export const HeroSection = () => {
                 <CheckCircle className="w-4 h-4 text-green-500" />
                 <span className="text-gray-700">Un outil, une centralisation</span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Brand header */}
+        <div className="bg-white py-4 mt-4">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <img 
+                src={logoHeader} 
+                alt="Reviewsvisor Logo" 
+                className="w-8 h-auto"
+              />
+              <span className="text-[#2563EB] text-lg font-semibold">
+                Reviewsvisor
+              </span>
             </div>
           </div>
         </div>
