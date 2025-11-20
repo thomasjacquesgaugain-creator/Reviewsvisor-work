@@ -104,10 +104,15 @@ export const HeroSection = () => {
                 <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center">
                   <Brain className="w-6 h-6 text-pink-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">IA GPT-4 Ultra-Intelligente</h3>
+                <h3 className="text-xl font-bold text-gray-900">👉 Analyse & Croissance Centralisée</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  La même IA que ChatGPT analyse vos avis avec une précision chirurgicale. 
-                  Détecte les émotions cachées et les problèmes récurrents que vous ne voyez pas.
+                  👉 Un outil, une centralisation pour votre établissement qui transforme vos retours en conception.
+                  Avec Reviewsvisor, vos retours clients deviennent une véritable source de croissance.
+                  <br /><br />
+                  👉 Notre technologie d'analyse avancée vous révèle :<br />
+                  • vos forces,<br />
+                  • vos axes d'amélioration,<br />
+                  • les priorités à traiter pour améliorer l'expérience client.
                 </p>
               </CardContent>
             </Card>
