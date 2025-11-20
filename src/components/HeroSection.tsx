@@ -58,9 +58,7 @@ export const HeroSection = () => {
               </h1>
               
               <p className="text-lg text-gray-600 leading-relaxed">
-                Rejoignez des centaines de restaurateurs qui ont déjà{" "}
-                <span className="text-green-600 font-semibold">augmenté leur note de 0.5 à 1 point</span>{" "}
-                en quelques semaines grâce à nos insights précis et actionnables.
+                Obtenez une vision claire des priorités en transformant leurs avis en véritables leviers de croissance.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
