@@ -120,8 +120,8 @@ export const HeroSection = () => {
             <h3 className="text-xl font-bold text-gray-900">Pourquoi les avis comptent vraiment</h3>
             <p className="text-gray-600 text-sm leading-relaxed">
               <span style={{ color: '#23C55E' }}>Parce qu&apos;un avis n&apos;est pas qu&apos;un commentaire</span> :<br />
-              ➡️ 94% des clients consultent les avis avant de choisir un établissement.<br />
-              ➡️ 86% hésitent à acheter auprès d&apos;un établissement avec des avis négatifs.
+              ➡️ <span style={{ color: '#2563EB' }}>94%</span> des clients consultent les avis avant de choisir un établissement.<br />
+              ➡️ <span style={{ color: '#2563EB' }}>86%</span> hésitent à acheter auprès d&apos;un établissement avec des avis négatifs.
             </p>
               </CardContent>
             </Card>
