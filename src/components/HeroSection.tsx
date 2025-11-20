@@ -155,9 +155,9 @@ export const HeroSection = () => {
                   <div className="flex items-start gap-3">
                     <span className="text-xl mt-1">⚡</span>
                     <div>
-                      <h3 className="text-lg font-semibold mb-2">Rapidité Extrême</h3>
+                      <h3 className="text-lg font-semibold mb-2">⚡ Analyse éclair</h3>
                       <p className="text-blue-100 text-sm leading-relaxed">
-                        Analysez 1000 avis en 30 secondes. Plus besoin de passer des heures à lire et classer vos avis manuellement.
+                        Reviewsvisor transforme vos avis en insights en quelques secondes, vous permettant de prendre des décisions rapides et fiables.
                       </p>
                     </div>
                   </div>
@@ -167,9 +167,10 @@ export const HeroSection = () => {
                   <div className="flex items-start gap-3">
                     <span className="text-xl mt-1">📈</span>
                     <div>
-                      <h3 className="text-lg font-semibold mb-2">Résultat immédiat</h3>
+                      <h3 className="text-lg font-semibold mb-2">🎯 Actionnable immédiatement</h3>
                       <p className="text-blue-100 text-sm leading-relaxed">
-                        Chaque utilisateur qui utilise <span translate="no">Reviewsvisor</span> voit sa note augmenter de 0.5 à 1 point en moyenne chaque semaine.
+                        Reviewsvisor ne se contente pas d&apos;identifier des problèmes… il propose les solutions.<br />
+                        Des priorités claires. Des résultats mesurables.
                       </p>
                     </div>
                   </div>
@@ -179,9 +180,10 @@ export const HeroSection = () => {
                   <div className="flex items-start gap-3">
                     <span className="text-xl mt-1">🔬</span>
                     <div>
-                      <h3 className="text-lg font-semibold mb-2">Précision chirurgicale</h3>
+                      <h3 className="text-lg font-semibold mb-2">🧠 Analyse Ultra-Précise</h3>
                       <p className="text-blue-100 text-sm leading-relaxed">
-                        <span translate="no">Reviewsvisor</span> analyse chaque mot, chaque émotion, chaque nuance pour vous donner des insights précis.
+                        L&apos;IA détecte émotions, problèmes récurrents et opportunités d&apos;amélioration avec une précision exceptionnelle.<br />
+                        Elle met en lumière les signaux faibles et ce qui compte réellement pour vos clients.
                       </p>
                     </div>
                   </div>
@@ -191,9 +193,13 @@ export const HeroSection = () => {
                   <div className="flex items-start gap-3">
                     <span className="text-xl mt-1">🔒</span>
                     <div>
-                      <h3 className="text-lg font-semibold mb-2">Sécurité Totale</h3>
+                      <h3 className="text-lg font-semibold mb-2">📈 Croissance Mesurable</h3>
                       <p className="text-blue-100 text-sm leading-relaxed">
-                        Vos données sont protégées et isolées. Chaque utilisateur a son propre espace sécurisé et privé.
+                        Reviewsvisor vous aide à augmenter votre note en ligne, attirer davantage de clients et améliorer vos revenus.<br />
+                        Les établissements utilisant l&apos;analyse intelligente :<br />
+                        • 📈 voient jusqu&apos;à +25% d&apos;avis positifs,<br />
+                        • 💸 génèrent en moyenne +10% à +20% de chiffre d&apos;affaires,<br />
+                        • ⭐ gagnent +0.5 à +1 point de note en quelques semaines.
                       </p>
                     </div>
                   </div>
