@@ -122,10 +122,17 @@ export const HeroSection = () => {
                 <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
                   <Target className="w-6 h-6 text-red-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Actions Prioritaires Précises</h3>
+                <h3 className="text-xl font-bold text-gray-900">👉 Pourquoi les avis comptent vraiment ?</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Plus de devinettes ! Obtenez un plan d'action concret avec les 3 problèmes à résoudre en 
-                  priorité pour maximiser votre impact sur la satisfaction client.
+                  Parce qu'un avis n'est pas qu'un commentaire :<br />
+                  ➡️ 94% des clients consultent les avis avant de choisir un établissement.<br />
+                  ➡️ 86% hésitent à acheter auprès d'un établissement ayant des avis négatifs.
+                  <br /><br />
+                  C'est pour cela que Reviewsvisor a été créé :<br />
+                  • 👉 Un outil simple,<br />
+                  • 👉 Une analyse intelligente,<br />
+                  • 👉 Une vision claire,<br />
+                  • 👉 Et des actions concrètes.
                 </p>
               </CardContent>
             </Card>
