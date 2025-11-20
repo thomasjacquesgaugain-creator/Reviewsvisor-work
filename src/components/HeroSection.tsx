@@ -67,7 +67,7 @@ export const HeroSection = () => {
                   onClick={() => window.location.href = '/onboarding'}
                 >
                   <span>✨</span>
-                  Commencer gratuitement maintenant
+                  Commencer maintenant
                 </Button>
                 <Button 
                   variant="outline" 
