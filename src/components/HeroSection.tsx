@@ -58,7 +58,7 @@ export const HeroSection = () => {
               </h1>
               
               <p className="text-lg text-gray-600 leading-relaxed">
-                Obtenez une vision claire des priorités en transformant leurs avis en véritables leviers de croissance.
+                Obtenez une <span className="font-semibold" style={{ color: '#2ECC71' }}>vision claire</span> des priorités en transformant leurs avis en véritables <span className="font-semibold" style={{ color: '#2ECC71' }}>leviers de croissance</span>.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
