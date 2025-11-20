@@ -17,8 +17,9 @@ export function Footer() {
             </Link>
             <ul className="space-y-3">
               <li>
-                <Link to="/a-propos" className="text-white hover:underline hover:opacity-80 transition-all">
-                  À propos
+                <Link to="/aide" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
+                  <HelpCircle className="h-4 w-4" />
+                  Aide
                 </Link>
               </li>
               <li>
@@ -28,9 +29,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/aide" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
-                  <HelpCircle className="h-4 w-4" />
-                  Aide
+                <Link to="/a-propos" className="text-white hover:underline hover:opacity-80 transition-all">
+                  À propos
                 </Link>
               </li>
               <li>
