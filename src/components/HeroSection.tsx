@@ -104,10 +104,10 @@ export const HeroSection = () => {
                 <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center">
                   <Brain className="w-6 h-6 text-pink-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">IA GPT-4 Ultra-Intelligente</h3>
+                <h3 className="text-xl font-bold text-gray-900">Centralisation & Analyse Essentielle</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  La même IA que ChatGPT analyse vos avis avec une précision chirurgicale. 
-                  Détecte les émotions cachées et les problèmes récurrents que vous ne voyez pas.
+                  Un outil, une centralisation pour votre établissement qui transforme vos retours en conception.
+                  Avec Reviewsvisor, vos retours clients deviennent une véritable source de croissance.
                 </p>
               </CardContent>
             </Card>
@@ -117,10 +117,16 @@ export const HeroSection = () => {
                 <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
                   <Target className="w-6 h-6 text-red-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Actions Prioritaires Précises</h3>
+                <h3 className="text-xl font-bold text-gray-900">Pourquoi les avis comptent vraiment</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Plus de devinettes ! Obtenez un plan d'action concret avec les 3 problèmes à résoudre en 
-                  priorité pour maximiser votre impact sur la satisfaction client.
+                  Parce qu'un avis n'est pas qu'un commentaire :<br />
+                  ➡️ 94% des clients consultent les avis avant de choisir un établissement.<br />
+                  ➡️ 86% hésitent à acheter auprès d'un établissement avec des avis négatifs.<br /><br />
+                  C'est pour cela que Reviewsvisor a été créé :<br />
+                  • 👉 Un outil simple<br />
+                  • 👉 Une analyse intelligente<br />
+                  • 👉 Une vision claire<br />
+                  • 👉 Des actions concrètes
                 </p>
               </CardContent>
             </Card>
@@ -130,10 +136,11 @@ export const HeroSection = () => {
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-purple-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Suivi Évolution Temps Réel</h3>
+                <h3 className="text-xl font-bold text-gray-900">Décisions Basées sur Vos Données</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Visualisez l'impact de vos améliorations avec des graphiques évolutifs et 
-                  des alertes intelligentes quand de nouveaux problèmes émergent.
+                  Nous croyons que chaque avis contient une opportunité d'évolution – et que des données bien analysées deviennent un véritable moteur de croissance.<br /><br />
+                  Restaurants, hôtels, commerces…<br />
+                  Prenez des décisions stratégiques basées sur vos propres données.
                 </p>
               </CardContent>
             </Card>
