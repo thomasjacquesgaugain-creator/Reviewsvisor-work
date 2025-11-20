@@ -106,8 +106,8 @@ export const HeroSection = () => {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900">👉 Analyse & Croissance Centralisée</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  👉 Un outil, une centralisation pour votre établissement qui transforme vos retours en conception.
-                  Avec Reviewsvisor, vos retours clients deviennent une véritable source de croissance.
+                  👉 <span style={{ color: '#2ECC71' }}>Un outil</span>, <span style={{ color: '#2ECC71' }}>une centralisation</span> pour votre établissement qui transforme vos <span style={{ color: '#2ECC71' }}>retours en conception</span>.
+                  Avec Reviewsvisor, vos retours clients deviennent une véritable <span style={{ color: '#2ECC71' }}>source de croissance</span>.
                   <br /><br />
                   👉 Notre technologie d'analyse avancée vous révèle :<br />
                   • vos forces,<br />
