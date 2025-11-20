@@ -104,15 +104,10 @@ export const HeroSection = () => {
                 <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center">
                   <Brain className="w-6 h-6 text-pink-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">👉 Analyse & Croissance Centralisée</h3>
+                <h3 className="text-xl font-bold text-gray-900">IA GPT-4 Ultra-Intelligente</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  👉 <span style={{ color: '#2ECC71' }}>Un outil</span>, <span style={{ color: '#2ECC71' }}>une centralisation</span> pour votre établissement qui transforme vos <span style={{ color: '#2ECC71' }}>retours en conception</span>.
-                  Avec Reviewsvisor, vos retours clients deviennent une véritable <span style={{ color: '#2ECC71' }}>source de croissance</span>.
-                  <br /><br />
-                  👉 Notre technologie d'analyse avancée vous révèle :<br />
-                  • vos forces,<br />
-                  • vos axes d'amélioration,<br />
-                  • les priorités à traiter pour améliorer l'expérience client.
+                  La même IA que ChatGPT analyse vos avis avec une précision chirurgicale. 
+                  Détecte les émotions cachées et les problèmes récurrents que vous ne voyez pas.
                 </p>
               </CardContent>
             </Card>
@@ -122,17 +117,10 @@ export const HeroSection = () => {
                 <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
                   <Target className="w-6 h-6 text-red-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">👉 Pourquoi les avis comptent vraiment ?</h3>
+                <h3 className="text-xl font-bold text-gray-900">Actions Prioritaires Précises</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Parce qu'un avis n'est pas qu'un commentaire :<br />
-                  ➡️ 94% des clients consultent les avis avant de choisir un établissement.<br />
-                  ➡️ 86% hésitent à acheter auprès d'un établissement ayant des avis négatifs.
-                  <br /><br />
-                  C'est pour cela que Reviewsvisor a été créé :<br />
-                  • 👉 Un outil simple,<br />
-                  • 👉 Une analyse intelligente,<br />
-                  • 👉 Une vision claire,<br />
-                  • 👉 Et des actions concrètes.
+                  Plus de devinettes ! Obtenez un plan d'action concret avec les 3 problèmes à résoudre en 
+                  priorité pour maximiser votre impact sur la satisfaction client.
                 </p>
               </CardContent>
             </Card>
