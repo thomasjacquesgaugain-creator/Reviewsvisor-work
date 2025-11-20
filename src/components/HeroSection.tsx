@@ -36,7 +36,7 @@ export const HeroSection = () => {
         </div>
 
         {/* Brand header - Large version */}
-        <div className="flex items-center justify-center pt-6 pb-0">
+        <div className="flex items-center justify-center pt-2 pb-0">
           <img 
             src={logoHeader} 
             alt="Reviewsvisor Logo" 
