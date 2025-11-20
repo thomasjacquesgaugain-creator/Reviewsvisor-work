@@ -41,7 +41,24 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Colonne 2 - Légal */}
+          {/* Colonne 2 - Compte */}
+          <div>
+            <h3 className="text-white font-bold text-lg mb-4">Compte</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link to="/login" className="text-white hover:underline hover:opacity-80 transition-all">
+                  Se connecter
+                </Link>
+              </li>
+              <li>
+                <Link to="/onboarding/signup" className="text-white hover:underline hover:opacity-80 transition-all">
+                  Créer un compte
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Colonne 3 - Légal */}
           <div>
             <h3 className="text-white font-bold text-lg mb-4">Légal</h3>
             <ul className="space-y-3">
@@ -66,23 +83,6 @@ export function Footer() {
                 <Link to="/cookies" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
                   <Cookie className="h-4 w-4" />
                   Cookies
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Colonne 3 - Compte */}
-          <div>
-            <h3 className="text-white font-bold text-lg mb-4">Compte</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link to="/login" className="text-white hover:underline hover:opacity-80 transition-all">
-                  Se connecter
-                </Link>
-              </li>
-              <li>
-                <Link to="/onboarding/signup" className="text-white hover:underline hover:opacity-80 transition-all">
-                  Créer un compte
                 </Link>
               </li>
             </ul>
