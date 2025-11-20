@@ -121,12 +121,7 @@ export const HeroSection = () => {
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Parce qu'un avis n'est pas qu'un commentaire :<br />
                   ➡️ 94% des clients consultent les avis avant de choisir un établissement.<br />
-                  ➡️ 86% hésitent à acheter auprès d'un établissement avec des avis négatifs.<br /><br />
-                  C'est pour cela que Reviewsvisor a été créé :<br />
-                  • 👉 Un outil simple<br />
-                  • 👉 Une analyse intelligente<br />
-                  • 👉 Une vision claire<br />
-                  • 👉 Des actions concrètes
+                  ➡️ 86% hésitent à acheter auprès d'un établissement avec des avis négatifs.
                 </p>
               </CardContent>
             </Card>
@@ -139,7 +134,6 @@ export const HeroSection = () => {
                 <h3 className="text-xl font-bold text-gray-900">Décisions Basées sur Vos Données</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Nous croyons que chaque avis contient une opportunité d'évolution – et que des données bien analysées deviennent un véritable moteur de croissance.<br /><br />
-                  Restaurants, hôtels, commerces…<br />
                   Prenez des décisions stratégiques basées sur vos propres données.
                 </p>
               </CardContent>
