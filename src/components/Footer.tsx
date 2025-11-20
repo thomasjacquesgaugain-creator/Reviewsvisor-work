@@ -1,14 +1,20 @@
 import { Link } from "react-router-dom";
 import { Mail, Shield, Cookie, FileText, HelpCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthProvider";
 
 export function Footer() {
+  const { user } = useAuth();
+  const reviewsvisorLink = user ? "/tableau-de-bord" : "/";
+  
   return (
     <footer className="bg-blue-600 text-white mt-auto shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           {/* Colonne 1 - Reviewsvisor */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4" translate="no">Reviewsvisor</h3>
+            <Link to={reviewsvisorLink}>
+              <h3 className="text-white font-bold text-lg mb-4 hover:opacity-80 transition-opacity cursor-pointer" translate="no">Reviewsvisor</h3>
+            </Link>
             <ul className="space-y-3">
               <li>
                 <Link to="/a-propos" className="text-white hover:underline hover:opacity-80 transition-all">
