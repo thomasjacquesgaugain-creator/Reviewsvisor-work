@@ -36,11 +36,11 @@ export const HeroSection = () => {
         </div>
 
         {/* Brand header - Large version */}
-        <div className="flex items-center justify-center pt-6 pb-2">
+        <div className="flex items-center justify-center pt-6 pb-0">
           <img 
             src={logoHeader} 
             alt="Reviewsvisor Logo" 
-            className="h-[90px] w-auto mt-4 -mr-2"
+            className="h-[90px] w-auto -mr-2"
             style={{ filter: 'brightness(0) saturate(100%) invert(38%) sepia(89%) saturate(2475%) hue-rotate(214deg) brightness(101%) contrast(101%)' }}
           />
           <span className="text-[#2F6BFF] text-[48px] font-bold leading-none">
@@ -50,7 +50,7 @@ export const HeroSection = () => {
 
 
         {/* Main hero card */}
-        <div className="container mx-auto px-4 pt-6 pb-16">
+        <div className="container mx-auto px-4 pt-2 pb-16">
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-12">
             <CardContent className="p-8 text-center space-y-6">
               <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
