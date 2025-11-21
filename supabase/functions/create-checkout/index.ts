@@ -87,6 +87,9 @@ serve(async (req) => {
       payment_method_types: ["card"],
       billing_address_collection: "auto",
       allow_promotion_codes: false,
+      subscription_data: {
+        trial_period_days: 14,
+      },
       success_url: `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/billing/cancel`,
     });
