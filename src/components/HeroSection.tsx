@@ -193,8 +193,8 @@ export const HeroSection = () => {
                       <p className="text-blue-100 text-sm leading-relaxed">
                         Reviewsvisor vous aide à augmenter votre note en ligne, attirer davantage de clients et améliorer vos revenus.<br />
                         Les établissements utilisant l&apos;analyse intelligente :<br />
-                        • 📈 voient jusqu&apos;à +25% d&apos;avis positifs,<br />
-                        • 💸 génèrent en moyenne +10% à +20% de chiffre d&apos;affaires,<br />
+                        • ✅ voient jusqu&apos;à +25% d&apos;avis positifs,<br />
+                        • 📊 génèrent en moyenne +10% à +20% de chiffre d&apos;affaires,<br />
                         • ⭐ gagnent +0.5 à +1 point de note en quelques semaines.
                       </p>
                     </div>
