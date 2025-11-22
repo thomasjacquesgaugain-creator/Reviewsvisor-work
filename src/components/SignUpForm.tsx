@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { User, UserCircle } from "lucide-react";
+import { User, UserCircle, Building2 } from "lucide-react";
 
 interface SignUpFormProps {
   prefilledEmail?: string;
@@ -17,6 +17,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [company, setCompany] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -80,7 +81,8 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
         options: { 
           data: { 
             first_name: firstName.trim(),
-            last_name: lastName.trim()
+            last_name: lastName.trim(),
+            company: company.trim()
           },
           emailRedirectTo: redirectUrl
         }
@@ -105,6 +107,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
             first_name: firstName.trim(),
             last_name: lastName.trim(),
             full_name: `${firstName.trim()} ${lastName.trim()}`,
+            company: company.trim(),
             updated_at: new Date().toISOString()
           }, { 
             onConflict: 'id'
@@ -221,6 +224,22 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
         {errors.lastName && (
           <p id="lastName-error" className="text-sm text-destructive">{errors.lastName}</p>
         )}
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="company">Entreprise (optionnel)</Label>
+        <div className="relative">
+          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="company"
+            placeholder="Nom de votre entreprise"
+            autoComplete="organization"
+            value={company}
+            onChange={e => setCompany(e.target.value)}
+            maxLength={100}
+            className="pl-10"
+          />
+        </div>
       </div>
       
       <div className="space-y-2">
