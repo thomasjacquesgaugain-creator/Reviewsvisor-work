@@ -40,33 +40,6 @@ const Aide = () => {
 
                   <AccordionItem value="item-2">
                     <AccordionTrigger className="text-left text-lg font-semibold">
-                      Comment connecter mon établissement ?
-                    </AccordionTrigger>
-                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
-                      Il vous suffit de rechercher votre établissement dans notre interface de recherche. Une fois trouvé, vous pouvez l'enregistrer et commencer à importer vos avis depuis Google, Facebook, TripAdvisor et d'autres plateformes. Le processus est simple et guidé étape par étape.
-                    </AccordionContent>
-                  </AccordionItem>
-
-                  <AccordionItem value="item-3">
-                    <AccordionTrigger className="text-left text-lg font-semibold">
-                      Quelles plateformes sont supportées ?
-                    </AccordionTrigger>
-                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
-                      <span className="text-blue">Reviewsvisor</span> centralise vos avis provenant de Google My Business, Facebook, TripAdvisor, TheFork, Yelp et bien d'autres. Vous pouvez également importer manuellement des avis depuis n'importe quelle source en utilisant notre système d'import CSV ou de collage direct.
-                    </AccordionContent>
-                  </AccordionItem>
-
-                  <AccordionItem value="item-4">
-                    <AccordionTrigger className="text-left text-lg font-semibold">
-                      À quelle fréquence les données sont-elles mises à jour ?
-                    </AccordionTrigger>
-                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
-                      Les analyses et statistiques sont actualisées en temps réel dès que de nouveaux avis sont importés. Vous pouvez configurer des imports automatiques pour certaines plateformes ou effectuer des mises à jour manuelles à tout moment selon vos besoins.
-                    </AccordionContent>
-                  </AccordionItem>
-
-                  <AccordionItem value="item-5">
-                    <AccordionTrigger className="text-left text-lg font-semibold">
                       Comment interpréter les rapports d'analyse ?
                     </AccordionTrigger>
                     <AccordionContent className="text-foreground/80 text-base leading-relaxed">
