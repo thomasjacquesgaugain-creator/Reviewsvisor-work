@@ -21,14 +21,18 @@ export type Database = {
           country: string | null
           created_at: string | null
           formatted_address: string | null
+          gamme_prix: string | null
           google_account_id: string | null
           google_location_id: string | null
           icon_type: string | null
           id: string
           lat: number | null
+          latitude: string | null
           lng: number | null
           name: string
+          nom: string | null
           organization_id: string | null
+          pays: string | null
           phone: string | null
           place_id: string
           postal_code: string | null
@@ -37,10 +41,12 @@ export type Database = {
           raw: Json | null
           source: string
           timezone: string | null
+          type: string | null
           types: Json | null
           updated_at: string | null
           user_id: string
           user_ratings_total: number | null
+          ville: string | null
           website: string | null
         }
         Insert: {
@@ -49,14 +55,18 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           formatted_address?: string | null
+          gamme_prix?: string | null
           google_account_id?: string | null
           google_location_id?: string | null
           icon_type?: string | null
           id?: string
           lat?: number | null
+          latitude?: string | null
           lng?: number | null
           name: string
+          nom?: string | null
           organization_id?: string | null
+          pays?: string | null
           phone?: string | null
           place_id: string
           postal_code?: string | null
@@ -65,10 +75,12 @@ export type Database = {
           raw?: Json | null
           source?: string
           timezone?: string | null
+          type?: string | null
           types?: Json | null
           updated_at?: string | null
           user_id: string
           user_ratings_total?: number | null
+          ville?: string | null
           website?: string | null
         }
         Update: {
@@ -77,14 +89,18 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           formatted_address?: string | null
+          gamme_prix?: string | null
           google_account_id?: string | null
           google_location_id?: string | null
           icon_type?: string | null
           id?: string
           lat?: number | null
+          latitude?: string | null
           lng?: number | null
           name?: string
+          nom?: string | null
           organization_id?: string | null
+          pays?: string | null
           phone?: string | null
           place_id?: string
           postal_code?: string | null
@@ -93,10 +109,12 @@ export type Database = {
           raw?: Json | null
           source?: string
           timezone?: string | null
+          type?: string | null
           types?: Json | null
           updated_at?: string | null
           user_id?: string
           user_ratings_total?: number | null
+          ville?: string | null
           website?: string | null
         }
         Relationships: [
