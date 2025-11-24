@@ -25,7 +25,7 @@ const Fonctionnalites = () => {
                     Voyez votre réputation autrement
                   </h2>
                   <p>
-                    Derrière chaque note, il y a une émotion. Reviewsvisor capte ces nuances pour vous offrir une lecture humaine de votre réputation. Vous découvrez enfin ce que vos clients ressentent vraiment.
+                    Derrière chaque note, il y a une émotion. <span className="text-brand-blue">Reviewsvisor</span> <span className="text-brand-green">capte ces nuances pour vous offrir une lecture humaine</span> de votre réputation. Vous découvrez enfin ce que vos clients ressentent vraiment.
                   </p>
                 </div>
 
@@ -34,7 +34,7 @@ const Fonctionnalites = () => {
                     Une intelligence qui comprend vos clients
                   </h2>
                   <p>
-                    Notre IA lit les avis comme une personne : elle repère le ton, le choix des mots, les émotions et les thèmes dominants. Elle transforme le bruit des commentaires en une vision claire de votre image.
+                    Notre IA lit les avis comme une personne : elle repère le ton, le choix des mots, les émotions et les thèmes dominants. <span className="text-brand-green">Elle transforme le bruit des commentaires en une vision claire</span> de votre image.
                   </p>
                 </div>
 
@@ -43,7 +43,7 @@ const Fonctionnalites = () => {
                     Des pistes d'action claires
                   </h2>
                   <p>
-                    Reviewsvisor ne se contente pas d'analyser : il vous montre où agir. En quelques secondes, vous identifiez les domaines à renforcer et ceux qui font déjà la différence.
+                    <span className="text-brand-blue">Reviewsvisor</span> ne se contente pas d'analyser : il vous montre où agir. En quelques secondes, <span className="text-brand-green">vous identifiez les domaines à renforcer et ceux qui font déjà la différence</span>.
                   </p>
                 </div>
 
@@ -52,7 +52,7 @@ const Fonctionnalites = () => {
                     Une évolution visible
                   </h2>
                   <p>
-                    Votre réputation est vivante. Notre outil suit vos progrès, détecte les changements de perception et vous aide à anticiper les tendances avant qu'elles ne deviennent critiques.
+                    Votre réputation est vivante. Notre outil suit vos progrès, détecte les changements de perception et <span className="text-brand-green">aide à anticiper les tendances avant qu'elles ne deviennent critiques</span>.
                   </p>
                 </div>
 
@@ -61,7 +61,7 @@ const Fonctionnalites = () => {
                     Une compréhension locale et globale
                   </h2>
                   <p>
-                    Que vous gériez un seul établissement ou un réseau entier, Reviewsvisor vous offre une vision claire de vos performances à chaque échelle. Comparez vos sites, repérez les différences régionales et ajustez vos stratégies là où cela compte le plus.
+                    Que vous gériez un seul établissement ou un réseau entier, <span className="text-brand-blue">Reviewsvisor</span> vous offre une vision claire de vos performances à chaque échelle. Comparez vos sites, repérez les différences régionales et <span className="text-brand-green">ajustez vos stratégies là où cela compte le plus</span>.
                   </p>
                 </div>
 
@@ -70,7 +70,7 @@ const Fonctionnalites = () => {
                     Des rapports qui parlent vrai
                   </h2>
                   <p>
-                    Des visuels clairs, des données utiles et une interprétation accessible. Reviewsvisor vous offre la vérité sur votre réputation, sans jargon inutile.
+                    Des visuels clairs, des données utiles et une interprétation accessible. <span className="text-brand-blue">Reviewsvisor</span> <span className="text-brand-green">vous offre la vérité sur votre réputation</span>, sans jargon inutile.
                   </p>
                 </div>
 
@@ -79,7 +79,7 @@ const Fonctionnalites = () => {
                     Un partenaire, pas juste un outil
                   </h2>
                   <p>
-                    Au fil du temps, Reviewsvisor apprend à connaître votre établissement et vous guide vers l'excellence. Ensemble, on transforme les avis en leviers de croissance.
+                    Au fil du temps, <span className="text-brand-blue">Reviewsvisor</span> <span className="text-brand-green">apprend à connaître votre établissement et vous guide vers l'excellence</span>. Ensemble, on transforme les avis en <span className="text-brand-green">leviers de croissance</span>.
                   </p>
                 </div>
               </div>

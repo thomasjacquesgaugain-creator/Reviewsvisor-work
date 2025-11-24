@@ -186,6 +186,14 @@ All colors MUST be HSL.
   font-weight: 600;
 }
 
+.text-brand-blue {
+  color: hsl(var(--brand-blue));
+}
+
+.text-brand-green {
+  color: hsl(var(--brand-green));
+}
+
 .intro-line {
   display: flex;
   align-items: center;
@@ -288,6 +296,10 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Brand colors for Reviewsvisor */
+    --brand-blue: 214 74% 54%;
+    --brand-green: 157 46% 54%;
   }
 }
 
