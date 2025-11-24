@@ -123,15 +123,6 @@ const Fonctionnalites = () => {
                       Oui, vous pouvez filtrer vos rapports par période, par plateforme (Google, TripAdvisor...), par note ou par source. Vous choisissez également les indicateurs que vous souhaitez suivre dans vos rapports pour vous concentrer sur ce qui compte vraiment pour votre établissement.
                     </AccordionContent>
                   </AccordionItem>
-
-                  <AccordionItem value="item-5">
-                    <AccordionTrigger className="text-left text-lg font-semibold">
-                      Reviewsvisor s'intègre-t-il avec Google, TripAdvisor et d'autres plateformes ?
-                    </AccordionTrigger>
-                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
-                      Oui, <span className="text-blue">Reviewsvisor</span> se connecte aux principales plateformes d'avis en ligne comme Google My Business, TripAdvisor, Facebook, TheFork et bien d'autres. Tous vos retours clients sont centralisés au même endroit pour vous offrir une vision globale et cohérente de votre réputation.
-                    </AccordionContent>
-                  </AccordionItem>
                 </Accordion>
               </div>
             </div>
