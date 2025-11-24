@@ -1,4 +1,11 @@
 import logoReviewsvisor from "@/assets/logo-reviewsvisor.png";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import AiAssistance from "@/components/AiAssistance";
 
 const Fonctionnalites = () => {
   return (
@@ -76,6 +83,65 @@ const Fonctionnalites = () => {
                     Des recommandations adaptées à votre établissement pour améliorer l'expérience client et votre note.
                   </p>
                 </div>
+              </div>
+
+              <div className="mt-12 pt-8 border-t border-border">
+                <h2 className="text-2xl font-bold mb-6 text-foreground">Questions sur les fonctionnalités</h2>
+                
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="item-1">
+                    <AccordionTrigger className="text-left text-lg font-semibold">
+                      Comment fonctionne l'analyse des avis ?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
+                      <span className="text-blue">Reviewsvisor</span> utilise une intelligence artificielle avancée pour analyser vos avis clients. L'outil lit chaque commentaire, identifie le ton et l'émotion, extrait les mots-clés importants et détecte automatiquement les points forts et les points faibles. Vous obtenez ensuite une synthèse claire avec des <span className="text-green">axes d'amélioration prioritaires</span>.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-2">
+                    <AccordionTrigger className="text-left text-lg font-semibold">
+                      Comment interpréter les rapports d'analyse ?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
+                      Nos rapports sont conçus pour être clairs et actionnables. Vous verrez votre note moyenne, la répartition positive/négative, les thèmes récurrents identifiés par l'IA, ainsi que les principaux points d'amélioration. Chaque section est accompagnée de conseils personnalisés pour améliorer votre expérience client et votre réputation en ligne.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-3">
+                    <AccordionTrigger className="text-left text-lg font-semibold">
+                      Comment Reviewsvisor identifie les points forts et faibles ?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
+                      L'intelligence artificielle analyse chaque avis pour détecter les aspects positifs et négatifs. Elle identifie les thèmes récurrents (accueil, propreté, qualité...), calcule leur impact sur votre note globale et les classe par ordre d'importance. Les points faibles prioritaires sont ceux qui affectent le plus votre réputation.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-4">
+                    <AccordionTrigger className="text-left text-lg font-semibold">
+                      Peut-on personnaliser les rapports d'analyse ?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
+                      Oui, vous pouvez adapter les rapports selon vos besoins. Filtrez par période, plateforme ou type d'avis. Vous pouvez également exporter vos rapports en PDF pour les partager avec votre équipe ou vos partenaires.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-5">
+                    <AccordionTrigger className="text-left text-lg font-semibold">
+                      Reviewsvisor s'intègre-t-il à d'autres outils de gestion (Google, TripAdvisor, etc.) ?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
+                      Oui, <span className="text-blue">Reviewsvisor</span> centralise automatiquement vos avis depuis Google My Business, TripAdvisor, Facebook, TheFork et d'autres plateformes majeures. L'import peut être automatisé ou manuel selon vos préférences.
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+
+              <div className="mt-12 pt-8 border-t border-border">
+                <h2 className="text-2xl font-bold mb-6 text-foreground">Assistance IA</h2>
+                <p className="text-foreground/80 text-base leading-relaxed mb-6">
+                  Posez vos questions à notre assistant virtuel pour obtenir une réponse personnalisée et immédiate.
+                </p>
+                <AiAssistance />
               </div>
             </div>
           </div>
