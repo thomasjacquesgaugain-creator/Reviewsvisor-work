@@ -22,64 +22,64 @@ const Fonctionnalites = () => {
               <div className="text-foreground/90 leading-relaxed space-y-6 text-lg mb-2">
                 <div>
                   <h2 className="text-2xl font-semibold mb-2 text-foreground">
-                    Vision globale de votre réputation
+                    Voyez votre réputation autrement
                   </h2>
                   <p>
-                    Accédez à une vue d'ensemble complète et intuitive de votre e-réputation. En un coup d'œil, comprenez comment vos clients perçoivent votre établissement, quelles émotions dominent dans leurs retours et comment évolue votre note moyenne. Reviewsvisor traduit les données brutes en une compréhension claire et exploitable de votre image en ligne.
+                    Derrière chaque note, il y a une émotion. Reviewsvisor capte ces nuances pour vous offrir une lecture humaine de votre réputation. Vous découvrez enfin ce que vos clients ressentent vraiment.
                   </p>
                 </div>
 
                 <div>
                   <h2 className="text-2xl font-semibold mb-2 text-foreground">
-                    Analyse intelligente des avis
+                    Une intelligence qui comprend vos clients
                   </h2>
                   <p>
-                    Notre intelligence artificielle lit, comprend et interprète chaque avis client. Elle détecte automatiquement les sentiments, identifie les mots-clés récurrents et met en évidence les points forts comme les faiblesses. Chaque avis compte, et Reviewsvisor veille à ce qu'aucun détail important ne vous échappe.
+                    Notre IA lit les avis comme une personne : elle repère le ton, le choix des mots, les émotions et les thèmes dominants. Elle transforme le bruit des commentaires en une vision claire de votre image.
                   </p>
                 </div>
 
                 <div>
                   <h2 className="text-2xl font-semibold mb-2 text-foreground">
-                    Points d'amélioration prioritaires
+                    Des pistes d'action claires
                   </h2>
                   <p>
-                    Ne perdez plus de temps à chercher où agir. Reviewsvisor hiérarchise pour vous les axes d'amélioration ayant le plus d'impact sur votre réputation. Vous savez exactement quels leviers activer pour renforcer vos performances et satisfaire durablement vos clients.
+                    Reviewsvisor ne se contente pas d'analyser : il vous montre où agir. En quelques secondes, vous identifiez les domaines à renforcer et ceux qui font déjà la différence.
                   </p>
                 </div>
 
                 <div>
                   <h2 className="text-2xl font-semibold mb-2 text-foreground">
-                    Historique de votre évolution
+                    Une évolution visible
                   </h2>
                   <p>
-                    Visualisez votre progression dans le temps. Suivez les tendances clés, les périodes de forte activité et les moments sensibles. L'historique vous aide à mesurer l'efficacité de vos actions et à anticiper les changements de perception de vos clients.
+                    Votre réputation est vivante. Notre outil suit vos progrès, détecte les changements de perception et vous aide à anticiper les tendances avant qu'elles ne deviennent critiques.
                   </p>
                 </div>
 
                 <div>
                   <h2 className="text-2xl font-semibold mb-2 text-foreground">
-                    Centralisation multi-plateforme
+                    Une compréhension locale et globale
                   </h2>
                   <p>
-                    Simplifiez votre gestion : tous vos avis — Google, Facebook, TripAdvisor, TheFork et bien d'autres — sont regroupés automatiquement dans un tableau de bord unique. Plus besoin de jongler entre les plateformes : tout est centralisé, mis à jour en temps réel et prêt à être analysé.
+                    Que vous gériez un seul établissement ou un réseau entier, Reviewsvisor vous offre une vision claire de vos performances à chaque échelle. Comparez vos sites, repérez les différences régionales et ajustez vos stratégies là où cela compte le plus.
                   </p>
                 </div>
 
                 <div>
                   <h2 className="text-2xl font-semibold mb-2 text-foreground">
-                    Rapports clairs et actionnables
+                    Des rapports qui parlent vrai
                   </h2>
                   <p>
-                    Recevez des rapports visuels et faciles à lire, générés automatiquement selon la fréquence de votre choix. Chaque synthèse met en avant les chiffres clés, les tendances et les recommandations stratégiques pour vous aider à prendre les meilleures décisions rapidement.
+                    Des visuels clairs, des données utiles et une interprétation accessible. Reviewsvisor vous offre la vérité sur votre réputation, sans jargon inutile.
                   </p>
                 </div>
 
                 <div>
                   <h2 className="text-2xl font-semibold mb-2 text-foreground">
-                    Conseils personnalisés
+                    Un partenaire, pas juste un outil
                   </h2>
                   <p>
-                    Reviewsvisor ne se contente pas de vous montrer vos résultats : il vous accompagne. L'IA vous propose des conseils adaptés à votre établissement, à votre secteur et à vos clients. Vous bénéficiez d'un véritable partenaire d'amélioration continue pour booster votre expérience client et votre note globale.
+                    Au fil du temps, Reviewsvisor apprend à connaître votre établissement et vous guide vers l'excellence. Ensemble, on transforme les avis en leviers de croissance.
                   </p>
                 </div>
               </div>
