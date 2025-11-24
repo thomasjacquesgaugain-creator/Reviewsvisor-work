@@ -99,28 +99,55 @@ const Fonctionnalites = () => {
 
                   <AccordionItem value="item-2">
                     <AccordionTrigger className="text-left text-lg font-semibold">
-                      Comment interpréter les rapports d'analyse ?
+                      En quoi Reviewsvisor est-il différent d'un simple outil de statistiques ?
                     </AccordionTrigger>
                     <AccordionContent className="text-foreground/80 text-base leading-relaxed">
-                      Nos rapports sont conçus pour être clairs et actionnables. Vous verrez votre note moyenne, la répartition positive/négative, les thèmes récurrents identifiés par l'IA, ainsi que les principaux points d'amélioration. Chaque section est accompagnée de conseils personnalisés pour améliorer votre expérience client et votre réputation en ligne.
+                      <span className="text-blue">Reviewsvisor</span> ne se limite pas aux chiffres. L'IA analyse le ton, le vocabulaire et les émotions dans chaque avis afin de révéler les véritables ressentis des clients. L'outil identifie les tendances, les points forts et les axes d'amélioration, pour offrir une vision stratégique plutôt qu'un simple tableau de données.
                     </AccordionContent>
                   </AccordionItem>
 
                   <AccordionItem value="item-3">
                     <AccordionTrigger className="text-left text-lg font-semibold">
-                      Comment Reviewsvisor identifie-t-il les points forts et les points faibles ?
+                      Comment les axes d'amélioration sont-ils déterminés ?
                     </AccordionTrigger>
                     <AccordionContent className="text-foreground/80 text-base leading-relaxed">
-                      L'IA regroupe automatiquement vos avis par thèmes récurrents (service, accueil, prix, ambiance, propreté, qualité...). Elle mesure la tonalité positive ou négative de chaque commentaire et met en avant les éléments qui reviennent le plus souvent. Ainsi, vous identifiez rapidement ce qui plaît à vos clients et ce qui nécessite une amélioration.
+                      L'IA regroupe les retours clients par thématiques récurrentes (accueil, qualité, prix, service, ambiance, etc.). Elle mesure la fréquence et la tonalité de chaque sujet pour établir une liste claire des priorités d'amélioration à fort impact.
                     </AccordionContent>
                   </AccordionItem>
 
                   <AccordionItem value="item-4">
                     <AccordionTrigger className="text-left text-lg font-semibold">
-                      Peut-on personnaliser les rapports d'analyse ?
+                      Quelle est la précision de l'analyse ?
                     </AccordionTrigger>
                     <AccordionContent className="text-foreground/80 text-base leading-relaxed">
-                      Oui, vous pouvez filtrer vos rapports par période, par plateforme (Google, TripAdvisor...), par note ou par source. Vous choisissez également les indicateurs que vous souhaitez suivre dans vos rapports pour vous concentrer sur ce qui compte vraiment pour votre établissement.
+                      <span className="text-blue">Reviewsvisor</span> utilise des modèles d'intelligence artificielle entraînés sur des millions de commentaires clients réels. Le taux de précision moyen dépasse 90 %, avec une amélioration continue grâce à l'apprentissage automatique des nouveaux avis analysés.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-5">
+                    <AccordionTrigger className="text-left text-lg font-semibold">
+                      L'IA peut-elle détecter les faux avis ou les avis suspects ?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
+                      Oui, partiellement. <span className="text-blue">Reviewsvisor</span> repère les avis suspects selon plusieurs signaux : répétition de mots-clés, schémas d'écriture inhabituels, extrêmes émotionnels ou activité anormale sur une courte période. Cette fonctionnalité est conçue pour alerter les établissements sur les anomalies possibles.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-6">
+                    <AccordionTrigger className="text-left text-lg font-semibold">
+                      Puis-je comparer mes performances à celles de mes concurrents ?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
+                      Cette fonctionnalité arrive très bientôt ! <span className="text-blue">Reviewsvisor</span> intégrera prochainement une <span className="font-semibold">analyse concurrentielle avancée</span>, permettant de comparer vos indicateurs clés à ceux de vos concurrents directs. Un véritable <span className="font-semibold">benchmarkeur intelligent</span> pour suivre votre position sur le marché.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-7">
+                    <AccordionTrigger className="text-left text-lg font-semibold">
+                      Puis-je connecter plusieurs établissements à un seul compte ?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
+                      Oui. <span className="text-blue">Reviewsvisor</span> permet de centraliser la gestion de plusieurs établissements depuis un tableau de bord unique. Chaque lieu dispose de ses propres rapports, filtres et analyses, tout en conservant une vision globale de la performance du groupe.
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
