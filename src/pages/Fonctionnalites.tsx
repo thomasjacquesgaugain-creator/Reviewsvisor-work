@@ -5,7 +5,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import AiAssistance from "@/components/AiAssistance";
 
 const Fonctionnalites = () => {
   return (
@@ -109,10 +108,10 @@ const Fonctionnalites = () => {
 
                   <AccordionItem value="item-3">
                     <AccordionTrigger className="text-left text-lg font-semibold">
-                      Comment Reviewsvisor identifie les points forts et faibles ?
+                      Comment Reviewsvisor identifie-t-il les points forts et les points faibles ?
                     </AccordionTrigger>
                     <AccordionContent className="text-foreground/80 text-base leading-relaxed">
-                      L'intelligence artificielle analyse chaque avis pour détecter les aspects positifs et négatifs. Elle identifie les thèmes récurrents (accueil, propreté, qualité...), calcule leur impact sur votre note globale et les classe par ordre d'importance. Les points faibles prioritaires sont ceux qui affectent le plus votre réputation.
+                      L'IA regroupe automatiquement vos avis par thèmes récurrents (service, accueil, prix, ambiance, propreté, qualité...). Elle mesure la tonalité positive ou négative de chaque commentaire et met en avant les éléments qui reviennent le plus souvent. Ainsi, vous identifiez rapidement ce qui plaît à vos clients et ce qui nécessite une amélioration.
                     </AccordionContent>
                   </AccordionItem>
 
@@ -121,27 +120,19 @@ const Fonctionnalites = () => {
                       Peut-on personnaliser les rapports d'analyse ?
                     </AccordionTrigger>
                     <AccordionContent className="text-foreground/80 text-base leading-relaxed">
-                      Oui, vous pouvez adapter les rapports selon vos besoins. Filtrez par période, plateforme ou type d'avis. Vous pouvez également exporter vos rapports en PDF pour les partager avec votre équipe ou vos partenaires.
+                      Oui, vous pouvez filtrer vos rapports par période, par plateforme (Google, TripAdvisor...), par note ou par source. Vous choisissez également les indicateurs que vous souhaitez suivre dans vos rapports pour vous concentrer sur ce qui compte vraiment pour votre établissement.
                     </AccordionContent>
                   </AccordionItem>
 
                   <AccordionItem value="item-5">
                     <AccordionTrigger className="text-left text-lg font-semibold">
-                      Reviewsvisor s'intègre-t-il à d'autres outils de gestion (Google, TripAdvisor, etc.) ?
+                      Reviewsvisor s'intègre-t-il avec Google, TripAdvisor et d'autres plateformes ?
                     </AccordionTrigger>
                     <AccordionContent className="text-foreground/80 text-base leading-relaxed">
-                      Oui, <span className="text-blue">Reviewsvisor</span> centralise automatiquement vos avis depuis Google My Business, TripAdvisor, Facebook, TheFork et d'autres plateformes majeures. L'import peut être automatisé ou manuel selon vos préférences.
+                      Oui, <span className="text-blue">Reviewsvisor</span> se connecte aux principales plateformes d'avis en ligne comme Google My Business, TripAdvisor, Facebook, TheFork et bien d'autres. Tous vos retours clients sont centralisés au même endroit pour vous offrir une vision globale et cohérente de votre réputation.
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
-              </div>
-
-              <div className="mt-12 pt-8 border-t border-border">
-                <h2 className="text-2xl font-bold mb-6 text-foreground">Assistance IA</h2>
-                <p className="text-foreground/80 text-base leading-relaxed mb-6">
-                  Posez vos questions à notre assistant virtuel pour obtenir une réponse personnalisée et immédiate.
-                </p>
-                <AiAssistance />
               </div>
             </div>
           </div>
