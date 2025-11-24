@@ -120,7 +120,7 @@ const Fonctionnalites = () => {
                       Quelle est la précision de l'analyse ?
                     </AccordionTrigger>
                     <AccordionContent className="text-foreground/80 text-base leading-relaxed">
-                      <span className="text-blue">Reviewsvisor</span> utilise des modèles d'intelligence artificielle entraînés sur des millions de commentaires clients réels. Le taux de précision moyen dépasse 90 %, avec une amélioration continue grâce à l'apprentissage automatique des nouveaux avis analysés.
+                      <span style={{color:"#2C7BE5"}}>Reviewsvisor</span> utilise des modèles d'intelligence artificielle entraînés sur des millions de commentaires clients réels. <span style={{color:"#3FB27F"}}>Le taux de précision moyen dépasse 90 %</span>, avec une amélioration continue grâce à l'apprentissage automatique des nouveaux avis analysés.
                     </AccordionContent>
                   </AccordionItem>
 
@@ -129,7 +129,7 @@ const Fonctionnalites = () => {
                       L'IA peut-elle détecter les faux avis ou les avis suspects ?
                     </AccordionTrigger>
                     <AccordionContent className="text-foreground/80 text-base leading-relaxed">
-                      Oui, partiellement. <span className="text-blue">Reviewsvisor</span> repère les avis suspects selon plusieurs signaux : répétition de mots-clés, schémas d'écriture inhabituels, extrêmes émotionnels ou activité anormale sur une courte période. Cette fonctionnalité est conçue pour alerter les établissements sur les anomalies possibles.
+                      Oui, partiellement. <span style={{color:"#2C7BE5"}}>Reviewsvisor</span> repère les avis suspects selon plusieurs signaux : répétition de <span style={{color:"#3FB27F"}}>mots-clés</span>, <span style={{color:"#3FB27F"}}>schémas d'écriture inhabituels</span>, extrêmes émotionnels ou activité anormale sur une courte période. Cette fonctionnalité est conçue pour alerter les établissements sur les anomalies possibles.
                     </AccordionContent>
                   </AccordionItem>
 
@@ -147,7 +147,7 @@ const Fonctionnalites = () => {
                       Puis-je connecter plusieurs établissements à un seul compte ?
                     </AccordionTrigger>
                     <AccordionContent className="text-foreground/80 text-base leading-relaxed">
-                      Oui. <span className="text-blue">Reviewsvisor</span> permet de centraliser la gestion de plusieurs établissements depuis un tableau de bord unique. Chaque lieu dispose de ses propres rapports, filtres et analyses, tout en conservant une vision globale de la performance du groupe.
+                      Oui. <span style={{color:"#2C7BE5"}}>Reviewsvisor</span> permet de <span style={{color:"#3FB27F"}}>centraliser la gestion de plusieurs établissements</span> depuis un tableau de bord unique. Chaque lieu dispose de <span style={{color:"#3FB27F"}}>ses propres rapports</span>, filtres et analyses, tout en conservant une vision globale de la performance du groupe.
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
