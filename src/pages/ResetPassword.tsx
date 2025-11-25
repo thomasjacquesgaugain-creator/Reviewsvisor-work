@@ -106,14 +106,10 @@ const ResetPassword = () => {
                 </form>
               ) : (
                 <div className="text-center space-y-4">
-                  <div className="p-4 bg-green-50 rounded-xl border border-green-200">
-                    <p className="text-sm text-green-800">
-                      ✅ Un email de réinitialisation a été envoyé à <strong>{email}</strong>
-                    </p>
-                    <p className="text-sm text-green-700 mt-2">
-                      Vérifiez votre boîte mail et cliquez sur le lien pour réinitialiser votre mot de passe.
-                    </p>
-                  </div>
+                  <p className="mt-4 rounded-md bg-green-100 p-4 text-sm text-green-800">
+                    ✅ Un email de réinitialisation a été envoyé à <strong>{email}</strong><br />
+                    📬 <strong>Astuce :</strong> Vérifie aussi ton dossier <em>Spam</em> ou <em>Courrier indésirable</em>, il peut parfois s'y glisser par erreur.
+                  </p>
                 </div>
               )}
 
