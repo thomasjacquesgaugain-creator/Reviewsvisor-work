@@ -280,6 +280,17 @@ const Login = () => {
                 </Button>
               </form>
 
+              {!isSignUp && (
+                <div className="text-center">
+                  <Link 
+                    to="/reset-password" 
+                    className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                  >
+                    🔒 Mot de passe oublié ?
+                  </Link>
+                </div>
+              )}
+
               <div className="text-center space-y-4">
                 <p className="text-gray-600">
                   {isSignUp ? "Déjà un compte ?" : "Pas encore de compte ?"}{" "}
