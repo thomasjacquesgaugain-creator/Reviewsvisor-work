@@ -52,6 +52,7 @@ const App = () => {
             <Route path="/" element={<Accueil />} />
             <Route path="/accueil" element={<Navigate to="/" replace />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/connexion" element={<Login />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/contact" element={<Contact />} />
