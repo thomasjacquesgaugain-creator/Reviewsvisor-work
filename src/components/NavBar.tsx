@@ -12,7 +12,7 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/');
+    // La redirection est gérée dans signOut
   };
 
   const isAccueil = location.pathname === "/tableau-de-bord";

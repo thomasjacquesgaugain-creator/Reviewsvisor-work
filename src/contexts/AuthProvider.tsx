@@ -133,8 +133,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error('Erreur lors de la déconnexion:', error);
     } finally {
       // Force le nettoyage local même si l'appel échoue
+      localStorage.clear();
       setSession(null);
       setProfile(null);
+      // Redirection vers la page de connexion
+      window.location.href = '/connexion';
     }
   };
 

@@ -15,7 +15,7 @@ export default function Protected({ children }: { children: JSX.Element }) {
     );
   }
   
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to="/connexion" replace />;
   
   return children;
 }
