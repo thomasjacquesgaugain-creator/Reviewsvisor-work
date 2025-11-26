@@ -10,12 +10,6 @@ export function PricingSection() {
   return (
     <section className="w-full py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-            Choisissez la formule qui vous correspond
-          </h2>
-        </div>
-
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {/* Offre 1: Avec engagement - Violet */}
           <Card className="relative overflow-hidden bg-white rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-2 border-border">
