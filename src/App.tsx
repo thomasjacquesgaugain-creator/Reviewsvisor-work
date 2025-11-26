@@ -27,6 +27,7 @@ import Fonctionnalites from "./pages/Fonctionnalites";
 import Aide from "./pages/Aide";
 import ResetPassword from "./pages/ResetPassword";
 import UpdatePassword from "./pages/UpdatePassword";
+import Abonnement from "./pages/Abonnement";
 
 const ScrollToTop = () => {
   const location = useLocation();
@@ -59,6 +60,7 @@ const App = () => {
             <Route path="/a-propos" element={<APropos />} />
             <Route path="/fonctionnalites" element={<Fonctionnalites />} />
             <Route path="/aide" element={<Aide />} />
+            <Route path="/abonnement" element={<Abonnement />} />
             <Route path="/tableau-de-bord" element={
               <Protected>
                 <TableauDeBord />
