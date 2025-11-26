@@ -149,6 +149,11 @@ serve(async (req) => {
     // Envoyer l'email avec Resend
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
     
+    // Encoder le JSON en base64 (Deno-compatible)
+    const encoder = new TextEncoder();
+    const jsonBytes = encoder.encode(jsonContent);
+    const base64Content = btoa(String.fromCharCode(...jsonBytes));
+    
     const emailResponse = await resend.emails.send({
       from: 'Reviewsvisor <no-reply@reviewsvisor.com>',
       to: [to],
@@ -169,7 +174,7 @@ serve(async (req) => {
       attachments: [
         {
           filename,
-          content: Buffer.from(jsonContent).toString('base64'),
+          content: base64Content,
         },
       ],
     });
