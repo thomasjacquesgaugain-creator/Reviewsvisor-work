@@ -1,5 +1,5 @@
 // ✅ Section "Pourquoi Reviewsvisor fonctionne ?"
-// Aligne parfaitement toutes les colonnes (icônes et titres identiques en taille)
+// Alignement parfait + icône billet pour le chiffre d'affaires
 
 export function WhyReviewsvisor() {
   return (
@@ -9,10 +9,9 @@ export function WhyReviewsvisor() {
           💡 Pourquoi Reviewsvisor fonctionne ?
         </h2>
 
-        {/* Conteneur en grille parfaitement aligné */}
-        <div className="grid gap-8 lg:grid-cols-4">
+        <div className="grid gap-10 lg:grid-cols-4">
           {/* Analyse éclair */}
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col h-full justify-start">
             <div className="flex items-start gap-2 mb-3">
               <span className="text-2xl lg:text-3xl leading-none">⚡</span>
               <h3 className="font-semibold text-lg lg:text-xl">
@@ -26,7 +25,7 @@ export function WhyReviewsvisor() {
           </div>
 
           {/* Actionnable immédiatement */}
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col h-full justify-start">
             <div className="flex items-start gap-2 mb-3">
               <span className="text-2xl lg:text-3xl leading-none">🎯</span>
               <h3 className="font-semibold text-lg lg:text-xl">
@@ -41,7 +40,7 @@ export function WhyReviewsvisor() {
           </div>
 
           {/* Analyse Ultra-Précise */}
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col h-full justify-start">
             <div className="flex items-start gap-2 mb-3">
               <span className="text-2xl lg:text-3xl leading-none">🧠</span>
               <h3 className="font-semibold text-lg lg:text-xl">
@@ -57,10 +56,9 @@ export function WhyReviewsvisor() {
           </div>
 
           {/* Croissance Mesurable */}
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col h-full justify-start">
             <div className="flex items-start gap-2 mb-3">
-              {/* Icône élargie pour équilibrer la hauteur du bloc */}
-              <span className="text-2xl lg:text-3xl leading-none flex-shrink-0 w-8 text-center">
+              <span className="text-2xl lg:text-3xl leading-none w-8 text-center">
                 📈
               </span>
               <h3 className="font-semibold text-lg lg:text-xl">
@@ -76,7 +74,7 @@ export function WhyReviewsvisor() {
                 ✅ voient jusqu'à <strong>+25 %</strong> d'avis positifs,
               </li>
               <li>
-                🏷️ génèrent en moyenne <strong>+10 % à +20 %</strong> de chiffre
+                💵 génèrent en moyenne <strong>+10 % à +20 %</strong> de chiffre
                 d'affaires,
               </li>
               <li>
