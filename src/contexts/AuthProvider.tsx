@@ -128,26 +128,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // 1️⃣ Sauvegarder les données persistantes (avis, établissements)
-      const persistentKeys = ['reviews_data', 'establishments_data', 'currentEstablishment'];
-      const backup: Record<string, string | null> = {};
-      persistentKeys.forEach((key) => {
-        backup[key] = localStorage.getItem(key);
-      });
-
-      // 2️⃣ Déconnexion Supabase
+      // 1️⃣ Déconnexion Supabase (supprime automatiquement ses propres tokens)
       await supabase.auth.signOut();
 
-      // 3️⃣ Nettoyer tout le localStorage
-      localStorage.clear();
-
-      // 4️⃣ Restaurer uniquement les données persistantes
-      persistentKeys.forEach((key) => {
-        const value = backup[key];
-        if (value !== null) {
-          localStorage.setItem(key, value);
-        }
+      // 2️⃣ Supprimer uniquement les clés d'auth personnalisées (si utilisées)
+      const authKeys = ['auth_token', 'user', 'session'];
+      authKeys.forEach((key) => {
+        localStorage.removeItem(key);
       });
+
+      // ⚠️ NE PAS faire localStorage.clear()
+      // Les avis, établissements et autres données restent intacts
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     } finally {
