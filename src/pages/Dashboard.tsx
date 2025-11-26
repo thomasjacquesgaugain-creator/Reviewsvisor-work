@@ -426,26 +426,24 @@ const Dashboard = () => {
               <BarChart3 className="w-6 h-6 text-blue-600" />
               <h1 className="text-2xl font-bold text-gray-900">Dashboard d'analyse</h1>
             </div>
-            {/* Bouton Envoyer le rapport par email */}
+            {/* Bouton Télécharger le rapport */}
             {(selectedEtab || selectedEstablishment) && (
               <Button
                 className="download-report-btn"
                 onClick={async () => {
-                  console.log('[Dashboard] 🔘 Clic sur Envoyer le rapport par email');
-                  
+                  console.log('[Dashboard] 🔘 Clic sur Télécharger le rapport');
+                  console.log('[Dashboard] État actuel:', {
+                    establishmentDbId,
+                    selectedEtab: selectedEtab?.name,
+                    place_id: selectedEtab?.place_id
+                  });
+
                   const placeId = selectedEtab?.place_id || selectedEstablishment?.place_id;
                   
                   if (!placeId) {
                     console.error('[Dashboard] ❌ place_id manquant');
                     toast.error('Erreur', {
                       description: 'Impossible de générer le rapport : établissement introuvable.',
-                    });
-                    return;
-                  }
-
-                  if (!user?.email) {
-                    toast.error('Erreur', {
-                      description: 'Impossible d\'envoyer le rapport : email utilisateur introuvable.',
                     });
                     return;
                   }
@@ -461,45 +459,89 @@ const Dashboard = () => {
                       return;
                     }
 
-                    const { data, error } = await supabase.functions.invoke('send-report-email', {
-                      body: {
+                    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-report`;
+                    console.log('[Dashboard] 📡 Appel API:', apiUrl);
+                    console.log('[Dashboard] Payload:', { 
+                      establishmentId: establishmentDbId,
+                      placeId: placeId
+                    });
+
+                    const response = await fetch(apiUrl, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${session.access_token}`,
+                      },
+                      body: JSON.stringify({
                         establishmentId: establishmentDbId,
                         placeId: placeId,
-                        to: user.email,
-                      },
+                      }),
                     });
 
-                    if (error) {
-                      console.error('[Dashboard] ❌ Erreur:', error);
-                      toast.error('Erreur', {
-                        description: error.message || 'Une erreur est survenue lors de l\'envoi du rapport.',
-                      });
-                      return;
+                    console.log('[Dashboard] 📥 Réponse API:', response.status, response.statusText);
+
+                    const contentType = response.headers.get('Content-Type');
+
+                    if (contentType && contentType.includes('application/json')) {
+                      const json = await response.json();
+                      if (json.error) {
+                        if (json.error === 'ESTABLISHMENT_NOT_FOUND') {
+                          toast.error('Établissement non trouvé', {
+                            description: 'Cet établissement n\'est pas encore enregistré dans votre compte.',
+                          });
+                        } else if (json.reason === 'no_data') {
+                          toast.info('Aucun rapport disponible', {
+                            description: 'Aucune analyse n\'est encore disponible pour cet établissement. Importez des avis pour générer un rapport.',
+                          });
+                        } else {
+                          toast.error('Erreur', {
+                            description: json.error || 'Une erreur est survenue lors de la génération du rapport.',
+                          });
+                        }
+                        return;
+                      }
                     }
 
-                    toast.success('Rapport envoyé !', {
-                      description: `Le rapport a été envoyé avec succès à ${user.email}`,
+                    if (!response.ok) {
+                      throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const htmlContent = await response.text();
+                    console.log('[Dashboard] ✅ HTML reçu, longueur:', htmlContent.length);
+
+                    const blob = new Blob([htmlContent], { type: 'text/html' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    const filename = `rapport-${(selectedEtab?.name || selectedEstablishment?.name || 'etablissement').toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.html`;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+
+                    toast.success('Rapport téléchargé', {
+                      description: `Le rapport a été téléchargé avec succès.`,
                     });
-                  } catch (error: any) {
-                    console.error('[Dashboard] ❌ Exception:', error);
+                  } catch (error) {
+                    console.error('[Dashboard] ❌ Erreur téléchargement:', error);
                     toast.error('Erreur', {
-                      description: error.message || 'Une erreur inattendue s\'est produite.',
+                      description: 'Une erreur est survenue lors du téléchargement du rapport.',
                     });
                   } finally {
                     setIsDownloadingReport(false);
                   }
                 }}
-                disabled={isDownloadingReport}
               >
                 {isDownloadingReport ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Envoi en cours...
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Génération...
                   </>
                 ) : (
                   <>
-                    <Download className="w-4 h-4 mr-2" />
-                    Envoyer le rapport par email
+                    <Download className="w-4 h-4" />
+                    Télécharger le rapport
                   </>
                 )}
               </Button>
