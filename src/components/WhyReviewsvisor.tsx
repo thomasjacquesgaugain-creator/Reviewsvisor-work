@@ -1,5 +1,5 @@
 // ✅ Section "Pourquoi Reviewsvisor fonctionne ?"
-// Espace au-dessus fortement réduit (pt-0 + -mt-4) + icône billet
+// Texte équilibré entre les 4 icônes, sans modifier "Croissance Mesurable"
 
 export function WhyReviewsvisor() {
   return (
@@ -8,7 +8,7 @@ export function WhyReviewsvisor() {
         w-full flex justify-center px-4 
         pb-12 lg:pb-14 
         pt-0 lg:pt-0 
-        -mt-12 lg:-mt-16   /* ⬅️ remonte encore plus le bloc bleu */
+        -mt-4 lg:-mt-6
       "
     >
       <div className="w-full max-w-6xl rounded-[40px] bg-[#2555FF] text-white px-6 py-10 lg:px-12 lg:py-14 shadow-xl">
@@ -17,7 +17,7 @@ export function WhyReviewsvisor() {
         </h2>
 
         <div className="grid gap-10 lg:grid-cols-4">
-          {/* Analyse éclair */}
+          {/* ⚡ Analyse éclair */}
           <div className="flex flex-col h-full justify-start">
             <div className="flex items-start gap-2 mb-3">
               <span className="text-2xl lg:text-3xl leading-none">⚡</span>
@@ -27,11 +27,13 @@ export function WhyReviewsvisor() {
             </div>
             <p className="text-sm lg:text-base leading-relaxed flex-1">
               Reviewsvisor transforme vos avis en insights en quelques secondes,
-              vous permettant de prendre des décisions rapides et fiables.
+              vous permettant de prendre des décisions rapides et fiables.  
+              Grâce à une synthèse claire et visuelle, vous identifiez instantanément
+              les tendances et priorités d'action qui comptent pour votre établissement.
             </p>
           </div>
 
-          {/* Actionnable immédiatement */}
+          {/* 🎯 Actionnable immédiatement */}
           <div className="flex flex-col h-full justify-start">
             <div className="flex items-start gap-2 mb-3">
               <span className="text-2xl lg:text-3xl leading-none">🎯</span>
@@ -41,12 +43,13 @@ export function WhyReviewsvisor() {
             </div>
             <p className="text-sm lg:text-base leading-relaxed flex-1">
               Reviewsvisor ne se contente pas d'identifier des problèmes… il
-              propose des solutions. Des priorités claires. Des résultats
-              mesurables.
+              propose des solutions concrètes et hiérarchisées.  
+              Chaque recommandation est liée à un impact mesurable sur la satisfaction client,
+              vous aidant à agir vite et efficacement.
             </p>
           </div>
 
-          {/* Analyse Ultra-Précise */}
+          {/* 🧠 Analyse Ultra-Précise */}
           <div className="flex flex-col h-full justify-start">
             <div className="flex items-start gap-2 mb-3">
               <span className="text-2xl lg:text-3xl leading-none">🧠</span>
@@ -56,13 +59,13 @@ export function WhyReviewsvisor() {
             </div>
             <p className="text-sm lg:text-base leading-relaxed flex-1">
               L'IA détecte émotions, problèmes récurrents et opportunités
-              d'amélioration avec une précision exceptionnelle. Elle met en
-              lumière les signaux faibles et ce qui compte réellement pour vos
-              clients.
+              d'amélioration avec une précision exceptionnelle.  
+              Elle mesure la tonalité de chaque avis, repère les signaux faibles
+              et met en évidence les leviers concrets de fidélisation client.
             </p>
           </div>
 
-          {/* Croissance Mesurable */}
+          {/* 📈 Croissance Mesurable (inchangé) */}
           <div className="flex flex-col h-full justify-start">
             <div className="flex items-start gap-2 mb-3">
               <span className="text-2xl lg:text-3xl leading-none w-8 text-center">
