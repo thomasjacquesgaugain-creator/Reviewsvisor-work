@@ -1,11 +1,13 @@
-// ✅ Section "Pourquoi Reviewsvisor fonctionne ?"
-// Alignement parfait + icône billet pour le chiffre d'affaires
+// ✅ Section "Pourquoi Reviewsvisor fonctionne ?" 
+// Espacement supérieur réduit + alignement parfait + icône billet 💵
 
 export function WhyReviewsvisor() {
   return (
-    <section className="w-full flex justify-center px-4 py-12 lg:py-16">
+    <section
+      className="w-full flex justify-center px-4 pt-6 pb-12 lg:pt-8 lg:pb-14" // ⬅️ ESPACEMENT SUP RÉDUIT
+    >
       <div className="w-full max-w-6xl rounded-[40px] bg-[#2555FF] text-white px-6 py-10 lg:px-12 lg:py-14 shadow-xl">
-        <h2 className="text-2xl lg:text-3xl font-bold mb-10 text-center">
+        <h2 className="text-2xl lg:text-3xl font-bold mb-8 text-center">
           💡 Pourquoi Reviewsvisor fonctionne ?
         </h2>
 
