@@ -133,9 +133,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error('Erreur lors de la déconnexion:', error);
     } finally {
       // Force le nettoyage local même si l'appel échoue
-      localStorage.clear();
       setSession(null);
       setProfile(null);
+      
+      // Nettoyer uniquement les données d'authentification (préservation des avis et établissements)
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        // Supprimer uniquement les clés Supabase auth (préfixées par 'sb-')
+        if (key && key.startsWith('sb-')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      
       // Redirection vers la page de connexion
       window.location.href = '/connexion';
     }
