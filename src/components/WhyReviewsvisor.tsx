@@ -8,7 +8,7 @@ export function WhyReviewsvisor() {
         w-full flex justify-center px-4 
         pb-12 lg:pb-14 
         pt-0 lg:pt-0 
-        -mt-8 lg:-mt-12   /* ⬅️ remonte encore plus le bloc bleu */
+        -mt-12 lg:-mt-16   /* ⬅️ remonte encore plus le bloc bleu */
       "
     >
       <div className="w-full max-w-6xl rounded-[40px] bg-[#2555FF] text-white px-6 py-10 lg:px-12 lg:py-14 shadow-xl">
