@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Brain, Target, TrendingUp, CheckCircle, Zap, Shield } from "lucide-react";
 import logoHeader from "@/assets/reviewsvisor-logo-header.png";
+import { WhyReviewsvisor } from "@/components/WhyReviewsvisor";
 
 export const HeroSection = () => {
   return (
@@ -140,65 +141,10 @@ export const HeroSection = () => {
             </Card>
           </div>
 
-          {/* Why section */}
-          <Card className="bg-blue-600 text-white border-0 shadow-xl rounded-3xl overflow-hidden max-w-4xl mx-auto">
-            <CardContent className="p-8">
-              <h2 className="text-2xl font-bold mb-4">💡 Pourquoi <span translate="no">Reviewsvisor</span> fonctionne ?</h2>
-
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">⚡ Analyse éclair</h3>
-                      <p className="text-blue-100 text-sm leading-relaxed">
-                        Reviewsvisor transforme vos avis en insights en quelques secondes, vous permettant de prendre des décisions rapides et fiables.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">🎯 Actionnable immédiatement</h3>
-                      <p className="text-blue-100 text-sm leading-relaxed">
-                        Reviewsvisor ne se contente pas d&apos;identifier des problèmes… il propose les solutions.<br />
-                        Des priorités claires. Des résultats mesurables.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">🧠 Analyse Ultra-Précise</h3>
-                      <p className="text-blue-100 text-sm leading-relaxed">
-                        L&apos;IA détecte émotions, problèmes récurrents et opportunités d&apos;amélioration avec une précision exceptionnelle.<br />
-                        Elle met en lumière les signaux faibles et ce qui compte réellement pour vos clients.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">📈 Croissance Mesurable</h3>
-                      <p className="text-blue-100 text-sm leading-relaxed">
-                        Reviewsvisor vous aide à augmenter votre note en ligne, attirer davantage de clients et améliorer vos revenus.<br />
-                        Les établissements utilisant l&apos;analyse intelligente :<br />
-                        • ✅ voient jusqu&apos;à +25% d&apos;avis positifs,<br />
-                        • 📊 génèrent en moyenne +10% à +20% de chiffre d&apos;affaires,<br />
-                        • ⭐ gagnent +0.5 à +1 point de note en quelques semaines.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
+        
+        {/* Why section */}
+        <WhyReviewsvisor />
       </div>
     </div>
   );
