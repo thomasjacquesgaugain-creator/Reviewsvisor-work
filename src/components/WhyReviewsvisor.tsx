@@ -1,19 +1,19 @@
-// ✅ Section "Pourquoi Reviewsvisor fonctionne ?"
-// - Le bloc bleu entier est élargi (plus large horizontalement)
-// - Espacement réduit uniquement dans "Croissance Mesurable"
+// ✅ Bloc bleu élargi visuellement (presque plein écran)
+// ✅ Espacement réduit uniquement pour le texte "Croissance Mesurable"
 
 export function WhyReviewsvisor() {
   return (
     <section
       className="
-        w-full flex justify-center px-2 sm:px-4 md:px-6
+        w-full flex justify-center 
+        px-0 sm:px-0 md:px-0
         pb-12 lg:pb-14 
         pt-0 lg:pt-0 
         -mt-10 lg:-mt-12
       "
     >
-      {/* 💙 Bloc bleu élargi avec largeur max augmentée */}
-      <div className="w-full max-w-[95%] md:max-w-[90%] lg:max-w-[88%] rounded-[40px] bg-[#2555FF] text-white px-6 py-10 lg:px-14 lg:py-14 shadow-xl transition-all duration-300">
+      {/* 💙 Bloc bleu élargi : largeur maximale */}
+      <div className="w-[98%] lg:w-[96%] rounded-[40px] bg-[#2555FF] text-white px-8 py-12 lg:px-16 lg:py-16 shadow-xl mx-auto transition-all duration-300">
         <h2 className="text-2xl lg:text-3xl font-bold mb-10 text-center">
           💡 Pourquoi Reviewsvisor fonctionne ?
         </h2>
