@@ -1,6 +1,6 @@
-// ✅ Bloc bleu élargi + texte équilibré pour toutes les icônes
-// ✅ Chaque bloc a à peu près la même hauteur
-// ✅ Line-height compact uniquement pour "Croissance Mesurable"
+// ✅ Version finale équilibrée : tous les blocs alignés
+// ✅ Bloc bleu élargi conservé
+// ✅ "Croissance Mesurable" inchangé
 
 export function WhyReviewsvisor() {
   return (
@@ -30,11 +30,9 @@ export function WhyReviewsvisor() {
             <p className="text-sm lg:text-base leading-relaxed flex-1">
               Reviewsvisor transforme vos avis en insights en quelques secondes,
               vous permettant de prendre des décisions rapides et fiables.  
-              Grâce à une synthèse claire et visuelle, vous identifiez instantanément
-              les tendances et priorités d'action qui comptent pour votre établissement.  
-              L'analyse automatique met également en avant les points forts les plus cités
-              par vos clients, vous permettant de capitaliser sur ce qui fonctionne déjà
-              et d'anticiper les besoins futurs.
+              Grâce à une synthèse claire et visuelle, vous repérez les tendances
+              clés et priorités d'action qui comptent pour votre établissement.  
+              L'analyse met aussi en avant vos points forts pour consolider ce qui fonctionne.
             </p>
           </div>
 
@@ -49,11 +47,8 @@ export function WhyReviewsvisor() {
             <p className="text-sm lg:text-base leading-relaxed flex-1">
               Reviewsvisor ne se contente pas d'identifier des problèmes… il
               propose des solutions concrètes et hiérarchisées.  
-              Chaque recommandation est liée à un impact mesurable sur la satisfaction client,
-              vous aidant à agir vite et efficacement.  
-              Les actions prioritaires sont classées selon leur potentiel d'amélioration,
-              vous permettant de piloter vos efforts avec précision et de suivre l'évolution
-              des résultats dans le temps.
+              Chaque recommandation est mesurable, liée à la satisfaction client,
+              pour vous aider à agir efficacement et suivre vos progrès dans le temps.
             </p>
           </div>
 
@@ -68,11 +63,8 @@ export function WhyReviewsvisor() {
             <p className="text-sm lg:text-base leading-relaxed flex-1">
               L'IA détecte émotions, problèmes récurrents et opportunités
               d'amélioration avec une précision exceptionnelle.  
-              Elle mesure la tonalité de chaque avis, repère les signaux faibles
-              et met en évidence les leviers concrets de fidélisation client.  
-              En combinant analyse linguistique et apprentissage automatique,
-              Reviewsvisor identifie les nuances cachées dans les retours,
-              vous offrant une vision complète et fiable de la satisfaction globale.
+              Elle mesure la tonalité des avis et met en évidence les signaux
+              faibles pour révéler les vrais leviers de fidélisation client.
             </p>
           </div>
 
@@ -87,7 +79,6 @@ export function WhyReviewsvisor() {
               </h3>
             </div>
 
-            {/* 🧩 Texte compact uniquement ici */}
             <p className="text-sm lg:text-base leading-tight">
               Reviewsvisor vous aide à augmenter votre note en ligne, attirer
               davantage de clients et améliorer vos revenus.
