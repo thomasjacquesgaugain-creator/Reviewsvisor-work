@@ -1,18 +1,20 @@
 // ✅ Section "Pourquoi Reviewsvisor fonctionne ?"
-// Texte équilibré entre les 4 icônes, sans modifier "Croissance Mesurable"
+// - Le bloc bleu entier est élargi (plus large horizontalement)
+// - Espacement réduit uniquement dans "Croissance Mesurable"
 
 export function WhyReviewsvisor() {
   return (
     <section
       className="
-        w-full flex justify-center px-4 
+        w-full flex justify-center px-2 sm:px-4 md:px-6
         pb-12 lg:pb-14 
         pt-0 lg:pt-0 
-        -mt-4 lg:-mt-6
+        -mt-10 lg:-mt-12
       "
     >
-      <div className="w-full max-w-6xl rounded-[40px] bg-[#2555FF] text-white px-6 py-10 lg:px-12 lg:py-14 shadow-xl">
-        <h2 className="text-2xl lg:text-3xl font-bold mb-8 text-center">
+      {/* 💙 Bloc bleu élargi avec largeur max augmentée */}
+      <div className="w-full max-w-[95%] md:max-w-[90%] lg:max-w-[88%] rounded-[40px] bg-[#2555FF] text-white px-6 py-10 lg:px-14 lg:py-14 shadow-xl transition-all duration-300">
+        <h2 className="text-2xl lg:text-3xl font-bold mb-10 text-center">
           💡 Pourquoi Reviewsvisor fonctionne ?
         </h2>
 
@@ -65,7 +67,7 @@ export function WhyReviewsvisor() {
             </p>
           </div>
 
-          {/* 📈 Croissance Mesurable (inchangé) */}
+          {/* 📈 Croissance Mesurable */}
           <div className="flex flex-col h-full justify-start">
             <div className="flex items-start gap-2 mb-3">
               <span className="text-2xl lg:text-3xl leading-none w-8 text-center">
@@ -75,11 +77,13 @@ export function WhyReviewsvisor() {
                 Croissance Mesurable
               </h3>
             </div>
-            <p className="text-sm lg:text-base leading-relaxed">
+
+            {/* 🧩 Espacement compact uniquement ici */}
+            <p className="text-sm lg:text-base leading-tight">
               Reviewsvisor vous aide à augmenter votre note en ligne, attirer
               davantage de clients et améliorer vos revenus.
             </p>
-            <ul className="mt-3 text-sm lg:text-base leading-relaxed list-disc list-inside space-y-1">
+            <ul className="mt-2 text-sm lg:text-base leading-tight list-disc list-inside space-y-0.5">
               <li>
                 ✅ voient jusqu'à <strong>+25 %</strong> d'avis positifs,
               </li>
