@@ -128,12 +128,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
+      // 1️⃣ Sauvegarder les données persistantes (avis, établissements)
+      const persistentKeys = ['reviews_data', 'establishments_data', 'currentEstablishment'];
+      const backup: Record<string, string | null> = {};
+      persistentKeys.forEach((key) => {
+        backup[key] = localStorage.getItem(key);
+      });
+
+      // 2️⃣ Déconnexion Supabase
       await supabase.auth.signOut();
+
+      // 3️⃣ Nettoyer tout le localStorage
+      localStorage.clear();
+
+      // 4️⃣ Restaurer uniquement les données persistantes
+      persistentKeys.forEach((key) => {
+        const value = backup[key];
+        if (value !== null) {
+          localStorage.setItem(key, value);
+        }
+      });
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     } finally {
-      // Force le nettoyage local même si l'appel échoue
-      localStorage.clear();
+      // Force le nettoyage de l'état local
       setSession(null);
       setProfile(null);
       // Redirection vers la page de connexion
