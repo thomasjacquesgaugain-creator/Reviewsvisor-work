@@ -157,8 +157,16 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
                 review.rating = parseFloat(values[index]) || 0;
               } else if (header.includes('text') || header.includes('comment') || header.includes('avis')) {
                 review.text = values[index] || "";
-              } else if (header.includes('author') || header.includes('name') || header.includes('nom')) {
-                review.author_name = values[index] || "Anonyme";
+              } else if (
+                header.includes('author') || 
+                header.includes('auteur') ||
+                header.includes('name') || 
+                header.includes('nom') ||
+                header.includes('user') ||
+                header.includes('reviewer')
+              ) {
+                const authorValue = values[index]?.trim() || "";
+                review.author_name = authorValue || "Anonyme";
               } else if (header.includes('date')) {
                 review.published_at = values[index] || null;
               }
