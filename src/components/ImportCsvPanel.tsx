@@ -9,6 +9,7 @@ import { runAnalyze } from "@/lib/runAnalyze";
 import { useNavigate } from "react-router-dom";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { toast as sonnerToast } from "sonner";
+import { getDisplayAuthor } from "@/utils/getDisplayAuthor";
 
 interface ImportCsvPanelProps {
   onFileAnalyzed?: () => void;
@@ -103,19 +104,23 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
           
           if (data.reviews.length > 0) {
             console.log('🔍 Exemple d\'avis (premier):', data.reviews[0]);
+            console.log('🔑 Clés de l\'avis:', Object.keys(data.reviews[0]));
           }
           
           const reviews = data.reviews.map((review: any, index: number) => {
             const rating = convertStarRating(review.starRating);
+            const displayAuthor = getDisplayAuthor(review);
+            
             const parsedReview = {
               text: review.comment || "",
               rating: rating,
-              author_name: review.reviewerName || "Anonyme",
+              author_name: displayAuthor,
               published_at: review.publishedAtDate ? new Date(review.publishedAtDate).toISOString() : null,
               source: "Google"
             };
             
             if (index === 0) {
+              console.log('👤 Auteur extrait:', displayAuthor);
               console.log('✅ Avis normalisé (premier):', parsedReview);
             }
             
@@ -148,8 +153,24 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
           }
 
           const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-          const reviews = lines.slice(1).map(line => {
+          
+          console.log('📋 En-têtes CSV détectés:', headers);
+          
+          const reviews = lines.slice(1).map((line, lineIndex) => {
             const values = line.split(',').map(v => v.trim());
+            const rawReview: any = {};
+            
+            // D'abord, mapper toutes les colonnes avec leurs noms originaux
+            headers.forEach((header, index) => {
+              rawReview[header] = values[index];
+            });
+            
+            if (lineIndex === 0) {
+              console.log('🔍 Premier avis brut CSV:', rawReview);
+              console.log('🔑 Clés disponibles:', Object.keys(rawReview));
+            }
+            
+            // Ensuite extraire les champs normalisés
             const review: any = {};
             
             headers.forEach((header, index) => {
@@ -157,20 +178,18 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
                 review.rating = parseFloat(values[index]) || 0;
               } else if (header.includes('text') || header.includes('comment') || header.includes('avis')) {
                 review.text = values[index] || "";
-              } else if (
-                header.includes('author') || 
-                header.includes('auteur') ||
-                header.includes('name') || 
-                header.includes('nom') ||
-                header.includes('user') ||
-                header.includes('reviewer')
-              ) {
-                const authorValue = values[index]?.trim() || "";
-                review.author_name = authorValue || "Anonyme";
               } else if (header.includes('date')) {
                 review.published_at = values[index] || null;
               }
             });
+            
+            // Utiliser la fonction getDisplayAuthor pour extraire le nom
+            const displayAuthor = getDisplayAuthor(rawReview);
+            review.author_name = displayAuthor;
+            
+            if (lineIndex === 0) {
+              console.log('👤 Auteur extrait:', displayAuthor);
+            }
 
             return {
               ...review,
@@ -178,6 +197,7 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
             };
           });
 
+          console.log(`✅ ${reviews.length} avis CSV parsés`);
           resolve(reviews);
         } catch (error) {
           reject(new Error("Erreur lors de la lecture du fichier CSV"));

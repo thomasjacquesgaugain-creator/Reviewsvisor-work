@@ -9,6 +9,7 @@ import { bulkCreateReviews, ReviewCreate } from "@/services/reviewsService";
 import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
+import { getDisplayAuthor } from "@/utils/getDisplayAuthor";
 
 interface PasteImportPanelProps {
   onImportBulk?: (reviews: any[]) => void;
@@ -142,13 +143,23 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
 
   // Convert parsed reviews to table format
   const reviewsTableData: ReviewsTableRow[] = useMemo(() => {
-    return parsedReviews.map(review => ({
-      authorName: `${review.firstName} ${review.lastName}`.trim() || "Anonyme",
-      rating: review.rating,
-      comment: review.comment || "",
-      platform: review.platform || "unknown",
-      reviewDate: review.reviewDate || null
-    }));
+    return parsedReviews.map(review => {
+      // Construire un objet avec tous les champs possibles pour getDisplayAuthor
+      const reviewWithAllFields = {
+        ...review,
+        author_name: `${review.firstName} ${review.lastName}`.trim(),
+        author: `${review.firstName} ${review.lastName}`.trim(),
+        name: `${review.firstName} ${review.lastName}`.trim(),
+      };
+      
+      return {
+        authorName: getDisplayAuthor(reviewWithAllFields),
+        rating: review.rating,
+        comment: review.comment || "",
+        platform: review.platform || "unknown",
+        reviewDate: review.reviewDate || null
+      };
+    });
   }, [parsedReviews]);
 
   return (
