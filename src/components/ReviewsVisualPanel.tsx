@@ -9,6 +9,7 @@ import { getReviewsSummary, listAllReviews, listAll, deleteAllReviews } from "@/
 import { STORAGE_KEY } from "@/types/etablissement";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
 import { toast as sonnerToast } from "sonner";
+import { getDisplayAuthor } from "@/utils/getDisplayAuthor";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -78,7 +79,7 @@ export function ReviewsVisualPanel({
         
         // Map ALL reviews to table format
         const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
-          authorName: review.author || "Anonyme",
+          authorName: getDisplayAuthor(review),
           rating: review.rating || 0,
           comment: review.text || "",
           platform: review.source || "Google",
@@ -117,7 +118,7 @@ export function ReviewsVisualPanel({
       
       // Map ALL reviews to table format
       const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
-        authorName: review.author || "Anonyme",
+        authorName: getDisplayAuthor(review),
         rating: review.rating || 0,
         comment: review.text || "",
         platform: review.source || "Google",
