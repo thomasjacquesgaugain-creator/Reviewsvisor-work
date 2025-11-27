@@ -20,8 +20,8 @@ export function PricingSection() {
               <CardTitle className="text-2xl font-bold text-foreground mb-2">
                 Abonnement Pro
               </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Engagement 12 mois
+              <p className="text-sm text-muted-foreground mb-2">
+                14 jours offerts, puis 14,99 €/mois – engagement 12 mois
               </p>
               <div className="mt-6">
                 <span className="text-5xl font-bold text-purple-600">14,99 €</span>
@@ -36,7 +36,7 @@ export function PricingSection() {
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
-                  <span className="text-foreground">14 jours d'essai gratuit</span>
+                  <span className="text-foreground">14 jours offerts</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
@@ -47,7 +47,7 @@ export function PricingSection() {
                 className="w-full h-12 text-base font-semibold bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-xl transition-all rounded-lg"
                 onClick={() => handleSubscribe('https://buy.stripe.com/bJebJ1dqp0uD9oI1s6gjC01')}
               >
-                Essayer gratuitement
+                Profiter des 14 jours offerts
               </Button>
             </CardContent>
           </Card>
