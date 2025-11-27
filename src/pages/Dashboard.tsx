@@ -1556,28 +1556,31 @@ const Dashboard = () => {
                               </>
                             ) : (
                               <>
-                                {!hasAiResponse && (
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    className="border-purple-600 text-purple-600 hover:bg-purple-50"
-                                    disabled={isGenerating}
-                                    onClick={() => generateAiResponse(reviewId)}
-                                  >
-                                    {isGenerating ? (
-                                      <>
-                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                        Génération IA...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Lightbulb className="w-3 h-3 mr-1" />
-                                        Générer avec IA
-                                      </>
-                                    )}
-                                  </Button>
-                                )}
                                 <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  className="border-purple-600 text-purple-600 hover:bg-purple-50"
+                                  disabled={isGenerating}
+                                  onClick={() => generateAiResponse(reviewId)}
+                                >
+                                  {isGenerating ? (
+                                    <>
+                                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                      Génération en cours...
+                                    </>
+                                  ) : hasAiResponse ? (
+                                    <>
+                                      <Lightbulb className="w-3 h-3 mr-1" />
+                                      Régénérer avec IA
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Lightbulb className="w-3 h-3 mr-1" />
+                                      Générer avec IA
+                                    </>
+                                  )}
+                                </Button>
+                                 <Button 
                                   size="sm" 
                                   className="bg-blue-600 hover:bg-blue-700 text-white"
                                   disabled={isValidatingReview[reviewId]}
@@ -1680,6 +1683,11 @@ const Dashboard = () => {
                             <Copy className="h-4 w-4" />
                           </Button>
                         </div>
+                        {hasAiResponse && (
+                          <div className="mt-3 text-green-600 text-sm flex items-center gap-1">
+                            ✅ Réponse générée — Vous pouvez la modifier avant de valider.
+                          </div>
+                        )}
                       </div>
                     );
                   })()
