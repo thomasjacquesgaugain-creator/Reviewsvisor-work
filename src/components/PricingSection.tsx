@@ -21,7 +21,7 @@ export function PricingSection() {
                 Abonnement Pro
               </CardTitle>
               <p className="text-sm text-muted-foreground mb-2">
-                14 jours offerts, puis 14,99 €/mois – engagement 12 mois
+                14,99 €/mois – engagement 12 mois (facturé 179,88 € en une seule fois par an)
               </p>
               <div className="mt-6">
                 <span className="text-5xl font-bold text-purple-600">14,99 €</span>
@@ -45,7 +45,7 @@ export function PricingSection() {
               </ul>
               <Button 
                 className="w-full h-12 text-base font-semibold bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-xl transition-all rounded-lg"
-                onClick={() => handleSubscribe('https://buy.stripe.com/bJebJ1dqp0uD9oI1s6gjC01')}
+                onClick={() => handleSubscribe('https://buy.stripe.com/5kQbJ1dqp0uD6cwb2GgjC03')}
               >
                 Profiter des 14 jours offerts
               </Button>
