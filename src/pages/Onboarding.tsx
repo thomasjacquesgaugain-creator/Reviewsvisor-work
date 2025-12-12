@@ -1,18 +1,27 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { createCheckoutSession } from "@/lib/stripe";
 import { StepHeader } from "@/components/StepHeader";
+import { SubscriptionPlanCard } from "@/components/SubscriptionPlanCard";
+import { subscriptionPlans, getPlanBySlug, getDefaultPlan } from "@/config/subscriptionPlans";
 
 const Onboarding = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  // Pré-sélection via URL param ?plan=pro-14 ou ?plan=pro-24
+  const urlPlanSlug = searchParams.get("plan");
+  const initialPlan = urlPlanSlug ? getPlanBySlug(urlPlanSlug) : getDefaultPlan();
+  
+  const [selectedPlanId, setSelectedPlanId] = useState(initialPlan?.id || subscriptionPlans[0].id);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const selectedPlan = subscriptionPlans.find(p => p.id === selectedPlanId) || subscriptionPlans[0];
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -24,7 +33,6 @@ const Onboarding = () => {
     
     const trimmedEmail = email.trim();
     
-    // Validation
     if (!trimmedEmail) {
       toast.error("Veuillez saisir votre adresse email");
       return;
@@ -38,22 +46,18 @@ const Onboarding = () => {
     setLoading(true);
     
     try {
-      console.log("Creating checkout session for:", trimmedEmail);
+      console.log("Redirecting to checkout for plan:", selectedPlan.id, "email:", trimmedEmail);
       
-      // Store email for later use
+      // Store email and plan for later use
       sessionStorage.setItem("onboarding_email", trimmedEmail);
+      sessionStorage.setItem("onboarding_plan", selectedPlan.id);
       
-      // Create checkout session
-      const url = await createCheckoutSession(trimmedEmail);
+      // Redirect to Stripe Checkout using the plan's checkout URL
+      // Add email as prefill parameter
+      const checkoutUrl = new URL(selectedPlan.checkoutUrl);
+      checkoutUrl.searchParams.set("prefilled_email", trimmedEmail);
       
-      if (!url) {
-        throw new Error("No checkout URL returned");
-      }
-
-      console.log("Redirecting to Stripe Checkout:", url);
-      
-      // Redirect to Stripe Checkout
-      window.location.href = url;
+      window.location.href = checkoutUrl.toString();
       
     } catch (error) {
       console.error("Checkout error:", error);
@@ -64,44 +68,28 @@ const Onboarding = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-5xl">
         <StepHeader currentStep={1} />
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Abonnement Pro</CardTitle>
-            <CardDescription>Accédez à toutes les fonctionnalités premium</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Pricing info */}
-          <div className="bg-primary/5 rounded-lg p-4 text-center">
-            <div className="text-4xl font-bold text-primary">14,99 €</div>
-            <div className="text-sm text-muted-foreground">par mois</div>
-          </div>
+        
+        {/* Plans Grid */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          {subscriptionPlans.map((plan) => (
+            <SubscriptionPlanCard
+              key={plan.id}
+              plan={plan}
+              isSelected={selectedPlanId === plan.id}
+              onSelect={() => setSelectedPlanId(plan.id)}
+              showSelectButton={true}
+              loading={loading}
+            />
+          ))}
+        </div>
 
-          {/* Benefits */}
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-              <span className="text-sm">Analyses illimitées d'établissements</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-              <span className="text-sm">Réponses automatiques aux avis</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-              <span className="text-sm">Statistiques avancées</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-              <span className="text-sm">Support prioritaire</span>
-            </div>
-          </div>
-
-          {/* Payment Form */}
+        {/* Email Form */}
+        <div className="bg-card rounded-2xl shadow-lg p-6 max-w-md mx-auto">
           <form onSubmit={handleSubscribe} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Votre email</Label>
               <Input
                 id="email"
                 type="email"
@@ -114,14 +102,14 @@ const Onboarding = () => {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Redirection vers Stripe...
                 </>
               ) : (
-                "Continuer – 14,99€/mois"
+                `Continuer – ${selectedPlan.priceLabel}/mois`
               )}
             </Button>
 
@@ -131,8 +119,11 @@ const Onboarding = () => {
               </a>
             </p>
           </form>
-        </CardContent>
-        </Card>
+        </div>
+
+        <p className="text-center text-sm text-muted-foreground mt-6">
+          🔒 Paiement sécurisé par Stripe • Annulation simple en ligne
+        </p>
       </div>
     </div>
   );
