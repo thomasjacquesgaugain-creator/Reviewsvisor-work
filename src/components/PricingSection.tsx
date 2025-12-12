@@ -10,7 +10,7 @@ export function PricingSection() {
   };
 
   return (
-    <section className="w-full py-16 lg:py-24 bg-background">
+    <section id="abonnements" className="w-full py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto items-stretch">
           {subscriptionPlans.map((plan) => {
