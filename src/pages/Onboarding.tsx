@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { StepHeader } from "@/components/StepHeader";
@@ -10,7 +8,6 @@ import { SubscriptionPlanCard } from "@/components/SubscriptionPlanCard";
 import { subscriptionPlans, getPlanBySlug, getDefaultPlan } from "@/config/subscriptionPlans";
 
 const Onboarding = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
   // Pré-sélection via URL param ?plan=pro-14 ou ?plan=pro-24
@@ -18,46 +15,21 @@ const Onboarding = () => {
   const initialPlan = urlPlanSlug ? getPlanBySlug(urlPlanSlug) : getDefaultPlan();
   
   const [selectedPlanId, setSelectedPlanId] = useState(initialPlan?.id || subscriptionPlans[0].id);
-  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
   const selectedPlan = subscriptionPlans.find(p => p.id === selectedPlanId) || subscriptionPlans[0];
 
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email.trim());
-  };
-
-  const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const trimmedEmail = email.trim();
-    
-    if (!trimmedEmail) {
-      toast.error("Veuillez saisir votre adresse email");
-      return;
-    }
-
-    if (!validateEmail(trimmedEmail)) {
-      toast.error("Format d'email invalide");
-      return;
-    }
-
+  const handleContinue = async () => {
     setLoading(true);
     
     try {
-      console.log("Redirecting to checkout for plan:", selectedPlan.id, "email:", trimmedEmail);
+      console.log("Redirecting to checkout for plan:", selectedPlan.id);
       
-      // Store email and plan for later use
-      sessionStorage.setItem("onboarding_email", trimmedEmail);
+      // Store plan for later use
       sessionStorage.setItem("onboarding_plan", selectedPlan.id);
       
-      // Redirect to Stripe Checkout using the plan's checkout URL
-      // Add email as prefill parameter
-      const checkoutUrl = new URL(selectedPlan.checkoutUrl);
-      checkoutUrl.searchParams.set("prefilled_email", trimmedEmail);
-      
-      window.location.href = checkoutUrl.toString();
+      // Redirect to Stripe Checkout
+      window.location.href = selectedPlan.checkoutUrl;
       
     } catch (error) {
       console.error("Checkout error:", error);
@@ -85,45 +57,31 @@ const Onboarding = () => {
           ))}
         </div>
 
-        {/* Email Form */}
-        <div className="bg-card rounded-2xl shadow-lg p-6 max-w-md mx-auto">
-          <form onSubmit={handleSubscribe} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Votre email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="votre@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                required
-                autoComplete="email"
-              />
-            </div>
+        {/* CTA Section */}
+        <div className="flex flex-col items-center gap-4 max-w-md mx-auto">
+          <Button 
+            onClick={handleContinue}
+            className="w-full h-12 text-base font-semibold" 
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Redirection vers Stripe...
+              </>
+            ) : (
+              `Continuer – ${selectedPlan.priceLabel}/mois`
+            )}
+          </Button>
 
-            <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Redirection vers Stripe...
-                </>
-              ) : (
-                `Continuer – ${selectedPlan.priceLabel}/mois`
-              )}
-            </Button>
+          <a href="/login" className="text-sm text-muted-foreground underline hover:text-foreground">
+            J'ai déjà un compte
+          </a>
 
-            <p className="text-sm text-center text-muted-foreground">
-              <a href="/login" className="underline hover:text-foreground">
-                J'ai déjà un compte
-              </a>
-            </p>
-          </form>
+          <p className="text-center text-sm text-muted-foreground">
+            🔒 Paiement sécurisé par Stripe • Annulation simple en ligne
+          </p>
         </div>
-
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          🔒 Paiement sécurisé par Stripe • Annulation simple en ligne
-        </p>
       </div>
     </div>
   );
