@@ -302,12 +302,12 @@ const Login = () => {
                       Se connecter
                     </button>
                   ) : (
-                    <Link 
-                      to="/"
+                    <a 
+                      href="/#abonnements"
                       className="text-blue-600 font-medium hover:underline"
                     >
                       Créer un compte
-                    </Link>
+                    </a>
                   )}
                 </p>
 
