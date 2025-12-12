@@ -294,12 +294,21 @@ const Login = () => {
               <div className="text-center space-y-4">
                 <p className="text-gray-600">
                   {isSignUp ? "Déjà un compte ?" : "Pas encore de compte ?"}{" "}
-                  <button 
-                    onClick={() => setIsSignUp(!isSignUp)}
-                    className="text-blue-600 font-medium hover:underline"
-                  >
-                    {isSignUp ? "Se connecter" : "Créer un compte"}
-                  </button>
+                  {isSignUp ? (
+                    <button 
+                      onClick={() => setIsSignUp(false)}
+                      className="text-blue-600 font-medium hover:underline"
+                    >
+                      Se connecter
+                    </button>
+                  ) : (
+                    <Link 
+                      to="/"
+                      className="text-blue-600 font-medium hover:underline"
+                    >
+                      Créer un compte
+                    </Link>
+                  )}
                 </p>
 
                 <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
