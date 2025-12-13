@@ -13,14 +13,14 @@ const reviews = [
 
 const getRandomDirection = (index: number) => {
   const angles = [
-    { x: -200, y: -150 },  // top-left
-    { x: 200, y: -150 },   // top-right
-    { x: -250, y: 0 },     // left
-    { x: 250, y: 0 },      // right
-    { x: -180, y: 150 },   // bottom-left
-    { x: 180, y: 150 },    // bottom-right
-    { x: 0, y: -200 },     // top
-    { x: 0, y: 200 },      // bottom
+    { x: -280, y: -200 },  // top-left
+    { x: 280, y: -200 },   // top-right
+    { x: -350, y: 0 },     // left
+    { x: 350, y: 0 },      // right
+    { x: -250, y: 200 },   // bottom-left
+    { x: 250, y: 200 },    // bottom-right
+    { x: 0, y: -280 },     // top
+    { x: 0, y: 280 },      // bottom
   ];
   return angles[index % angles.length];
 };
@@ -35,20 +35,20 @@ export const ReviewIntro = () => {
   const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
-    // Start scatter animation after a brief delay
+    // Start scatter animation immediately
     const animateTimer = setTimeout(() => {
       setAnimate(true);
-    }, 100);
+    }, 50);
 
-    // Start fade out after 5.5 seconds
+    // Start fade out after 3 seconds
     const fadeTimer = setTimeout(() => {
       setFadeOut(true);
-    }, 5500);
+    }, 3000);
 
-    // Hide completely after 6 seconds
+    // Hide completely after 3.5 seconds
     const hideTimer = setTimeout(() => {
       setVisible(false);
-    }, 6000);
+    }, 3500);
 
     return () => {
       clearTimeout(animateTimer);
@@ -70,31 +70,30 @@ export const ReviewIntro = () => {
     >
       {/* Ambient glow effect */}
       <div 
-        className="absolute w-[600px] h-[600px] rounded-full opacity-20"
+        className="absolute w-[500px] h-[500px] rounded-full opacity-30"
         style={{
-          background: "radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%)",
         }}
       />
 
       {/* Review bubbles */}
       {reviews.map((review, index) => {
         const direction = getRandomDirection(index);
-        const delay = index * 0.15;
-        const duration = 2.5 + Math.random() * 0.5;
+        const delay = index * 0.08;
 
         return (
           <div
             key={index}
-            className="absolute px-4 py-3 rounded-2xl shadow-2xl max-w-[280px] text-center"
+            className="absolute px-4 py-3 rounded-2xl shadow-2xl max-w-[260px] text-center"
             style={{
-              background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%)",
+              background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)",
               backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              border: "1px solid rgba(255,255,255,0.15)",
               transform: animate 
-                ? `translate(${direction.x}px, ${direction.y}px) scale(0.8)` 
+                ? `translate(${direction.x}px, ${direction.y}px) scale(0.6)` 
                 : "translate(0, 0) scale(1)",
               opacity: animate ? 0 : 1,
-              transition: `all ${duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
+              transition: `all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
               transitionDelay: `${delay}s`,
             }}
           >
@@ -110,10 +109,10 @@ export const ReviewIntro = () => {
 
       {/* Center logo/brand text */}
       <div 
-        className={`absolute z-10 text-center transition-all duration-1000 ${
+        className={`absolute z-10 text-center transition-all duration-700 ${
           animate ? "opacity-100 scale-100" : "opacity-0 scale-90"
         }`}
-        style={{ transitionDelay: "1s" }}
+        style={{ transitionDelay: "0.5s" }}
       >
         <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
           Reviews<span className="text-primary">visor</span>
