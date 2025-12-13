@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import logoIntro from "@/assets/reviewsvisor-logo-intro.png";
+import logoIntro from "@/assets/reviewsvisor-logo-header.png";
 
 const REVIEWS = [
   "⭐⭐⭐⭐⭐ Excellent service !",
