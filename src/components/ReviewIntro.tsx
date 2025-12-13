@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import logoIntro from "@/assets/reviewsvisor-logo-intro.png";
 
 const REVIEWS = [
   "⭐⭐⭐⭐⭐ Excellent service !",
@@ -64,10 +65,8 @@ export const ReviewIntro = () => {
         .rv-intro-logo {
           position: relative;
           z-index: 2;
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-          font-weight: 700;
-          font-size: 2rem;
-          color: #111827;
+          width: 180px;
+          height: auto;
           animation: rv-logo-pop 0.25s ease-out 200ms forwards;
           opacity: 0;
           transform: scale(0.9);
@@ -130,12 +129,12 @@ export const ReviewIntro = () => {
             font-size: 0.7rem;
           }
           .rv-intro-logo {
-            font-size: 1.6rem;
+            width: 120px;
           }
         }
       `}</style>
 
-      <div className="rv-intro-logo">Reviewsvisor</div>
+      <img src={logoIntro} alt="Reviewsvisor" className="rv-intro-logo" />
       {bubbles.map((b, i) => (
         <div
           key={i}
