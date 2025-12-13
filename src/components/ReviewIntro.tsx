@@ -140,7 +140,7 @@ export const ReviewIntro = () => {
           <img 
             src={logoHeader} 
             alt="Reviewsvisor Logo" 
-            className="h-[90px] w-auto -mr-2 translate-y-[3px]"
+            className="h-[90px] w-auto -mr-2 translate-y-[5px]"
             style={{ filter: 'brightness(0) saturate(100%) invert(38%) sepia(89%) saturate(2475%) hue-rotate(214deg) brightness(101%) contrast(101%)' }}
           />
           <span className="text-[#2F6BFF] text-[48px] font-bold leading-none">
