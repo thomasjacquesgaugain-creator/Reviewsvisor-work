@@ -31,42 +31,51 @@ const getStars = (count: number) => "⭐".repeat(count);
 
 export const ReviewIntro = () => {
   const [visible, setVisible] = useState(true);
+  const [logoReady, setLogoReady] = useState(false);
   const [scatterStart, setScatterStart] = useState(false);
-  const [showLogo, setShowLogo] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
 
   // Generate random directions and styles for each bubble
   const bubbles = useMemo(() => {
     return reviewTexts.map((text, i) => {
-      const angle = (i / reviewTexts.length) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
-      const distance = 500 + Math.random() * 400;
-      const x = Math.cos(angle) * distance;
-      const y = Math.sin(angle) * distance;
-      const rotation = (Math.random() - 0.5) * 25;
-      const scale = 0.75 + Math.random() * 0.35;
-      const delay = Math.random() * 0.2;
-      const stars = Math.random() > 0.25 ? 5 : 4;
+      // Distribute bubbles in a circle around center
+      const angle = (i / reviewTexts.length) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+      
+      // Initial position: close to center but not overlapping logo
+      const initialDistance = 80 + Math.random() * 60;
+      const initialX = Math.cos(angle) * initialDistance;
+      const initialY = Math.sin(angle) * initialDistance;
+      
+      // Final position: far outside screen
+      const finalDistance = 600 + Math.random() * 400;
+      const finalX = Math.cos(angle) * finalDistance;
+      const finalY = Math.sin(angle) * finalDistance;
+      
+      const rotation = (Math.random() - 0.5) * 20;
+      const scale = 0.8 + Math.random() * 0.3;
+      const delay = Math.random() * 0.15;
+      const stars = Math.random() > 0.2 ? 5 : 4;
 
-      return { text, x, y, rotation, scale, delay, stars };
+      return { text, initialX, initialY, finalX, finalY, rotation, scale, delay, stars };
     });
   }, []);
 
   useEffect(() => {
-    // Phase 1: Start scatter animation immediately
-    const scatterTimer = setTimeout(() => setScatterStart(true), 50);
+    // Logo appears immediately with slight animation
+    const logoTimer = setTimeout(() => setLogoReady(true), 50);
 
-    // Phase 2: Show logo after reviews have mostly left (~2.3s)
-    const logoTimer = setTimeout(() => setShowLogo(true), 2300);
+    // Start scatter animation shortly after
+    const scatterTimer = setTimeout(() => setScatterStart(true), 150);
 
-    // Fade out the entire intro at ~2.8s
-    const fadeTimer = setTimeout(() => setFadeOut(true), 2800);
+    // Fade out everything at ~2.7s
+    const fadeTimer = setTimeout(() => setFadeOut(true), 2700);
 
-    // Remove completely at 3.3s
-    const hideTimer = setTimeout(() => setVisible(false), 3300);
+    // Remove completely at 3s
+    const hideTimer = setTimeout(() => setVisible(false), 3000);
 
     return () => {
-      clearTimeout(scatterTimer);
       clearTimeout(logoTimer);
+      clearTimeout(scatterTimer);
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
     };
@@ -76,25 +85,39 @@ export const ReviewIntro = () => {
 
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center z-[9999] overflow-hidden bg-white transition-opacity duration-500 ${
+      className={`fixed inset-0 flex items-center justify-center z-[9999] overflow-hidden bg-white transition-opacity duration-300 ${
         fadeOut ? "opacity-0" : "opacity-100"
       }`}
     >
-      {/* Review bubbles */}
+      {/* Center logo - visible from start */}
+      <div
+        className="absolute z-10 text-center"
+        style={{
+          opacity: logoReady ? 1 : 0,
+          transform: logoReady ? "scale(1)" : "scale(0.9)",
+          transition: "opacity 0.25s ease-out, transform 0.25s ease-out",
+        }}
+      >
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
+          Reviews<span className="text-primary">visor</span>
+        </h1>
+      </div>
+
+      {/* Review bubbles - start around logo, scatter outward */}
       {bubbles.map((bubble, index) => (
         <div
           key={index}
-          className="absolute px-3 py-2 rounded-xl shadow-lg text-center whitespace-nowrap"
+          className="absolute px-3 py-2 rounded-xl shadow-lg text-center whitespace-nowrap pointer-events-none"
           style={{
             background: "white",
             border: "1px solid rgba(0,0,0,0.08)",
             boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
             fontSize: `${11 + bubble.scale * 3}px`,
             transform: scatterStart
-              ? `translate(${bubble.x}px, ${bubble.y}px) rotate(${bubble.rotation}deg) scale(${bubble.scale * 0.4})`
-              : `translate(0, 0) rotate(0deg) scale(${bubble.scale})`,
+              ? `translate(${bubble.finalX}px, ${bubble.finalY}px) rotate(${bubble.rotation}deg) scale(${bubble.scale * 0.5})`
+              : `translate(${bubble.initialX}px, ${bubble.initialY}px) rotate(0deg) scale(${bubble.scale})`,
             opacity: scatterStart ? 0 : 1,
-            transition: `all 2.2s cubic-bezier(0.25, 0.1, 0.25, 1)`,
+            transition: `all 2.5s cubic-bezier(0.22, 0.61, 0.36, 1)`,
             transitionDelay: `${bubble.delay}s`,
           }}
         >
@@ -102,20 +125,6 @@ export const ReviewIntro = () => {
           <span className="text-gray-700 font-medium">{bubble.text}</span>
         </div>
       ))}
-
-      {/* Center logo - appears after reviews scatter */}
-      <div
-        className="absolute z-10 text-center"
-        style={{
-          opacity: showLogo ? 1 : 0,
-          transform: showLogo ? "scale(1)" : "scale(0.85)",
-          transition: "opacity 0.35s ease-out, transform 0.35s ease-out",
-        }}
-      >
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
-          Reviews<span className="text-primary">visor</span>
-        </h1>
-      </div>
     </div>
   );
 };
