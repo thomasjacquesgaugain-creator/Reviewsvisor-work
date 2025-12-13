@@ -1,27 +1,57 @@
 import { useState, useEffect } from "react";
 
 const reviews = [
-  { text: "Excellent outil pour gérer mes avis !", author: "Clara" },
-  { text: "Simple, rapide et efficace.", author: "Julien" },
-  { text: "Interface super moderne !", author: "Marc" },
+  { text: "Excellent service !", stars: 5 },
+  { text: "Je recommande Reviewsvisor !", stars: 5 },
+  { text: "Interface fluide et moderne.", stars: 4 },
+  { text: "Outil très pro et rapide.", stars: 5 },
+  { text: "Gain de temps incroyable !", stars: 5 },
+  { text: "Simple et efficace.", stars: 4 },
+  { text: "Le meilleur du marché !", stars: 5 },
+  { text: "Enfin un outil qui marche.", stars: 5 },
 ];
+
+const getRandomDirection = (index: number) => {
+  const angles = [
+    { x: -200, y: -150 },  // top-left
+    { x: 200, y: -150 },   // top-right
+    { x: -250, y: 0 },     // left
+    { x: 250, y: 0 },      // right
+    { x: -180, y: 150 },   // bottom-left
+    { x: 180, y: 150 },    // bottom-right
+    { x: 0, y: -200 },     // top
+    { x: 0, y: 200 },      // bottom
+  ];
+  return angles[index % angles.length];
+};
+
+const getStars = (count: number) => {
+  return "⭐".repeat(count);
+};
 
 export const ReviewIntro = () => {
   const [visible, setVisible] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
+  const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
-    // Start fade out after 7 seconds
+    // Start scatter animation after a brief delay
+    const animateTimer = setTimeout(() => {
+      setAnimate(true);
+    }, 100);
+
+    // Start fade out after 5.5 seconds
     const fadeTimer = setTimeout(() => {
       setFadeOut(true);
-    }, 7000);
+    }, 5500);
 
-    // Hide completely after 8 seconds
+    // Hide completely after 6 seconds
     const hideTimer = setTimeout(() => {
       setVisible(false);
-    }, 8000);
+    }, 6000);
 
     return () => {
+      clearTimeout(animateTimer);
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
     };
@@ -31,45 +61,67 @@ export const ReviewIntro = () => {
 
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center z-[9999] overflow-hidden transition-opacity duration-1000 ${
+      className={`fixed inset-0 flex items-center justify-center z-[9999] overflow-hidden transition-opacity duration-500 ${
         fadeOut ? "opacity-0" : "opacity-100"
       }`}
       style={{
-        background: "linear-gradient(135deg, hsl(210 20% 8%), hsl(200 30% 10%))",
+        background: "radial-gradient(ellipse at center, #0b0e13 0%, #050709 100%)",
       }}
     >
-      {reviews.map((review, index) => (
-        <div
-          key={index}
-          className="absolute text-white text-center text-xl md:text-2xl font-medium px-6"
-          style={{
-            animation: `slideInReview 7s infinite`,
-            animationDelay: `${index * 2}s`,
-            opacity: 0,
-          }}
-        >
-          <div className="mb-2 text-yellow-400">⭐⭐⭐⭐⭐</div>
-          <div className="text-white/90">"{review.text}"</div>
-          <div className="mt-2 text-white/60 text-base">– {review.author}</div>
-        </div>
-      ))}
+      {/* Ambient glow effect */}
+      <div 
+        className="absolute w-[600px] h-[600px] rounded-full opacity-20"
+        style={{
+          background: "radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)",
+        }}
+      />
 
-      <style>{`
-        @keyframes slideInReview {
-          0% { 
-            transform: scale(0.9) translateY(30px); 
-            opacity: 0; 
-          }
-          10%, 30% { 
-            transform: scale(1) translateY(0); 
-            opacity: 1; 
-          }
-          40%, 100% { 
-            transform: scale(1.1) translateY(-30px); 
-            opacity: 0; 
-          }
-        }
-      `}</style>
+      {/* Review bubbles */}
+      {reviews.map((review, index) => {
+        const direction = getRandomDirection(index);
+        const delay = index * 0.15;
+        const duration = 2.5 + Math.random() * 0.5;
+
+        return (
+          <div
+            key={index}
+            className="absolute px-4 py-3 rounded-2xl shadow-2xl max-w-[280px] text-center"
+            style={{
+              background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%)",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              transform: animate 
+                ? `translate(${direction.x}px, ${direction.y}px) scale(0.8)` 
+                : "translate(0, 0) scale(1)",
+              opacity: animate ? 0 : 1,
+              transition: `all ${duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
+              transitionDelay: `${delay}s`,
+            }}
+          >
+            <div className="text-yellow-400 text-sm mb-1">
+              {getStars(review.stars)}
+            </div>
+            <div className="text-white/90 text-sm font-medium">
+              "{review.text}"
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Center logo/brand text */}
+      <div 
+        className={`absolute z-10 text-center transition-all duration-1000 ${
+          animate ? "opacity-100 scale-100" : "opacity-0 scale-90"
+        }`}
+        style={{ transitionDelay: "1s" }}
+      >
+        <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
+          Reviews<span className="text-primary">visor</span>
+        </h1>
+        <p className="text-white/60 mt-2 text-sm">
+          Analysez vos avis en un clin d'œil
+        </p>
+      </div>
     </div>
   );
 };
