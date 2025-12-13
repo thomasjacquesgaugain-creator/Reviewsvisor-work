@@ -31,33 +31,43 @@ const getStars = (count: number) => "⭐".repeat(count);
 
 export const ReviewIntro = () => {
   const [visible, setVisible] = useState(true);
-  const [animate, setAnimate] = useState(false);
+  const [scatterStart, setScatterStart] = useState(false);
+  const [showLogo, setShowLogo] = useState(false);
+  const [fadeOut, setFadeOut] = useState(false);
 
   // Generate random directions and styles for each bubble
   const bubbles = useMemo(() => {
     return reviewTexts.map((text, i) => {
       const angle = (i / reviewTexts.length) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
-      const distance = 400 + Math.random() * 300;
+      const distance = 500 + Math.random() * 400;
       const x = Math.cos(angle) * distance;
       const y = Math.sin(angle) * distance;
-      const rotation = (Math.random() - 0.5) * 30;
-      const scale = 0.7 + Math.random() * 0.4;
-      const delay = Math.random() * 0.15;
-      const stars = Math.random() > 0.3 ? 5 : 4;
+      const rotation = (Math.random() - 0.5) * 25;
+      const scale = 0.75 + Math.random() * 0.35;
+      const delay = Math.random() * 0.2;
+      const stars = Math.random() > 0.25 ? 5 : 4;
 
       return { text, x, y, rotation, scale, delay, stars };
     });
   }, []);
 
   useEffect(() => {
-    // Start scatter animation immediately
-    const animateTimer = setTimeout(() => setAnimate(true), 30);
+    // Phase 1: Start scatter animation immediately
+    const scatterTimer = setTimeout(() => setScatterStart(true), 50);
 
-    // Remove completely after 3 seconds
-    const hideTimer = setTimeout(() => setVisible(false), 3000);
+    // Phase 2: Show logo after reviews have mostly left (~2.3s)
+    const logoTimer = setTimeout(() => setShowLogo(true), 2300);
+
+    // Fade out the entire intro at ~2.8s
+    const fadeTimer = setTimeout(() => setFadeOut(true), 2800);
+
+    // Remove completely at 3.3s
+    const hideTimer = setTimeout(() => setVisible(false), 3300);
 
     return () => {
-      clearTimeout(animateTimer);
+      clearTimeout(scatterTimer);
+      clearTimeout(logoTimer);
+      clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
     };
   }, []);
@@ -66,11 +76,9 @@ export const ReviewIntro = () => {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center z-[9999] overflow-hidden bg-white"
-      style={{
-        opacity: animate ? 0 : 1,
-        transition: "opacity 0.5s ease-out 2s",
-      }}
+      className={`fixed inset-0 flex items-center justify-center z-[9999] overflow-hidden bg-white transition-opacity duration-500 ${
+        fadeOut ? "opacity-0" : "opacity-100"
+      }`}
     >
       {/* Review bubbles */}
       {bubbles.map((bubble, index) => (
@@ -82,11 +90,11 @@ export const ReviewIntro = () => {
             border: "1px solid rgba(0,0,0,0.08)",
             boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
             fontSize: `${11 + bubble.scale * 3}px`,
-            transform: animate
-              ? `translate(${bubble.x}px, ${bubble.y}px) rotate(${bubble.rotation}deg) scale(${bubble.scale * 0.5})`
+            transform: scatterStart
+              ? `translate(${bubble.x}px, ${bubble.y}px) rotate(${bubble.rotation}deg) scale(${bubble.scale * 0.4})`
               : `translate(0, 0) rotate(0deg) scale(${bubble.scale})`,
-            opacity: animate ? 0 : 1,
-            transition: `all 1s cubic-bezier(0.25, 0.1, 0.25, 1)`,
+            opacity: scatterStart ? 0 : 1,
+            transition: `all 2.2s cubic-bezier(0.25, 0.1, 0.25, 1)`,
             transitionDelay: `${bubble.delay}s`,
           }}
         >
@@ -95,13 +103,13 @@ export const ReviewIntro = () => {
         </div>
       ))}
 
-      {/* Center logo */}
+      {/* Center logo - appears after reviews scatter */}
       <div
         className="absolute z-10 text-center"
         style={{
-          opacity: animate ? 1 : 0,
-          transform: animate ? "scale(1)" : "scale(0.8)",
-          transition: "all 0.6s ease-out 0.3s",
+          opacity: showLogo ? 1 : 0,
+          transform: showLogo ? "scale(1)" : "scale(0.85)",
+          transition: "opacity 0.35s ease-out, transform 0.35s ease-out",
         }}
       >
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
