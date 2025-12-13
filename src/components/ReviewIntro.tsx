@@ -59,7 +59,7 @@ export const ReviewIntro = () => {
           overflow: hidden;
           z-index: 9999;
           pointer-events: none;
-          animation: rv-intro-fadeout 0.4s ease-out ${DURATION_MS - 550}ms forwards;
+          animation: rv-intro-fadeout 0.4s ease-out ${DURATION_MS - 650}ms forwards;
         }
 
         .rv-intro-logo-wrapper {
