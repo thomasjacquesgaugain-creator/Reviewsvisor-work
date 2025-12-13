@@ -68,9 +68,24 @@ export const ReviewIntro = () => {
           display: flex;
           align-items: center;
           justify-content: center;
+          gap: 10px;
           animation: rv-logo-pop 0.25s ease-out 200ms forwards;
           opacity: 0;
           transform: scale(0.9);
+        }
+
+        .rv-intro-logo img {
+          width: 44px;
+          height: auto;
+          filter: brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(1352%) hue-rotate(196deg) brightness(97%) contrast(96%);
+        }
+
+        .rv-intro-logo span {
+          font-family: 'Inter', system-ui, sans-serif;
+          font-weight: 700;
+          font-size: 2.2rem;
+          color: #3B82F6;
+          line-height: 1;
         }
 
         .rv-intro-bubble {
@@ -130,26 +145,17 @@ export const ReviewIntro = () => {
             font-size: 0.7rem;
           }
           .rv-intro-logo img {
-            width: 36px;
+            width: 32px;
           }
           .rv-intro-logo span {
-            font-size: 1.5rem;
-            margin-left: 8px;
+            font-size: 1.6rem;
           }
         }
       `}</style>
 
       <div className="rv-intro-logo">
-        <img src={logoIntro} alt="Reviewsvisor" style={{ width: '48px', height: 'auto' }} />
-        <span style={{ 
-          fontFamily: 'Inter, system-ui, sans-serif', 
-          fontWeight: 700, 
-          fontSize: '2rem', 
-          color: '#3B82F6',
-          marginLeft: '12px'
-        }}>
-          Reviewsvisor
-        </span>
+        <img src={logoIntro} alt="" />
+        <span>Reviewsvisor</span>
       </div>
       {bubbles.map((b, i) => (
         <div
