@@ -49,7 +49,7 @@ export const ReviewIntro = () => {
       
       const rotation = (Math.random() - 0.5) * 20;
       const scale = 0.8 + Math.random() * 0.3;
-      const delay = Math.random() * 0.12;
+      const delay = Math.random() * 0.1;
       const stars = Math.random() > 0.2 ? 5 : 4;
 
       return { text, initialX, initialY, finalX, finalY, rotation, scale, delay, stars };
@@ -57,8 +57,11 @@ export const ReviewIntro = () => {
   }, []);
 
   useEffect(() => {
+    // Start scatter at 0.1s
     const scatterTimer = setTimeout(() => setScatterStart(true), 100);
-    const fadeTimer = setTimeout(() => setFadeOut(true), 2800);
+    // Fade-out global at 2.7s
+    const fadeTimer = setTimeout(() => setFadeOut(true), 2700);
+    // Remove at 3s
     const hideTimer = setTimeout(() => setVisible(false), 3000);
 
     return () => {
@@ -72,11 +75,11 @@ export const ReviewIntro = () => {
 
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center z-[9999] overflow-hidden bg-white transition-opacity duration-200 ${
+      className={`fixed inset-0 flex items-center justify-center z-[9999] overflow-hidden bg-white transition-opacity duration-300 ${
         fadeOut ? "opacity-0" : "opacity-100"
       }`}
     >
-      {/* CSS animation for logo - always in DOM, uses animation-delay */}
+      {/* CSS keyframes for precise timing control */}
       <style>{`
         @keyframes logoFadeIn {
           0% { opacity: 0; transform: scale(0.92); }
@@ -84,19 +87,24 @@ export const ReviewIntro = () => {
         }
         .intro-logo {
           opacity: 0;
-          animation: logoFadeIn 0.3s ease-out forwards;
-          animation-delay: 2s;
+          animation: logoFadeIn 0.25s ease-out forwards;
+          animation-delay: 2.3s;
+        }
+        @keyframes reviewScatter {
+          0% { opacity: 1; }
+          85% { opacity: 0.3; }
+          100% { opacity: 0; }
         }
       `}</style>
 
-      {/* Center logo - ALWAYS rendered, visibility controlled by CSS animation */}
+      {/* Center logo - always in DOM, CSS animation starts at 2.3s */}
       <div className="absolute z-10 text-center intro-logo">
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
           Reviews<span className="text-primary">visor</span>
         </h1>
       </div>
 
-      {/* Review bubbles - 3s dispersion */}
+      {/* Review bubbles - visible until ~2.4s with slower fade */}
       {bubbles.map((bubble, index) => (
         <div
           key={index}
@@ -110,7 +118,8 @@ export const ReviewIntro = () => {
               ? `translate(${bubble.finalX}px, ${bubble.finalY}px) rotate(${bubble.rotation}deg) scale(${bubble.scale * 0.5})`
               : `translate(${bubble.initialX}px, ${bubble.initialY}px) rotate(0deg) scale(${bubble.scale})`,
             opacity: scatterStart ? 0 : 1,
-            transition: `all 3s cubic-bezier(0.25, 0.1, 0.25, 1)`,
+            // 2.4s duration so reviews stay visible until ~2.5s
+            transition: `transform 2.8s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 2.4s ease-in`,
             transitionDelay: `${bubble.delay}s`,
           }}
         >
