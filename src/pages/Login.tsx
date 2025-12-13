@@ -303,7 +303,7 @@ const Login = () => {
                     </button>
                   ) : (
                     <a 
-                      href="/#abonnements"
+                      href="/abonnement"
                       className="text-blue-600 font-medium hover:underline"
                     >
                       Créer un compte
