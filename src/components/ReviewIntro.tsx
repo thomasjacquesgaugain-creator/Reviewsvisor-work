@@ -32,7 +32,6 @@ const getStars = (count: number) => "⭐".repeat(count);
 export const ReviewIntro = () => {
   const [visible, setVisible] = useState(true);
   const [scatterStart, setScatterStart] = useState(false);
-  const [showLogo, setShowLogo] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
 
   // Generate random directions and styles for each bubble
@@ -40,12 +39,10 @@ export const ReviewIntro = () => {
     return reviewTexts.map((text, i) => {
       const angle = (i / reviewTexts.length) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
       
-      // Initial position: close to center around logo
       const initialDistance = 90 + Math.random() * 70;
       const initialX = Math.cos(angle) * initialDistance;
       const initialY = Math.sin(angle) * initialDistance;
       
-      // Final position: far outside screen
       const finalDistance = 650 + Math.random() * 450;
       const finalX = Math.cos(angle) * finalDistance;
       const finalY = Math.sin(angle) * finalDistance;
@@ -60,21 +57,12 @@ export const ReviewIntro = () => {
   }, []);
 
   useEffect(() => {
-    // Start scatter animation almost immediately
     const scatterTimer = setTimeout(() => setScatterStart(true), 100);
-
-    // Logo appears at 2.2s - overlaps with end of reviews so no white gap
-    const logoTimer = setTimeout(() => setShowLogo(true), 2200);
-
-    // Start fade out at 2.8s
     const fadeTimer = setTimeout(() => setFadeOut(true), 2800);
-
-    // Remove completely at 3s
     const hideTimer = setTimeout(() => setVisible(false), 3000);
 
     return () => {
       clearTimeout(scatterTimer);
-      clearTimeout(logoTimer);
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
     };
@@ -88,15 +76,21 @@ export const ReviewIntro = () => {
         fadeOut ? "opacity-0" : "opacity-100"
       }`}
     >
-      {/* Center logo - appears at 2.2s to overlap with fading reviews */}
-      <div
-        className="absolute z-10 text-center"
-        style={{
-          opacity: showLogo ? 1 : 0,
-          transform: showLogo ? "scale(1)" : "scale(0.92)",
-          transition: "opacity 0.2s ease-out, transform 0.2s ease-out",
-        }}
-      >
+      {/* CSS animation for logo - always in DOM, uses animation-delay */}
+      <style>{`
+        @keyframes logoFadeIn {
+          0% { opacity: 0; transform: scale(0.92); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+        .intro-logo {
+          opacity: 0;
+          animation: logoFadeIn 0.3s ease-out forwards;
+          animation-delay: 2s;
+        }
+      `}</style>
+
+      {/* Center logo - ALWAYS rendered, visibility controlled by CSS animation */}
+      <div className="absolute z-10 text-center intro-logo">
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
           Reviews<span className="text-primary">visor</span>
         </h1>
