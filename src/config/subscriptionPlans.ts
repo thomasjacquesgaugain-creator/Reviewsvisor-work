@@ -22,7 +22,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     description: "14 jours offerts, puis 14,99 €/mois – engagement 12 mois",
     badge: "💎 Meilleur prix",
     badgeColor: "purple",
-    checkoutUrl: "https://buy.stripe.com/bJebJ1dqp0uD9oI1s6gjC01",
+    checkoutUrl: "https://buy.stripe.com/5kQbJ1dqp0uD6cwb2GgjC03",
     benefits: [
       "Accès complet à Reviewsvisor",
       "14 jours offerts",
