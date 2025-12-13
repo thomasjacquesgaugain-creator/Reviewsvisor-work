@@ -23,7 +23,7 @@ type Bubble = {
   delay: number;
 };
 
-const DURATION_MS = 3000;
+const DURATION_MS = 2800;
 
 export const ReviewIntro = () => {
   const [visible, setVisible] = useState(true);
