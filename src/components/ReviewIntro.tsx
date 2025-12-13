@@ -1,130 +1,152 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-const reviewTexts = [
-  "Excellent service !",
-  "Je recommande !",
-  "Interface fluide",
-  "Outil très pro",
-  "Gain de temps !",
-  "Simple et efficace",
-  "Le meilleur !",
-  "Ça marche !",
-  "Très satisfait",
-  "Top qualité",
-  "Rapide",
-  "Moderne",
-  "Intuitif",
-  "Efficace",
-  "5 étoiles !",
-  "Parfait",
-  "Génial",
-  "Super app",
-  "Bravo !",
-  "Incroyable",
-  "Impressionnant",
-  "Je valide",
-  "Pratique",
-  "Facile",
+const REVIEWS = [
+  "⭐⭐⭐⭐⭐ Excellent service !",
+  "⭐⭐⭐⭐⭐ Je recommande Reviewsvisor !",
+  "⭐⭐⭐⭐ Interface fluide et moderne.",
+  "⭐⭐⭐⭐⭐ Outil très pro et rapide.",
+  "⭐⭐⭐⭐⭐ Mes avis ont explosé en 1 mois.",
+  "⭐⭐⭐⭐⭐ Simple à installer, ultra efficace.",
+  "⭐⭐⭐⭐ Boost énorme sur Google.",
+  "⭐⭐⭐⭐⭐ Mes clients laissent enfin des avis.",
+  "⭐⭐⭐⭐⭐ Parfait pour les petits commerces.",
+  "⭐⭐⭐⭐⭐ UX propre et rassurante.",
+  "⭐⭐⭐⭐⭐ On a gagné en e-réputation.",
+  "⭐⭐⭐⭐⭐ Indispensable pour gérer les avis.",
 ];
 
-const getStars = (count: number) => "⭐".repeat(count);
+type Bubble = {
+  text: string;
+  tx: number;
+  ty: number;
+  delay: number;
+};
+
+const DURATION_MS = 3000;
 
 export const ReviewIntro = () => {
   const [visible, setVisible] = useState(true);
-  const [scatterStart, setScatterStart] = useState(false);
-  const [fadeOut, setFadeOut] = useState(false);
-
-  // Generate random directions and styles for each bubble
-  const bubbles = useMemo(() => {
-    return reviewTexts.map((text, i) => {
-      const angle = (i / reviewTexts.length) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
-      
-      const initialDistance = 90 + Math.random() * 70;
-      const initialX = Math.cos(angle) * initialDistance;
-      const initialY = Math.sin(angle) * initialDistance;
-      
-      const finalDistance = 650 + Math.random() * 450;
-      const finalX = Math.cos(angle) * finalDistance;
-      const finalY = Math.sin(angle) * finalDistance;
-      
-      const rotation = (Math.random() - 0.5) * 20;
-      const scale = 0.8 + Math.random() * 0.3;
-      const delay = Math.random() * 0.1;
-      const stars = Math.random() > 0.2 ? 5 : 4;
-
-      return { text, initialX, initialY, finalX, finalY, rotation, scale, delay, stars };
-    });
-  }, []);
 
   useEffect(() => {
-    // Start scatter at 0.1s
-    const scatterTimer = setTimeout(() => setScatterStart(true), 100);
-    // Fade-out global at 2.7s
-    const fadeTimer = setTimeout(() => setFadeOut(true), 2700);
-    // Remove at 3s
-    const hideTimer = setTimeout(() => setVisible(false), 3000);
+    const timer = setTimeout(() => setVisible(false), DURATION_MS);
+    return () => clearTimeout(timer);
+  }, []);
 
-    return () => {
-      clearTimeout(scatterTimer);
-      clearTimeout(fadeTimer);
-      clearTimeout(hideTimer);
-    };
+  const bubbles: Bubble[] = useMemo(() => {
+    const distance = 450;
+    return REVIEWS.map((text, index) => {
+      const angle = (index / REVIEWS.length) * Math.PI * 2;
+      const tx = Math.cos(angle) * distance;
+      const ty = Math.sin(angle) * distance;
+      const delay = Math.random() * 150;
+      return { text, tx, ty, delay };
+    });
   }, []);
 
   if (!visible) return null;
 
   return (
-    <div
-      className={`fixed inset-0 flex items-center justify-center z-[9999] overflow-hidden bg-white transition-opacity duration-300 ${
-        fadeOut ? "opacity-0" : "opacity-100"
-      }`}
-    >
-      {/* CSS keyframes for precise timing control */}
+    <div className="rv-intro-overlay">
       <style>{`
-        @keyframes logoFadeIn {
-          0% { opacity: 0; transform: scale(0.92); }
-          100% { opacity: 1; transform: scale(1); }
+        .rv-intro-overlay {
+          position: fixed;
+          inset: 0;
+          background: #ffffff;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          overflow: hidden;
+          z-index: 9999;
+          pointer-events: none;
+          animation: rv-intro-fadeout 0.4s ease-out ${DURATION_MS - 400}ms forwards;
         }
-        .intro-logo {
+
+        .rv-intro-logo {
+          position: relative;
+          z-index: 2;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+          font-weight: 700;
+          font-size: 2rem;
+          color: #111827;
+          animation: rv-logo-pop 0.25s ease-out 200ms forwards;
           opacity: 0;
-          animation: logoFadeIn 0.25s ease-out forwards;
-          animation-delay: 2.3s;
+          transform: scale(0.9);
         }
-        @keyframes reviewScatter {
-          0% { opacity: 1; }
-          85% { opacity: 0.3; }
-          100% { opacity: 0; }
+
+        .rv-intro-bubble {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          padding: 8px 16px;
+          border-radius: 999px;
+          background: rgba(15, 23, 42, 0.04);
+          box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+          border: 1px solid rgba(15, 23, 42, 0.08);
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+          font-size: 0.85rem;
+          color: #111827;
+          white-space: nowrap;
+          opacity: 0;
+          animation: rv-bubble-fly 2.6s ease-out var(--delay) forwards;
+        }
+
+        @keyframes rv-bubble-fly {
+          0% {
+            transform: translate(-50%, -50%) scale(0.7);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          100% {
+            transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.1);
+            opacity: 0;
+          }
+        }
+
+        @keyframes rv-logo-pop {
+          0% {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        @keyframes rv-intro-fadeout {
+          0% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .rv-intro-bubble {
+            font-size: 0.7rem;
+          }
+          .rv-intro-logo {
+            font-size: 1.6rem;
+          }
         }
       `}</style>
 
-      {/* Center logo - always in DOM, CSS animation starts at 2.3s */}
-      <div className="absolute z-10 text-center intro-logo">
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
-          Reviews<span className="text-primary">visor</span>
-        </h1>
-      </div>
-
-      {/* Review bubbles - visible until ~2.4s with slower fade */}
-      {bubbles.map((bubble, index) => (
+      <div className="rv-intro-logo">Reviewsvisor</div>
+      {bubbles.map((b, i) => (
         <div
-          key={index}
-          className="absolute px-3 py-2 rounded-xl shadow-lg text-center whitespace-nowrap pointer-events-none"
+          key={i}
+          className="rv-intro-bubble"
           style={{
-            background: "white",
-            border: "1px solid rgba(0,0,0,0.08)",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-            fontSize: `${11 + bubble.scale * 3}px`,
-            transform: scatterStart
-              ? `translate(${bubble.finalX}px, ${bubble.finalY}px) rotate(${bubble.rotation}deg) scale(${bubble.scale * 0.5})`
-              : `translate(${bubble.initialX}px, ${bubble.initialY}px) rotate(0deg) scale(${bubble.scale})`,
-            opacity: scatterStart ? 0 : 1,
-            // 2.4s duration so reviews stay visible until ~2.5s
-            transition: `transform 2.8s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 2.4s ease-in`,
-            transitionDelay: `${bubble.delay}s`,
-          }}
+            "--tx": `${b.tx}px`,
+            "--ty": `${b.ty}px`,
+            "--delay": `${b.delay}ms`,
+          } as React.CSSProperties}
         >
-          <span className="text-yellow-400 mr-1">{getStars(bubble.stars)}</span>
-          <span className="text-gray-700 font-medium">{bubble.text}</span>
+          {b.text}
         </div>
       ))}
     </div>
