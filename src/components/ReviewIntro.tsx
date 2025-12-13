@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import logoIntro from "@/assets/reviewsvisor-logo-header.png";
 
 const REVIEWS = [
   "⭐⭐⭐⭐⭐ Excellent service !",
@@ -62,30 +61,21 @@ export const ReviewIntro = () => {
           animation: rv-intro-fadeout 0.4s ease-out ${DURATION_MS - 400}ms forwards;
         }
 
-        .rv-intro-logo {
+        .rv-intro-logo-wrapper {
           position: relative;
           z-index: 2;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
           animation: rv-logo-pop 0.25s ease-out 200ms forwards;
           opacity: 0;
           transform: scale(0.9);
         }
 
-        .rv-intro-logo img {
-          width: 44px;
-          height: auto;
-          filter: brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(1352%) hue-rotate(196deg) brightness(97%) contrast(96%);
+        .rv-intro-logo-wrapper .rv-logo {
+          font-size: 24px;
+          gap: 10px;
         }
 
-        .rv-intro-logo span {
-          font-family: 'Inter', system-ui, sans-serif;
-          font-weight: 700;
-          font-size: 2.2rem;
-          color: #3B82F6;
-          line-height: 1;
+        .rv-intro-logo-wrapper .rv-logo-icon {
+          font-size: 28px;
         }
 
         .rv-intro-bubble {
@@ -144,18 +134,20 @@ export const ReviewIntro = () => {
           .rv-intro-bubble {
             font-size: 0.7rem;
           }
-          .rv-intro-logo img {
-            width: 32px;
+          .rv-intro-logo-wrapper .rv-logo {
+            font-size: 20px;
           }
-          .rv-intro-logo span {
-            font-size: 1.6rem;
+          .rv-intro-logo-wrapper .rv-logo-icon {
+            font-size: 22px;
           }
         }
       `}</style>
 
-      <div className="rv-intro-logo">
-        <img src={logoIntro} alt="" />
-        <span>Reviewsvisor</span>
+      <div className="rv-intro-logo-wrapper">
+        <div className="rv-logo">
+          <span className="rv-logo-icon">📊</span>
+          <span className="rv-logo-text">Reviewsvisor</span>
+        </div>
       </div>
       {bubbles.map((b, i) => (
         <div
