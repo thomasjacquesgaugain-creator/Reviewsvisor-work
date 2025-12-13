@@ -31,29 +31,28 @@ const getStars = (count: number) => "⭐".repeat(count);
 
 export const ReviewIntro = () => {
   const [visible, setVisible] = useState(true);
-  const [logoReady, setLogoReady] = useState(false);
   const [scatterStart, setScatterStart] = useState(false);
+  const [showLogo, setShowLogo] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
 
   // Generate random directions and styles for each bubble
   const bubbles = useMemo(() => {
     return reviewTexts.map((text, i) => {
-      // Distribute bubbles in a circle around center
       const angle = (i / reviewTexts.length) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
       
-      // Initial position: close to center but not overlapping logo
+      // Initial position: close to center
       const initialDistance = 80 + Math.random() * 60;
       const initialX = Math.cos(angle) * initialDistance;
       const initialY = Math.sin(angle) * initialDistance;
       
       // Final position: far outside screen
-      const finalDistance = 600 + Math.random() * 400;
+      const finalDistance = 650 + Math.random() * 450;
       const finalX = Math.cos(angle) * finalDistance;
       const finalY = Math.sin(angle) * finalDistance;
       
       const rotation = (Math.random() - 0.5) * 20;
       const scale = 0.8 + Math.random() * 0.3;
-      const delay = Math.random() * 0.15;
+      const delay = Math.random() * 0.12;
       const stars = Math.random() > 0.2 ? 5 : 4;
 
       return { text, initialX, initialY, finalX, finalY, rotation, scale, delay, stars };
@@ -61,21 +60,21 @@ export const ReviewIntro = () => {
   }, []);
 
   useEffect(() => {
-    // Logo appears immediately with slight animation
-    const logoTimer = setTimeout(() => setLogoReady(true), 50);
+    // Start scatter animation immediately
+    const scatterTimer = setTimeout(() => setScatterStart(true), 50);
 
-    // Start scatter animation shortly after
-    const scatterTimer = setTimeout(() => setScatterStart(true), 150);
+    // Logo appears at 2.2s (short signature at the end)
+    const logoTimer = setTimeout(() => setShowLogo(true), 2200);
 
-    // Fade out everything at ~2.7s
+    // Start fade out at 2.7s
     const fadeTimer = setTimeout(() => setFadeOut(true), 2700);
 
     // Remove completely at 3s
     const hideTimer = setTimeout(() => setVisible(false), 3000);
 
     return () => {
-      clearTimeout(logoTimer);
       clearTimeout(scatterTimer);
+      clearTimeout(logoTimer);
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
     };
@@ -89,21 +88,7 @@ export const ReviewIntro = () => {
         fadeOut ? "opacity-0" : "opacity-100"
       }`}
     >
-      {/* Center logo - visible from start */}
-      <div
-        className="absolute z-10 text-center"
-        style={{
-          opacity: logoReady ? 1 : 0,
-          transform: logoReady ? "scale(1)" : "scale(0.9)",
-          transition: "opacity 0.25s ease-out, transform 0.25s ease-out",
-        }}
-      >
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
-          Reviews<span className="text-primary">visor</span>
-        </h1>
-      </div>
-
-      {/* Review bubbles - start around logo, scatter outward */}
+      {/* Review bubbles - slow 3s dispersion */}
       {bubbles.map((bubble, index) => (
         <div
           key={index}
@@ -117,7 +102,7 @@ export const ReviewIntro = () => {
               ? `translate(${bubble.finalX}px, ${bubble.finalY}px) rotate(${bubble.rotation}deg) scale(${bubble.scale * 0.5})`
               : `translate(${bubble.initialX}px, ${bubble.initialY}px) rotate(0deg) scale(${bubble.scale})`,
             opacity: scatterStart ? 0 : 1,
-            transition: `all 2.5s cubic-bezier(0.22, 0.61, 0.36, 1)`,
+            transition: `all 3s cubic-bezier(0.25, 0.1, 0.25, 1)`,
             transitionDelay: `${bubble.delay}s`,
           }}
         >
@@ -125,6 +110,20 @@ export const ReviewIntro = () => {
           <span className="text-gray-700 font-medium">{bubble.text}</span>
         </div>
       ))}
+
+      {/* Center logo - appears briefly at the end as signature */}
+      <div
+        className="absolute z-10 text-center"
+        style={{
+          opacity: showLogo ? 1 : 0,
+          transform: showLogo ? "scale(1)" : "scale(0.9)",
+          transition: "opacity 0.2s ease-out, transform 0.2s ease-out",
+        }}
+      >
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
+          Reviews<span className="text-primary">visor</span>
+        </h1>
+      </div>
     </div>
   );
 };
