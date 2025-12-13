@@ -23,7 +23,7 @@ type Bubble = {
   delay: number;
 };
 
-const DURATION_MS = 2800;
+const DURATION_MS = 2600;
 
 export const ReviewIntro = () => {
   const [visible, setVisible] = useState(true);
@@ -59,7 +59,7 @@ export const ReviewIntro = () => {
           overflow: hidden;
           z-index: 9999;
           pointer-events: none;
-          animation: rv-intro-fadeout 0.4s ease-out ${DURATION_MS - 650}ms forwards;
+          animation: rv-intro-fadeout 0.35s ease-out ${DURATION_MS - 500}ms forwards;
         }
 
         .rv-intro-logo-wrapper {
