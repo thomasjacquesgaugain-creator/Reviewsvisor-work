@@ -23,7 +23,7 @@ type Bubble = {
   delay: number;
 };
 
-const DURATION_MS = 2000;
+const DURATION_MS = 1700;
 
 export const ReviewIntro = () => {
   const [visible, setVisible] = useState(true);
@@ -59,13 +59,13 @@ export const ReviewIntro = () => {
           overflow: hidden;
           z-index: 9999;
           pointer-events: none;
-          animation: rv-intro-fadeout 0.25s ease-out ${DURATION_MS - 300}ms forwards;
+          animation: rv-intro-fadeout 0.2s ease-out ${DURATION_MS - 250}ms forwards;
         }
 
         .rv-intro-logo-wrapper {
           position: relative;
           z-index: 2;
-          animation: rv-logo-pop 0.2s ease-out 150ms forwards;
+          animation: rv-logo-pop 0.15s ease-out 100ms forwards;
           opacity: 0;
           transform: scale(0.9);
         }
@@ -85,7 +85,7 @@ export const ReviewIntro = () => {
           color: #111827;
           white-space: nowrap;
           opacity: 0;
-          animation: rv-bubble-fly 1.8s ease-out var(--delay) forwards;
+          animation: rv-bubble-fly 1.5s ease-out var(--delay) forwards;
         }
 
         @keyframes rv-bubble-fly {
