@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import logoIntro from "@/assets/reviewsvisor-logo-intro.png";
 
 const REVIEWS = [
   "⭐⭐⭐⭐⭐ Excellent service !",
@@ -64,18 +65,25 @@ export const ReviewIntro = () => {
         .rv-intro-logo-wrapper {
           position: relative;
           z-index: 2;
+          display: flex;
+          align-items: center;
+          gap: 12px;
           animation: rv-logo-pop 0.25s ease-out 200ms forwards;
           opacity: 0;
           transform: scale(0.9);
         }
 
-        .rv-intro-logo-wrapper .rv-logo {
-          font-size: 24px;
-          gap: 10px;
+        .rv-intro-logo-wrapper img {
+          width: 48px;
+          height: auto;
         }
 
-        .rv-intro-logo-wrapper .rv-logo-icon {
-          font-size: 28px;
+        .rv-intro-logo-wrapper span {
+          font-family: 'Inter', system-ui, sans-serif;
+          font-weight: 700;
+          font-size: 2rem;
+          color: #3B82F6;
+          line-height: 1;
         }
 
         .rv-intro-bubble {
@@ -134,20 +142,18 @@ export const ReviewIntro = () => {
           .rv-intro-bubble {
             font-size: 0.7rem;
           }
-          .rv-intro-logo-wrapper .rv-logo {
-            font-size: 20px;
+          .rv-intro-logo-wrapper img {
+            width: 36px;
           }
-          .rv-intro-logo-wrapper .rv-logo-icon {
-            font-size: 22px;
+          .rv-intro-logo-wrapper span {
+            font-size: 1.5rem;
           }
         }
       `}</style>
 
       <div className="rv-intro-logo-wrapper">
-        <div className="rv-logo">
-          <span className="rv-logo-icon">📊</span>
-          <span className="rv-logo-text">Reviewsvisor</span>
-        </div>
+        <img src={logoIntro} alt="" />
+        <span>Reviewsvisor</span>
       </div>
       {bubbles.map((b, i) => (
         <div
