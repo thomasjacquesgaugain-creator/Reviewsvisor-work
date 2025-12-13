@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import logoIntro from "@/assets/reviewsvisor-logo-intro.png";
+import logoHeader from "@/assets/reviewsvisor-logo-header.png";
 
 const REVIEWS = [
   "⭐⭐⭐⭐⭐ Excellent service !",
@@ -65,25 +65,9 @@ export const ReviewIntro = () => {
         .rv-intro-logo-wrapper {
           position: relative;
           z-index: 2;
-          display: flex;
-          align-items: center;
-          gap: 12px;
           animation: rv-logo-pop 0.25s ease-out 200ms forwards;
           opacity: 0;
           transform: scale(0.9);
-        }
-
-        .rv-intro-logo-wrapper img {
-          width: 48px;
-          height: auto;
-        }
-
-        .rv-intro-logo-wrapper span {
-          font-family: 'Inter', system-ui, sans-serif;
-          font-weight: 700;
-          font-size: 2rem;
-          color: #3B82F6;
-          line-height: 1;
         }
 
         .rv-intro-bubble {
@@ -143,17 +127,26 @@ export const ReviewIntro = () => {
             font-size: 0.7rem;
           }
           .rv-intro-logo-wrapper img {
-            width: 36px;
+            height: 50px;
           }
           .rv-intro-logo-wrapper span {
-            font-size: 1.5rem;
+            font-size: 28px;
           }
         }
       `}</style>
 
       <div className="rv-intro-logo-wrapper">
-        <img src={logoIntro} alt="" />
-        <span>Reviewsvisor</span>
+        <div className="flex items-center justify-center">
+          <img 
+            src={logoHeader} 
+            alt="Reviewsvisor Logo" 
+            className="h-[90px] w-auto -mr-2"
+            style={{ filter: 'brightness(0) saturate(100%) invert(38%) sepia(89%) saturate(2475%) hue-rotate(214deg) brightness(101%) contrast(101%)' }}
+          />
+          <span className="text-[#2F6BFF] text-[48px] font-bold leading-none">
+            Reviewsvisor
+          </span>
+        </div>
       </div>
       {bubbles.map((b, i) => (
         <div
