@@ -33,11 +33,14 @@ const ScrollToTop = () => {
   const location = useLocation();
 
   useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-  }, [location.pathname]);
+    // Don't scroll to top if there's a hash (anchor) in the URL
+    if (!location.hash) {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+    }
+  }, [location.pathname, location.hash]);
 
   return null;
 };
