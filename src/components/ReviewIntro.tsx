@@ -63,8 +63,8 @@ export const ReviewIntro = () => {
     // Start scatter animation almost immediately
     const scatterTimer = setTimeout(() => setScatterStart(true), 100);
 
-    // Logo appears late at 2.4s as quick signature
-    const logoTimer = setTimeout(() => setShowLogo(true), 2400);
+    // Logo appears at 2.2s - overlaps with end of reviews so no white gap
+    const logoTimer = setTimeout(() => setShowLogo(true), 2200);
 
     // Start fade out at 2.8s
     const fadeTimer = setTimeout(() => setFadeOut(true), 2800);
@@ -88,13 +88,13 @@ export const ReviewIntro = () => {
         fadeOut ? "opacity-0" : "opacity-100"
       }`}
     >
-      {/* Center logo - appears briefly at 2.4s, visible ~0.4s */}
+      {/* Center logo - appears at 2.2s to overlap with fading reviews */}
       <div
         className="absolute z-10 text-center"
         style={{
           opacity: showLogo ? 1 : 0,
           transform: showLogo ? "scale(1)" : "scale(0.92)",
-          transition: "opacity 0.15s ease-out, transform 0.15s ease-out",
+          transition: "opacity 0.2s ease-out, transform 0.2s ease-out",
         }}
       >
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
