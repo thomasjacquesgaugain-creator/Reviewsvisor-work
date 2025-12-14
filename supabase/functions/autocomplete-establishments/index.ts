@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,6 +25,32 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('Authentication failed:', authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Authenticated user:', user.id);
+
     const url = new URL(req.url);
     const input = url.searchParams.get('input') || url.searchParams.get('q') || url.searchParams.get('query');
     const sessionToken = url.searchParams.get('sessionToken');
@@ -51,19 +78,19 @@ serve(async (req) => {
     }
 
     // Use Google Places Autocomplete API
-    const url = new URL('https://maps.googleapis.com/maps/api/place/autocomplete/json');
-    url.searchParams.append('input', input);
-    url.searchParams.append('types', 'establishment');
-    url.searchParams.append('components', 'country:fr'); // France uniquement
-    url.searchParams.append('language', 'fr');
+    const apiUrl = new URL('https://maps.googleapis.com/maps/api/place/autocomplete/json');
+    apiUrl.searchParams.append('input', input);
+    apiUrl.searchParams.append('types', 'establishment');
+    apiUrl.searchParams.append('components', 'country:fr'); // France uniquement
+    apiUrl.searchParams.append('language', 'fr');
     if (sessionToken) {
-      url.searchParams.append('sessiontoken', sessionToken);
+      apiUrl.searchParams.append('sessiontoken', sessionToken);
     }
-    url.searchParams.append('key', googleMapsApiKey);
+    apiUrl.searchParams.append('key', googleMapsApiKey);
 
     console.log('Autocomplete request for:', input);
     
-    const response = await fetch(url.toString());
+    const response = await fetch(apiUrl.toString());
     const data: AutocompleteResponse = await response.json();
 
     if (!response.ok) {

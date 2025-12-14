@@ -13,6 +13,38 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    // Use anon key for auth verification
+    const supabaseAuth = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      console.error('Authentication failed:', authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Authenticated user:', user.id);
+
+    // Use service role for database operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     const { etablissementId } = await req.json();
     
     if (!etablissementId) {
@@ -25,16 +57,12 @@ serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Get reviews for the establishment
+    // Get reviews for the establishment (owned by the user)
     const { data: reviews, error: reviewsError } = await supabase
       .from('reviews')
       .select('*')
-      .eq('place_id', etablissementId);
+      .eq('place_id', etablissementId)
+      .eq('user_id', user.id);
 
     if (reviewsError) {
       throw new Error(`Error fetching reviews: ${reviewsError.message}`);
@@ -123,12 +151,12 @@ serve(async (req) => {
       ...aiJson
     };
 
-    // Store analysis in Supabase
+    // Store analysis in Supabase with proper user_id
     const { error: insertError } = await supabase
       .from('review_insights')
       .upsert({
         place_id: etablissementId,
-        user_id: null, // Will be set by RLS
+        user_id: user.id,
         summary: analyse,
         last_analyzed_at: now,
         total_count: avis.length,
