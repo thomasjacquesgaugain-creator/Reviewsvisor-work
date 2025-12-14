@@ -34,18 +34,24 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
         </div>
 
         {/* Centre : liens avec icônes */}
-        <nav className="rv-navbar-center">
-          <Link to="/tableau-de-bord" className={`rv-nav-link ${isAccueil ? "active" : ""}`}>
-            <span className="rv-nav-icon">🏠</span>
-            <span>Accueil</span>
+        <nav className="rv-navbar-center flex items-center space-x-4">
+          <Link
+            to="/tableau-de-bord"
+            className={`flex items-center space-x-1 px-2 py-1 rounded-md transition text-gray-700 hover:text-blue-600 hover:ring-2 hover:ring-blue-400 hover:ring-offset-2 hover:ring-offset-white ${isAccueil ? "text-blue-600 ring-2 ring-blue-400" : ""}`}
+          >
+            🏠 Accueil
           </Link>
-          <Link to="/dashboard" className={`rv-nav-link ${isDashboard ? "active" : ""}`}>
-            <span className="rv-nav-icon">📈</span>
-            <span>Dashboard</span>
+          <Link
+            to="/dashboard"
+            className={`flex items-center space-x-1 px-2 py-1 rounded-md transition text-gray-700 hover:text-blue-600 hover:ring-2 hover:ring-blue-400 hover:ring-offset-2 hover:ring-offset-white ${isDashboard ? "text-blue-600 ring-2 ring-blue-400" : ""}`}
+          >
+            📊 Dashboard
           </Link>
-          <Link to="/etablissement" className={`rv-nav-link ${isEtablissement ? "active" : ""}`}>
-            <span className="rv-nav-icon">🏢</span>
-            <span>Établissement</span>
+          <Link
+            to="/etablissement"
+            className={`flex items-center space-x-1 px-2 py-1 rounded-md transition text-gray-700 hover:text-blue-600 hover:ring-2 hover:ring-blue-400 hover:ring-offset-2 hover:ring-offset-white ${isEtablissement ? "text-blue-600 ring-2 ring-blue-400" : ""}`}
+          >
+            🏢 Établissement
           </Link>
         </nav>
 
