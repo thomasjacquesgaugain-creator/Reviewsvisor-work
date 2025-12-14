@@ -20,6 +20,35 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    // Authentication check - require valid user session
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("Unauthorized: Missing authorization header");
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      {
+        auth: { persistSession: false },
+        global: { headers: { Authorization: authHeader } },
+      }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      logStep("Authentication failed", { error: authError?.message });
+      throw new Error("Unauthorized: Invalid or expired session");
+    }
+
+    // Use the authenticated user's email - do not accept email from request body
+    const email = user.email;
+    if (!email) {
+      throw new Error("User email not found");
+    }
+
+    logStep("User authenticated", { userId: user.id, email });
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
@@ -30,9 +59,6 @@ serve(async (req) => {
       priceIdPreview: priceId?.substring(0, 10) + "...",
       priceIdLength: priceId?.length 
     });
-
-    const { email } = await req.json();
-    if (!email) throw new Error("Email is required");
 
     logStep("Creating subscription for email", { email });
 
@@ -157,18 +183,18 @@ serve(async (req) => {
 
     logStep("Client secret resolved successfully");
 
-    // Initialize Supabase client
-    const supabaseClient = createClient(
+    // Initialize Supabase client with service role for database operations
+    const supabaseServiceClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
 
     // Upsert subscription in database
-    const { error: dbError } = await supabaseClient
+    const { error: dbError } = await supabaseServiceClient
       .from("subscriptions")
       .upsert({
-        email,
+        user_id: user.id,
         stripe_customer_id: customerId,
         stripe_subscription_id: subscription.id,
         status: subscription.status,
