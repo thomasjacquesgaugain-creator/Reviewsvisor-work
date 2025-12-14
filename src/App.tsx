@@ -20,6 +20,7 @@ import BillingSuccess from "./pages/BillingSuccess";
 import BillingCancel from "./pages/BillingCancel";
 import Onboarding from "./pages/Onboarding";
 import OnboardingSignup from "./pages/OnboardingSignup";
+import CreerComptePreview from "./pages/CreerComptePreview";
 import GoogleOAuthCallback from "./pages/GoogleOAuthCallback";
 import Contact from "./pages/Contact";
 import APropos from "./pages/APropos";
@@ -100,6 +101,7 @@ const App = () => {
             <Route path="/api/auth/callback/google" element={<GoogleOAuthCallback />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/onboarding/signup" element={<OnboardingSignup />} />
+            <Route path="/creer-compte-preview" element={<CreerComptePreview />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
