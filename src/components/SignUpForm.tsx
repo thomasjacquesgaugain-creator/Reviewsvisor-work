@@ -33,32 +33,36 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!firstName.trim()) {
-      newErrors.firstName = "Le prénom est requis";
-    }
-    
-    if (!lastName.trim()) {
-      newErrors.lastName = "Le nom est requis";
-    }
-    
     if (!email.trim()) {
-      newErrors.email = "L'email est requis";
+      newErrors.email = "Ce champ est obligatoire";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Email invalide";
     }
     
+    if (!firstName.trim()) {
+      newErrors.firstName = "Ce champ est obligatoire";
+    }
+    
+    if (!lastName.trim()) {
+      newErrors.lastName = "Ce champ est obligatoire";
+    }
+    
+    if (!company.trim()) {
+      newErrors.company = "Ce champ est obligatoire";
+    }
+    
+    if (!address.trim()) {
+      newErrors.address = "Ce champ est obligatoire";
+    }
+    
     if (!password) {
-      newErrors.password = "Le mot de passe est requis";
+      newErrors.password = "Ce champ est obligatoire";
     } else if (password.length < 6) {
       newErrors.password = "Le mot de passe doit contenir au moins 6 caractères";
     }
     
-    if (!address.trim()) {
-      newErrors.address = "L'adresse de l'établissement est obligatoire";
-    }
-    
     if (!confirmPassword) {
-      newErrors.confirmPassword = "Veuillez confirmer le mot de passe";
+      newErrors.confirmPassword = "Ce champ est obligatoire";
     } else if (password !== confirmPassword) {
       newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
     }
@@ -240,11 +244,20 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
             placeholder="Nom de votre entreprise"
             autoComplete="organization"
             value={company}
-            onChange={e => setCompany(e.target.value)}
+            onChange={e => {
+              setCompany(e.target.value);
+              setErrors(prev => ({ ...prev, company: "" }));
+            }}
+            aria-invalid={!!errors.company}
+            aria-describedby={errors.company ? "company-error" : undefined}
+            required
             maxLength={100}
             className="pl-10"
           />
         </div>
+        {errors.company && (
+          <p id="company-error" className="text-sm text-destructive">{errors.company}</p>
+        )}
       </div>
       
       <div className="space-y-2">
