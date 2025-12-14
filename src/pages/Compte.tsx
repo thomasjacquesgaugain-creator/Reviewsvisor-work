@@ -157,19 +157,22 @@ const Compte = () => {
               )}
               <div className="w-full">
                 <Label className="text-xs uppercase text-muted-foreground">Mode de l'interface</Label>
-                <Button
+                <button
                   type="button"
-                  variant="outline"
                   onClick={handleToggleTheme}
-                  className="mt-1 w-full flex items-center justify-between"
+                  className={`mt-1 w-full flex items-center justify-between rounded-lg px-3 py-2 border text-sm font-medium transition ${
+                    isDark
+                      ? "bg-purple-600 text-white border-purple-400 hover:bg-purple-700"
+                      : "bg-blue-100 text-gray-900 border-blue-400 hover:bg-blue-200"
+                  }`}
                 >
                   <span>{isDark ? "Mode sombre" : "Mode clair"}</span>
                   {isDark ? (
-                    <Moon className="h-5 w-5" />
+                    <Moon className="h-5 w-5 text-white" />
                   ) : (
-                    <Sun className="h-5 w-5" />
+                    <Sun className="h-5 w-5 text-yellow-500" />
                   )}
-                </Button>
+                </button>
               </div>
             </div>
           </div>
