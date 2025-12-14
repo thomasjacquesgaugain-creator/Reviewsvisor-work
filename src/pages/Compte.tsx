@@ -14,7 +14,6 @@ import {
   Bell,
   CalendarClock,
   KeyRound,
-  UserPen,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -77,16 +76,8 @@ const Compte = () => {
 
           {/* AVATAR + NOM */}
           <div className="flex items-center mb-8">
-            <div className="relative mr-6">
-              <div className="w-24 h-24 rounded-full flex items-center justify-center text-2xl font-semibold bg-primary/10 text-primary">
-                {initials || "??"}
-              </div>
-              <button
-                type="button"
-                className="absolute bottom-0 right-0 rounded-full p-1 shadow bg-card border border-border"
-              >
-                <UserPen className="h-4 w-4 text-muted-foreground" />
-              </button>
+            <div className="w-24 h-24 rounded-full flex items-center justify-center text-2xl font-semibold bg-primary/10 text-primary mr-6">
+              {initials || "??"}
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Compte</p>
