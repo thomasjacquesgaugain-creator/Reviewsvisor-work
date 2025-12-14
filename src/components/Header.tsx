@@ -17,26 +17,32 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="relative flex items-center justify-center bg-background py-4 shadow-sm border-b border-border">
-      <div className="flex items-center gap-6 text-sm text-muted-foreground font-medium">
-        <span>✅ Transformer retour en conception</span>
-        <span>✅ Vos avis, votre croissance</span>
-        <span>✅ Un outil, une centralisation</span>
+    <header className="sticky top-0 z-50 w-full flex items-center justify-center bg-white py-3 shadow-sm border-b border-border">
+      <div className="flex items-center gap-4 md:gap-6 text-xs md:text-sm text-muted-foreground font-medium flex-wrap justify-center px-4">
+        <span className="flex items-center gap-1">
+          <span className="text-green-500">✓</span> Transformer retour en conception
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="text-green-500">✓</span> Vos avis, votre croissance
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="text-green-500">✓</span> Un outil, une centralisation
+        </span>
 
         <div className="relative" ref={menuRef}>
           <Menu
-            className="cursor-pointer text-muted-foreground hover:text-primary transition-colors"
+            className="cursor-pointer text-foreground hover:text-primary transition-colors"
             size={22}
             onClick={() => setIsOpen(!isOpen)}
           />
 
           {isOpen && (
-            <div className="absolute right-0 top-8 bg-background shadow-lg rounded-xl border border-border p-3 w-40 animate-fade-in z-50">
-              <ul className="space-y-2 text-foreground">
+            <div className="absolute right-0 top-10 bg-white shadow-lg rounded-xl border border-border p-4 w-44 z-50">
+              <ul className="space-y-3 text-foreground text-sm">
                 <li>
                   <Link 
                     to="/login" 
-                    className="block hover:text-primary cursor-pointer transition-colors"
+                    className="block hover:text-primary transition-colors py-1"
                     onClick={() => setIsOpen(false)}
                   >
                     Se connecter
@@ -45,7 +51,7 @@ export default function Header() {
                 <li>
                   <Link 
                     to="/abonnement" 
-                    className="block hover:text-primary cursor-pointer transition-colors"
+                    className="block hover:text-primary transition-colors py-1"
                     onClick={() => setIsOpen(false)}
                   >
                     S'inscrire
@@ -54,7 +60,7 @@ export default function Header() {
                 <li>
                   <Link 
                     to="/a-propos" 
-                    className="block hover:text-primary cursor-pointer transition-colors"
+                    className="block hover:text-primary transition-colors py-1"
                     onClick={() => setIsOpen(false)}
                   >
                     À propos
