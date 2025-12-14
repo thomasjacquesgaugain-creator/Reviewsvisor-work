@@ -1,5 +1,8 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
+import { useTheme } from "next-themes";
+import { Sun, Moon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface NavBarProps {
   variant?: "default" | "transparent";
@@ -9,10 +12,14 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, displayName, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const handleLogout = async () => {
     await signOut();
-    // La redirection est gérée dans signOut
+  };
+
+  const handleToggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   const isAccueil = location.pathname === "/tableau-de-bord";
@@ -20,7 +27,6 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
   const isEtablissement = location.pathname === "/etablissement";
   const isCompte = location.pathname === "/compte";
 
-  // Ne pas afficher la navbar si l'utilisateur n'est pas connecté
   if (!user) {
     return null;
   }
@@ -52,7 +58,7 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
           </Link>
         </nav>
 
-        {/* Droite : texte cliquable + déconnexion */}
+        {/* Droite : texte cliquable + toggle thème + déconnexion */}
         <div className="rv-navbar-right">
           {user ? (
             <>
@@ -62,6 +68,27 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
               >
                 Bonjour, {displayName}
               </Link>
+
+              {/* Toggle thème */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleToggleTheme}
+                className="flex items-center gap-2"
+              >
+                {theme === "dark" ? (
+                  <>
+                    <Sun className="h-4 w-4" />
+                    <span className="hidden sm:inline">Mode clair</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="h-4 w-4" />
+                    <span className="hidden sm:inline">Mode sombre</span>
+                  </>
+                )}
+              </Button>
+
               <button onClick={handleLogout} className="rv-logout-btn">
                 Déconnexion
               </button>
