@@ -150,7 +150,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
         <Input
           id="email"
           type="email"
-          placeholder="votre@email.com"
+          placeholder=""
           autoComplete="email"
           {...register("email")}
           aria-invalid={!!errors.email}
