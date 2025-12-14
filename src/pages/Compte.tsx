@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthProvider";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail, MapPin, Building2, User, Globe } from "lucide-react";
+import { Mail, MapPin, Building2, User, Globe, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
 
 const Compte = () => {
   const { user, displayName } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const nameParts = (displayName || "").split(" ");
   const [firstName, setFirstName] = useState(nameParts[0] || "");
@@ -19,6 +21,7 @@ const Compte = () => {
   const [language, setLanguage] = useState("fr");
 
   const fullName = `${firstName} ${lastName}`.trim();
+  const isDark = theme === "dark";
 
   const initials = fullName
     .split(" ")
@@ -30,6 +33,10 @@ const Compte = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     toast.success("Informations enregistrées avec succès");
+  };
+
+  const handleToggleTheme = () => {
+    setTheme(isDark ? "light" : "dark");
   };
 
   return (
@@ -138,6 +145,31 @@ const Compte = () => {
                     <SelectItem value="en">🇬🇧 English</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            {/* Mode de l'interface */}
+            <div className="flex items-center gap-3">
+              {isDark ? (
+                <Moon className="h-6 w-6 text-primary flex-shrink-0" />
+              ) : (
+                <Sun className="h-6 w-6 text-primary flex-shrink-0" />
+              )}
+              <div className="w-full">
+                <Label className="text-xs uppercase text-muted-foreground">Mode de l'interface</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleToggleTheme}
+                  className="mt-1 w-full flex items-center justify-between"
+                >
+                  <span>{isDark ? "Mode sombre" : "Mode clair"}</span>
+                  {isDark ? (
+                    <Moon className="h-5 w-5" />
+                  ) : (
+                    <Sun className="h-5 w-5" />
+                  )}
+                </Button>
               </div>
             </div>
           </div>
