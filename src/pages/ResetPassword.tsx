@@ -65,6 +65,20 @@ const ResetPassword = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      {/* Back arrow */}
+      <Link
+        to="/"
+        className="fixed top-[15px] left-[10px] z-50 p-2 rounded-lg hover:bg-white/50 transition-colors"
+        aria-label="Retour à l'accueil"
+      >
+        <ArrowLeft 
+          size={28} 
+          color="#2F6BFF" 
+          strokeWidth={2.5}
+          className="rounded-sm"
+        />
+      </Link>
+
       {/* Background with organic shapes */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-purple-100">
         <div className="absolute top-20 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full blur-3xl opacity-30"></div>

@@ -134,10 +134,10 @@ const Login = () => {
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Back arrow */}
-      <button
-        onClick={() => window.history.back()}
+      <Link
+        to="/"
         className="fixed top-[15px] left-[10px] z-50 p-2 rounded-lg hover:bg-white/50 transition-colors"
-        aria-label="Retour"
+        aria-label="Retour à l'accueil"
       >
         <ArrowLeft 
           size={28} 
@@ -145,7 +145,7 @@ const Login = () => {
           strokeWidth={2.5}
           className="rounded-sm"
         />
-      </button>
+      </Link>
 
       {/* Background with organic shapes */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-purple-100">
