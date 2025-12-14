@@ -27,12 +27,14 @@ const ResetPassword = () => {
   });
 
   const onSubmit = async (values: ResetFormData) => {
+    console.log("reset-password submit values", values);
     setLoading(true);
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
         redirectTo: "https://reviewsvisor.fr/reset-password-update",
       });
+      console.log("reset-password result", { error });
 
       if (error) {
         console.error("Erreur réinitialisation mot de passe:", error);
