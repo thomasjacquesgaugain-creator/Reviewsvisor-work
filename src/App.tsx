@@ -30,6 +30,7 @@ import Aide from "./pages/Aide";
 import ResetPassword from "./pages/ResetPassword";
 import UpdatePassword from "./pages/UpdatePassword";
 import Abonnement from "./pages/Abonnement";
+import Compte from "./pages/Compte";
 
 const ScrollToTop = () => {
   const location = useLocation();
@@ -74,6 +75,11 @@ const App = () => {
             <Route path="/dashboard" element={
               <Protected>
                 <Dashboard />
+              </Protected>
+            } />
+            <Route path="/compte" element={
+              <Protected>
+                <Compte />
               </Protected>
             } />
             <Route path="/etablissement" element={

@@ -18,6 +18,7 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
   const isAccueil = location.pathname === "/tableau-de-bord";
   const isDashboard = location.pathname === "/dashboard";
   const isEtablissement = location.pathname === "/etablissement";
+  const isCompte = location.pathname === "/compte";
 
   // Ne pas afficher la navbar si l'utilisateur n'est pas connecté
   if (!user) {
@@ -51,11 +52,16 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
           </Link>
         </nav>
 
-        {/* Droite : texte + déconnexion */}
+        {/* Droite : texte cliquable + déconnexion */}
         <div className="rv-navbar-right">
           {user ? (
             <>
-              <span className="rv-user-text">Bonjour, {displayName}</span>
+              <Link 
+                to="/compte" 
+                className={`rv-user-text hover:text-primary transition-colors cursor-pointer ${isCompte ? "text-primary" : ""}`}
+              >
+                Bonjour, {displayName}
+              </Link>
               <button onClick={handleLogout} className="rv-logout-btn">
                 Déconnexion
               </button>
