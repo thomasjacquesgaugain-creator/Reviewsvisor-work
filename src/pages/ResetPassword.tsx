@@ -6,19 +6,31 @@ import { Mail, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const resetSchema = z.object({
+  email: z.string().trim().email({ message: "Adresse email invalide" }),
+});
+
+type ResetFormData = z.infer<typeof resetSchema>;
 
 const ResetPassword = () => {
-  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<ResetFormData>({
+    resolver: zodResolver(resetSchema),
+    mode: "onSubmit",
+  });
+
+  const onSubmit = async (values: ResetFormData) => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
         redirectTo: "https://reviewsvisor.fr/reset-password-update",
       });
 
@@ -31,6 +43,7 @@ const ResetPassword = () => {
         });
       } else {
         setEmailSent(true);
+        reset();
         toast({
           title: "✅ Email envoyé",
           description: "Un email de réinitialisation vient de vous être envoyé. Pensez à vérifier vos spams.",
@@ -82,7 +95,7 @@ const ResetPassword = () => {
               </div>
 
               {!emailSent ? (
-                <form className="space-y-6" onSubmit={handleSubmit}>
+                <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
                   <div className="space-y-2">
                     <label htmlFor="email" className="text-sm font-medium text-gray-700">
                       Adresse email
@@ -91,11 +104,12 @@ const ResetPassword = () => {
                       id="email"
                       type="email"
                       placeholder="votre@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      {...register("email")}
                       className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
-                      required
                     />
+                    {errors.email && (
+                      <p className="text-sm text-red-500">{errors.email.message}</p>
+                    )}
                   </div>
 
                   <Button 
@@ -109,7 +123,7 @@ const ResetPassword = () => {
               ) : (
                 <div className="text-center space-y-4">
                   <p className="mt-4 rounded-md bg-green-100 p-4 text-sm text-green-800">
-                    ✅ Un email de réinitialisation a été envoyé à <strong>{email}</strong><br />
+                    ✅ Un email de réinitialisation a été envoyé.<br />
                     📬 <strong>Astuce :</strong> Vérifie aussi ton dossier <em>Spam</em> ou <em>Courrier indésirable</em>, il peut parfois s'y glisser par erreur.
                   </p>
                 </div>
