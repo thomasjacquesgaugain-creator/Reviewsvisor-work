@@ -31,7 +31,7 @@ const CreerComptePreview = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SignUpForm prefilledEmail="preview@example.com" />
+            <SignUpForm />
           </CardContent>
         </Card>
       </div>
