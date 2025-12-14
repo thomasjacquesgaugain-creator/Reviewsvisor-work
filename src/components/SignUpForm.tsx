@@ -139,11 +139,11 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
 
       toast({
         title: "Compte créé avec succès !",
-        description: "Bienvenue ! Vous pouvez maintenant utiliser l'application."
+        description: "Bienvenue ! Vous allez être redirigé."
       });
 
-      // Redirection
-      navigate("/tableau-de-bord");
+      // Redirection vers la page de remerciement
+      navigate("/merci-inscription");
       
     } catch (err) {
       console.error('Erreur inattendue:', err);
