@@ -1,27 +1,12 @@
 project_id = "zzjmtipdsccxmmoaetlp"
 
-[functions.create-checkout]
-verify_jwt = false
-
 [functions.stripe-webhook]
 verify_jwt = false
 
-[functions.analyze-reviews]
-verify_jwt = false
-
-[functions.google-oauth-callback]
-verify_jwt = false
-
-[functions.google-business-accounts]
-verify_jwt = false
-
-[functions.google-business-locations]
-verify_jwt = false
-
-[functions.google-business-reviews]
-verify_jwt = false
-
 [functions.google-client-config]
+verify_jwt = false
+
+[functions.get-stripe-config]
 verify_jwt = false
 
 [functions.create-checkout]
@@ -33,11 +18,35 @@ verify_jwt = true
 [functions.customer-portal]
 verify_jwt = true
 
-[functions.stripe-webhook]
-verify_jwt = false
-
 [functions.create-subscription]
 verify_jwt = true
 
-[functions.get-stripe-config]
-verify_jwt = false
+[functions.analyze-reviews]
+verify_jwt = true
+
+[functions.google-oauth-callback]
+verify_jwt = true
+
+[functions.google-business-accounts]
+verify_jwt = true
+
+[functions.google-business-locations]
+verify_jwt = true
+
+[functions.google-business-reviews]
+verify_jwt = true
+
+[functions.autocomplete-establishments]
+verify_jwt = true
+
+[functions.get-place-details]
+verify_jwt = true
+
+[functions.find-establishment]
+verify_jwt = true
+
+[functions.ai-assistance]
+verify_jwt = true
+
+[functions.analyze-establishment]
+verify_jwt = true
