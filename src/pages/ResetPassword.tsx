@@ -1,52 +1,80 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 import { Mail, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const resetPasswordSchema = z.object({
+  email: z.string().min(1, { message: "Veuillez renseigner ce champ." }).email({ message: "Veuillez renseigner un email valide." }),
+});
+
+type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
 const ResetPassword = () => {
-  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+    mode: "onSubmit",
+    defaultValues: {
+      email: "",
+    },
+  });
 
+  async function onSubmit(formData: ResetPasswordFormData) {
+    setLoading(true);
+    
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(formData.email.trim(), {
         redirectTo: "https://reviewsvisor.fr/reset-password-update",
       });
 
       if (error) {
         console.error("Erreur réinitialisation mot de passe:", error);
         toast({
-          title: "❌ Erreur",
-          description: "Une erreur est survenue, veuillez réessayer plus tard.",
           variant: "destructive",
+          title: "Erreur",
+          description: error.message
         });
-      } else {
-        setEmailSent(true);
-        toast({
-          title: "✅ Email envoyé",
-          description: "Un email de réinitialisation vient de vous être envoyé. Pensez à vérifier vos spams.",
-        });
+        return;
       }
-    } catch (error) {
-      console.error("Erreur inattendue réinitialisation:", error);
+
+      // Succès
+      setSubmittedEmail(formData.email.trim());
+      setEmailSent(true);
+      reset(); // Vide le champ email
+      
       toast({
-        title: "❌ Erreur",
-        description: "Une erreur est survenue, veuillez réessayer plus tard.",
+        title: "Email envoyé !",
+        description: "Un email de réinitialisation vient de vous être envoyé."
+      });
+      
+    } catch (err) {
+      console.error('Erreur inattendue:', err);
+      toast({
         variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur inattendue s'est produite"
       });
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -82,20 +110,23 @@ const ResetPassword = () => {
               </div>
 
               {!emailSent ? (
-                <form className="space-y-6" onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                      Adresse email
-                    </label>
+                    <Label htmlFor="email">Adresse email</Label>
                     <Input
                       id="email"
                       type="email"
                       placeholder="votre@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="email"
+                      {...register("email")}
+                      aria-invalid={!!errors.email}
+                      aria-describedby={errors.email ? "email-error" : undefined}
                       className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
                       required
                     />
+                    {errors.email && (
+                      <p id="email-error" className="text-sm text-destructive">{errors.email.message}</p>
+                    )}
                   </div>
 
                   <Button 
@@ -109,7 +140,7 @@ const ResetPassword = () => {
               ) : (
                 <div className="text-center space-y-4">
                   <p className="mt-4 rounded-md bg-green-100 p-4 text-sm text-green-800">
-                    ✅ Un email de réinitialisation a été envoyé à <strong>{email}</strong><br />
+                    ✅ Un email de réinitialisation a été envoyé à <strong>{submittedEmail}</strong><br />
                     📬 <strong>Astuce :</strong> Vérifie aussi ton dossier <em>Spam</em> ou <em>Courrier indésirable</em>, il peut parfois s'y glisser par erreur.
                   </p>
                 </div>
