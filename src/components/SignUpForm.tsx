@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { User, UserCircle, Building2 } from "lucide-react";
+import { User, UserCircle, Building2, MapPin } from "lucide-react";
 
 interface SignUpFormProps {
   prefilledEmail?: string;
@@ -18,6 +18,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [company, setCompany] = useState("");
+  const [address, setAddress] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -50,6 +51,10 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
       newErrors.password = "Le mot de passe est requis";
     } else if (password.length < 6) {
       newErrors.password = "Le mot de passe doit contenir au moins 6 caractères";
+    }
+    
+    if (!address.trim()) {
+      newErrors.address = "L'adresse de l'établissement est obligatoire";
     }
     
     if (!confirmPassword) {
@@ -227,7 +232,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="company">Entreprise (optionnel)</Label>
+        <Label htmlFor="company">Entreprise</Label>
         <div className="relative">
           <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -240,6 +245,31 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
             className="pl-10"
           />
         </div>
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="address">Adresse de l'établissement</Label>
+        <div className="relative">
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="address"
+            placeholder="Adresse complète du restaurant"
+            autoComplete="street-address"
+            value={address}
+            onChange={e => {
+              setAddress(e.target.value);
+              setErrors(prev => ({ ...prev, address: "" }));
+            }}
+            aria-invalid={!!errors.address}
+            aria-describedby={errors.address ? "address-error" : undefined}
+            required
+            maxLength={200}
+            className="pl-10"
+          />
+        </div>
+        {errors.address && (
+          <p id="address-error" className="text-sm text-destructive">{errors.address}</p>
+        )}
       </div>
       
       <div className="space-y-2">
