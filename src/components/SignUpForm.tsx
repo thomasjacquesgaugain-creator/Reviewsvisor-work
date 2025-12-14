@@ -118,6 +118,21 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
           console.error('Erreur lors du lien de l\'abonnement:', subError);
         }
 
+        // 4. Envoyer l'email de bienvenue (non bloquant)
+        supabase.functions.invoke('send-welcome-email', {
+          body: {
+            email: formData.email.trim(),
+            firstName: formData.firstName.trim(),
+            lastName: formData.lastName.trim(),
+          },
+        }).then(({ error: emailError }) => {
+          if (emailError) {
+            console.error('Erreur lors de l\'envoi de l\'email de bienvenue:', emailError);
+          } else {
+            console.log('Email de bienvenue envoyé avec succès');
+          }
+        });
+
         // Clean up local storage
         localStorage.removeItem("subscribed_ok");
         localStorage.removeItem("subscribed_email");

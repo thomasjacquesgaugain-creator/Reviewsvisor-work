@@ -24,44 +24,62 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending welcome email to: ${email}`);
 
+    const appUrl = "https://reviewsvisor.com";
+    const dashboardUrl = `${appUrl}/tableau-de-bord`;
+
     const emailResponse = await resend.emails.send({
-      from: "Staffly <onboarding@resend.dev>",
+      from: "L'équipe Reviewsvisor <no-reply@reviewsvisor.com>",
       to: [email],
-      subject: "Bienvenue sur Staffly ! 🎉",
+      subject: "Bienvenue sur Reviewsvisor – Confirmation de votre compte",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #2563eb; font-size: 28px; margin: 0;">Bienvenue sur Staffly !</h1>
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
+          <div style="background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #2F6BFF; font-size: 24px; margin: 0 0 8px 0;">
+                Votre compte Reviewsvisor a bien été créé 🎉
+              </h1>
+            </div>
+            
+            <div style="margin-bottom: 24px;">
+              <p style="color: #374151; font-size: 16px; line-height: 1.7; margin: 0 0 16px 0;">
+                Bonjour ${firstName} ${lastName},
+              </p>
+              <p style="color: #374151; font-size: 16px; line-height: 1.7; margin: 0 0 16px 0;">
+                Merci de votre inscription. Votre compte est maintenant prêt, vous pouvez accéder à votre tableau de bord et commencer à analyser vos avis clients.
+              </p>
+            </div>
+            
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="${dashboardUrl}" 
+                 style="background: #2F6BFF; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block;">
+                Accéder à mon tableau de bord
+              </a>
+            </div>
+            
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 24px; margin-top: 32px;">
+              <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0;">
+                Si vous avez des questions, n'hésitez pas à nous contacter.
+              </p>
+              <p style="color: #6b7280; font-size: 14px; margin: 12px 0 0 0;">
+                À bientôt,<br>
+                <strong style="color: #374151;">L'équipe Reviewsvisor</strong>
+              </p>
+            </div>
           </div>
           
-          <div style="background: linear-gradient(135deg, #f8fafc, #e2e8f0); padding: 30px; border-radius: 12px; margin-bottom: 20px;">
-            <h2 style="color: #1e293b; margin-top: 0;">Salut ${firstName} ${lastName} ! 👋</h2>
-            <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-              Merci d'avoir rejoint Staffly, la plateforme qui révolutionne la gestion d'équipe dans la restauration.
+          <div style="text-align: center; margin-top: 20px;">
+            <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+              © ${new Date().getFullYear()} Reviewsvisor. Tous droits réservés.
             </p>
-            <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-              Votre compte a été créé avec succès ! Vous pouvez maintenant :
-            </p>
-            <ul style="color: #475569; font-size: 16px; line-height: 1.6;">
-              <li>Gérer vos plannings d'équipe</li>
-              <li>Suivre les performances de votre restaurant</li>
-              <li>Analyser vos avis clients</li>
-              <li>Optimiser vos opérations</li>
-            </ul>
           </div>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'lovable.app') || 'https://your-app.lovable.app'}" 
-               style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-              Commencer maintenant
-            </a>
-          </div>
-          
-          <div style="text-align: center; color: #64748b; font-size: 14px; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
-            <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
-            <p>L'équipe Staffly</p>
-          </div>
-        </div>
+        </body>
+        </html>
       `,
     });
 
