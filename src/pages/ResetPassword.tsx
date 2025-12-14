@@ -19,26 +19,28 @@ const ResetPassword = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/update-password`,
+        redirectTo: "https://reviewsvisor.fr/reset-password-update",
       });
 
       if (error) {
+        console.error("Erreur réinitialisation mot de passe:", error);
         toast({
-          title: "Erreur",
-          description: error.message,
+          title: "❌ Erreur",
+          description: "Une erreur est survenue, veuillez réessayer plus tard.",
           variant: "destructive",
         });
       } else {
         setEmailSent(true);
         toast({
-          title: "Email envoyé",
-          description: "Vérifiez votre boîte mail pour réinitialiser votre mot de passe.",
+          title: "✅ Email envoyé",
+          description: "Un email de réinitialisation vient de vous être envoyé. Pensez à vérifier vos spams.",
         });
       }
     } catch (error) {
+      console.error("Erreur inattendue réinitialisation:", error);
       toast({
-        title: "Erreur",
-        description: "Une erreur inattendue s'est produite.",
+        title: "❌ Erreur",
+        description: "Une erreur est survenue, veuillez réessayer plus tard.",
         variant: "destructive",
       });
     } finally {
