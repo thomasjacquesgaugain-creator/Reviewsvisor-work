@@ -1,5 +1,4 @@
 import { useAuth } from "@/contexts/AuthProvider";
-import { NavBar } from "@/components/NavBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +10,6 @@ const Compte = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <NavBar />
       <div className="container mx-auto px-4 py-10">
         <h1 className="text-2xl font-bold text-foreground mb-2">Mon compte</h1>
         <p className="text-muted-foreground mb-8">
