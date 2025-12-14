@@ -23,8 +23,8 @@ const MerciInscription = () => {
         <CardContent className="pt-10 pb-10 text-center space-y-6">
           <div className="flex flex-col items-center gap-4">
             <span 
-              className="text-7xl mb-2 inline-block" 
-              style={{ transform: "scale(1.3, 1)" }}
+              className="text-7xl mb-2 inline-block animate-bounce" 
+              style={{ transform: "scale(1.3, 1)", animationDuration: "1.5s" }}
               role="img" 
               aria-label="Félicitations"
             >
