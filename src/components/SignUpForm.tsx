@@ -178,7 +178,6 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
           aria-invalid={!!errors.email}
           aria-describedby={errors.email ? "email-error" : undefined}
           required
-          disabled={!!prefilledEmail}
         />
         {errors.email && (
           <p id="email-error" className="text-sm text-destructive">{errors.email}</p>
