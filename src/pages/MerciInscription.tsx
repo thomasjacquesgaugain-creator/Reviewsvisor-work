@@ -1,10 +1,24 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
 
 const MerciInscription = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted relative">
+      {/* Back arrow */}
+      <Link
+        to="/"
+        className="fixed top-[15px] left-[10px] z-50 p-2 rounded-lg hover:bg-white/50 transition-colors"
+        aria-label="Retour à l'accueil"
+      >
+        <ArrowLeft 
+          size={28} 
+          color="#2F6BFF" 
+          strokeWidth={2.5}
+          className="rounded-sm"
+        />
+      </Link>
       <Card className="w-full max-w-md shadow-lg">
         <CardContent className="pt-8 pb-8 text-center space-y-6">
           <h1 className="text-2xl font-bold text-foreground">
