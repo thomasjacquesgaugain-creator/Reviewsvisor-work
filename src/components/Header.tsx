@@ -17,27 +17,39 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full flex items-center justify-center bg-white py-3 shadow-sm border-b border-border">
-      <div className="flex items-center gap-4 md:gap-6 text-xs md:text-sm text-muted-foreground font-medium flex-wrap justify-center px-4">
-        <span className="flex items-center gap-1">
-          <span className="text-green-500">✓</span> Transformer retour en conception
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="text-green-500">✓</span> Vos avis, votre croissance
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="text-green-500">✓</span> Un outil, une centralisation
-        </span>
+    <header className="w-full flex justify-center py-4 px-4">
+      <div className="flex items-center justify-between gap-4 md:gap-6 bg-white rounded-2xl shadow-md px-6 pr-4 py-3 w-full max-w-4xl">
+        {/* Taglines */}
+        <div className="flex items-center gap-3 md:gap-6 text-xs md:text-sm text-muted-foreground font-medium flex-wrap">
+          <span className="flex items-center gap-1.5 whitespace-nowrap">
+            <span className="text-green-500 text-base">✓</span>
+            <span className="hidden sm:inline">Transformer retour en conception</span>
+            <span className="sm:hidden">Retour → conception</span>
+          </span>
+          <span className="flex items-center gap-1.5 whitespace-nowrap">
+            <span className="text-green-500 text-base">✓</span>
+            <span className="hidden sm:inline">Vos avis, votre croissance</span>
+            <span className="sm:hidden">Avis = croissance</span>
+          </span>
+          <span className="flex items-center gap-1.5 whitespace-nowrap">
+            <span className="text-green-500 text-base">✓</span>
+            <span className="hidden sm:inline">Un outil, une centralisation</span>
+            <span className="sm:hidden">Centralisation</span>
+          </span>
+        </div>
 
-        <div className="relative" ref={menuRef}>
-          <Menu
-            className="cursor-pointer text-foreground hover:text-primary transition-colors"
-            size={22}
+        {/* Menu button */}
+        <div className="relative flex-shrink-0" ref={menuRef}>
+          <button
+            className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors"
             onClick={() => setIsOpen(!isOpen)}
-          />
+            aria-label="Menu"
+          >
+            <Menu className="text-foreground" size={22} />
+          </button>
 
           {isOpen && (
-            <div className="absolute right-0 top-10 bg-white shadow-lg rounded-xl border border-border p-4 w-44 z-50">
+            <div className="absolute right-0 top-12 bg-white shadow-lg rounded-xl border border-border p-4 w-44 z-50">
               <ul className="space-y-3 text-foreground text-sm">
                 <li>
                   <Link 
