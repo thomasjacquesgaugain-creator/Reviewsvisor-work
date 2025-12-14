@@ -75,7 +75,7 @@ serve(async (req) => {
       logStep("No email provided, Stripe Checkout will collect it");
     }
 
-    const origin = req.headers.get("origin") || Deno.env.get("APP_URL") || "http://localhost:8080";
+    const origin = req.headers.get("origin") || "https://reviewsvisor.fr";
     
     // Determine if trial should be applied (only for pro-engagement plan)
     const isEngagementPlan = priceId === "price_1SZT7tGkt979eNWB0MF2xczP";
@@ -94,8 +94,8 @@ serve(async (req) => {
       billing_address_collection: "auto",
       allow_promotion_codes: false,
       ...(isEngagementPlan && { subscription_data: { trial_period_days: 14 } }),
-      success_url: `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/billing/cancel`,
+      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/#pricing`,
     });
 
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
