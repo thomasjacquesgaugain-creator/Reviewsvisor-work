@@ -32,79 +32,76 @@ const Compte = () => {
 
         <Card className="max-w-xl mx-auto">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Informations personnelles
-            </CardTitle>
+            <CardTitle>Informations personnelles</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="name" className="flex items-center gap-2 mb-1">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  Nom complet
-                </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                />
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="flex items-center gap-3">
+                <User className="h-6 w-6 text-primary flex-shrink-0" />
+                <div className="w-full">
+                  <Label htmlFor="name" className="mb-1 block">Nom complet</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                  />
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="email" className="flex items-center gap-2 mb-1">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+              <div className="flex items-center gap-3">
+                <Mail className="h-6 w-6 text-primary flex-shrink-0" />
+                <div className="w-full">
+                  <Label htmlFor="email" className="mb-1 block">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="etablissement" className="flex items-center gap-2 mb-1">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  Établissement
-                </Label>
-                <Input
-                  id="etablissement"
-                  type="text"
-                  value={etablissement}
-                  onChange={(e) => setEtablissement(e.target.value)}
-                />
+              <div className="flex items-center gap-3">
+                <Building2 className="h-6 w-6 text-primary flex-shrink-0" />
+                <div className="w-full">
+                  <Label htmlFor="etablissement" className="mb-1 block">Établissement</Label>
+                  <Input
+                    id="etablissement"
+                    type="text"
+                    value={etablissement}
+                    onChange={(e) => setEtablissement(e.target.value)}
+                  />
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="adresse" className="flex items-center gap-2 mb-1">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  Adresse du restaurant
-                </Label>
-                <Input
-                  id="adresse"
-                  type="text"
-                  value={adresse}
-                  onChange={(e) => setAdresse(e.target.value)}
-                />
+              <div className="flex items-center gap-3">
+                <MapPin className="h-6 w-6 text-primary flex-shrink-0" />
+                <div className="w-full">
+                  <Label htmlFor="adresse" className="mb-1 block">Adresse du restaurant</Label>
+                  <Input
+                    id="adresse"
+                    type="text"
+                    value={adresse}
+                    onChange={(e) => setAdresse(e.target.value)}
+                  />
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="language" className="flex items-center gap-2 mb-1">
-                  <Globe className="h-4 w-4 text-muted-foreground" />
-                  Langue de l'interface
-                </Label>
-                <Select value={language} onValueChange={setLanguage}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="fr">🇫🇷 Français</SelectItem>
-                    <SelectItem value="en">🇬🇧 English</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center gap-3">
+                <Globe className="h-6 w-6 text-primary flex-shrink-0" />
+                <div className="w-full">
+                  <Label htmlFor="language" className="mb-1 block">Langue de l'interface</Label>
+                  <Select value={language} onValueChange={setLanguage}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                      <SelectItem value="en">🇬🇧 English</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <Button type="submit" className="w-full mt-4">
