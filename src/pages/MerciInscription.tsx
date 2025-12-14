@@ -21,8 +21,15 @@ const MerciInscription = () => {
       </Link>
       <Card className="w-full max-w-md shadow-lg">
         <CardContent className="pt-10 pb-10 text-center space-y-6">
-          <div className="flex flex-col items-center gap-3">
-            <span className="text-5xl" role="img" aria-label="Félicitations">🎉</span>
+          <div className="flex flex-col items-center gap-4">
+            <span 
+              className="text-7xl mb-2 inline-block" 
+              style={{ transform: "scale(1.3, 1)" }}
+              role="img" 
+              aria-label="Félicitations"
+            >
+              🎉
+            </span>
             <h1 className="text-3xl font-bold text-foreground">
               Compte créé avec succès
             </h1>
