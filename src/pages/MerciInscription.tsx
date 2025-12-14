@@ -9,11 +9,11 @@ const MerciInscription = () => {
       {/* Back arrow */}
       <Link
         to="/"
-        className="fixed top-6 left-6 z-50 p-3 rounded-xl hover:bg-white/60 transition-colors"
+        className="fixed top-[15px] left-[10px] z-50 p-2 rounded-lg hover:bg-white/50 transition-colors"
         aria-label="Retour à l'accueil"
       >
         <ArrowLeft 
-          size={36} 
+          size={28} 
           color="#2F6BFF" 
           strokeWidth={2.5}
           className="rounded-sm"
