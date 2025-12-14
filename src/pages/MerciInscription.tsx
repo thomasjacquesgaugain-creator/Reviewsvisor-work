@@ -20,12 +20,15 @@ const MerciInscription = () => {
         />
       </Link>
       <Card className="w-full max-w-md shadow-lg">
-        <CardContent className="pt-8 pb-8 text-center space-y-6">
-          <h1 className="text-2xl font-bold text-foreground">
-            Compte créé avec succès 🎉
-          </h1>
+        <CardContent className="pt-10 pb-10 text-center space-y-6">
+          <div className="flex flex-col items-center gap-3">
+            <span className="text-5xl" role="img" aria-label="Félicitations">🎉</span>
+            <h1 className="text-3xl font-bold text-foreground">
+              Compte créé avec succès
+            </h1>
+          </div>
           
-          <p className="text-muted-foreground">
+          <p className="text-lg text-muted-foreground">
             Merci d'avoir rejoint Reviewsvisor. Votre compte est prêt, vous pouvez maintenant accéder à votre espace d'analyse.
           </p>
           
