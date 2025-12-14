@@ -21,6 +21,7 @@ import BillingCancel from "./pages/BillingCancel";
 import Onboarding from "./pages/Onboarding";
 import OnboardingSignup from "./pages/OnboardingSignup";
 import CreerComptePreview from "./pages/CreerComptePreview";
+import MerciInscription from "./pages/MerciInscription";
 import GoogleOAuthCallback from "./pages/GoogleOAuthCallback";
 import Contact from "./pages/Contact";
 import APropos from "./pages/APropos";
@@ -102,6 +103,7 @@ const App = () => {
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/onboarding/signup" element={<OnboardingSignup />} />
             <Route path="/creer-compte-preview" element={<CreerComptePreview />} />
+            <Route path="/merci-inscription" element={<MerciInscription />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
