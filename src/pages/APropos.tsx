@@ -1,10 +1,12 @@
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import logoReviewsvisor from "@/assets/logo-reviewsvisor.png";
+import BackArrow from "@/components/BackArrow";
 
 const APropos = () => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col relative">
+      <BackArrow />
       <main className="flex-1 pt-6 pb-0 px-4">
         <section className="py-5 pb-0">
           <div className="relative z-1">

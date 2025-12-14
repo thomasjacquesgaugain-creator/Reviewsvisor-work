@@ -1,8 +1,10 @@
 import { Mail } from "lucide-react";
+import BackArrow from "@/components/BackArrow";
 
 export default function Contact() {
   return (
-    <div className="min-h-screen bg-background">      
+    <div className="min-h-screen bg-background relative">
+      <BackArrow />
       <main className="container mx-auto px-4 py-16">
         <div className="max-w-2xl mx-auto text-center">
           <div className="mb-8">
