@@ -10,11 +10,15 @@ import { toast } from "sonner";
 const Compte = () => {
   const { user, displayName } = useAuth();
 
-  const [fullName, setFullName] = useState(displayName || "");
+  const nameParts = (displayName || "").split(" ");
+  const [firstName, setFirstName] = useState(nameParts[0] || "");
+  const [lastName, setLastName] = useState(nameParts.slice(1).join(" ") || "");
   const [email, setEmail] = useState(user?.email || "");
   const [etablissement, setEtablissement] = useState("Mon établissement");
   const [adresse, setAdresse] = useState("12 Rue du Restaurant, 75000 Paris");
   const [language, setLanguage] = useState("fr");
+
+  const fullName = `${firstName} ${lastName}`.trim();
 
   const initials = fullName
     .split(" ")
@@ -50,15 +54,29 @@ const Compte = () => {
         {/* FORMULAIRE 2 COLONNES AVEC ICÔNES */}
         <form onSubmit={handleSubmit} className="bg-card shadow rounded-xl p-6 border border-border">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Nom complet */}
+            {/* Prénom */}
             <div className="flex items-center gap-3">
               <User className="h-6 w-6 text-primary flex-shrink-0" />
               <div className="w-full">
-                <Label className="text-xs uppercase text-muted-foreground">Nom complet</Label>
+                <Label className="text-xs uppercase text-muted-foreground">Prénom</Label>
                 <Input
                   type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            {/* Nom */}
+            <div className="flex items-center gap-3">
+              <User className="h-6 w-6 text-primary flex-shrink-0" />
+              <div className="w-full">
+                <Label className="text-xs uppercase text-muted-foreground">Nom</Label>
+                <Input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   className="mt-1"
                 />
               </div>
@@ -78,20 +96,6 @@ const Compte = () => {
               </div>
             </div>
 
-            {/* Établissement */}
-            <div className="flex items-center gap-3">
-              <Building2 className="h-6 w-6 text-primary flex-shrink-0" />
-              <div className="w-full">
-                <Label className="text-xs uppercase text-muted-foreground">Établissement</Label>
-                <Input
-                  type="text"
-                  value={etablissement}
-                  onChange={(e) => setEtablissement(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
             {/* Adresse resto */}
             <div className="flex items-center gap-3">
               <MapPin className="h-6 w-6 text-primary flex-shrink-0" />
@@ -101,6 +105,20 @@ const Compte = () => {
                   type="text"
                   value={adresse}
                   onChange={(e) => setAdresse(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            {/* Établissement */}
+            <div className="flex items-center gap-3">
+              <Building2 className="h-6 w-6 text-primary flex-shrink-0" />
+              <div className="w-full">
+                <Label className="text-xs uppercase text-muted-foreground">Établissement</Label>
+                <Input
+                  type="text"
+                  value={etablissement}
+                  onChange={(e) => setEtablissement(e.target.value)}
                   className="mt-1"
                 />
               </div>
