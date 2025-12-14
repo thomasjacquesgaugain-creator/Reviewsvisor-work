@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Eye, EyeOff, AlertTriangle, User, UserCircle, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, AlertTriangle, User, UserCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import BackArrow from "@/components/BackArrow";
 
 const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -133,19 +134,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Back arrow */}
-      <Link
-        to="/"
-        className="fixed top-[15px] left-[10px] z-50 p-2 rounded-lg hover:bg-white/50 transition-colors"
-        aria-label="Retour à l'accueil"
-      >
-        <ArrowLeft 
-          size={28} 
-          color="#2F6BFF" 
-          strokeWidth={2.5}
-          className="rounded-sm"
-        />
-      </Link>
+      <BackArrow />
 
       {/* Background with organic shapes */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-purple-100">
