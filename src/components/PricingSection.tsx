@@ -1,12 +1,34 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import { subscriptionPlans } from "@/config/subscriptionPlans";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export function PricingSection() {
-  const handleSubscribe = (url: string) => {
-    window.open(url, '_blank', 'noopener,noreferrer');
+  const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
+
+  const handleCheckout = async (priceId: string) => {
+    setLoadingPriceId(priceId);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId },
+      });
+      
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("URL de paiement non reçue");
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast.error("Erreur lors de la redirection vers le paiement");
+    } finally {
+      setLoadingPriceId(null);
+    }
   };
 
   return (
@@ -59,9 +81,14 @@ export function PricingSection() {
                   </ul>
                   <Button 
                     className={cn("w-full h-12 text-base font-semibold text-white shadow-lg hover:shadow-xl transition-all rounded-lg mt-6", colorClasses.button)}
-                    onClick={() => handleSubscribe(plan.checkoutUrl)}
+                    onClick={() => handleCheckout(plan.priceId)}
+                    disabled={loadingPriceId === plan.priceId}
                   >
-                    {plan.id === "pro-engagement" ? "Profiter des 14 jours offerts" : "S'abonner maintenant"}
+                    {loadingPriceId === plan.priceId 
+                      ? "Redirection..." 
+                      : plan.id === "pro-engagement" 
+                        ? "Profiter des 14 jours offerts" 
+                        : "S'abonner maintenant"}
                   </Button>
                 </CardContent>
               </Card>

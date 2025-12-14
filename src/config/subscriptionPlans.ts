@@ -8,7 +8,7 @@ export interface SubscriptionPlan {
   description: string;
   badge: string;
   badgeColor: "purple" | "blue";
-  checkoutUrl: string;
+  priceId: string;
   benefits: string[];
 }
 
@@ -22,7 +22,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     description: "14 jours offerts, puis 14,99 €/mois – engagement 12 mois",
     badge: "💎 Meilleur prix",
     badgeColor: "purple",
-    checkoutUrl: "https://buy.stripe.com/5kQbJ1dqp0uD6cwb2GgjC03",
+    priceId: "price_1SZT7tGkt979eNWB0MF2xczP",
     benefits: [
       "Accès complet à Reviewsvisor",
       "14 jours offerts",
@@ -38,7 +38,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     description: "Sans engagement",
     badge: "⚡ Flexible",
     badgeColor: "blue",
-    checkoutUrl: "https://buy.stripe.com/cNi14n1HHgtBeJ29YCgjC02",
+    priceId: "price_1SXnCbGkt979eNWBttiTM124",
     benefits: [
       "Accès complet à Reviewsvisor",
       "Sans engagement",

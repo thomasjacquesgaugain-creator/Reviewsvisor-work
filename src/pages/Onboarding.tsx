@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { StepHeader } from "@/components/StepHeader";
 import { SubscriptionPlanCard } from "@/components/SubscriptionPlanCard";
 import { subscriptionPlans, getPlanBySlug, getDefaultPlan } from "@/config/subscriptionPlans";
+import { supabase } from "@/integrations/supabase/client";
 
 const Onboarding = () => {
   const [searchParams] = useSearchParams();
@@ -28,9 +29,17 @@ const Onboarding = () => {
       // Store plan for later use
       sessionStorage.setItem("onboarding_plan", selectedPlan.id);
       
-      // Redirect to Stripe Checkout
-      window.location.href = selectedPlan.checkoutUrl;
+      // Call edge function to create Stripe Checkout session
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId: selectedPlan.priceId },
+      });
       
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("URL de paiement non reçue");
+      }
     } catch (error) {
       console.error("Checkout error:", error);
       toast.error("Le paiement n'a pas pu être initialisé. Réessayez.");

@@ -28,6 +28,7 @@ serve(async (req) => {
     // Get email from request body (for non-authenticated users) or from auth
     const body = await req.json().catch(() => ({}));
     const emailFromBody = body.email;
+    const priceIdFromBody = body.priceId;
     
     let userEmail = emailFromBody;
     
@@ -51,10 +52,11 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     
-    const priceId = Deno.env.get("STRIPE_PRICE_ID");
+    // Use priceId from request body, fallback to env variable
+    const priceId = priceIdFromBody || Deno.env.get("STRIPE_PRICE_ID");
     if (!priceId) {
-      logStep("ERROR: STRIPE_PRICE_ID not found in environment");
-      throw new Error("STRIPE_PRICE_ID is not set");
+      logStep("ERROR: No priceId provided and STRIPE_PRICE_ID not found in environment");
+      throw new Error("priceId is required");
     }
     
     logStep("Config verified", { priceId, priceIdLength: priceId.length });
