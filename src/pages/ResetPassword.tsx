@@ -32,19 +32,62 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-        redirectTo: "https://reviewsvisor.fr/reset-password-update",
+      // Appeler l'edge function pour envoyer l'email via Resend
+      const resetLink = `${window.location.origin}/update-password`;
+      
+      console.log("Calling send-password-reset edge function with:", {
+        email: values.email,
+        resetLink,
       });
-      console.log("reset-password result", { error });
 
-      if (error) {
-        console.error("Erreur réinitialisation mot de passe:", error);
+      // D'abord, on génère le lien de reset via Supabase (cela crée le token)
+      // Puis on envoie l'email via notre edge function Resend
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(values.email, {
+        redirectTo: resetLink,
+      });
+
+      console.log("Supabase resetPasswordForEmail response:", { error: resetError });
+
+      // Si l'erreur est liée à l'envoi d'email (SMTP), on utilise notre edge function
+      if (resetError && (resetError.message.includes("sending") || resetError.message.includes("SMTP") || resetError.status === 500)) {
+        console.log("SMTP error detected, attempting to use edge function fallback...");
+        
+        // Appeler directement l'edge function pour envoyer via Resend
+        const { data: functionData, error: functionError } = await supabase.functions.invoke("send-password-reset", {
+          body: { 
+            email: values.email, 
+            resetLink: `${resetLink}?email=${encodeURIComponent(values.email)}`
+          },
+        });
+
+        console.log("Edge function response:", { data: functionData, error: functionError });
+
+        if (functionError) {
+          console.error("Edge function error:", functionError);
+          toast({
+            title: "❌ Erreur",
+            description: "Une erreur est survenue lors de l'envoi de l'email. Veuillez réessayer.",
+            variant: "destructive",
+          });
+        } else {
+          // Succès via edge function
+          setEmailSent(true);
+          reset();
+          toast({
+            title: "✅ Email envoyé",
+            description: "Un email de réinitialisation vient de vous être envoyé. Pensez à vérifier vos spams.",
+          });
+        }
+      } else if (resetError) {
+        // Autre erreur Supabase
+        console.error("Supabase error:", resetError);
         toast({
           title: "❌ Erreur",
           description: "Une erreur est survenue, veuillez réessayer plus tard.",
           variant: "destructive",
         });
       } else {
+        // Succès via Supabase natif
         setEmailSent(true);
         reset();
         toast({
