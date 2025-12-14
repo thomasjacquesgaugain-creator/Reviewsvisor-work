@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import BackArrow from "@/components/BackArrow";
 
 const resetSchema = z.object({
   email: z.string().trim().email({ message: "Adresse email invalide" }),
@@ -65,19 +66,7 @@ const ResetPassword = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Back arrow */}
-      <Link
-        to="/"
-        className="fixed top-[15px] left-[10px] z-50 p-2 rounded-lg hover:bg-white/50 transition-colors"
-        aria-label="Retour à l'accueil"
-      >
-        <ArrowLeft 
-          size={28} 
-          color="#2F6BFF" 
-          strokeWidth={2.5}
-          className="rounded-sm"
-        />
-      </Link>
+      <BackArrow />
 
       {/* Background with organic shapes */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-purple-100">
