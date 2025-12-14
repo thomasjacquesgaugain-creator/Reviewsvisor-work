@@ -34,18 +34,24 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
         </div>
 
         {/* Centre : liens avec icônes */}
-        <nav className="rv-navbar-center">
-          <Link to="/tableau-de-bord" className={`rv-nav-link ${isAccueil ? "active" : ""}`}>
-            <span className="rv-nav-icon">🏠</span>
-            <span>Accueil</span>
+        <nav className="rv-navbar-center flex items-center gap-2">
+          <Link
+            to="/tableau-de-bord"
+            className={`flex items-center justify-center w-10 h-10 rounded-full transition text-gray-700 hover:text-blue-600 hover:ring-2 hover:ring-blue-400 ${isAccueil ? "ring-2 ring-blue-400 text-blue-600" : ""}`}
+          >
+            🏠
           </Link>
-          <Link to="/dashboard" className={`rv-nav-link ${isDashboard ? "active" : ""}`}>
-            <span className="rv-nav-icon">📈</span>
-            <span>Dashboard</span>
+          <Link
+            to="/dashboard"
+            className={`flex items-center justify-center w-10 h-10 rounded-full transition text-gray-700 hover:text-blue-600 hover:ring-2 hover:ring-blue-400 ${isDashboard ? "ring-2 ring-blue-400 text-blue-600" : ""}`}
+          >
+            📊
           </Link>
-          <Link to="/etablissement" className={`rv-nav-link ${isEtablissement ? "active" : ""}`}>
-            <span className="rv-nav-icon">🏢</span>
-            <span>Établissement</span>
+          <Link
+            to="/etablissement"
+            className={`flex items-center justify-center w-10 h-10 rounded-full transition text-gray-700 hover:text-blue-600 hover:ring-2 hover:ring-blue-400 ${isEtablissement ? "ring-2 ring-blue-400 text-blue-600" : ""}`}
+          >
+            🏢
           </Link>
         </nav>
 
