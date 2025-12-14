@@ -24,8 +24,8 @@ const MerciInscription = () => {
           <div className="flex flex-col items-center gap-4">
             <span 
               className="text-7xl mb-2 inline-block" 
-              style={{ transform: "scale(1.3, 1)" }}
-              role="img" 
+              style={{ transform: "scale(1.5, 1)" }}
+              role="img"
               aria-label="Félicitations"
             >
               🎉
