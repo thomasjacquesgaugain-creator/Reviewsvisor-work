@@ -31,6 +31,7 @@ serve(async (req) => {
     const priceIdFromBody = body.priceId;
     
     let userEmail = emailFromBody;
+    let customerId: string | undefined;
     
     // Try to get authenticated user if available
     const authHeader = req.headers.get("Authorization");
@@ -43,11 +44,9 @@ serve(async (req) => {
           logStep("User authenticated", { email: userEmail });
         }
       } catch (e) {
-        logStep("No valid auth, using email from body");
+        logStep("No valid auth, proceeding as guest");
       }
     }
-    
-    if (!userEmail) throw new Error("Email is required");
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
@@ -59,26 +58,31 @@ serve(async (req) => {
       throw new Error("priceId is required");
     }
     
-    logStep("Config verified", { priceId, priceIdLength: priceId.length });
+    logStep("Config verified", { priceId, hasEmail: !!userEmail });
     
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
-    // Check if customer already exists
-    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
-    let customerId;
-    
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep("Existing customer found", { customerId });
+    // Check if customer already exists (only if we have an email)
+    if (userEmail) {
+      const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        logStep("Existing customer found", { customerId });
+      } else {
+        logStep("No customer found, will create in checkout");
+      }
     } else {
-      logStep("No customer found, will create in checkout");
+      logStep("No email provided, Stripe Checkout will collect it");
     }
 
     const origin = req.headers.get("origin") || Deno.env.get("APP_URL") || "http://localhost:8080";
     
+    // Determine if trial should be applied (only for pro-engagement plan)
+    const isEngagementPlan = priceId === "price_1SZT7tGkt979eNWB0MF2xczP";
+    
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : userEmail,
+      customer_email: customerId ? undefined : userEmail || undefined,
       line_items: [
         {
           price: priceId,
@@ -89,9 +93,7 @@ serve(async (req) => {
       payment_method_types: ["card"],
       billing_address_collection: "auto",
       allow_promotion_codes: false,
-      subscription_data: {
-        trial_period_days: 14,
-      },
+      ...(isEngagementPlan && { subscription_data: { trial_period_days: 14 } }),
       success_url: `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/billing/cancel`,
     });
