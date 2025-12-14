@@ -20,6 +20,7 @@ type ResetFormData = z.infer<typeof resetSchema>;
 const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
   const { toast } = useToast();
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ResetFormData>({
@@ -71,6 +72,7 @@ const ResetPassword = () => {
           });
         } else {
           // Succès via edge function
+          setSubmittedEmail(values.email);
           setEmailSent(true);
           reset();
           toast({
@@ -88,6 +90,7 @@ const ResetPassword = () => {
         });
       } else {
         // Succès via Supabase natif
+        setSubmittedEmail(values.email);
         setEmailSent(true);
         reset();
         toast({
@@ -171,7 +174,7 @@ const ResetPassword = () => {
               ) : (
                 <div className="text-center space-y-4">
                   <p className="mt-4 rounded-md bg-green-100 p-4 text-sm text-green-800">
-                    ✅ Un email de réinitialisation a été envoyé.<br />
+                    ✅ Un email de réinitialisation a été envoyé à <strong>{submittedEmail}</strong>.<br />
                     📬 <strong>Astuce :</strong> Vérifie aussi ton dossier <em>Spam</em> ou <em>Courrier indésirable</em>, il peut parfois s'y glisser par erreur.
                   </p>
                 </div>
