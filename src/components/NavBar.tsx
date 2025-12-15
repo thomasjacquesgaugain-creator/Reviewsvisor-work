@@ -72,7 +72,7 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
 
           <button 
             onClick={handleLogout} 
-            className="px-4 py-2 rounded-md border border-red-500 text-red-600 font-medium transition-all duration-200 hover:bg-red-600 hover:text-white hover:border-red-600 focus:outline-none active:bg-red-700"
+            className="px-4 py-2 rounded-md bg-red-600 text-white font-medium transition-all duration-200 hover:bg-red-700 focus:outline-none active:bg-red-800"
           >
             Déconnexion
           </button>
