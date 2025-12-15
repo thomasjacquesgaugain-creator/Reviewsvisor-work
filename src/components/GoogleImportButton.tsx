@@ -76,15 +76,25 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
   };
 
   const handleImportClick = async () => {
+    console.log('🔵 SYNC BUTTON CLICKED');
+    
     // Guard against double-clicks
     if (loading || operationInProgress.current) {
       console.log('⚠️ Import already in progress, ignoring click');
       return;
     }
 
+    // Show immediate feedback to user
+    toast({
+      title: "Synchronisation Google démarrée",
+      description: "Récupération des avis en cours...",
+    });
+
     if (hasExistingConnection) {
+      console.log('🔄 Connection exists, fetching accounts...');
       await fetchAccountsAndLocations();
     } else {
+      console.log('🔐 No connection, initiating OAuth...');
       await initiateGoogleOAuth();
     }
   };
@@ -226,12 +236,14 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
         console.error('❌ Error in response:', errorMessage);
         
         // Check for API not enabled error
-        if (errorMessage.includes('API has not been used') || 
+        if (errorMessage.includes('API_NOT_ENABLED') ||
+            errorMessage.includes('API has not been used') || 
             errorMessage.includes('SERVICE_DISABLED') ||
             errorMessage.includes('Enable it by visiting')) {
+          console.error('❌ API not enabled:', errorMessage);
           toast({
             title: "API Google Business non activée",
-            description: "Veuillez activer l'API 'My Business Account Management' dans votre console Google Cloud.",
+            description: "Veuillez activer l'API 'My Business Account Management' dans votre console Google Cloud, puis réessayer.",
             variant: "destructive",
           });
           return;
@@ -392,12 +404,13 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       <Button
         onClick={handleImportClick}
         disabled={loading}
-        className="w-full"
+        variant="default"
+        className="w-full bg-violet-600 hover:bg-violet-700 text-white"
       >
         {loading ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Importation en cours...
+            Importation en cours…
           </>
         ) : hasExistingConnection ? (
           <>
