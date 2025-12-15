@@ -31,7 +31,9 @@ export default function NavBar() {
           <span className="text-xl">📊</span>
           <div className="text-2xl font-bold text-blue-600">Reviewsvisor</div>
           {/* Barre verticale */}
-          <div className="h-10 border-r border-blue-300 mx-4"></div>
+          <div
+            className="relative mx-4 h-12 w-px bg-blue-300 before:absolute before:top-0 before:left-0 before:w-full before:h-2 before:bg-gradient-to-b before:from-white before:to-transparent after:absolute after:bottom-0 after:left-0 after:w-full after:h-2 after:bg-gradient-to-t after:from-white after:to-transparent"
+          ></div>
         </div>
 
         <NavLink to="/tableau-de-bord" className={getLinkClass("/tableau-de-bord")}>
