@@ -43,7 +43,7 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
           .select('id, token_expires_at')
           .eq('user_id', user.id)
           .eq('provider', 'google')
-          .single();
+          .maybeSingle();
 
         if (connection) {
           setHasExistingConnection(true);
@@ -162,20 +162,28 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       // Check for authentication errors that require reconnection
       if (accountsError || accountsData?.error) {
         const errorMessage = accountsData?.error || accountsError?.message || '';
-        
-        if (errorMessage.includes('RECONNECT_REQUIRED') || errorMessage.includes('reconnect') || errorMessage.includes('revoked') || errorMessage.includes('expired') || errorMessage.includes('Refresh token')) {
-          // Token expired, need to reconnect - trigger OAuth in a separate async context
+
+        const needsReconnect =
+          errorMessage.includes('RECONNECT_REQUIRED') ||
+          errorMessage.includes('Google connection not found') ||
+          errorMessage.includes('connect your Google account first') ||
+          errorMessage.includes('reconnect') ||
+          errorMessage.includes('revoked') ||
+          errorMessage.includes('expired') ||
+          errorMessage.includes('Refresh token');
+
+        if (needsReconnect) {
+          // Not connected (or token revoked) → trigger OAuth
           setHasExistingConnection(false);
           setLoading(false); // Reset loading before showing toast
           toast({
             title: "Reconnexion nécessaire",
-            description: "Votre session Google a expiré. Une nouvelle fenêtre d'autorisation va s'ouvrir...",
+            description: "Connexion Google requise. Une nouvelle fenêtre d'autorisation va s'ouvrir...",
           });
-          // Use setTimeout to break out of the current try-catch context
           setTimeout(() => initiateGoogleOAuth(), 500);
           return;
         }
-        
+
         throw new Error(errorMessage || 'Failed to fetch accounts');
       }
 
@@ -202,18 +210,26 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
 
       if (locationsError || locationsData?.error) {
         const errorMessage = locationsData?.error || locationsError?.message || '';
-        
-        if (errorMessage.includes('RECONNECT_REQUIRED') || errorMessage.includes('reconnect') || errorMessage.includes('revoked') || errorMessage.includes('expired')) {
+
+        const needsReconnect =
+          errorMessage.includes('RECONNECT_REQUIRED') ||
+          errorMessage.includes('Google connection not found') ||
+          errorMessage.includes('connect your Google account first') ||
+          errorMessage.includes('reconnect') ||
+          errorMessage.includes('revoked') ||
+          errorMessage.includes('expired');
+
+        if (needsReconnect) {
           setHasExistingConnection(false);
           setLoading(false);
           toast({
             title: "Reconnexion nécessaire",
-            description: "Votre session Google a expiré. Une nouvelle fenêtre d'autorisation va s'ouvrir...",
+            description: "Connexion Google requise. Une nouvelle fenêtre d'autorisation va s'ouvrir...",
           });
           setTimeout(() => initiateGoogleOAuth(), 500);
           return;
         }
-        
+
         throw new Error(errorMessage || 'Failed to fetch locations');
       }
 
