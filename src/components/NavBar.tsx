@@ -5,12 +5,6 @@ interface NavBarProps {
   variant?: "default" | "transparent";
 }
 
-const linkStyle =
-  "px-4 py-2 rounded-md font-medium border border-blue-600 text-blue-600 bg-white transition-all duration-200 hover:bg-blue-600 hover:text-white";
-
-const logoutStyle =
-  "px-4 py-2 rounded-md font-medium bg-red-600 text-white border border-red-600";
-
 export const NavBar = ({ variant = "default" }: NavBarProps) => {
   const location = useLocation();
   const { user, displayName, signOut } = useAuth();
@@ -19,17 +13,14 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
     await signOut();
   };
 
+  const isAccueil = location.pathname === "/tableau-de-bord";
+  const isDashboard = location.pathname === "/dashboard";
+  const isEtablissement = location.pathname === "/etablissement";
   const isCompte = location.pathname === "/compte";
 
   if (!user) {
     return null;
   }
-
-  const navItems = [
-    { name: "Accueil", href: "/tableau-de-bord" },
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "Établissement", href: "/etablissement" },
-  ];
 
   return (
     <header className="rv-navbar">
@@ -42,34 +33,34 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
           </div>
         </div>
 
-        {/* Centre : liens */}
-        <nav className="flex items-center space-x-6">
-          {navItems.map((item) => (
-            <Link
-              key={item.name}
-              to={item.href}
-              className={linkStyle}
-            >
-              {item.name}
-            </Link>
-          ))}
+        {/* Centre : liens avec icônes */}
+        <nav className="rv-navbar-center">
+          <Link to="/tableau-de-bord" className={`rv-nav-link ${isAccueil ? "active" : ""}`}>
+            <span className="rv-nav-icon">🏠</span>
+            <span>Accueil</span>
+          </Link>
+          <Link to="/dashboard" className={`rv-nav-link ${isDashboard ? "active" : ""}`}>
+            <span className="rv-nav-icon">📈</span>
+            <span>Dashboard</span>
+          </Link>
+          <Link to="/etablissement" className={`rv-nav-link ${isEtablissement ? "active" : ""}`}>
+            <span className="rv-nav-icon">🏢</span>
+            <span>Établissement</span>
+          </Link>
         </nav>
 
         {/* Droite : texte cliquable + déconnexion */}
-        <div className="flex items-center space-x-4">
+        <div className="rv-navbar-right">
           {user ? (
             <>
               <Link 
                 to="/compte" 
-                className={linkStyle}
+                className={`rv-user-text hover:text-primary transition-colors cursor-pointer ${isCompte ? "text-primary" : ""}`}
               >
                 Bonjour, {displayName}
               </Link>
 
-              <button 
-                onClick={handleLogout} 
-                className={logoutStyle}
-              >
+              <button onClick={handleLogout} className="rv-logout-btn">
                 Déconnexion
               </button>
             </>
