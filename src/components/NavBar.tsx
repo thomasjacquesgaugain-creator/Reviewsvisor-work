@@ -5,6 +5,13 @@ interface NavBarProps {
   variant?: "default" | "transparent";
 }
 
+const navLinkBase =
+  "flex items-center gap-2 px-3 py-2 rounded-md font-medium transition-colors";
+const navLinkHover =
+  "hover:border hover:border-blue-500 hover:bg-blue-50 text-gray-700";
+const navLinkActive =
+  "border border-blue-600 bg-blue-100 text-blue-700";
+
 export const NavBar = ({ variant = "default" }: NavBarProps) => {
   const location = useLocation();
   const { user, displayName, signOut } = useAuth();
@@ -13,14 +20,17 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
     await signOut();
   };
 
-  const isAccueil = location.pathname === "/tableau-de-bord";
-  const isDashboard = location.pathname === "/dashboard";
-  const isEtablissement = location.pathname === "/etablissement";
   const isCompte = location.pathname === "/compte";
 
   if (!user) {
     return null;
   }
+
+  const navItems = [
+    { name: "Accueil", href: "/tableau-de-bord" },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Établissement", href: "/etablissement" },
+  ];
 
   return (
     <header className="rv-navbar">
@@ -33,20 +43,19 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
           </div>
         </div>
 
-        {/* Centre : liens avec icônes */}
-        <nav className="rv-navbar-center">
-          <Link to="/tableau-de-bord" className={`rv-nav-link ${isAccueil ? "active" : ""}`}>
-            <span className="rv-nav-icon">🏠</span>
-            <span>Accueil</span>
-          </Link>
-          <Link to="/dashboard" className={`rv-nav-link ${isDashboard ? "active" : ""}`}>
-            <span className="rv-nav-icon">📈</span>
-            <span>Dashboard</span>
-          </Link>
-          <Link to="/etablissement" className={`rv-nav-link ${isEtablissement ? "active" : ""}`}>
-            <span className="rv-nav-icon">🏢</span>
-            <span>Établissement</span>
-          </Link>
+        {/* Centre : liens */}
+        <nav className="flex items-center space-x-6">
+          {navItems.map((item) => (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={`${navLinkBase} ${
+                location.pathname === item.href ? navLinkActive : navLinkHover
+              }`}
+            >
+              {item.name}
+            </Link>
+          ))}
         </nav>
 
         {/* Droite : texte cliquable + déconnexion */}
@@ -60,7 +69,10 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
                 Bonjour, {displayName}
               </Link>
 
-              <button onClick={handleLogout} className="rv-logout-btn">
+              <button 
+                onClick={handleLogout} 
+                className="ml-4 px-4 py-2 rounded-md border border-red-500 text-red-600 font-medium hover:bg-red-50 transition"
+              >
                 Déconnexion
               </button>
             </>
