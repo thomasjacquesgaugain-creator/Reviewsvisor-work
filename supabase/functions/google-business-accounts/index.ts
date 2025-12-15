@@ -160,10 +160,14 @@ Deno.serve(async (req) => {
       }
       
       if (accountsResponse.status === 403) {
-        throw new Error('Access denied. Make sure your Google account has access to Google Business Profile.');
+        // Check if it's an API not enabled error
+        if (errorText.includes('SERVICE_DISABLED') || errorText.includes('API has not been used')) {
+          throw new Error('API_NOT_ENABLED: Veuillez activer "My Business Account Management API" dans votre console Google Cloud.');
+        }
+        throw new Error('Access denied. Assurez-vous que votre compte Google a accès à Google Business Profile.');
       }
       
-      throw new Error(`Failed to fetch Google Business accounts: ${accountsResponse.status}`);
+      throw new Error(`Échec de la récupération des comptes Google Business: ${accountsResponse.status}`);
     }
 
     const accountsData = await accountsResponse.json();
