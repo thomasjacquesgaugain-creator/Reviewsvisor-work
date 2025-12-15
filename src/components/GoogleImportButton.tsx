@@ -207,47 +207,42 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
     
     try {
       // Get accounts
+      console.log('📡 Calling google-business-accounts...');
       const { data: accountsData, error: accountsError } = await supabase.functions.invoke(
         'google-business-accounts'
       );
 
       console.log('📦 Accounts response:', { accountsData, accountsError });
 
-      // Check for errors
+      // Handle Supabase function errors
       if (accountsError) {
-        const errorMessage = accountsError.message || 'Unknown error';
-        console.error('❌ Accounts error:', errorMessage);
+        console.error('❌ Supabase function error:', accountsError);
+        throw new Error(accountsError.message || 'Erreur lors de la connexion à Google Business');
+      }
+
+      // Handle error in response data (from edge function)
+      if (accountsData?.error) {
+        const errorMessage = accountsData.error;
+        console.error('❌ Error in response:', errorMessage);
+        
+        // Check for API not enabled error
+        if (errorMessage.includes('API has not been used') || 
+            errorMessage.includes('SERVICE_DISABLED') ||
+            errorMessage.includes('Enable it by visiting')) {
+          toast({
+            title: "API Google Business non activée",
+            description: "Veuillez activer l'API 'My Business Account Management' dans votre console Google Cloud.",
+            variant: "destructive",
+          });
+          return;
+        }
         
         // Check if reconnection is needed
         if (errorMessage.includes('connection not found') || 
             errorMessage.includes('RECONNECT') ||
             errorMessage.includes('expired') ||
-            errorMessage.includes('revoked')) {
-          setHasExistingConnection(false);
-          toast({
-            title: "Connexion Google requise",
-            description: "Veuillez reconnecter votre compte Google Business.",
-            variant: "destructive",
-          });
-          // Reset state before initiating OAuth
-          setLoading(false);
-          operationInProgress.current = false;
-          setTimeout(() => initiateGoogleOAuth(), 500);
-          return;
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      // Check for error in response data
-      if (accountsData?.error) {
-        const errorMessage = accountsData.error;
-        console.error('❌ Error in response:', errorMessage);
-        
-        if (errorMessage.includes('connection not found') || 
-            errorMessage.includes('RECONNECT') ||
-            errorMessage.includes('expired') ||
-            errorMessage.includes('revoked')) {
+            errorMessage.includes('revoked') ||
+            errorMessage.includes('Access denied')) {
           setHasExistingConnection(false);
           toast({
             title: "Connexion Google requise",
@@ -256,7 +251,6 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
           });
           setLoading(false);
           operationInProgress.current = false;
-          setTimeout(() => initiateGoogleOAuth(), 500);
           return;
         }
         
@@ -281,6 +275,7 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       console.log('📍 Using account:', account.name);
 
       // Get locations
+      console.log('📡 Calling google-business-locations...');
       const { data: locationsData, error: locationsError } = await supabase.functions.invoke(
         'google-business-locations',
         { body: { accountId: account.name } }
@@ -289,7 +284,8 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       console.log('📦 Locations response:', { locationsData, locationsError });
 
       if (locationsError) {
-        throw new Error(locationsError.message || 'Failed to fetch locations');
+        console.error('❌ Locations error:', locationsError);
+        throw new Error(locationsError.message || 'Échec de la récupération des emplacements');
       }
 
       if (locationsData?.error) {
@@ -317,10 +313,10 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
         setShowLocationSelector(true);
       }
     } catch (error: any) {
-      console.error('❌ Error fetching locations:', error);
+      console.error('❌ Error in fetchAccountsAndLocations:', error);
       toast({
-        title: "Erreur",
-        description: error.message || "Échec de la récupération des emplacements. Veuillez réessayer.",
+        title: "L'import des avis Google a échoué",
+        description: error.message || "Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {
