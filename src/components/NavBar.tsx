@@ -5,12 +5,11 @@ interface NavBarProps {
   variant?: "default" | "transparent";
 }
 
-const navLinkBase =
-  "flex items-center gap-2 px-3 py-2 rounded-md font-medium transition-colors";
-const navLinkHover =
-  "hover:border hover:border-blue-500 hover:bg-blue-50 text-gray-700";
-const navLinkActive =
-  "border border-blue-600 bg-blue-100 text-blue-700";
+const linkStyle =
+  "px-4 py-2 rounded-md font-medium border border-blue-600 text-blue-600 bg-white transition-all duration-200 hover:bg-blue-600 hover:text-white";
+
+const logoutStyle =
+  "px-4 py-2 rounded-md font-medium bg-red-600 text-white border border-red-600";
 
 export const NavBar = ({ variant = "default" }: NavBarProps) => {
   const location = useLocation();
@@ -49,9 +48,7 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
             <Link
               key={item.name}
               to={item.href}
-              className={`${navLinkBase} ${
-                location.pathname === item.href ? navLinkActive : navLinkHover
-              }`}
+              className={linkStyle}
             >
               {item.name}
             </Link>
@@ -59,19 +56,19 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
         </nav>
 
         {/* Droite : texte cliquable + déconnexion */}
-        <div className="rv-navbar-right">
+        <div className="flex items-center space-x-4">
           {user ? (
             <>
               <Link 
                 to="/compte" 
-                className={`rv-user-text hover:text-primary transition-colors cursor-pointer ${isCompte ? "text-primary" : ""}`}
+                className={linkStyle}
               >
                 Bonjour, {displayName}
               </Link>
 
               <button 
                 onClick={handleLogout} 
-                className="ml-4 px-4 py-2 rounded-md border border-red-500 text-red-600 font-medium hover:bg-red-50 transition"
+                className={logoutStyle}
               >
                 Déconnexion
               </button>
