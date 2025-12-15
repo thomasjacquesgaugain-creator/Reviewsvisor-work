@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,9 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
   const [locations, setLocations] = useState<Location[]>([]);
   const [accountId, setAccountId] = useState<string>("");
   const [hasExistingConnection, setHasExistingConnection] = useState(false);
+  
+  // Ref to track if an operation is in progress (prevents double-clicks)
+  const operationInProgress = useRef(false);
 
   // Check for existing Google connection on mount
   useEffect(() => {
@@ -57,8 +60,8 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
             await fetchAccountsAndLocations();
           }
         }
-      } catch {
-        // no-op
+      } catch (err) {
+        console.error('Error checking Google connection:', err);
       }
     };
 
@@ -69,23 +72,31 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
   // Get dynamic redirect URI based on current environment
   const getRedirectUri = () => {
     const origin = window.location.origin;
-    // Use the explicit file path to avoid static hosting ambiguity
     return `${origin}/api/auth/callback/google/index.html`;
   };
 
   const handleImportClick = async () => {
+    // Guard against double-clicks
+    if (loading || operationInProgress.current) {
+      console.log('⚠️ Import already in progress, ignoring click');
+      return;
+    }
+
     if (hasExistingConnection) {
-      // Already connected, try to fetch accounts directly
       await fetchAccountsAndLocations();
     } else {
-      // Need to connect first
       await initiateGoogleOAuth();
     }
   };
 
   const initiateGoogleOAuth = async () => {
+    if (operationInProgress.current) return;
+    operationInProgress.current = true;
     setLoading(true);
+    
     try {
+      console.log('🔐 Initiating Google OAuth...');
+      
       // Fetch client ID from edge function
       const { data: configData, error: configError } = await supabase.functions.invoke(
         'google-client-config'
@@ -119,7 +130,7 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
 
       console.log('🔗 OAuth redirect URI:', redirectUri);
 
-      // Try popup first (best UX). If blocked (common in iframes), fallback to full redirect.
+      // Try popup first. If blocked, fallback to full redirect.
       const popup = window.open(
         authUrl.toString(),
         'googleOAuth',
@@ -127,11 +138,14 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       );
 
       if (!popup) {
+        console.log('📲 Popup blocked, redirecting...');
         window.location.href = authUrl.toString();
         return;
       }
 
+      // Reset loading since popup opened (user will interact there)
       setLoading(false);
+      operationInProgress.current = false;
 
       // Listen for OAuth callback messages
       const handleMessage = async (event: MessageEvent) => {
@@ -158,67 +172,103 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       };
 
       window.addEventListener('message', handleMessage);
+
+      // Check periodically if popup was closed without completing
+      const checkPopupClosed = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(checkPopupClosed);
+          window.removeEventListener('message', handleMessage);
+          // Don't show error - user might have just closed the popup
+        }
+      }, 1000);
+
     } catch (error: any) {
-      console.error('Error initiating OAuth:', error);
+      console.error('❌ Error initiating OAuth:', error);
       toast({
         title: "Erreur",
         description: error.message || "Impossible de démarrer l'authentification",
         variant: "destructive",
       });
+    } finally {
       setLoading(false);
+      operationInProgress.current = false;
     }
   };
 
   const fetchAccountsAndLocations = async () => {
+    if (operationInProgress.current) {
+      console.log('⚠️ Operation already in progress');
+      return;
+    }
+    
+    operationInProgress.current = true;
     setLoading(true);
+    console.log('🔄 Fetching Google Business accounts and locations...');
+    
     try {
       // Get accounts
       const { data: accountsData, error: accountsError } = await supabase.functions.invoke(
         'google-business-accounts'
       );
 
-      // Check for authentication errors that require reconnection
-      if (accountsError || accountsData?.error) {
-        // Supabase Functions errors often have a generic message; try to extract JSON body
-        let errorMessage = accountsData?.error || accountsError?.message || '';
-        if (!accountsData?.error && accountsError && (accountsError as any).context) {
-          try {
-            const body = await (accountsError as any).context.json();
-            if (body?.error) errorMessage = body.error;
-          } catch {
-            // ignore
-          }
-        }
+      console.log('📦 Accounts response:', { accountsData, accountsError });
 
-        const needsReconnect =
-          errorMessage.includes('RECONNECT_REQUIRED') ||
-          errorMessage.includes('Google connection not found') ||
-          errorMessage.includes('connect your Google account first') ||
-          errorMessage.includes('reconnect') ||
-          errorMessage.includes('revoked') ||
-          errorMessage.includes('expired') ||
-          errorMessage.includes('Refresh token');
-
-        if (needsReconnect) {
-          // Not connected (or token revoked) → trigger OAuth
+      // Check for errors
+      if (accountsError) {
+        const errorMessage = accountsError.message || 'Unknown error';
+        console.error('❌ Accounts error:', errorMessage);
+        
+        // Check if reconnection is needed
+        if (errorMessage.includes('connection not found') || 
+            errorMessage.includes('RECONNECT') ||
+            errorMessage.includes('expired') ||
+            errorMessage.includes('revoked')) {
           setHasExistingConnection(false);
-          setLoading(false); // Reset loading before showing toast
           toast({
             title: "Connexion Google requise",
-            description: "Une nouvelle fenêtre d'autorisation va s'ouvrir...",
+            description: "Veuillez reconnecter votre compte Google Business.",
+            variant: "destructive",
           });
-          setTimeout(() => initiateGoogleOAuth(), 200);
+          // Reset state before initiating OAuth
+          setLoading(false);
+          operationInProgress.current = false;
+          setTimeout(() => initiateGoogleOAuth(), 500);
           return;
         }
+        
+        throw new Error(errorMessage);
+      }
 
-        throw new Error(errorMessage || 'Failed to fetch accounts');
+      // Check for error in response data
+      if (accountsData?.error) {
+        const errorMessage = accountsData.error;
+        console.error('❌ Error in response:', errorMessage);
+        
+        if (errorMessage.includes('connection not found') || 
+            errorMessage.includes('RECONNECT') ||
+            errorMessage.includes('expired') ||
+            errorMessage.includes('revoked')) {
+          setHasExistingConnection(false);
+          toast({
+            title: "Connexion Google requise",
+            description: "Veuillez reconnecter votre compte Google Business.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          operationInProgress.current = false;
+          setTimeout(() => initiateGoogleOAuth(), 500);
+          return;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const accounts = accountsData?.accounts || [];
+      console.log('✅ Found accounts:', accounts.length);
       
       if (accounts.length === 0) {
         toast({
-          title: "Aucun compte",
+          title: "Aucun compte trouvé",
           description: "Aucun compte Google Business trouvé. Assurez-vous que votre compte Google est lié à un profil Google Business.",
           variant: "destructive",
         });
@@ -228,6 +278,7 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       // Use first account
       const account = accounts[0];
       setAccountId(account.name);
+      console.log('📍 Using account:', account.name);
 
       // Get locations
       const { data: locationsData, error: locationsError } = await supabase.functions.invoke(
@@ -235,45 +286,22 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
         { body: { accountId: account.name } }
       );
 
-      if (locationsError || locationsData?.error) {
-        // Supabase Functions errors often have a generic message; try to extract JSON body
-        let errorMessage = locationsData?.error || locationsError?.message || '';
-        if (!locationsData?.error && locationsError && (locationsError as any).context) {
-          try {
-            const body = await (locationsError as any).context.json();
-            if (body?.error) errorMessage = body.error;
-          } catch {
-            // ignore
-          }
-        }
+      console.log('📦 Locations response:', { locationsData, locationsError });
 
-        const needsReconnect =
-          errorMessage.includes('RECONNECT_REQUIRED') ||
-          errorMessage.includes('Google connection not found') ||
-          errorMessage.includes('connect your Google account first') ||
-          errorMessage.includes('reconnect') ||
-          errorMessage.includes('revoked') ||
-          errorMessage.includes('expired');
+      if (locationsError) {
+        throw new Error(locationsError.message || 'Failed to fetch locations');
+      }
 
-        if (needsReconnect) {
-          setHasExistingConnection(false);
-          setLoading(false);
-          toast({
-            title: "Connexion Google requise",
-            description: "Une nouvelle fenêtre d'autorisation va s'ouvrir...",
-          });
-          setTimeout(() => initiateGoogleOAuth(), 200);
-          return;
-        }
-
-        throw new Error(errorMessage || 'Failed to fetch locations');
+      if (locationsData?.error) {
+        throw new Error(locationsData.error);
       }
 
       const locs = locationsData?.locations || [];
+      console.log('✅ Found locations:', locs.length);
       
       if (locs.length === 0) {
         toast({
-          title: "Aucun emplacement",
+          title: "Aucun emplacement trouvé",
           description: "Aucun emplacement trouvé pour ce compte Google Business",
           variant: "destructive",
         });
@@ -289,22 +317,25 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
         setShowLocationSelector(true);
       }
     } catch (error: any) {
-      console.error('Error fetching locations:', error);
+      console.error('❌ Error fetching locations:', error);
       toast({
         title: "Erreur",
-        description: error.message || "Échec de la récupération des emplacements",
+        description: error.message || "Échec de la récupération des emplacements. Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
+      operationInProgress.current = false;
+      console.log('🔓 Loading state reset');
     }
   };
 
   const importReviews = async (accId: string, locationId: string) => {
+    // Don't set operationInProgress here since we're already in an operation
     setLoading(true);
+    console.log('🚀 Starting import:', { accountId: accId, locationId, placeId });
+    
     try {
-      console.log('🚀 Starting import with:', { accountId: accId, locationId, placeId });
-      
       const { data, error } = await supabase.functions.invoke('google-business-reviews', {
         body: {
           accountId: accId,
@@ -313,11 +344,17 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
         },
       });
 
-      console.log('📦 Import response:', data, error);
+      console.log('📦 Import response:', { data, error });
 
-      if (error) throw error;
+      if (error) {
+        throw new Error(error.message || "Échec de l'import");
+      }
 
-      if (data.total === 0) {
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (data?.total === 0) {
         toast({
           title: "Aucun avis trouvé",
           description: "Aucun avis Google n'a été trouvé pour cet établissement.",
@@ -325,7 +362,7 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
         });
       } else {
         toast({
-          title: "Import réussi",
+          title: "Avis Google importés avec succès",
           description: `${data.total} avis importés (${data.inserted} nouveaux, ${data.updated} mis à jour)`,
         });
       }
@@ -339,12 +376,14 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
     } catch (error: any) {
       console.error('❌ Error importing reviews:', error);
       toast({
-        title: "Erreur d'import",
-        description: error.message || "Échec de l'import des avis. Vérifiez les logs de la console.",
+        title: "L'import des avis Google a échoué",
+        description: error.message || "Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
+      operationInProgress.current = false;
+      console.log('✅ Import complete, button re-enabled');
     }
   };
 
@@ -374,7 +413,14 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
         )}
       </Button>
 
-      <Dialog open={showLocationSelector} onOpenChange={setShowLocationSelector}>
+      <Dialog open={showLocationSelector} onOpenChange={(open) => {
+        setShowLocationSelector(open);
+        // If dialog is closed without selecting, reset loading state
+        if (!open && loading) {
+          setLoading(false);
+          operationInProgress.current = false;
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Sélectionner un emplacement</DialogTitle>
