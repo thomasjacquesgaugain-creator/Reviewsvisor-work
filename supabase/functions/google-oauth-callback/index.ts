@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { code } = await req.json();
+    const { code, redirectUri } = await req.json();
     
     if (!code) {
       throw new Error('Authorization code is required');
@@ -19,7 +19,11 @@ Deno.serve(async (req) => {
 
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
     const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
-    const redirectUri = Deno.env.get('AUTH_REDIRECT') || 'https://reviewsvisor.fr/api/auth/callback/google';
+    
+    // Use provided redirectUri or fallback to configured one
+    const finalRedirectUri = redirectUri || Deno.env.get('AUTH_REDIRECT') || 'https://reviewsvisor.fr/api/auth/callback/google';
+
+    console.log('🔐 OAuth callback - using redirect URI:', finalRedirectUri);
 
     if (!clientId || !clientSecret) {
       throw new Error('Google OAuth credentials not configured');
@@ -33,7 +37,7 @@ Deno.serve(async (req) => {
         code,
         client_id: clientId,
         client_secret: clientSecret,
-        redirect_uri: redirectUri,
+        redirect_uri: finalRedirectUri,
         grant_type: 'authorization_code',
       }),
     });
@@ -45,6 +49,11 @@ Deno.serve(async (req) => {
     }
 
     const tokens = await tokenResponse.json();
+    console.log('✅ Tokens received:', { 
+      has_access_token: !!tokens.access_token,
+      has_refresh_token: !!tokens.refresh_token,
+      expires_in: tokens.expires_in
+    });
     
     // Get user from auth header
     const authHeader = req.headers.get('Authorization');
@@ -65,27 +74,55 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
+    console.log('✅ User authenticated:', user.id);
+
     // Calculate token expiration
     const tokenExpiresAt = new Date(Date.now() + (tokens.expires_in * 1000));
 
-    // Upsert connection
-    const { error: upsertError } = await supabase
+    // Check if connection already exists
+    const { data: existingConnection } = await supabase
       .from('google_connections')
-      .upsert({
-        user_id: user.id,
-        provider: 'google',
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        token_expires_at: tokenExpiresAt.toISOString(),
-        scope: tokens.scope || 'https://www.googleapis.com/auth/business.manage',
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'user_id,provider',
-      });
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('provider', 'google')
+      .single();
 
-    if (upsertError) {
-      console.error('Database error:', upsertError);
-      throw new Error('Failed to save connection');
+    if (existingConnection) {
+      // Update existing connection
+      const { error: updateError } = await supabase
+        .from('google_connections')
+        .update({
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token || undefined, // Only update if new refresh token provided
+          token_expires_at: tokenExpiresAt.toISOString(),
+          scope: tokens.scope || 'https://www.googleapis.com/auth/business.manage',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existingConnection.id);
+
+      if (updateError) {
+        console.error('Database update error:', updateError);
+        throw new Error('Failed to update connection');
+      }
+      console.log('✅ Existing connection updated');
+    } else {
+      // Insert new connection
+      const { error: insertError } = await supabase
+        .from('google_connections')
+        .insert({
+          user_id: user.id,
+          provider: 'google',
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          token_expires_at: tokenExpiresAt.toISOString(),
+          scope: tokens.scope || 'https://www.googleapis.com/auth/business.manage',
+        });
+
+      if (insertError) {
+        console.error('Database insert error:', insertError);
+        throw new Error('Failed to save connection');
+      }
+      console.log('✅ New connection created');
     }
 
     return new Response(

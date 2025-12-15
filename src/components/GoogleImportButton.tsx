@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +29,47 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
   const [showLocationSelector, setShowLocationSelector] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
   const [accountId, setAccountId] = useState<string>("");
+  const [hasExistingConnection, setHasExistingConnection] = useState(false);
+
+  // Check for existing Google connection on mount
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: connection } = await supabase
+          .from('google_connections')
+          .select('id, token_expires_at')
+          .eq('user_id', user.id)
+          .eq('provider', 'google')
+          .single();
+
+        if (connection) {
+          setHasExistingConnection(true);
+        }
+      } catch (error) {
+        console.log('No existing Google connection');
+      }
+    };
+    checkConnection();
+  }, []);
+
+  // Get dynamic redirect URI based on current environment
+  const getRedirectUri = () => {
+    const origin = window.location.origin;
+    return `${origin}/api/auth/callback/google`;
+  };
+
+  const handleImportClick = async () => {
+    if (hasExistingConnection) {
+      // Already connected, try to fetch accounts directly
+      await fetchAccountsAndLocations();
+    } else {
+      // Need to connect first
+      await initiateGoogleOAuth();
+    }
+  };
 
   const initiateGoogleOAuth = async () => {
     setLoading(true);
@@ -48,13 +89,13 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       }
 
       const clientId = configData.clientId;
-      const redirectUri = 'https://reviewsvisor.fr/api/auth/callback/google';
-    const scope = [
-      'openid',
-      'email',
-      'profile',
-      'https://www.googleapis.com/auth/business.manage',
-    ].join(' ');
+      const redirectUri = getRedirectUri();
+      const scope = [
+        'openid',
+        'email',
+        'profile',
+        'https://www.googleapis.com/auth/business.manage',
+      ].join(' ');
 
       const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
       authUrl.searchParams.set('client_id', clientId);
@@ -64,6 +105,7 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       authUrl.searchParams.set('access_type', 'offline');
       authUrl.searchParams.set('prompt', 'consent');
 
+      console.log('🔗 OAuth redirect URI:', redirectUri);
       setLoading(false);
 
       // Open popup
@@ -73,15 +115,27 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
         'width=600,height=700,left=200,top=100'
       );
 
-      // Listen for OAuth callback
+      // Listen for OAuth callback messages
       const handleMessage = async (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return;
         
-        if (event.data.type === 'oauth-callback' && event.data.code) {
+        if (event.data.type === 'oauth-success') {
           window.removeEventListener('message', handleMessage);
           popup?.close();
-          
-          await handleOAuthCallback(event.data.code);
+          setHasExistingConnection(true);
+          toast({
+            title: "Connexion réussie",
+            description: "Récupération des emplacements...",
+          });
+          await fetchAccountsAndLocations();
+        } else if (event.data.type === 'oauth-error') {
+          window.removeEventListener('message', handleMessage);
+          popup?.close();
+          toast({
+            title: "Erreur OAuth",
+            description: event.data.error || "Échec de la connexion",
+            variant: "destructive",
+          });
         }
       };
 
@@ -97,33 +151,6 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
     }
   };
 
-  const handleOAuthCallback = async (code: string) => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.functions.invoke('google-oauth-callback', {
-        body: { code },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Connexion réussie",
-        description: "Récupération des emplacements...",
-      });
-
-      await fetchAccountsAndLocations();
-    } catch (error: any) {
-      console.error('OAuth callback error:', error);
-      toast({
-        title: "Erreur",
-        description: error.message || "Échec de la connexion Google",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchAccountsAndLocations = async () => {
     setLoading(true);
     try {
@@ -132,14 +159,32 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
         'google-business-accounts'
       );
 
-      if (accountsError) throw accountsError;
+      // Check for authentication errors that require reconnection
+      if (accountsError || accountsData?.error) {
+        const errorMessage = accountsData?.error || accountsError?.message || '';
+        
+        if (errorMessage.includes('reconnect') || errorMessage.includes('expired') || errorMessage.includes('Refresh token')) {
+          // Token expired, need to reconnect
+          setHasExistingConnection(false);
+          toast({
+            title: "Reconnexion nécessaire",
+            description: "Votre session Google a expiré. Veuillez vous reconnecter.",
+            variant: "destructive",
+          });
+          // Automatically trigger OAuth
+          await initiateGoogleOAuth();
+          return;
+        }
+        
+        throw new Error(errorMessage || 'Failed to fetch accounts');
+      }
 
       const accounts = accountsData?.accounts || [];
       
       if (accounts.length === 0) {
         toast({
           title: "Aucun compte",
-          description: "Aucun compte Google Business trouvé",
+          description: "Aucun compte Google Business trouvé. Assurez-vous que votre compte Google est lié à un profil Google Business.",
           variant: "destructive",
         });
         return;
@@ -155,14 +200,29 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
         { body: { accountId: account.name } }
       );
 
-      if (locationsError) throw locationsError;
+      if (locationsError || locationsData?.error) {
+        const errorMessage = locationsData?.error || locationsError?.message || '';
+        
+        if (errorMessage.includes('reconnect') || errorMessage.includes('expired')) {
+          setHasExistingConnection(false);
+          toast({
+            title: "Reconnexion nécessaire",
+            description: "Votre session Google a expiré. Veuillez vous reconnecter.",
+            variant: "destructive",
+          });
+          await initiateGoogleOAuth();
+          return;
+        }
+        
+        throw new Error(errorMessage || 'Failed to fetch locations');
+      }
 
       const locs = locationsData?.locations || [];
       
       if (locs.length === 0) {
         toast({
           title: "Aucun emplacement",
-          description: "Aucun emplacement trouvé pour ce compte",
+          description: "Aucun emplacement trouvé pour ce compte Google Business",
           variant: "destructive",
         });
         return;
@@ -243,7 +303,7 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
   return (
     <>
       <Button
-        onClick={initiateGoogleOAuth}
+        onClick={handleImportClick}
         disabled={loading}
         className="w-full"
       >
@@ -251,6 +311,11 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             Importation en cours...
+          </>
+        ) : hasExistingConnection ? (
+          <>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Synchroniser mes avis Google
           </>
         ) : (
           "Importer mes avis Google"
