@@ -9,7 +9,7 @@ export default function NavBar() {
   };
 
   const linkStyle =
-    "px-4 py-2 rounded-md font-medium text-gray-700 border border-transparent transition-all duration-200 hover:border-blue-600";
+    "px-4 py-2 rounded-md font-medium text-gray-700 transition-all duration-200 hover:bg-blue-600 hover:text-white";
 
   const logoutStyle =
     "px-4 py-2 rounded-md font-medium bg-red-600 text-white border border-red-600 transition-all duration-200";
