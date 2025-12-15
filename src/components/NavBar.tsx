@@ -43,45 +43,41 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
           </div>
         </div>
 
-        {/* Centre : liens */}
         <nav className="flex items-center space-x-6">
           {navItems.map((item) => (
             <Link
               key={item.name}
               to={item.href}
-              className={`${navLinkBase} ${
-                location.pathname === item.href ? navLinkActive : navLinkHover
+              className={`flex items-center gap-2 px-3 py-2 rounded-md font-medium transition-all duration-200 ${
+                location.pathname === item.href
+                  ? "bg-blue-600 text-white border border-blue-600"
+                  : "hover:bg-blue-600 hover:text-white text-gray-700 border border-transparent hover:border-blue-600"
               }`}
             >
               {item.name}
             </Link>
           ))}
+
+          {/* Bonjour, displayName */}
+          <Link
+            to="/compte"
+            className={`px-3 py-2 rounded-md font-medium transition-all duration-200 cursor-pointer ${
+              isCompte
+                ? "bg-blue-600 text-white border border-blue-600"
+                : "hover:bg-blue-600 hover:text-white text-gray-700 border border-transparent hover:border-blue-600"
+            }`}
+          >
+            Bonjour, {displayName}
+          </Link>
+
+          <button 
+            onClick={handleLogout} 
+            className="ml-4 px-4 py-2 rounded-md border border-red-500 text-red-600 font-medium hover:bg-red-50 transition"
+          >
+            Déconnexion
+          </button>
         </nav>
 
-        {/* Droite : texte cliquable + déconnexion */}
-        <div className="rv-navbar-right">
-          {user ? (
-            <>
-              <Link 
-                to="/compte" 
-                className={`rv-user-text hover:text-primary transition-colors cursor-pointer ${isCompte ? "text-primary" : ""}`}
-              >
-                Bonjour, {displayName}
-              </Link>
-
-              <button 
-                onClick={handleLogout} 
-                className="ml-4 px-4 py-2 rounded-md border border-red-500 text-red-600 font-medium hover:bg-red-50 transition"
-              >
-                Déconnexion
-              </button>
-            </>
-          ) : (
-            <Link to="/login" className="rv-nav-link">
-              Se connecter
-            </Link>
-          )}
-        </div>
       </div>
     </header>
   );
