@@ -123,8 +123,8 @@
         }
 
         setTimeout(() => {
-          // Redirect to etablissement page
-          window.location.href = '/etablissement';
+          // Redirect to etablissement page (helps redirect-based flows)
+          window.location.href = '/etablissement?google=connected';
         }, 800);
 
       } catch (err) {
