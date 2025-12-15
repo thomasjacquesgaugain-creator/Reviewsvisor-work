@@ -6,11 +6,11 @@ interface NavBarProps {
 }
 
 const navLinkBase =
-  "flex items-center gap-2 px-3 py-2 rounded-md font-medium transition-colors";
+  "flex items-center gap-2 px-3 py-2 rounded-md font-medium transition-all duration-200";
 const navLinkHover =
-  "hover:border hover:border-blue-500 hover:bg-blue-50 text-gray-700";
+  "hover:bg-blue-600 hover:text-white text-gray-700 border border-transparent hover:border-blue-600";
 const navLinkActive =
-  "border border-blue-600 bg-blue-100 text-blue-700";
+  "bg-blue-600 text-white border border-blue-600";
 
 export const NavBar = ({ variant = "default" }: NavBarProps) => {
   const location = useLocation();
@@ -27,8 +27,8 @@ export const NavBar = ({ variant = "default" }: NavBarProps) => {
   }
 
   const navItems = [
-    { name: "Accueil", href: "/tableau-de-bord" },
-    { name: "Dashboard", href: "/dashboard" },
+    { name: "Accueil", href: "/" },
+    { name: "Dashboard", href: "/tableau-de-bord" },
     { name: "Établissement", href: "/etablissement" },
   ];
 
