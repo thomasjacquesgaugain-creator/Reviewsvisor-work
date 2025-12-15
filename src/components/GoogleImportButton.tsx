@@ -164,15 +164,15 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
         const errorMessage = accountsData?.error || accountsError?.message || '';
         
         if (errorMessage.includes('RECONNECT_REQUIRED') || errorMessage.includes('reconnect') || errorMessage.includes('revoked') || errorMessage.includes('expired') || errorMessage.includes('Refresh token')) {
-          // Token expired, need to reconnect
+          // Token expired, need to reconnect - trigger OAuth in a separate async context
           setHasExistingConnection(false);
+          setLoading(false); // Reset loading before showing toast
           toast({
             title: "Reconnexion nécessaire",
-            description: "Votre session Google a expiré. Veuillez vous reconnecter.",
-            variant: "destructive",
+            description: "Votre session Google a expiré. Une nouvelle fenêtre d'autorisation va s'ouvrir...",
           });
-          // Automatically trigger OAuth
-          await initiateGoogleOAuth();
+          // Use setTimeout to break out of the current try-catch context
+          setTimeout(() => initiateGoogleOAuth(), 500);
           return;
         }
         
@@ -203,14 +203,14 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       if (locationsError || locationsData?.error) {
         const errorMessage = locationsData?.error || locationsError?.message || '';
         
-        if (errorMessage.includes('reconnect') || errorMessage.includes('expired')) {
+        if (errorMessage.includes('RECONNECT_REQUIRED') || errorMessage.includes('reconnect') || errorMessage.includes('revoked') || errorMessage.includes('expired')) {
           setHasExistingConnection(false);
+          setLoading(false);
           toast({
             title: "Reconnexion nécessaire",
-            description: "Votre session Google a expiré. Veuillez vous reconnecter.",
-            variant: "destructive",
+            description: "Votre session Google a expiré. Une nouvelle fenêtre d'autorisation va s'ouvrir...",
           });
-          await initiateGoogleOAuth();
+          setTimeout(() => initiateGoogleOAuth(), 500);
           return;
         }
         
