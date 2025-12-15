@@ -45,11 +45,15 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log('🚀 google-business-locations: Starting...');
+    
     const { accountId } = await req.json();
     
     if (!accountId) {
       throw new Error('Account ID is required');
     }
+
+    console.log('📍 Account ID received:', accountId);
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -66,8 +70,11 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
+      console.error('❌ User auth failed:', userError);
       throw new Error('Unauthorized');
     }
+
+    console.log('✅ User authenticated:', user.id);
 
     // Get access token and refresh token
     const { data: connection, error: connError } = await supabase
@@ -78,8 +85,11 @@ Deno.serve(async (req) => {
       .single();
 
     if (connError || !connection) {
+      console.error('❌ No Google connection found');
       throw new Error('Google connection not found');
     }
+
+    console.log('✅ Google connection found');
 
     let accessToken = connection.access_token;
 
@@ -118,18 +128,23 @@ Deno.serve(async (req) => {
       console.log('✅ Token refreshed successfully');
     }
 
-    // List locations with pagination
+    // Use the new Business Profile API for locations
+    // The accountId format from the new API is "accounts/123456789"
+    // We need to use the businessbusinessinformation API
     const allLocations: any[] = [];
     let nextPageToken: string | null = null;
 
     do {
-      const url = new URL(`https://mybusiness.googleapis.com/v4/${accountId}/locations`);
+      // Build the URL for the new Business Profile API
+      // Format: https://mybusinessbusinessinformation.googleapis.com/v1/{account}/locations
+      const url = new URL(`https://mybusinessbusinessinformation.googleapis.com/v1/${accountId}/locations`);
       url.searchParams.set('pageSize', '100');
+      url.searchParams.set('readMask', 'name,title,storefrontAddress');
       if (nextPageToken) {
         url.searchParams.set('pageToken', nextPageToken);
       }
 
-      console.log('📍 Fetching locations for account:', accountId);
+      console.log('📍 Fetching locations from:', url.pathname);
 
       const response = await fetch(url.toString(), {
         headers: {
@@ -139,31 +154,52 @@ Deno.serve(async (req) => {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        console.error('Failed to fetch locations:', response.status, error);
+        const errorText = await response.text();
+        console.error('❌ Failed to fetch locations:', response.status, errorText);
         
         if (response.status === 401) {
-          throw new Error('Google session expired. Please reconnect your Google account.');
+          throw new Error('RECONNECT_REQUIRED: Google session expired. Please reconnect your Google account.');
         }
         
-        throw new Error('Failed to fetch locations');
+        if (response.status === 403) {
+          throw new Error('Access denied. Make sure your Google account has access to this business.');
+        }
+        
+        throw new Error(`Failed to fetch locations: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('📦 Locations response:', {
+        locationsCount: data.locations?.length || 0,
+        hasNextPage: !!data.nextPageToken
+      });
+
       if (data.locations) {
-        allLocations.push(...data.locations);
+        // Map the new API format to the expected format
+        const mappedLocations = data.locations.map((loc: any) => ({
+          name: loc.name, // Format: "locations/123456789"
+          locationName: loc.title || loc.name,
+          address: loc.storefrontAddress ? {
+            addressLines: [
+              loc.storefrontAddress.addressLines?.join(', '),
+              loc.storefrontAddress.locality,
+              loc.storefrontAddress.postalCode
+            ].filter(Boolean)
+          } : undefined
+        }));
+        allLocations.push(...mappedLocations);
       }
       nextPageToken = data.nextPageToken || null;
     } while (nextPageToken);
 
-    console.log('✅ Fetched locations:', allLocations.length);
+    console.log('✅ Fetched locations total:', allLocations.length);
 
     return new Response(
       JSON.stringify({ locations: allLocations }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error listing locations:', error);
+    console.error('❌ Error in google-business-locations:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
