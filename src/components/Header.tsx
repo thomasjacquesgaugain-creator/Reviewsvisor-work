@@ -1,15 +1,20 @@
-import { useState, useEffect, useRef } from "react";
-import { Menu } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Menu, X, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export default function Header() {
-  const [isOpen, setIsOpen] = useState(false);
+interface HeaderProps {
+  theme?: string;
+}
+
+function Header({ theme = "light" }: HeaderProps) {
+  const isDark = theme === "dark";
+  const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+        setMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -17,54 +22,74 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="relative flex items-center justify-center bg-background py-4 shadow-sm border-b border-border">
-      <div className="flex items-center gap-6 text-sm text-muted-foreground font-medium">
-        <span>✅ Transformer retour en conception</span>
-        <span>✅ Vos avis, votre croissance</span>
-        <span>✅ Un outil, une centralisation</span>
+    <header
+      className={`flex justify-between items-center p-4 shadow-md ${
+        isDark ? "bg-black text-gray-100" : "bg-white text-gray-900"
+      }`}
+    >
+      {/* Logo */}
+      <div className="flex items-center space-x-6">
+        <Link
+          to="/"
+          className={`text-xl font-bold ${
+            isDark ? "text-purple-400" : "text-blue-600"
+          }`}
+        >
+          Reviewsvisor
+        </Link>
+      </div>
 
-        <div className="relative" ref={menuRef}>
-          <Menu
-            className="cursor-pointer text-muted-foreground hover:text-primary transition-colors"
-            size={22}
-            onClick={() => setIsOpen(!isOpen)}
-          />
-
-          {isOpen && (
-            <div className="absolute right-0 top-8 bg-background shadow-lg rounded-xl border border-border p-3 w-40 animate-fade-in z-50">
-              <ul className="space-y-2 text-foreground">
-                <li>
-                  <Link 
-                    to="/login" 
-                    className="block hover:text-primary cursor-pointer transition-colors"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Se connecter
-                  </Link>
-                </li>
-                <li>
-                  <Link 
-                    to="/abonnement" 
-                    className="block hover:text-primary cursor-pointer transition-colors"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    S'inscrire
-                  </Link>
-                </li>
-                <li>
-                  <Link 
-                    to="/a-propos" 
-                    className="block hover:text-primary cursor-pointer transition-colors"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    À propos
-                  </Link>
-                </li>
-              </ul>
-            </div>
+      {/* MENU BURGER */}
+      <div className="relative" ref={menuRef}>
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className={`p-2 rounded-md transition ${
+            isDark ? "hover:bg-gray-800" : "hover:bg-blue-100"
+          }`}
+        >
+          {menuOpen ? (
+            <X className={`w-6 h-6 ${isDark ? "text-purple-400" : "text-blue-600"}`} />
+          ) : (
+            <Menu className={`w-6 h-6 ${isDark ? "text-purple-400" : "text-blue-600"}`} />
           )}
-        </div>
+        </button>
+
+        {menuOpen && (
+          <div
+            className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg border z-50 ${
+              isDark
+                ? "bg-gray-900 border-gray-700 text-gray-100"
+                : "bg-white border-gray-200 text-gray-900"
+            }`}
+          >
+            <Link
+              to="/login"
+              className={`block w-full text-left px-4 py-2 ${
+                isDark ? "hover:bg-gray-800" : "hover:bg-blue-50"
+              }`}
+              onClick={() => setMenuOpen(false)}
+            >
+              🔐 Se connecter
+            </Link>
+
+            <div className={`border-t my-1 ${isDark ? "border-gray-700" : "border-gray-200"}`}></div>
+
+            <div className="px-4 py-2 flex items-center space-x-2">
+              <Globe className={`w-4 h-4 ${isDark ? "text-purple-400" : "text-blue-500"}`} />
+              <select
+                className={`text-sm bg-transparent outline-none cursor-pointer ${
+                  isDark ? "text-gray-100" : "text-gray-800"
+                }`}
+              >
+                <option>🇫🇷 Français</option>
+                <option>🇬🇧 English</option>
+              </select>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );
 }
+
+export default Header;
