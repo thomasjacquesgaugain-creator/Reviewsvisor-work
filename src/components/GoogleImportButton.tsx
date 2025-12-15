@@ -69,7 +69,8 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
   // Get dynamic redirect URI based on current environment
   const getRedirectUri = () => {
     const origin = window.location.origin;
-    return `${origin}/api/auth/callback/google`;
+    // Use the explicit file path to avoid static hosting ambiguity
+    return `${origin}/api/auth/callback/google/index.html`;
   };
 
   const handleImportClick = async () => {

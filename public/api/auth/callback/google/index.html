@@ -96,8 +96,8 @@
 
         messageEl.textContent = 'Échange du code d\'autorisation...';
 
-        // Get current origin for redirect URI
-        const redirectUri = window.location.origin + '/api/auth/callback/google';
+        // Must match exactly the redirect URI used in the initial OAuth request
+        const redirectUri = window.location.origin + '/api/auth/callback/google/index.html';
 
         // Call the Edge Function to exchange code for tokens
         const response = await fetch(`${SUPABASE_URL}/functions/v1/google-oauth-callback`, {
