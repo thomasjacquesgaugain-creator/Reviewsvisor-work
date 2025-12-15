@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { AuthProvider } from "@/contexts/AuthProvider";
 import { Toaster } from "sonner";
 import Protected from "@/components/Protected";
+import RequireGuest from "@/components/RequireGuest";
 import { AppLayout } from "@/components/AppLayout";
 import SignInForm from "@/components/SignInForm";
 import SignUpForm from "@/components/SignUpForm";
@@ -56,17 +57,49 @@ const App = () => {
         <Toaster position="bottom-right" richColors closeButton toastOptions={{ className: "z-[9999]" }} />
         <AppLayout>
           <Routes>
-            <Route path="/" element={<Accueil />} />
+            {/* Public routes - redirect to dashboard if authenticated */}
+            <Route path="/" element={
+              <RequireGuest>
+                <Accueil />
+              </RequireGuest>
+            } />
             <Route path="/accueil" element={<Navigate to="/" replace />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/connexion" element={<Login />} />
+            <Route path="/login" element={
+              <RequireGuest>
+                <Login />
+              </RequireGuest>
+            } />
+            <Route path="/connexion" element={
+              <RequireGuest>
+                <Login />
+              </RequireGuest>
+            } />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/a-propos" element={<APropos />} />
             <Route path="/fonctionnalites" element={<Fonctionnalites />} />
             <Route path="/aide" element={<Aide />} />
-            <Route path="/abonnement" element={<Abonnement />} />
+            <Route path="/abonnement" element={
+              <RequireGuest>
+                <Abonnement />
+              </RequireGuest>
+            } />
+            <Route path="/onboarding" element={
+              <RequireGuest>
+                <Onboarding />
+              </RequireGuest>
+            } />
+            <Route path="/onboarding/signup" element={
+              <RequireGuest>
+                <OnboardingSignup />
+              </RequireGuest>
+            } />
+            <Route path="/creer-compte-preview" element={
+              <RequireGuest>
+                <CreerComptePreview />
+              </RequireGuest>
+            } />
             <Route path="/tableau-de-bord" element={
               <Protected>
                 <TableauDeBord />
@@ -106,9 +139,6 @@ const App = () => {
             <Route path="/billing/success" element={<BillingSuccess />} />
             <Route path="/billing/cancel" element={<BillingCancel />} />
             <Route path="/api/auth/callback/google" element={<GoogleOAuthCallback />} />
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/onboarding/signup" element={<OnboardingSignup />} />
-            <Route path="/creer-compte-preview" element={<CreerComptePreview />} />
             <Route path="/merci-inscription" element={<MerciInscription />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

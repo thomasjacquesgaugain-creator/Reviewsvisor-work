@@ -37,7 +37,7 @@ export default function NavBar() {
         </div>
 
         <NavLink to="/tableau-de-bord" className={getLinkClass("/tableau-de-bord")}>
-          🏠 Accueil
+          🏠 Tableau de bord
         </NavLink>
 
         <NavLink to="/dashboard" className={getLinkClass("/dashboard")}>
