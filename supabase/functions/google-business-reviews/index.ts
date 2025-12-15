@@ -5,6 +5,40 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function refreshAccessToken(refreshToken: string): Promise<{ access_token: string; expires_in: number } | null> {
+  const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
+  const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    console.error('Missing credentials for token refresh');
+    return null;
+  }
+
+  try {
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Token refresh failed:', error);
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error refreshing token:', error);
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -45,10 +79,10 @@ Deno.serve(async (req) => {
 
     console.log('✅ User authenticated:', user.id);
 
-    // Get access token
+    // Get access token and refresh token
     const { data: connection, error: connError } = await supabase
       .from('google_connections')
-      .select('access_token')
+      .select('access_token, token_expires_at, refresh_token')
       .eq('user_id', user.id)
       .eq('provider', 'google')
       .single();
@@ -58,7 +92,44 @@ Deno.serve(async (req) => {
       throw new Error('Google connection not found');
     }
 
-    console.log('✅ Access token retrieved');
+    let accessToken = connection.access_token;
+
+    // Check if token needs refresh (with 5 minute buffer)
+    const tokenExpiresAt = connection.token_expires_at ? new Date(connection.token_expires_at) : null;
+    const now = new Date();
+    const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
+
+    if (tokenExpiresAt && tokenExpiresAt < fiveMinutesFromNow) {
+      console.log('🔄 Token expired or expiring soon, refreshing...');
+      
+      if (!connection.refresh_token) {
+        throw new Error('Refresh token not available. Please reconnect your Google account.');
+      }
+
+      const newTokens = await refreshAccessToken(connection.refresh_token);
+      
+      if (!newTokens) {
+        throw new Error('Failed to refresh access token. Please reconnect your Google account.');
+      }
+
+      accessToken = newTokens.access_token;
+
+      // Update the access token in database
+      const newExpiresAt = new Date(Date.now() + (newTokens.expires_in * 1000));
+      await supabase
+        .from('google_connections')
+        .update({
+          access_token: accessToken,
+          token_expires_at: newExpiresAt.toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', user.id)
+        .eq('provider', 'google');
+
+      console.log('✅ Token refreshed successfully');
+    }
+
+    console.log('✅ Access token ready');
 
     // Fetch reviews with pagination
     const allReviews: any[] = [];
@@ -76,7 +147,7 @@ Deno.serve(async (req) => {
 
       const response = await fetch(url.toString(), {
         headers: {
-          'Authorization': `Bearer ${connection.access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
       });
@@ -88,7 +159,15 @@ Deno.serve(async (req) => {
           statusText: response.statusText,
           body: errorText
         });
-        throw new Error(`Failed to fetch reviews: ${response.status} ${response.statusText}`);
+        
+        if (response.status === 401) {
+          throw new Error('Google session expired. Please reconnect your Google account.');
+        }
+        if (response.status === 429) {
+          throw new Error('Too many requests to Google. Please try again in a few minutes.');
+        }
+        
+        throw new Error('Failed to fetch reviews from Google Business');
       }
 
       const data = await response.json();
@@ -127,13 +206,16 @@ Deno.serve(async (req) => {
     console.log(`💾 Starting to insert ${allReviews.length} reviews into database...`);
 
     for (const review of allReviews) {
+      const externalId = review.reviewId || review.name;
+      
       const reviewData = {
         user_id: user.id,
         place_id: placeId || `gb:${locationId}`,
-        source: 'google_business',
-        source_review_id: review.reviewId || review.name,
-        review_id_ext: review.reviewId || review.name,
+        source: 'google',
+        source_review_id: externalId,
+        review_id_ext: externalId,
         author_name: review.reviewer?.displayName,
+        author: review.reviewer?.displayName,
         rating: review.starRating === 'FIVE' ? 5 :
                 review.starRating === 'FOUR' ? 4 :
                 review.starRating === 'THREE' ? 3 :
@@ -142,32 +224,45 @@ Deno.serve(async (req) => {
         text: review.comment,
         create_time: review.createTime,
         update_time: review.updateTime,
+        published_at: review.createTime,
         owner_reply_text: review.reviewReply?.comment,
         owner_reply_time: review.reviewReply?.updateTime,
         raw: review,
       };
 
-      // Check if review already exists
+      // Check if review already exists by external ID
       const { data: existing } = await supabase
         .from('reviews')
         .select('id')
-        .eq('review_id_ext', reviewData.review_id_ext)
+        .eq('user_id', user.id)
+        .eq('review_id_ext', externalId)
         .single();
 
-      const { error: upsertError } = await supabase
-        .from('reviews')
-        .upsert(reviewData, {
-          onConflict: 'review_id_ext',
-        });
-
-      if (upsertError) {
-        console.error('❌ Failed to upsert review:', upsertError);
-        continue;
-      }
-
       if (existing) {
+        // Update existing review
+        const { error: updateError } = await supabase
+          .from('reviews')
+          .update({
+            ...reviewData,
+            inserted_at: undefined, // Don't update inserted_at
+          })
+          .eq('id', existing.id);
+
+        if (updateError) {
+          console.error('❌ Failed to update review:', updateError);
+          continue;
+        }
         updatedCount++;
       } else {
+        // Insert new review
+        const { error: insertError } = await supabase
+          .from('reviews')
+          .insert(reviewData);
+
+        if (insertError) {
+          console.error('❌ Failed to insert review:', insertError);
+          continue;
+        }
         insertedCount++;
       }
     }
