@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function refreshAccessToken(refreshToken: string): Promise<{ access_token: string; expires_in: number } | null> {
+async function refreshAccessToken(refreshToken: string): Promise<{ access_token: string; expires_in: number; error?: string } | null> {
   const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
   const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
 
@@ -30,9 +30,8 @@ async function refreshAccessToken(refreshToken: string): Promise<{ access_token:
       const errorData = await response.json();
       console.error('Token refresh failed:', JSON.stringify(errorData));
       
-      // Return error info for better handling
       if (errorData.error === 'invalid_grant') {
-        return { error: 'invalid_grant', error_description: errorData.error_description };
+        return { error: 'invalid_grant', access_token: '', expires_in: 0 };
       }
       return null;
     }
@@ -50,6 +49,8 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log('🚀 google-business-accounts: Starting...');
+    
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Missing authorization header');
@@ -65,8 +66,11 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
+      console.error('❌ User auth failed:', userError);
       throw new Error('Unauthorized');
     }
+
+    console.log('✅ User authenticated:', user.id);
 
     // Get access token and refresh token
     const { data: connection, error: connError } = await supabase
@@ -77,8 +81,11 @@ Deno.serve(async (req) => {
       .single();
 
     if (connError || !connection) {
+      console.error('❌ No Google connection found for user:', user.id);
       throw new Error('Google connection not found. Please connect your Google account first.');
     }
+
+    console.log('✅ Google connection found');
 
     let accessToken = connection.access_token;
 
@@ -97,7 +104,6 @@ Deno.serve(async (req) => {
       const newTokens = await refreshAccessToken(connection.refresh_token);
       
       if (!newTokens || newTokens.error) {
-        // Token is invalid/revoked - clear it from database
         console.log('🗑️ Clearing invalid tokens from database...');
         await supabase
           .from('google_connections')
@@ -129,9 +135,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // List accounts
-    console.log('📡 Fetching Google Business accounts...');
-    const accountsResponse = await fetch('https://mybusiness.googleapis.com/v4/accounts', {
+    // Use the new Business Profile API for accounts
+    // API: https://mybusinessaccountmanagement.googleapis.com/v1/accounts
+    console.log('📡 Fetching Google Business accounts from new API...');
+    const accountsResponse = await fetch('https://mybusinessaccountmanagement.googleapis.com/v1/accounts', {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
@@ -139,25 +146,35 @@ Deno.serve(async (req) => {
     });
 
     if (!accountsResponse.ok) {
-      const error = await accountsResponse.text();
-      console.error('Failed to fetch accounts:', accountsResponse.status, error);
+      const errorText = await accountsResponse.text();
+      console.error('❌ Failed to fetch accounts:', accountsResponse.status, errorText);
       
       if (accountsResponse.status === 401) {
-        throw new Error('Google session expired. Please reconnect your Google account.');
+        // Clear the connection and ask for reconnection
+        await supabase
+          .from('google_connections')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('provider', 'google');
+        throw new Error('RECONNECT_REQUIRED: Google session expired. Please reconnect your Google account.');
       }
       
-      throw new Error('Failed to fetch Google Business accounts');
+      if (accountsResponse.status === 403) {
+        throw new Error('Access denied. Make sure your Google account has access to Google Business Profile.');
+      }
+      
+      throw new Error(`Failed to fetch Google Business accounts: ${accountsResponse.status}`);
     }
 
-    const accounts = await accountsResponse.json();
-    console.log('✅ Fetched accounts:', accounts?.accounts?.length || 0);
+    const accountsData = await accountsResponse.json();
+    console.log('✅ Fetched accounts:', accountsData?.accounts?.length || 0);
 
     return new Response(
-      JSON.stringify(accounts),
+      JSON.stringify(accountsData),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error listing accounts:', error);
+    console.error('❌ Error in google-business-accounts:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

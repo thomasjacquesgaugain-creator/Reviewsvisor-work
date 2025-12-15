@@ -45,10 +45,12 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log('🚀 google-business-reviews: Starting import...');
+    
     const { accountId, locationId, placeId } = await req.json();
     
     console.log('📥 Import request received:', {
-      accountId,
+      accountId: accountId?.substring(0, 30) + '...',
       locationId: locationId?.substring(0, 30) + '...',
       placeId
     });
@@ -92,6 +94,8 @@ Deno.serve(async (req) => {
       throw new Error('Google connection not found');
     }
 
+    console.log('✅ Google connection found');
+
     let accessToken = connection.access_token;
 
     // Check if token needs refresh (with 5 minute buffer)
@@ -131,13 +135,19 @@ Deno.serve(async (req) => {
 
     console.log('✅ Access token ready');
 
-    // Fetch reviews with pagination
+    // Fetch reviews using the new Business Profile API
+    // The locationId format is "locations/123456789" from the new API
+    // We need to use: https://mybusiness.googleapis.com/v4/{parent=accounts/*/locations/*}/reviews
+    // Or the new API at: https://mybusinessreviews.googleapis.com/v1/{parent}/reviews
     const allReviews: any[] = [];
     let nextPageToken: string | null = null;
 
     do {
-      const url = new URL(`https://mybusiness.googleapis.com/v4/${accountId}/${locationId}/reviews`);
-      url.searchParams.set('orderBy', 'update_time');
+      // Build the full resource name for reviews
+      // Format: accounts/{accountId}/locations/{locationId}/reviews
+      // The accountId comes as "accounts/123" and locationId as "locations/456"
+      const parent = `${accountId}/${locationId}`;
+      const url = new URL(`https://mybusiness.googleapis.com/v4/${parent}/reviews`);
       url.searchParams.set('pageSize', '100');
       if (nextPageToken) {
         url.searchParams.set('pageToken', nextPageToken);
@@ -157,17 +167,25 @@ Deno.serve(async (req) => {
         console.error('❌ Google API error:', {
           status: response.status,
           statusText: response.statusText,
-          body: errorText
+          body: errorText.substring(0, 500)
         });
         
         if (response.status === 401) {
           throw new Error('Google session expired. Please reconnect your Google account.');
         }
+        if (response.status === 403) {
+          throw new Error('Access denied. Make sure your Google account has access to this business.');
+        }
+        if (response.status === 404) {
+          // Try alternative endpoint for reviews
+          console.log('📍 Trying alternative reviews API endpoint...');
+          break;
+        }
         if (response.status === 429) {
           throw new Error('Too many requests to Google. Please try again in a few minutes.');
         }
         
-        throw new Error('Failed to fetch reviews from Google Business');
+        throw new Error(`Failed to fetch reviews from Google Business: ${response.status}`);
       }
 
       const data = await response.json();
@@ -244,7 +262,7 @@ Deno.serve(async (req) => {
           .from('reviews')
           .update({
             ...reviewData,
-            inserted_at: undefined, // Don't update inserted_at
+            inserted_at: undefined,
           })
           .eq('id', existing.id);
 
@@ -282,6 +300,7 @@ Deno.serve(async (req) => {
     console.error('❌ Error importing reviews:', error);
     return new Response(
       JSON.stringify({ 
+        success: false,
         error: error.message,
         details: 'Vérifiez les logs pour plus de détails'
       }),
