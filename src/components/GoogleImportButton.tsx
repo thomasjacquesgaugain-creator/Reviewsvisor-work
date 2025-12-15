@@ -163,7 +163,7 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       if (accountsError || accountsData?.error) {
         const errorMessage = accountsData?.error || accountsError?.message || '';
         
-        if (errorMessage.includes('reconnect') || errorMessage.includes('expired') || errorMessage.includes('Refresh token')) {
+        if (errorMessage.includes('RECONNECT_REQUIRED') || errorMessage.includes('reconnect') || errorMessage.includes('revoked') || errorMessage.includes('expired') || errorMessage.includes('Refresh token')) {
           // Token expired, need to reconnect
           setHasExistingConnection(false);
           toast({

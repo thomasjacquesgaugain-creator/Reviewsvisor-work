@@ -27,8 +27,13 @@ async function refreshAccessToken(refreshToken: string): Promise<{ access_token:
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('Token refresh failed:', error);
+      const errorData = await response.json();
+      console.error('Token refresh failed:', JSON.stringify(errorData));
+      
+      // Return error info for better handling
+      if (errorData.error === 'invalid_grant') {
+        return { error: 'invalid_grant', error_description: errorData.error_description };
+      }
       return null;
     }
 
@@ -86,13 +91,21 @@ Deno.serve(async (req) => {
       console.log('🔄 Token expired or expiring soon, refreshing...');
       
       if (!connection.refresh_token) {
-        throw new Error('Refresh token not available. Please reconnect your Google account.');
+        throw new Error('RECONNECT_REQUIRED: Refresh token not available.');
       }
 
       const newTokens = await refreshAccessToken(connection.refresh_token);
       
-      if (!newTokens) {
-        throw new Error('Failed to refresh access token. Please reconnect your Google account.');
+      if (!newTokens || newTokens.error) {
+        // Token is invalid/revoked - clear it from database
+        console.log('🗑️ Clearing invalid tokens from database...');
+        await supabase
+          .from('google_connections')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('provider', 'google');
+        
+        throw new Error('RECONNECT_REQUIRED: Google access has been revoked. Please reconnect your account.');
       }
 
       accessToken = newTokens.access_token;
