@@ -47,12 +47,23 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
 
         if (connection) {
           setHasExistingConnection(true);
+
+          // If we just came back from OAuth (redirect flow), auto-continue
+          const params = new URLSearchParams(window.location.search);
+          if (params.get('google') === 'connected') {
+            params.delete('google');
+            const next = params.toString();
+            window.history.replaceState({}, '', `${window.location.pathname}${next ? `?${next}` : ''}`);
+            await fetchAccountsAndLocations();
+          }
         }
-      } catch (error) {
-        console.log('No existing Google connection');
+      } catch {
+        // no-op
       }
     };
+
     checkConnection();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Get dynamic redirect URI based on current environment
@@ -106,19 +117,25 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       authUrl.searchParams.set('prompt', 'consent');
 
       console.log('🔗 OAuth redirect URI:', redirectUri);
-      setLoading(false);
 
-      // Open popup
+      // Try popup first (best UX). If blocked (common in iframes), fallback to full redirect.
       const popup = window.open(
         authUrl.toString(),
         'googleOAuth',
         'width=600,height=700,left=200,top=100'
       );
 
+      if (!popup) {
+        window.location.href = authUrl.toString();
+        return;
+      }
+
+      setLoading(false);
+
       // Listen for OAuth callback messages
       const handleMessage = async (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return;
-        
+
         if (event.data.type === 'oauth-success') {
           window.removeEventListener('message', handleMessage);
           popup?.close();
@@ -161,7 +178,16 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
 
       // Check for authentication errors that require reconnection
       if (accountsError || accountsData?.error) {
-        const errorMessage = accountsData?.error || accountsError?.message || '';
+        // Supabase Functions errors often have a generic message; try to extract JSON body
+        let errorMessage = accountsData?.error || accountsError?.message || '';
+        if (!accountsData?.error && accountsError && (accountsError as any).context) {
+          try {
+            const body = await (accountsError as any).context.json();
+            if (body?.error) errorMessage = body.error;
+          } catch {
+            // ignore
+          }
+        }
 
         const needsReconnect =
           errorMessage.includes('RECONNECT_REQUIRED') ||
@@ -177,10 +203,10 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
           setHasExistingConnection(false);
           setLoading(false); // Reset loading before showing toast
           toast({
-            title: "Reconnexion nécessaire",
-            description: "Connexion Google requise. Une nouvelle fenêtre d'autorisation va s'ouvrir...",
+            title: "Connexion Google requise",
+            description: "Une nouvelle fenêtre d'autorisation va s'ouvrir...",
           });
-          setTimeout(() => initiateGoogleOAuth(), 500);
+          setTimeout(() => initiateGoogleOAuth(), 200);
           return;
         }
 
@@ -209,7 +235,16 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       );
 
       if (locationsError || locationsData?.error) {
-        const errorMessage = locationsData?.error || locationsError?.message || '';
+        // Supabase Functions errors often have a generic message; try to extract JSON body
+        let errorMessage = locationsData?.error || locationsError?.message || '';
+        if (!locationsData?.error && locationsError && (locationsError as any).context) {
+          try {
+            const body = await (locationsError as any).context.json();
+            if (body?.error) errorMessage = body.error;
+          } catch {
+            // ignore
+          }
+        }
 
         const needsReconnect =
           errorMessage.includes('RECONNECT_REQUIRED') ||
@@ -223,10 +258,10 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
           setHasExistingConnection(false);
           setLoading(false);
           toast({
-            title: "Reconnexion nécessaire",
-            description: "Connexion Google requise. Une nouvelle fenêtre d'autorisation va s'ouvrir...",
+            title: "Connexion Google requise",
+            description: "Une nouvelle fenêtre d'autorisation va s'ouvrir...",
           });
-          setTimeout(() => initiateGoogleOAuth(), 500);
+          setTimeout(() => initiateGoogleOAuth(), 200);
           return;
         }
 

@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
       .select('id')
       .eq('user_id', user.id)
       .eq('provider', 'google')
-      .single();
+      .maybeSingle();
 
     if (existingConnection) {
       // Update existing connection
