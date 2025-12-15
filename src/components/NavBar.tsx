@@ -30,6 +30,8 @@ export default function NavBar() {
         <div className="flex items-center space-x-2">
           <span className="text-xl">📊</span>
           <div className="text-2xl font-bold text-blue-600">Reviewsvisor</div>
+          {/* Barre verticale */}
+          <div className="h-6 border-r border-gray-200 mx-4"></div>
         </div>
 
         <NavLink to="/tableau-de-bord" className={getLinkClass("/tableau-de-bord")}>
