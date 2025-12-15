@@ -1,50 +1,76 @@
-import { NavLink, Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
 
-export function NavBar() {
+interface NavBarProps {
+  variant?: "default" | "transparent";
+}
+
+export const NavBar = ({ variant = "default" }: NavBarProps) => {
+  const location = useLocation();
   const { user, displayName, signOut } = useAuth();
 
   const handleLogout = async () => {
     await signOut();
   };
 
-  const linkStyle =
-    "px-4 py-2 rounded-md font-medium text-gray-700 border border-transparent transition-all duration-200 hover:border-blue-600";
-
-  const logoutStyle =
-    "px-4 py-2 rounded-md font-medium bg-red-600 text-white border border-red-600 transition-all duration-200";
+  const isAccueil = location.pathname === "/tableau-de-bord";
+  const isDashboard = location.pathname === "/dashboard";
+  const isEtablissement = location.pathname === "/etablissement";
+  const isCompte = location.pathname === "/compte";
 
   if (!user) {
     return null;
   }
 
   return (
-    <nav className="w-full flex justify-between items-center px-8 py-3 bg-white shadow-sm">
-      <div className="flex items-center space-x-8">
-        <div className="text-2xl font-bold text-blue-600">Reviewsvisor</div>
+    <header className="rv-navbar">
+      <div className="rv-navbar-inner">
+        {/* Gauche : logo */}
+        <div className="rv-navbar-left">
+          <div className="rv-logo cursor-default select-none">
+            <span className="rv-logo-icon">📊</span>
+            <span className="rv-logo-text">Reviewsvisor</span>
+          </div>
+        </div>
 
-        <NavLink to="/tableau-de-bord" className={linkStyle}>
-          Accueil
-        </NavLink>
+        {/* Centre : liens avec icônes */}
+        <nav className="rv-navbar-center">
+          <Link to="/tableau-de-bord" className={`rv-nav-link ${isAccueil ? "active" : ""}`}>
+            <span className="rv-nav-icon">🏠</span>
+            <span>Accueil</span>
+          </Link>
+          <Link to="/dashboard" className={`rv-nav-link ${isDashboard ? "active" : ""}`}>
+            <span className="rv-nav-icon">📈</span>
+            <span>Dashboard</span>
+          </Link>
+          <Link to="/etablissement" className={`rv-nav-link ${isEtablissement ? "active" : ""}`}>
+            <span className="rv-nav-icon">🏢</span>
+            <span>Établissement</span>
+          </Link>
+        </nav>
 
-        <NavLink to="/dashboard" className={linkStyle}>
-          Dashboard
-        </NavLink>
+        {/* Droite : texte cliquable + déconnexion */}
+        <div className="rv-navbar-right">
+          {user ? (
+            <>
+              <Link 
+                to="/compte" 
+                className={`rv-user-text hover:text-primary transition-colors cursor-pointer ${isCompte ? "text-primary" : ""}`}
+              >
+                Bonjour, {displayName}
+              </Link>
 
-        <NavLink to="/etablissement" className={linkStyle}>
-          Établissement
-        </NavLink>
+              <button onClick={handleLogout} className="rv-logout-btn">
+                Déconnexion
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="rv-nav-link">
+              Se connecter
+            </Link>
+          )}
+        </div>
       </div>
-
-      <div className="flex items-center space-x-4">
-        <Link to="/compte" className={linkStyle}>
-          Bonjour, {displayName}
-        </Link>
-
-        <button onClick={handleLogout} className={logoutStyle}>
-          Déconnexion
-        </button>
-      </div>
-    </nav>
+    </header>
   );
-}
+};
