@@ -14,6 +14,34 @@ serve(async (req) => {
   try {
     console.log('[generate-review-response] ========== DÉBUT ==========');
     
+    // STEP 1: Validate authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('[generate-review-response] Missing Authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('[generate-review-response] Authentication failed:', authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('[generate-review-response] Authenticated user:', user.id);
+    
+    // STEP 2: Get and validate request data
     const { review, establishment } = await req.json();
     console.log('[generate-review-response] Données reçues:', { 
       reviewText: review?.text?.substring(0, 50),
@@ -25,6 +53,31 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Données manquantes (review ou establishment)' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // STEP 3: Validate input data
+    if (!review.text || !review.rating || !establishment.name) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid request data' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Limit text length to prevent abuse
+    if (review.text.length > 5000) {
+      return new Response(
+        JSON.stringify({ error: 'Review text too long' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // STEP 4: Verify ownership if user_id is provided
+    if (review.user_id && review.user_id !== user.id) {
+      console.error('[generate-review-response] User does not own this review');
+      return new Response(
+        JSON.stringify({ error: 'Forbidden' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
