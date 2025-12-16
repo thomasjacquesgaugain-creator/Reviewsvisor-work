@@ -27,10 +27,37 @@ const UpdatePassword = () => {
       return;
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       toast({
         title: "Erreur",
-        description: "Le mot de passe doit contenir au moins 6 caractères.",
+        description: "Le mot de passe doit contenir au moins 8 caractères.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      toast({
+        title: "Erreur",
+        description: "Le mot de passe doit contenir au moins une majuscule.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/[a-z]/.test(password)) {
+      toast({
+        title: "Erreur",
+        description: "Le mot de passe doit contenir au moins une minuscule.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/[0-9]/.test(password)) {
+      toast({
+        title: "Erreur",
+        description: "Le mot de passe doit contenir au moins un chiffre.",
         variant: "destructive",
       });
       return;

@@ -48,6 +48,29 @@ serve(async (req) => {
       }
     }
 
+    // Validate email format if provided
+    if (userEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(userEmail)) {
+        logStep("Invalid email format", { email: userEmail });
+        return new Response(JSON.stringify({ error: "Format d'email invalide" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+      
+      // Block disposable email domains
+      const disposableDomains = ['tempmail.com', 'guerrillamail.com', 'mailinator.com', 'throwaway.email', 'fakeinbox.com', 'temp-mail.org'];
+      const emailDomain = userEmail.split('@')[1]?.toLowerCase();
+      if (emailDomain && disposableDomains.includes(emailDomain)) {
+        logStep("Disposable email blocked", { domain: emailDomain });
+        return new Response(JSON.stringify({ error: "Les adresses email temporaires ne sont pas autorisées" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+    }
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     
