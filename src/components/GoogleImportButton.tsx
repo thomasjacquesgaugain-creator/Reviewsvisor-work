@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Loader2, RefreshCw } from "lucide-react";
@@ -24,8 +24,100 @@ interface Location {
   };
 }
 
+type ToastPayload = {
+  title: string;
+  description?: string;
+  variant?: "destructive" | "default";
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
+};
+
+const toast = ({ title, description, variant, action }: ToastPayload) => {
+  const common = { description, action } as const;
+
+  if (variant === "destructive") return sonnerToast.error(title, common);
+  if (title.trim().startsWith("✅")) return sonnerToast.success(title, common);
+  if (title.trim().startsWith("⚠️")) return sonnerToast.warning(title, common);
+
+  return sonnerToast(title, common);
+};
+
+const SUPABASE_FUNCTIONS_BASE_URL = "https://zzjmtipdsccxmmoaetlp.supabase.co/functions/v1";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU";
+
+async function callEdgeFunction<T = any>(
+  name: string,
+  body?: unknown
+): Promise<{
+  url: string;
+  status: number;
+  ok: boolean;
+  data: T | null;
+  rawText: string;
+}> {
+  const url = `${SUPABASE_FUNCTIONS_BASE_URL}/${name}`;
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    apikey: SUPABASE_ANON_KEY,
+  };
+
+  if (session?.access_token) {
+    headers.authorization = `Bearer ${session.access_token}`;
+  }
+
+  const safeHeadersForLog = {
+    "content-type": headers["content-type"],
+    apikey: "(anon)",
+    authorization: headers.authorization ? "Bearer ***" : undefined,
+  };
+
+  console.log("[google-sync] request", {
+    url,
+    method: "POST",
+    headers: safeHeadersForLog,
+    body: body ?? null,
+  });
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body ?? {}),
+  });
+
+  const rawText = await res.text();
+  let data: T | null = null;
+  try {
+    data = (rawText ? JSON.parse(rawText) : null) as T | null;
+  } catch {
+    // Keep rawText for debugging
+  }
+
+  console.log("[google-sync] response", {
+    url,
+    status: res.status,
+    ok: res.ok,
+    data,
+    rawText: data ? undefined : rawText,
+  });
+
+  return {
+    url,
+    status: res.status,
+    ok: res.ok,
+    data,
+    rawText,
+  };
+}
+
 export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportButtonProps) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showLocationSelector, setShowLocationSelector] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -77,25 +169,29 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
   };
 
   const handleImportClick = async () => {
-    console.log('🔵 SYNC BUTTON CLICKED');
-    
+    console.log("[google-sync] click", {
+      placeId,
+      hasExistingConnection,
+      at: new Date().toISOString(),
+    });
+
     // Guard against double-clicks
     if (loading || operationInProgress.current) {
-      console.log('⚠️ Import already in progress, ignoring click');
+      console.log("[google-sync] ignored: already in progress");
       return;
     }
 
-    // Show immediate feedback to user
+    // Toast obligatoire avant tout appel API (preuve visible)
     toast({
-      title: "Synchronisation Google démarrée",
-      description: "Récupération des avis en cours...",
+      title: "Sync démarrée…",
+      description: "Récupération des avis Google en cours.",
     });
 
     if (hasExistingConnection) {
-      console.log('🔄 Connection exists, fetching accounts...');
+      console.log("[google-sync] connection exists → fetch accounts");
       await fetchAccountsAndLocations();
     } else {
-      console.log('🔐 No connection, initiating OAuth...');
+      console.log("[google-sync] no connection → initiate OAuth");
       await initiateGoogleOAuth();
     }
   };
@@ -208,191 +304,276 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
 
   const fetchAccountsAndLocations = async () => {
     if (operationInProgress.current) {
-      console.log('⚠️ Operation already in progress');
+      console.log("[google-sync] fetchAccountsAndLocations ignored: already in progress");
       return;
     }
-    
+
     operationInProgress.current = true;
     setLoading(true);
-    console.log('🔄 Fetching Google Business accounts and locations...');
-    
+    console.log("[google-sync] fetchAccountsAndLocations:start", { placeId });
+
     try {
-      // Get accounts
-      console.log('📡 Calling google-business-accounts...');
-      const { data: accountsData, error: accountsError } = await supabase.functions.invoke(
-        'google-business-accounts'
-      );
+      // 1) Accounts
+      const accountsRes = await callEdgeFunction<any>("google-business-accounts");
+      const accountsPayload = accountsRes.data;
 
-      console.log('📦 Accounts response:', { accountsData, accountsError });
+      console.log("[google-sync] accounts details", {
+        status: accountsRes.status,
+        ok: accountsRes.ok,
+        error: accountsPayload?.error,
+      });
 
-      // Handle Supabase function errors
-      if (accountsError) {
-        console.error('❌ Supabase function error:', accountsError);
-        throw new Error(accountsError.message || 'Erreur lors de la connexion à Google Business');
-      }
+      if (!accountsRes.ok) {
+        const msg = accountsPayload?.error || `HTTP ${accountsRes.status}`;
 
-      // Handle error in response data (from edge function)
-      if (accountsData?.error) {
-        const errorMessage = accountsData.error;
-        console.error('❌ Error in response:', errorMessage);
-        
-        // Check for API not enabled error
-        if (errorMessage.includes('API_NOT_ENABLED') ||
-            errorMessage.includes('API has not been used') || 
-            errorMessage.includes('SERVICE_DISABLED') ||
-            errorMessage.includes('Enable it by visiting')) {
-          console.error('❌ API not enabled:', errorMessage);
-          toast({
-            title: "API Google Business non activée",
-            description: "Veuillez activer l'API 'My Business Account Management' dans votre console Google Cloud, puis réessayer.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Check if reconnection is needed
-        if (errorMessage.includes('connection not found') || 
-            errorMessage.includes('RECONNECT') ||
-            errorMessage.includes('expired') ||
-            errorMessage.includes('revoked') ||
-            errorMessage.includes('Access denied')) {
+        if (accountsRes.status === 401 || accountsRes.status === 403) {
           setHasExistingConnection(false);
           toast({
-            title: "Connexion Google requise",
-            description: "Veuillez reconnecter votre compte Google Business.",
+            title: `❌ Erreur: ${msg}`,
+            description: "Session expirée ou accès refusé. Reconnectez Google puis réessayez.",
             variant: "destructive",
+            action: {
+              label: "Reconnecter Google",
+              onClick: () => initiateGoogleOAuth(),
+            },
           });
-          setLoading(false);
-          operationInProgress.current = false;
           return;
         }
-        
-        throw new Error(errorMessage);
+
+        toast({
+          title: `❌ Erreur: ${msg}`,
+          description: "Impossible de récupérer les comptes Google Business.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      const accounts = accountsData?.accounts || [];
-      console.log('✅ Found accounts:', accounts.length);
-      
+      if (accountsPayload?.error) {
+        const errorMessage: string = accountsPayload.error;
+
+        // API non activée
+        if (
+          errorMessage.includes("API_NOT_ENABLED") ||
+          errorMessage.includes("API has not been used") ||
+          errorMessage.includes("SERVICE_DISABLED") ||
+          errorMessage.includes("Enable it by visiting")
+        ) {
+          toast({
+            title: "❌ Erreur: API Google Business non activée",
+            description:
+              "Activez l’API 'My Business Account Management' dans Google Cloud puis réessayez.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Reconnect requis
+        if (
+          errorMessage.includes("connection not found") ||
+          errorMessage.includes("RECONNECT") ||
+          errorMessage.includes("expired") ||
+          errorMessage.includes("revoked") ||
+          errorMessage.includes("Access denied")
+        ) {
+          setHasExistingConnection(false);
+          toast({
+            title: `❌ Erreur: ${errorMessage}`,
+            description: "Reconnectez Google Business puis réessayez.",
+            variant: "destructive",
+            action: {
+              label: "Reconnecter Google",
+              onClick: () => initiateGoogleOAuth(),
+            },
+          });
+          return;
+        }
+
+        toast({
+          title: `❌ Erreur: ${errorMessage}`,
+          description: "Erreur côté Google Business Accounts.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const accounts = accountsPayload?.accounts || [];
       if (accounts.length === 0) {
         toast({
-          title: "Aucun compte trouvé",
-          description: "Aucun compte Google Business trouvé. Assurez-vous que votre compte Google est lié à un profil Google Business.",
+          title: "❌ Erreur: Aucun compte Google Business",
+          description:
+            "Aucun compte Google Business trouvé. Vérifiez que votre compte Google est bien propriétaire/gestionnaire d’un établissement.",
           variant: "destructive",
         });
         return;
       }
 
-      // Use first account
       const account = accounts[0];
       setAccountId(account.name);
-      console.log('📍 Using account:', account.name);
 
-      // Get locations
-      console.log('📡 Calling google-business-locations...');
-      const { data: locationsData, error: locationsError } = await supabase.functions.invoke(
-        'google-business-locations',
-        { body: { accountId: account.name } }
-      );
+      // 2) Locations
+      const locationsRes = await callEdgeFunction<any>("google-business-locations", {
+        accountId: account.name,
+      });
 
-      console.log('📦 Locations response:', { locationsData, locationsError });
+      const locationsPayload = locationsRes.data;
 
-      if (locationsError) {
-        console.error('❌ Locations error:', locationsError);
-        throw new Error(locationsError.message || 'Échec de la récupération des emplacements');
-      }
+      console.log("[google-sync] locations details", {
+        status: locationsRes.status,
+        ok: locationsRes.ok,
+        accountId: account.name,
+        error: locationsPayload?.error,
+      });
 
-      if (locationsData?.error) {
-        throw new Error(locationsData.error);
-      }
-
-      const locs = locationsData?.locations || [];
-      console.log('✅ Found locations:', locs.length);
-      
-      if (locs.length === 0) {
+      if (!locationsRes.ok) {
+        const msg = locationsPayload?.error || `HTTP ${locationsRes.status}`;
         toast({
-          title: "Aucun emplacement trouvé",
-          description: "Aucun emplacement trouvé pour ce compte Google Business",
+          title: `❌ Erreur: ${msg}`,
+          description: "Impossible de récupérer les emplacements Google Business.",
           variant: "destructive",
         });
         return;
       }
 
+      if (locationsPayload?.error) {
+        toast({
+          title: `❌ Erreur: ${locationsPayload.error}`,
+          description: "Erreur côté Google Business Locations.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const locs = locationsPayload?.locations || [];
+      if (locs.length === 0) {
+        toast({
+          title: "❌ Erreur: Aucun emplacement trouvé",
+          description: "Aucun emplacement trouvé pour ce compte Google Business.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 3) Import
       if (locs.length === 1) {
-        // Only one location, import directly
         await importReviews(account.name, locs[0].name);
       } else {
-        // Multiple locations, show selector
         setLocations(locs);
         setShowLocationSelector(true);
+        toast({
+          title: "Sélectionnez un établissement",
+          description: "Plusieurs emplacements détectés : choisissez celui à synchroniser.",
+        });
       }
     } catch (error: any) {
-      console.error('❌ Error in fetchAccountsAndLocations:', error);
+      console.error("[google-sync] fetchAccountsAndLocations:error", error);
       toast({
-        title: "L'import des avis Google a échoué",
-        description: error.message || "Veuillez réessayer.",
+        title: `❌ Erreur: ${error?.message || "Erreur inconnue"}`,
+        description: "Échec de la synchronisation (accounts/locations).",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
       operationInProgress.current = false;
-      console.log('🔓 Loading state reset');
+      console.log("[google-sync] fetchAccountsAndLocations:done");
     }
   };
 
   const importReviews = async (accId: string, locationId: string) => {
-    // Don't set operationInProgress here since we're already in an operation
     setLoading(true);
-    console.log('🚀 Starting import:', { accountId: accId, locationId, placeId });
-    
+
+    console.log("[google-sync] importReviews:start", {
+      accountId: accId,
+      locationId,
+      place_id: placeId,
+    });
+
     try {
-      const { data, error } = await supabase.functions.invoke('google-business-reviews', {
-        body: {
-          accountId: accId,
-          locationId,
-          placeId,
-        },
+      const importRes = await callEdgeFunction<any>("google-business-reviews", {
+        accountId: accId,
+        locationId,
+        placeId,
       });
 
-      console.log('📦 Import response:', { data, error });
+      const payload = importRes.data;
 
-      if (error) {
-        throw new Error(error.message || "Échec de l'import");
-      }
+      console.log("[google-sync] import response details", {
+        status: importRes.status,
+        ok: importRes.ok,
+        error: payload?.error,
+        accountId: accId,
+        locationId,
+        place_id: placeId,
+        reviewsCount: payload?.total ?? payload?.importedCount,
+        inserted: payload?.inserted ?? payload?.insertedCount,
+        updated: payload?.updated ?? payload?.updatedCount,
+      });
 
-      if (data?.error) {
-        throw new Error(data.error);
-      }
+      if (!importRes.ok) {
+        const msg = payload?.error || `HTTP ${importRes.status}`;
 
-      if (data?.total === 0) {
+        if (importRes.status === 401 || importRes.status === 403) {
+          setHasExistingConnection(false);
+          toast({
+            title: `❌ Erreur: ${msg}`,
+            description: "Session Google expirée. Reconnectez Google puis réessayez.",
+            variant: "destructive",
+            action: {
+              label: "Reconnecter Google",
+              onClick: () => initiateGoogleOAuth(),
+            },
+          });
+          return;
+        }
+
         toast({
-          title: "Aucun avis trouvé",
-          description: "Aucun avis Google n'a été trouvé pour cet établissement.",
-          variant: "default",
+          title: `❌ Erreur: ${msg}`,
+          description: "La route de synchro a répondu en erreur.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (payload?.error) {
+        toast({
+          title: `❌ Erreur: ${payload.error}`,
+          description: "Erreur lors de l’import des avis Google.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const inserted = Number(payload?.inserted ?? payload?.insertedCount ?? 0);
+      const updated = Number(payload?.updated ?? payload?.updatedCount ?? 0);
+      const total = Number(payload?.total ?? payload?.importedCount ?? inserted + updated);
+
+      if (!total || total === 0) {
+        toast({
+          title: "⚠️ 0 avis trouvés (vérifier compte Google + établissement)",
+          description: `accountId=${accId} • locationId=${locationId} • place_id=${placeId || "(manquant)"}`,
         });
       } else {
         toast({
-          title: "Avis Google importés avec succès",
-          description: `${data.total} avis importés (${data.inserted} nouveaux, ${data.updated} mis à jour)`,
+          title: `✅ ${total} avis importés / mis à jour`,
+          description: `${inserted} nouveaux • ${updated} mis à jour • place_id=${placeId || "(manquant)"}`,
         });
       }
 
       setShowLocationSelector(false);
-      
-      // Trigger reviews:imported event to refresh the UI
-      window.dispatchEvent(new CustomEvent('reviews:imported'));
-      
+
+      // Refresh UI
+      window.dispatchEvent(new CustomEvent("reviews:imported"));
       onSuccess?.();
     } catch (error: any) {
-      console.error('❌ Error importing reviews:', error);
+      console.error("[google-sync] importReviews:error", error);
       toast({
-        title: "L'import des avis Google a échoué",
-        description: error.message || "Veuillez réessayer.",
+        title: `❌ Erreur: ${error?.message || "Erreur inconnue"}`,
+        description: "Échec de la synchronisation des avis Google. Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
       operationInProgress.current = false;
-      console.log('✅ Import complete, button re-enabled');
+      console.log("[google-sync] importReviews:done");
     }
   };
 
@@ -408,12 +589,7 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
         onPointerDown={() => {
           console.log("SYNC POINTERDOWN", new Date().toISOString());
         }}
-        onClick={async () => {
-          console.log("SYNC CLICK", new Date().toISOString());
-          alert("SYNC CLICK OK");
-
-          await handleImportClick();
-        }}
+        onClick={handleImportClick}
         className={cn(
           buttonVariants({ variant: "accent", size: "default" }),
           "w-full pointer-events-auto cursor-pointer relative z-50"
