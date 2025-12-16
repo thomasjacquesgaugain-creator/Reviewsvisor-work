@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import { Loader2, RefreshCw } from "lucide-react";
 import {
   Dialog,
@@ -401,11 +402,22 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
 
   return (
     <>
-      <Button
-        onClick={handleImportClick}
+      <button
+        type="button"
         disabled={loading}
-        variant="default"
-        className="w-full bg-violet-600 hover:bg-violet-700 text-white"
+        onPointerDown={() => {
+          console.log("SYNC POINTERDOWN", new Date().toISOString());
+        }}
+        onClick={async () => {
+          console.log("SYNC CLICK", new Date().toISOString());
+          alert("SYNC CLICK OK");
+
+          await handleImportClick();
+        }}
+        className={cn(
+          buttonVariants({ variant: "accent", size: "default" }),
+          "w-full pointer-events-auto cursor-pointer relative z-50"
+        )}
       >
         {loading ? (
           <>
@@ -420,7 +432,7 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
         ) : (
           "Importer mes avis Google"
         )}
-      </Button>
+      </button>
 
       <Dialog open={showLocationSelector} onOpenChange={(open) => {
         setShowLocationSelector(open);
