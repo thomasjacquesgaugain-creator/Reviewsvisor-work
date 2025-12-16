@@ -74,8 +74,20 @@ async function fetchAllGoogleReviews(placeId: string) {
 
     const r = await fetch(url.toString(), { headers });
     if (!r.ok) {
-      const e = await r.text();
-      throw new Error(`google_fetch_failed: ${r.status} ${e}`);
+      const errorText = await r.text();
+      console.error('Google Places API error:', { status: r.status, body: errorText, timestamp: new Date().toISOString() });
+      
+      // Return generic errors to client
+      if (r.status === 429) {
+        throw new Error('Limite de requêtes Google atteinte. Veuillez réessayer plus tard.');
+      }
+      if (r.status === 401 || r.status === 403) {
+        throw new Error('Authentification Google échouée. Veuillez reconnecter votre compte.');
+      }
+      if (r.status === 404) {
+        throw new Error('Établissement introuvable.');
+      }
+      throw new Error('Échec de la récupération des avis. Veuillez réessayer.');
     }
     const j = await r.json();
     const reviews = j.reviews ?? [];

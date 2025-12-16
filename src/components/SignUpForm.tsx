@@ -16,7 +16,12 @@ const signUpSchema = z.object({
   lastName: z.string().min(1, { message: "Veuillez renseigner ce champ." }),
   company: z.string().min(1, { message: "Veuillez renseigner ce champ." }),
   address: z.string().min(1, { message: "Veuillez renseigner ce champ." }),
-  password: z.string().min(1, { message: "Veuillez renseigner ce champ." }).min(6, { message: "Le mot de passe doit contenir au moins 6 caractères" }),
+  password: z.string()
+    .min(1, { message: "Veuillez renseigner ce champ." })
+    .min(8, { message: "Le mot de passe doit contenir au moins 8 caractères" })
+    .regex(/[A-Z]/, { message: "Le mot de passe doit contenir au moins une majuscule" })
+    .regex(/[a-z]/, { message: "Le mot de passe doit contenir au moins une minuscule" })
+    .regex(/[0-9]/, { message: "Le mot de passe doit contenir au moins un chiffre" }),
   confirmPassword: z.string().min(1, { message: "Veuillez renseigner ce champ." }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
