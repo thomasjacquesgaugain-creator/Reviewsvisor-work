@@ -16,6 +16,7 @@ import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etabliss
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
 import { getRatingEvolution, formatRegistrationDate, Granularity } from "@/utils/ratingEvolution";
 import { validateReponse } from "@/lib/reponses";
+import { generatePdfReport } from "@/utils/generatePdfReport";
 
 
 const Dashboard = () => {
@@ -430,20 +431,20 @@ const Dashboard = () => {
             {(selectedEtab || selectedEstablishment) && (
               <Button
                 className="download-report-btn"
-                onClick={async () => {
-                  console.log('[Dashboard] 🔘 Clic sur Télécharger le rapport');
-                  console.log('[Dashboard] État actuel:', {
-                    establishmentDbId,
-                    selectedEtab: selectedEtab?.name,
-                    place_id: selectedEtab?.place_id
-                  });
-
-                  const placeId = selectedEtab?.place_id || selectedEstablishment?.place_id;
+                onClick={() => {
+                  console.log('[Dashboard] 🔘 Clic sur Télécharger le rapport PDF');
                   
-                  if (!placeId) {
-                    console.error('[Dashboard] ❌ place_id manquant');
+                  const currentEstab = selectedEtab || selectedEstablishment;
+                  if (!currentEstab) {
                     toast.error('Erreur', {
-                      description: 'Impossible de générer le rapport : établissement introuvable.',
+                      description: 'Aucun établissement sélectionné.',
+                    });
+                    return;
+                  }
+
+                  if (!hasReviews || allReviewsForChart.length === 0) {
+                    toast.info('Aucun rapport disponible', {
+                      description: 'Importez des avis pour générer un rapport.',
                     });
                     return;
                   }
@@ -451,82 +452,31 @@ const Dashboard = () => {
                   setIsDownloadingReport(true);
 
                   try {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    if (!session?.access_token) {
-                      toast.error('Erreur d\'authentification', {
-                        description: 'Votre session a expiré. Veuillez vous reconnecter.',
-                      });
-                      return;
-                    }
+                    // Préparer les données pour le PDF
+                    const reportData = {
+                      establishmentName: currentEstab.name || 'Établissement',
+                      totalReviews: totalAnalyzed || allReviewsForChart.length,
+                      avgRating: avgRating,
+                      positiveRatio: positivePct / 100,
+                      topIssues: topIssues,
+                      topStrengths: topStrengths,
+                      themes: insight?.themes || [],
+                      recentReviews: allReviewsForChart,
+                      summary: insight?.summary || '',
+                    };
 
-                    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-report`;
-                    console.log('[Dashboard] 📡 Appel API:', apiUrl);
-                    console.log('[Dashboard] Payload:', { 
-                      establishmentId: establishmentDbId,
-                      placeId: placeId
-                    });
+                    console.log('[Dashboard] 📄 Génération du PDF avec:', reportData);
 
-                    const response = await fetch(apiUrl, {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${session.access_token}`,
-                      },
-                      body: JSON.stringify({
-                        establishmentId: establishmentDbId,
-                        placeId: placeId,
-                      }),
-                    });
-
-                    console.log('[Dashboard] 📥 Réponse API:', response.status, response.statusText);
-
-                    const contentType = response.headers.get('Content-Type');
-
-                    if (contentType && contentType.includes('application/json')) {
-                      const json = await response.json();
-                      if (json.error) {
-                        if (json.error === 'ESTABLISHMENT_NOT_FOUND') {
-                          toast.error('Établissement non trouvé', {
-                            description: 'Cet établissement n\'est pas encore enregistré dans votre compte.',
-                          });
-                        } else if (json.reason === 'no_data') {
-                          toast.info('Aucun rapport disponible', {
-                            description: 'Aucune analyse n\'est encore disponible pour cet établissement. Importez des avis pour générer un rapport.',
-                          });
-                        } else {
-                          toast.error('Erreur', {
-                            description: json.error || 'Une erreur est survenue lors de la génération du rapport.',
-                          });
-                        }
-                        return;
-                      }
-                    }
-
-                    if (!response.ok) {
-                      throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const htmlContent = await response.text();
-                    console.log('[Dashboard] ✅ HTML reçu, longueur:', htmlContent.length);
-
-                    const blob = new Blob([htmlContent], { type: 'text/html' });
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    const filename = `rapport-${(selectedEtab?.name || selectedEstablishment?.name || 'etablissement').toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.html`;
-                    link.download = filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(url);
+                    // Générer et télécharger le PDF
+                    generatePdfReport(reportData);
 
                     toast.success('Rapport téléchargé', {
-                      description: `Le rapport a été téléchargé avec succès.`,
+                      description: 'Le rapport PDF a été généré avec succès.',
                     });
                   } catch (error) {
-                    console.error('[Dashboard] ❌ Erreur téléchargement:', error);
+                    console.error('[Dashboard] ❌ Erreur génération PDF:', error);
                     toast.error('Erreur', {
-                      description: 'Une erreur est survenue lors du téléchargement du rapport.',
+                      description: 'Une erreur est survenue lors de la génération du rapport.',
                     });
                   } finally {
                     setIsDownloadingReport(false);
