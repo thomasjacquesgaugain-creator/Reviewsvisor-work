@@ -1332,15 +1332,16 @@ const Dashboard = () => {
         </Card>
 
         {/* Analyse détaillée */}
-        <Card className="relative mt-6">
+        <Card className="relative mb-8">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-purple-600" />
+                <BarChart3 className="w-5 h-5 text-indigo-600" />
+                <span className="text-2xl font-bold text-indigo-600">{totalReviews}</span>
                 <CardTitle className="text-lg">Analyse détaillée</CardTitle>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setShowAnalyseDetaillee(!showAnalyseDetaillee)} className="h-6 w-6 p-0 hover:bg-purple-50">
-                {showAnalyseDetaillee ? <ChevronUp className="w-3 h-3 text-purple-600" /> : <ChevronDown className="w-3 h-3 text-purple-600" />}
+              <Button variant="ghost" size="sm" onClick={() => setShowAnalyseDetaillee(!showAnalyseDetaillee)} className="h-6 w-6 p-0 hover:bg-indigo-50">
+                {showAnalyseDetaillee ? <ChevronUp className="w-3 h-3 text-indigo-600" /> : <ChevronDown className="w-3 h-3 text-indigo-600" />}
               </Button>
             </div>
             <p className="text-sm text-gray-500">Détails complets des notes et thématiques</p>
@@ -1379,11 +1380,11 @@ const Dashboard = () => {
                       const themeCount = theme.count || 0;
                       const percentage = totalAnalyzed > 0 ? (themeCount / totalAnalyzed) * 100 : 0;
                       return (
-                        <div key={index} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                        <div key={index} className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg">
                           <span className="font-medium text-gray-700">{theme.theme}</span>
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-500">{themeCount} mention{themeCount > 1 ? 's' : ''}</span>
-                            <Badge variant="outline" className="text-purple-600 border-purple-600">{percentage.toFixed(1)}%</Badge>
+                            <Badge variant="outline" className="text-indigo-600 border-indigo-600">{percentage.toFixed(1)}%</Badge>
                           </div>
                         </div>
                       );
@@ -1413,8 +1414,8 @@ const Dashboard = () => {
                     <p className="text-2xl font-bold text-red-600">{negativePct}%</p>
                     <p className="text-xs text-gray-600">Avis négatifs</p>
                   </div>
-                  <div className="p-3 bg-purple-50 rounded-lg text-center">
-                    <p className="text-2xl font-bold text-purple-600">{totalReviews}</p>
+                  <div className="p-3 bg-indigo-50 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-indigo-600">{totalReviews}</p>
                     <p className="text-xs text-gray-600">Total avis</p>
                   </div>
                 </div>
@@ -1424,7 +1425,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Réponse automatique */}
-        <Card className="relative mt-6">
+        <Card className="relative">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
