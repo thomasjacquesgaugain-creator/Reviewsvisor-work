@@ -7,13 +7,14 @@ import { AnalyzeEstablishmentButton } from "@/components/AnalyzeEstablishmentBut
 import ImportAvisToolbar from "@/components/ImportAvisToolbar";
 import { ReviewsVisualPanel } from "@/components/ReviewsVisualPanel";
 
-import { Etab, STORAGE_KEY, EVT_SAVED } from "@/types/etablissement";
+import { Etab, STORAGE_KEY, EVT_SAVED, EVT_ESTABLISHMENT_UPDATED } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
 import { Building2, Home, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { useAuth } from "@/contexts/AuthProvider";
 import { toast } from "sonner";
+import { getCurrentEstablishment } from "@/services/establishments";
 
 
 export default function EtablissementPage() {
@@ -30,6 +31,50 @@ export default function EtablissementPage() {
   const [placesError, setPlacesError] = useState<string | null>(null);
   
   const currentEstablishment = useCurrentEstablishment();
+
+  // Sync the local establishment card from the DB (source of truth)
+  useEffect(() => {
+    const syncFromDb = async () => {
+      try {
+        const est = await getCurrentEstablishment();
+        if (!est) return;
+
+        let prev: any = {};
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          prev = raw ? JSON.parse(raw) : {};
+        } catch {
+          prev = {};
+        }
+
+        const etab: Etab = {
+          ...prev,
+          place_id: est.place_id,
+          name: est.name,
+          address: est.formatted_address || "",
+          phone: est.phone ?? prev.phone,
+          website: est.website ?? prev.website,
+          rating: est.rating ?? prev.rating ?? null,
+        };
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(etab));
+        window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));
+      } catch (err) {
+        console.warn("Impossible de synchroniser l'établissement depuis la base", err);
+      }
+    };
+
+    syncFromDb();
+
+    const onUpdated = () => {
+      syncFromDb();
+    };
+
+    window.addEventListener(EVT_ESTABLISHMENT_UPDATED, onUpdated as EventListener);
+    return () => {
+      window.removeEventListener(EVT_ESTABLISHMENT_UPDATED, onUpdated as EventListener);
+    };
+  }, []);
 
   // Callback to refresh reviews data after import
   const handleImportSuccess = () => {
