@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,17 +6,53 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail, MapPin, Building2, User, Globe } from "lucide-react";
 import { toast } from "sonner";
+import { STORAGE_KEY, EVT_SAVED } from "@/types/etablissement";
 
 const Compte = () => {
   const { user, displayName } = useAuth();
+
+  // Read establishment from localStorage
+  const getStoredEstablishment = () => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch {
+      // ignore parse errors
+    }
+    return null;
+  };
+
+  const storedEstab = getStoredEstablishment();
 
   const nameParts = (displayName || "").split(" ");
   const [firstName, setFirstName] = useState(nameParts[0] || "");
   const [lastName, setLastName] = useState(nameParts.slice(1).join(" ") || "");
   const [email, setEmail] = useState(user?.email || "");
-  const [etablissement, setEtablissement] = useState("Mon établissement");
-  const [adresse, setAdresse] = useState("12 Rue du Restaurant, 75000 Paris");
+  const [etablissement, setEtablissement] = useState(storedEstab?.name || "");
+  const [adresse, setAdresse] = useState(storedEstab?.formatted_address || "");
   const [language, setLanguage] = useState("fr");
+
+  // Listen for establishment changes
+  useEffect(() => {
+    const handleUpdate = () => {
+      const estab = getStoredEstablishment();
+      if (estab) {
+        setEtablissement(estab.name || "");
+        setAdresse(estab.formatted_address || "");
+      }
+    };
+
+    window.addEventListener(EVT_SAVED, handleUpdate);
+    window.addEventListener("storage", (e) => {
+      if (e.key === STORAGE_KEY) handleUpdate();
+    });
+
+    return () => {
+      window.removeEventListener(EVT_SAVED, handleUpdate);
+    };
+  }, []);
 
   const fullName = `${firstName} ${lastName}`.trim();
 
