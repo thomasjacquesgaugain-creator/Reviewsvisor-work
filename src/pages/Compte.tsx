@@ -65,7 +65,30 @@ const Compte = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Informations enregistrées avec succès");
+    
+    // Update establishment in localStorage
+    const currentEstab = getStoredEstablishment() || {};
+    const updatedEstab = {
+      ...currentEstab,
+      name: etablissement.trim() || currentEstab.name || "",
+      formatted_address: adresse.trim() || "",
+      // Keep other fields like place_id, phone, website, rating, etc.
+    };
+    
+    // Only save if we have at least a name
+    if (updatedEstab.name) {
+      // Generate a place_id if none exists (for newly created establishments)
+      if (!updatedEstab.place_id) {
+        updatedEstab.place_id = `reviewsvisor_${Date.now()}`;
+      }
+      
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedEstab));
+      
+      // Dispatch event to notify other components (like /etablissement)
+      window.dispatchEvent(new CustomEvent(EVT_SAVED));
+    }
+    
+    toast.success("Informations mises à jour");
   };
 
   return (
