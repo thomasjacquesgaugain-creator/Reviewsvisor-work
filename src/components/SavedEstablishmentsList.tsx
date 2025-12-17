@@ -32,13 +32,13 @@ export default function SavedEstablishmentsList() {
             const convertedEstabs: Etab[] = etablissements.map(etab => ({
               place_id: etab.place_id,
               name: etab.name,
-              formatted_address: etab.formatted_address || "",
-              formatted_phone_number: etab.phone || "",
+              address: etab.formatted_address || "",
+              lat: etab.lat,
+              lng: etab.lng,
+              phone: etab.phone || "",
               website: etab.website || "",
               url: "",
-              rating: etab.rating || null,
-              lat: etab.lat,
-              lng: etab.lng
+              rating: etab.rating || null
             }));
             
             setEstablishments(convertedEstabs);

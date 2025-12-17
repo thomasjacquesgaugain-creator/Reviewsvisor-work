@@ -1,14 +1,15 @@
 export type Etab = {
   place_id: string;
   name: string;
-  formatted_address: string;
-  formatted_phone_number?: string;
-  website?: string;
-  rating?: number | null;
+  address: string;
+  lat: number | null;
+  lng: number | null;
   url?: string;
-  // Legacy fields for backward compatibility
-  lat?: number | null;
-  lng?: number | null;
+  website?: string;
+  phone?: string;
+  phoneIntl?: string;
+  mapsUrl?: string;
+  rating?: number | null;
 };
 
 export const STORAGE_KEY = "mon-etablissement";

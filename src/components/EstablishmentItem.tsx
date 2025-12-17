@@ -25,8 +25,8 @@ export default function EstablishmentItem({ etab, onSelect }: EstablishmentItemP
     }
   }, [etab.place_id, placeDetails]);
 
-  const displayPhone = placeDetails?.phone || etab.formatted_phone_number;
-  const displayMapsUrl = placeDetails?.mapsUrl || etab.url;
+  const displayPhone = placeDetails?.phone || etab.phone;
+  const displayMapsUrl = placeDetails?.mapsUrl;
 
   const handlePhoneClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -57,8 +57,8 @@ export default function EstablishmentItem({ etab, onSelect }: EstablishmentItemP
             <h4 className="font-medium text-sm text-foreground truncate" title={etab.name}>
               {etab.name}
             </h4>
-            <p className="text-xs text-muted-foreground truncate" title={etab.formatted_address}>
-              {etab.formatted_address}
+            <p className="text-xs text-muted-foreground truncate" title={etab.address}>
+              {etab.address}
             </p>
             
             {etab.rating && (

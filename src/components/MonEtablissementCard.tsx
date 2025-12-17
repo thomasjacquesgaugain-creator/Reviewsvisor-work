@@ -88,7 +88,7 @@ export default function MonEtablissementCard() {
       const result = await runAnalyze({
         place_id: etab.place_id,
         name: etab.name,
-        address: etab.formatted_address
+        address: etab.address
       });
 
       if (result.ok) {
@@ -120,12 +120,12 @@ export default function MonEtablissementCard() {
   return (
     <div className="relative">
       <div className="space-y-2">
-        <div><strong>Nom :</strong> {etab.name || "—"}</div>
-        <div><strong>Adresse :</strong> {etab.formatted_address || "—"}</div>
-        <div><strong>Téléphone :</strong> {etab.formatted_phone_number || "—"}</div>
-        <div><strong>Site web :</strong> {etab.website ? <a href={etab.website} target="_blank" className="text-blue-600 hover:underline">Ouvrir</a> : "—"}</div>
+        <div><strong>Nom :</strong> {etab.name}</div>
+        <div><strong>Adresse :</strong> {etab.address}</div>
+        <div><strong>Téléphone :</strong> {etab.phone || "—"}</div>
+        <div><strong>Site web :</strong> {etab.website ? <a href={etab.website} target="_blank">Ouvrir</a> : "—"}</div>
         <div><strong>Note Google :</strong> {etab.rating ?? "—"}</div>
-        <div><strong>Google Maps :</strong> {etab.url ? <a href={etab.url} target="_blank" className="text-blue-600 hover:underline">Voir la fiche</a> : "—"}</div>
+        <div><strong>Google Maps :</strong> {etab.url ? <a href={etab.url} target="_blank">Voir la fiche</a> : "—"}</div>
         <div className="text-xs text-neutral-500"><strong>place_id :</strong> {etab.place_id}</div>
       </div>
       
@@ -168,14 +168,6 @@ export default function MonEtablissementCard() {
         >
           <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
         </Button>
-      </div>
-      
-      {/* DEBUG: Affichage JSON brut temporaire */}
-      <div className="mt-6 p-3 bg-gray-100 border border-gray-300 rounded text-xs">
-        <div className="font-bold text-red-600 mb-2">DEBUG Places Details Response</div>
-        <pre className="whitespace-pre-wrap break-all overflow-auto max-h-48">
-          {JSON.stringify(etab, null, 2)}
-        </pre>
       </div>
     </div>
   );

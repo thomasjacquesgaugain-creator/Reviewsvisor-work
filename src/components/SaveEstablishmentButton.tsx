@@ -66,8 +66,8 @@ export default function SaveEstablishmentButton({
       user_id: user.id,
       place_id: selected.place_id,
       nom: selected.name,
-      adresse: selected.formatted_address,
-      telephone: selected.formatted_phone_number || null,
+      adresse: selected.address,
+      telephone: selected.phone || null,
       type: "Restaurant"
     };
     const { error: etabError } = await supabase.from("établissements").upsert(etablissementPayload, {
