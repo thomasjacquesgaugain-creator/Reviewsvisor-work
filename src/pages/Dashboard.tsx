@@ -1472,7 +1472,7 @@ const Dashboard = () => {
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-indigo-600" />
                 <span className="text-2xl font-bold text-indigo-600">{totalReviews}</span>
-                <CardTitle className="text-lg">Analyse détaillée</CardTitle>
+                <CardTitle className="text-lg">Décryptage des avis</CardTitle>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setShowAnalyseDetaillee(!showAnalyseDetaillee)} className="h-6 w-6 p-0 hover:bg-indigo-50">
                 {showAnalyseDetaillee ? <ChevronUp className="w-3 h-3 text-indigo-600" /> : <ChevronDown className="w-3 h-3 text-indigo-600" />}
