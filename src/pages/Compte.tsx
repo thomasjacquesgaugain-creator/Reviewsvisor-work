@@ -8,56 +8,121 @@ import { Mail, MapPin, Building2, User, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { STORAGE_KEY, EVT_SAVED, EVT_ESTABLISHMENT_UPDATED } from "@/types/etablissement";
 import { supabase } from "@/integrations/supabase/client";
-import { upsertUserEstablishmentFromProfile } from "@/services/establishments";
+import { EstablishmentSelector, EstablishmentOption } from "@/components/EstablishmentSelector";
 
 const Compte = () => {
   const { user, displayName } = useAuth();
 
-  // Read establishment from localStorage
-  const getStoredEstablishment = () => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch {
-      // ignore parse errors
-    }
-    return null;
-  };
-
-  const storedEstab = getStoredEstablishment();
+  // Selected establishment (from Supabase)
+  const [selectedEstablishment, setSelectedEstablishment] = useState<EstablishmentOption | null>(null);
 
   const nameParts = (displayName || "").split(" ");
   const [firstName, setFirstName] = useState(nameParts[0] || "");
   const [lastName, setLastName] = useState(nameParts.slice(1).join(" ") || "");
   const [email, setEmail] = useState(user?.email || "");
-  const [etablissement, setEtablissement] = useState(storedEstab?.name || "");
-  const [adresse, setAdresse] = useState(storedEstab?.address ?? storedEstab?.formatted_address ?? "");
+  const [etablissement, setEtablissement] = useState("");
+  const [adresse, setAdresse] = useState("");
   const [language, setLanguage] = useState("fr");
 
-  // Listen for establishment changes
+  // Load current establishment from Supabase on mount
   useEffect(() => {
-    const handleUpdate = () => {
-      const estab = getStoredEstablishment();
-      if (estab) {
-        setEtablissement(estab.name || "");
-        setAdresse(estab.address ?? estab.formatted_address ?? "");
+    const loadCurrentEstablishment = async () => {
+      if (!user) return;
+
+      try {
+        // Try profile's current_establishment_id first
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("current_establishment_id")
+          .eq("user_id", user.id)
+          .single();
+
+        let estData: EstablishmentOption | null = null;
+
+        if (profile?.current_establishment_id) {
+          const { data } = await supabase
+            .from("establishments")
+            .select("id, place_id, name, formatted_address")
+            .eq("id", profile.current_establishment_id)
+            .single();
+
+          if (data) {
+            estData = data as EstablishmentOption;
+          }
+        }
+
+        // Fallback: most recent establishment
+        if (!estData) {
+          const { data } = await supabase
+            .from("establishments")
+            .select("id, place_id, name, formatted_address")
+            .eq("user_id", user.id)
+            .order("updated_at", { ascending: false })
+            .limit(1)
+            .single();
+
+          if (data) {
+            estData = data as EstablishmentOption;
+          }
+        }
+
+        if (estData) {
+          setSelectedEstablishment(estData);
+          setEtablissement(estData.name || "");
+          setAdresse(estData.formatted_address || "");
+        }
+      } catch (err) {
+        console.warn("Could not load current establishment:", err);
       }
     };
 
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) handleUpdate();
+    loadCurrentEstablishment();
+  }, [user]);
+
+  // Handle establishment selection change
+  const handleEstablishmentSelect = (est: EstablishmentOption) => {
+    setSelectedEstablishment(est);
+    setEtablissement(est.name || "");
+    setAdresse(est.formatted_address || "");
+  };
+
+  // Listen for establishment changes from other pages
+  useEffect(() => {
+    const handleUpdate = () => {
+      // Reload from Supabase when event fires
+      if (!user) return;
+      
+      (async () => {
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            // Find matching establishment from DB
+            const { data } = await supabase
+              .from("establishments")
+              .select("id, place_id, name, formatted_address")
+              .eq("place_id", parsed.place_id)
+              .eq("user_id", user.id)
+              .single();
+
+            if (data) {
+              setSelectedEstablishment(data as EstablishmentOption);
+              setEtablissement(data.name || "");
+              setAdresse(data.formatted_address || "");
+            }
+          }
+        } catch {
+          // ignore
+        }
+      })();
     };
 
-    window.addEventListener(EVT_SAVED, handleUpdate as EventListener);
-    window.addEventListener("storage", handleStorage);
+    window.addEventListener(EVT_ESTABLISHMENT_UPDATED, handleUpdate as EventListener);
 
     return () => {
-      window.removeEventListener(EVT_SAVED, handleUpdate as EventListener);
-      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(EVT_ESTABLISHMENT_UPDATED, handleUpdate as EventListener);
     };
-  }, []);
+  }, [user]);
 
   const fullName = `${firstName} ${lastName}`.trim();
 
@@ -109,24 +174,68 @@ const Compte = () => {
         if (emailError) throw emailError;
       }
 
-      // 3) Upsert établissement (source de vérité: establishments.formatted_address)
-      const savedEst = await upsertUserEstablishmentFromProfile({
-        name: etabName,
-        formatted_address: addr ? addr : null,
-      });
+      // 3) Update the selected establishment in Supabase
+      if (selectedEstablishment?.id) {
+        const { data: updatedEst, error: estError } = await supabase
+          .from("establishments")
+          .update({
+            name: etabName,
+            formatted_address: addr || null,
+          })
+          .eq("id", selectedEstablishment.id)
+          .select("id, place_id, name, formatted_address")
+          .single();
 
-      // 4) Mettre à jour la carte /etablissement (local cache) avec le mapping attendu
-      const currentEstab = getStoredEstablishment() || {};
-      const updatedLocal = {
-        ...currentEstab,
-        place_id: savedEst.place_id,
-        name: savedEst.name,
-        address: savedEst.formatted_address || "",
-      };
+        if (estError) throw estError;
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedLocal));
-      window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: updatedLocal }));
-      window.dispatchEvent(new CustomEvent(EVT_ESTABLISHMENT_UPDATED));
+        if (updatedEst) {
+          setSelectedEstablishment(updatedEst as EstablishmentOption);
+
+          // 4) Update localStorage for other components
+          const localData = {
+            place_id: updatedEst.place_id,
+            name: updatedEst.name,
+            address: updatedEst.formatted_address || "",
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(localData));
+          window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: localData }));
+          window.dispatchEvent(new CustomEvent(EVT_ESTABLISHMENT_UPDATED));
+        }
+      } else {
+        // Create new establishment if none selected
+        const placeId = `manual_${user.id}_${Date.now()}`;
+        const { data: newEst, error: createError } = await supabase
+          .from("establishments")
+          .insert({
+            user_id: user.id,
+            place_id: placeId,
+            name: etabName,
+            formatted_address: addr || null,
+            source: "manual",
+          })
+          .select("id, place_id, name, formatted_address")
+          .single();
+
+        if (createError) throw createError;
+
+        if (newEst) {
+          setSelectedEstablishment(newEst as EstablishmentOption);
+
+          // Update profile with current establishment
+          await supabase
+            .from("profiles")
+            .upsert({ user_id: user.id, current_establishment_id: newEst.id }, { onConflict: "user_id" });
+
+          const localData = {
+            place_id: newEst.place_id,
+            name: newEst.name,
+            address: newEst.formatted_address || "",
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(localData));
+          window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: localData }));
+          window.dispatchEvent(new CustomEvent(EVT_ESTABLISHMENT_UPDATED));
+        }
+      }
 
       toast.success("Informations mises à jour");
     } catch (err) {
@@ -138,9 +247,16 @@ const Compte = () => {
   return (
     <div className="p-6 md:p-10 flex justify-center bg-background min-h-screen">
       <div className="w-full max-w-4xl">
-        <h1 className="text-3xl font-semibold mb-8 text-foreground">
-          Informations personnelles
-        </h1>
+        {/* Header avec titre et sélecteur d'établissement */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-semibold text-foreground">
+            Informations personnelles
+          </h1>
+          <EstablishmentSelector
+            selectedEstablishment={selectedEstablishment}
+            onSelect={handleEstablishmentSelect}
+          />
+        </div>
 
         {/* AVATAR + NOM */}
         <div className="flex items-center mb-8">
