@@ -230,6 +230,72 @@ export function generatePdfReport(data: ReportData): void {
   doc.setTextColor(...COLORS.text);
   doc.text('Avis negatifs', MARGINS.left + (CONTENT_WIDTH * 3 / 4) + 2, yPos + 32, { align: 'center' });
 
+  yPos += 55;
+
+  // ========== KPI - INDICATEURS CLES A SUIVRE ==========
+  yPos = addSectionTitle(doc, 'KPI - Indicateurs cles a suivre', yPos, COLORS.secondary);
+
+  // Encadre principal des KPIs
+  doc.setFillColor(...COLORS.background);
+  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 80, 3, 3, 'F');
+
+  doc.setTextColor(...COLORS.text);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+
+  let kpiY = yPos + 10;
+
+  // Note moyenne globale
+  doc.setFont('helvetica', 'bold');
+  doc.text('Note moyenne globale :', MARGINS.left + 10, kpiY);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${data.avgRating.toFixed(1)} / 5`, MARGINS.left + 80, kpiY);
+  kpiY += 10;
+
+  // Pourcentage d'avis positifs
+  doc.setFont('helvetica', 'bold');
+  doc.text('Pourcentage d\'avis positifs :', MARGINS.left + 10, kpiY);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${Math.round(data.positiveRatio * 100)}%`, MARGINS.left + 80, kpiY);
+  kpiY += 10;
+
+  // Pourcentage d'avis negatifs
+  doc.setFont('helvetica', 'bold');
+  doc.text('Pourcentage d\'avis negatifs :', MARGINS.left + 10, kpiY);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${100 - Math.round(data.positiveRatio * 100)}%`, MARGINS.left + 80, kpiY);
+  kpiY += 10;
+
+  // Principal theme negatif identifie
+  doc.setFont('helvetica', 'bold');
+  doc.text('Principal theme negatif :', MARGINS.left + 10, kpiY);
+  doc.setFont('helvetica', 'normal');
+  const mainNegativeTheme = (data.topIssues && data.topIssues.length > 0) 
+    ? (data.topIssues[0].theme || data.topIssues[0].issue || 'Non identifie') 
+    : 'Aucun';
+  doc.text(truncateText(mainNegativeTheme, 50), MARGINS.left + 80, kpiY);
+  kpiY += 10;
+
+  // Principal theme positif identifie
+  doc.setFont('helvetica', 'bold');
+  doc.text('Principal theme positif :', MARGINS.left + 10, kpiY);
+  doc.setFont('helvetica', 'normal');
+  const mainPositiveTheme = (data.topStrengths && data.topStrengths.length > 0) 
+    ? (data.topStrengths[0].theme || data.topStrengths[0].strength || 'Non identifie') 
+    : 'Aucun';
+  doc.text(truncateText(mainPositiveTheme, 50), MARGINS.left + 80, kpiY);
+
+  // Texte explicatif
+  yPos += 90;
+  doc.setFillColor(240, 249, 255);
+  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 20, 2, 2, 'F');
+  doc.setTextColor(...COLORS.textLight);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'italic');
+  const kpiExplanation = 'Ces indicateurs permettent de suivre l\'evolution de la satisfaction client et de mesurer l\'impact des actions mises en place dans le temps.';
+  const kpiLines = doc.splitTextToSize(kpiExplanation, CONTENT_WIDTH - 10);
+  doc.text(kpiLines, MARGINS.left + 5, yPos + 8);
+
   addFooter(doc, pageNumber);
 
   // ========== PAGE 3: SYNTHESE - CE QUE VOS CLIENTS DISENT VRAIMENT ==========
@@ -536,6 +602,126 @@ export function generatePdfReport(data: ReportData): void {
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.text('Imprimez cette page et affichez-la en back-office pour un suivi quotidien des actions.', MARGINS.left + 5, yPos + 18);
+
+  addFooter(doc, pageNumber);
+
+  // ========== PAGE 6: PRIORISATION DES ACTIONS ==========
+  pageNumber = addNewPage(doc, pageNumber);
+  yPos = MARGINS.top;
+
+  yPos = addSectionTitle(doc, 'Priorisation des actions - Impact vs Effort', yPos, COLORS.warning);
+
+  // Sous-titre
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(...COLORS.textLight);
+  doc.text('Classement des actions par impact attendu et effort estime', MARGINS.left, yPos);
+  yPos += 15;
+
+  // Actions prioritaires
+  const prioritizedActions: Array<{ action: string; impact: string; effort: string; impactColor: [number, number, number] }> = [];
+
+  // Action 1: Corriger le principal point de friction identifie
+  const mainIssueAction = (data.topIssues && data.topIssues.length > 0) 
+    ? `Corriger le principal point de friction : "${data.topIssues[0].theme || data.topIssues[0].issue}"`
+    : 'Corriger le principal point de friction identifie';
+  prioritizedActions.push({
+    action: mainIssueAction,
+    impact: 'Eleve',
+    effort: 'Moyen',
+    impactColor: COLORS.success
+  });
+
+  // Action 2: Former l'equipe
+  prioritizedActions.push({
+    action: 'Former l\'equipe sur les points d\'amelioration',
+    impact: 'Moyen',
+    effort: 'Faible',
+    impactColor: COLORS.warning
+  });
+
+  // Action 3: Repondre systematiquement aux avis clients
+  prioritizedActions.push({
+    action: 'Repondre systematiquement aux avis clients',
+    impact: 'Moyen',
+    effort: 'Faible',
+    impactColor: COLORS.warning
+  });
+
+  // Action 4: Valoriser les points forts identifies
+  const strengthAction = (data.topStrengths && data.topStrengths.length > 0) 
+    ? `Valoriser le point fort : "${data.topStrengths[0].theme || data.topStrengths[0].strength}"`
+    : 'Valoriser les points forts identifies';
+  prioritizedActions.push({
+    action: strengthAction,
+    impact: 'Moyen',
+    effort: 'Faible',
+    impactColor: COLORS.warning
+  });
+
+  // En-tete du tableau
+  doc.setFillColor(...COLORS.primary);
+  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 10, 1, 1, 'F');
+  doc.setTextColor(...COLORS.white);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Action', MARGINS.left + 5, yPos + 7);
+  doc.text('Impact', MARGINS.left + 115, yPos + 7);
+  doc.text('Effort', MARGINS.left + 145, yPos + 7);
+  yPos += 15;
+
+  // Liste des actions
+  prioritizedActions.forEach((item, idx) => {
+    const bgColor = idx % 2 === 0 ? COLORS.background : COLORS.white;
+    doc.setFillColor(...bgColor);
+    doc.roundedRect(MARGINS.left, yPos - 3, CONTENT_WIDTH, 16, 1, 1, 'F');
+
+    // Numero et action
+    doc.setTextColor(...COLORS.text);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${idx + 1}.`, MARGINS.left + 5, yPos + 5);
+    doc.setFont('helvetica', 'normal');
+    const actionLines = doc.splitTextToSize(item.action, 95);
+    doc.text(actionLines[0], MARGINS.left + 12, yPos + 5);
+    if (actionLines.length > 1) {
+      doc.setFontSize(8);
+      doc.text(truncateText(actionLines[1], 50), MARGINS.left + 12, yPos + 11);
+      doc.setFontSize(9);
+    }
+
+    // Impact
+    doc.setTextColor(...item.impactColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(item.impact, MARGINS.left + 115, yPos + 5);
+
+    // Effort
+    doc.setTextColor(...COLORS.textLight);
+    doc.setFont('helvetica', 'normal');
+    doc.text(item.effort, MARGINS.left + 145, yPos + 5);
+
+    yPos += 20;
+  });
+
+  // Phrase de conclusion
+  yPos += 10;
+  doc.setFillColor(255, 251, 235);
+  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 25, 2, 2, 'F');
+  doc.setDrawColor(...COLORS.warning);
+  doc.setLineWidth(1);
+  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 25, 2, 2, 'S');
+  
+  doc.setTextColor(...COLORS.warning);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Recommandation', MARGINS.left + 5, yPos + 8);
+  
+  doc.setTextColor(...COLORS.text);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  const prioConclusion = 'Il est recommande de commencer par les actions a fort impact et faible effort afin d\'obtenir des resultats rapides et mesurables.';
+  const prioLines = doc.splitTextToSize(prioConclusion, CONTENT_WIDTH - 10);
+  doc.text(prioLines, MARGINS.left + 5, yPos + 16);
 
   addFooter(doc, pageNumber);
 
