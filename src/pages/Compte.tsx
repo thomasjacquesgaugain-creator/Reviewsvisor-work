@@ -6,7 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail, MapPin, Building2, User, Globe } from "lucide-react";
 import { toast } from "sonner";
-import { STORAGE_KEY, EVT_SAVED } from "@/types/etablissement";
+import { STORAGE_KEY, EVT_SAVED, EVT_ESTABLISHMENT_UPDATED } from "@/types/etablissement";
+import { supabase } from "@/integrations/supabase/client";
+import { upsertUserEstablishmentFromProfile } from "@/services/establishments";
 
 const Compte = () => {
   const { user, displayName } = useAuth();
@@ -31,7 +33,7 @@ const Compte = () => {
   const [lastName, setLastName] = useState(nameParts.slice(1).join(" ") || "");
   const [email, setEmail] = useState(user?.email || "");
   const [etablissement, setEtablissement] = useState(storedEstab?.name || "");
-  const [adresse, setAdresse] = useState(storedEstab?.formatted_address || "");
+  const [adresse, setAdresse] = useState(storedEstab?.address ?? storedEstab?.formatted_address ?? "");
   const [language, setLanguage] = useState("fr");
 
   // Listen for establishment changes
@@ -40,17 +42,20 @@ const Compte = () => {
       const estab = getStoredEstablishment();
       if (estab) {
         setEtablissement(estab.name || "");
-        setAdresse(estab.formatted_address || "");
+        setAdresse(estab.address ?? estab.formatted_address ?? "");
       }
     };
 
-    window.addEventListener(EVT_SAVED, handleUpdate);
-    window.addEventListener("storage", (e) => {
+    const handleStorage = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY) handleUpdate();
-    });
+    };
+
+    window.addEventListener(EVT_SAVED, handleUpdate as EventListener);
+    window.addEventListener("storage", handleStorage);
 
     return () => {
-      window.removeEventListener(EVT_SAVED, handleUpdate);
+      window.removeEventListener(EVT_SAVED, handleUpdate as EventListener);
+      window.removeEventListener("storage", handleStorage);
     };
   }, []);
 
@@ -63,32 +68,71 @@ const Compte = () => {
     .slice(0, 2)
     .join("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Update establishment in localStorage
-    const currentEstab = getStoredEstablishment() || {};
-    const updatedEstab = {
-      ...currentEstab,
-      name: etablissement.trim() || currentEstab.name || "",
-      formatted_address: adresse.trim() || "",
-      // Keep other fields like place_id, phone, website, rating, etc.
-    };
-    
-    // Only save if we have at least a name
-    if (updatedEstab.name) {
-      // Generate a place_id if none exists (for newly created establishments)
-      if (!updatedEstab.place_id) {
-        updatedEstab.place_id = `reviewsvisor_${Date.now()}`;
-      }
-      
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedEstab));
-      
-      // Dispatch event to notify other components (like /etablissement)
-      window.dispatchEvent(new CustomEvent(EVT_SAVED));
+
+    if (!user) {
+      toast.error("Vous devez être connecté pour modifier vos informations");
+      return;
     }
-    
-    toast.success("Informations mises à jour");
+
+    const etabName = etablissement.trim();
+    const addr = adresse.trim();
+
+    if (!etabName) {
+      toast.error("Veuillez renseigner le nom de l'établissement");
+      return;
+    }
+
+    try {
+      // 1) Sauvegarder le profil utilisateur (prénom/nom + display_name)
+      const computedFullName = `${firstName} ${lastName}`.trim();
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert(
+          {
+            user_id: user.id,
+            first_name: firstName.trim() || null,
+            last_name: lastName.trim() || null,
+            display_name: computedFullName || null,
+          },
+          { onConflict: "user_id" }
+        );
+
+      if (profileError) throw profileError;
+
+      // 2) Mettre à jour l'email si modifié
+      const nextEmail = email.trim();
+      if (nextEmail && nextEmail !== (user.email || "")) {
+        const { error: emailError } = await supabase.auth.updateUser({ email: nextEmail });
+        if (emailError) throw emailError;
+      }
+
+      // 3) Upsert établissement (source de vérité: establishments.formatted_address)
+      const savedEst = await upsertUserEstablishmentFromProfile({
+        name: etabName,
+        formatted_address: addr ? addr : null,
+      });
+
+      // 4) Mettre à jour la carte /etablissement (local cache) avec le mapping attendu
+      const currentEstab = getStoredEstablishment() || {};
+      const updatedLocal = {
+        ...currentEstab,
+        place_id: savedEst.place_id,
+        name: savedEst.name,
+        address: savedEst.formatted_address || "",
+      };
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedLocal));
+      window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: updatedLocal }));
+      window.dispatchEvent(new CustomEvent(EVT_ESTABLISHMENT_UPDATED));
+
+      toast.success("Informations mises à jour");
+    } catch (err) {
+      console.error("Erreur lors de la mise à jour du compte:", err);
+      toast.error("Impossible de mettre à jour vos informations");
+    }
   };
 
   return (

@@ -304,3 +304,65 @@ export async function updateCurrentEstablishment(establishmentId: string): Promi
     throw new Error('Erreur lors de la mise à jour de l\'établissement courant');
   }
 }
+
+export async function upsertUserEstablishmentFromProfile(input: {
+  name: string;
+  formatted_address: string | null;
+}): Promise<EstablishmentData> {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error('Utilisateur non connecté');
+  }
+
+  const name = input.name.trim();
+  if (!name) {
+    throw new Error("Nom d'établissement manquant");
+  }
+
+  // Try to update current establishment if it exists
+  const existing = await getCurrentEstablishment().catch(() => null);
+
+  if (existing?.id) {
+    const { data, error } = await supabase
+      .from('establishments')
+      .update({
+        name,
+        formatted_address: input.formatted_address,
+      })
+      .eq('id', existing.id)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('Error updating establishment:', error);
+      throw new Error("Erreur lors de la mise à jour de l'établissement");
+    }
+
+    await updateCurrentEstablishment(data.id);
+    return data as EstablishmentData;
+  }
+
+  // Else: create a new minimal establishment
+  const placeId = `manual_${user.id}`;
+
+  const { data, error } = await supabase
+    .from('establishments')
+    .insert({
+      user_id: user.id,
+      place_id: placeId,
+      name,
+      formatted_address: input.formatted_address,
+      source: 'manual',
+    })
+    .select('*')
+    .single();
+
+  if (error) {
+    console.error('Error creating establishment:', error);
+    throw new Error("Erreur lors de la création de l'établissement");
+  }
+
+  await updateCurrentEstablishment(data.id);
+  return data as EstablishmentData;
+}
