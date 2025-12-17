@@ -37,7 +37,7 @@ function addFooter(doc: jsPDF, pageNumber: number) {
   const footerY = PAGE_HEIGHT - 12;
   doc.setFontSize(8);
   doc.setTextColor(...COLORS.textLight);
-  doc.text('Rapport généré automatiquement par Reviewsvisor', MARGINS.left, footerY);
+  doc.text('Rapport genere automatiquement par Reviewsvisor', MARGINS.left, footerY);
   doc.text(`Page ${pageNumber}`, PAGE_WIDTH - MARGINS.right, footerY, { align: 'right' });
 }
 
@@ -54,17 +54,11 @@ function getSatisfactionIndex(avgRating: number): { label: string; color: [numbe
 }
 
 function getSentimentLabel(ratio: number): { label: string; color: [number, number, number] } {
-  if (ratio >= 0.8) return { label: 'Très positif', color: COLORS.success };
+  if (ratio >= 0.8) return { label: 'Tres positif', color: COLORS.success };
   if (ratio >= 0.6) return { label: 'Positif', color: COLORS.success };
   if (ratio >= 0.4) return { label: 'Neutre', color: COLORS.warning };
-  if (ratio >= 0.2) return { label: 'Négatif', color: COLORS.danger };
-  return { label: 'Très négatif', color: COLORS.danger };
-}
-
-function formatDate(dateStr: string | undefined): string {
-  if (!dateStr) return 'Date inconnue';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  if (ratio >= 0.2) return { label: 'Negatif', color: COLORS.danger };
+  return { label: 'Tres negatif', color: COLORS.danger };
 }
 
 function truncateText(text: string, maxLength: number): string {
@@ -94,7 +88,7 @@ export function generatePdfReport(data: ReportData): void {
 
   // ========== PAGE 1: COUVERTURE ==========
   
-  // Fond de couleur pour l'en-tête
+  // Fond de couleur pour l'en-tete
   doc.setFillColor(...COLORS.primary);
   doc.rect(0, 0, PAGE_WIDTH, 100, 'F');
 
@@ -109,19 +103,19 @@ export function generatePdfReport(data: ReportData): void {
   doc.setFont('helvetica', 'normal');
   doc.text("Rapport d'analyse des avis clients", PAGE_WIDTH / 2, 55, { align: 'center' });
 
-  // Ligne décorative
+  // Ligne decorative
   doc.setDrawColor(...COLORS.white);
   doc.setLineWidth(0.5);
   doc.line(60, 70, 150, 70);
 
-  // Nom de l'établissement
+  // Nom de l'etablissement
   doc.setTextColor(...COLORS.text);
   doc.setFontSize(24);
   doc.setFont('helvetica', 'bold');
   const estabName = truncateText(data.establishmentName, 40);
   doc.text(estabName, PAGE_WIDTH / 2, 140, { align: 'center' });
 
-  // Date de génération
+  // Date de generation
   const generationDate = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long',
     year: 'numeric',
@@ -131,9 +125,9 @@ export function generatePdfReport(data: ReportData): void {
   doc.setFontSize(12);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...COLORS.textLight);
-  doc.text(`Rapport généré le ${generationDate}`, PAGE_WIDTH / 2, 155, { align: 'center' });
+  doc.text(`Rapport genere le ${generationDate}`, PAGE_WIDTH / 2, 155, { align: 'center' });
 
-  // Encadré avec les KPIs principaux
+  // Encadre avec les KPIs principaux
   doc.setFillColor(...COLORS.background);
   doc.roundedRect(30, 180, 150, 60, 3, 3, 'F');
 
@@ -152,7 +146,7 @@ export function generatePdfReport(data: ReportData): void {
   doc.setFontSize(11);
   doc.setTextColor(...COLORS.text);
   doc.setFont('helvetica', 'bold');
-  doc.text("Avis analysés", 105, 200, { align: 'center' });
+  doc.text("Avis analyses", 105, 200, { align: 'center' });
   doc.setFontSize(24);
   doc.setTextColor(...COLORS.primary);
   doc.text(`${data.totalReviews}`, 105, 215, { align: 'center' });
@@ -169,50 +163,44 @@ export function generatePdfReport(data: ReportData): void {
 
   addFooter(doc, pageNumber);
 
-  // ========== PAGE 2: SCORE GLOBAL VISUEL ==========
+  // ========== PAGE 2: SCORE GLOBAL (VERSION TEXTE UNIQUEMENT) ==========
   pageNumber = addNewPage(doc, pageNumber);
   yPos = MARGINS.top;
 
   yPos = addSectionTitle(doc, 'Score Global', yPos, COLORS.gold);
 
-  // Encadré principal du score
+  // Encadre principal du score
   doc.setFillColor(...COLORS.background);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 70, 4, 4, 'F');
+  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 60, 4, 4, 'F');
   
-  // Bordure colorée selon le score
+  // Bordure coloree selon le score
   const satisfaction = getSatisfactionIndex(data.avgRating);
   doc.setDrawColor(...satisfaction.color);
   doc.setLineWidth(2);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 70, 4, 4, 'S');
+  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 60, 4, 4, 'S');
 
-  // Grande note au centre
-  doc.setTextColor(...COLORS.primary);
-  doc.setFontSize(48);
+  // Note globale texte
+  doc.setTextColor(...COLORS.text);
+  doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text(`${data.avgRating.toFixed(1)}`, PAGE_WIDTH / 2 - 20, yPos + 35, { align: 'center' });
+  doc.text('Note globale :', PAGE_WIDTH / 2, yPos + 20, { align: 'center' });
   
-  doc.setFontSize(24);
-  doc.setTextColor(...COLORS.textLight);
-  doc.text('/ 5', PAGE_WIDTH / 2 + 20, yPos + 35, { align: 'left' });
+  doc.setTextColor(...COLORS.primary);
+  doc.setFontSize(36);
+  doc.text(`${data.avgRating.toFixed(1)} / 5`, PAGE_WIDTH / 2, yPos + 38, { align: 'center' });
 
-  // Étoiles visuelles
-  doc.setFontSize(20);
-  doc.setTextColor(...COLORS.gold);
-  const fullStars = Math.floor(data.avgRating);
-  const starDisplay = '★'.repeat(fullStars) + '☆'.repeat(5 - fullStars);
-  doc.text(starDisplay, PAGE_WIDTH / 2, yPos + 50, { align: 'center' });
-
-  // Indice de satisfaction
-  doc.setFillColor(...satisfaction.color);
-  doc.roundedRect(PAGE_WIDTH / 2 - 30, yPos + 55, 60, 10, 2, 2, 'F');
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(10);
+  // Indice de satisfaction texte
+  doc.setTextColor(...COLORS.text);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Indice de satisfaction : `, PAGE_WIDTH / 2 - 25, yPos + 52);
+  doc.setTextColor(...satisfaction.color);
   doc.setFont('helvetica', 'bold');
-  doc.text(`Indice: ${satisfaction.label}`, PAGE_WIDTH / 2, yPos + 62, { align: 'center' });
+  doc.text(satisfaction.label, PAGE_WIDTH / 2 + 25, yPos + 52);
 
-  yPos += 85;
+  yPos += 75;
 
-  // Stats complémentaires
+  // Stats complementaires
   doc.setFillColor(...COLORS.white);
   doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH / 2 - 5, 40, 3, 3, 'F');
   doc.setDrawColor(...COLORS.success);
@@ -240,30 +228,30 @@ export function generatePdfReport(data: ReportData): void {
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...COLORS.text);
-  doc.text('Avis négatifs', MARGINS.left + (CONTENT_WIDTH * 3 / 4) + 2, yPos + 32, { align: 'center' });
+  doc.text('Avis negatifs', MARGINS.left + (CONTENT_WIDTH * 3 / 4) + 2, yPos + 32, { align: 'center' });
 
   addFooter(doc, pageNumber);
 
-  // ========== PAGE 3: SYNTHÈSE - CE QUE VOS CLIENTS DISENT VRAIMENT ==========
+  // ========== PAGE 3: SYNTHESE - CE QUE VOS CLIENTS DISENT VRAIMENT ==========
   pageNumber = addNewPage(doc, pageNumber);
   yPos = MARGINS.top;
 
-  yPos = addSectionTitle(doc, 'Synthèse des retours clients', yPos);
+  yPos = addSectionTitle(doc, 'Synthese des retours clients', yPos);
 
   // Sous-titre
   doc.setFontSize(11);
   doc.setFont('helvetica', 'italic');
   doc.setTextColor(...COLORS.textLight);
-  doc.text('Ce que vos clients disent vraiment de votre établissement', MARGINS.left, yPos);
+  doc.text('Ce que vos clients disent vraiment de votre etablissement', MARGINS.left, yPos);
   yPos += 15;
 
-  // Section: Éléments positifs les plus cités
+  // Section: Elements positifs les plus cites
   doc.setFillColor(...COLORS.success);
   doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 8, 1, 1, 'F');
   doc.setTextColor(...COLORS.white);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('✓ Les 3 éléments les plus appréciés', MARGINS.left + 5, yPos + 5.5);
+  doc.text('Les 3 elements les plus apprecies', MARGINS.left + 5, yPos + 5.5);
   yPos += 15;
 
   doc.setFontSize(10);
@@ -288,7 +276,7 @@ export function generatePdfReport(data: ReportData): void {
     });
   } else {
     doc.setTextColor(...COLORS.textLight);
-    doc.text('Aucun point fort identifié dans les avis analysés', MARGINS.left + 5, yPos);
+    doc.text('Aucun point fort identifie dans les avis analyses', MARGINS.left + 5, yPos);
     yPos += 12;
   }
 
@@ -300,14 +288,14 @@ export function generatePdfReport(data: ReportData): void {
   doc.setTextColor(...COLORS.white);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('✗ Les 2-3 principaux points de friction', MARGINS.left + 5, yPos + 5.5);
+  doc.text('Les 2-3 principaux points de friction', MARGINS.left + 5, yPos + 5.5);
   yPos += 15;
 
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   if (data.topIssues && data.topIssues.length > 0) {
     data.topIssues.slice(0, 3).forEach((issue, idx) => {
-      const name = issue.theme || issue.issue || `Problème ${idx + 1}`;
+      const name = issue.theme || issue.issue || `Probleme ${idx + 1}`;
       const count = issue.count || issue.mentions || 0;
       doc.setFillColor(...COLORS.background);
       doc.roundedRect(MARGINS.left, yPos - 3, CONTENT_WIDTH, 10, 1, 1, 'F');
@@ -325,7 +313,7 @@ export function generatePdfReport(data: ReportData): void {
     });
   } else {
     doc.setTextColor(...COLORS.textLight);
-    doc.text('Aucun problème majeur identifié', MARGINS.left + 5, yPos);
+    doc.text('Aucun probleme majeur identifie', MARGINS.left + 5, yPos);
     yPos += 12;
   }
 
@@ -337,7 +325,7 @@ export function generatePdfReport(data: ReportData): void {
   doc.setTextColor(...COLORS.white);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('⚡ Élément ayant le plus d\'impact sur la note', MARGINS.left + 5, yPos + 5.5);
+  doc.text('Element ayant le plus d\'impact sur la note', MARGINS.left + 5, yPos + 5.5);
   yPos += 15;
 
   doc.setFillColor(...COLORS.background);
@@ -349,59 +337,29 @@ export function generatePdfReport(data: ReportData): void {
   let impactElement = '';
   if (data.topIssues && data.topIssues.length > 0 && data.avgRating < 4) {
     const mainIssue = data.topIssues[0];
-    impactElement = `Le principal facteur impactant négativement votre note est "${mainIssue.theme || mainIssue.issue}". Améliorer ce point pourrait significativement augmenter votre note globale.`;
+    impactElement = `Le principal facteur impactant negativement votre note est "${mainIssue.theme || mainIssue.issue}". Ameliorer ce point pourrait significativement augmenter votre note globale.`;
   } else if (data.topStrengths && data.topStrengths.length > 0) {
     const mainStrength = data.topStrengths[0];
-    impactElement = `Votre point fort "${mainStrength.theme || mainStrength.strength}" est le principal atout qui maintient votre bonne note. Continuez à le valoriser.`;
+    impactElement = `Votre point fort "${mainStrength.theme || mainStrength.strength}" est le principal atout qui maintient votre bonne note. Continuez a le valoriser.`;
   } else {
-    impactElement = 'Collectez plus d\'avis pour identifier les facteurs clés impactant votre note.';
+    impactElement = 'Collectez plus d\'avis pour identifier les facteurs cles impactant votre note.';
   }
   
   const impactLines = doc.splitTextToSize(impactElement, CONTENT_WIDTH - 10);
   doc.text(impactLines, MARGINS.left + 5, yPos + 5);
-  yPos += 25;
-
-  // Conclusion de la synthèse
-  yPos += 10;
-  doc.setFillColor(240, 249, 255);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 35, 3, 3, 'F');
-  doc.setDrawColor(...COLORS.primary);
-  doc.setLineWidth(1);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 35, 3, 3, 'S');
-
-  doc.setTextColor(...COLORS.primary);
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text('💡 Conclusion', MARGINS.left + 5, yPos + 8);
-
-  doc.setTextColor(...COLORS.text);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-
-  let conclusion = '';
-  if (data.avgRating >= 4.5) {
-    conclusion = `Vos clients sont très satisfaits ! Maintenez cette excellence en continuant à valoriser vos points forts et en restant attentif aux retours.`;
-  } else if (data.avgRating >= 3.5) {
-    conclusion = `Votre établissement reçoit des retours globalement positifs. Quelques ajustements sur les points de friction identifiés pourraient significativement améliorer la satisfaction client.`;
-  } else {
-    conclusion = `Des actions correctives sont nécessaires. Concentrez-vous sur les problèmes les plus cités par vos clients pour améliorer rapidement leur expérience.`;
-  }
-
-  const conclusionLines = doc.splitTextToSize(conclusion, CONTENT_WIDTH - 10);
-  doc.text(conclusionLines, MARGINS.left + 5, yPos + 18);
 
   addFooter(doc, pageNumber);
 
-  // ========== PAGE 4: ANALYSE DÉTAILLÉE ==========
+  // ========== PAGE 4: ANALYSE DETAILLEE ==========
   pageNumber = addNewPage(doc, pageNumber);
   yPos = MARGINS.top;
 
-  yPos = addSectionTitle(doc, 'Analyse Détaillée', yPos);
+  yPos = addSectionTitle(doc, 'Analyse Detaillee', yPos);
 
-  // Répartition par note
+  // Repartition par note
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text('Répartition des avis par note', MARGINS.left, yPos);
+  doc.text('Repartition des avis par note', MARGINS.left, yPos);
   yPos += 10;
 
   const ratingCounts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
@@ -420,7 +378,7 @@ export function generatePdfReport(data: ReportData): void {
 
     doc.setTextColor(...COLORS.text);
     doc.setFontSize(10);
-    doc.text(`${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}`, MARGINS.left, yPos + 4);
+    doc.text(`Note ${rating}/5`, MARGINS.left, yPos + 4);
 
     doc.setFillColor(...COLORS.background);
     doc.roundedRect(MARGINS.left + 35, yPos, 100, 6, 1, 1, 'F');
@@ -439,12 +397,12 @@ export function generatePdfReport(data: ReportData): void {
 
   yPos += 10;
 
-  // Thèmes récurrents
+  // Themes recurrents
   if (data.themes && data.themes.length > 0) {
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...COLORS.text);
-    doc.text('Thèmes récurrents', MARGINS.left, yPos);
+    doc.text('Themes recurrents', MARGINS.left, yPos);
     yPos += 10;
 
     doc.setFontSize(10);
@@ -462,72 +420,31 @@ export function generatePdfReport(data: ReportData): void {
     });
   }
 
-  yPos += 15;
-
-  // Extraits d'avis représentatifs
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...COLORS.text);
-  doc.text('Extraits d\'avis représentatifs', MARGINS.left, yPos);
-  yPos += 10;
-
-  const representativeReviews = data.recentReviews
-    .filter((r) => r.text && r.text.length > 20)
-    .slice(0, 4);
-
-  doc.setFontSize(9);
-  representativeReviews.forEach((review) => {
-    if (yPos > PAGE_HEIGHT - 50) {
-      pageNumber = addNewPage(doc, pageNumber);
-      yPos = MARGINS.top;
-    }
-
-    doc.setFillColor(...COLORS.background);
-    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 25, 2, 2, 'F');
-
-    const stars = '★'.repeat(review.rating || 0) + '☆'.repeat(5 - (review.rating || 0));
-    const author = review.author || review.author_name || 'Anonyme';
-    doc.setTextColor(...COLORS.warning);
-    doc.text(stars, MARGINS.left + 3, yPos + 6);
-    doc.setTextColor(...COLORS.textLight);
-    doc.text(`- ${author}`, MARGINS.left + 30, yPos + 6);
-    doc.text(formatDate(review.published_at), MARGINS.left + CONTENT_WIDTH - 30, yPos + 6);
-
-    doc.setTextColor(...COLORS.text);
-    doc.setFont('helvetica', 'italic');
-    const reviewText = truncateText(review.text || '', 150);
-    const lines = doc.splitTextToSize(`"${reviewText}"`, CONTENT_WIDTH - 10);
-    doc.text(lines.slice(0, 2), MARGINS.left + 3, yPos + 14);
-    doc.setFont('helvetica', 'normal');
-
-    yPos += 30;
-  });
-
   addFooter(doc, pageNumber);
 
-  // ========== PAGE 5: CHECKLIST OPÉRATIONNELLE ==========
+  // ========== PAGE 5: CHECKLIST OPERATIONNELLE ==========
   pageNumber = addNewPage(doc, pageNumber);
   yPos = MARGINS.top;
 
-  yPos = addSectionTitle(doc, 'Checklist Opérationnelle', yPos, COLORS.success);
+  yPos = addSectionTitle(doc, 'Checklist Operationnelle', yPos, COLORS.success);
 
   // Sous-titre
   doc.setFontSize(11);
   doc.setFont('helvetica', 'italic');
   doc.setTextColor(...COLORS.textLight);
-  doc.text('Actions concrètes à mettre en place', MARGINS.left, yPos);
+  doc.text('Actions concretes a mettre en place', MARGINS.left, yPos);
   yPos += 15;
 
-  // Générer les actions basées sur les données
+  // Generer les actions basees sur les donnees
   const checklistItems: Array<{ category: string; action: string; priority: 'high' | 'medium' | 'low' }> = [];
 
-  // Action prioritaire liée au principal point négatif
+  // Action prioritaire liee au principal point negatif
   if (data.topIssues && data.topIssues.length > 0) {
     const mainIssue = data.topIssues[0];
-    const issueName = mainIssue.theme || mainIssue.issue || 'problème identifié';
+    const issueName = mainIssue.theme || mainIssue.issue || 'probleme identifie';
     checklistItems.push({
       category: 'Action prioritaire',
-      action: `Traiter en urgence : "${issueName}" - C'est le problème le plus mentionné par vos clients`,
+      action: `Traiter en urgence : "${issueName}" - C'est le probleme le plus mentionne par vos clients`,
       priority: 'high'
     });
   }
@@ -536,13 +453,13 @@ export function generatePdfReport(data: ReportData): void {
   if (data.avgRating < 4) {
     checklistItems.push({
       category: 'Court terme',
-      action: 'Former l\'équipe sur les points d\'amélioration identifiés dans ce rapport',
+      action: 'Former l\'equipe sur les points d\'amelioration identifies dans ce rapport',
       priority: 'medium'
     });
   } else {
     checklistItems.push({
       category: 'Court terme',
-      action: 'Maintenir la qualité actuelle et surveiller les nouveaux avis régulièrement',
+      action: 'Maintenir la qualite actuelle et surveiller les nouveaux avis regulierement',
       priority: 'medium'
     });
   }
@@ -550,7 +467,7 @@ export function generatePdfReport(data: ReportData): void {
   // Action gestion des avis
   checklistItems.push({
     category: 'Gestion des avis',
-    action: 'Répondre à tous les avis (positifs et négatifs) dans les 48h pour montrer votre engagement',
+    action: 'Repondre a tous les avis (positifs et negatifs) dans les 48h pour montrer votre engagement',
     priority: 'medium'
   });
 
@@ -560,31 +477,31 @@ export function generatePdfReport(data: ReportData): void {
     const strengthName = mainStrength.theme || mainStrength.strength || 'point fort';
     checklistItems.push({
       category: 'Valorisation',
-      action: `Mettre en avant "${strengthName}" dans votre communication (réseaux sociaux, site web, etc.)`,
+      action: `Mettre en avant "${strengthName}" dans votre communication (reseaux sociaux, site web, etc.)`,
       priority: 'low'
     });
   }
 
-  // Action suivi régulier
+  // Action suivi regulier
   checklistItems.push({
-    category: 'Suivi régulier',
-    action: 'Planifier une analyse mensuelle des nouveaux avis avec Reviewsvisor pour suivre l\'évolution',
+    category: 'Suivi regulier',
+    action: 'Planifier une analyse mensuelle des nouveaux avis avec Reviewsvisor pour suivre l\'evolution',
     priority: 'low'
   });
 
   // Dessiner la checklist
-  checklistItems.forEach((item, idx) => {
+  checklistItems.forEach((item) => {
     const priorityColor = item.priority === 'high' ? COLORS.danger : item.priority === 'medium' ? COLORS.warning : COLORS.success;
     
     doc.setFillColor(...COLORS.background);
     doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 25, 2, 2, 'F');
     
-    // Case à cocher
+    // Case a cocher
     doc.setDrawColor(...COLORS.textLight);
     doc.setLineWidth(0.5);
     doc.rect(MARGINS.left + 5, yPos + 5, 5, 5, 'S');
     
-    // Badge priorité
+    // Badge priorite
     doc.setFillColor(...priorityColor);
     doc.roundedRect(MARGINS.left + 15, yPos + 3, 35, 8, 1, 1, 'F');
     doc.setTextColor(...COLORS.white);
@@ -613,7 +530,7 @@ export function generatePdfReport(data: ReportData): void {
   doc.setTextColor(...COLORS.warning);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
-  doc.text('💡 Conseil', MARGINS.left + 5, yPos + 8);
+  doc.text('Conseil', MARGINS.left + 5, yPos + 8);
   
   doc.setTextColor(...COLORS.text);
   doc.setFontSize(9);
@@ -622,62 +539,31 @@ export function generatePdfReport(data: ReportData): void {
 
   addFooter(doc, pageNumber);
 
-  // ========== PAGE 6: DÉBRIEF STRATÉGIQUE IA ==========
+  // ========== PAGE 6: CONCLUSION STRATEGIQUE - ANALYSE IA ==========
   pageNumber = addNewPage(doc, pageNumber);
   yPos = MARGINS.top;
 
-  yPos = addSectionTitle(doc, 'Débrief Stratégique – Analyse IA', yPos, COLORS.primary);
+  yPos = addSectionTitle(doc, 'Conclusion strategique - Analyse IA', yPos, COLORS.primary);
 
-  // Génération du débrief basé sur les données
-  let aiDebrief = data.aiDebrief;
-  
-  if (!aiDebrief) {
-    // Générer un débrief automatique basé sur les données disponibles
-    const analyseParts: string[] = [];
-    
-    // Analyse globale
-    if (data.avgRating >= 4.5) {
-      analyseParts.push(`Analyse globale : Votre établissement "${data.establishmentName}" affiche une excellente performance avec une note moyenne de ${data.avgRating.toFixed(1)}/5. Sur ${data.totalReviews} avis analysés, ${Math.round(data.positiveRatio * 100)}% sont positifs, ce qui témoigne d'une satisfaction client remarquable.`);
-    } else if (data.avgRating >= 3.5) {
-      analyseParts.push(`Analyse globale : Votre établissement "${data.establishmentName}" présente une performance correcte avec une note de ${data.avgRating.toFixed(1)}/5. Les ${data.totalReviews} avis analysés montrent un potentiel d'amélioration significatif.`);
-    } else {
-      analyseParts.push(`Analyse globale : Votre établissement "${data.establishmentName}" traverse une période difficile avec une note de ${data.avgRating.toFixed(1)}/5. Une attention immédiate aux retours clients est nécessaire.`);
-    }
+  // Generation de la conclusion strategique detaillee
+  const strategicConclusion = generateStrategicConclusion(data);
 
-    // Priorités
-    if (data.topIssues && data.topIssues.length > 0) {
-      const issuesList = data.topIssues.slice(0, 2).map(i => i.theme || i.issue).join(' et ');
-      analyseParts.push(`\n\nPriorités absolues : Concentrez vos efforts sur ${issuesList}. Ces éléments sont les plus fréquemment cités négativement par vos clients et impactent directement votre note.`);
-    }
-
-    // Leviers d'amélioration
-    if (data.topStrengths && data.topStrengths.length > 0) {
-      const strengthsList = data.topStrengths.slice(0, 2).map(s => s.theme || s.strength).join(' et ');
-      analyseParts.push(`\n\nLeviers principaux : Vos points forts (${strengthsList}) constituent votre meilleur atout. Capitalisez dessus en les mettant en avant dans votre communication et en maintenant ce niveau de qualité.`);
-    }
-
-    // Conclusion encourageante
-    analyseParts.push(`\n\nConclusion : Chaque avis client est une opportunité d'amélioration. En restant à l'écoute de vos clients et en agissant sur les points identifiés, vous êtes sur la bonne voie pour améliorer durablement la satisfaction de votre clientèle. La clé du succès réside dans la constance et l'engagement quotidien de toute l'équipe.`);
-
-    aiDebrief = analyseParts.join('');
-  }
-
-  // Afficher le débrief
+  // Afficher la conclusion
   doc.setFillColor(...COLORS.background);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 180, 3, 3, 'F');
+  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 200, 3, 3, 'F');
 
   doc.setTextColor(...COLORS.text);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
 
-  const debriefLines = doc.splitTextToSize(aiDebrief, CONTENT_WIDTH - 15);
+  const conclusionLines = doc.splitTextToSize(strategicConclusion, CONTENT_WIDTH - 15);
   let currentY = yPos + 10;
   
-  debriefLines.forEach((line: string, idx: number) => {
-    if (currentY > yPos + 170) return; // Limiter à la zone disponible
+  conclusionLines.forEach((line: string) => {
+    if (currentY > yPos + 190) return;
     
     // Mettre en gras les titres de section
-    if (line.includes('Analyse globale') || line.includes('Priorités') || line.includes('Leviers') || line.includes('Conclusion')) {
+    if (line.includes('1. Resume') || line.includes('2. Coherence') || line.includes('3. Consequences') || line.includes('4. Opportunites') || line.includes('5. Vision')) {
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...COLORS.primary);
     } else {
@@ -686,22 +572,22 @@ export function generatePdfReport(data: ReportData): void {
     }
     
     doc.text(line, MARGINS.left + 7, currentY);
-    currentY += 6;
+    currentY += 5.5;
   });
 
   // Signature IA
-  yPos += 190;
+  yPos += 210;
   doc.setFillColor(...COLORS.primary);
   doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 20, 2, 2, 'F');
   doc.setTextColor(...COLORS.white);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'italic');
-  doc.text('Cette analyse a été générée automatiquement par l\'intelligence artificielle de Reviewsvisor', PAGE_WIDTH / 2, yPos + 8, { align: 'center' });
-  doc.text('basée sur l\'ensemble des avis clients de votre établissement.', PAGE_WIDTH / 2, yPos + 14, { align: 'center' });
+  doc.text('Cette analyse a ete generee automatiquement par l\'intelligence artificielle de Reviewsvisor', PAGE_WIDTH / 2, yPos + 8, { align: 'center' });
+  doc.text('basee sur l\'ensemble des avis clients de votre etablissement.', PAGE_WIDTH / 2, yPos + 14, { align: 'center' });
 
   addFooter(doc, pageNumber);
 
-  // Générer le nom du fichier
+  // Generer le nom du fichier
   const sanitizedName = data.establishmentName
     .replace(/[^a-zA-Z0-9àâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇ\s-]/g, '')
     .replace(/\s+/g, '_')
@@ -709,6 +595,78 @@ export function generatePdfReport(data: ReportData): void {
   const dateStr = new Date().toISOString().split('T')[0];
   const filename = `Rapport_Analyse_Avis_${sanitizedName}_${dateStr}.pdf`;
 
-  // Télécharger automatiquement
+  // Telecharger automatiquement
   doc.save(filename);
+}
+
+function generateStrategicConclusion(data: ReportData): string {
+  const parts: string[] = [];
+  
+  // 1. Resume global de la perception client
+  parts.push('1. Resume global de la perception client');
+  parts.push('');
+  if (data.avgRating >= 4.5) {
+    parts.push(`Votre etablissement "${data.establishmentName}" beneficie d'une excellente reputation aupres de vos clients. Avec une note moyenne de ${data.avgRating.toFixed(1)}/5 basee sur ${data.totalReviews} avis, vous vous situez dans la categorie des etablissements les mieux notes. ${Math.round(data.positiveRatio * 100)}% de vos clients expriment une satisfaction elevee, ce qui temoigne d'une experience client de qualite constante.`);
+  } else if (data.avgRating >= 3.5) {
+    parts.push(`Votre etablissement "${data.establishmentName}" presente une perception client globalement positive mais perfectible. Avec une note de ${data.avgRating.toFixed(1)}/5 sur ${data.totalReviews} avis et ${Math.round(data.positiveRatio * 100)}% d'avis positifs, vous disposez d'une base solide sur laquelle construire des ameliorations significatives.`);
+  } else {
+    parts.push(`Votre etablissement "${data.establishmentName}" fait face a des defis importants en matiere de satisfaction client. La note actuelle de ${data.avgRating.toFixed(1)}/5 sur ${data.totalReviews} avis indique des axes d'amelioration prioritaires a adresser rapidement pour redresser la perception client.`);
+  }
+  parts.push('');
+  
+  // 2. Analyse de la coherence entre points forts et points faibles
+  parts.push('2. Coherence entre points forts et points faibles');
+  parts.push('');
+  if (data.topStrengths && data.topStrengths.length > 0 && data.topIssues && data.topIssues.length > 0) {
+    const strengthsList = data.topStrengths.slice(0, 2).map(s => s.theme || s.strength).filter(Boolean).join(', ');
+    const issuesList = data.topIssues.slice(0, 2).map(i => i.theme || i.issue).filter(Boolean).join(', ');
+    parts.push(`L'analyse revele une dichotomie interessante : vos points forts (${strengthsList}) sont reconnus par vos clients, tandis que les axes d'amelioration (${issuesList}) constituent des freins a une satisfaction complete. Cette situation suggere un potentiel d'amelioration rapide si les problemes identifies sont traites de maniere ciblee.`);
+  } else if (data.topStrengths && data.topStrengths.length > 0) {
+    const strengthsList = data.topStrengths.slice(0, 2).map(s => s.theme || s.strength).filter(Boolean).join(', ');
+    parts.push(`Vos points forts (${strengthsList}) sont clairement identifies par vos clients. L'absence de problemes majeurs recurrents est un signal positif de maitrise operationnelle.`);
+  } else if (data.topIssues && data.topIssues.length > 0) {
+    const issuesList = data.topIssues.slice(0, 2).map(i => i.theme || i.issue).filter(Boolean).join(', ');
+    parts.push(`Les points d'amelioration identifies (${issuesList}) meritent une attention immediate. La resolution de ces problemes devrait avoir un impact direct et mesurable sur votre note globale.`);
+  }
+  parts.push('');
+  
+  // 3. Consequences potentielles si les points de friction ne sont pas traites
+  parts.push('3. Consequences potentielles si les points de friction ne sont pas traites');
+  parts.push('');
+  if (data.topIssues && data.topIssues.length > 0 && data.avgRating < 4.5) {
+    parts.push(`Sans action corrective sur les problemes identifies, plusieurs risques sont a anticiper : erosion progressive de la note moyenne, perte de competitivite face aux etablissements mieux notes, difficulte a attirer de nouveaux clients qui consultent les avis avant de choisir, et potentielle demotivation des equipes face aux retours negatifs recurrents. A moyen terme, ces facteurs peuvent impacter significativement le chiffre d'affaires.`);
+  } else {
+    parts.push(`Votre situation actuelle est favorable. Le risque principal reside dans la complaisance : le maintien de l'excellence requiert une vigilance constante et une capacite d'adaptation aux attentes evoluant de vos clients.`);
+  }
+  parts.push('');
+  
+  // 4. Opportunites concretes d'amelioration a court et moyen terme
+  parts.push('4. Opportunites d\'amelioration a court et moyen terme');
+  parts.push('');
+  const opportunities: string[] = [];
+  if (data.topIssues && data.topIssues.length > 0) {
+    const mainIssue = data.topIssues[0].theme || data.topIssues[0].issue;
+    opportunities.push(`Court terme : Concentrer les efforts sur "${mainIssue}" avec un plan d'action dedie`);
+  }
+  if (data.topStrengths && data.topStrengths.length > 0) {
+    const mainStrength = data.topStrengths[0].theme || data.topStrengths[0].strength;
+    opportunities.push(`Moyen terme : Capitaliser sur "${mainStrength}" en l'integrant dans votre communication et votre strategie de differenciation`);
+  }
+  opportunities.push('Formation continue des equipes sur les standards de qualite identifies');
+  opportunities.push('Mise en place d\'un processus de reponse systematique aux avis pour montrer l\'engagement');
+  parts.push(opportunities.join('. ') + '.');
+  parts.push('');
+  
+  // 5. Vision projetee de l'evolution
+  parts.push('5. Vision projetee si les actions recommandees sont mises en place');
+  parts.push('');
+  if (data.avgRating >= 4.5) {
+    parts.push(`En maintenant votre niveau d'excellence et en restant attentif aux nouvelles attentes, votre etablissement peut consolider sa position de leader sur votre marche. L'objectif est de transformer vos clients satisfaits en ambassadeurs actifs de votre marque.`);
+  } else if (data.avgRating >= 3.5) {
+    parts.push(`Avec une execution rigoureuse des actions recommandees, une amelioration de 0.3 a 0.5 point sur votre note moyenne est realiste dans les 3 a 6 prochains mois. Cela vous positionnerait favorablement face a la concurrence et devrait se traduire par une augmentation de la frequentation.`);
+  } else {
+    parts.push(`Un plan d'action structure sur les problemes prioritaires peut permettre un redressement significatif de votre note en 6 a 12 mois. L'objectif initial devrait etre d'atteindre une note superieure a 3.5/5, seuil a partir duquel la perception client change positivement.`);
+  }
+  
+  return parts.join('\n');
 }
