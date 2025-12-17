@@ -7,12 +7,13 @@ import { AnalyzeEstablishmentButton } from "@/components/AnalyzeEstablishmentBut
 import ImportAvisToolbar from "@/components/ImportAvisToolbar";
 import { ReviewsVisualPanel } from "@/components/ReviewsVisualPanel";
 
-import { Etab } from "@/types/etablissement";
+import { Etab, STORAGE_KEY, EVT_SAVED } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
 import { Building2, Home, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { useAuth } from "@/contexts/AuthProvider";
+import { toast } from "sonner";
 
 
 export default function EtablissementPage() {
@@ -136,23 +137,44 @@ export default function EtablissementPage() {
         const autocomplete = new g.maps.places.Autocomplete(input, {
           types: ['establishment'],
           componentRestrictions: { country: 'fr' },
-          fields: [
-            'place_id',
-            'name',
-            'formatted_address',
-            'formatted_phone_number',
-            'website',
-            'rating',
-            'url',
-            'geometry'
-          ]
+          fields: ['place_id'] // Only get place_id from autocomplete
         });
 
-        autocomplete.addListener('place_changed', () => {
-          const place = autocomplete.getPlace();
-          if (!place || !place.place_id) return;
-          console.log('✅ Établissement sélectionné:', place.name);
-          setSelected(serializePlace(place));
+        autocomplete.addListener('place_changed', async () => {
+          const autocompletePlace = autocomplete.getPlace();
+          if (!autocompletePlace || !autocompletePlace.place_id) return;
+          
+          console.log('🔍 Place sélectionnée, récupération des détails via Places Details API...');
+          
+          try {
+            // Appel explicite à Places Details (New) avec tous les champs
+            const placeDetails = await fetchPlaceDetails(autocompletePlace.place_id);
+            
+            console.log('✅ Détails récupérés:', {
+              name: placeDetails.name,
+              formatted_address: placeDetails.formatted_address,
+              formatted_phone_number: placeDetails.formatted_phone_number,
+              website: placeDetails.website,
+              rating: placeDetails.rating,
+              url: placeDetails.url
+            });
+            
+            // Sérialiser les détails complets
+            const etab = serializePlace(placeDetails);
+            
+            // Mettre à jour l'état local
+            setSelected(etab);
+            
+            // Sauvegarder dans localStorage et déclencher le rafraîchissement de la carte
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(etab));
+            window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));
+            
+            toast.success(`${etab.name} sélectionné`);
+            
+          } catch (error: any) {
+            console.error('❌ Erreur lors de la récupération des détails:', error);
+            toast.error(error?.message || 'Impossible de récupérer les détails de l\'établissement');
+          }
         });
         
         console.log('✅ Autocomplete initialisé avec succès');
