@@ -37,6 +37,7 @@ const Dashboard = () => {
   const [showAvisPositifs, setShowAvisPositifs] = useState(false);
   const [showAvisNegatifs, setShowAvisNegatifs] = useState(false);
   const [showThematiques, setShowThematiques] = useState(false);
+  const [showAnalyseDetaillee, setShowAnalyseDetaillee] = useState(false);
   const [showReponseAuto, setShowReponseAuto] = useState(false);
   const [showParetoChart, setShowParetoChart] = useState(false);
   const [showParetoPoints, setShowParetoPoints] = useState(false);
@@ -1328,6 +1329,98 @@ const Dashboard = () => {
                 )}
               </div>
             </CardContent>}
+        </Card>
+
+        {/* Analyse détaillée */}
+        <Card className="relative mt-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-purple-600" />
+                <CardTitle className="text-lg">Analyse détaillée</CardTitle>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowAnalyseDetaillee(!showAnalyseDetaillee)} className="h-6 w-6 p-0 hover:bg-purple-50">
+                {showAnalyseDetaillee ? <ChevronUp className="w-3 h-3 text-purple-600" /> : <ChevronDown className="w-3 h-3 text-purple-600" />}
+              </Button>
+            </div>
+            <p className="text-sm text-gray-500">Détails complets des notes et thématiques</p>
+          </CardHeader>
+          {showAnalyseDetaillee && <CardContent>
+            <div className="space-y-6">
+              {/* Répartition des avis par note */}
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-3">Répartition des avis par note</h4>
+                <div className="space-y-2">
+                  {[5, 4, 3, 2, 1].map((rating) => {
+                    const count = allReviewsForChart.filter(r => r.rating === rating).length;
+                    const percentage = allReviewsForChart.length > 0 ? (count / allReviewsForChart.length) * 100 : 0;
+                    return (
+                      <div key={rating} className="flex items-center gap-3">
+                        <span className="w-16 text-sm font-medium text-gray-600">{rating} étoile{rating > 1 ? 's' : ''}</span>
+                        <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full ${rating >= 4 ? 'bg-green-500' : rating === 3 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <span className="w-16 text-sm text-gray-600 text-right">{count} ({percentage.toFixed(1)}%)</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Thématiques récurrentes */}
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-3">Thématiques récurrentes</h4>
+                {insight?.themes && insight.themes.length > 0 ? (
+                  <div className="space-y-2">
+                    {insight.themes.map((theme: any, index: number) => {
+                      const themeCount = theme.count || 0;
+                      const percentage = totalAnalyzed > 0 ? (themeCount / totalAnalyzed) * 100 : 0;
+                      return (
+                        <div key={index} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                          <span className="font-medium text-gray-700">{theme.theme}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-500">{themeCount} mention{themeCount > 1 ? 's' : ''}</span>
+                            <Badge variant="outline" className="text-purple-600 border-purple-600">{percentage.toFixed(1)}%</Badge>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    <p className="text-sm">Aucune thématique identifiée</p>
+                    <p className="text-xs mt-1">Analysez votre établissement pour voir les thématiques</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Indicateurs clés */}
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-3">Indicateurs clés</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-3 bg-blue-50 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-blue-600">{avgRating.toFixed(1)}</p>
+                    <p className="text-xs text-gray-600">Note moyenne</p>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-green-600">{positivePct}%</p>
+                    <p className="text-xs text-gray-600">Avis positifs</p>
+                  </div>
+                  <div className="p-3 bg-red-50 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-red-600">{negativePct}%</p>
+                    <p className="text-xs text-gray-600">Avis négatifs</p>
+                  </div>
+                  <div className="p-3 bg-purple-50 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-purple-600">{totalReviews}</p>
+                    <p className="text-xs text-gray-600">Total avis</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>}
         </Card>
 
         {/* Réponse automatique */}
