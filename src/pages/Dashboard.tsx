@@ -1332,7 +1332,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Analyse détaillée */}
-        <Card className="relative mb-8">
+        <Card className="relative mt-10 mb-8">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
