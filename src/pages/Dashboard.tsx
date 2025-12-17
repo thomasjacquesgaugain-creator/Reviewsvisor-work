@@ -69,11 +69,11 @@ const Dashboard = () => {
       setSelectedEtab({
         place_id: selectedEstablishment.place_id,
         name: selectedEstablishment.name,
-        address: selectedEstablishment.formatted_address || "",
+        formatted_address: selectedEstablishment.formatted_address || "",
         lat: selectedEstablishment.lat ?? null,
         lng: selectedEstablishment.lng ?? null,
         website: selectedEstablishment.website,
-        phone: selectedEstablishment.phone,
+        formatted_phone_number: selectedEstablishment.phone,
         rating: selectedEstablishment.rating ?? null
       });
     }
@@ -558,7 +558,7 @@ const Dashboard = () => {
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="font-medium text-gray-900 truncate">{etab.name}</div>
-                                    <div className="text-sm text-gray-500 truncate">{etab.address}</div>
+                                    <div className="text-sm text-gray-500 truncate">{etab.formatted_address}</div>
                                   </div>
                                 </div>
                               </Button>)}
@@ -568,7 +568,7 @@ const Dashboard = () => {
                   </div>
                   <div className="flex-1">
                     <div className="font-medium text-gray-900">{selectedEtab.name}</div>
-                    <div className="text-sm text-gray-500">{selectedEtab.address}</div>
+                    <div className="text-sm text-gray-500">{selectedEtab.formatted_address}</div>
                   </div>
                 </div>
                 
@@ -596,7 +596,7 @@ const Dashboard = () => {
                         const result = await runAnalyze({
                           place_id: selectedEtab.place_id,
                           name: selectedEtab.name,
-                          address: selectedEtab.address
+                          address: selectedEtab.formatted_address
                         });
                         
                         if (result.ok) {
@@ -1620,7 +1620,7 @@ const Dashboard = () => {
                               },
                               establishment: {
                                 name: selectedEtab?.name || selectedEstablishment?.name || 'votre établissement',
-                                formatted_address: selectedEtab?.address || selectedEstablishment?.formatted_address || '',
+                                formatted_address: selectedEtab?.formatted_address || selectedEstablishment?.formatted_address || '',
                                 category: 'restaurant',
                                 city: '',
                               },

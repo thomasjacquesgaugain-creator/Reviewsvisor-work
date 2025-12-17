@@ -103,18 +103,18 @@ export default function EtablissementPage() {
     });
   }
 
-  // Fonction pour sérialiser un lieu Google Places
+  // Fonction pour sérialiser un lieu Google Places (clés anglaises)
   function serializePlace(place: any): Etab {
     return {
       place_id: place.place_id || "",
       name: place.name || "",
-      address: place.formatted_address || "",
-      lat: place.geometry?.location?.lat() ?? null,
-      lng: place.geometry?.location?.lng() ?? null,
+      formatted_address: place.formatted_address || "",
+      formatted_phone_number: place.formatted_phone_number || "",
       website: place.website || "",
-      phone: place.formatted_phone_number || "",
       url: place.url || "",
       rating: place.rating ?? null,
+      lat: place.geometry?.location?.lat?.() ?? null,
+      lng: place.geometry?.location?.lng?.() ?? null,
     };
   }
 
@@ -291,7 +291,7 @@ export default function EtablissementPage() {
                 <AnalyzeEstablishmentButton
                   place_id={selected.place_id}
                   name={selected.name}
-                  address={selected.address}
+                  address={selected.formatted_address}
                 />
               </div>
             )}
