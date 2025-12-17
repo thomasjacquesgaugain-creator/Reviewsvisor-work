@@ -67,7 +67,7 @@ export default function EtablissementPage() {
     }
   }
 
-  // Fonction pour récupérer les détails d'un lieu
+  // Fonction pour récupérer les détails d'un lieu via Places Details (New)
   async function fetchPlaceDetails(placeId: string): Promise<any> {
     await loadGooglePlaces();
     const g = (window as any).google;
@@ -81,9 +81,10 @@ export default function EtablissementPage() {
             'place_id',
             'name',
             'formatted_address',
-            'international_phone_number',
+            'formatted_phone_number',
             'website',
             'rating',
+            'url',
             'geometry'
           ]
         },
@@ -110,7 +111,8 @@ export default function EtablissementPage() {
       lat: place.geometry?.location?.lat() ?? null,
       lng: place.geometry?.location?.lng() ?? null,
       website: place.website || "",
-      phone: place.international_phone_number || "",
+      phone: place.formatted_phone_number || "",
+      url: place.url || "",
       rating: place.rating ?? null,
     };
   }
@@ -138,9 +140,10 @@ export default function EtablissementPage() {
             'place_id',
             'name',
             'formatted_address',
-            'international_phone_number',
+            'formatted_phone_number',
             'website',
             'rating',
+            'url',
             'geometry'
           ]
         });

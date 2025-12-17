@@ -22,6 +22,7 @@ interface PlaceResult {
   phone?: string;
   rating?: number;
   user_ratings_total?: number;
+  url?: string;
   source?: string;
 }
 
@@ -203,10 +204,11 @@ export default function GooglePlaceAutocomplete({
           'name', 
           'formatted_address',
           'geometry.location',
-          'international_phone_number',
+          'formatted_phone_number',
           'website',
           'rating',
-          'user_ratings_total'
+          'user_ratings_total',
+          'url'
         ],
         sessionToken: sessionToken
       };
@@ -222,9 +224,10 @@ export default function GooglePlaceAutocomplete({
               lng: place.geometry.location.lng()
             },
             website: place.website,
-            phone: place.international_phone_number,
+            phone: place.formatted_phone_number,
             rating: place.rating,
             user_ratings_total: place.user_ratings_total,
+            url: place.url,
             source: 'google-places'
           };
 
@@ -287,10 +290,11 @@ export default function GooglePlaceAutocomplete({
           'name', 
           'formatted_address',
           'geometry.location',
-          'international_phone_number',
+          'formatted_phone_number',
           'website',
           'rating',
-          'user_ratings_total'
+          'user_ratings_total',
+          'url'
         ],
         sessionToken: sessionToken
       };
