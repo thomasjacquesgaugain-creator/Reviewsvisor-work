@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar, Download } from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar, Download, ClipboardList } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +38,7 @@ const Dashboard = () => {
   const [showAvisNegatifs, setShowAvisNegatifs] = useState(false);
   const [showThematiques, setShowThematiques] = useState(false);
   const [showAnalyseDetaillee, setShowAnalyseDetaillee] = useState(false);
+  const [showChecklist, setShowChecklist] = useState(false);
   const [showReponseAuto, setShowReponseAuto] = useState(false);
   const [showParetoChart, setShowParetoChart] = useState(false);
   const [showParetoPoints, setShowParetoPoints] = useState(false);
@@ -1195,6 +1196,139 @@ const Dashboard = () => {
               )}
             </div>
           </CardContent>
+        </Card>
+
+        {/* Checklist opérationnelle */}
+        <Card className="relative mb-8">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ClipboardList className="w-5 h-5 text-emerald-600" />
+                <CardTitle className="text-lg">Checklist opérationnelle</CardTitle>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowChecklist(!showChecklist)} className="h-6 w-6 p-0 hover:bg-emerald-50">
+                {showChecklist ? <ChevronUp className="w-3 h-3 text-emerald-600" /> : <ChevronDown className="w-3 h-3 text-emerald-600" />}
+              </Button>
+            </div>
+            <p className="text-sm text-gray-500">Actions concrètes et priorisées à mettre en place</p>
+          </CardHeader>
+          {showChecklist && <CardContent>
+            <div className="space-y-8">
+              {/* Section 1 - Checklist opérationnelle */}
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-4">Checklist opérationnelle</h4>
+                <div className="space-y-3">
+                  {/* Action prioritaire */}
+                  <div className="p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className="bg-red-500 text-white text-xs">Action prioritaire</Badge>
+                    </div>
+                    <p className="text-sm text-gray-700">
+                      {topIssues.length > 0 
+                        ? `Corriger le principal point de friction : ${topIssues[0]?.theme || topIssues[0]?.issue || 'Non identifié'}`
+                        : 'Analyser les avis pour identifier les points de friction prioritaires'}
+                    </p>
+                  </div>
+                  
+                  {/* Court terme */}
+                  <div className="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className="bg-yellow-500 text-white text-xs">Court terme</Badge>
+                    </div>
+                    <ul className="space-y-2">
+                      <li className="text-sm text-gray-700 flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                        Former l'équipe sur les points d'amélioration identifiés
+                      </li>
+                      <li className="text-sm text-gray-700 flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                        {topStrengths.length > 0 
+                          ? `Valoriser les points forts : ${topStrengths[0]?.theme || topStrengths[0]?.strength || 'Non identifié'}`
+                          : 'Identifier et valoriser les points forts existants'}
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  {/* Gestion des avis */}
+                  <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className="bg-blue-500 text-white text-xs">Gestion des avis</Badge>
+                    </div>
+                    <ul className="space-y-2">
+                      <li className="text-sm text-gray-700 flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        Répondre systématiquement aux avis clients (positifs et négatifs)
+                      </li>
+                      <li className="text-sm text-gray-700 flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        Mettre en place un suivi régulier de la satisfaction client
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Séparateur visuel */}
+              <div className="border-t border-gray-200"></div>
+
+              {/* Section 2 - Priorisation des actions */}
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-4">Priorisation des actions – Impact vs Effort</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Action</th>
+                        <th className="text-center py-3 px-4 font-semibold text-gray-700">Impact</th>
+                        <th className="text-center py-3 px-4 font-semibold text-gray-700">Effort</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-gray-100">
+                        <td className="py-3 px-4 text-gray-700">Corriger le principal point de friction identifié</td>
+                        <td className="py-3 px-4 text-center">
+                          <Badge className="bg-red-100 text-red-700 border-red-200">Élevé</Badge>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Moyen</Badge>
+                        </td>
+                      </tr>
+                      <tr className="border-b border-gray-100">
+                        <td className="py-3 px-4 text-gray-700">Former l'équipe sur les points d'amélioration</td>
+                        <td className="py-3 px-4 text-center">
+                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Moyen</Badge>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <Badge className="bg-green-100 text-green-700 border-green-200">Faible</Badge>
+                        </td>
+                      </tr>
+                      <tr className="border-b border-gray-100">
+                        <td className="py-3 px-4 text-gray-700">Répondre systématiquement aux avis clients</td>
+                        <td className="py-3 px-4 text-center">
+                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Moyen</Badge>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <Badge className="bg-green-100 text-green-700 border-green-200">Faible</Badge>
+                        </td>
+                      </tr>
+                      <tr className="border-b border-gray-100">
+                        <td className="py-3 px-4 text-gray-700">Valoriser les points forts identifiés</td>
+                        <td className="py-3 px-4 text-center">
+                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Moyen</Badge>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <Badge className="bg-green-100 text-green-700 border-green-200">Faible</Badge>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-sm text-gray-500 mt-4 italic">
+                  Il est recommandé de commencer par les actions à fort impact et faible effort afin d'obtenir des résultats rapides et mesurables.
+                </p>
+              </div>
+            </div>
+          </CardContent>}
         </Card>
 
         {/* Analyse par thématiques */}
