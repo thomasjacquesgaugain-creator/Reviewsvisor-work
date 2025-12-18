@@ -338,14 +338,52 @@ const Dashboard = () => {
 
           <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
-              <CardContent className="p-0 space-y-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <Target className="w-6 h-6 text-purple-600" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900">Performance globale</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  Détection automatique des thématiques, sentiments et mentions fréquentes dans vos avis
-                </p>
+              <CardContent className="p-0 h-full flex items-center justify-center">
+                {(() => {
+                  const positiveRatio = allReviews.length > 0 
+                    ? allReviews.filter(r => r.rating >= 4).length / allReviews.length 
+                    : 0;
+                  
+                  let level: 'excellent' | 'bon' | 'surveiller' = 'bon';
+                  let badgeColor = 'bg-green-500';
+                  let badgeBorder = 'border-green-300';
+                  let badgeBg = 'bg-gradient-to-r from-green-50 to-green-100';
+                  
+                  if (avgRating >= 4.5 && positiveRatio >= 0.8) {
+                    level = 'excellent';
+                    badgeColor = 'bg-emerald-500';
+                    badgeBorder = 'border-emerald-300';
+                    badgeBg = 'bg-gradient-to-r from-emerald-50 to-emerald-100';
+                  } else if (avgRating >= 3.5 && positiveRatio >= 0.6) {
+                    level = 'bon';
+                    badgeColor = 'bg-green-500';
+                    badgeBorder = 'border-green-300';
+                    badgeBg = 'bg-gradient-to-r from-green-50 to-green-100';
+                  } else {
+                    level = 'surveiller';
+                    badgeColor = 'bg-orange-500';
+                    badgeBorder = 'border-orange-300';
+                    badgeBg = 'bg-gradient-to-r from-orange-50 to-orange-100';
+                  }
+                  
+                  const levelLabels = {
+                    excellent: 'Excellent',
+                    bon: 'Bon',
+                    surveiller: 'À surveiller'
+                  };
+                  
+                  return (
+                    <div className={`inline-flex items-center gap-3 px-5 py-3 rounded-2xl ${badgeBg} border ${badgeBorder}`}>
+                      <div className={`w-10 h-10 ${badgeColor} rounded-full flex items-center justify-center border-2 ${badgeBorder} shadow-lg`}>
+                        <Target className="w-5 h-5 text-white" />
+                      </div>
+                      <p className="text-lg font-bold text-gray-900 flex items-center gap-1">
+                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                        {levelLabels[level]}
+                      </p>
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
