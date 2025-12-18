@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, CheckCircle, ArrowDownRight, Minus } from "lucide-react";
+import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, CheckCircle, ArrowDownRight, Minus, Award } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -336,7 +336,74 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-          {/* Feature cards */}
+            {/* Performance globale card */}
+            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-6">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-2 mb-6">
+                  <Award className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-xl font-bold text-gray-900">Performance globale</h3>
+                </div>
+                
+                <div className="flex flex-col items-center text-center space-y-4">
+                  {(() => {
+                    // Compute performance level
+                    const positiveRatio = allReviews.length > 0 
+                      ? allReviews.filter(r => r.rating >= 4).length / allReviews.length 
+                      : 0;
+                    const hasPositiveEvolution = ratingEvolution?.status === 'increase';
+                    
+                    let level: 'excellent' | 'bon' | 'surveiller' = 'bon';
+                    let badgeColor = 'bg-green-500';
+                    let badgeBorder = 'border-green-300';
+                    let badgeBg = 'bg-gradient-to-r from-green-50 to-green-100';
+                    
+                    if (avgRating >= 4.5 && positiveRatio >= 0.8) {
+                      level = 'excellent';
+                      badgeColor = 'bg-emerald-500';
+                      badgeBorder = 'border-emerald-300';
+                      badgeBg = 'bg-gradient-to-r from-emerald-50 to-emerald-100';
+                    } else if (avgRating >= 3.5 && positiveRatio >= 0.6) {
+                      level = 'bon';
+                      badgeColor = 'bg-green-500';
+                      badgeBorder = 'border-green-300';
+                      badgeBg = 'bg-gradient-to-r from-green-50 to-green-100';
+                    } else {
+                      level = 'surveiller';
+                      badgeColor = 'bg-orange-500';
+                      badgeBorder = 'border-orange-300';
+                      badgeBg = 'bg-gradient-to-r from-orange-50 to-orange-100';
+                    }
+                    
+                    const levelLabels = {
+                      excellent: 'Excellent',
+                      bon: 'Bon',
+                      surveiller: 'À surveiller'
+                    };
+                    
+                    return (
+                      <>
+                        <div className={`inline-flex items-center gap-3 px-6 py-4 rounded-2xl ${badgeBg} border ${badgeBorder}`}>
+                          <div className={`w-14 h-14 ${badgeColor} rounded-full flex items-center justify-center border-2 ${badgeBorder} shadow-lg`}>
+                            <Award className="w-7 h-7 text-white" />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm text-gray-600 font-medium">Performance globale</p>
+                            <p className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                              <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                              {levelLabels[level]}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-500 max-w-md">
+                          Basé sur la note moyenne ({avgRating.toFixed(1)}/5), la proportion d'avis positifs ({Math.round(positiveRatio * 100)}%) et l'évolution récente.
+                        </p>
+                      </>
+                    );
+                  })()}
+                </div>
+              </CardContent>
+            </Card>
+
           <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
