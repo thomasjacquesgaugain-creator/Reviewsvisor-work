@@ -189,7 +189,7 @@ const Dashboard = () => {
 
       <div className="relative z-10">
         {/* Main content */}
-        <div className="container mx-auto px-4 py-16">
+        <div className="container mx-auto px-4 pt-6 pb-16">
           {/* Header */}
           <div className="text-center space-y-4 mb-12">
             <h1 className="text-5xl font-bold text-gray-900">
