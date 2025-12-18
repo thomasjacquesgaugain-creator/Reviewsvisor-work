@@ -342,7 +342,7 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
                   <Target className="w-6 h-6 text-purple-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Analyse IA avancée</h3>
+                <h3 className="text-xl font-bold text-gray-900">Performance globale</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Détection automatique des thématiques, sentiments et mentions fréquentes dans vos avis
                 </p>
@@ -355,7 +355,7 @@ const Dashboard = () => {
                     <span className="text-white text-xs font-bold">!</span>
                   </div>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Problèmes prioritaires</h3>
+                <h3 className="text-xl font-bold text-gray-900">Indice de satisfaction</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Identification des 3 problèmes les plus critiques à résoudre en priorité.
                 </p>
@@ -367,7 +367,7 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Score de satisfaction</h3>
+                <h3 className="text-xl font-bold text-gray-900">Valeur ressentie</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Calcul automatique de votre score moyen basé sur l'analyse des sentiments.
                 </p>
@@ -379,7 +379,7 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                   <Clock className="w-6 h-6 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Gain de temps</h3>
+                <h3 className="text-xl font-bold text-gray-900">Expérience délivrée</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Résumé express et recommandations personnalisées en quelques clics.
                 </p>
