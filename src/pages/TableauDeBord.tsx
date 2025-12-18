@@ -189,17 +189,7 @@ const Dashboard = () => {
 
       <div className="relative z-10">
         {/* Main content */}
-        <div className="container mx-auto px-4 pt-6 pb-16">
-          {/* Header */}
-          <div className="text-center space-y-4 mb-12">
-            <h1 className="text-5xl font-bold text-gray-900">
-              <span className="text-blue-600" translate="no">Reviewsvisor</span>
-            </h1>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Analysez automatiquement vos avis clients pour identifier les problèmes prioritaires et améliorer la satisfaction de votre établissement.
-            </p>
-          </div>
-
+        <div className="container mx-auto px-4 pt-4 pb-16">
           {/* Welcome card */}
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-16">
             <CardContent className="p-8 text-center space-y-6">
