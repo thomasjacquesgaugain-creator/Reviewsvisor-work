@@ -191,7 +191,7 @@ const Dashboard = () => {
         {/* Main content */}
         <div className="container mx-auto px-4 pt-8 pb-16">
           {/* Welcome card */}
-          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-16">
+          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-6">
             <CardContent className="p-8 text-center space-y-6">
               <h2 className="text-2xl font-bold text-gray-900">Bienvenue, {displayName} !</h2>
               <p className="text-gray-600">
