@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { parsePastedReviews, ParsedReview } from "@/utils/parsePastedReviews";
-import { Loader2, Info, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { bulkCreateReviews, ReviewCreate } from "@/services/reviewsService";
 import { useToast } from "@/hooks/use-toast";
@@ -162,35 +162,17 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
     });
   }, [parsedReviews]);
 
-  const [showInstructions, setShowInstructions] = useState(false);
-
   return (
-    <div data-testid="paste-import-panel" className="space-y-6 relative z-40 pointer-events-auto">
-      {/* Instructions - Collapsible block */}
-      <div className="border border-border rounded-lg overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setShowInstructions(!showInstructions)}
-          className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Info className="w-4 h-4 text-blue-500" />
-            <span className="text-sm font-medium text-foreground">Instructions</span>
-          </div>
-          <div className="transition-transform duration-200" style={{ transform: showInstructions ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-          </div>
-        </button>
-        <div
-          className="overflow-hidden transition-all duration-200 ease-out"
-          style={{
-            maxHeight: showInstructions ? '200px' : '0px',
-            opacity: showInstructions ? 1 : 0,
-          }}
-        >
-          <div className="px-4 py-3 text-sm text-muted-foreground border-t border-border">
-            {/* Contenu vide pour le moment */}
-          </div>
+    <div data-testid="paste-import-panel" className="space-y-4 relative z-40 pointer-events-auto">
+      {/* Instructions header - static, not collapsible */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Info className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Instructions</span>
+        </div>
+        <div className="text-sm text-muted-foreground pl-6">
+          <p>Dans Google Maps, ouvrez « Tous les avis », cliquez sur « Plus » pour dérouler le texte complet, puis copiez/collez ici.</p>
+          <p className="text-xs mt-1 opacity-80">Fonctionne aussi avec les avis Tripadvisor copiés depuis la page web.</p>
         </div>
       </div>
 
