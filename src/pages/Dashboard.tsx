@@ -39,6 +39,7 @@ const Dashboard = () => {
   const [showThematiques, setShowThematiques] = useState(false);
   const [showAnalyseDetaillee, setShowAnalyseDetaillee] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
+  const [showRecommandations, setShowRecommandations] = useState(true);
   const [showReponseAuto, setShowReponseAuto] = useState(false);
   const [showParetoChart, setShowParetoChart] = useState(false);
   const [showParetoPoints, setShowParetoPoints] = useState(false);
@@ -1171,15 +1172,20 @@ const Dashboard = () => {
           </Card>}
 
         {/* Recommandations */}
-        <Card className="mb-8">
+        <Card className="relative mb-8">
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <Lightbulb className="w-5 h-5 text-blue-500" />
-              <CardTitle className="text-lg">Recommandations actionnables</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-blue-500" />
+                <CardTitle className="text-lg">Recommandations actionnables</CardTitle>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowRecommandations(!showRecommandations)} className="h-6 w-6 p-0 hover:bg-blue-50">
+                {showRecommandations ? <ChevronUp className="w-3 h-3 text-blue-500" /> : <ChevronDown className="w-3 h-3 text-blue-500" />}
+              </Button>
             </div>
             <p className="text-sm text-gray-500">Actions concrètes à mettre en place</p>
           </CardHeader>
-          <CardContent>
+          {showRecommandations && <CardContent>
             <div className="space-y-3">
               {insight?.summary?.recommendations && insight.summary.recommendations.length > 0 ? (
                 insight.summary.recommendations.map((recommendation: string, index: number) => (
@@ -1195,7 +1201,7 @@ const Dashboard = () => {
                 </div>
               )}
             </div>
-          </CardContent>
+          </CardContent>}
         </Card>
 
         {/* Checklist opérationnelle */}
