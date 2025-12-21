@@ -338,11 +338,20 @@ const Dashboard = () => {
 
           <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
-              <CardContent className="p-0 h-full flex items-center justify-center">
-                <div className="flex items-center gap-2 px-4 py-2 bg-emerald-100 rounded-full shadow-sm">
-                  <span className="text-lg">⭐</span>
-                  <span className="text-emerald-700 font-semibold text-sm">Bon</span>
+              <CardContent className="p-0 flex flex-col items-center text-center space-y-4">
+                <h3 className="text-xl font-bold text-gray-900">Performance globale</h3>
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+                    <span className="text-white text-2xl">✓</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-emerald-100 rounded-full">
+                    <span className="text-lg">⭐</span>
+                    <span className="text-emerald-700 font-semibold">Bon</span>
+                  </div>
                 </div>
+                <p className="text-gray-500 text-xs leading-relaxed">
+                  Basé sur la note moyenne, la proportion d'avis positifs et l'évolution récente.
+                </p>
               </CardContent>
             </Card>
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
