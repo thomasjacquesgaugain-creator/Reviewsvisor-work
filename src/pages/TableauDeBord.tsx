@@ -361,11 +361,18 @@ const Dashboard = () => {
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">!</span>
-                  </div>
+                  <Star className="w-6 h-6 text-blue-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900">Indice de satisfaction</h3>
+                
+                {/* Badge central */}
+                <div className="flex justify-center">
+                  <div className="inline-flex items-center gap-2 bg-blue-500 rounded-full px-5 py-3 shadow-md">
+                    <Star className="w-5 h-5 text-white" />
+                    <span className="text-white font-semibold text-base">78%</span>
+                  </div>
+                </div>
+                
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Identification des 3 problèmes les plus critiques à résoudre en priorité.
                 </p>
@@ -374,10 +381,19 @@ const Dashboard = () => {
 
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-amber-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900">Valeur ressentie</h3>
+                
+                {/* Badge central */}
+                <div className="flex justify-center">
+                  <div className="inline-flex items-center gap-2 bg-amber-500 rounded-full px-5 py-3 shadow-md">
+                    <TrendingUp className="w-5 h-5 text-white" />
+                    <span className="text-white font-semibold text-base">Élevée</span>
+                  </div>
+                </div>
+                
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Calcul automatique de votre score moyen basé sur l'analyse des sentiments.
                 </p>
@@ -386,10 +402,19 @@ const Dashboard = () => {
 
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-violet-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900">Expérience délivrée</h3>
+                
+                {/* Badge central */}
+                <div className="flex justify-center">
+                  <div className="inline-flex items-center gap-2 bg-violet-500 rounded-full px-5 py-3 shadow-md">
+                    <Clock className="w-5 h-5 text-white" />
+                    <span className="text-white font-semibold text-base">Fluide</span>
+                  </div>
+                </div>
+                
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Résumé express et recommandations personnalisées en quelques clics.
                 </p>
