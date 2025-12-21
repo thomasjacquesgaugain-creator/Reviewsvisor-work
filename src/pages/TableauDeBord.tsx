@@ -337,21 +337,20 @@ const Dashboard = () => {
             </Card>
 
           <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
-              <CardContent className="p-0 flex flex-col items-center text-center space-y-4">
-                <h3 className="text-xl font-bold text-gray-900">Performance globale</h3>
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg">
-                    <span className="text-white text-2xl">✓</span>
-                  </div>
-                  <div className="flex items-center gap-2 px-4 py-2 bg-emerald-100 rounded-full">
-                    <span className="text-lg">⭐</span>
-                    <span className="text-emerald-700 font-semibold">Bon</span>
+            <Card className="bg-emerald-50/80 backdrop-blur-sm border border-emerald-200 shadow-lg rounded-2xl p-5">
+              <CardContent className="p-0 flex items-center gap-4">
+                <div className="w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
+                  <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C13.1 2 14 2.9 14 4C14 4.74 13.6 5.39 13 5.73V7H14C15.1 7 16 7.9 16 9V10H17C18.1 10 19 10.9 19 12V20C19 21.1 18.1 22 17 22H7C5.9 22 5 21.1 5 20V12C5 10.9 5.9 10 7 10H8V9C8 7.9 8.9 7 10 7H11V5.73C10.4 5.39 10 4.74 10 4C10 2.9 10.9 2 12 2ZM12 4C11.45 4 11 4.45 11 5C11 5.55 11.45 6 12 6C12.55 6 13 5.55 13 5C13 4.45 12.55 4 12 4ZM7 12V20H17V12H7ZM10 9V10H14V9H10ZM12 14C13.1 14 14 14.9 14 16C14 17.1 13.1 18 12 18C10.9 18 10 17.1 10 16C10 14.9 10.9 14 12 14Z"/>
+                  </svg>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-gray-800 font-semibold text-base">Performance globale</span>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="text-amber-400 text-lg">★</span>
+                    <span className="text-gray-900 font-bold text-lg">Bon</span>
                   </div>
                 </div>
-                <p className="text-gray-500 text-xs leading-relaxed">
-                  Basé sur la note moyenne, la proportion d'avis positifs et l'évolution récente.
-                </p>
               </CardContent>
             </Card>
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
