@@ -3,7 +3,7 @@ import { Upload, File, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import InstructionsHeader from "./InstructionsHeader";
+import CollapsibleInstructionsHeader from "./CollapsibleInstructionsHeader";
 
 import { bulkCreateReviews } from "@/services/reviewsService";
 import { runAnalyze } from "@/lib/runAnalyze";
@@ -310,7 +310,9 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
 
   return (
     <div className="space-y-4">
-      <InstructionsHeader />
+      <CollapsibleInstructionsHeader>
+        {/* Contenu vide pour le moment */}
+      </CollapsibleInstructionsHeader>
       
       <div
         className={cn(
