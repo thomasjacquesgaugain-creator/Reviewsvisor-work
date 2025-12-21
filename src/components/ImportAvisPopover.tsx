@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Upload, FileText, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ManualReviewPanel from "./ManualReviewPanel";
+import InstructionsHeader from "./InstructionsHeader";
 
 interface ImportAvisPopoverProps {
   children: React.ReactNode;
@@ -235,6 +236,8 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
 
             {/* Contenu Import CSV */}
             <TabsContent value="csv" className="mt-6 space-y-4">
+              <InstructionsHeader />
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Fichier CSV (colonnes : avis, source, date)
@@ -320,7 +323,9 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
             </TabsContent>
 
             {/* Contenu Récupération auto */}
-            <TabsContent value="auto" className="mt-6">
+            <TabsContent value="auto" className="mt-6 space-y-4">
+              <InstructionsHeader />
+              
               <div className="text-center py-8 text-muted-foreground">
                 <div className="w-12 h-12 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                   <span className="text-xl">🔄</span>
