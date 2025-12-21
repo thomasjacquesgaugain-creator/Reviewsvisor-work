@@ -406,7 +406,7 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
               Import en cours...
             </>
           ) : (
-            "Analyser le fichier importé"
+            "Importer"
           )}
         </Button>
       )}
