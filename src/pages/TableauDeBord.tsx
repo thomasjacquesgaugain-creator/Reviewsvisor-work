@@ -336,7 +336,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-          <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto mt-4">
+          <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto pt-6 pb-4">
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
