@@ -311,7 +311,25 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
   return (
     <div className="space-y-4">
       <CollapsibleInstructionsHeader>
-        {/* Contenu vide pour le moment */}
+        <ul className="space-y-2 text-sm text-muted-foreground list-disc list-inside pl-1">
+          <li>
+            Rendez-vous sur Google Takeout via le lien officiel{" "}
+            <a 
+              href="https://takeout.google.com/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-primary underline hover:text-primary/80"
+            >
+              Google Takeout
+            </a>.
+          </li>
+          <li>Cliquez sur « Tout désélectionner ».</li>
+          <li>Faites défiler vers le bas et activez « Profil Google Business ».</li>
+          <li>Cliquez sur « Étape suivante » et suivez les instructions pour exporter vos données.</li>
+          <li>Une fois l'exportation terminée et le téléchargement effectué, extrayez le fichier.</li>
+          <li>Sur cette page, cliquez sur « Choisir un fichier » et sélectionnez le dossier que vous venez d'extraire (reviews).</li>
+          <li>Cliquez ensuite sur « Importer les avis ».</li>
+        </ul>
       </CollapsibleInstructionsHeader>
       
       <div
