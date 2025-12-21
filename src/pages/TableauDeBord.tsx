@@ -189,7 +189,7 @@ const Dashboard = () => {
 
       <div className="relative z-10">
         {/* Main content */}
-        <div className="container mx-auto px-4 pt-8 pb-16">
+        <div className="container mx-auto px-4 pt-8 pb-6">
           {/* Welcome card */}
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-6">
             <CardContent className="p-8 text-center space-y-6">
