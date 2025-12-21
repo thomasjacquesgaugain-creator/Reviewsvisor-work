@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Upload, File, X } from "lucide-react";
+import { Upload, File, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -307,98 +307,123 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
     }
   };
 
+  const [showContent, setShowContent] = useState(false);
+
   return (
-    <div className="space-y-4">
-      <div
-        className={cn(
-          "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
-          isDragOver ? "border-primary bg-primary/5" : "border-border",
-          selectedFile && "bg-muted/50"
-        )}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDragOver(true);
-        }}
-        onDragLeave={() => setIsDragOver(false)}
-        onDrop={handleDrop}
+    <div className="border border-border rounded-lg overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setShowContent(!showContent)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors"
       >
-        {!selectedFile ? (
-          <>
-            <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium mb-2">
-              Glissez-déposez votre fichier ici
-            </p>
-            <p className="text-sm text-muted-foreground mb-4">
-              ou cliquez pour sélectionner un fichier CSV ou JSON
-            </p>
-            <input
-              type="file"
-              accept=".csv,.json"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFileSelect(file);
-              }}
-              className="hidden"
-              id="file-upload"
-            />
-            <Button
-              variant="outline"
-              onClick={() => document.getElementById("file-upload")?.click()}
-            >
-              Sélectionner un fichier
-            </Button>
-          </>
-        ) : (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <File className="h-8 w-8 text-primary" />
-              <div className="text-left">
-                <p className="font-medium">{selectedFile.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {(selectedFile.size / 1024).toFixed(2)} KB
+        <div className="flex items-center gap-2">
+          <Upload className="w-4 h-4 text-blue-500" />
+          <span className="text-sm font-medium text-foreground">Import CSV</span>
+        </div>
+        <div className="transition-transform duration-200" style={{ transform: showContent ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        </div>
+      </button>
+      <div
+        className="overflow-hidden transition-all duration-200 ease-out"
+        style={{
+          maxHeight: showContent ? '600px' : '0px',
+          opacity: showContent ? 1 : 0,
+        }}
+      >
+        <div className="px-4 py-4 border-t border-border space-y-4">
+          <div
+            className={cn(
+              "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
+              isDragOver ? "border-primary bg-primary/5" : "border-border",
+              selectedFile && "bg-muted/50"
+            )}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragOver(true);
+            }}
+            onDragLeave={() => setIsDragOver(false)}
+            onDrop={handleDrop}
+          >
+            {!selectedFile ? (
+              <>
+                <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-lg font-medium mb-2">
+                  Glissez-déposez votre fichier ici
                 </p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  ou cliquez pour sélectionner un fichier CSV ou JSON
+                </p>
+                <input
+                  type="file"
+                  accept=".csv,.json"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileSelect(file);
+                  }}
+                  className="hidden"
+                  id="file-upload"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => document.getElementById("file-upload")?.click()}
+                >
+                  Sélectionner un fichier
+                </Button>
+              </>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <File className="h-8 w-8 text-primary" />
+                  <div className="text-left">
+                    <p className="font-medium">{selectedFile.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {(selectedFile.size / 1024).toFixed(2)} KB
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSelectedFile(null)}
+                  disabled={isUploading}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSelectedFile(null)}
-              disabled={isUploading}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            )}
           </div>
-        )}
-      </div>
 
-      {selectedFile && (
-        <Button
-          className="w-full"
-          onClick={handleAnalyze}
-          disabled={isUploading || !activeEstablishment}
-        >
-          {isUploading ? (
-            <>
-              <Upload className="mr-2 h-4 w-4 animate-spin" />
-              Import en cours...
-            </>
-          ) : (
-            "Analyser le fichier importé"
+          {selectedFile && (
+            <Button
+              className="w-full"
+              onClick={handleAnalyze}
+              disabled={isUploading || !activeEstablishment}
+            >
+              {isUploading ? (
+                <>
+                  <Upload className="mr-2 h-4 w-4 animate-spin" />
+                  Import en cours...
+                </>
+              ) : (
+                "Analyser le fichier importé"
+              )}
+            </Button>
           )}
-        </Button>
-      )}
 
-      {error && (
-        <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
-          {error}
-        </div>
-      )}
+          {error && (
+            <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
+              {error}
+            </div>
+          )}
 
-      {successMessage && (
-        <div className="bg-green-50 text-green-700 p-3 rounded-md text-sm">
-          {successMessage}
+          {successMessage && (
+            <div className="bg-green-50 text-green-700 p-3 rounded-md text-sm">
+              {successMessage}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

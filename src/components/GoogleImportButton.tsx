@@ -3,7 +3,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { toast as sonnerToast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, Zap, ChevronDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -581,34 +581,64 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
     importReviews(accountId, locationId);
   };
 
+  const [showContent, setShowContent] = useState(false);
+
   return (
     <>
-      <button
-        type="button"
-        disabled={loading}
-        onPointerDown={() => {
-          console.log("SYNC POINTERDOWN", new Date().toISOString());
-        }}
-        onClick={handleImportClick}
-        className={cn(
-          buttonVariants({ variant: "accent", size: "default" }),
-          "w-full pointer-events-auto cursor-pointer relative z-50"
-        )}
-      >
-        {loading ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Importation en cours…
-          </>
-        ) : hasExistingConnection ? (
-          <>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Synchroniser mes avis Google
-          </>
-        ) : (
-          "Importer mes avis Google"
-        )}
-      </button>
+      <div className="border border-border rounded-lg overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setShowContent(!showContent)}
+          className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-yellow-500" />
+            <span className="text-sm font-medium text-foreground">Récupération auto</span>
+          </div>
+          <div className="transition-transform duration-200" style={{ transform: showContent ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          </div>
+        </button>
+        <div
+          className="overflow-hidden transition-all duration-200 ease-out"
+          style={{
+            maxHeight: showContent ? '300px' : '0px',
+            opacity: showContent ? 1 : 0,
+          }}
+        >
+          <div className="px-4 py-4 border-t border-border space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Connectez votre compte Google Business pour synchroniser automatiquement vos avis.
+            </p>
+            <button
+              type="button"
+              disabled={loading}
+              onPointerDown={() => {
+                console.log("SYNC POINTERDOWN", new Date().toISOString());
+              }}
+              onClick={handleImportClick}
+              className={cn(
+                buttonVariants({ variant: "accent", size: "default" }),
+                "w-full pointer-events-auto cursor-pointer relative z-50"
+              )}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Importation en cours…
+                </>
+              ) : hasExistingConnection ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Synchroniser mes avis Google
+                </>
+              ) : (
+                "Importer mes avis Google"
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
 
       <Dialog open={showLocationSelector} onOpenChange={(open) => {
         setShowLocationSelector(open);
