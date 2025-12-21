@@ -352,9 +352,9 @@ const Dashboard = () => {
                   </div>
                   <div className="flex flex-col items-start">
                     <span className="text-gray-700 font-medium text-sm">Performance globale</span>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-amber-400 text-xl">★</span>
-                      <span className="text-gray-900 font-bold text-xl">Bon</span>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <span className="text-amber-400 text-base">★</span>
+                      <span className="text-gray-900 font-semibold text-base">Bon</span>
                     </div>
                   </div>
                 </div>
