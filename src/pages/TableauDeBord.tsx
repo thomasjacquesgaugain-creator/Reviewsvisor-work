@@ -338,14 +338,11 @@ const Dashboard = () => {
 
           <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
-              <CardContent className="p-0 space-y-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <Target className="w-6 h-6 text-purple-600" />
+              <CardContent className="p-0 h-full flex items-center justify-center">
+                <div className="flex items-center gap-2 px-4 py-2 bg-emerald-100 rounded-full shadow-sm">
+                  <span className="text-lg">⭐</span>
+                  <span className="text-emerald-700 font-semibold text-sm">Bon</span>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Performance globale</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  Détection automatique des thématiques, sentiments et mentions fréquentes dans vos avis
-                </p>
               </CardContent>
             </Card>
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
