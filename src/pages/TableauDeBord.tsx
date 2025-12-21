@@ -346,7 +346,7 @@ const Dashboard = () => {
                 </div>
                 
                 {/* Badge central */}
-                <div className="flex items-center gap-4 bg-emerald-50 border border-emerald-200 rounded-2xl px-6 py-4">
+                <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-4">
                   <div className="w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
                     <Award className="w-7 h-7 text-white" />
                   </div>
