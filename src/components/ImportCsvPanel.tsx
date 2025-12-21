@@ -3,6 +3,7 @@ import { Upload, File, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import InstructionsHeader from "./InstructionsHeader";
 
 import { bulkCreateReviews } from "@/services/reviewsService";
 import { runAnalyze } from "@/lib/runAnalyze";
@@ -309,6 +310,8 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
 
   return (
     <div className="space-y-4">
+      <InstructionsHeader />
+      
       <div
         className={cn(
           "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
