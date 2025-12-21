@@ -345,16 +345,11 @@ const Dashboard = () => {
                 <h3 className="text-xl font-bold text-gray-900">Performance globale</h3>
                 
                 {/* Badge central */}
-                <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-3 py-3">
-                  <div className="w-32 h-12 bg-emerald-500 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
-                    <Award className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex flex-col items-start">
-                    <span className="text-gray-700 font-medium text-sm">Performance globale</span>
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <span className="text-amber-400 text-base">★</span>
-                      <span className="text-gray-900 font-semibold text-base">Bon</span>
-                    </div>
+                <div className="flex justify-center">
+                  <div className="inline-flex items-center gap-2 bg-emerald-500 rounded-full px-5 py-3 shadow-md">
+                    <Award className="w-5 h-5 text-white" />
+                    <span className="text-amber-300 text-lg">★</span>
+                    <span className="text-white font-semibold text-base">Bon</span>
                   </div>
                 </div>
                 
