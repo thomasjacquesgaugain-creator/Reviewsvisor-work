@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import ImportCsvPanel from "./ImportCsvPanel";
 import PasteImportPanel from "./PasteImportPanel";
 import GoogleImportButton from "./GoogleImportButton";
+import InstructionsHeader from "./InstructionsHeader";
 
 interface ImportAvisToolbarProps {
   onClose: () => void;
@@ -63,13 +64,17 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
         return <PasteImportPanel onImportBulk={handleBulkImport} onClose={onClose} onImportSuccess={onImportSuccess} onOpenVisualPanel={onOpenVisualPanel} />;
       case "auto":
         return (
-          <div className="py-6">
-            <p className="text-sm text-gray-600 mb-4">
-              {placeId 
-                ? `Importation automatique des avis Google pour "${establishmentName || 'cet établissement'}"`
-                : "Sélectionnez un établissement pour importer les avis Google"}
-            </p>
-            <GoogleImportButton onSuccess={onImportSuccess} placeId={placeId} />
+          <div className="space-y-4">
+            <InstructionsHeader />
+            
+            <div className="py-6">
+              <p className="text-sm text-gray-600 mb-4">
+                {placeId 
+                  ? `Importation automatique des avis Google pour "${establishmentName || 'cet établissement'}"`
+                  : "Sélectionnez un établissement pour importer les avis Google"}
+              </p>
+              <GoogleImportButton onSuccess={onImportSuccess} placeId={placeId} />
+            </div>
           </div>
         );
       default:
