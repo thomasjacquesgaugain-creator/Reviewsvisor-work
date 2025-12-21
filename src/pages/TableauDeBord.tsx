@@ -338,17 +338,16 @@ const Dashboard = () => {
 
           <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
-              <CardContent className="p-0 flex flex-col items-center text-center space-y-5">
-                {/* Titre avec icône */}
-                <div className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-emerald-600" />
-                  <h3 className="text-lg font-bold text-gray-900">Performance globale</h3>
+              <CardContent className="p-0 space-y-4">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <Award className="w-6 h-6 text-purple-600" />
                 </div>
+                <h3 className="text-xl font-bold text-gray-900">Performance globale</h3>
                 
                 {/* Badge central */}
-                <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-3 py-4">
-                  <div className="w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
-                    <Award className="w-7 h-7 text-white" />
+                <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-3 py-3">
+                  <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
+                    <Award className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex flex-col items-start">
                     <span className="text-gray-700 font-medium text-sm">Performance globale</span>
@@ -359,9 +358,8 @@ const Dashboard = () => {
                   </div>
                 </div>
                 
-                {/* Texte explicatif */}
-                <p className="text-gray-500 text-sm leading-relaxed max-w-xs">
-                  Basé sur la note moyenne (3.9/5), la proportion d'avis positifs (70%) et l'évolution récente.
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Basé sur la note moyenne, la proportion d'avis positifs et l'évolution récente.
                 </p>
               </CardContent>
             </Card>
