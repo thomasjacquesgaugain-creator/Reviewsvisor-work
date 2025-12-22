@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Etab, STORAGE_KEY_LIST, STORAGE_KEY, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
+import { useEffect, useState, useCallback } from "react";
+import { Etab, STORAGE_KEY, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
 import EstablishmentItem from "./EstablishmentItem";
 import { Building2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,22 +32,16 @@ export default function SavedEstablishmentsList() {
     return () => window.removeEventListener(EVT_SAVED, onSaved);
   }, []);
 
-  // Fonction pour charger les établissements depuis la DB (source de vérité)
-  const loadEstablishmentsFromDb = async () => {
+  // Fonction pour charger les établissements UNIQUEMENT depuis la DB
+  const loadEstablishmentsFromDb = useCallback(async () => {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
-        // Non connecté: utiliser localStorage seulement
-        const rawLocal = localStorage.getItem(STORAGE_KEY_LIST);
-        if (rawLocal) {
-          setEstablishments(JSON.parse(rawLocal));
-        } else {
-          setEstablishments([]);
-        }
+        setEstablishments([]);
         return;
       }
 
-      // Charger depuis la table "établissements" (source de vérité)
+      // Charger depuis la table "établissements" (source de vérité unique)
       const { data: etablissements, error } = await supabase
         .from("établissements")
         .select("*")
@@ -56,6 +50,7 @@ export default function SavedEstablishmentsList() {
 
       if (error) {
         console.error("Erreur chargement établissements:", error);
+        setEstablishments([]);
         return;
       }
 
@@ -73,12 +68,11 @@ export default function SavedEstablishmentsList() {
       }));
 
       setEstablishments(dbList);
-      // Synchroniser localStorage avec la DB
-      localStorage.setItem(STORAGE_KEY_LIST, JSON.stringify(dbList));
     } catch (error) {
       console.error("Erreur lors du chargement de la liste:", error);
+      setEstablishments([]);
     }
-  };
+  }, []);
 
   // Charger au montage
   useEffect(() => {
@@ -87,17 +81,16 @@ export default function SavedEstablishmentsList() {
       setLoading(false);
     };
     load();
-  }, []);
+  }, [loadEstablishmentsFromDb]);
 
-  // Écouter les mises à jour de la liste (après ajout depuis SaveEstablishmentButton)
+  // Écouter les mises à jour de la liste (après ajout/suppression)
   useEffect(() => {
-    const onListUpdated = async () => {
-      // Recharger depuis la DB pour être sûr d'avoir la vraie liste
-      await loadEstablishmentsFromDb();
+    const onListUpdated = () => {
+      loadEstablishmentsFromDb();
     };
     window.addEventListener(EVT_LIST_UPDATED, onListUpdated);
     return () => window.removeEventListener(EVT_LIST_UPDATED, onListUpdated);
-  }, []);
+  }, [loadEstablishmentsFromDb]);
 
   // Définir un établissement comme principal
   const handleSelectEstablishment = (etab: Etab) => {
@@ -120,48 +113,32 @@ export default function SavedEstablishmentsList() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (user) {
-        // 1. Supprimer de la table "établissements" (source de vérité)
-        const { error: etabError } = await supabase
-          .from("établissements")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("place_id", etab.place_id);
-        
-        if (etabError) {
-          console.error("Erreur suppression établissements:", etabError);
-          throw etabError;
-        }
-
-        // 2. Supprimer aussi de user_establishment si c'est celui-là
-        await supabase
-          .from("user_establishment")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("place_id", etab.place_id);
-
-        // 3. Supprimer de establishments (compat)
-        await supabase
-          .from("establishments")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("place_id", etab.place_id);
+      if (!user) {
+        sonnerToast.error("Vous devez être connecté pour supprimer un établissement");
+        return;
       }
 
-      // 4. Mettre à jour immédiatement l'état local (optimistic UI)
-      const newList = establishments.filter(e => e.place_id !== etab.place_id);
-      setEstablishments(newList);
-      localStorage.setItem(STORAGE_KEY_LIST, JSON.stringify(newList));
+      // 1. Supprimer de la table "établissements" (source de vérité)
+      const { error: etabError } = await supabase
+        .from("établissements")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("place_id", etab.place_id);
+      
+      if (etabError) {
+        console.error("Erreur suppression établissements:", etabError);
+        throw etabError;
+      }
 
-      // 5. Si c'était l'établissement actif, le vider
+      // 2. Si c'était l'établissement actif, le vider
       if (activeEstablishment?.place_id === etab.place_id) {
         localStorage.removeItem(STORAGE_KEY);
         setActiveEstablishment(null);
         window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: null }));
       }
 
-      // 6. Dispatcher l'event pour synchroniser les autres composants
-      window.dispatchEvent(new CustomEvent(EVT_LIST_UPDATED, { detail: newList }));
+      // 3. Recharger la liste depuis la DB (source de vérité)
+      await loadEstablishmentsFromDb();
 
       sonnerToast.success(`"${etab.name}" supprimé`, { duration: 3000 });
 
