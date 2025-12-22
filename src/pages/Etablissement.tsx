@@ -340,10 +340,7 @@ export default function EtablissementPage() {
             className="border border-border rounded-lg p-4"
             data-testid="card-mon-etablissement"
           >
-            <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-muted-foreground" />
-              Mon Établissement
-            </h2>
+            <h2 className="text-xl font-semibold mb-3">🏢 Mon Établissement</h2>
             <MonEtablissementCard />
           </section>
 
