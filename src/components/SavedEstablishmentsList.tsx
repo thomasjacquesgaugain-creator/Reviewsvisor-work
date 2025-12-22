@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Etab, STORAGE_KEY_LIST, STORAGE_KEY, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
 import EstablishmentItem from "./EstablishmentItem";
+import { Building2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -72,28 +73,39 @@ export default function SavedEstablishmentsList() {
   };
 
   if (loading) {
-    return <div className="text-muted-foreground">Chargement...</div>;
-  }
-
-  if (establishments.length === 0) {
-    return null;
+    return (
+      <section className="p-4 border border-border rounded-lg bg-card/50">
+        <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-2">
+          <Building2 className="h-5 w-5 text-primary" />
+          Établissements enregistrés
+        </h3>
+        <div className="text-muted-foreground text-sm">Chargement...</div>
+      </section>
+    );
   }
 
   return (
     <section className="p-4 border border-border rounded-lg bg-card/50">
       <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-2">
-        Mes Établissements Enregistrés
+        <Building2 className="h-5 w-5 text-primary" />
+        Établissements enregistrés
       </h3>
       
-      <div className="flex flex-wrap gap-3">
-        {establishments.map((etab) => (
-          <EstablishmentItem
-            key={etab.place_id}
-            etab={etab}
-            onSelect={handleSelectEstablishment}
-          />
-        ))}
-      </div>
+      {establishments.length === 0 ? (
+        <p className="text-muted-foreground text-sm">
+          Aucun établissement enregistré pour le moment.
+        </p>
+      ) : (
+        <div className="flex flex-wrap gap-3">
+          {establishments.map((etab) => (
+            <EstablishmentItem
+              key={etab.place_id}
+              etab={etab}
+              onSelect={handleSelectEstablishment}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
