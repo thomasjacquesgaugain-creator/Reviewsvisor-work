@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Etab, STORAGE_KEY, EVT_SAVED, EVT_LIST_UPDATED } from "../types/etablissement";
+import { Etab, EVT_SAVED, EVT_LIST_UPDATED } from "../types/etablissement";
 import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
 
@@ -73,14 +73,22 @@ export default function SaveEstablishmentButton({
     setSaving(true);
 
     try {
-      // 3) Sauvegarder dans la table établissements (source de vérité)
+      // 3) Sauvegarder dans la table établissements avec TOUTES les infos (source de vérité)
+      // Le trigger handle_active_establishment va automatiquement désactiver les autres
       const { error: etabError } = await supabase.from("établissements").upsert({
         user_id: user.id,
         place_id: selected.place_id,
         nom: selected.name,
         adresse: selected.address,
         telephone: selected.phone || null,
-        type: "Restaurant"
+        type: "Restaurant",
+        // Nouveaux champs pour persistance complète
+        website: selected.website || null,
+        rating: selected.rating || null,
+        google_maps_url: selected.url || null,
+        lat: selected.lat || null,
+        lng: selected.lng || null,
+        is_active: true, // Définir comme établissement actif
       }, {
         onConflict: 'user_id,place_id',
         ignoreDuplicates: false
@@ -92,9 +100,9 @@ export default function SaveEstablishmentButton({
         return;
       }
 
-      // 4) Mettre à jour l'établissement actif dans localStorage
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
-      window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: selected }));
+      // 4) Plus besoin de localStorage - la DB est la source de vérité
+      // Notifier MonEtablissementCard de recharger depuis la DB
+      window.dispatchEvent(new CustomEvent(EVT_SAVED));
 
       // 5) Notifier la liste de se recharger depuis la DB
       window.dispatchEvent(new CustomEvent(EVT_LIST_UPDATED));
