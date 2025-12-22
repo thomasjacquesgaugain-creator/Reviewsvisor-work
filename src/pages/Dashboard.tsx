@@ -46,25 +46,78 @@ const Dashboard = () => {
   const [granularityEvolution, setGranularityEvolution] = useState<Granularity>("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
-  // Établissement sélectionné (depuis localStorage ou store)
+  // Établissement sélectionné (depuis DB)
   const [selectedEtab, setSelectedEtab] = useState<Etab | null>(null);
 
-  // Liste des établissements enregistrés
+  // Liste des établissements enregistrés (depuis DB)
   const [establishments, setEstablishments] = useState<Etab[]>([]);
   const [showEstablishmentsDropdown, setShowEstablishmentsDropdown] = useState(false);
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setSelectedEtab(JSON.parse(raw));
+  const [establishmentsLoading, setEstablishmentsLoading] = useState(true);
 
-      // Charger la liste des établissements
-      const rawList = localStorage.getItem(STORAGE_KEY_LIST);
-      if (rawList) setEstablishments(JSON.parse(rawList));
-    } catch {}
-    const onSaved = (e: any) => setSelectedEtab(e.detail as Etab);
-    window.addEventListener(EVT_SAVED, onSaved);
-    return () => window.removeEventListener(EVT_SAVED, onSaved);
-  }, []);
+  // Charger les établissements depuis la DB (source de vérité unique)
+  const loadEstablishmentsFromDB = async () => {
+    if (!user?.id) {
+      setEstablishmentsLoading(false);
+      return;
+    }
+
+    setEstablishmentsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("établissements")
+        .select("id, place_id, nom, adresse, is_active, lat, lng, website, telephone, rating, updated_at")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false });
+
+      if (error) throw error;
+
+      const mapped: Etab[] = (data ?? []).map((row) => ({
+        place_id: row.place_id,
+        name: row.nom,
+        address: row.adresse ?? "",
+        lat: row.lat ?? null,
+        lng: row.lng ?? null,
+        website: row.website ?? undefined,
+        phone: row.telephone ?? undefined,
+        rating: row.rating ?? null,
+        is_active: row.is_active ?? false,
+      }));
+
+      setEstablishments(mapped);
+
+      // Détermine l'établissement affiché: actif si défini, sinon plus récent
+      if (mapped.length > 0) {
+        const active = mapped.find((e) => e.is_active) ?? mapped[0];
+        setSelectedEtab(active);
+      } else {
+        setSelectedEtab(null);
+      }
+    } catch (err) {
+      console.error("[Dashboard] Erreur chargement établissements:", err);
+      setEstablishments([]);
+    } finally {
+      setEstablishmentsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadEstablishmentsFromDB();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // Écouter les événements de mise à jour
+  useEffect(() => {
+    const onUpdated = () => loadEstablishmentsFromDB();
+    window.addEventListener(EVT_SAVED, onUpdated);
+    window.addEventListener("establishment:updated", onUpdated);
+    return () => {
+      window.removeEventListener(EVT_SAVED, onUpdated);
+      window.removeEventListener("establishment:updated", onUpdated);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // Synchroniser avec le store si mis à jour
   useEffect(() => {
     if (selectedEstablishment) {
       setSelectedEtab({

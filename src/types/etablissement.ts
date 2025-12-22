@@ -10,6 +10,7 @@ export type Etab = {
   phoneIntl?: string;
   mapsUrl?: string;
   rating?: number | null;
+  is_active?: boolean;
 };
 
 export const STORAGE_KEY = "mon-etablissement";
