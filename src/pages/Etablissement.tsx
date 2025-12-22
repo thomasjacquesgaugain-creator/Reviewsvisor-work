@@ -195,36 +195,23 @@ export default function EtablissementPage() {
           const autocompletePlace = autocomplete.getPlace();
           if (!autocompletePlace || !autocompletePlace.place_id) return;
           
-          console.log('🔍 Place sélectionnée, récupération des détails via Places Details API...');
-          
           try {
-            // Appel explicite à Places Details (New) avec tous les champs
+            // Récupérer les détails complets via Places Details API
             const placeDetails = await fetchPlaceDetails(autocompletePlace.place_id);
             
-            console.log('✅ Détails récupérés:', {
-              name: placeDetails.name,
-              formatted_address: placeDetails.formatted_address,
-              formatted_phone_number: placeDetails.formatted_phone_number,
-              website: placeDetails.website,
-              rating: placeDetails.rating,
-              url: placeDetails.url
-            });
-            
-            // Sérialiser les détails complets
+            // Sérialiser les détails
             const etab = serializePlace(placeDetails);
             
-            // Mettre à jour l'état local
+            // UNIQUEMENT mettre à jour l'état local (pas de sauvegarde DB)
             setSelected(etab);
             
-            // Sauvegarder dans localStorage et déclencher le rafraîchissement de la carte
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(etab));
-            window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));
-            
-            toast.success(`${etab.name} sélectionné`);
+            toast.success(`${etab.name} sélectionné`, {
+              description: "Cliquez sur 'Enregistrer' pour l'ajouter à votre liste.",
+            });
             
           } catch (error: any) {
-            console.error('❌ Erreur lors de la récupération des détails:', error);
-            toast.error(error?.message || 'Impossible de récupérer les détails de l\'établissement');
+            console.error('Erreur lors de la récupération des détails:', error);
+            toast.error(error?.message || 'Impossible de récupérer les détails');
           }
         });
         
