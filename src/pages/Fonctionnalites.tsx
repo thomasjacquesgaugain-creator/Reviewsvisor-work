@@ -125,7 +125,7 @@ const Fonctionnalites = () => {
         </section>
 
         {/* GRID FEATURES SECTION */}
-        <section className="py-12 md:py-16 px-4 md:px-8 bg-gradient-to-b from-transparent via-secondary/30 to-transparent">
+        <section className="py-8 md:py-10 px-4 md:px-8 bg-gradient-to-b from-transparent via-secondary/30 to-transparent">
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-2 gap-6">
               {/* Grid Card 1 */}
@@ -192,10 +192,10 @@ const Fonctionnalites = () => {
         </section>
 
         {/* FAQ SECTION */}
-        <section className="py-16 md:py-24 px-4 md:px-8">
+        <section className="pt-8 pb-16 md:pt-10 md:pb-20 px-4 md:px-8">
           <div className="max-w-4xl mx-auto">
             <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-10 shadow-sm">
-              <h2 className="text-2xl md:text-3xl font-bold mb-8 text-foreground text-center">
+              <h2 className="text-2xl md:text-3xl font-bold mb-6 text-foreground text-center">
                 Questions sur les fonctionnalités
               </h2>
               
