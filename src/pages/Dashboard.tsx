@@ -580,8 +580,8 @@ const Dashboard = () => {
               <div className="relative">
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                      <Building2 className="w-5 h-5 text-muted-foreground" />
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Building2 className="w-5 h-5 text-blue-600" />
                     </div>
                     {/* Flèche vers le bas en haut à droite de l'icône */}
                     <Popover open={showEstablishmentsDropdown} onOpenChange={setShowEstablishmentsDropdown}>
@@ -640,8 +640,8 @@ const Dashboard = () => {
                                 window.dispatchEvent(new CustomEvent("establishment:updated"));
                               }}
                             >
-                              <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
-                                <Building2 className="w-4 h-4 text-muted-foreground" />
+                              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Building2 className="w-4 h-4 text-blue-600" />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
