@@ -154,6 +154,27 @@ export function EstablishmentSelector({ selectedEstablishment, onSelect }: Estab
               </div>
             </Button>
           ))}
+          
+          {/* Option pour ajouter un nouvel établissement */}
+          <div className="border-t border-border mt-2 pt-2">
+            <Button
+              variant="ghost"
+              className="w-full justify-start p-3 h-auto text-left hover:bg-muted"
+              onClick={() => {
+                setOpen(false);
+                navigate("/etablissement");
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Plus className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <div className="font-medium text-muted-foreground">
+                  Ajouter un établissement
+                </div>
+              </div>
+            </Button>
+          </div>
         </div>
       </PopoverContent>
     </Popover>
