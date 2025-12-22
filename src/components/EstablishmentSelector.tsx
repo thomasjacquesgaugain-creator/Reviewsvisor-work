@@ -144,82 +144,90 @@ export function EstablishmentSelector({ selectedEstablishment, onSelect }: Estab
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className="flex items-center gap-3 h-auto py-2 px-3 min-w-[200px] justify-between hover:bg-transparent hover:text-foreground"
+    <div className="relative">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className="flex items-center gap-3 h-auto py-2 px-3 min-w-[200px] max-w-[280px] justify-between hover:bg-transparent hover:text-foreground"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-4 h-4 text-primary" />
+              </div>
+              <div className="text-left min-w-0">
+                <div className="font-medium text-foreground truncate max-w-[140px]">
+                  {selectedEstablishment?.name || "Sélectionner"}
+                </div>
+                {selectedEstablishment?.formatted_address && (
+                  <div className="text-xs text-muted-foreground truncate max-w-[140px]">
+                    {selectedEstablishment.formatted_address}
+                  </div>
+                )}
+              </div>
+            </div>
+            <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent 
+          className="w-[280px] max-w-[280px] p-2 overflow-hidden" 
+          align="end" 
+          sideOffset={4}
+          avoidCollisions={true}
+          collisionPadding={8}
         >
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Building2 className="w-4 h-4 text-primary" />
+          <div className="space-y-1">
+            <div className="text-sm font-medium text-muted-foreground px-3 py-2">
+              Mes Établissements
             </div>
-            <div className="text-left">
-              <div className="font-medium text-foreground truncate max-w-[180px]">
-                {selectedEstablishment?.name || "Sélectionner"}
-              </div>
-              {selectedEstablishment?.formatted_address && (
-                <div className="text-xs text-muted-foreground truncate max-w-[180px]">
-                  {selectedEstablishment.formatted_address}
+            {establishments.map((est) => (
+              <Button
+                key={est.id}
+                variant="ghost"
+                className={`w-full justify-start p-3 h-auto text-left hover:bg-muted ${
+                  selectedEstablishment?.id === est.id ? "bg-muted" : ""
+                }`}
+                onClick={() => handleSelect(est)}
+              >
+                <div className="flex items-center gap-3 min-w-0 w-full">
+                  <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-foreground truncate">{est.name}</div>
+                    {est.formatted_address && (
+                      <div className="text-sm text-muted-foreground truncate">
+                        {est.formatted_address}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
+              </Button>
+            ))}
+            
+            {/* Option pour ajouter un nouvel établissement */}
+            <div className="border-t border-border mt-2 pt-2">
+              <Button
+                variant="ghost"
+                className="w-full justify-start p-3 h-auto text-left hover:bg-muted"
+                onClick={() => {
+                  setOpen(false);
+                  navigate("/etablissement");
+                }}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Plus className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <div className="font-medium text-muted-foreground truncate">
+                    Ajouter un établissement
+                  </div>
+                </div>
+              </Button>
             </div>
           </div>
-          <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-2" align="end">
-        <div className="space-y-1">
-          <div className="text-sm font-medium text-muted-foreground px-3 py-2">
-            Mes Établissements
-          </div>
-          {establishments.map((est) => (
-            <Button
-              key={est.id}
-              variant="ghost"
-              className={`w-full justify-start p-3 h-auto text-left hover:bg-muted ${
-                selectedEstablishment?.id === est.id ? "bg-muted" : ""
-              }`}
-              onClick={() => handleSelect(est)}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-4 h-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-foreground truncate">{est.name}</div>
-                  {est.formatted_address && (
-                    <div className="text-sm text-muted-foreground truncate">
-                      {est.formatted_address}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Button>
-          ))}
-          
-          {/* Option pour ajouter un nouvel établissement */}
-          <div className="border-t border-border mt-2 pt-2">
-            <Button
-              variant="ghost"
-              className="w-full justify-start p-3 h-auto text-left hover:bg-muted"
-              onClick={() => {
-                setOpen(false);
-                navigate("/etablissement");
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Plus className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <div className="font-medium text-muted-foreground">
-                  Ajouter un établissement
-                </div>
-              </div>
-            </Button>
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
