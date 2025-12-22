@@ -201,15 +201,14 @@ export default function MonEtablissementCard() {
       </div>
 
       {/* Footer avec place_id et actions */}
-      <div className="border-t border-border mt-6 pt-4 flex items-center justify-between">
+      <div className="border-t border-border mt-6 pt-4 flex items-center justify-between relative">
         {/* place_id discret à gauche */}
-        <p className="text-xs text-muted-foreground font-mono truncate max-w-[60%]">
+        <p className="text-xs text-muted-foreground font-mono truncate max-w-[40%]">
           place_id: {etab.place_id}
         </p>
 
-        {/* 3 icônes/actions identiques à droite */}
-        <div className="flex gap-1">
-          {/* Bouton importer vos avis */}
+        {/* Bouton importer vos avis - centré */}
+        <div className="absolute left-1/2 transform -translate-x-1/2">
           <Button
             variant="ghost"
             size="sm"
@@ -219,7 +218,10 @@ export default function MonEtablissementCard() {
           >
             <Download className="w-4 h-4" />
           </Button>
+        </div>
 
+        {/* 2 icônes/actions à droite */}
+        <div className="flex gap-1">
           {/* Bouton analyser établissement */}
           <Button
             variant="ghost"
