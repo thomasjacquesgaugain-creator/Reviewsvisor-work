@@ -1,11 +1,71 @@
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Brain, Target, TrendingUp, CheckCircle, Zap, Shield } from "lucide-react";
+import { ArrowRight, Brain, Target, TrendingUp, CheckCircle, Zap, Shield, Menu, X, Globe, ChevronRight } from "lucide-react";
 import logoHeader from "@/assets/reviewsvisor-logo-header.png";
 import { WhyReviewsvisor } from "@/components/WhyReviewsvisor";
+import { useNavigate } from "react-router-dom";
+
+type Language = "fr" | "en";
+
+const translations = {
+  fr: {
+    trust1: "Transformer retour en conception",
+    trust2: "Vos avis, votre croissance",
+    trust3: "Un outil, une centralisation",
+    heroTitle: "⚡ Prêt à révolutionner votre établissement ?",
+    heroDesc1: "Obtenez une",
+    heroDescHighlight1: "vision claire",
+    heroDesc2: "des priorités en transformant leurs avis en véritables",
+    heroDescHighlight2: "leviers de croissance",
+    startNow: "Commencer maintenant",
+    haveAccount: "J'ai déjà un compte",
+    login: "Se connecter",
+    language: "Langue",
+  },
+  en: {
+    trust1: "Turn feedback into design",
+    trust2: "Your reviews, your growth",
+    trust3: "One tool, one centralization",
+    heroTitle: "⚡ Ready to revolutionize your establishment?",
+    heroDesc1: "Get a",
+    heroDescHighlight1: "clear vision",
+    heroDesc2: "of priorities by turning reviews into real",
+    heroDescHighlight2: "growth levers",
+    startNow: "Get started now",
+    haveAccount: "I already have an account",
+    login: "Log in",
+    language: "Language",
+  },
+};
 
 export const HeroSection = () => {
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [lang, setLang] = useState<Language>("fr");
+  const menuRef = useRef<HTMLDivElement>(null);
+  
+  const t = translations[lang];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+        setLangMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLanguageChange = (newLang: Language) => {
+    setLang(newLang);
+    setLangMenuOpen(false);
+    setMenuOpen(false);
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Background with organic shapes */}
@@ -17,22 +77,94 @@ export const HeroSection = () => {
 
       <div className="relative z-10">
         {/* Trust indicators bar */}
-        <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full mx-4 mt-6 shadow-sm">
+        <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full mx-4 mt-6 shadow-sm relative">
           <div className="container mx-auto px-6 py-4">
             <div className="flex flex-wrap items-center justify-center gap-8 text-sm">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-gray-700">Transformer retour en conception</span>
+                <span className="text-gray-700">{t.trust1}</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-gray-700">Vos avis, votre croissance</span>
+                <span className="text-gray-700">{t.trust2}</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-gray-700">Un outil, une centralisation</span>
+                <span className="text-gray-700">{t.trust3}</span>
               </div>
             </div>
+          </div>
+          
+          {/* Hamburger menu - positioned absolute to not affect trust indicators */}
+          <div className="absolute right-4 top-1/2 -translate-y-1/2" ref={menuRef}>
+            <button
+              onClick={() => {
+                setMenuOpen(!menuOpen);
+                if (!menuOpen) setLangMenuOpen(false);
+              }}
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              aria-label="Menu"
+            >
+              {menuOpen ? (
+                <X className="w-5 h-5 text-gray-700" />
+              ) : (
+                <Menu className="w-5 h-5 text-gray-700" />
+              )}
+            </button>
+
+            {/* Dropdown menu */}
+            {menuOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
+                {/* Se connecter */}
+                <button
+                  onClick={() => {
+                    navigate("/connexion");
+                    setMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                >
+                  <span>🔐</span>
+                  {t.login}
+                </button>
+
+                <div className="border-t border-gray-100"></div>
+
+                {/* Langue */}
+                <div className="relative">
+                  <button
+                    onClick={() => setLangMenuOpen(!langMenuOpen)}
+                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-gray-500" />
+                      {t.language}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-gray-500">{lang === "fr" ? "FR" : "EN"}</span>
+                      <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${langMenuOpen ? "rotate-90" : ""}`} />
+                    </div>
+                  </button>
+
+                  {/* Language submenu */}
+                  {langMenuOpen && (
+                    <div className="border-t border-gray-100 bg-gray-50">
+                      <button
+                        onClick={() => handleLanguageChange("fr")}
+                        className={`w-full text-left px-6 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 ${lang === "fr" ? "text-blue-600 font-medium" : "text-gray-700"}`}
+                      >
+                        🇫🇷 Français
+                      </button>
+                      <button
+                        onClick={() => handleLanguageChange("en")}
+                        className={`w-full text-left px-6 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 ${lang === "en" ? "text-blue-600 font-medium" : "text-gray-700"}`}
+                      >
+                        🇬🇧 English
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -55,11 +187,11 @@ export const HeroSection = () => {
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-12">
             <CardContent className="p-8 text-center space-y-6">
               <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
-                ⚡ Prêt à révolutionner votre établissement ?
+                {t.heroTitle}
               </h1>
               
               <p className="text-lg text-gray-600 leading-relaxed">
-                Obtenez une <span className="font-semibold" style={{ color: '#2ECC71' }}>vision claire</span> des priorités en transformant leurs avis en véritables <span className="font-semibold" style={{ color: '#2ECC71' }}>leviers de croissance</span>.
+                {t.heroDesc1} <span className="font-semibold" style={{ color: '#2ECC71' }}>{t.heroDescHighlight1}</span> {t.heroDesc2} <span className="font-semibold" style={{ color: '#2ECC71' }}>{t.heroDescHighlight2}</span>.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
@@ -68,7 +200,7 @@ export const HeroSection = () => {
                   onClick={() => window.location.href = '/abonnement'}
                 >
                   <span>✨</span>
-                  Commencer maintenant
+                  {t.startNow}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -76,7 +208,7 @@ export const HeroSection = () => {
                   onClick={() => window.location.href = '/login'}
                 >
                   <span>👤</span>
-                  J&apos;ai déjà un compte
+                  {t.haveAccount}
                 </Button>
               </div>
 
@@ -84,15 +216,15 @@ export const HeroSection = () => {
               <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 pt-4">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Transformer retour en conception</span>
+                  <span>{t.trust1}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Vos avis, votre croissance</span>
+                  <span>{t.trust2}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Un outil, une centralisation</span>
+                  <span>{t.trust3}</span>
                 </div>
               </div>
             </CardContent>
