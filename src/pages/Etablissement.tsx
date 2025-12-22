@@ -318,7 +318,10 @@ export default function EtablissementPage() {
 
           {/* Liste des établissements enregistrés */}
           <div data-testid="section-etablissements-enregistres">
-            <SavedEstablishmentsList />
+            <SavedEstablishmentsList onAddClick={() => {
+              document.getElementById('places-input')?.focus();
+              document.getElementById('places-input')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }} />
           </div>
         </div>
       </div>

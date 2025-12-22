@@ -1,11 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
 import { Etab, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
 import EstablishmentItem from "./EstablishmentItem";
-import { Building2 } from "lucide-react";
+import { Building2, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
 
-export default function SavedEstablishmentsList() {
+interface SavedEstablishmentsListProps {
+  onAddClick?: () => void;
+}
+
+export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishmentsListProps) {
   const [establishments, setEstablishments] = useState<Etab[]>([]);
   const [loading, setLoading] = useState(true);
   const [settingActive, setSettingActive] = useState<string | null>(null);
@@ -133,20 +137,32 @@ export default function SavedEstablishmentsList() {
         Établissements enregistrés
       </h3>
       
-      {establishments.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
+      <div className="flex flex-wrap gap-3">
+        {establishments.map((etab) => (
+          <EstablishmentItem
+            key={etab.place_id}
+            etab={etab}
+            onSelect={handleSelectEstablishment}
+          />
+        ))}
+        
+        {/* Bouton Ajouter un établissement */}
+        <button
+          onClick={onAddClick}
+          className="cursor-pointer bg-card border border-dashed border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/10 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-2 min-h-[80px]"
+          title="Ajouter un établissement"
+        >
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <Plus className="w-5 h-5 text-primary" />
+          </div>
+          <span className="text-xs text-muted-foreground font-medium">Ajouter</span>
+        </button>
+      </div>
+      
+      {establishments.length === 0 && (
+        <p className="text-muted-foreground text-sm mt-3">
           Aucun établissement enregistré pour le moment.
         </p>
-      ) : (
-        <div className="flex flex-wrap gap-3">
-          {establishments.map((etab) => (
-            <EstablishmentItem
-              key={etab.place_id}
-              etab={etab}
-              onSelect={handleSelectEstablishment}
-            />
-          ))}
-        </div>
       )}
     </section>
   );
