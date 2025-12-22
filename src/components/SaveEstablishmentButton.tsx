@@ -6,9 +6,11 @@ import { toast as sonnerToast } from "sonner";
 export default function SaveEstablishmentButton({
   selected,
   disabled,
+  onSaveSuccess,
 }: {
   selected: Etab | null;
   disabled?: boolean;
+  onSaveSuccess?: () => void;
 }) {
   const [isAlreadySaved, setIsAlreadySaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -92,6 +94,9 @@ export default function SaveEstablishmentButton({
         description: "L'établissement a été ajouté à votre liste.",
         duration: 3000,
       });
+
+      // 7) Notifier le parent pour reset la barre de recherche
+      onSaveSuccess?.();
     } finally {
       setSaving(false);
     }

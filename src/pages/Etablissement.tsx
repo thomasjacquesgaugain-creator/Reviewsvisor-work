@@ -154,6 +154,16 @@ export default function EtablissementPage() {
     });
   }
 
+  // Reset complet de la barre de recherche
+  const resetSearch = () => {
+    setSelected(null);
+    const input = document.getElementById('places-input') as HTMLInputElement;
+    if (input) {
+      input.value = '';
+      input.focus();
+    }
+  };
+
   // Fonction pour sérialiser un lieu Google Places
   function serializePlace(place: any): Etab {
     return {
@@ -322,7 +332,7 @@ export default function EtablissementPage() {
               )}
             </div>
             
-            <SaveEstablishmentButton selected={selected} />
+            <SaveEstablishmentButton selected={selected} onSaveSuccess={resetSearch} />
             
             {selected && (
               <div className="mt-4">
