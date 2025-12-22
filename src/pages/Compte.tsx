@@ -24,52 +24,51 @@ const Compte = () => {
   const [adresse, setAdresse] = useState("");
   const [language, setLanguage] = useState("fr");
 
-  // Load current establishment from Supabase on mount
+  // Load current establishment from Supabase on mount (source de vérité = DB)
   useEffect(() => {
     const loadCurrentEstablishment = async () => {
       if (!user) return;
 
       try {
-        // Try profile's current_establishment_id first
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("current_establishment_id")
+        // 1) établissement actif si présent
+        const { data: activeRows, error: activeError } = await supabase
+          .from("établissements")
+          .select("id, place_id, nom, adresse")
           .eq("user_id", user.id)
-          .single();
+          .eq("is_active", true)
+          .order("updated_at", { ascending: false })
+          .limit(1);
 
-        let estData: EstablishmentOption | null = null;
+        if (activeError) throw activeError;
 
-        if (profile?.current_establishment_id) {
-          const { data } = await supabase
-            .from("establishments")
-            .select("id, place_id, name, formatted_address")
-            .eq("id", profile.current_establishment_id)
-            .single();
+        let row = activeRows?.[0] ?? null;
 
-          if (data) {
-            estData = data as EstablishmentOption;
-          }
-        }
-
-        // Fallback: most recent establishment
-        if (!estData) {
-          const { data } = await supabase
-            .from("establishments")
-            .select("id, place_id, name, formatted_address")
+        // 2) fallback: le plus récent
+        if (!row) {
+          const { data: recentRows, error: recentError } = await supabase
+            .from("établissements")
+            .select("id, place_id, nom, adresse")
             .eq("user_id", user.id)
             .order("updated_at", { ascending: false })
-            .limit(1)
-            .single();
+            .limit(1);
 
-          if (data) {
-            estData = data as EstablishmentOption;
-          }
+          if (recentError) throw recentError;
+          row = recentRows?.[0] ?? null;
         }
 
-        if (estData) {
+        if (row) {
+          const estData: EstablishmentOption = {
+            id: row.id,
+            place_id: row.place_id,
+            name: row.nom,
+            formatted_address: row.adresse ?? null,
+          };
+
           setSelectedEstablishment(estData);
           setEtablissement(estData.name || "");
           setAdresse(estData.formatted_address || "");
+        } else {
+          setSelectedEstablishment(null);
         }
       } catch (err) {
         console.warn("Could not load current establishment:", err);
@@ -86,33 +85,53 @@ const Compte = () => {
     setAdresse(est.formatted_address || "");
   };
 
-  // Listen for establishment changes from other pages
+  // Listen for establishment changes from other pages (source de vérité = DB)
   useEffect(() => {
     const handleUpdate = () => {
-      // Reload from Supabase when event fires
       if (!user) return;
-      
+
       (async () => {
         try {
-          const stored = localStorage.getItem(STORAGE_KEY);
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            // Find matching establishment from DB
-            const { data } = await supabase
-              .from("establishments")
-              .select("id, place_id, name, formatted_address")
-              .eq("place_id", parsed.place_id)
-              .eq("user_id", user.id)
-              .single();
+          const { data: activeRows, error: activeError } = await supabase
+            .from("établissements")
+            .select("id, place_id, nom, adresse")
+            .eq("user_id", user.id)
+            .eq("is_active", true)
+            .order("updated_at", { ascending: false })
+            .limit(1);
 
-            if (data) {
-              setSelectedEstablishment(data as EstablishmentOption);
-              setEtablissement(data.name || "");
-              setAdresse(data.formatted_address || "");
-            }
+          if (activeError) throw activeError;
+
+          let row = activeRows?.[0] ?? null;
+
+          if (!row) {
+            const { data: recentRows, error: recentError } = await supabase
+              .from("établissements")
+              .select("id, place_id, nom, adresse")
+              .eq("user_id", user.id)
+              .order("updated_at", { ascending: false })
+              .limit(1);
+
+            if (recentError) throw recentError;
+            row = recentRows?.[0] ?? null;
           }
-        } catch {
-          // ignore
+
+          if (row) {
+            const estData: EstablishmentOption = {
+              id: row.id,
+              place_id: row.place_id,
+              name: row.nom,
+              formatted_address: row.adresse ?? null,
+            };
+
+            setSelectedEstablishment(estData);
+            setEtablissement(estData.name || "");
+            setAdresse(estData.formatted_address || "");
+          } else {
+            setSelectedEstablishment(null);
+          }
+        } catch (err) {
+          console.warn("Could not reload establishment:", err);
         }
       })();
     };
