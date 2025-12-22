@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST, EVT_LIST_UPDATED } from "../types/etablissement";
-import { Trash2, BarChart3, Download, Store, ExternalLink, Star, Phone, Globe, MapPin } from "lucide-react";
+import { Trash2, BarChart3, Download, ExternalLink, Star, Phone, Globe, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { runAnalyze } from "@/lib/runAnalyze";
 import { toast as sonnerToast } from "sonner";
 import { deleteAllReviews } from "@/services/reviewsService";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
 
 
 export default function MonEtablissementCard() {
@@ -112,165 +111,141 @@ export default function MonEtablissementCard() {
 
   if (!etab) {
     return (
-      <Card className="bg-card border border-border rounded-2xl shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Store className="w-6 h-6 text-muted-foreground" />
-            <div>
-              <h3 className="font-semibold text-xl text-foreground">Mon Établissement</h3>
-              <p className="text-sm text-muted-foreground">Informations Google Business</p>
-            </div>
-          </div>
-          <p className="text-muted-foreground mt-4">
-            Aucun établissement sélectionné. Utilisez l'autocomplétion ci-dessus pour en choisir un.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="p-6">
+        <p className="text-muted-foreground">
+          Aucun établissement sélectionné. Utilisez l'autocomplétion ci-dessus pour en choisir un.
+        </p>
+      </div>
     );
   }
 
   return (
-    <Card className="bg-card border border-border rounded-2xl shadow-sm">
-      <CardContent className="p-6 md:p-6 p-4">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Store className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-xl text-foreground">Mon Établissement</h3>
-            <p className="text-sm text-muted-foreground">Informations Google Business</p>
-          </div>
+    <div className="p-6">
+      {/* Grid des informations */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-10">
+        {/* Nom */}
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground font-medium">Nom</p>
+          <p className="text-base font-medium text-foreground">{etab.name}</p>
         </div>
 
-        {/* Grid des informations */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {/* Nom */}
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground font-medium">Nom</p>
-            <p className="text-base font-semibold text-foreground">{etab.name}</p>
-          </div>
-
-          {/* Note Google */}
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground font-medium">Note Google</p>
-            <div className="flex items-center gap-2">
-              {etab.rating ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-700 font-semibold text-sm">
-                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  {etab.rating}
-                </span>
-              ) : (
-                <span className="text-muted-foreground">—</span>
-              )}
-            </div>
-          </div>
-
-          {/* Adresse */}
-          <div className="space-y-1 md:col-span-2">
-            <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5" />
-              Adresse
-            </p>
-            <p className="text-base text-foreground">{etab.address}</p>
-          </div>
-
-          {/* Téléphone */}
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-              <Phone className="w-3.5 h-3.5" />
-              Téléphone
-            </p>
-            <p className="text-base text-foreground">{etab.phone || "—"}</p>
-          </div>
-
-          {/* Site web */}
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-              <Globe className="w-3.5 h-3.5" />
-              Site web
-            </p>
-            {etab.website ? (
-              <a 
-                href={etab.website} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-base text-primary hover:underline inline-flex items-center gap-1"
-              >
-                Ouvrir
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            ) : (
-              <p className="text-muted-foreground">—</p>
-            )}
-          </div>
-
-          {/* Google Maps */}
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground font-medium">Google Maps</p>
-            {etab.url ? (
-              <a 
-                href={etab.url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-base text-primary hover:underline inline-flex items-center gap-1"
-              >
-                Voir la fiche
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            ) : (
-              <p className="text-muted-foreground">—</p>
-            )}
-          </div>
+        {/* Note Google */}
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground font-medium">Note Google</p>
+          {etab.rating ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 font-medium text-sm">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              {etab.rating}
+            </span>
+          ) : (
+            <p className="text-base text-muted-foreground">—</p>
+          )}
         </div>
 
-        {/* Footer avec place_id et actions */}
-        <div className="border-t border-border pt-4 flex items-center justify-between">
-          {/* place_id discret à gauche */}
-          <p className="text-xs text-muted-foreground font-mono">
-            place_id: {etab.place_id}
+        {/* Adresse */}
+        <div className="space-y-1 md:col-span-2">
+          <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5" />
+            Adresse
           </p>
-
-          {/* 3 icônes/actions identiques à droite */}
-          <div className="flex gap-1">
-            {/* Bouton importer vos avis */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto"
-              title="Importer vos avis"
-              data-testid="btn-import-avis"
-            >
-              <Download className="w-4 h-4" />
-            </Button>
-
-            {/* Bouton analyser établissement */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleAnalyze}
-              disabled={isAnalyzing}
-              className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto disabled:opacity-50"
-              title="Visuel des avis"
-              data-testid="btn-analyser-etablissement"
-            >
-              <BarChart3 className={`w-4 h-4 ${isAnalyzing ? 'animate-spin' : ''}`} />
-            </Button>
-            
-            {/* Bouton supprimer établissement */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDeleteEstablishment}
-              disabled={isDeleting}
-              className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto disabled:opacity-50"
-              title="Supprimer l'établissement et tous ses avis"
-            >
-              <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
+          <p className="text-base font-medium text-foreground">{etab.address}</p>
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Téléphone */}
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+            <Phone className="w-3.5 h-3.5" />
+            Téléphone
+          </p>
+          <p className="text-base font-medium text-foreground">{etab.phone || "—"}</p>
+        </div>
+
+        {/* Site web */}
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+            <Globe className="w-3.5 h-3.5" />
+            Site web
+          </p>
+          {etab.website ? (
+            <a 
+              href={etab.website} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
+            >
+              Ouvrir
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          ) : (
+            <p className="text-base text-muted-foreground">—</p>
+          )}
+        </div>
+
+        {/* Google Maps */}
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground font-medium">Google Maps</p>
+          {etab.url ? (
+            <a 
+              href={etab.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
+            >
+              Voir la fiche
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          ) : (
+            <p className="text-base text-muted-foreground">—</p>
+          )}
+        </div>
+      </div>
+
+      {/* Footer avec place_id et actions */}
+      <div className="border-t border-border mt-6 pt-4 flex items-center justify-between">
+        {/* place_id discret à gauche */}
+        <p className="text-xs text-muted-foreground font-mono truncate max-w-[60%]">
+          place_id: {etab.place_id}
+        </p>
+
+        {/* 3 icônes/actions identiques à droite */}
+        <div className="flex gap-1">
+          {/* Bouton importer vos avis */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto"
+            title="Importer vos avis"
+            data-testid="btn-import-avis"
+          >
+            <Download className="w-4 h-4" />
+          </Button>
+
+          {/* Bouton analyser établissement */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleAnalyze}
+            disabled={isAnalyzing}
+            className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto disabled:opacity-50"
+            title="Visuel des avis"
+            data-testid="btn-analyser-etablissement"
+          >
+            <BarChart3 className={`w-4 h-4 ${isAnalyzing ? 'animate-spin' : ''}`} />
+          </Button>
+          
+          {/* Bouton supprimer établissement */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDeleteEstablishment}
+            disabled={isDeleting}
+            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto disabled:opacity-50"
+            title="Supprimer l'établissement et tous ses avis"
+          >
+            <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
