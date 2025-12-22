@@ -343,7 +343,7 @@ export function ReviewsVisualPanel({
                     className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'all' ? 'ring-2 ring-primary bg-primary/5' : ''}`}
                     onClick={() => setActiveFilter('all')}
                   >
-                    <CardContent className="flex items-center p-4">
+                    <CardContent className="flex items-center px-4 py-2">
                       <List className="w-8 h-8 text-primary mr-3" />
                       <div>
                         <p className="text-sm text-muted-foreground">Tous les avis</p>
@@ -357,7 +357,7 @@ export function ReviewsVisualPanel({
                     className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'positive' ? 'ring-2 ring-green-500 bg-green-500/5' : ''}`}
                     onClick={() => setActiveFilter('positive')}
                   >
-                    <CardContent className="flex items-center p-4">
+                    <CardContent className="flex items-center px-4 py-2">
                       <ThumbsUp className="w-8 h-8 text-green-500 mr-3" />
                       <div>
                         <p className="text-sm text-muted-foreground">Avis positifs</p>
@@ -371,7 +371,7 @@ export function ReviewsVisualPanel({
                     className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'negative' ? 'ring-2 ring-red-500 bg-red-500/5' : ''}`}
                     onClick={() => setActiveFilter('negative')}
                   >
-                    <CardContent className="flex items-center p-4">
+                    <CardContent className="flex items-center px-4 py-2">
                       <ThumbsDown className="w-8 h-8 text-red-500 mr-3" />
                       <div>
                         <p className="text-sm text-muted-foreground">Avis négatifs</p>
@@ -385,7 +385,7 @@ export function ReviewsVisualPanel({
                     className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'suspect' ? 'ring-2 ring-orange-500 bg-orange-500/5' : ''}`}
                     onClick={() => setActiveFilter('suspect')}
                   >
-                    <CardContent className="flex items-center p-4">
+                    <CardContent className="flex items-center px-4 py-2">
                       <ShieldAlert className="w-8 h-8 text-orange-500 mr-3" />
                       <div>
                         <p className="text-sm text-muted-foreground">Suspicion faux avis</p>
