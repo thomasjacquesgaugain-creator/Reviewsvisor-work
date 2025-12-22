@@ -187,7 +187,7 @@ export default function MonEtablissementCard() {
     return (
       <div className="p-6">
         <p className="text-muted-foreground">
-          Aucun établissement sélectionné. Utilisez l'autocomplétion ci-dessus pour en choisir un.
+          Sélectionner un établissement
         </p>
       </div>
     );
