@@ -87,7 +87,7 @@ const Fonctionnalites = () => {
                 </div>
               </div>
 
-              <div className="mt-12 pt-8 border-t border-border">
+              <div className="mt-12 pt-8 mb-16 border-t border-border">
                 <h2 className="text-2xl font-bold mb-6 text-foreground">Questions sur les fonctionnalités</h2>
                 
                 <Accordion type="single" collapsible className="w-full space-y-2">
