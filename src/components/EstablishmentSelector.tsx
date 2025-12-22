@@ -148,7 +148,7 @@ export function EstablishmentSelector({ selectedEstablishment, onSelect }: Estab
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="flex items-center gap-3 h-auto py-2 px-3 min-w-[200px] justify-between"
+          className="flex items-center gap-3 h-auto py-2 px-3 min-w-[200px] justify-between hover:bg-transparent hover:text-foreground"
         >
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
