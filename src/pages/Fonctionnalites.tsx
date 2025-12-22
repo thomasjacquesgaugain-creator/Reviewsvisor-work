@@ -5,6 +5,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { HelpCircle } from "lucide-react";
 import BackArrow from "@/components/BackArrow";
 
 const Fonctionnalites = () => {
@@ -89,66 +90,87 @@ const Fonctionnalites = () => {
               <div className="mt-12 pt-8 border-t border-border">
                 <h2 className="text-2xl font-bold mb-6 text-foreground">Questions sur les fonctionnalités</h2>
                 
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="item-1">
-                    <AccordionTrigger className="text-left text-lg font-semibold">
-                      Comment fonctionne l'analyse des avis ?
+                <Accordion type="single" collapsible className="w-full space-y-2">
+                  <AccordionItem value="item-1" className="border border-border rounded-lg px-4 bg-card">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                      <div className="flex items-center gap-3 text-left">
+                        <HelpCircle className="h-5 w-5 text-blue shrink-0" />
+                        <span className="font-medium text-foreground">Comment fonctionne l'analyse des avis ?</span>
+                      </div>
                     </AccordionTrigger>
-                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
+                    <AccordionContent className="pb-4 pl-8 text-muted-foreground">
                       <span className="text-blue">Reviewsvisor</span> utilise une intelligence artificielle avancée pour analyser vos avis clients. L'outil lit chaque commentaire, identifie le ton et l'émotion, extrait les mots-clés importants et détecte automatiquement les points forts et les points faibles. Vous obtenez ensuite une synthèse claire avec des <span className="text-green">axes d'amélioration prioritaires</span>.
                     </AccordionContent>
                   </AccordionItem>
 
-                  <AccordionItem value="item-2">
-                    <AccordionTrigger className="text-left text-lg font-semibold">
-                      En quoi Reviewsvisor est-il différent d'un simple outil de statistiques ?
+                  <AccordionItem value="item-2" className="border border-border rounded-lg px-4 bg-card">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                      <div className="flex items-center gap-3 text-left">
+                        <HelpCircle className="h-5 w-5 text-blue shrink-0" />
+                        <span className="font-medium text-foreground">En quoi Reviewsvisor est-il différent d'un simple outil de statistiques ?</span>
+                      </div>
                     </AccordionTrigger>
-                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
+                    <AccordionContent className="pb-4 pl-8 text-muted-foreground">
                       <span className="text-blue">Reviewsvisor</span> ne se limite pas aux chiffres. L'IA analyse le ton, le vocabulaire et les émotions dans chaque avis afin de révéler les véritables ressentis des clients. L'outil identifie les tendances, les points forts et les axes d'amélioration, pour offrir une vision stratégique plutôt qu'un simple tableau de données.
                     </AccordionContent>
                   </AccordionItem>
 
-                  <AccordionItem value="item-3">
-                    <AccordionTrigger className="text-left text-lg font-semibold">
-                      Comment les axes d'amélioration sont-ils déterminés ?
+                  <AccordionItem value="item-3" className="border border-border rounded-lg px-4 bg-card">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                      <div className="flex items-center gap-3 text-left">
+                        <HelpCircle className="h-5 w-5 text-blue shrink-0" />
+                        <span className="font-medium text-foreground">Comment les axes d'amélioration sont-ils déterminés ?</span>
+                      </div>
                     </AccordionTrigger>
-                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
+                    <AccordionContent className="pb-4 pl-8 text-muted-foreground">
                       L'IA regroupe les retours clients par thématiques récurrentes (accueil, qualité, prix, service, ambiance, etc.). Elle mesure la fréquence et la tonalité de chaque sujet pour établir une liste claire des priorités d'amélioration à fort impact.
                     </AccordionContent>
                   </AccordionItem>
 
-                  <AccordionItem value="item-4">
-                    <AccordionTrigger className="text-left text-lg font-semibold">
-                      Quelle est la précision de l'analyse ?
+                  <AccordionItem value="item-4" className="border border-border rounded-lg px-4 bg-card">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                      <div className="flex items-center gap-3 text-left">
+                        <HelpCircle className="h-5 w-5 text-blue shrink-0" />
+                        <span className="font-medium text-foreground">Quelle est la précision de l'analyse ?</span>
+                      </div>
                     </AccordionTrigger>
-                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
+                    <AccordionContent className="pb-4 pl-8 text-muted-foreground">
                       <span style={{color:"#2C7BE5"}}>Reviewsvisor</span> utilise des modèles d'intelligence artificielle entraînés sur des millions de commentaires clients réels. <span style={{color:"#3FB27F"}}>Le taux de précision moyen dépasse 90 %</span>, avec une amélioration continue grâce à l'apprentissage automatique des nouveaux avis analysés.
                     </AccordionContent>
                   </AccordionItem>
 
-                  <AccordionItem value="item-5">
-                    <AccordionTrigger className="text-left text-lg font-semibold">
-                      L'IA peut-elle détecter les faux avis ou les avis suspects ?
+                  <AccordionItem value="item-5" className="border border-border rounded-lg px-4 bg-card">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                      <div className="flex items-center gap-3 text-left">
+                        <HelpCircle className="h-5 w-5 text-blue shrink-0" />
+                        <span className="font-medium text-foreground">L'IA peut-elle détecter les faux avis ou les avis suspects ?</span>
+                      </div>
                     </AccordionTrigger>
-                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
+                    <AccordionContent className="pb-4 pl-8 text-muted-foreground">
                       Oui, partiellement. <span style={{color:"#2C7BE5"}}>Reviewsvisor</span> repère les avis suspects selon plusieurs signaux : répétition de <span style={{color:"#3FB27F"}}>mots-clés</span>, <span style={{color:"#3FB27F"}}>schémas d'écriture inhabituels</span>, extrêmes émotionnels ou activité anormale sur une courte période. Cette fonctionnalité est conçue pour alerter les établissements sur les anomalies possibles.
                     </AccordionContent>
                   </AccordionItem>
 
-                  <AccordionItem value="item-6">
-                    <AccordionTrigger className="text-left text-lg font-semibold">
-                      Puis-je comparer mes performances à celles de mes concurrents ?
+                  <AccordionItem value="item-6" className="border border-border rounded-lg px-4 bg-card">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                      <div className="flex items-center gap-3 text-left">
+                        <HelpCircle className="h-5 w-5 text-blue shrink-0" />
+                        <span className="font-medium text-foreground">Puis-je comparer mes performances à celles de mes concurrents ?</span>
+                      </div>
                     </AccordionTrigger>
-                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
+                    <AccordionContent className="pb-4 pl-8 text-muted-foreground">
                       Cette fonctionnalité arrive très bientôt ! <span className="text-blue">Reviewsvisor</span> intégrera prochainement une <span className="font-semibold">analyse concurrentielle avancée</span>, permettant de comparer vos indicateurs clés à ceux de vos concurrents directs. Un véritable <span className="font-semibold">benchmarkeur intelligent</span> pour suivre votre position sur le marché.
                     </AccordionContent>
                   </AccordionItem>
 
-                  <AccordionItem value="item-7">
-                    <AccordionTrigger className="text-left text-lg font-semibold">
-                      Puis-je connecter plusieurs établissements à un seul compte ?
+                  <AccordionItem value="item-7" className="border border-border rounded-lg px-4 bg-card">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                      <div className="flex items-center gap-3 text-left">
+                        <HelpCircle className="h-5 w-5 text-blue shrink-0" />
+                        <span className="font-medium text-foreground">Puis-je connecter plusieurs établissements à un seul compte ?</span>
+                      </div>
                     </AccordionTrigger>
-                    <AccordionContent className="text-foreground/80 text-base leading-relaxed">
+                    <AccordionContent className="pb-4 pl-8 text-muted-foreground">
                       Oui. <span style={{color:"#2C7BE5"}}>Reviewsvisor</span> permet de <span style={{color:"#3FB27F"}}>centraliser la gestion de plusieurs établissements</span> depuis un tableau de bord unique. Chaque lieu dispose de <span style={{color:"#3FB27F"}}>ses propres rapports</span>, filtres et analyses, tout en conservant une vision globale de la performance du groupe.
                     </AccordionContent>
                   </AccordionItem>
