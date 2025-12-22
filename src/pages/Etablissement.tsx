@@ -33,6 +33,7 @@ export default function EtablissementPage() {
   const currentEstablishment = useCurrentEstablishment();
 
   // Sync the local establishment card from the DB (source of truth)
+  // IMPORTANT: préserver le rating local si la DB n'en a pas
   useEffect(() => {
     const syncFromDb = async () => {
       try {
@@ -47,14 +48,19 @@ export default function EtablissementPage() {
           prev = {};
         }
 
+        // Si l'établissement dans la DB est le même que celui en local, on merge
+        // Sinon on remplace entièrement
+        const isSamePlace = prev.place_id === est.place_id;
+
         const etab: Etab = {
           ...prev,
           place_id: est.place_id,
           name: est.name,
-          address: est.formatted_address || "",
+          address: est.formatted_address || prev.address || "",
           phone: est.phone ?? prev.phone,
           website: est.website ?? prev.website,
-          rating: est.rating ?? prev.rating ?? null,
+          // CRUCIAL: préserver le rating local si la DB n'en a pas (null/undefined)
+          rating: est.rating != null ? est.rating : (isSamePlace ? prev.rating : null),
         };
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(etab));
