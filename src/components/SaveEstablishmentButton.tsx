@@ -14,33 +14,45 @@ export default function SaveEstablishmentButton({
 }) {
   const [isAlreadySaved, setIsAlreadySaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [checkVersion, setCheckVersion] = useState(0);
 
-  // Vérifier si l'établissement est déjà enregistré
+  // Fonction de vérification DB
+  const checkIfSaved = async () => {
+    if (!selected?.place_id) {
+      setIsAlreadySaved(false);
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setIsAlreadySaved(false);
+      return;
+    }
+
+    const { data } = await supabase
+      .from("établissements")
+      .select("place_id")
+      .eq("user_id", user.id)
+      .eq("place_id", selected.place_id)
+      .maybeSingle();
+
+    setIsAlreadySaved(!!data);
+  };
+
+  // Vérifier quand la sélection change OU quand la liste est mise à jour
   useEffect(() => {
-    const checkIfSaved = async () => {
-      if (!selected?.place_id) {
-        setIsAlreadySaved(false);
-        return;
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setIsAlreadySaved(false);
-        return;
-      }
-
-      const { data } = await supabase
-        .from("établissements")
-        .select("place_id")
-        .eq("user_id", user.id)
-        .eq("place_id", selected.place_id)
-        .maybeSingle();
-
-      setIsAlreadySaved(!!data);
-    };
-
     checkIfSaved();
-  }, [selected?.place_id]);
+  }, [selected?.place_id, checkVersion]);
+
+  // Écouter les mises à jour de la liste (après ajout/suppression)
+  useEffect(() => {
+    const onListUpdated = () => {
+      // Forcer une re-vérification depuis la DB
+      setCheckVersion(v => v + 1);
+    };
+    window.addEventListener(EVT_LIST_UPDATED, onListUpdated);
+    return () => window.removeEventListener(EVT_LIST_UPDATED, onListUpdated);
+  }, []);
 
   async function handleSave() {
     if (!selected) return;
