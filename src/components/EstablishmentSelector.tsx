@@ -3,7 +3,7 @@ import { Building2, ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
-import { STORAGE_KEY, EVT_SAVED, EVT_ESTABLISHMENT_UPDATED } from "@/types/etablissement";
+import { EVT_SAVED, EVT_ESTABLISHMENT_UPDATED } from "@/types/etablissement";
 import { useNavigate } from "react-router-dom";
 
 export interface EstablishmentOption {
@@ -11,6 +11,7 @@ export interface EstablishmentOption {
   place_id: string;
   name: string;
   formatted_address: string | null;
+  is_active?: boolean | null;
 }
 
 interface EstablishmentSelectorProps {
@@ -24,32 +25,54 @@ export function EstablishmentSelector({ selectedEstablishment, onSelect }: Estab
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const loadEstablishments = async () => {
-      setLoading(true);
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data, error } = await supabase
-          .from("establishments")
-          .select("id, place_id, name, formatted_address")
-          .eq("user_id", user.id)
-          .order("updated_at", { ascending: false });
-
-        if (!error && data) {
-          setEstablishments(data as EstablishmentOption[]);
-        }
-      } catch (err) {
-        console.error("Erreur chargement établissements:", err);
-      } finally {
-        setLoading(false);
+  const loadEstablishments = async () => {
+    setLoading(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setEstablishments([]);
+        return;
       }
-    };
 
+      const { data, error } = await supabase
+        .from("établissements")
+        .select("id, place_id, nom, adresse, is_active, updated_at")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false });
+
+      if (error) throw error;
+
+      const mapped: EstablishmentOption[] = (data ?? []).map((row) => ({
+        id: row.id,
+        place_id: row.place_id,
+        name: row.nom,
+        formatted_address: row.adresse ?? null,
+        is_active: row.is_active ?? null,
+      }));
+
+      setEstablishments(mapped);
+
+      // Détermine l'établissement affiché: actif si défini, sinon plus récent
+      const selectedId = selectedEstablishment?.id;
+      const selectedStillExists = selectedId ? mapped.some((e) => e.id === selectedId) : false;
+
+      if ((!selectedEstablishment || !selectedStillExists) && mapped.length > 0) {
+        const active = mapped.find((e) => e.is_active) ?? mapped[0];
+        onSelect(active);
+      }
+    } catch (err) {
+      console.error("Erreur chargement établissements:", err);
+      setEstablishments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadEstablishments();
 
-    // Reload when establishment is updated
     const onUpdated = () => loadEstablishments();
     window.addEventListener(EVT_ESTABLISHMENT_UPDATED, onUpdated);
     window.addEventListener(EVT_SAVED, onUpdated);
@@ -58,23 +81,43 @@ export function EstablishmentSelector({ selectedEstablishment, onSelect }: Estab
       window.removeEventListener(EVT_ESTABLISHMENT_UPDATED, onUpdated);
       window.removeEventListener(EVT_SAVED, onUpdated);
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEstablishment?.id]);
 
-  const handleSelect = (est: EstablishmentOption) => {
-    // Update localStorage for other components
-    const localData = {
-      place_id: est.place_id,
-      name: est.name,
-      address: est.formatted_address || "",
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(localData));
+  const handleSelect = async (est: EstablishmentOption) => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    // Dispatch events
-    window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: localData }));
-    window.dispatchEvent(new CustomEvent(EVT_ESTABLISHMENT_UPDATED));
+      // Persist: définir comme "actif" en DB (source de vérité)
+      if (user) {
+        const { error } = await supabase
+          .from("établissements")
+          .update({ is_active: true })
+          .eq("user_id", user.id)
+          .eq("id", est.id);
 
-    onSelect(est);
-    setOpen(false);
+        if (error) throw error;
+      }
+
+      const detail = {
+        place_id: est.place_id,
+        name: est.name,
+        address: est.formatted_address || "",
+      };
+
+      window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail }));
+      window.dispatchEvent(new CustomEvent(EVT_ESTABLISHMENT_UPDATED));
+
+      onSelect(est);
+    } catch (err) {
+      console.error("Erreur sélection établissement:", err);
+      // UI réactive même si la mise à jour DB échoue
+      onSelect(est);
+    } finally {
+      setOpen(false);
+    }
   };
 
   if (loading) {
