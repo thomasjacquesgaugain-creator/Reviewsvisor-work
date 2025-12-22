@@ -18,7 +18,7 @@ const APropos = () => {
       
       <main className="flex-1 relative z-10">
         {/* HERO SECTION */}
-        <section className="pt-12 pb-16 px-4 md:px-8 bg-gradient-to-b from-primary/5 via-transparent to-transparent">
+        <section className="pt-10 pb-8 px-4 md:px-8 bg-gradient-to-b from-primary/5 via-transparent to-transparent">
           <div className="max-w-4xl mx-auto text-center">
             {/* Badge */}
             <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-sm font-medium bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
@@ -34,7 +34,7 @@ const APropos = () => {
             </h1>
             
             {/* Intro text */}
-            <div className="max-w-2xl mx-auto space-y-4 text-lg md:text-xl text-muted-foreground leading-relaxed mb-12">
+            <div className="max-w-2xl mx-auto space-y-4 text-lg md:text-xl text-muted-foreground leading-relaxed mb-8">
               <p className="flex items-center justify-center gap-2">
                 <span className="text-blue">Reviewsvisor</span> est une plateforme d'analyse intelligente des avis clients.
               </p>
@@ -63,7 +63,7 @@ const APropos = () => {
         </section>
 
         {/* INTRO SECTION */}
-        <section className="py-12 md:py-16 px-4 md:px-8">
+        <section className="py-6 md:py-8 px-4 md:px-8">
           <div className="max-w-4xl mx-auto">
             <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm">
               <div className="flex gap-4">
@@ -83,7 +83,7 @@ const APropos = () => {
         </section>
 
         {/* MISSION SECTION */}
-        <section className="py-12 md:py-16 px-4 md:px-8 bg-gradient-to-b from-transparent via-secondary/30 to-transparent">
+        <section className="py-6 md:py-8 px-4 md:px-8 bg-gradient-to-b from-transparent via-secondary/30 to-transparent">
           <div className="max-w-4xl mx-auto">
             <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-10 shadow-sm hover:shadow-md transition-shadow duration-300">
               <div className="flex gap-4">
@@ -105,9 +105,9 @@ const APropos = () => {
         </section>
 
         {/* WHY SECTION */}
-        <section className="py-12 md:py-16 px-4 md:px-8">
+        <section className="py-6 md:py-8 px-4 md:px-8">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-3 mb-8">
+            <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
                 <Lightbulb className="w-5 h-5 text-success" />
               </div>
@@ -153,7 +153,7 @@ const APropos = () => {
         </section>
 
         {/* TECHNOLOGY SECTION */}
-        <section className="py-12 md:py-16 px-4 md:px-8 bg-gradient-to-b from-transparent via-primary/5 to-transparent">
+        <section className="py-6 md:py-8 px-4 md:px-8 bg-gradient-to-b from-transparent via-primary/5 to-transparent">
           <div className="max-w-4xl mx-auto">
             <div className="bg-card border border-primary/20 rounded-2xl p-6 md:p-10 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
               {/* Subtle tech pattern */}
@@ -182,9 +182,9 @@ const APropos = () => {
         </section>
 
         {/* PLATFORM SECTION */}
-        <section className="py-16 md:py-24 px-4 md:px-8">
+        <section className="pt-6 pb-12 md:pt-8 md:pb-16 px-4 md:px-8">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-3 mb-8 justify-center">
+            <div className="flex items-center gap-3 mb-6 justify-center">
               <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
                 <Building2 className="w-5 h-5 text-accent" />
               </div>
