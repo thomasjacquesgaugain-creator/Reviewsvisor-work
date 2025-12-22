@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST, EVT_LIST_UPDATED } from "../types/etablissement";
-import { Trash2, BarChart3, Download, ExternalLink, Star, Phone, Globe, MapPin } from "lucide-react";
+import { Trash2, BarChart3, Download, ExternalLink, Star, Phone, Globe, MapPin, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { runAnalyze } from "@/lib/runAnalyze";
 import { toast as sonnerToast } from "sonner";
@@ -202,10 +202,13 @@ export default function MonEtablissementCard() {
 
       {/* Footer avec place_id et actions */}
       <div className="border-t border-border mt-6 pt-4 flex items-center justify-between relative">
-        {/* place_id discret à gauche */}
-        <p className="text-xs text-muted-foreground font-mono truncate max-w-[40%]">
-          place_id: {etab.place_id}
-        </p>
+        {/* Icône building + place_id à gauche */}
+        <div className="flex items-center gap-2 max-w-[40%]">
+          <Building2 className="w-4 h-4 text-primary flex-shrink-0" />
+          <p className="text-xs text-muted-foreground font-mono truncate">
+            place_id: {etab.place_id}
+          </p>
+        </div>
 
         {/* Bouton importer vos avis - centré */}
         <div className="absolute left-1/2 transform -translate-x-1/2">
