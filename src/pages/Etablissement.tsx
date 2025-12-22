@@ -294,9 +294,9 @@ export default function EtablissementPage() {
   }, [showImportBar, showReviewsVisual]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background overflow-y-auto">
       {/* Main content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 pb-16">
         <h1 className="text-3xl font-bold mb-8">Établissement</h1>
         
         <div className="space-y-6">

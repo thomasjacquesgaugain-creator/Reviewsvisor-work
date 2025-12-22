@@ -80,8 +80,8 @@ export default function SavedEstablishmentsList() {
   }
 
   return (
-    <div className="mt-8 p-4 border border-border rounded-lg bg-card/50">
-      <h3 className="text-lg font-semibold mb-4 text-foreground">
+    <section className="p-4 border border-border rounded-lg bg-card/50">
+      <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-2">
         Mes Établissements Enregistrés
       </h3>
       
@@ -94,6 +94,6 @@ export default function SavedEstablishmentsList() {
           />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
