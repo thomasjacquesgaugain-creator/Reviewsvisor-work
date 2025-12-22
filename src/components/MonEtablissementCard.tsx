@@ -40,11 +40,26 @@ export default function MonEtablissementCard() {
       // 2. Supprimer l'établissement de la base de données
       const { data: user } = await supabase.auth.getUser();
       if (user.user) {
+        // IMPORTANT: la liste "Établissements enregistrés" est basée sur la table "établissements".
+        // On supprime donc ici dans la/les tables réellement utilisées.
         await supabase
-          .from('establishments')
+          .from("établissements")
           .delete()
-          .eq('user_id', user.user.id)
-          .eq('place_id', etab.place_id);
+          .eq("user_id", user.user.id)
+          .eq("place_id", etab.place_id);
+
+        // Établissement principal (1 par utilisateur)
+        await supabase
+          .from("user_establishment")
+          .delete()
+          .eq("user_id", user.user.id);
+
+        // Ancienne table (compat) si jamais utilisée ailleurs
+        await supabase
+          .from("establishments")
+          .delete()
+          .eq("user_id", user.user.id)
+          .eq("place_id", etab.place_id);
       }
 
       // 3. Supprimer du localStorage
