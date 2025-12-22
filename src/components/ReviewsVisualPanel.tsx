@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2 } from "lucide-react";
+import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2, ThumbsUp, ThumbsDown, ShieldAlert } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
@@ -10,6 +10,7 @@ import { STORAGE_KEY } from "@/types/etablissement";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
 import { toast as sonnerToast } from "sonner";
 import { getDisplayAuthor } from "@/utils/getDisplayAuthor";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +21,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+type ReviewFilter = "all" | "positive" | "negative" | "suspect";
+
 interface ReviewsSummary {
   total: number;
   avgRating: number;
@@ -36,11 +40,37 @@ interface ReviewsSummary {
     avg?: number;
   }>;
 }
+
 interface ReviewsVisualPanelProps {
   establishmentId?: string;
   establishmentName?: string;
   onClose: () => void;
 }
+
+// Heuristique simple pour détecter les avis suspects
+function isSuspectReview(comment: string, rating: number): boolean {
+  if (!comment) return false;
+  const trimmed = comment.trim();
+  
+  // Commentaire très court (moins de 15 caractères)
+  if (trimmed.length < 15 && trimmed.length > 0) return true;
+  
+  // Commentaires génériques courants
+  const genericPatterns = [
+    /^(super|top|genial|parfait|excellent|nul|mauvais|bien|bof)\.?$/i,
+    /^(très bien|pas mal|à éviter|je recommande|recommande)\.?$/i,
+    /^\.+$/,
+    /^[👍👎❤️⭐️🌟]+$/,
+  ];
+  
+  if (genericPatterns.some(pattern => pattern.test(trimmed))) return true;
+  
+  // Note extrême (1 ou 5) avec commentaire très court
+  if ((rating === 1 || rating === 5) && trimmed.length < 30) return true;
+  
+  return false;
+}
+
 export function ReviewsVisualPanel({
   establishmentId,
   establishmentName,
@@ -52,6 +82,7 @@ export function ReviewsVisualPanel({
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<ReviewFilter>("all");
   const currentEstablishment = useCurrentEstablishment();
   
   // Use props first, fallback to current establishment
@@ -298,6 +329,56 @@ export function ReviewsVisualPanel({
               </Card>
             </div>
 
+            {/* Nouvelles cards de filtrage */}
+            {(() => {
+              const positiveCount = reviewsList.filter(r => r.rating >= 4).length;
+              const negativeCount = reviewsList.filter(r => r.rating <= 2).length;
+              const suspectCount = reviewsList.filter(r => isSuspectReview(r.comment, r.rating)).length;
+              
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Card 
+                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'positive' ? 'ring-2 ring-green-500' : ''}`}
+                    onClick={() => setActiveFilter(activeFilter === 'positive' ? 'all' : 'positive')}
+                  >
+                    <CardContent className="flex items-center p-4">
+                      <ThumbsUp className="w-8 h-8 text-green-500 mr-3" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Avis positifs</p>
+                        <p className="text-2xl font-bold">{positiveCount}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card 
+                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'negative' ? 'ring-2 ring-red-500' : ''}`}
+                    onClick={() => setActiveFilter(activeFilter === 'negative' ? 'all' : 'negative')}
+                  >
+                    <CardContent className="flex items-center p-4">
+                      <ThumbsDown className="w-8 h-8 text-red-500 mr-3" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Avis négatifs</p>
+                        <p className="text-2xl font-bold">{negativeCount}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card 
+                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'suspect' ? 'ring-2 ring-orange-500' : ''}`}
+                    onClick={() => setActiveFilter(activeFilter === 'suspect' ? 'all' : 'suspect')}
+                  >
+                    <CardContent className="flex items-center p-4">
+                      <ShieldAlert className="w-8 h-8 text-orange-500 mr-3" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Suspicion faux avis</p>
+                        <p className="text-2xl font-bold">{suspectCount}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              );
+            })()}
+
             {/* Stars Distribution */}
             
 
@@ -318,12 +399,39 @@ export function ReviewsVisualPanel({
                 </div>
               </div>}
 
-            {/* Reviews List */}
+            {/* Reviews List with Filter */}
             <div>
+              {activeFilter !== 'all' && (
+                <div className="flex items-center justify-between mb-4">
+                  <Badge variant="secondary" className="text-sm">
+                    Filtre : {activeFilter === 'positive' ? 'avis positifs (≥ 4 étoiles)' : 
+                             activeFilter === 'negative' ? 'avis négatifs (≤ 2 étoiles)' : 
+                             'avis suspects'}
+                  </Badge>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setActiveFilter('all')}
+                  >
+                    Réinitialiser
+                  </Button>
+                </div>
+              )}
               <ReviewsTable
-                rows={reviewsList}
+                rows={(() => {
+                  switch (activeFilter) {
+                    case 'positive':
+                      return reviewsList.filter(r => r.rating >= 4);
+                    case 'negative':
+                      return reviewsList.filter(r => r.rating <= 2);
+                    case 'suspect':
+                      return reviewsList.filter(r => isSuspectReview(r.comment, r.rating));
+                    default:
+                      return reviewsList;
+                  }
+                })()}
                 isLoading={isLoadingReviews}
-                emptyLabel="Aucun avis enregistré"
+                emptyLabel={activeFilter === 'all' ? "Aucun avis enregistré" : "Aucun avis correspondant au filtre"}
                 data-testid="establishment-reviews-table"
               />
             </div>
