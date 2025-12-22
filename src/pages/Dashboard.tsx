@@ -39,7 +39,7 @@ const Dashboard = () => {
   const [showThematiques, setShowThematiques] = useState(false);
   const [showAnalyseDetaillee, setShowAnalyseDetaillee] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
-  const [showRecommandations, setShowRecommandations] = useState(true);
+  const [showRecommandations, setShowRecommandations] = useState(false);
   const [showReponseAuto, setShowReponseAuto] = useState(false);
   const [showParetoChart, setShowParetoChart] = useState(false);
   const [showParetoPoints, setShowParetoPoints] = useState(false);
