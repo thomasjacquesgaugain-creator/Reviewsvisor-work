@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail, MapPin, Building2, User, Globe, Phone } from "lucide-react";
+import { Mail, MapPin, Building2, User, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { STORAGE_KEY, EVT_SAVED, EVT_ESTABLISHMENT_UPDATED } from "@/types/etablissement";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,25 +23,13 @@ const Compte = () => {
   const [etablissement, setEtablissement] = useState("");
   const [adresse, setAdresse] = useState("");
   const [language, setLanguage] = useState("fr");
-  const [phone, setPhone] = useState("");
 
   // Load current establishment from Supabase on mount (source de vérité = DB)
   useEffect(() => {
-    const loadCurrentData = async () => {
+    const loadCurrentEstablishment = async () => {
       if (!user) return;
 
       try {
-        // Load user profile (including phone)
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("phone")
-          .eq("user_id", user.id)
-          .single();
-
-        if (profileData?.phone) {
-          setPhone(profileData.phone);
-        }
-
         // 1) établissement actif si présent
         const { data: activeRows, error: activeError } = await supabase
           .from("établissements")
@@ -83,11 +71,11 @@ const Compte = () => {
           setSelectedEstablishment(null);
         }
       } catch (err) {
-        console.warn("Could not load current data:", err);
+        console.warn("Could not load current establishment:", err);
       }
     };
 
-    loadCurrentData();
+    loadCurrentEstablishment();
   }, [user]);
 
   // Handle establishment selection change
@@ -192,7 +180,6 @@ const Compte = () => {
             first_name: firstName.trim() || null,
             last_name: lastName.trim() || null,
             display_name: computedFullName || null,
-            phone: phone.trim() || null,
           },
           { onConflict: "user_id" }
         );
@@ -342,21 +329,6 @@ const Compte = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
-            {/* Numéro de téléphone */}
-            <div className="flex items-center gap-3">
-              <Phone className="h-6 w-6 text-primary flex-shrink-0" />
-              <div className="w-full">
-                <Label className="text-xs uppercase text-muted-foreground">Numéro de téléphone</Label>
-                <Input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="06 12 34 56 78"
                   className="mt-1"
                 />
               </div>
