@@ -66,7 +66,7 @@ const Fonctionnalites = () => {
         </section>
 
         {/* MAIN FEATURES SECTION */}
-        <section className="pt-8 pb-16 md:pt-10 md:pb-20 px-4 md:px-8">
+        <section className="pt-8 pb-6 md:pt-10 md:pb-8 px-4 md:px-8">
           <div className="max-w-4xl mx-auto space-y-6">
             {/* Feature Card 1 */}
             <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
