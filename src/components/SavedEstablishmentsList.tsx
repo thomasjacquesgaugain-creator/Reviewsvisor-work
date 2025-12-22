@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Etab, STORAGE_KEY, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
 import EstablishmentItem from "./EstablishmentItem";
-import { Building2, CheckCircle } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
 
@@ -176,28 +176,15 @@ export default function SavedEstablishmentsList() {
       ) : (
         <div className="flex flex-wrap gap-3">
           {establishments.map((etab) => {
-            const isActive = activeEstablishment?.place_id === etab.place_id;
             const isDeleting = deletingPlaceId === etab.place_id;
             return (
-              <div 
-                key={etab.place_id} 
-                className="relative"
-              >
-                {isActive && (
-                  <div className="absolute -top-2 -right-2 z-10">
-                    <span className="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-medium px-2 py-0.5 rounded-full shadow-sm">
-                      <CheckCircle className="h-3 w-3" />
-                      Actif
-                    </span>
-                  </div>
-                )}
-                <EstablishmentItem
-                  etab={etab}
-                  onSelect={handleSelectEstablishment}
-                  onDelete={handleDeleteEstablishment}
-                  isDeleting={isDeleting}
-                />
-              </div>
+              <EstablishmentItem
+                key={etab.place_id}
+                etab={etab}
+                onSelect={handleSelectEstablishment}
+                onDelete={handleDeleteEstablishment}
+                isDeleting={isDeleting}
+              />
             );
           })}
         </div>
