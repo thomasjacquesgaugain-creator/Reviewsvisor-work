@@ -59,7 +59,7 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
   const renderTabContent = () => {
     switch (activeTab) {
       case "csv":
-        return <ImportCsvPanel onFileAnalyzed={onFileAnalyzed} placeId={placeId} />;
+        return <ImportCsvPanel onFileAnalyzed={onFileAnalyzed} placeId={placeId} onOpenVisualPanel={onOpenVisualPanel} />;
       case "paste":
         return <PasteImportPanel onImportBulk={handleBulkImport} onClose={onClose} onImportSuccess={onImportSuccess} onOpenVisualPanel={onOpenVisualPanel} />;
       case "auto":
@@ -75,7 +75,7 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
                   ? `Importation automatique des avis Google pour "${establishmentName || 'cet établissement'}"`
                   : "Sélectionnez un établissement pour importer les avis Google"}
               </p>
-              <GoogleImportButton onSuccess={onImportSuccess} placeId={placeId} />
+              <GoogleImportButton onSuccess={onImportSuccess} placeId={placeId} onOpenVisualPanel={onOpenVisualPanel} />
             </div>
           </div>
         );

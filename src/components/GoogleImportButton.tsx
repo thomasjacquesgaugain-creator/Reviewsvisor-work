@@ -14,6 +14,7 @@ import {
 interface GoogleImportButtonProps {
   onSuccess?: () => void;
   placeId?: string;
+  onOpenVisualPanel?: () => void;
 }
 
 interface Location {
@@ -117,7 +118,7 @@ async function callEdgeFunction<T = any>(
   };
 }
 
-export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportButtonProps) {
+export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPanel }: GoogleImportButtonProps) {
   const [loading, setLoading] = useState(false);
   const [showLocationSelector, setShowLocationSelector] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -559,6 +560,17 @@ export default function GoogleImportButton({ onSuccess, placeId }: GoogleImportB
       }
 
       setShowLocationSelector(false);
+
+      // Ouvrir le panneau visuel et scroll
+      if (onOpenVisualPanel) {
+        onOpenVisualPanel();
+        setTimeout(() => {
+          document.getElementById("reviews-visual-anchor")?.scrollIntoView({ 
+            behavior: "smooth", 
+            block: "start" 
+          });
+        }, 100);
+      }
 
       // Refresh UI
       window.dispatchEvent(new CustomEvent("reviews:imported"));
