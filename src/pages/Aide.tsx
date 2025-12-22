@@ -13,8 +13,7 @@ import BackArrow from "@/components/BackArrow";
 const faqItems = [
   {
     question: "Comment importer mes avis Google ?",
-    answer: `Vous pouvez importer vos avis Google de trois façons :
-- en les collant manuellement depuis Google Maps,
+    answer: `Vous pouvez importer vos avis Google de deux façons :
 - en important un fichier via Google Takeout,
 - ou via la récupération automatique si votre établissement est connecté.
 
