@@ -5,7 +5,11 @@ import { Loader2, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const AiAssistance = () => {
+interface AiAssistanceProps {
+  className?: string;
+}
+
+const AiAssistance = ({ className }: AiAssistanceProps) => {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [isLoading, setIsLoading] = useState(false);
