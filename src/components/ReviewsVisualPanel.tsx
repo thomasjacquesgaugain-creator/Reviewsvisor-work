@@ -419,23 +419,12 @@ export function ReviewsVisualPanel({
 
             {/* Reviews List with Filter */}
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <Badge variant="secondary" className="text-sm">
-                  Filtre : {activeFilter === 'all' ? 'tous les avis' :
-                           activeFilter === 'positive' ? 'avis positifs (≥ 4 étoiles)' : 
-                           activeFilter === 'negative' ? 'avis négatifs (≤ 2 étoiles)' : 
-                           'avis suspects'}
-                </Badge>
-                {activeFilter !== 'all' && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setActiveFilter('all')}
-                  >
-                    Réinitialiser
-                  </Button>
-                )}
-              </div>
+              <Badge variant="secondary" className="text-sm mb-4">
+                Filtre : {activeFilter === 'all' ? 'tous les avis' :
+                         activeFilter === 'positive' ? 'avis positifs (≥ 4 étoiles)' : 
+                         activeFilter === 'negative' ? 'avis négatifs (≤ 2 étoiles)' : 
+                         'avis suspects'}
+              </Badge>
               <ReviewsTable
                 rows={(() => {
                   switch (activeFilter) {
