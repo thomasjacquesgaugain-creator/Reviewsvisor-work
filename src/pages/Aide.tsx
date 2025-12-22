@@ -33,7 +33,7 @@ Cela permet de transformer les avis clients en actions concrètes.`
 Vous pouvez générer des réponses adaptées au ton des avis (positifs ou négatifs), tout en gardant le contrôle avant publication.`
 }];
 const Aide = () => {
-  return <div className="min-h-screen flex flex-col relative bg-primary-foreground">
+  return <div className="min-h-screen flex flex-col relative">
       <BackArrow />
       <main className="flex-1 pt-6 pb-8 px-4">
         <section className="py-5">
