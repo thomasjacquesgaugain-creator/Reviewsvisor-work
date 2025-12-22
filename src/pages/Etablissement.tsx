@@ -3,7 +3,7 @@ import { loadGooglePlaces } from "@/lib/loadGooglePlaces";
 import MonEtablissementCard from "@/components/MonEtablissementCard";
 import SaveEstablishmentButton from "@/components/SaveEstablishmentButton";
 import SavedEstablishmentsList from "@/components/SavedEstablishmentsList";
-import { AnalyzeEstablishmentButton } from "@/components/AnalyzeEstablishmentButton";
+
 import ImportAvisToolbar from "@/components/ImportAvisToolbar";
 import { ReviewsVisualPanel } from "@/components/ReviewsVisualPanel";
 
@@ -333,16 +333,6 @@ export default function EtablissementPage() {
             </div>
             
             <SaveEstablishmentButton selected={selected} onSaveSuccess={resetSearch} />
-            
-            {selected && (
-              <div className="mt-4">
-                <AnalyzeEstablishmentButton
-                  place_id={selected.place_id}
-                  name={selected.name}
-                  address={selected.address}
-                />
-              </div>
-            )}
           </div>
 
           {/* Section Mon Établissement */}
