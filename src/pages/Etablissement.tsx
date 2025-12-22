@@ -318,7 +318,7 @@ export default function EtablissementPage() {
 
           {/* Liste des établissements enregistrés */}
           <div data-testid="section-etablissements-enregistres">
-            <SavedEstablishmentsList className="bg-destructive-foreground" />
+            <SavedEstablishmentsList />
           </div>
         </div>
       </div>
