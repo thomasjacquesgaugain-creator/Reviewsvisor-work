@@ -1,45 +1,69 @@
 import { useEffect, useState } from "react";
 import { Etab, STORAGE_KEY_LIST, STORAGE_KEY, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
 import EstablishmentItem from "./EstablishmentItem";
-import { Building2 } from "lucide-react";
-
+import { Building2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function SavedEstablishmentsList() {
   const [establishments, setEstablishments] = useState<Etab[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeEstablishment, setActiveEstablishment] = useState<Etab | null>(null);
 
-  // Charger la liste au montage (local + base de données)
+  // Charger l'établissement actif depuis localStorage
+  useEffect(() => {
+    const loadActive = () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          setActiveEstablishment(JSON.parse(raw));
+        }
+      } catch (e) {
+        console.error("Erreur lecture établissement actif:", e);
+      }
+    };
+    loadActive();
+
+    const onSaved = (e: any) => {
+      setActiveEstablishment(e.detail as Etab);
+    };
+    window.addEventListener(EVT_SAVED, onSaved);
+    return () => window.removeEventListener(EVT_SAVED, onSaved);
+  }, []);
+
+  // Charger la liste au montage (depuis la table établissements)
   useEffect(() => {
     const loadEstablishments = async () => {
       try {
-        // 1) Charger depuis localStorage en premier
+        // 1) Charger depuis localStorage en premier (fallback)
         const rawLocal = localStorage.getItem(STORAGE_KEY_LIST);
+        let localList: Etab[] = [];
         if (rawLocal) {
-          setEstablishments(JSON.parse(rawLocal));
+          localList = JSON.parse(rawLocal);
+          setEstablishments(localList);
         }
 
-        // 2) Essayer de charger depuis la base de données si connecté
+        // 2) Charger depuis la base de données si connecté
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (!authError && user) {
+          // Charger depuis la table "établissements" (français)
           const { data: etablissements, error } = await supabase
-            .from("establishments")
+            .from("établissements")
             .select("*")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false });
 
-          if (!error && etablissements) {
+          if (!error && etablissements && etablissements.length > 0) {
             // Convertir le format de la base vers le format Etab
             const convertedEstabs: Etab[] = etablissements.map(etab => ({
               place_id: etab.place_id,
-              name: etab.name,
-              address: etab.formatted_address || "",
-              lat: etab.lat,
-              lng: etab.lng,
-              phone: etab.phone || "",
-              website: etab.website || "",
+              name: etab.nom,
+              address: etab.adresse || "",
+              lat: null,
+              lng: null,
+              phone: etab.telephone || "",
+              website: "",
               url: "",
-              rating: etab.rating || null
+              rating: null
             }));
             
             setEstablishments(convertedEstabs);
@@ -70,7 +94,18 @@ export default function SavedEstablishmentsList() {
   const handleSelectEstablishment = (etab: Etab) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(etab));
     window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));
+    
+    // Scroll smooth vers le haut
+    document.querySelector('[data-testid="card-mon-etablissement"]')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
   };
+
+  // Fallback: si liste vide mais établissement actif, l'afficher
+  const displayList = establishments.length > 0 
+    ? establishments 
+    : (activeEstablishment ? [activeEstablishment] : []);
 
   if (loading) {
     return (
@@ -91,19 +126,34 @@ export default function SavedEstablishmentsList() {
         Établissements enregistrés
       </h3>
       
-      {establishments.length === 0 ? (
+      {displayList.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           Aucun établissement enregistré pour le moment.
         </p>
       ) : (
         <div className="flex flex-wrap gap-3">
-          {establishments.map((etab) => (
-            <EstablishmentItem
-              key={etab.place_id}
-              etab={etab}
-              onSelect={handleSelectEstablishment}
-            />
-          ))}
+          {displayList.map((etab) => {
+            const isActive = activeEstablishment?.place_id === etab.place_id;
+            return (
+              <div 
+                key={etab.place_id} 
+                className="relative"
+              >
+                {isActive && (
+                  <div className="absolute -top-2 -right-2 z-10">
+                    <span className="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-medium px-2 py-0.5 rounded-full shadow-sm">
+                      <CheckCircle className="h-3 w-3" />
+                      Actif
+                    </span>
+                  </div>
+                )}
+                <EstablishmentItem
+                  etab={etab}
+                  onSelect={handleSelectEstablishment}
+                />
+              </div>
+            );
+          })}
         </div>
       )}
     </section>
