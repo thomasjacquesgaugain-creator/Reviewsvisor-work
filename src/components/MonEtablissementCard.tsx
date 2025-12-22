@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST, EVT_LIST_UPDATED } from "../types/etablissement";
+import { Etab, STORAGE_KEY, EVT_SAVED, EVT_LIST_UPDATED } from "../types/etablissement";
 import { Trash2, BarChart3, Download, ExternalLink, Star, Phone, Globe, MapPin, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { runAnalyze } from "@/lib/runAnalyze";
@@ -65,15 +65,8 @@ export default function MonEtablissementCard() {
       // 3. Supprimer du localStorage
       localStorage.removeItem(STORAGE_KEY);
 
-      // 4. Mettre à jour la liste des établissements enregistrés
-      const rawList = localStorage.getItem(STORAGE_KEY_LIST);
-      if (rawList) {
-        const list: Etab[] = JSON.parse(rawList);
-        const updatedList = list.filter(e => e.place_id !== etab.place_id);
-        localStorage.setItem(STORAGE_KEY_LIST, JSON.stringify(updatedList));
-        // Dispatcher l'événement pour mettre à jour la liste affichée
-        window.dispatchEvent(new CustomEvent(EVT_LIST_UPDATED, { detail: updatedList }));
-      }
+      // 4. Notifier la liste de se recharger depuis la DB
+      window.dispatchEvent(new CustomEvent(EVT_LIST_UPDATED));
 
       // 5. Toast rouge en bas à droite (même système que import)
       sonnerToast.error("L'établissement et tous ses avis ont été supprimés.", {
