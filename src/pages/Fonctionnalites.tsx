@@ -24,7 +24,7 @@ const Fonctionnalites = () => {
       
       <main className="flex-1 relative z-10">
         {/* HERO SECTION */}
-        <section className="pt-12 pb-16 px-4 md:px-8 bg-gradient-to-b from-primary/5 via-transparent to-transparent">
+        <section className="pt-12 pb-6 px-4 md:px-8 bg-gradient-to-b from-primary/5 via-transparent to-transparent">
           <div className="max-w-4xl mx-auto text-center">
             {/* Badge */}
             <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-sm font-medium bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
@@ -66,7 +66,7 @@ const Fonctionnalites = () => {
         </section>
 
         {/* MAIN FEATURES SECTION */}
-        <section className="py-16 md:py-20 px-4 md:px-8">
+        <section className="pt-8 pb-16 md:pt-10 md:pb-20 px-4 md:px-8">
           <div className="max-w-4xl mx-auto space-y-6">
             {/* Feature Card 1 */}
             <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
