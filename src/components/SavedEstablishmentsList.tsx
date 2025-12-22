@@ -3,11 +3,13 @@ import { Etab, STORAGE_KEY_LIST, STORAGE_KEY, EVT_LIST_UPDATED, EVT_SAVED } from
 import EstablishmentItem from "./EstablishmentItem";
 import { Building2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast as sonnerToast } from "sonner";
 
 export default function SavedEstablishmentsList() {
   const [establishments, setEstablishments] = useState<Etab[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeEstablishment, setActiveEstablishment] = useState<Etab | null>(null);
+  const [deletingPlaceId, setDeletingPlaceId] = useState<string | null>(null);
 
   // Charger l'établissement actif depuis localStorage
   useEffect(() => {
@@ -30,74 +32,68 @@ export default function SavedEstablishmentsList() {
     return () => window.removeEventListener(EVT_SAVED, onSaved);
   }, []);
 
-  // Charger la liste au montage (depuis la table établissements)
-  useEffect(() => {
-    const loadEstablishments = async () => {
-      try {
-        // 1) Charger depuis localStorage en premier (source locale)
+  // Fonction pour charger les établissements depuis la DB (source de vérité)
+  const loadEstablishmentsFromDb = async () => {
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        // Non connecté: utiliser localStorage seulement
         const rawLocal = localStorage.getItem(STORAGE_KEY_LIST);
-        let localList: Etab[] = [];
         if (rawLocal) {
-          localList = JSON.parse(rawLocal);
-          setEstablishments(localList);
+          setEstablishments(JSON.parse(rawLocal));
+        } else {
+          setEstablishments([]);
         }
-
-        // Helper: si une liste locale existe, elle fait foi (évite de "ressusciter" des éléments supprimés).
-        const mergeLocalWithDb = (local: Etab[], db: Etab[]) => {
-          if (local.length > 0) {
-            const byPlaceId = new Map(db.map((e) => [e.place_id, e] as const));
-            return local.map((l) => ({ ...(byPlaceId.get(l.place_id) || {}), ...l }));
-          }
-          return db;
-        };
-
-        // 2) Charger depuis la base de données si connecté
-        const {
-          data: { user },
-          error: authError,
-        } = await supabase.auth.getUser();
-
-        if (!authError && user) {
-          // Charger depuis la table "établissements" (français)
-          const { data: etablissements, error } = await supabase
-            .from("établissements")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false });
-
-          if (!error) {
-            const dbList: Etab[] = (etablissements || []).map((etab) => ({
-              place_id: etab.place_id,
-              name: etab.nom,
-              address: etab.adresse || "",
-              lat: null,
-              lng: null,
-              phone: etab.telephone || "",
-              website: "",
-              url: "",
-              rating: null,
-            }));
-
-            const merged = mergeLocalWithDb(localList, dbList);
-
-            setEstablishments(merged);
-            localStorage.setItem(STORAGE_KEY_LIST, JSON.stringify(merged));
-          }
-        }
-      } catch (error) {
-        console.error("Erreur lors du chargement de la liste:", error);
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
 
-    loadEstablishments();
+      // Charger depuis la table "établissements" (source de vérité)
+      const { data: etablissements, error } = await supabase
+        .from("établissements")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Erreur chargement établissements:", error);
+        return;
+      }
+
+      // Convertir vers le format Etab
+      const dbList: Etab[] = (etablissements || []).map((etab) => ({
+        place_id: etab.place_id,
+        name: etab.nom,
+        address: etab.adresse || "",
+        lat: null,
+        lng: null,
+        phone: etab.telephone || "",
+        website: "",
+        url: "",
+        rating: null,
+      }));
+
+      setEstablishments(dbList);
+      // Synchroniser localStorage avec la DB
+      localStorage.setItem(STORAGE_KEY_LIST, JSON.stringify(dbList));
+    } catch (error) {
+      console.error("Erreur lors du chargement de la liste:", error);
+    }
+  };
+
+  // Charger au montage
+  useEffect(() => {
+    const load = async () => {
+      await loadEstablishmentsFromDb();
+      setLoading(false);
+    };
+    load();
   }, []);
 
-  // Écouter les mises à jour de la liste
+  // Écouter les mises à jour de la liste (après ajout depuis SaveEstablishmentButton)
   useEffect(() => {
-    const onListUpdated = (e: any) => {
-      setEstablishments(e.detail as Etab[]);
+    const onListUpdated = async () => {
+      // Recharger depuis la DB pour être sûr d'avoir la vraie liste
+      await loadEstablishmentsFromDb();
     };
     window.addEventListener(EVT_LIST_UPDATED, onListUpdated);
     return () => window.removeEventListener(EVT_LIST_UPDATED, onListUpdated);
@@ -115,10 +111,67 @@ export default function SavedEstablishmentsList() {
     });
   };
 
-  // Fallback: si liste vide mais établissement actif, l'afficher
-  const displayList = establishments.length > 0 
-    ? establishments 
-    : (activeEstablishment ? [activeEstablishment] : []);
+  // Supprimer un établissement
+  const handleDeleteEstablishment = async (etab: Etab) => {
+    if (!etab.place_id) return;
+
+    setDeletingPlaceId(etab.place_id);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // 1. Supprimer de la table "établissements" (source de vérité)
+        const { error: etabError } = await supabase
+          .from("établissements")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("place_id", etab.place_id);
+        
+        if (etabError) {
+          console.error("Erreur suppression établissements:", etabError);
+          throw etabError;
+        }
+
+        // 2. Supprimer aussi de user_establishment si c'est celui-là
+        await supabase
+          .from("user_establishment")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("place_id", etab.place_id);
+
+        // 3. Supprimer de establishments (compat)
+        await supabase
+          .from("establishments")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("place_id", etab.place_id);
+      }
+
+      // 4. Mettre à jour immédiatement l'état local (optimistic UI)
+      const newList = establishments.filter(e => e.place_id !== etab.place_id);
+      setEstablishments(newList);
+      localStorage.setItem(STORAGE_KEY_LIST, JSON.stringify(newList));
+
+      // 5. Si c'était l'établissement actif, le vider
+      if (activeEstablishment?.place_id === etab.place_id) {
+        localStorage.removeItem(STORAGE_KEY);
+        setActiveEstablishment(null);
+        window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: null }));
+      }
+
+      // 6. Dispatcher l'event pour synchroniser les autres composants
+      window.dispatchEvent(new CustomEvent(EVT_LIST_UPDATED, { detail: newList }));
+
+      sonnerToast.success(`"${etab.name}" supprimé`, { duration: 3000 });
+
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+      sonnerToast.error("Impossible de supprimer l'établissement", { duration: 5000 });
+    } finally {
+      setDeletingPlaceId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -139,14 +192,15 @@ export default function SavedEstablishmentsList() {
         Établissements enregistrés
       </h3>
       
-      {displayList.length === 0 ? (
+      {establishments.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           Aucun établissement enregistré pour le moment.
         </p>
       ) : (
         <div className="flex flex-wrap gap-3">
-          {displayList.map((etab) => {
+          {establishments.map((etab) => {
             const isActive = activeEstablishment?.place_id === etab.place_id;
+            const isDeleting = deletingPlaceId === etab.place_id;
             return (
               <div 
                 key={etab.place_id} 
@@ -163,6 +217,8 @@ export default function SavedEstablishmentsList() {
                 <EstablishmentItem
                   etab={etab}
                   onSelect={handleSelectEstablishment}
+                  onDelete={handleDeleteEstablishment}
+                  isDeleting={isDeleting}
                 />
               </div>
             );
