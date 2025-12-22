@@ -34,7 +34,7 @@ export default function SavedEstablishmentsList() {
   useEffect(() => {
     const loadEstablishments = async () => {
       try {
-        // 1) Charger depuis localStorage en premier (fallback)
+        // 1) Charger depuis localStorage en premier (source locale)
         const rawLocal = localStorage.getItem(STORAGE_KEY_LIST);
         let localList: Etab[] = [];
         if (rawLocal) {
@@ -42,8 +42,21 @@ export default function SavedEstablishmentsList() {
           setEstablishments(localList);
         }
 
+        // Helper: si une liste locale existe, elle fait foi (évite de "ressusciter" des éléments supprimés).
+        const mergeLocalWithDb = (local: Etab[], db: Etab[]) => {
+          if (local.length > 0) {
+            const byPlaceId = new Map(db.map((e) => [e.place_id, e] as const));
+            return local.map((l) => ({ ...(byPlaceId.get(l.place_id) || {}), ...l }));
+          }
+          return db;
+        };
+
         // 2) Charger depuis la base de données si connecté
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
+
         if (!authError && user) {
           // Charger depuis la table "établissements" (français)
           const { data: etablissements, error } = await supabase
@@ -52,9 +65,8 @@ export default function SavedEstablishmentsList() {
             .eq("user_id", user.id)
             .order("created_at", { ascending: false });
 
-          if (!error && etablissements && etablissements.length > 0) {
-            // Convertir le format de la base vers le format Etab
-            const convertedEstabs: Etab[] = etablissements.map(etab => ({
+          if (!error) {
+            const dbList: Etab[] = (etablissements || []).map((etab) => ({
               place_id: etab.place_id,
               name: etab.nom,
               address: etab.adresse || "",
@@ -63,12 +75,13 @@ export default function SavedEstablishmentsList() {
               phone: etab.telephone || "",
               website: "",
               url: "",
-              rating: null
+              rating: null,
             }));
-            
-            setEstablishments(convertedEstabs);
-            // Synchroniser avec localStorage
-            localStorage.setItem(STORAGE_KEY_LIST, JSON.stringify(convertedEstabs));
+
+            const merged = mergeLocalWithDb(localList, dbList);
+
+            setEstablishments(merged);
+            localStorage.setItem(STORAGE_KEY_LIST, JSON.stringify(merged));
           }
         }
       } catch (error) {
