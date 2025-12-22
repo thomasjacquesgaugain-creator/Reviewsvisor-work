@@ -590,32 +590,70 @@ const Dashboard = () => {
                           <ChevronDown className="w-3 h-3" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-80 p-2 bg-white" align="start">
-                        <div className="space-y-2">
+                      <PopoverContent className="w-80 p-2 bg-white z-50 shadow-lg border" align="start">
+                        <div className="space-y-1">
                           <div className="text-sm font-medium text-gray-700 px-3 py-2">
                             Mes Établissements
                           </div>
-                          {establishments.length === 0 ? <div className="text-sm text-gray-500 px-3 py-2">
+                          {establishmentsLoading ? (
+                            <div className="text-sm text-gray-500 px-3 py-2 flex items-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Chargement...
+                            </div>
+                          ) : establishments.length === 0 ? (
+                            <div className="text-sm text-gray-500 px-3 py-2">
                               Aucun établissement enregistré
-                            </div> : establishments.map(etab => <Button key={etab.place_id} variant="ghost" className="w-full justify-start p-3 h-auto text-left hover:bg-gray-50" onClick={() => {
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(etab));
-                        setSelectedEtab(etab);
-                        setShowEstablishmentsDropdown(false);
-                        // Déclencher l'événement pour mettre à jour d'autres composants
-                        window.dispatchEvent(new CustomEvent(EVT_SAVED, {
-                          detail: etab
-                        }));
-                      }}>
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <Building2 className="w-4 h-4 text-blue-600" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-gray-900 truncate">{etab.name}</div>
-                                    <div className="text-sm text-gray-500 truncate">{etab.address}</div>
-                                  </div>
+                            </div>
+                          ) : establishments.map(etab => (
+                            <button
+                              key={etab.place_id}
+                              type="button"
+                              className={`w-full flex items-center gap-3 p-3 text-left rounded-lg cursor-pointer transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                selectedEtab?.place_id === etab.place_id ? 'bg-blue-50' : ''
+                              }`}
+                              onClick={async () => {
+                                // Persist en DB : marquer comme actif
+                                if (user?.id) {
+                                  try {
+                                    // D'abord désactiver tous les établissements
+                                    await supabase
+                                      .from("établissements")
+                                      .update({ is_active: false })
+                                      .eq("user_id", user.id);
+                                    
+                                    // Puis activer celui sélectionné
+                                    await supabase
+                                      .from("établissements")
+                                      .update({ is_active: true })
+                                      .eq("user_id", user.id)
+                                      .eq("place_id", etab.place_id);
+                                  } catch (err) {
+                                    console.error("Erreur mise à jour établissement actif:", err);
+                                  }
+                                }
+                                
+                                setSelectedEtab(etab);
+                                setShowEstablishmentsDropdown(false);
+                                
+                                // Déclencher les événements pour mettre à jour d'autres composants
+                                window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));
+                                window.dispatchEvent(new CustomEvent("establishment:updated"));
+                              }}
+                            >
+                              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Building2 className="w-4 h-4 text-blue-600" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-gray-900 truncate">{etab.name}</span>
+                                  {selectedEtab?.place_id === etab.place_id && (
+                                    <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Actif</span>
+                                  )}
                                 </div>
-                              </Button>)}
+                                <div className="text-sm text-gray-500 truncate">{etab.address}</div>
+                              </div>
+                            </button>
+                          ))}
                         </div>
                       </PopoverContent>
                     </Popover>
