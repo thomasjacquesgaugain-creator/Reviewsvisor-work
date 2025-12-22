@@ -15,9 +15,10 @@ import { getDisplayAuthor } from "@/utils/getDisplayAuthor";
 interface ImportCsvPanelProps {
   onFileAnalyzed?: () => void;
   placeId?: string;
+  onOpenVisualPanel?: () => void;
 }
 
-export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPanelProps) {
+export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPanel }: ImportCsvPanelProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -294,6 +295,21 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId }: ImportCsvPan
       setSelectedFile(null);
       onFileAnalyzed?.();
       
+      // Ouvrir le panneau visuel et scroll
+      if (onOpenVisualPanel) {
+        onOpenVisualPanel();
+        setTimeout(() => {
+          document.getElementById("reviews-visual-anchor")?.scrollIntoView({ 
+            behavior: "smooth", 
+            block: "start" 
+          });
+        }, 100);
+      }
+      
+      // Signal de refresh pour le panneau
+      window.dispatchEvent(new CustomEvent("reviews:imported", { 
+        detail: { establishmentId: establishmentIdForService } 
+      }));
     } catch (error) {
       console.error('Erreur lors de l\'import/analyse:', error);
       const errorMsg = error instanceof Error ? error.message : "Une erreur est survenue lors de l'import des avis. Veuillez vérifier votre fichier.";
