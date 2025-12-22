@@ -48,8 +48,8 @@ export default function EstablishmentItem({ etab, onSelect }: EstablishmentItemP
         onClick={() => onSelect(etab)}
         className="cursor-pointer bg-card border border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/5 transition-all relative"
       >
-        <div className="flex items-start gap-2">
-          <div className="mt-1 text-primary">
+        <div className="flex items-end gap-2">
+          <div className="text-primary self-end">
             <Building2 className="w-4 h-4" />
           </div>
           
