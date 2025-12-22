@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
-import { Building2, Phone, MapPin } from "lucide-react";
+import { Building2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Etab } from "@/types/etablissement";
-import { getPlaceDetails, normalizePhoneNumber, PlaceDetailsResponse } from "@/services/placeDetails";
+import { getPlaceDetails, PlaceDetailsResponse } from "@/services/placeDetails";
 
 interface EstablishmentItemProps {
   etab: Etab;
   onSelect: (etab: Etab) => void;
+  onDelete?: (etab: Etab) => void;
+  isDeleting?: boolean;
 }
 
-export default function EstablishmentItem({ etab, onSelect }: EstablishmentItemProps) {
+export default function EstablishmentItem({ etab, onSelect, onDelete, isDeleting }: EstablishmentItemProps) {
   const [placeDetails, setPlaceDetails] = useState<PlaceDetailsResponse | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
@@ -25,20 +27,10 @@ export default function EstablishmentItem({ etab, onSelect }: EstablishmentItemP
     }
   }, [etab.place_id, placeDetails]);
 
-  const displayPhone = placeDetails?.phone || etab.phone;
-  const displayMapsUrl = placeDetails?.mapsUrl;
-
-  const handlePhoneClick = (e: React.MouseEvent) => {
+  const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (displayPhone) {
-      window.location.href = `tel:${normalizePhoneNumber(displayPhone)}`;
-    }
-  };
-
-  const handleMapsClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (displayMapsUrl) {
-      window.open(displayMapsUrl, '_blank', 'noopener,noreferrer');
+    if (onDelete && !isDeleting) {
+      onDelete(etab);
     }
   };
 
@@ -46,15 +38,15 @@ export default function EstablishmentItem({ etab, onSelect }: EstablishmentItemP
     <TooltipProvider>
       <div
         onClick={() => onSelect(etab)}
-        className="cursor-pointer bg-card border border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/5 transition-all relative"
+        className="cursor-pointer bg-card border border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/5 transition-all relative group"
       >
-        <div className="flex items-end gap-2">
-          <div className="text-primary self-end">
+        <div className="flex items-start gap-2">
+          <div className="text-primary mt-0.5">
             <Building2 className="w-4 h-4" />
           </div>
           
           <div className="flex-1 min-w-0">
-            <h4 className="font-medium text-sm text-foreground truncate" title={etab.name}>
+            <h4 className="font-medium text-sm text-foreground truncate pr-6" title={etab.name}>
               {etab.name}
             </h4>
             <p className="text-xs text-muted-foreground truncate" title={etab.address}>
@@ -68,6 +60,20 @@ export default function EstablishmentItem({ etab, onSelect }: EstablishmentItemP
               </div>
             )}
           </div>
+
+          {/* Bouton supprimer - visible au hover */}
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDeleteClick}
+              disabled={isDeleting}
+              className="absolute top-1 right-1 p-1 h-6 w-6 text-red-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+              title="Supprimer cet établissement"
+            >
+              <Trash2 className={`w-3.5 h-3.5 ${isDeleting ? 'animate-spin' : ''}`} />
+            </Button>
+          )}
         </div>
       </div>
     </TooltipProvider>
