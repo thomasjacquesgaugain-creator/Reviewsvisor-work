@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { Etab, STORAGE_KEY, EVT_SAVED, EVT_LIST_UPDATED } from "../types/etablissement";
-import { Trash2, BarChart3, Download, ExternalLink, Star, Phone, Globe, MapPin, Building2 } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Etab, EVT_SAVED, EVT_LIST_UPDATED } from "../types/etablissement";
+import { Trash2, BarChart3, Download, ExternalLink, Star, Phone, Globe, MapPin, Building2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { runAnalyze } from "@/lib/runAnalyze";
 import { toast as sonnerToast } from "sonner";
@@ -12,21 +12,79 @@ export default function MonEtablissementCard() {
   const [etab, setEtab] = useState<Etab | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // 1) Lire ce qui est déjà enregistré (au chargement)
-  useEffect(() => {
+  // Charger l'établissement actif depuis la DB (source de vérité)
+  const loadActiveEstablishment = useCallback(async () => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setEtab(JSON.parse(raw));
-    } catch {}
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setEtab(null);
+        setIsLoading(false);
+        return;
+      }
+
+      // Récupérer l'établissement actif depuis la DB
+      const { data, error } = await supabase
+        .from("établissements")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Erreur chargement établissement actif:", error);
+        setEtab(null);
+      } else if (data) {
+        // Mapper les données DB vers le type Etab
+        setEtab({
+          place_id: data.place_id,
+          name: data.nom,
+          address: data.adresse || "",
+          phone: data.telephone || undefined,
+          website: data.website || undefined,
+          url: data.google_maps_url || undefined,
+          rating: data.rating || undefined,
+          lat: data.lat || null,
+          lng: data.lng || null,
+        });
+      } else {
+        setEtab(null);
+      }
+    } catch (err) {
+      console.error("Erreur chargement établissement actif:", err);
+      setEtab(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  // 2) Se mettre à jour instantanément quand on clique "Enregistrer"
+  // 1) Au mount, charger depuis la DB
   useEffect(() => {
-    const onSaved = (e: any) => setEtab(e.detail as Etab);
+    loadActiveEstablishment();
+  }, [loadActiveEstablishment]);
+
+  // 2) Se mettre à jour quand on clique "Enregistrer" ou qu'on sélectionne un autre
+  useEffect(() => {
+    const onSaved = () => {
+      // Recharger depuis la DB pour avoir les données persistées
+      loadActiveEstablishment();
+    };
     window.addEventListener(EVT_SAVED, onSaved);
     return () => window.removeEventListener(EVT_SAVED, onSaved);
-  }, []);
+  }, [loadActiveEstablishment]);
+
+  // 3) Écouter les changements d'auth (login/logout)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        loadActiveEstablishment();
+      } else if (event === 'SIGNED_OUT') {
+        setEtab(null);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [loadActiveEstablishment]);
 
   // Fonction pour supprimer l'établissement et tous ses avis
   const handleDeleteEstablishment = async () => {
@@ -62,8 +120,7 @@ export default function MonEtablissementCard() {
           .eq("place_id", etab.place_id);
       }
 
-      // 3. Supprimer du localStorage
-      localStorage.removeItem(STORAGE_KEY);
+      // 3. Plus besoin de localStorage - la DB est la source de vérité
 
       // 4. Notifier la liste de se recharger depuis la DB
       window.dispatchEvent(new CustomEvent(EVT_LIST_UPDATED));
@@ -116,6 +173,15 @@ export default function MonEtablissementCard() {
       setIsAnalyzing(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Chargement...</span>
+      </div>
+    );
+  }
 
   if (!etab) {
     return (

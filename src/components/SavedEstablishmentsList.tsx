@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback } from "react";
-import { Etab, STORAGE_KEY, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
+import { Etab, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
 import EstablishmentItem from "./EstablishmentItem";
 import { Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast as sonnerToast } from "sonner";
 
 export default function SavedEstablishmentsList() {
   const [establishments, setEstablishments] = useState<Etab[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [settingActive, setSettingActive] = useState<string | null>(null);
 
   // Fonction pour charger les établissements UNIQUEMENT depuis la DB
   const loadEstablishmentsFromDb = useCallback(async () => {
@@ -31,17 +32,17 @@ export default function SavedEstablishmentsList() {
         return;
       }
 
-      // Convertir vers le format Etab
+      // Convertir vers le format Etab avec toutes les infos de la DB
       const dbList: Etab[] = (etablissements || []).map((etab) => ({
         place_id: etab.place_id,
         name: etab.nom,
         address: etab.adresse || "",
-        lat: null,
-        lng: null,
-        phone: etab.telephone || "",
-        website: "",
-        url: "",
-        rating: null,
+        lat: etab.lat || null,
+        lng: etab.lng || null,
+        phone: etab.telephone || undefined,
+        website: etab.website || undefined,
+        url: etab.google_maps_url || undefined,
+        rating: etab.rating || null,
       }));
 
       setEstablishments(dbList);
@@ -69,16 +70,47 @@ export default function SavedEstablishmentsList() {
     return () => window.removeEventListener(EVT_LIST_UPDATED, onListUpdated);
   }, [loadEstablishmentsFromDb]);
 
-  // Définir un établissement comme principal
-  const handleSelectEstablishment = (etab: Etab) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(etab));
-    window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));
+  // Définir un établissement comme actif dans la DB (source de vérité)
+  const handleSelectEstablishment = async (etab: Etab) => {
+    setSettingActive(etab.place_id);
     
-    // Scroll smooth vers le haut
-    document.querySelector('[data-testid="card-mon-etablissement"]')?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
-    });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        sonnerToast.error("Vous devez être connecté");
+        return;
+      }
+
+      // Mettre à jour is_active=true dans la DB
+      // Le trigger va automatiquement désactiver les autres
+      const { error } = await supabase
+        .from("établissements")
+        .update({ is_active: true })
+        .eq("user_id", user.id)
+        .eq("place_id", etab.place_id);
+
+      if (error) {
+        console.error("Erreur définition établissement actif:", error);
+        sonnerToast.error("Impossible de sélectionner cet établissement");
+        return;
+      }
+
+      // Notifier MonEtablissementCard de recharger depuis la DB
+      window.dispatchEvent(new CustomEvent(EVT_SAVED));
+      
+      // Scroll smooth vers le haut
+      document.querySelector('[data-testid="card-mon-etablissement"]')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+
+      sonnerToast.success(`"${etab.name}" défini comme établissement actif`);
+    } catch (err) {
+      console.error("Erreur:", err);
+      sonnerToast.error("Une erreur est survenue");
+    } finally {
+      setSettingActive(null);
+    }
   };
 
 

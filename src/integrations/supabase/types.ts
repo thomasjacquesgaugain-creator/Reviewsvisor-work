@@ -132,37 +132,61 @@ export type Database = {
           adresse: string | null
           created_at: string
           email: string | null
+          google_maps_url: string | null
           id: string
+          is_active: boolean | null
+          lat: number | null
+          lng: number | null
           nom: string
           place_id: string
+          rating: number | null
+          raw_place_json: Json | null
           telephone: string | null
           type: string | null
           updated_at: string
           user_id: string
+          user_ratings_total: number | null
+          website: string | null
         }
         Insert: {
           adresse?: string | null
           created_at?: string
           email?: string | null
+          google_maps_url?: string | null
           id?: string
+          is_active?: boolean | null
+          lat?: number | null
+          lng?: number | null
           nom: string
           place_id: string
+          rating?: number | null
+          raw_place_json?: Json | null
           telephone?: string | null
           type?: string | null
           updated_at?: string
           user_id: string
+          user_ratings_total?: number | null
+          website?: string | null
         }
         Update: {
           adresse?: string | null
           created_at?: string
           email?: string | null
+          google_maps_url?: string | null
           id?: string
+          is_active?: boolean | null
+          lat?: number | null
+          lng?: number | null
           nom?: string
           place_id?: string
+          rating?: number | null
+          raw_place_json?: Json | null
           telephone?: string | null
           type?: string | null
           updated_at?: string
           user_id?: string
+          user_ratings_total?: number | null
+          website?: string | null
         }
         Relationships: []
       }
