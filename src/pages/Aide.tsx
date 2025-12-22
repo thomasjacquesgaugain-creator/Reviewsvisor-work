@@ -4,7 +4,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { HelpCircle } from "lucide-react";
 import AiAssistance from "@/components/AiAssistance";
 import BackArrow from "@/components/BackArrow";
-
 const faqItems = [{
   question: "Comment importer mes avis Google ?",
   answer: `Vous pouvez importer vos avis Google de deux façons :
@@ -33,74 +32,60 @@ Cela permet de transformer les avis clients en actions concrètes.`
 
 Vous pouvez générer des réponses adaptées au ton des avis (positifs ou négatifs), tout en gardant le contrôle avant publication.`
 }];
-
 const Aide = () => {
-  return (
-    <div className="min-h-screen flex flex-col bg-background">
+  return <div className="min-h-screen flex flex-col relative">
       <BackArrow />
-      
-      <main className="flex-1 pt-8 pb-12 px-4">
-        <div className="max-w-[800px] mx-auto">
-          {/* Header */}
-          <div className="text-center mb-10">
-            <h1 className="text-3xl md:text-4xl font-bold mb-3 text-foreground">
-              Centre d'aide <span className="text-blue">Reviewsvisor</span>
-            </h1>
-            <p className="text-muted-foreground text-base max-w-[500px] mx-auto">
-              Trouvez des réponses rapides à vos questions.
-            </p>
-          </div>
+      <main className="flex-1 pt-6 pb-8 px-4">
+        <section className="py-5">
+          <div className="relative z-1">
+            <div className="max-w-[900px] mx-auto">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-center text-foreground">
+                Centre d'aide <span className="text-blue">Reviewsvisor</span>
+              </h1>
+              
+              <p className="text-center text-foreground/80 text-lg mb-12 max-w-[700px] mx-auto">
+                Trouvez des réponses rapides à vos questions et découvrez comment utiliser <span className="text-blue">Reviewsvisor</span> efficacement.
+              </p>
 
-          {/* AI Assistance Card */}
-          <div className="bg-card rounded-xl border border-border p-6 mb-8">
-            <AiAssistance className="bg-transparent border-0 shadow-none p-0" />
-          </div>
+              <AiAssistance className="bg-primary-foreground" />
 
-          {/* FAQ Section */}
-          <div className="bg-card rounded-xl border border-border p-6 mb-8">
-            <h2 className="text-xl font-semibold mb-5 text-foreground">
-              Questions fréquentes
-            </h2>
-            
-            <Accordion type="single" collapsible className="w-full space-y-2">
-              {faqItems.map((item, index) => (
-                <AccordionItem 
-                  key={index} 
-                  value={`faq-${index}`} 
-                  className="border border-border rounded-lg px-4 bg-background"
-                >
-                  <AccordionTrigger className="hover:no-underline py-4">
-                    <div className="flex items-center gap-3 text-left">
-                      <HelpCircle className="h-5 w-5 text-blue shrink-0" />
-                      <span className="font-medium text-foreground">{item.question}</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="pb-4 pl-8 text-muted-foreground whitespace-pre-line">
-                    {item.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </div>
+              {/* Section FAQ */}
+              <div className="mt-12">
+                <h2 className="text-2xl font-semibold mb-6 text-foreground">
+                  Questions fréquentes
+                </h2>
+                <Accordion type="single" collapsible className="w-full space-y-2">
+                  {faqItems.map((item, index) => <AccordionItem key={index} value={`faq-${index}`} className="border border-border rounded-lg px-4 bg-card">
+                      <AccordionTrigger className="hover:no-underline py-4">
+                        <div className="flex items-center gap-3 text-left">
+                          <HelpCircle className="h-5 w-5 text-blue shrink-0" />
+                          <span className="font-medium text-foreground">{item.question}</span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="pb-4 pl-8 text-muted-foreground whitespace-pre-line">
+                        {item.answer}
+                      </AccordionContent>
+                    </AccordionItem>)}
+                </Accordion>
+              </div>
 
-          {/* Contact Section */}
-          <div className="text-center pt-6 border-t border-border">
-            <h3 className="text-lg font-semibold mb-2 text-foreground">
-              Besoin d'aide ?
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              Notre équipe est là pour vous accompagner.
-            </p>
-            <Link to="/contact">
-              <Button size="lg" className="font-semibold">
-                Contactez-nous
-              </Button>
-            </Link>
+              <div className="text-center mt-12 pt-8 border-t border-border">
+                <h3 className="text-xl font-semibold mb-4 text-foreground">
+                  Besoin d'aide ?
+                </h3>
+                <p className="text-foreground/80 mb-6">
+                  Notre équipe est là pour vous accompagner dans l'utilisation de <span className="text-blue">Reviewsvisor</span>.
+                </p>
+                <Link to="/contact">
+                  <Button size="lg" className="font-semibold">
+                    Contactez-nous
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Aide;
