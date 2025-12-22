@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2, ThumbsUp, ThumbsDown, ShieldAlert } from "lucide-react";
+import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2, ThumbsUp, ThumbsDown, ShieldAlert, List } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
@@ -329,17 +329,33 @@ export function ReviewsVisualPanel({
               </Card>
             </div>
 
-            {/* Nouvelles cards de filtrage */}
+            {/* Cards de filtrage */}
             {(() => {
+              const totalCount = reviewsList.length;
               const positiveCount = reviewsList.filter(r => r.rating >= 4).length;
               const negativeCount = reviewsList.filter(r => r.rating <= 2).length;
               const suspectCount = reviewsList.filter(r => isSuspectReview(r.comment, r.rating)).length;
               
               return (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {/* Tous les avis */}
                   <Card 
-                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'positive' ? 'ring-2 ring-green-500' : ''}`}
-                    onClick={() => setActiveFilter(activeFilter === 'positive' ? 'all' : 'positive')}
+                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'all' ? 'ring-2 ring-primary bg-primary/5' : ''}`}
+                    onClick={() => setActiveFilter('all')}
+                  >
+                    <CardContent className="flex items-center p-4">
+                      <List className="w-8 h-8 text-primary mr-3" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Tous les avis</p>
+                        <p className="text-2xl font-bold">{totalCount}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Avis positifs */}
+                  <Card 
+                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'positive' ? 'ring-2 ring-green-500 bg-green-500/5' : ''}`}
+                    onClick={() => setActiveFilter('positive')}
                   >
                     <CardContent className="flex items-center p-4">
                       <ThumbsUp className="w-8 h-8 text-green-500 mr-3" />
@@ -350,9 +366,10 @@ export function ReviewsVisualPanel({
                     </CardContent>
                   </Card>
                   
+                  {/* Avis négatifs */}
                   <Card 
-                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'negative' ? 'ring-2 ring-red-500' : ''}`}
-                    onClick={() => setActiveFilter(activeFilter === 'negative' ? 'all' : 'negative')}
+                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'negative' ? 'ring-2 ring-red-500 bg-red-500/5' : ''}`}
+                    onClick={() => setActiveFilter('negative')}
                   >
                     <CardContent className="flex items-center p-4">
                       <ThumbsDown className="w-8 h-8 text-red-500 mr-3" />
@@ -363,9 +380,10 @@ export function ReviewsVisualPanel({
                     </CardContent>
                   </Card>
                   
+                  {/* Suspicion faux avis */}
                   <Card 
-                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'suspect' ? 'ring-2 ring-orange-500' : ''}`}
-                    onClick={() => setActiveFilter(activeFilter === 'suspect' ? 'all' : 'suspect')}
+                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'suspect' ? 'ring-2 ring-orange-500 bg-orange-500/5' : ''}`}
+                    onClick={() => setActiveFilter('suspect')}
                   >
                     <CardContent className="flex items-center p-4">
                       <ShieldAlert className="w-8 h-8 text-orange-500 mr-3" />
@@ -401,13 +419,14 @@ export function ReviewsVisualPanel({
 
             {/* Reviews List with Filter */}
             <div>
-              {activeFilter !== 'all' && (
-                <div className="flex items-center justify-between mb-4">
-                  <Badge variant="secondary" className="text-sm">
-                    Filtre : {activeFilter === 'positive' ? 'avis positifs (≥ 4 étoiles)' : 
-                             activeFilter === 'negative' ? 'avis négatifs (≤ 2 étoiles)' : 
-                             'avis suspects'}
-                  </Badge>
+              <div className="flex items-center justify-between mb-4">
+                <Badge variant="secondary" className="text-sm">
+                  Filtre : {activeFilter === 'all' ? 'tous les avis' :
+                           activeFilter === 'positive' ? 'avis positifs (≥ 4 étoiles)' : 
+                           activeFilter === 'negative' ? 'avis négatifs (≤ 2 étoiles)' : 
+                           'avis suspects'}
+                </Badge>
+                {activeFilter !== 'all' && (
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -415,8 +434,8 @@ export function ReviewsVisualPanel({
                   >
                     Réinitialiser
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
               <ReviewsTable
                 rows={(() => {
                   switch (activeFilter) {
