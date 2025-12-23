@@ -73,7 +73,7 @@ const AiAssistance = ({ className }: AiAssistanceProps) => {
   };
 
   return (
-    <div className="w-full max-w-[700px] mx-auto my-8 p-6 bg-[#F7F7F9] border border-border rounded-lg shadow-sm">
+    <div className="w-full max-w-[900px] mx-auto my-8 p-6 bg-[#F7F7F9] border border-border rounded-lg shadow-sm">
       <h2 className="text-2xl font-bold mb-2 text-foreground">
         Assistance IA
       </h2>
