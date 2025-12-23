@@ -7,7 +7,7 @@ import ImportAvisToolbar from "@/components/ImportAvisToolbar";
 import { ReviewsVisualPanel } from "@/components/ReviewsVisualPanel";
 import { Etab, STORAGE_KEY, EVT_SAVED, EVT_ESTABLISHMENT_UPDATED } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
-import { Building2, Home, LogOut } from "lucide-react";
+import { Building2, Home, LogOut, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -288,7 +288,17 @@ export default function EtablissementPage() {
             <h2 className="text-xl font-semibold">Rechercher un établissement</h2>
             
             <div className="space-y-2">
-              <input id="places-input" className="w-full border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Rechercher un établissement…" />
+              <div className="relative">
+                <input id="places-input" className="w-full border border-border rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Rechercher un établissement…" />
+                <button
+                  type="button"
+                  onClick={resetSearchAndClose}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-red-500 hover:text-red-600 cursor-pointer transition-colors"
+                  title="Annuler la recherche"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
               
               {placesError && <div className="text-sm text-destructive">
                   {placesError}
