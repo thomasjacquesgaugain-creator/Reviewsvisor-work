@@ -267,14 +267,16 @@ const Compte = () => {
     <div className="p-6 md:p-10 flex justify-center bg-background min-h-screen">
       <div className="w-full max-w-4xl">
         {/* Header avec titre et sélecteur d'établissement */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-start justify-between mb-8">
           <h1 className="text-3xl font-semibold text-foreground">
             Informations personnelles
           </h1>
-          <EstablishmentSelector
-            selectedEstablishment={selectedEstablishment}
-            onSelect={handleEstablishmentSelect}
-          />
+          <div className="mt-8">
+            <EstablishmentSelector
+              selectedEstablishment={selectedEstablishment}
+              onSelect={handleEstablishmentSelect}
+            />
+          </div>
         </div>
 
         {/* AVATAR + NOM */}
