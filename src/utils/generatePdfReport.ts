@@ -987,7 +987,7 @@ export function generatePdfReport(data: ReportData): void {
     doc.setTextColor(...COLORS.white);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text(ritual.icon, ritualX, yPos + 10, { align: 'center' });
+    doc.text(ritual.icon, ritualX, yPos + 9.5, { align: 'center', baseline: 'middle' });
 
     doc.setTextColor(...COLORS.text);
     doc.setFontSize(7);
