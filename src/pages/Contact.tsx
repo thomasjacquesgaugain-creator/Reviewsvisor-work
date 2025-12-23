@@ -1,7 +1,6 @@
 import { Mail, Headphones, HelpCircle, Handshake } from "lucide-react";
 import BackArrow from "@/components/BackArrow";
 import { Card, CardContent } from "@/components/ui/card";
-import { Footer } from "@/components/Footer";
 
 export default function Contact() {
   return (
@@ -108,9 +107,6 @@ export default function Contact() {
         </div>
       </section>
 
-      <div className="mt-auto">
-        <Footer />
-      </div>
     </div>
   );
 }
