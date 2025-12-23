@@ -7,15 +7,15 @@ export default function Contact() {
     <div className="min-h-screen bg-background flex flex-col">
       <BackArrow />
       
-      {/* Hero Section */}
-      <section className="pt-10 pb-4 md:pt-14 md:pb-6">
+      {/* Hero Section - plus compact */}
+      <section className="pt-6 pb-2 md:pt-8 md:pb-3">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center">
             {/* Icon - simple, sans fond */}
-            <Mail className="w-14 h-14 text-primary mx-auto mb-4" />
+            <Mail className="w-14 h-14 text-primary mx-auto mb-3" />
             
             {/* Title */}
-            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-foreground tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-bold mb-1.5 text-foreground tracking-tight">
               Nous contacter
             </h1>
             
@@ -27,17 +27,17 @@ export default function Contact() {
         </div>
       </section>
 
-      {/* Main Contact Card */}
-      <section className="py-6 md:py-8">
+      {/* Main Contact Card - plus compact */}
+      <section className="py-4 md:py-5">
         <div className="container mx-auto px-4">
           <div className="max-w-xl mx-auto">
             <Card className="border border-border/50 shadow-md hover:shadow-lg transition-shadow duration-300 bg-card">
-              <CardContent className="p-6 md:p-8 text-center">
-                <div className="mb-4 inline-flex items-center justify-center w-32 h-18 rounded-full bg-primary/10">
+              <CardContent className="p-5 md:p-6 text-center">
+                <div className="mb-3 inline-flex items-center justify-center w-32 h-16 rounded-full bg-primary/10">
                   <Mail className="w-12 h-10 text-primary" />
                 </div>
                 
-                <h2 className="text-lg font-semibold mb-3 text-foreground">
+                <h2 className="text-lg font-semibold mb-2 text-foreground">
                   Email de contact
                 </h2>
                 
@@ -50,7 +50,7 @@ export default function Contact() {
                   </span>
                 </a>
                 
-                <p className="mt-4 text-sm text-muted-foreground">
+                <p className="mt-3 text-sm text-muted-foreground">
                   Nous vous répondrons dans les plus brefs délais.
                 </p>
               </CardContent>
@@ -59,15 +59,15 @@ export default function Contact() {
         </div>
       </section>
 
-      {/* Info Cards Grid */}
-      <section className="py-6 md:py-8 pb-12 md:pb-16">
+      {/* Info Cards Grid - plus compact */}
+      <section className="py-4 md:py-5 pb-8 md:pb-10">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 md:gap-3">
               {/* Support Card */}
               <Card className="border border-border/40 bg-card hover:bg-muted/30 hover:border-primary/30 transition-all duration-300 group">
-                <CardContent className="p-5 text-center">
-                  <div className="mb-3 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
+                <CardContent className="p-4 text-center">
+                  <div className="mb-2.5 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
                     <Headphones className="w-5 h-5 text-primary" />
                   </div>
                   <h3 className="font-semibold text-foreground text-sm">Support</h3>
@@ -79,8 +79,8 @@ export default function Contact() {
 
               {/* Questions Card */}
               <Card className="border border-border/40 bg-card hover:bg-muted/30 hover:border-primary/30 transition-all duration-300 group">
-                <CardContent className="p-5 text-center">
-                  <div className="mb-3 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
+                <CardContent className="p-4 text-center">
+                  <div className="mb-2.5 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
                     <HelpCircle className="w-5 h-5 text-primary" />
                   </div>
                   <h3 className="font-semibold text-foreground text-sm">Questions produit</h3>
@@ -92,8 +92,8 @@ export default function Contact() {
 
               {/* Partnerships Card */}
               <Card className="border border-border/40 bg-card hover:bg-muted/30 hover:border-primary/30 transition-all duration-300 group">
-                <CardContent className="p-5 text-center">
-                  <div className="mb-3 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
+                <CardContent className="p-4 text-center">
+                  <div className="mb-2.5 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
                     <Handshake className="w-5 h-5 text-primary" />
                   </div>
                   <h3 className="font-semibold text-foreground text-sm">Partenariats</h3>
