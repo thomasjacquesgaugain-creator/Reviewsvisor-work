@@ -266,29 +266,27 @@ const Compte = () => {
   return (
     <div className="p-6 md:p-10 flex justify-center bg-background min-h-screen">
       <div className="w-full max-w-4xl">
-        {/* Header avec titre et sélecteur d'établissement */}
-        <div className="flex items-start justify-between mb-8">
-          <h1 className="text-3xl font-semibold text-foreground">
-            Informations personnelles
-          </h1>
-          <div className="mt-12">
-            <EstablishmentSelector
-              selectedEstablishment={selectedEstablishment}
-              onSelect={handleEstablishmentSelect}
-            />
-          </div>
-        </div>
+        {/* Header avec titre */}
+        <h1 className="text-3xl font-semibold text-foreground mb-8">
+          Informations personnelles
+        </h1>
 
-        {/* AVATAR + NOM */}
-        <div className="flex items-center mb-8">
-          <div className="w-24 h-24 rounded-full flex items-center justify-center text-2xl font-semibold bg-primary/10 text-primary mr-6">
-            {initials || "??"}
+        {/* AVATAR + NOM + SÉLECTEUR ÉTABLISSEMENT */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center">
+            <div className="w-24 h-24 rounded-full flex items-center justify-center text-2xl font-semibold bg-primary/10 text-primary mr-6">
+              {initials || "??"}
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Compte</p>
+              <p className="text-xl font-semibold text-foreground">{fullName || "Utilisateur"}</p>
+              <p className="text-muted-foreground">{etablissement}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Compte</p>
-            <p className="text-xl font-semibold text-foreground">{fullName || "Utilisateur"}</p>
-            <p className="text-muted-foreground">{etablissement}</p>
-          </div>
+          <EstablishmentSelector
+            selectedEstablishment={selectedEstablishment}
+            onSelect={handleEstablishmentSelect}
+          />
         </div>
 
         {/* FORMULAIRE 2 COLONNES AVEC ICÔNES */}
