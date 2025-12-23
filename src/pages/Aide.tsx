@@ -74,8 +74,8 @@ const Aide = () => {
                 
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <MessageCircle className="w-4.5 h-4.5 text-primary" />
+                    <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
+                      <MessageCircle className="w-4.5 h-4.5 text-white" />
                     </div>
                     <h2 className="text-xl md:text-2xl font-bold text-foreground">Assistance IA</h2>
                   </div>
