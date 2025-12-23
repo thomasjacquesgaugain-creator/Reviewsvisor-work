@@ -15,6 +15,7 @@ interface GoogleImportButtonProps {
   onSuccess?: () => void;
   placeId?: string;
   onOpenVisualPanel?: () => void;
+  onClose?: () => void;
 }
 
 interface Location {
@@ -118,7 +119,7 @@ async function callEdgeFunction<T = any>(
   };
 }
 
-export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPanel }: GoogleImportButtonProps) {
+export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPanel, onClose }: GoogleImportButtonProps) {
   const [loading, setLoading] = useState(false);
   const [showLocationSelector, setShowLocationSelector] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -575,6 +576,11 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
       // Refresh UI
       window.dispatchEvent(new CustomEvent("reviews:imported"));
       onSuccess?.();
+      
+      // Fermer la modale après succès
+      if (onClose) {
+        onClose();
+      }
     } catch (error: any) {
       console.error("[google-sync] importReviews:error", error);
       toast({

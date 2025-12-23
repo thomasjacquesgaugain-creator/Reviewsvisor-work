@@ -16,9 +16,11 @@ interface ImportCsvPanelProps {
   onFileAnalyzed?: () => void;
   placeId?: string;
   onOpenVisualPanel?: () => void;
+  onClose?: () => void;
+  onImportSuccess?: () => void;
 }
 
-export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPanel }: ImportCsvPanelProps) {
+export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPanel, onClose, onImportSuccess }: ImportCsvPanelProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -294,6 +296,7 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
       
       setSelectedFile(null);
       onFileAnalyzed?.();
+      onImportSuccess?.();
       
       // Ouvrir le panneau visuel et scroll
       if (onOpenVisualPanel) {
@@ -310,6 +313,11 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
       window.dispatchEvent(new CustomEvent("reviews:imported", { 
         detail: { establishmentId: establishmentIdForService } 
       }));
+      
+      // Fermer la modale après succès
+      if (onClose) {
+        onClose();
+      }
     } catch (error) {
       console.error('Erreur lors de l\'import/analyse:', error);
       const errorMsg = error instanceof Error ? error.message : "Une erreur est survenue lors de l'import des avis. Veuillez vérifier votre fichier.";
