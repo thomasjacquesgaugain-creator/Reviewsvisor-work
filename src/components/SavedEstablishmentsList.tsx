@@ -118,16 +118,9 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
   };
 
 
-  if (loading) {
-    return (
-      <section className="p-4 border border-border rounded-lg bg-card/50">
-        <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-2">
-          <Building2 className="h-5 w-5 text-primary" />
-          Établissements enregistrés
-        </h3>
-        <div className="text-muted-foreground text-sm">Chargement...</div>
-      </section>
-    );
+  // Ne rien afficher pendant le chargement ou si aucun établissement
+  if (loading || establishments.length === 0) {
+    return null;
   }
 
   return (
