@@ -183,15 +183,27 @@ export default function MonEtablissementCard() {
     );
   }
 
+  // Fonction pour scroll vers la barre de recherche
+  const handleAddClick = () => {
+    const input = document.getElementById('places-input');
+    if (input) {
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => input.focus(), 300);
+    }
+  };
+
   if (!etab) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[180px]">
-        <div className="cursor-pointer bg-card border border-dashed border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/10 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-2 min-h-[80px]">
+        <button
+          onClick={handleAddClick}
+          className="cursor-pointer bg-card border border-dashed border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/10 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-2 min-h-[80px]"
+        >
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
             <Plus className="w-5 h-5 text-primary" />
           </div>
           <span className="text-xs text-muted-foreground font-medium">Ajouter</span>
-        </div>
+        </button>
       </div>
     );
   }
