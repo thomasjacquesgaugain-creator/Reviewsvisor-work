@@ -93,9 +93,9 @@ const AiAssistance = ({ className }: AiAssistanceProps) => {
           />
           <Button type="submit" disabled={isLoading} className="shrink-0">
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin text-white" />
             ) : (
-              <Send className="h-4 w-4" />
+              <Send className="h-4 w-4 text-white" />
             )}
             <span className="ml-2">Demander</span>
           </Button>
