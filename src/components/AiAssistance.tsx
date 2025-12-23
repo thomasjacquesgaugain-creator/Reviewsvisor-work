@@ -95,7 +95,7 @@ const AiAssistance = ({ className }: AiAssistanceProps) => {
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Send className="h-4 w-4 !text-white" />
+              <Send className="h-4 w-4 !text-white" stroke="white" />
             )}
             <span className="ml-2">Demander</span>
           </Button>
