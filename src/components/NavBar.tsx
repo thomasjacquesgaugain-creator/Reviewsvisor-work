@@ -1,6 +1,6 @@
 import { NavLink, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
-import { User } from "lucide-react";
+import { UserRound } from "lucide-react";
 
 export default function NavBar() {
   const location = useLocation();
@@ -57,7 +57,7 @@ export default function NavBar() {
           className="flex items-center gap-2 px-3 py-2 rounded-md transition-all duration-200 hover:bg-gray-100 group"
         >
           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 group-hover:bg-blue-200 transition-colors">
-            <User className="w-4 h-4 text-blue-600" />
+            <UserRound className="w-4 h-4 text-blue-600" />
           </div>
           <span className="font-medium text-gray-700 hidden sm:inline">{displayName}</span>
         </Link>
