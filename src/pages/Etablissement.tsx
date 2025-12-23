@@ -289,14 +289,13 @@ export default function EtablissementPage() {
             
             <div className="space-y-2">
               <div className="relative">
-                <input id="places-input" className="w-full border border-border rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Rechercher un établissement…" />
+                <input id="places-input" className="w-full border border-border rounded-lg px-3 py-2 pr-24 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Rechercher un établissement…" />
                 <button
                   type="button"
                   onClick={resetSearchAndClose}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-red-500 hover:text-red-600 cursor-pointer transition-colors"
-                  title="Annuler la recherche"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-3 py-1.5 rounded-md cursor-pointer transition-colors"
                 >
-                  <X className="h-5 w-5" />
+                  Annuler
                 </button>
               </div>
               
