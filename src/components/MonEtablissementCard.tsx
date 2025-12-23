@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Etab, EVT_SAVED, EVT_LIST_UPDATED } from "../types/etablissement";
-import { Trash2, BarChart3, Download, ExternalLink, Star, Phone, Globe, MapPin, Building2, Loader2 } from "lucide-react";
+import { Trash2, BarChart3, Download, ExternalLink, Star, Phone, Globe, MapPin, Building2, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { runAnalyze } from "@/lib/runAnalyze";
 import { toast as sonnerToast } from "sonner";
@@ -185,7 +185,10 @@ export default function MonEtablissementCard() {
 
   if (!etab) {
     return (
-      <div className="p-6">
+      <div className="p-6 flex flex-col items-center justify-center min-h-[200px]">
+        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+          <Plus className="w-8 h-8 text-primary" />
+        </div>
         <p className="text-muted-foreground">
           Sélectionner un établissement
         </p>
