@@ -9,7 +9,7 @@ export default function Contact() {
       <BackArrow />
       
       {/* Hero Section */}
-      <section className="pt-16 pb-4 md:pt-20 md:pb-6">
+      <section className="pt-10 pb-4 md:pt-14 md:pb-6">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center">
             {/* Icon */}
@@ -36,8 +36,8 @@ export default function Contact() {
           <div className="max-w-xl mx-auto">
             <Card className="border border-border/50 shadow-md hover:shadow-lg transition-shadow duration-300 bg-card">
               <CardContent className="p-6 md:p-8 text-center">
-                <div className="mb-4 inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10">
-                  <Mail className="w-7 h-7 text-primary" />
+                <div className="mb-4 inline-flex items-center justify-center w-16 h-14 rounded-full bg-primary/10">
+                  <Mail className="w-8 h-7 text-primary" />
                 </div>
                 
                 <h2 className="text-lg font-semibold mb-3 text-foreground">
