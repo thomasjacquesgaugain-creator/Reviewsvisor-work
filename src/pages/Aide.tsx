@@ -80,7 +80,7 @@ const Aide = () => {
                     <h2 className="text-xl md:text-2xl font-bold text-foreground">Assistance IA</h2>
                   </div>
                   
-                  <AiAssistance className="bg-primary-foreground" />
+                  <AiAssistance className="text-primary-foreground border-primary-foreground bg-primary-foreground" />
                 </div>
               </div>
             </div>
