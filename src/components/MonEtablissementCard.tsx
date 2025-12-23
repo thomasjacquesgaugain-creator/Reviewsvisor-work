@@ -186,8 +186,8 @@ export default function MonEtablissementCard() {
   if (!etab) {
     return (
       <div className="p-6 flex flex-col items-center justify-center min-h-[200px]">
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-          <Plus className="w-8 h-8 text-primary" />
+        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+          <Plus className="w-5 h-5 text-primary" />
         </div>
         <p className="text-muted-foreground">
           Sélectionner un établissement
