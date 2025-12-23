@@ -5,11 +5,11 @@ import { Footer } from "@/components/Footer";
 
 export default function Contact() {
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <BackArrow />
       
-      {/* Hero Section - fond blanc uni */}
-      <section className="pt-16 pb-10 md:pt-20 md:pb-12">
+      {/* Hero Section */}
+      <section className="pt-16 pb-4 md:pt-20 md:pb-6">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center">
             {/* Icon */}
