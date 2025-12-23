@@ -1,10 +1,43 @@
 import { NavLink, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
-import { UserRound } from "lucide-react";
+import { UserRound, Plus, Building2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { EVT_LIST_UPDATED, EVT_SAVED } from "@/types/etablissement";
 
 export default function NavBar() {
   const location = useLocation();
   const { user, displayName, signOut } = useAuth();
+  const [hasEstablishments, setHasEstablishments] = useState<boolean | null>(null);
+
+  // Vérifier si l'utilisateur a des établissements enregistrés
+  useEffect(() => {
+    const checkEstablishments = async () => {
+      if (!user) {
+        setHasEstablishments(null);
+        return;
+      }
+      
+      const { count } = await supabase
+        .from("établissements")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      
+      setHasEstablishments((count ?? 0) > 0);
+    };
+
+    checkEstablishments();
+
+    // Écouter les mises à jour
+    const onUpdate = () => checkEstablishments();
+    window.addEventListener(EVT_LIST_UPDATED, onUpdate);
+    window.addEventListener(EVT_SAVED, onUpdate);
+    
+    return () => {
+      window.removeEventListener(EVT_LIST_UPDATED, onUpdate);
+      window.removeEventListener(EVT_SAVED, onUpdate);
+    };
+  }, [user]);
 
   const handleLogout = async () => {
     await signOut();
@@ -45,8 +78,13 @@ export default function NavBar() {
           📈 Dashboard
         </NavLink>
 
-        <NavLink to="/etablissement" className={getLinkClass("/etablissement")}>
-          🏢 Établissement
+        <NavLink to="/etablissement" className={`${getLinkClass("/etablissement")} flex items-center gap-1.5 group`}>
+          {hasEstablishments === false ? (
+            <Plus className={`w-4 h-4 ${location.pathname === "/etablissement" ? "text-blue-600" : "text-gray-700 group-hover:text-white"}`} />
+          ) : (
+            <Building2 className={`w-4 h-4 ${location.pathname === "/etablissement" ? "text-blue-600" : "text-gray-700 group-hover:text-white"}`} />
+          )}
+          Établissement
         </NavLink>
       </div>
 
