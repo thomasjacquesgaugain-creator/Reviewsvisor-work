@@ -5,7 +5,6 @@ import { HelpCircle, MessageCircle, LifeBuoy } from "lucide-react";
 import AiAssistance from "@/components/AiAssistance";
 import BackArrow from "@/components/BackArrow";
 import { Badge } from "@/components/ui/badge";
-
 const faqItems = [{
   question: "Comment importer mes avis Google ?",
   answer: `Vous pouvez importer vos avis Google de deux façons :
@@ -34,17 +33,12 @@ Cela permet de transformer les avis clients en actions concrètes.`
 
 Vous pouvez générer des réponses adaptées au ton des avis (positifs ou négatifs), tout en gardant le contrôle avant publication.`
 }];
-
 const Aide = () => {
-  return (
-    <div className="min-h-screen flex flex-col relative bg-gradient-to-br from-background via-background to-primary/5">
+  return <div className="min-h-screen flex flex-col relative bg-gradient-to-br from-background via-background to-primary/5">
       {/* Subtle noise/grain overlay */}
-      <div 
-        className="fixed inset-0 pointer-events-none opacity-[0.015] z-0"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-        }}
-      />
+      <div className="fixed inset-0 pointer-events-none opacity-[0.015] z-0" style={{
+      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+    }} />
       
       <BackArrow />
       
@@ -86,7 +80,7 @@ const Aide = () => {
                     <h2 className="text-xl md:text-2xl font-bold text-foreground">Assistance IA</h2>
                   </div>
                   
-                  <AiAssistance className="bg-transparent" />
+                  <AiAssistance className="bg-primary-foreground" />
                 </div>
               </div>
             </div>
@@ -105,12 +99,7 @@ const Aide = () => {
             
             <div className="bg-card border border-border/60 rounded-2xl p-4 md:p-6 shadow-sm">
               <Accordion type="single" collapsible className="w-full space-y-2">
-                {faqItems.map((item, index) => (
-                  <AccordionItem 
-                    key={index} 
-                    value={`faq-${index}`} 
-                    className="border border-border/50 rounded-lg px-4 bg-secondary/20 hover:bg-secondary/40 transition-colors duration-200"
-                  >
+                {faqItems.map((item, index) => <AccordionItem key={index} value={`faq-${index}`} className="border border-border/50 rounded-lg px-4 bg-secondary/20 hover:bg-secondary/40 transition-colors duration-200">
                     <AccordionTrigger className="hover:no-underline py-4">
                       <div className="flex items-center gap-3 text-left">
                         <HelpCircle className="h-5 w-5 text-primary shrink-0" />
@@ -120,8 +109,7 @@ const Aide = () => {
                     <AccordionContent className="pb-4 pl-8 text-muted-foreground whitespace-pre-line">
                       {item.answer}
                     </AccordionContent>
-                  </AccordionItem>
-                ))}
+                  </AccordionItem>)}
               </Accordion>
             </div>
           </div>
@@ -146,8 +134,6 @@ const Aide = () => {
           </div>
         </section>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Aide;
