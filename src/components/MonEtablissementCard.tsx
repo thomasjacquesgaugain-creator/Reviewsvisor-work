@@ -185,13 +185,13 @@ export default function MonEtablissementCard() {
 
   if (!etab) {
     return (
-      <div className="p-6 flex flex-col items-center justify-center min-h-[180px]">
-        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-          <Plus className="w-5 h-5 text-primary" />
+      <div className="p-6 flex items-center justify-center min-h-[180px]">
+        <div className="flex flex-col items-center justify-center gap-2">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <Plus className="w-5 h-5 text-primary" />
+          </div>
+          <span className="text-xs text-muted-foreground font-medium">Ajouter</span>
         </div>
-        <p className="text-muted-foreground text-sm mt-4">
-          Sélectionner un établissement
-        </p>
       </div>
     );
   }
