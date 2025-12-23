@@ -7,8 +7,11 @@ import { toast as sonnerToast } from "sonner";
 import { deleteAllReviews } from "@/services/reviewsService";
 import { supabase } from "@/integrations/supabase/client";
 
+interface MonEtablissementCardProps {
+  onAddClick?: () => void;
+}
 
-export default function MonEtablissementCard() {
+export default function MonEtablissementCard({ onAddClick }: MonEtablissementCardProps) {
   const [etab, setEtab] = useState<Etab | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -183,12 +186,10 @@ export default function MonEtablissementCard() {
     );
   }
 
-  // Fonction pour scroll vers la barre de recherche
+  // Fonction pour ouvrir la recherche (utilise la prop du parent)
   const handleAddClick = () => {
-    const input = document.getElementById('places-input');
-    if (input) {
-      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => input.focus(), 300);
+    if (onAddClick) {
+      onAddClick();
     }
   };
 

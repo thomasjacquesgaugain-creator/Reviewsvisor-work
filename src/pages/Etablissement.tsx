@@ -20,6 +20,7 @@ export default function EtablissementPage() {
     signOut
   } = useAuth();
   const [selected, setSelected] = useState<Etab | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
   const [showImportBar, setShowImportBar] = useState(false);
   const [showReviewsVisual, setShowReviewsVisual] = useState(false);
   const [visualEstablishment, setVisualEstablishment] = useState<{
@@ -135,14 +136,26 @@ export default function EtablissementPage() {
     });
   }
 
-  // Reset complet de la barre de recherche
-  const resetSearch = () => {
+  // Reset complet de la barre de recherche et fermer
+  const resetSearchAndClose = () => {
     setSelected(null);
+    setShowSearch(false);
     const input = document.getElementById('places-input') as HTMLInputElement;
     if (input) {
       input.value = '';
-      input.focus();
     }
+  };
+
+  // Ouvrir la barre de recherche
+  const openSearch = () => {
+    setShowSearch(true);
+    setTimeout(() => {
+      const input = document.getElementById('places-input');
+      if (input) {
+        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => input.focus(), 300);
+      }
+    }, 100);
   };
 
   // Fonction pour sérialiser un lieu Google Places
@@ -270,58 +283,55 @@ export default function EtablissementPage() {
         <h1 className="text-3xl font-bold mb-8">Établissement</h1>
         
         <div className="space-y-6">
-          {/* Section de recherche d'établissement */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Rechercher un établissement</h2>
-            
-            <div className="space-y-2">
-              <input id="places-input" className="w-full border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Rechercher un établissement…" />
+          {/* Section de recherche d'établissement - visible uniquement si showSearch */}
+          {showSearch && (
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Rechercher un établissement</h2>
               
-              {placesError && <div className="text-sm text-destructive">
-                  {placesError}
-                </div>}
-              
-              <div className="text-xs text-muted-foreground">
-                Powered by Google
+              <div className="space-y-2">
+                <input id="places-input" className="w-full border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Rechercher un établissement…" />
+                
+                {placesError && <div className="text-sm text-destructive">
+                    {placesError}
+                  </div>}
+                
+                <div className="text-xs text-muted-foreground">
+                  Powered by Google
+                </div>
+                
+                {selected && <div className="inline-flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
+                    <span>✅ Sélectionné :</span>
+                    <strong>{selected.name}</strong>
+                  </div>}
               </div>
               
-              {selected && <div className="inline-flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
-                  <span>✅ Sélectionné :</span>
-                  <strong>{selected.name}</strong>
-                </div>}
+              <SaveEstablishmentButton selected={selected} onSaveSuccess={resetSearchAndClose} />
             </div>
-            
-            <SaveEstablishmentButton selected={selected} onSaveSuccess={resetSearch} />
-          </div>
+          )}
 
           {/* Section Mon Établissement */}
           <section data-testid="card-mon-etablissement" className="border border-border rounded-lg p-4 bg-primary-foreground">
             <h2 className="text-xl font-semibold mb-3">🏢 Mon Établissement</h2>
-            <MonEtablissementCard />
+            <MonEtablissementCard onAddClick={openSearch} />
           </section>
 
           {/* Anchor for reviews visual panel */}
           <div id="reviews-visual-anchor" />
 
           {/* Reviews Visual Panel */}
-          {showReviewsVisual && <ReviewsVisualPanel establishmentId={visualEstablishment?.id} establishmentName={visualEstablishment?.name} onClose={() => setShowReviewsVisual(false)} key={refreshTrigger} // Force re-render on import success
-        />}
+          {showReviewsVisual && <ReviewsVisualPanel establishmentId={visualEstablishment?.id} establishmentName={visualEstablishment?.name} onClose={() => setShowReviewsVisual(false)} key={refreshTrigger} />}
 
           {/* Anchor pour le scroll vers la barre d'import */}
           <div id="import-avis-toolbar-anchor" />
 
           {/* Barre d'outils d'import (affichée conditionnellement) */}
           {showImportBar && <ImportAvisToolbar onClose={() => setShowImportBar(false)} onFileAnalyzed={() => {
-          // TODO: Rafraîchir les données du dashboard
-          console.log("Fichier analysé, rafraîchissement des données...");
-        }} onImportSuccess={handleImportSuccess} onOpenVisualPanel={handleOpenVisualPanel} placeId={currentEstablishment?.place_id || selected?.place_id} establishmentName={currentEstablishment?.name || selected?.name} />}
+            console.log("Fichier analysé, rafraîchissement des données...");
+          }} onImportSuccess={handleImportSuccess} onOpenVisualPanel={handleOpenVisualPanel} placeId={currentEstablishment?.place_id || selected?.place_id} establishmentName={currentEstablishment?.name || selected?.name} />}
 
           {/* Liste des établissements enregistrés */}
           <div data-testid="section-etablissements-enregistres">
-            <SavedEstablishmentsList onAddClick={() => {
-              document.getElementById('places-input')?.focus();
-              document.getElementById('places-input')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }} />
+            <SavedEstablishmentsList onAddClick={openSearch} />
           </div>
         </div>
       </div>
