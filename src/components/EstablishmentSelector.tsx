@@ -127,7 +127,7 @@ export function EstablishmentSelector({
   return <div className="relative">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" className="flex items-center gap-3 h-auto py-2 px-3 min-w-[200px] max-w-[280px] justify-between hover:text-foreground bg-primary-foreground">
+          <Button variant="outline" className="flex items-center gap-3 h-auto py-2 px-3 min-w-[200px] max-w-[280px] justify-between bg-primary-foreground hover:bg-primary-foreground hover:text-foreground hover:border-border">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Building2 className="w-4 h-4 text-primary" />
