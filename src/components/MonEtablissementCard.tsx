@@ -258,9 +258,19 @@ export default function MonEtablissementCard() {
         {/* Google Maps */}
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground font-medium">Google Maps</p>
-          {etab.url ? (
+          {etab.place_id ? (
             <a 
-              href={etab.url} 
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(etab.name)}&query_place_id=${encodeURIComponent(etab.place_id)}`}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
+            >
+              Voir la fiche
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          ) : etab.address ? (
+            <a 
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(etab.address)}`}
               target="_blank" 
               rel="noopener noreferrer"
               className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
