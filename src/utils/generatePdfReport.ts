@@ -979,21 +979,27 @@ export function generatePdfReport(data: ReportData): void {
   doc.setFillColor(...COLORS.background);
   doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 25, 2, 2, 'F');
 
+  const ritualsBoxTop = yPos;
+  const ritualsBoxHeight = 25;
+  const ritualTextStartY = ritualsBoxTop + 16; // hauteur fixe identique pour toutes les colonnes
+
   rituals.forEach((ritual, idx) => {
     const ritualX = MARGINS.left + 10 + (idx * 55);
-    
+
     doc.setFillColor(...COLORS.primary);
-    doc.circle(ritualX, yPos + 8, 4, 'F');
+    doc.circle(ritualX, ritualsBoxTop + 8, 4, 'F');
     doc.setTextColor(...COLORS.white);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text(ritual.icon, ritualX, yPos + 9.5, { align: 'center', baseline: 'middle' });
+    doc.text(ritual.icon, ritualX, ritualsBoxTop + 9.5, { align: 'center', baseline: 'middle' });
 
     doc.setTextColor(...COLORS.text);
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
+
+    // Bloc texte à hauteur contrôlée: même y de départ pour chaque rituel, centrage horizontal strict.
     const ritualLines = doc.splitTextToSize(ritual.text, 50);
-    doc.text(ritualLines, ritualX - 20, yPos + 16);
+    doc.text(ritualLines, ritualX, ritualTextStartY, { align: 'center' });
   });
 
   yPos += 32;
