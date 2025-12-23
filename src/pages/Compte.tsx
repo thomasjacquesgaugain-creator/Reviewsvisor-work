@@ -271,7 +271,7 @@ const Compte = () => {
           <h1 className="text-3xl font-semibold text-foreground">
             Informations personnelles
           </h1>
-          <div className="mt-8">
+          <div className="mt-12">
             <EstablishmentSelector
               selectedEstablishment={selectedEstablishment}
               onSelect={handleEstablishmentSelect}
