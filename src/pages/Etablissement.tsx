@@ -283,31 +283,29 @@ export default function EtablissementPage() {
         <h1 className="text-3xl font-bold mb-8">Établissement</h1>
         
         <div className="space-y-6">
-          {/* Section de recherche d'établissement - visible uniquement si showSearch */}
-          {showSearch && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Rechercher un établissement</h2>
+          {/* Section de recherche d'établissement - toujours montée, masquée via CSS */}
+          <div className={showSearch ? "space-y-4" : "hidden"}>
+            <h2 className="text-xl font-semibold">Rechercher un établissement</h2>
+            
+            <div className="space-y-2">
+              <input id="places-input" className="w-full border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Rechercher un établissement…" />
               
-              <div className="space-y-2">
-                <input id="places-input" className="w-full border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Rechercher un établissement…" />
-                
-                {placesError && <div className="text-sm text-destructive">
-                    {placesError}
-                  </div>}
-                
-                <div className="text-xs text-muted-foreground">
-                  Powered by Google
-                </div>
-                
-                {selected && <div className="inline-flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
-                    <span>✅ Sélectionné :</span>
-                    <strong>{selected.name}</strong>
-                  </div>}
+              {placesError && <div className="text-sm text-destructive">
+                  {placesError}
+                </div>}
+              
+              <div className="text-xs text-muted-foreground">
+                Powered by Google
               </div>
               
-              <SaveEstablishmentButton selected={selected} onSaveSuccess={resetSearchAndClose} />
+              {selected && <div className="inline-flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
+                  <span>✅ Sélectionné :</span>
+                  <strong>{selected.name}</strong>
+                </div>}
             </div>
-          )}
+            
+            <SaveEstablishmentButton selected={selected} onSaveSuccess={resetSearchAndClose} />
+          </div>
 
           {/* Section Mon Établissement */}
           <section data-testid="card-mon-etablissement" className="border border-border rounded-lg p-4 bg-primary-foreground">
