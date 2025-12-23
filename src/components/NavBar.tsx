@@ -56,14 +56,14 @@ export default function NavBar() {
           to="/compte" 
           className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 ${
             location.pathname === "/compte"
-              ? "text-blue-600"
+              ? "bg-blue-600 text-white"
               : "text-gray-700 hover:bg-blue-600 hover:text-white"
           } group`}
         >
           <div className="flex items-center justify-center w-6 h-6 transition-colors">
             <UserRound className={`w-5 h-5 transition-colors ${
               location.pathname === "/compte"
-                ? "text-blue-600"
+                ? "text-white"
                 : "text-blue-600 group-hover:text-white"
             }`} />
           </div>
