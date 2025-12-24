@@ -283,9 +283,9 @@ export default function SavedEstablishmentsList({
             
             {/* Établissement supplémentaire - styled as mini pricing card */}
             <div className="relative overflow-hidden bg-white rounded-xl shadow-md border-2 border-border">
-              {/* Badge Ajouter - same style as pricing cards */}
+              {/* Badge Multi-établissements - same style as pricing cards */}
               <div className="absolute top-0 right-0 bg-purple-600 text-white px-3 py-1 text-xs font-semibold rounded-bl-lg">
-                Ajouter
+                Multi-établissements
               </div>
               
               <div className="p-3 pt-5">
