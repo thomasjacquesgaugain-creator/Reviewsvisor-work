@@ -38,6 +38,30 @@ export default function SavedEstablishmentsList({
     return plan || subscriptionPlans[0];
   }, [subscription.subscribed, subscription.price_id]);
 
+  // Calcul dynamique du prix basé sur le nombre d'établissements
+  const pricingInfo = useMemo(() => {
+    const currentCount = establishments.length;
+    const newCount = currentCount + 1; // +1 for the one they want to add
+    const additionalCount = Math.max(0, newCount - 1); // First one is included in base plan
+    
+    const basePlanPrice = activePlan.price;
+    const addonUnitPrice = establishmentAddon.price;
+    const addonTotal = additionalCount * addonUnitPrice;
+    const totalMonthly = basePlanPrice + addonTotal;
+    
+    return {
+      currentCount,
+      newCount,
+      additionalCount,
+      basePlanPrice,
+      addonUnitPrice,
+      addonTotal,
+      totalMonthly,
+      formattedTotal: totalMonthly.toFixed(2).replace('.', ',') + ' €',
+      formattedAddonTotal: addonTotal > 0 ? `+${addonTotal.toFixed(2).replace('.', ',')} €` : null,
+    };
+  }, [establishments.length, activePlan.price]);
+
   // Fonction pour charger les établissements UNIQUEMENT depuis la DB
   const loadEstablishmentsFromDb = useCallback(async () => {
     try {
@@ -140,7 +164,7 @@ export default function SavedEstablishmentsList({
     }
   };
 
-  // Create Stripe checkout session or use creator bypass
+  // Create Stripe checkout session, update addon quantity, or use creator bypass
   const handleProceedToCheckout = async () => {
     console.log("[SavedEstablishmentsList] handleProceedToCheckout triggered");
     setCreatingCheckout(true);
@@ -155,42 +179,87 @@ export default function SavedEstablishmentsList({
         return;
       }
 
+      const newAddonQty = pricingInfo.additionalCount;
+
       // ======= CREATOR BYPASS =======
       if (isCreator()) {
-        console.log("[SavedEstablishmentsList] Creator bypass - activating pro plan");
-        // Activate the default pro plan (engagement)
-        const result = await activateCreatorSubscription(PRODUCT_KEYS.PRO_1499_12M);
-        if (result.success) {
-          await refreshSubscription();
-          setShowSubscriptionModal(false);
-          onAddClick?.();
-          return;
-        } else {
-          sonnerToast.error(result.error || "Erreur d'activation");
-          return;
+        console.log("[SavedEstablishmentsList] Creator bypass mode");
+        
+        // If not subscribed yet, activate pro plan first
+        if (!subscription.subscribed) {
+          console.log("[SavedEstablishmentsList] Creator: Activating pro plan first");
+          const proResult = await activateCreatorSubscription(PRODUCT_KEYS.PRO_1499_12M);
+          if (!proResult.success) {
+            sonnerToast.error(proResult.error || "Erreur d'activation du plan Pro");
+            return;
+          }
         }
+        
+        // If adding an addon (additional establishment beyond the first)
+        if (newAddonQty > 0) {
+          console.log("[SavedEstablishmentsList] Creator: Activating addon", { newAddonQty });
+          const addonResult = await activateCreatorSubscription(PRODUCT_KEYS.ADDON_MULTI_ETABLISSEMENTS);
+          if (!addonResult.success) {
+            sonnerToast.error(addonResult.error || "Erreur d'activation addon");
+            return;
+          }
+        }
+        
+        await refreshSubscription();
+        setShowSubscriptionModal(false);
+        onAddClick?.();
+        return;
       }
 
       // ======= NORMAL STRIPE FLOW =======
+      
+      // Check if user already has an active subscription
+      if (subscription.subscribed) {
+        // User is subscribed - update addon quantity
+        console.log("[SavedEstablishmentsList] Updating addon quantity", { newAddonQty });
+        const { data, error } = await supabase.functions.invoke("update-addon-quantity", {
+          body: { new_addon_quantity: newAddonQty }
+        });
+        
+        if (error) {
+          console.error("[SavedEstablishmentsList] Update addon error:", error);
+          sonnerToast.error(`Erreur: ${error.message}`);
+          return;
+        }
+        
+        if (data?.success) {
+          sonnerToast.success("Établissement ajouté à votre abonnement !");
+          await refreshSubscription();
+          setShowSubscriptionModal(false);
+          onAddClick?.();
+        } else {
+          sonnerToast.error(data?.error || "Erreur lors de la mise à jour");
+        }
+        return;
+      }
+
+      // New subscription checkout
       const establishmentsCount = establishments.length;
-      console.log("[SavedEstablishmentsList] Current establishments count:", establishmentsCount);
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke("create-subscription", {
+      console.log("[SavedEstablishmentsList] Creating new subscription", { 
+        establishmentsCount,
+        newTotal: establishmentsCount + 1 
+      });
+      
+      const { data, error } = await supabase.functions.invoke("create-subscription", {
         body: {
-          establishments_count: establishmentsCount + 1
+          establishments_count: establishmentsCount + 1,
+          priceId: activePlan.priceId
         }
       });
-      console.log("[SavedEstablishmentsList] create-subscription response:", {
-        data,
-        error
-      });
+      
+      console.log("[SavedEstablishmentsList] create-subscription response:", { data, error });
+      
       if (error) {
         console.error("[SavedEstablishmentsList] Edge function error:", error);
         sonnerToast.error(`Erreur: ${error.message}`);
         return;
       }
+      
       if (data?.error) {
         console.error("[SavedEstablishmentsList] Response error:", data.error);
         if (data.has_subscription) {
@@ -202,6 +271,7 @@ export default function SavedEstablishmentsList({
         }
         return;
       }
+      
       if (data?.url) {
         console.log("[SavedEstablishmentsList] Redirecting to Stripe checkout:", data.url);
         window.location.href = data.url;
@@ -320,17 +390,31 @@ export default function SavedEstablishmentsList({
               </div>
             </div>
             
-            {/* Établissement supplémentaire - styled as mini pricing card */}
+            {/* Établissement supplémentaire - avec quantité dynamique */}
             <div className="relative bg-white rounded-xl shadow-lg border-2 border-border transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
               <div className="p-3">
-                {/* Header with title and price */}
+                {/* Header with title and dynamic quantity/price */}
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
-                    <h4 className="text-base font-bold text-foreground">Établissement supplémentaire</h4>
-                    <p className="text-xs text-muted-foreground">Facturé par mois</p>
+                    <h4 className="text-base font-bold text-foreground">
+                      Établissement supplémentaire
+                      {pricingInfo.additionalCount > 0 && (
+                        <span className="ml-2 text-xs font-normal text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
+                          ×{pricingInfo.additionalCount}
+                        </span>
+                      )}
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      {pricingInfo.additionalCount === 0 
+                        ? "1er établissement inclus dans le plan" 
+                        : `${pricingInfo.additionalCount} × 4,99 €/mois`}
+                    </p>
                   </div>
                   <div className="text-right whitespace-nowrap">
-                    <span className="text-xl font-bold text-purple-600">+4,99 €<span className="text-xs font-normal text-muted-foreground">/mois</span></span>
+                    <span className="text-xl font-bold text-purple-600">
+                      {pricingInfo.formattedAddonTotal || "+0 €"}
+                      <span className="text-xs font-normal text-muted-foreground">/mois</span>
+                    </span>
                   </div>
                 </div>
                 
@@ -355,6 +439,22 @@ export default function SavedEstablishmentsList({
                     <span className="text-sm text-foreground leading-tight">Suivi indépendant par établissement</span>
                   </li>
                 </ul>
+              </div>
+            </div>
+
+            {/* Total mensuel dynamique */}
+            <div className="rounded-xl p-3 border-2 border-primary bg-primary/5">
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="text-base font-bold text-foreground">Total mensuel</span>
+                  <p className="text-xs text-muted-foreground">
+                    {pricingInfo.newCount} établissement{pricingInfo.newCount > 1 ? 's' : ''} après ajout
+                  </p>
+                </div>
+                <span className="text-xl font-bold text-primary">
+                  {pricingInfo.formattedTotal}
+                  <span className="text-sm font-normal text-muted-foreground">/mois</span>
+                </span>
               </div>
             </div>
           </div>
