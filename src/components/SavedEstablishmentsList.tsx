@@ -260,72 +260,72 @@ export default function SavedEstablishmentsList({
 
       {/* Subscription required modal */}
       <Dialog open={showSubscriptionModal} onOpenChange={setShowSubscriptionModal}>
-        <DialogContent className="sm:max-w-md h-auto max-h-[90vh] overflow-y-auto" hideCloseButton>
-          <DialogHeader>
+        <DialogContent className="sm:max-w-md" hideCloseButton>
+          <DialogHeader className="pb-2">
             <DialogTitle>Abonnement requis</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-sm">
               Pour ajouter des établissements, vous devez souscrire à un abonnement.
               Votre premier établissement est inclus dans l'abonnement de base.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-3 space-y-3">
+          <div className="py-2 space-y-2">
             {/* Plan principal */}
-            <div className="rounded-xl p-4 border border-border bg-white">
+            <div className="rounded-xl p-3 border border-border bg-white">
               <div className="flex justify-between items-center">
                 <div>
                   <span className="font-semibold text-foreground">Abonnement Pro</span>
-                  <p className="text-xs text-muted-foreground mt-0.5">Engagement 12 mois</p>
+                  <p className="text-xs text-muted-foreground">Engagement 12 mois</p>
                 </div>
                 <span className="text-lg font-bold text-blue-600">14,99 €<span className="text-sm font-normal text-muted-foreground">/mois</span></span>
               </div>
             </div>
             
             {/* Établissement supplémentaire - styled as mini pricing card */}
-            <div className="relative overflow-hidden bg-white rounded-2xl shadow-lg border-2 border-border transition-all duration-300 hover:shadow-xl">
+            <div className="relative overflow-hidden bg-white rounded-xl shadow-md border-2 border-border">
               {/* Badge Ajouter - same style as pricing cards */}
-              <div className="absolute top-0 right-0 bg-purple-600 text-white px-4 py-1.5 text-xs font-semibold rounded-bl-xl">
+              <div className="absolute top-0 right-0 bg-purple-600 text-white px-3 py-1 text-xs font-semibold rounded-bl-lg">
                 Ajouter
               </div>
               
-              <div className="p-5 pt-6">
+              <div className="p-3 pt-5">
                 {/* Header with title and price */}
-                <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
-                    <h4 className="text-lg font-bold text-foreground">Établissement supplémentaire</h4>
-                    <p className="text-sm text-muted-foreground mt-1">Facturé par mois</p>
+                    <h4 className="text-base font-bold text-foreground">Établissement supplémentaire</h4>
+                    <p className="text-xs text-muted-foreground">Facturé par mois</p>
                   </div>
                   <div className="text-right whitespace-nowrap">
-                    <span className="text-2xl font-bold text-purple-600">+4,99 €<span className="text-sm font-normal text-muted-foreground">/mois</span></span>
+                    <span className="text-xl font-bold text-purple-600">+4,99 €<span className="text-xs font-normal text-muted-foreground">/mois</span></span>
                   </div>
                 </div>
                 
                 {/* Feature list - same style as pricing cards */}
-                <ul className="space-y-2.5">
+                <ul className="space-y-1.5">
                   <li className="flex items-center gap-2">
                     <span className="inline-flex w-4 h-4 rounded-full bg-purple-100 items-center justify-center flex-shrink-0">
                       <Check className="w-2.5 h-2.5 text-purple-600" />
                     </span>
-                    <span className="text-sm text-foreground leading-normal">Centralisez la gestion de tous vos lieux</span>
+                    <span className="text-sm text-foreground leading-tight">Centralisez la gestion de tous vos lieux</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="inline-flex w-4 h-4 rounded-full bg-purple-100 items-center justify-center flex-shrink-0">
                       <Check className="w-2.5 h-2.5 text-purple-600" />
                     </span>
-                    <span className="text-sm text-foreground leading-normal">Idéal pour groupes et franchises</span>
+                    <span className="text-sm text-foreground leading-tight">Idéal pour groupes et franchises</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="inline-flex w-4 h-4 rounded-full bg-purple-100 items-center justify-center flex-shrink-0">
                       <Check className="w-2.5 h-2.5 text-purple-600" />
                     </span>
-                    <span className="text-sm text-foreground leading-normal">Suivi indépendant par établissement</span>
+                    <span className="text-sm text-foreground leading-tight">Suivi indépendant par établissement</span>
                   </li>
                 </ul>
               </div>
             </div>
           </div>
           
-          <DialogFooter className="flex gap-2 sm:gap-0 pt-2">
+          <DialogFooter className="flex gap-2 sm:gap-0 pt-1">
             <Button variant="outline" onClick={() => setShowSubscriptionModal(false)} disabled={creatingCheckout}>
               Annuler
             </Button>
