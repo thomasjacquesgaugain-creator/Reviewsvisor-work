@@ -9,6 +9,7 @@ export interface SubscriptionPlan {
   badge: string;
   badgeColor: "purple" | "blue";
   priceId: string;
+  productKey: string; // Clé stable pour le bypass créateur
   benefits: string[];
 }
 
@@ -23,6 +24,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     badge: "💎 Meilleur prix",
     badgeColor: "purple",
     priceId: "price_1SZT7tGkt979eNWB0MF2xczP",
+    productKey: "pro_1499_12m",
     benefits: [
       "Accès complet à Reviewsvisor",
       "14 jours offerts",
@@ -39,6 +41,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     badge: "⚡ Flexible",
     badgeColor: "blue",
     priceId: "price_1SXnCbGkt979eNWBttiTM124",
+    productKey: "pro_2499_monthly",
     benefits: [
       "Accès complet à Reviewsvisor",
       "Sans engagement",
@@ -47,6 +50,16 @@ export const subscriptionPlans: SubscriptionPlan[] = [
   },
 ];
 
+// Add-on pour établissements supplémentaires
+export const establishmentAddon = {
+  id: "addon-etablissement",
+  name: "Établissement supplémentaire",
+  price: 4.99,
+  priceLabel: "+4,99 €",
+  priceId: "price_1ShiPzGkt979eNWBSDapH7aJ",
+  productKey: "addon_multi_etablissements_499",
+};
+
 export const getDefaultPlan = (): SubscriptionPlan => subscriptionPlans[0];
 
 export const getPlanBySlug = (slug: string): SubscriptionPlan | undefined => 
@@ -54,3 +67,6 @@ export const getPlanBySlug = (slug: string): SubscriptionPlan | undefined =>
 
 export const getPlanById = (id: string): SubscriptionPlan | undefined => 
   subscriptionPlans.find(p => p.id === id);
+
+export const getPlanByProductKey = (productKey: string): SubscriptionPlan | undefined =>
+  subscriptionPlans.find(p => p.productKey === productKey);

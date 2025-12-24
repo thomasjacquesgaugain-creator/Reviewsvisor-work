@@ -11,6 +11,8 @@ export type SubscriptionStatus = {
   additional_establishments?: number;
   billed_additional_establishments?: number;
   billing_sync_needed?: boolean;
+  source?: 'stripe' | 'creator_bypass';
+  creator_bypass?: boolean;
 };
 
 export const STRIPE_PRODUCTS = {
