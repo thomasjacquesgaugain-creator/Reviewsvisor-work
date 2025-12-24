@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { loadGoogleMaps } from "@/lib/loadGoogleMaps";
+import { syncEstablishmentBilling } from "@/lib/establishmentBilling";
 
 export interface EstablishmentData {
   id?: string;
@@ -130,6 +131,15 @@ export async function saveEstablishmentFromPlaceDetails(details: any): Promise<E
     } catch (error) {
       console.warn('Could not update current establishment in profile:', error);
     }
+    
+    // Sync billing with Stripe (background, don't block)
+    syncEstablishmentBilling().then(result => {
+      if (result.success) {
+        console.log('Billing synced:', result);
+      } else {
+        console.warn('Billing sync failed:', result.error);
+      }
+    }).catch(err => console.warn('Billing sync error:', err));
   }
 
   return data as EstablishmentData;

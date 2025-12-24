@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { checkSubscription, type SubscriptionStatus } from "@/lib/stripe";
+import { syncEstablishmentBilling } from "@/lib/establishmentBilling";
 import { useAuth } from "@/contexts/AuthProvider";
 
 export function useSubscription() {
@@ -7,7 +8,7 @@ export function useSubscription() {
   const [subscription, setSubscription] = useState<SubscriptionStatus>({ subscribed: false });
   const [loading, setLoading] = useState(true);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     if (!user) {
       setSubscription({ subscribed: false });
       setLoading(false);
@@ -18,13 +19,24 @@ export function useSubscription() {
     try {
       const status = await checkSubscription();
       setSubscription(status);
+      
+      // Auto-sync billing if needed
+      if (status.billing_sync_needed) {
+        console.log('Billing sync needed, syncing...');
+        const syncResult = await syncEstablishmentBilling();
+        if (syncResult.success) {
+          // Refresh subscription status after sync
+          const updatedStatus = await checkSubscription();
+          setSubscription(updatedStatus);
+        }
+      }
     } catch (error) {
       console.error("Error refreshing subscription:", error);
       setSubscription({ subscribed: false });
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     refresh();
@@ -33,7 +45,7 @@ export function useSubscription() {
     const interval = setInterval(refresh, 60000);
     
     return () => clearInterval(interval);
-  }, [user]);
+  }, [refresh]);
 
   return { subscription, loading, refresh };
 }

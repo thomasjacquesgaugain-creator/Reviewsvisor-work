@@ -6,6 +6,10 @@ export type SubscriptionStatus = {
   subscribed: boolean;
   product_id?: string | null;
   subscription_end?: string | null;
+  total_establishments?: number;
+  additional_establishments?: number;
+  billed_additional_establishments?: number;
+  billing_sync_needed?: boolean;
 };
 
 export const STRIPE_PRODUCTS = {
