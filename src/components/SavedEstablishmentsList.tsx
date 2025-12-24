@@ -5,21 +5,14 @@ import { Building2, Plus, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
 import { checkSubscription } from "@/lib/stripe";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-
 interface SavedEstablishmentsListProps {
   onAddClick?: () => void;
 }
-
-export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishmentsListProps) {
+export default function SavedEstablishmentsList({
+  onAddClick
+}: SavedEstablishmentsListProps) {
   const [establishments, setEstablishments] = useState<Etab[]>([]);
   const [loading, setLoading] = useState(true);
   const [settingActive, setSettingActive] = useState<string | null>(null);
@@ -30,19 +23,24 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
   // Fonction pour charger les établissements UNIQUEMENT depuis la DB
   const loadEstablishmentsFromDb = useCallback(async () => {
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        },
+        error: authError
+      } = await supabase.auth.getUser();
       if (authError || !user) {
         setEstablishments([]);
         return;
       }
 
       // Charger depuis la table "établissements" (source de vérité unique)
-      const { data: etablissements, error } = await supabase
-        .from("établissements")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
+      const {
+        data: etablissements,
+        error
+      } = await supabase.from("établissements").select("*").eq("user_id", user.id).order("created_at", {
+        ascending: false
+      });
       if (error) {
         console.error("Erreur chargement établissements:", error);
         setEstablishments([]);
@@ -50,7 +48,7 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
       }
 
       // Convertir vers le format Etab avec toutes les infos de la DB
-      const dbList: Etab[] = (etablissements || []).map((etab) => ({
+      const dbList: Etab[] = (etablissements || []).map(etab => ({
         place_id: etab.place_id,
         name: etab.nom,
         address: etab.adresse || "",
@@ -59,9 +57,8 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
         phone: etab.telephone || undefined,
         website: etab.website || undefined,
         url: etab.google_maps_url || undefined,
-        rating: etab.rating || null,
+        rating: etab.rating || null
       }));
-
       setEstablishments(dbList);
     } catch (error) {
       console.error("Erreur lors du chargement de la liste:", error);
@@ -105,11 +102,9 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
   const handleAddClick = async () => {
     console.log("[SavedEstablishmentsList] handleAddClick triggered");
     setCheckingSubscription(true);
-    
     try {
       const status = await checkSubscription();
       console.log("[SavedEstablishmentsList] Subscription status:", status);
-      
       if (status.subscribed) {
         // User has active subscription, allow adding
         console.log("[SavedEstablishmentsList] User is subscribed, allowing add");
@@ -131,10 +126,12 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
   const handleProceedToCheckout = async () => {
     console.log("[SavedEstablishmentsList] Creating checkout session...");
     setCreatingCheckout(true);
-    
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (!session?.access_token) {
         sonnerToast.error("Vous devez être connecté pour vous abonner");
         return;
@@ -143,21 +140,23 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
       // Count current establishments for billing
       const establishmentsCount = establishments.length;
       console.log("[SavedEstablishmentsList] Current establishments count:", establishmentsCount);
-
-      const { data, error } = await supabase.functions.invoke("create-subscription", {
-        body: { 
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke("create-subscription", {
+        body: {
           establishments_count: establishmentsCount + 1 // +1 for the new one they want to add
-        },
+        }
       });
-
-      console.log("[SavedEstablishmentsList] create-subscription response:", { data, error });
-
+      console.log("[SavedEstablishmentsList] create-subscription response:", {
+        data,
+        error
+      });
       if (error) {
         console.error("[SavedEstablishmentsList] Edge function error:", error);
         sonnerToast.error(`Erreur: ${error.message}`);
         return;
       }
-
       if (data?.error) {
         console.error("[SavedEstablishmentsList] Response error:", data.error);
         if (data.has_subscription) {
@@ -169,7 +168,6 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
         }
         return;
       }
-
       if (data?.url) {
         console.log("[SavedEstablishmentsList] Redirecting to Stripe checkout:", data.url);
         // Redirect to Stripe Checkout
@@ -189,9 +187,12 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
   // Définir un établissement comme actif dans la DB (source de vérité)
   const handleSelectEstablishment = async (etab: Etab) => {
     setSettingActive(etab.place_id);
-    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) {
         sonnerToast.error("Vous devez être connecté");
         return;
@@ -199,12 +200,11 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
 
       // Mettre à jour is_active=true dans la DB
       // Le trigger va automatiquement désactiver les autres
-      const { error } = await supabase
-        .from("établissements")
-        .update({ is_active: true })
-        .eq("user_id", user.id)
-        .eq("place_id", etab.place_id);
-
+      const {
+        error
+      } = await supabase.from("établissements").update({
+        is_active: true
+      }).eq("user_id", user.id).eq("place_id", etab.place_id);
       if (error) {
         console.error("Erreur définition établissement actif:", error);
         sonnerToast.error("Impossible de sélectionner cet établissement");
@@ -213,13 +213,12 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
 
       // Notifier MonEtablissementCard de recharger depuis la DB
       window.dispatchEvent(new CustomEvent(EVT_SAVED));
-      
+
       // Scroll smooth vers le haut
       document.querySelector('[data-testid="card-mon-etablissement"]')?.scrollIntoView({
         behavior: 'smooth',
         block: 'start'
       });
-
       sonnerToast.success(`"${etab.name}" défini comme établissement actif`);
     } catch (err) {
       console.error("Erreur:", err);
@@ -233,9 +232,7 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
   if (loading || establishments.length === 0) {
     return null;
   }
-
-  return (
-    <>
+  return <>
       <section className="p-4 border border-border rounded-lg bg-card/50">
         <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-2">
           <Building2 className="h-5 w-5 text-primary" />
@@ -243,27 +240,12 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
         </h3>
         
         <div className="flex flex-wrap gap-3">
-          {establishments.map((etab) => (
-            <EstablishmentItem
-              key={etab.place_id}
-              etab={etab}
-              onSelect={handleSelectEstablishment}
-            />
-          ))}
+          {establishments.map(etab => <EstablishmentItem key={etab.place_id} etab={etab} onSelect={handleSelectEstablishment} />)}
           
           {/* Bouton Ajouter un établissement - with billing gate */}
-          <button
-            onClick={handleAddClick}
-            disabled={checkingSubscription}
-            className="cursor-pointer bg-card border border-dashed border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/10 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-2 min-h-[80px] disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Ajouter un établissement"
-          >
+          <button onClick={handleAddClick} disabled={checkingSubscription} className="cursor-pointer bg-card border border-dashed border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/10 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-2 min-h-[80px] disabled:opacity-50 disabled:cursor-not-allowed" title="Ajouter un établissement">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              {checkingSubscription ? (
-                <Loader2 className="w-5 h-5 text-primary animate-spin" />
-              ) : (
-                <Plus className="w-5 h-5 text-primary" />
-              )}
+              {checkingSubscription ? <Loader2 className="w-5 h-5 text-primary animate-spin" /> : <Plus className="w-5 h-5 text-primary" />}
             </div>
             <span className="text-xs text-muted-foreground font-medium">
               {checkingSubscription ? "Vérification..." : "Ajouter"}
@@ -271,11 +253,9 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
           </button>
         </div>
         
-        {establishments.length === 0 && (
-          <p className="text-muted-foreground text-sm mt-3">
+        {establishments.length === 0 && <p className="text-muted-foreground text-sm mt-3">
             Aucun établissement enregistré pour le moment.
-          </p>
-        )}
+          </p>}
       </section>
 
       {/* Subscription required modal */}
@@ -291,7 +271,7 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
           
           <div className="py-4 space-y-3">
             {/* Plan principal */}
-            <div className="bg-muted/50 rounded-xl p-4 border border-border">
+            <div className="rounded-xl p-4 border border-border bg-primary-foreground">
               <div className="flex justify-between items-center">
                 <div>
                   <span className="font-semibold text-foreground">Abonnement Pro</span>
@@ -341,29 +321,17 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
           </div>
           
           <DialogFooter className="flex gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setShowSubscriptionModal(false)}
-              disabled={creatingCheckout}
-            >
+            <Button variant="outline" onClick={() => setShowSubscriptionModal(false)} disabled={creatingCheckout}>
               Annuler
             </Button>
-            <Button
-              onClick={handleProceedToCheckout}
-              disabled={creatingCheckout}
-            >
-              {creatingCheckout ? (
-                <>
+            <Button onClick={handleProceedToCheckout} disabled={creatingCheckout}>
+              {creatingCheckout ? <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Redirection...
-                </>
-              ) : (
-                "S'abonner"
-              )}
+                </> : "S'abonner"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
-  );
+    </>;
 }
