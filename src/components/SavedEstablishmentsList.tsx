@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Etab, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
 import EstablishmentItem from "./EstablishmentItem";
-import { Building2, Plus, Loader2, Store } from "lucide-react";
+import { Building2, Plus, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
 import { checkSubscription } from "@/lib/stripe";
@@ -301,39 +301,42 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
               </div>
             </div>
             
-            {/* Établissement supplémentaire - styled as add-on */}
-            <div className="relative bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl p-4 border border-border shadow-sm">
-              {/* Badge Add-on */}
-              <div className="absolute -top-2 right-3">
-                <span className="bg-purple-600 text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-full shadow-sm">
-                  + Add-on
-                </span>
+            {/* Établissement supplémentaire - styled as mini pricing card */}
+            <div className="relative overflow-hidden bg-white rounded-2xl shadow-lg border-2 border-border transition-all duration-300 hover:shadow-xl">
+              {/* Badge Add-on - same style as pricing cards */}
+              <div className="absolute top-0 right-0 bg-purple-600 text-white px-4 py-1.5 text-xs font-semibold rounded-bl-xl">
+                + Add-on
               </div>
               
-              <div className="flex items-start gap-3 mt-1">
-                {/* Icon */}
-                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                  <Store className="w-5 h-5 text-purple-600" />
-                </div>
-                
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h4 className="font-semibold text-foreground text-sm">Établissement supplémentaire</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">Facturé par mois</p>
-                    </div>
-                    <span className="text-lg font-bold text-purple-600 whitespace-nowrap">
-                      +4,99 €<span className="text-xs font-normal text-muted-foreground">/mois</span>
-                    </span>
+              <div className="p-5 pt-6">
+                {/* Header with title and price */}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div>
+                    <h4 className="text-lg font-bold text-foreground">Établissement supplémentaire</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Facturé par mois</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-2xl font-bold text-purple-600">+4,99 €</span>
+                    <span className="text-sm text-muted-foreground ml-1">/mois</span>
                   </div>
                 </div>
+                
+                {/* Feature list - same style as pricing cards */}
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Check className="w-3 h-3 text-purple-600" />
+                    </div>
+                    <span className="text-sm text-foreground">Ajouté uniquement à partir du 2ᵉ établissement</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Check className="w-3 h-3 text-purple-600" />
+                    </div>
+                    <span className="text-sm text-foreground">Toutes les fonctionnalités Pro incluses</span>
+                  </li>
+                </ul>
               </div>
-              
-              {/* Note explicative */}
-              <p className="text-[11px] text-muted-foreground mt-3 pl-[52px] italic">
-                Ajouté uniquement à partir du 2ᵉ établissement
-              </p>
             </div>
           </div>
           
