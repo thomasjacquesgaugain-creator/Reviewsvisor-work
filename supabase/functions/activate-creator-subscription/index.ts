@@ -100,50 +100,84 @@ serve(async (req) => {
       upsertData.pro_current_period_end = periodEndISO;
       logStep("Activating pro plan", { planKey: config.planKey, periodEnd: periodEndISO });
     } else if (config.type === 'addon') {
+      // For addon, we just set the status - qty will be handled by increment
       upsertData.addon_multi_etablissements_status = 'active';
       upsertData.addon_multi_etablissements_period_end = periodEndISO;
-      // Increment quantity for each addon activation
       logStep("Activating addon", { periodEnd: periodEndISO });
     }
 
-    // Upsert into user_entitlements
-    const { data: entitlement, error: upsertError } = await supabaseClient
+    // Check if user already has an entitlement record
+    const { data: existingEntitlement } = await supabaseClient
       .from('user_entitlements')
-      .upsert(upsertData, { 
-        onConflict: 'user_id',
-        ignoreDuplicates: false 
-      })
-      .select()
+      .select('*')
+      .eq('user_id', user.id)
       .single();
 
-    if (upsertError) {
-      logStep("Upsert error", { error: upsertError });
-      throw new Error(`Failed to update entitlements: ${upsertError.message}`);
-    }
+    if (existingEntitlement) {
+      // Update existing record
+      const updateData: Record<string, any> = {
+        source: 'creator_bypass',
+        updated_at: new Date().toISOString(),
+      };
 
-    // If addon, we need to increment the qty (upsert doesn't handle increment well)
-    if (config.type === 'addon') {
-      const { data: currentData } = await supabaseClient
+      if (config.type === 'pro') {
+        updateData.pro_plan_key = config.planKey;
+        updateData.pro_status = 'active';
+        updateData.pro_current_period_end = periodEndISO;
+      } else if (config.type === 'addon') {
+        // Increment addon qty
+        updateData.addon_multi_etablissements_status = 'active';
+        updateData.addon_multi_etablissements_period_end = periodEndISO;
+        updateData.addon_multi_etablissements_qty = (existingEntitlement.addon_multi_etablissements_qty || 0) + 1;
+        logStep("Incrementing addon qty", { 
+          oldQty: existingEntitlement.addon_multi_etablissements_qty || 0,
+          newQty: updateData.addon_multi_etablissements_qty
+        });
+      }
+
+      const { error: updateError } = await supabaseClient
         .from('user_entitlements')
-        .select('addon_multi_etablissements_qty')
-        .eq('user_id', user.id)
-        .single();
-      
-      const currentQty = currentData?.addon_multi_etablissements_qty || 0;
-      
-      await supabaseClient
-        .from('user_entitlements')
-        .update({ 
-          addon_multi_etablissements_qty: currentQty + 1,
-          addon_multi_etablissements_status: 'active',
-          addon_multi_etablissements_period_end: periodEndISO,
-        })
+        .update(updateData)
         .eq('user_id', user.id);
-      
-      logStep("Addon qty incremented", { newQty: currentQty + 1 });
+
+      if (updateError) {
+        throw new Error(`Failed to update entitlements: ${updateError.message}`);
+      }
+    } else {
+      // Insert new record
+      const insertData: Record<string, any> = {
+        user_id: user.id,
+        source: 'creator_bypass',
+        pro_status: 'inactive',
+        addon_multi_etablissements_status: 'inactive',
+        addon_multi_etablissements_qty: 0,
+      };
+
+      if (config.type === 'pro') {
+        insertData.pro_plan_key = config.planKey;
+        insertData.pro_status = 'active';
+        insertData.pro_current_period_end = periodEndISO;
+      } else if (config.type === 'addon') {
+        insertData.addon_multi_etablissements_status = 'active';
+        insertData.addon_multi_etablissements_period_end = periodEndISO;
+        insertData.addon_multi_etablissements_qty = 1;
+      }
+
+      const { error: insertError } = await supabaseClient
+        .from('user_entitlements')
+        .insert(insertData);
+
+      if (insertError) {
+        throw new Error(`Failed to insert entitlements: ${insertError.message}`);
+      }
     }
 
     // Fetch final state
+    const { data: finalEntitlement, error: fetchError } = await supabaseClient
+      .from('user_entitlements')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
     const { data: finalEntitlement, error: fetchError } = await supabaseClient
       .from('user_entitlements')
       .select('*')

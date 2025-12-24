@@ -53,3 +53,6 @@ verify_jwt = true
 
 [functions.activate-creator-subscription]
 verify_jwt = true
+
+[functions.update-addon-quantity]
+verify_jwt = true
