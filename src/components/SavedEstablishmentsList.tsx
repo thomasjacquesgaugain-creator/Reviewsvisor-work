@@ -260,7 +260,11 @@ export default function SavedEstablishmentsList({
 
       {/* Subscription required modal */}
       <Dialog open={showSubscriptionModal} onOpenChange={setShowSubscriptionModal}>
-        <DialogContent className="sm:max-w-md" hideCloseButton>
+        <DialogContent className="sm:max-w-md relative" hideCloseButton>
+          {/* Badge Multi-établissements - positioned in modal header */}
+          <div className="absolute top-0 right-0 bg-purple-600 text-white px-3 py-1 text-xs font-semibold rounded-bl-lg rounded-tr-lg">
+            Multi-établissements
+          </div>
           <DialogHeader className="pb-2">
             <DialogTitle>Abonnement requis</DialogTitle>
             <DialogDescription className="text-sm">
@@ -283,12 +287,7 @@ export default function SavedEstablishmentsList({
             
             {/* Établissement supplémentaire - styled as mini pricing card */}
             <div className="relative bg-white rounded-xl shadow-md border-2 border-border">
-              {/* Badge Multi-établissements - same style as pricing cards */}
-              <div className="absolute top-0 right-0 bg-purple-600 text-white px-3 py-1 text-xs font-semibold rounded-bl-lg">
-                Multi-établissements
-              </div>
-              
-              <div className="p-3 pt-5">
+              <div className="p-3">
                 {/* Header with title and price */}
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
