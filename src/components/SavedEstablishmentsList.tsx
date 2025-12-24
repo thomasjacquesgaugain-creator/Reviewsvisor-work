@@ -260,7 +260,7 @@ export default function SavedEstablishmentsList({
 
       {/* Subscription required modal */}
       <Dialog open={showSubscriptionModal} onOpenChange={setShowSubscriptionModal}>
-        <DialogContent className="sm:max-w-md" hideCloseButton>
+        <DialogContent className="sm:max-w-md h-auto max-h-[90vh] overflow-y-auto" hideCloseButton>
           <DialogHeader>
             <DialogTitle>Abonnement requis</DialogTitle>
             <DialogDescription>
@@ -269,7 +269,7 @@ export default function SavedEstablishmentsList({
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-4 space-y-3">
+          <div className="py-3 space-y-3">
             {/* Plan principal */}
             <div className="rounded-xl p-4 border border-border bg-white">
               <div className="flex justify-between items-center">
@@ -325,7 +325,7 @@ export default function SavedEstablishmentsList({
             </div>
           </div>
           
-          <DialogFooter className="flex gap-2 sm:gap-0">
+          <DialogFooter className="flex gap-2 sm:gap-0 pt-2">
             <Button variant="outline" onClick={() => setShowSubscriptionModal(false)} disabled={creatingCheckout}>
               Annuler
             </Button>
