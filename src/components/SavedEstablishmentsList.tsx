@@ -140,22 +140,39 @@ export default function SavedEstablishmentsList({
     }
   }, []);
 
-  // Handle add button click with subscription check
+  // Quota included in base plan
+  const INCLUDED_ESTABLISHMENTS = 1;
+
+  // Handle add button click with subscription AND quota check
   const handleAddClick = async () => {
     console.log("[SavedEstablishmentsList] handleAddClick triggered");
     setCheckingSubscription(true);
     try {
       const status = await checkSubscription();
       console.log("[SavedEstablishmentsList] Subscription status:", status);
-      if (status.subscribed) {
-        // User has active subscription, allow adding
-        console.log("[SavedEstablishmentsList] User is subscribed, allowing add");
-        onAddClick?.();
-      } else {
-        // User doesn't have active subscription, show modal
-        console.log("[SavedEstablishmentsList] User NOT subscribed, showing modal");
+      console.log("[SavedEstablishmentsList] Current establishments:", establishments.length);
+      
+      // CASE 1: Not subscribed at all
+      if (!status.subscribed) {
+        console.log("[SavedEstablishmentsList] User NOT subscribed, showing subscription modal");
         setShowSubscriptionModal(true);
+        return;
       }
+      
+      // CASE 2: Subscribed but quota exceeded (already has 1+ establishments)
+      if (establishments.length >= INCLUDED_ESTABLISHMENTS) {
+        console.log("[SavedEstablishmentsList] Quota exceeded, showing addon modal", {
+          current: establishments.length,
+          included: INCLUDED_ESTABLISHMENTS
+        });
+        // Show addon modal instead of navigating
+        setShowSubscriptionModal(true);
+        return;
+      }
+      
+      // CASE 3: Subscribed and under quota - navigate directly
+      console.log("[SavedEstablishmentsList] Under quota, allowing navigation");
+      onAddClick?.();
     } catch (error) {
       console.error("[SavedEstablishmentsList] Error checking subscription:", error);
       sonnerToast.error("Erreur lors de la vérification de l'abonnement");
