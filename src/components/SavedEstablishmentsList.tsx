@@ -286,7 +286,7 @@ export default function SavedEstablishmentsList({
             </div>
             
             {/* Établissement supplémentaire - styled as mini pricing card */}
-            <div className="relative bg-white rounded-xl shadow-md border-2 border-border">
+            <div className="relative bg-white rounded-xl shadow-lg border-2 border-border transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
               <div className="p-3">
                 {/* Header with title and price */}
                 <div className="flex items-start justify-between gap-2 mb-2">
