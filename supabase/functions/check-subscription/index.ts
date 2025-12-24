@@ -55,6 +55,52 @@ serve(async (req) => {
     const additionalEstablishments = Math.max(0, totalEstablishments - 1);
     logStep("Establishment count", { total: totalEstablishments, additional: additionalEstablishments });
 
+    // ======= CHECK USER_ENTITLEMENTS FIRST (creator bypass) =======
+    const { data: entitlement, error: entitlementError } = await supabaseClient
+      .from("user_entitlements")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+
+    if (entitlement && entitlement.pro_status === 'active') {
+      const now = new Date();
+      const periodEnd = entitlement.pro_current_period_end ? new Date(entitlement.pro_current_period_end) : null;
+      
+      // Check if still valid
+      if (!periodEnd || periodEnd > now) {
+        logStep("Creator bypass entitlement active", { 
+          planKey: entitlement.pro_plan_key,
+          source: entitlement.source,
+          periodEnd: entitlement.pro_current_period_end
+        });
+        
+        // Map plan key to price_id for frontend compatibility
+        let priceId = null;
+        if (entitlement.pro_plan_key === 'pro_1499_12m') {
+          priceId = 'price_1SZT7tGkt979eNWB0MF2xczP';
+        } else if (entitlement.pro_plan_key === 'pro_2499_monthly') {
+          priceId = 'price_1SXnCbGkt979eNWBttiTM124';
+        }
+
+        return new Response(JSON.stringify({
+          subscribed: true,
+          product_id: null,
+          price_id: priceId,
+          subscription_end: entitlement.pro_current_period_end,
+          total_establishments: totalEstablishments,
+          additional_establishments: additionalEstablishments,
+          billed_additional_establishments: entitlement.addon_multi_etablissements_qty || 0,
+          billing_sync_needed: false,
+          source: entitlement.source,
+          creator_bypass: entitlement.source === 'creator_bypass',
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+    }
+
+    // ======= FALLBACK TO STRIPE CHECK =======
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
@@ -123,7 +169,9 @@ serve(async (req) => {
       total_establishments: totalEstablishments,
       additional_establishments: additionalEstablishments,
       billed_additional_establishments: billedAdditionalEstablishments,
-      billing_sync_needed: hasActiveSub && billedAdditionalEstablishments !== additionalEstablishments
+      billing_sync_needed: hasActiveSub && billedAdditionalEstablishments !== additionalEstablishments,
+      source: 'stripe',
+      creator_bypass: false,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

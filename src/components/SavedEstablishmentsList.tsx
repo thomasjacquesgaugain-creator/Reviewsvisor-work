@@ -6,12 +6,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
 import { checkSubscription } from "@/lib/stripe";
 import { useSubscription } from "@/hooks/useSubscription";
-import { subscriptionPlans } from "@/config/subscriptionPlans";
+import { useCreatorBypass, PRODUCT_KEYS } from "@/hooks/useCreatorBypass";
+import { subscriptionPlans, establishmentAddon } from "@/config/subscriptionPlans";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+
 interface SavedEstablishmentsListProps {
   onAddClick?: () => void;
 }
+
 export default function SavedEstablishmentsList({
   onAddClick
 }: SavedEstablishmentsListProps) {
@@ -22,7 +25,8 @@ export default function SavedEstablishmentsList({
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [creatingCheckout, setCreatingCheckout] = useState(false);
   
-  const { subscription } = useSubscription();
+  const { subscription, refresh: refreshSubscription } = useSubscription();
+  const { isCreator, activateCreatorSubscription } = useCreatorBypass();
   
   // Détermine le plan actif de l'utilisateur basé sur le price_id
   const activePlan = useMemo(() => {
@@ -136,9 +140,9 @@ export default function SavedEstablishmentsList({
     }
   };
 
-  // Create Stripe checkout session
+  // Create Stripe checkout session or use creator bypass
   const handleProceedToCheckout = async () => {
-    console.log("[SavedEstablishmentsList] Creating checkout session...");
+    console.log("[SavedEstablishmentsList] handleProceedToCheckout triggered");
     setCreatingCheckout(true);
     try {
       const {
@@ -151,7 +155,23 @@ export default function SavedEstablishmentsList({
         return;
       }
 
-      // Count current establishments for billing
+      // ======= CREATOR BYPASS =======
+      if (isCreator()) {
+        console.log("[SavedEstablishmentsList] Creator bypass - activating pro plan");
+        // Activate the default pro plan (engagement)
+        const result = await activateCreatorSubscription(PRODUCT_KEYS.PRO_1499_12M);
+        if (result.success) {
+          await refreshSubscription();
+          setShowSubscriptionModal(false);
+          onAddClick?.();
+          return;
+        } else {
+          sonnerToast.error(result.error || "Erreur d'activation");
+          return;
+        }
+      }
+
+      // ======= NORMAL STRIPE FLOW =======
       const establishmentsCount = establishments.length;
       console.log("[SavedEstablishmentsList] Current establishments count:", establishmentsCount);
       const {
@@ -159,7 +179,7 @@ export default function SavedEstablishmentsList({
         error
       } = await supabase.functions.invoke("create-subscription", {
         body: {
-          establishments_count: establishmentsCount + 1 // +1 for the new one they want to add
+          establishments_count: establishmentsCount + 1
         }
       });
       console.log("[SavedEstablishmentsList] create-subscription response:", {
@@ -184,7 +204,6 @@ export default function SavedEstablishmentsList({
       }
       if (data?.url) {
         console.log("[SavedEstablishmentsList] Redirecting to Stripe checkout:", data.url);
-        // Redirect to Stripe Checkout
         window.location.href = data.url;
       } else {
         console.error("[SavedEstablishmentsList] No URL in response:", data);

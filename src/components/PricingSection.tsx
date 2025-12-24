@@ -6,13 +6,31 @@ import { subscriptionPlans } from "@/config/subscriptionPlans";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCreatorBypass, ProductKey } from "@/hooks/useCreatorBypass";
+import { useSubscription } from "@/hooks/useSubscription";
 
 export function PricingSection() {
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
+  const { isCreator, activateCreatorSubscription } = useCreatorBypass();
+  const { refresh: refreshSubscription } = useSubscription();
 
-  const handleCheckout = async (priceId: string) => {
+  const handleCheckout = async (priceId: string, productKey: string) => {
     setLoadingPriceId(priceId);
     try {
+      // ======= CREATOR BYPASS =======
+      if (isCreator()) {
+        console.log("[PricingSection] Creator bypass for", productKey);
+        const result = await activateCreatorSubscription(productKey as ProductKey);
+        if (result.success) {
+          await refreshSubscription();
+          return;
+        } else {
+          toast.error(result.error || "Erreur d'activation");
+          return;
+        }
+      }
+
+      // ======= NORMAL STRIPE FLOW =======
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { priceId },
       });
@@ -81,7 +99,7 @@ export function PricingSection() {
                   </ul>
                   <Button 
                     className={cn("w-full h-12 text-base font-semibold text-white shadow-lg hover:shadow-xl transition-all rounded-lg mt-6", colorClasses.button)}
-                    onClick={() => handleCheckout(plan.priceId)}
+                    onClick={() => handleCheckout(plan.priceId, plan.productKey)}
                     disabled={loadingPriceId === plan.priceId}
                   >
                     {loadingPriceId === plan.priceId 

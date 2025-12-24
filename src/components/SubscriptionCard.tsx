@@ -5,12 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Loader2, CreditCard, Crown } from "lucide-react";
 import { createCheckoutSession, createCustomerPortalSession, STRIPE_PRODUCTS } from "@/lib/stripe";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useCreatorBypass, PRODUCT_KEYS } from "@/hooks/useCreatorBypass";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export function SubscriptionCard() {
   const { subscription, loading, refresh } = useSubscription();
+  const { isCreator, activateCreatorSubscription } = useCreatorBypass();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const { toast } = useToast();
@@ -18,6 +20,24 @@ export function SubscriptionCard() {
   const handleUpgrade = async () => {
     setCheckoutLoading(true);
     try {
+      // ======= CREATOR BYPASS =======
+      if (isCreator()) {
+        console.log("[SubscriptionCard] Creator bypass - activating pro plan");
+        const result = await activateCreatorSubscription(PRODUCT_KEYS.PRO_1499_12M);
+        if (result.success) {
+          await refresh();
+          return;
+        } else {
+          toast({
+            title: "Erreur",
+            description: result.error || "Erreur d'activation",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // ======= NORMAL STRIPE FLOW =======
       const url = await createCheckoutSession();
       if (url) {
         window.open(url, "_blank");
@@ -39,6 +59,15 @@ export function SubscriptionCard() {
   };
 
   const handleManageSubscription = async () => {
+    // Creator bypass users don't have Stripe portal
+    if (subscription.creator_bypass) {
+      toast({
+        title: "Mode créateur",
+        description: "La gestion d'abonnement n'est pas disponible en mode créateur",
+      });
+      return;
+    }
+
     setPortalLoading(true);
     try {
       const url = await createCustomerPortalSession();
@@ -141,9 +170,14 @@ export function SubscriptionCard() {
               <Crown className="h-5 w-5 text-primary" />
               Abonnement Pro
             </CardTitle>
-            <CardDescription>Votre abonnement est actif</CardDescription>
+            <CardDescription>
+              Votre abonnement est actif
+              {subscription.creator_bypass && " (mode créateur)"}
+            </CardDescription>
           </div>
-          <Badge className="bg-primary">Actif</Badge>
+          <Badge className="bg-primary">
+            {subscription.creator_bypass ? "Créateur" : "Actif"}
+          </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

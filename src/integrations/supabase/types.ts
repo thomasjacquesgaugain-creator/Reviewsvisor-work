@@ -658,6 +658,45 @@ export type Database = {
           },
         ]
       }
+      user_entitlements: {
+        Row: {
+          addon_multi_etablissements_period_end: string | null
+          addon_multi_etablissements_qty: number
+          addon_multi_etablissements_status: string
+          created_at: string
+          pro_current_period_end: string | null
+          pro_plan_key: string | null
+          pro_status: string
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          addon_multi_etablissements_period_end?: string | null
+          addon_multi_etablissements_qty?: number
+          addon_multi_etablissements_status?: string
+          created_at?: string
+          pro_current_period_end?: string | null
+          pro_plan_key?: string | null
+          pro_status?: string
+          source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          addon_multi_etablissements_period_end?: string | null
+          addon_multi_etablissements_qty?: number
+          addon_multi_etablissements_status?: string
+          created_at?: string
+          pro_current_period_end?: string | null
+          pro_plan_key?: string | null
+          pro_status?: string
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_establishment: {
         Row: {
           address: string | null
