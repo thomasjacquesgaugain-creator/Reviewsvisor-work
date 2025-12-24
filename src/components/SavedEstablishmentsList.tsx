@@ -295,9 +295,8 @@ export default function SavedEstablishmentsList({
                     <h4 className="text-lg font-bold text-foreground">Établissement supplémentaire</h4>
                     <p className="text-sm text-muted-foreground mt-1">Facturé par mois</p>
                   </div>
-                  <div className="text-right">
-                    <span className="text-2xl font-bold text-purple-600">+4,99 €</span>
-                    <span className="text-sm text-muted-foreground ml-1">/mois</span>
+                  <div className="text-right whitespace-nowrap">
+                    <span className="text-2xl font-bold text-purple-600">+4,99 €<span className="text-sm font-normal text-muted-foreground">/mois</span></span>
                   </div>
                 </div>
                 
@@ -324,7 +323,11 @@ export default function SavedEstablishmentsList({
             <Button variant="outline" onClick={() => setShowSubscriptionModal(false)} disabled={creatingCheckout}>
               Annuler
             </Button>
-            <Button onClick={handleProceedToCheckout} disabled={creatingCheckout}>
+            <Button 
+              onClick={handleProceedToCheckout} 
+              disabled={creatingCheckout}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
               {creatingCheckout ? <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Redirection...
