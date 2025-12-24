@@ -464,7 +464,7 @@ export default function SavedEstablishmentsList({
             </div>
 
             {/* Total mensuel dynamique */}
-            <div className="rounded-xl p-3 border-2 border-blue-600 bg-white">
+            <div className="rounded-xl p-3 border-2 border-blue-600 bg-primary-foreground">
               <div className="flex justify-between items-center">
                 <div>
                   <span className="text-base font-bold text-foreground">Total mensuel</span>
