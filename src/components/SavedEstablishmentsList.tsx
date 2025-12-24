@@ -293,8 +293,11 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
             {/* Plan principal */}
             <div className="bg-muted/50 rounded-xl p-4 border border-border">
               <div className="flex justify-between items-center">
-                <span className="font-semibold text-foreground">Abonnement Pro</span>
-                <span className="text-lg font-bold text-primary">19,99 €<span className="text-sm font-normal text-muted-foreground">/mois</span></span>
+                <div>
+                  <span className="font-semibold text-foreground">Abonnement Pro</span>
+                  <p className="text-xs text-muted-foreground mt-0.5">Engagement 12 mois</p>
+                </div>
+                <span className="text-lg font-bold text-primary">14,99 €<span className="text-sm font-normal text-muted-foreground">/mois</span></span>
               </div>
             </div>
             
