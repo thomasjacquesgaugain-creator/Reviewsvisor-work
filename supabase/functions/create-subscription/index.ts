@@ -7,6 +7,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Price IDs
+const ADDITIONAL_ESTABLISHMENT_PRICE_ID = "price_1ShiPzGkt979eNWBSDapH7aJ";
+const DEFAULT_PLAN_PRICE_ID = "price_1SSJ0sGkt979eNWBhN9cZmG2"; // Pro plan
+
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-SUBSCRIPTION] ${step}${detailsStr}`);
@@ -17,219 +21,147 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
+  );
+
   try {
     logStep("Function started");
 
-    // Authentication check - require valid user session
+    const body = await req.json().catch(() => ({}));
+    const { priceId, establishments_count } = body;
+    
+    // Use provided priceId or default
+    const mainPriceId = priceId || DEFAULT_PLAN_PRICE_ID;
+    
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("Unauthorized: Missing authorization header");
-    }
+    if (!authHeader) throw new Error("No authorization header provided");
 
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        auth: { persistSession: false },
-        global: { headers: { Authorization: authHeader } },
-      }
-    );
-
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
-      logStep("Authentication failed", { error: authError?.message });
-      throw new Error("Unauthorized: Invalid or expired session");
-    }
-
-    // Use the authenticated user's email - do not accept email from request body
-    const email = user.email;
-    if (!email) {
-      throw new Error("User email not found");
-    }
-
-    logStep("User authenticated", { userId: user.id, email });
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    const user = userData.user;
+    if (!user?.email) throw new Error("User not authenticated or email not available");
+    logStep("User authenticated", { userId: user.id, email: user.email });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
-    const priceId = Deno.env.get("STRIPE_PRICE_ID");
-    if (!priceId) throw new Error("STRIPE_PRICE_ID is not set");
-
-    logStep("Stripe keys verified", { 
-      priceIdPreview: priceId?.substring(0, 10) + "...",
-      priceIdLength: priceId?.length 
-    });
-
-    logStep("Creating subscription for email", { email });
-
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Find or create customer
-    const customers = await stripe.customers.list({ email, limit: 1 });
-    let customerId: string;
+    // Count user's establishments from database if not provided
+    let totalEstablishments = establishments_count;
+    if (totalEstablishments === undefined) {
+      const { count, error: countError } = await supabaseClient
+        .from("establishments")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      
+      if (countError) {
+        logStep("Error counting establishments", { error: countError.message });
+        totalEstablishments = 0;
+      } else {
+        totalEstablishments = count || 0;
+      }
+    }
 
+    const additionalEstablishments = Math.max(0, totalEstablishments - 1);
+    logStep("Establishment count", { total: totalEstablishments, additional: additionalEstablishments });
+
+    // Get or create Stripe customer
+    let customerId: string;
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep("Existing customer found", { customerId });
-    } else {
-      const customer = await stripe.customers.create({ email });
-      customerId = customer.id;
-      logStep("New customer created", { customerId });
-    }
-
-    // Create subscription with incomplete payment
-    const subscription = await stripe.subscriptions.create({
-      customer: customerId,
-      items: [{ price: priceId }],
-      payment_behavior: "default_incomplete",
-      payment_settings: {
-        save_default_payment_method: "on_subscription",
-        payment_method_types: ["card"],
-      },
-      expand: ["latest_invoice.payment_intent", "pending_setup_intent"],
-    });
-
-    logStep("Subscription created", { subscriptionId: subscription.id });
-
-    // Get client secret from payment or setup intent with robust fallbacks
-    const latestInvoiceRaw = subscription.latest_invoice as any;
-    const invoiceId = typeof latestInvoiceRaw === 'string' ? latestInvoiceRaw : latestInvoiceRaw?.id;
-
-    logStep("Invoice reference", { hasInvoice: !!latestInvoiceRaw, invoiceId });
-
-    let paymentIntent: Stripe.PaymentIntent | undefined =
-      latestInvoiceRaw && typeof latestInvoiceRaw.payment_intent !== 'string'
-        ? (latestInvoiceRaw.payment_intent as Stripe.PaymentIntent)
-        : undefined;
-
-    let setupIntent: Stripe.SetupIntent | undefined =
-      typeof subscription.pending_setup_intent !== 'string'
-        ? (subscription.pending_setup_intent as Stripe.SetupIntent)
-        : undefined;
-
-    logStep("Initial intents", {
-      hasPaymentIntent: !!paymentIntent,
-      hasSetupIntent: !!setupIntent,
-    });
-
-    // Fallback 1: Explicitly retrieve the invoice and expand the payment_intent
-    if (!paymentIntent && invoiceId) {
-      try {
-        const retrievedInvoice = await stripe.invoices.retrieve(invoiceId, {
-          expand: ["payment_intent"],
-        } as any);
-        logStep("Retrieved invoice from API", { retrievedInvoiceId: retrievedInvoice.id });
-        if (retrievedInvoice && typeof (retrievedInvoice as any).payment_intent !== 'string') {
-          paymentIntent = (retrievedInvoice as any).payment_intent as Stripe.PaymentIntent;
-          logStep("PaymentIntent found via retrieved invoice", { paymentIntentId: paymentIntent?.id, status: paymentIntent?.status });
-        }
-      } catch (e) {
-        logStep("Failed retrieving invoice for PI", { message: (e as Error).message });
-      }
-    }
-
-    // Fallback 2: List payment intents for the customer and match by invoice
-    if (!paymentIntent && invoiceId) {
-      try {
-        const pis = await stripe.paymentIntents.list({ customer: customerId, limit: 10 });
-        paymentIntent = pis.data.find((pi) => {
-          const inv = pi.invoice as string | undefined;
-          return inv === invoiceId;
-        });
-        if (paymentIntent) {
-          logStep("PaymentIntent matched via list", { paymentIntentId: paymentIntent.id, status: paymentIntent.status });
-        }
-      } catch (e) {
-        logStep("Failed listing PaymentIntents", { message: (e as Error).message });
-      }
-    }
-
-    // Fallback 3: Re-retrieve subscription to get pending_setup_intent
-    if (!paymentIntent && !setupIntent) {
-      try {
-        const sub = await stripe.subscriptions.retrieve(subscription.id, { expand: ["pending_setup_intent"] } as any);
-        if (typeof sub.pending_setup_intent !== 'string') {
-          setupIntent = sub.pending_setup_intent as Stripe.SetupIntent;
-          logStep("SetupIntent found via subscription retrieve", { setupIntentId: setupIntent?.id, status: setupIntent?.status });
-        }
-      } catch (e) {
-        logStep("Failed retrieving subscription for SetupIntent", { message: (e as Error).message });
-      }
-    }
-
-    // Fallback 4: Create a SetupIntent to collect a payment method if none exists
-    if (!paymentIntent && !setupIntent) {
-      try {
-        const createdSetupIntent = await stripe.setupIntents.create({
-          customer: customerId,
-          usage: "off_session",
-          payment_method_types: ["card"],
-          metadata: {
-            subscription_id: subscription.id,
-            invoice_id: invoiceId || "",
-          },
-        });
-        setupIntent = createdSetupIntent;
-        logStep("Created SetupIntent as fallback", { setupIntentId: setupIntent.id, status: setupIntent.status });
-      } catch (e) {
-        logStep("Failed creating SetupIntent fallback", { message: (e as Error).message });
-      }
-    }
-
-    const clientSecret = paymentIntent?.client_secret || setupIntent?.client_secret;
-    if (!clientSecret) {
-      throw new Error("Failed to get client_secret from payment or setup intent (after fallbacks)");
-    }
-
-    logStep("Client secret resolved successfully");
-
-    // Initialize Supabase client with service role for database operations
-    const supabaseServiceClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
-
-    // Upsert subscription in database
-    const { error: dbError } = await supabaseServiceClient
-      .from("subscriptions")
-      .upsert({
-        user_id: user.id,
-        stripe_customer_id: customerId,
-        stripe_subscription_id: subscription.id,
-        status: subscription.status,
-        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: "stripe_subscription_id",
+      
+      // Check if already has active subscription
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 1,
       });
-
-    if (dbError) {
-      logStep("Database error", { error: dbError });
+      
+      if (subscriptions.data.length > 0) {
+        logStep("User already has active subscription", { subscriptionId: subscriptions.data[0].id });
+        return new Response(JSON.stringify({ 
+          error: "Already subscribed",
+          has_subscription: true,
+          subscription_id: subscriptions.data[0].id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
     } else {
-      logStep("Subscription saved to database");
+      // Create new customer
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: { user_id: user.id }
+      });
+      customerId = customer.id;
+      logStep("Created new customer", { customerId });
     }
 
-    return new Response(
-      JSON.stringify({
-        clientSecret,
-        subscriptionId: subscription.id,
-        customerId,
-      }),
+    const origin = req.headers.get("origin") || "https://reviewsvisor.fr";
+    
+    // Build line items: main subscription + additional establishments if any
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
+        price: mainPriceId,
+        quantity: 1,
+      },
+    ];
+    
+    // Add additional establishments line item if needed
+    if (additionalEstablishments > 0) {
+      lineItems.push({
+        price: ADDITIONAL_ESTABLISHMENT_PRICE_ID,
+        quantity: additionalEstablishments,
+      });
+      logStep("Adding additional establishments to checkout", { quantity: additionalEstablishments });
+    }
+
+    // Check if this is an engagement plan (14-day trial)
+    const isEngagementPlan = mainPriceId === "price_1SZT7tGkt979eNWB0MF2xczP";
+
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      line_items: lineItems,
+      mode: "subscription",
+      payment_method_types: ["card"],
+      billing_address_collection: "auto",
+      allow_promotion_codes: false,
+      ...(isEngagementPlan && { subscription_data: { trial_period_days: 14 } }),
+      success_url: `${origin}/etablissement?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/etablissement?canceled=true`,
+    });
+
+    logStep("Checkout session created", { 
+      sessionId: session.id, 
+      url: session.url,
+      lineItemsCount: lineItems.length,
+      additionalEstablishments
+    });
+
+    return new Response(JSON.stringify({ 
+      url: session.url,
+      session_id: session.id,
+      establishments_count: totalEstablishments,
+      additional_establishments: additionalEstablishments
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
   }
 });
