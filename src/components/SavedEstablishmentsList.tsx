@@ -251,22 +251,31 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
             />
           ))}
           
-          {/* Bouton Ajouter un établissement - with billing gate */}
+          {/* Bouton Ajouter un établissement - style premium comme cartes abonnement */}
           <button
             onClick={handleAddClick}
             disabled={checkingSubscription}
-            className="cursor-pointer bg-card border border-dashed border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/10 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-2 min-h-[80px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="relative cursor-pointer bg-white border-2 border-border rounded-2xl p-4 min-w-[200px] max-w-[250px] shadow-lg hover:shadow-2xl hover:-translate-y-1 hover:border-blue-300 transition-all duration-300 flex flex-col items-center justify-center gap-3 min-h-[100px] disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
             title="Ajouter un établissement"
           >
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            {/* Badge en haut à droite style subscription card */}
+            <div className="absolute top-0 right-0 bg-blue-600 text-white px-3 py-1 text-xs font-semibold rounded-bl-xl flex items-center gap-1">
+              <Plus className="w-3 h-3" />
+              <span>Ajouter</span>
+            </div>
+            
+            {/* Icône centrale */}
+            <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mt-2">
               {checkingSubscription ? (
-                <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                <Loader2 className="w-7 h-7 text-blue-600 animate-spin" />
               ) : (
-                <Plus className="w-5 h-5 text-primary" />
+                <Plus className="w-7 h-7 text-blue-600 stroke-[2.5]" />
               )}
             </div>
-            <span className="text-xs text-muted-foreground font-medium">
-              {checkingSubscription ? "Vérification..." : "Ajouter"}
+            
+            {/* Texte sous l'icône */}
+            <span className="text-sm text-foreground font-medium">
+              {checkingSubscription ? "Vérification..." : "Ajouter un établissement"}
             </span>
           </button>
         </div>
