@@ -408,10 +408,10 @@ export default function SavedEstablishmentsList({
             </div>
             
             {/* Établissement supplémentaire - avec quantité dynamique */}
-            <div className="relative bg-white rounded-xl shadow-lg border-2 border-border transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 my-1.5">
-              <div className="px-3 py-1.5">
+            <div className="relative bg-white rounded-xl shadow-lg border-2 border-border transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 my-1">
+              <div className="px-3 py-1">
                 {/* Header with title and dynamic quantity/price */}
-                <div className="flex items-start justify-between gap-2 mb-1">
+                <div className="flex items-start justify-between gap-2 mb-0.5">
                   <div>
                     <h4 className="text-base font-bold text-foreground">
                       Établissement supplémentaire
@@ -436,7 +436,7 @@ export default function SavedEstablishmentsList({
                 </div>
                 
                 {/* Feature list - same style as pricing cards */}
-                <ul className="space-y-0.5">
+                <ul className="space-y-0">
                   <li className="flex items-center gap-2">
                     <span className="inline-flex w-4 h-4 rounded-full bg-purple-100 items-center justify-center flex-shrink-0">
                       <Check className="w-2.5 h-2.5 text-purple-600" />
