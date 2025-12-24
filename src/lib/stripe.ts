@@ -5,6 +5,7 @@ export const STRIPE_PUBLIC_KEY = "pk_live_51S0PSRGkt979eNWBtbxPd6e8SJM9ZYEIhvlwJ
 export type SubscriptionStatus = {
   subscribed: boolean;
   product_id?: string | null;
+  price_id?: string | null;
   subscription_end?: string | null;
   total_establishments?: number;
   additional_establishments?: number;

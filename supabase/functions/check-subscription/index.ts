@@ -80,6 +80,7 @@ serve(async (req) => {
     });
     const hasActiveSub = subscriptions.data.length > 0;
     let productId = null;
+    let priceId = null;
     let subscriptionEnd = null;
     let billedAdditionalEstablishments = 0;
 
@@ -94,6 +95,7 @@ serve(async (req) => {
       );
       if (mainItem) {
         productId = mainItem.price.product as string;
+        priceId = mainItem.price.id;
       }
       
       // Find additional establishment quantity
@@ -116,6 +118,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
       product_id: productId,
+      price_id: priceId,
       subscription_end: subscriptionEnd,
       total_establishments: totalEstablishments,
       additional_establishments: additionalEstablishments,

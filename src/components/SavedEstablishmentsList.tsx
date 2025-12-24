@@ -1,10 +1,12 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Etab, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
 import EstablishmentItem from "./EstablishmentItem";
 import { Building2, Plus, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
 import { checkSubscription } from "@/lib/stripe";
+import { useSubscription } from "@/hooks/useSubscription";
+import { subscriptionPlans } from "@/config/subscriptionPlans";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 interface SavedEstablishmentsListProps {
@@ -19,6 +21,18 @@ export default function SavedEstablishmentsList({
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [creatingCheckout, setCreatingCheckout] = useState(false);
+  
+  const { subscription } = useSubscription();
+  
+  // Détermine le plan actif de l'utilisateur basé sur le price_id
+  const activePlan = useMemo(() => {
+    if (!subscription.subscribed || !subscription.price_id) {
+      // Fallback sur le plan engagement par défaut
+      return subscriptionPlans.find(p => p.id === "pro-engagement") || subscriptionPlans[0];
+    }
+    const plan = subscriptionPlans.find(p => p.priceId === subscription.price_id);
+    return plan || subscriptionPlans[0];
+  }, [subscription.subscribed, subscription.price_id]);
 
   // Fonction pour charger les établissements UNIQUEMENT depuis la DB
   const loadEstablishmentsFromDb = useCallback(async () => {
@@ -274,14 +288,16 @@ export default function SavedEstablishmentsList({
           </DialogHeader>
           
           <div className="py-2 space-y-2 overflow-visible">
-            {/* Plan principal */}
+            {/* Plan principal - affiché dynamiquement selon l'abonnement actif */}
             <div className="rounded-xl p-3 border border-border bg-white">
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-base font-bold text-foreground">Abonnement Pro</span>
-                  <p className="text-xs text-muted-foreground">Engagement 12 mois</p>
+                  <span className="text-base font-bold text-foreground">{activePlan.name}</span>
+                  <p className="text-xs text-muted-foreground">
+                    {activePlan.id === "pro-engagement" ? "Engagement 12 mois" : "Sans engagement"}
+                  </p>
                 </div>
-                <span className="text-lg font-bold text-blue-600">14,99 €<span className="text-sm font-normal text-muted-foreground">/mois</span></span>
+                <span className="text-lg font-bold text-blue-600">{activePlan.priceLabel}<span className="text-sm font-normal text-muted-foreground">/mois</span></span>
               </div>
             </div>
             
