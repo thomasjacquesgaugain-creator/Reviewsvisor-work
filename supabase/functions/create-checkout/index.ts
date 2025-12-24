@@ -7,6 +7,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Price ID for additional establishments (4.99€/month each)
+const ADDITIONAL_ESTABLISHMENT_PRICE_ID = "price_1ShiPzGkt979eNWBSDapH7aJ";
+
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
@@ -19,7 +22,8 @@ serve(async (req) => {
 
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
   );
 
   try {
@@ -32,6 +36,7 @@ serve(async (req) => {
     
     let userEmail = emailFromBody;
     let customerId: string | undefined;
+    let userId: string | undefined;
     
     // Try to get authenticated user if available
     const authHeader = req.headers.get("Authorization");
@@ -41,7 +46,8 @@ serve(async (req) => {
         const { data } = await supabaseClient.auth.getUser(token);
         if (data.user?.email) {
           userEmail = data.user.email;
-          logStep("User authenticated", { email: userEmail });
+          userId = data.user.id;
+          logStep("User authenticated", { email: userEmail, userId });
         }
       } catch (e) {
         logStep("No valid auth, proceeding as guest");
@@ -85,6 +91,23 @@ serve(async (req) => {
     
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
+    // Count user's establishments if authenticated
+    let additionalEstablishments = 0;
+    if (userId) {
+      const { count: establishmentCount, error: countError } = await supabaseClient
+        .from("establishments")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId);
+      
+      if (countError) {
+        logStep("Error counting establishments", { error: countError.message });
+      } else {
+        const totalEstablishments = establishmentCount || 0;
+        additionalEstablishments = Math.max(0, totalEstablishments - 1);
+        logStep("Establishment count", { total: totalEstablishments, additional: additionalEstablishments });
+      }
+    }
+    
     // Check if customer already exists (only if we have an email)
     if (userEmail) {
       const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
@@ -103,15 +126,27 @@ serve(async (req) => {
     // Determine if trial should be applied (only for pro-engagement plan)
     const isEngagementPlan = priceId === "price_1SZT7tGkt979eNWB0MF2xczP";
     
+    // Build line items: main subscription + additional establishments if any
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+      {
+        price: priceId,
+        quantity: 1,
+      },
+    ];
+    
+    // Add additional establishments line item if user has more than 1 establishment
+    if (additionalEstablishments > 0) {
+      lineItems.push({
+        price: ADDITIONAL_ESTABLISHMENT_PRICE_ID,
+        quantity: additionalEstablishments,
+      });
+      logStep("Adding additional establishments to checkout", { quantity: additionalEstablishments });
+    }
+    
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : userEmail || undefined,
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
       mode: "subscription",
       payment_method_types: ["card"],
       billing_address_collection: "auto",
@@ -121,7 +156,12 @@ serve(async (req) => {
       cancel_url: `${origin}/#pricing`,
     });
 
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
+    logStep("Checkout session created", { 
+      sessionId: session.id, 
+      url: session.url,
+      lineItemsCount: lineItems.length,
+      additionalEstablishments
+    });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
