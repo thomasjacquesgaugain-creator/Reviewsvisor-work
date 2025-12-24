@@ -269,7 +269,7 @@ export default function SavedEstablishmentsList({
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-2 space-y-2">
+          <div className="py-2 space-y-2 overflow-visible">
             {/* Plan principal */}
             <div className="rounded-xl p-3 border border-border bg-white">
               <div className="flex justify-between items-center">
