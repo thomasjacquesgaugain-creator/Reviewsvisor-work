@@ -260,7 +260,7 @@ export default function SavedEstablishmentsList({
 
       {/* Subscription required modal */}
       <Dialog open={showSubscriptionModal} onOpenChange={setShowSubscriptionModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" hideCloseButton>
           <DialogHeader>
             <DialogTitle>Abonnement requis</DialogTitle>
             <DialogDescription>
@@ -277,15 +277,15 @@ export default function SavedEstablishmentsList({
                   <span className="font-semibold text-foreground">Abonnement Pro</span>
                   <p className="text-xs text-muted-foreground mt-0.5">Engagement 12 mois</p>
                 </div>
-                <span className="text-lg font-bold text-primary">14,99 €<span className="text-sm font-normal text-muted-foreground">/mois</span></span>
+                <span className="text-lg font-bold text-blue-600">14,99 €<span className="text-sm font-normal text-muted-foreground">/mois</span></span>
               </div>
             </div>
             
             {/* Établissement supplémentaire - styled as mini pricing card */}
             <div className="relative overflow-hidden bg-white rounded-2xl shadow-lg border-2 border-border transition-all duration-300 hover:shadow-xl">
-              {/* Badge Add-on - same style as pricing cards */}
+              {/* Badge Ajouter - same style as pricing cards */}
               <div className="absolute top-0 right-0 bg-purple-600 text-white px-4 py-1.5 text-xs font-semibold rounded-bl-xl">
-                + Add-on
+                Ajouter
               </div>
               
               <div className="p-5 pt-6">
