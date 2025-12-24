@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
 import { checkSubscription } from "@/lib/stripe";
 import { syncEstablishmentBilling } from "@/lib/establishmentBilling";
+import { useCreatorBypass, PRODUCT_KEYS } from "@/hooks/useCreatorBypass";
+import { establishmentAddon } from "@/config/subscriptionPlans";
+import { Check, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +16,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+
+// Quota included in base plan
+const INCLUDED_ESTABLISHMENTS = 1;
 
 export default function SaveEstablishmentButton({
   selected,
@@ -27,35 +33,44 @@ export default function SaveEstablishmentButton({
   const [saving, setSaving] = useState(false);
   const [checkVersion, setCheckVersion] = useState(0);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showAddonModal, setShowAddonModal] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [redirectingToCheckout, setRedirectingToCheckout] = useState(false);
+  const [currentEstablishmentCount, setCurrentEstablishmentCount] = useState(0);
+  const [updatingAddon, setUpdatingAddon] = useState(false);
+  
+  const { isCreator, activateCreatorSubscription } = useCreatorBypass();
 
-  // Fonction de vérification DB
-  const checkIfSaved = async () => {
+  // Fonction de vérification DB + count
+  const checkIfSavedAndCount = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setIsAlreadySaved(false);
+      setCurrentEstablishmentCount(0);
+      return;
+    }
+
+    // Get all establishments for count
+    const { data: allEstablishments } = await supabase
+      .from("établissements")
+      .select("place_id")
+      .eq("user_id", user.id);
+    
+    setCurrentEstablishmentCount(allEstablishments?.length || 0);
+
+    // Check if selected is already saved
     if (!selected?.place_id) {
       setIsAlreadySaved(false);
       return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setIsAlreadySaved(false);
-      return;
-    }
-
-    const { data } = await supabase
-      .from("établissements")
-      .select("place_id")
-      .eq("user_id", user.id)
-      .eq("place_id", selected.place_id)
-      .maybeSingle();
-
-    setIsAlreadySaved(!!data);
+    const isSaved = allEstablishments?.some(e => e.place_id === selected.place_id);
+    setIsAlreadySaved(!!isSaved);
   };
 
   // Vérifier quand la sélection change OU quand la liste est mise à jour
   useEffect(() => {
-    checkIfSaved();
+    checkIfSavedAndCount();
   }, [selected?.place_id, checkVersion]);
 
   // Écouter les mises à jour de la liste (après ajout/suppression)
@@ -170,6 +185,52 @@ export default function SaveEstablishmentButton({
     }
   }
 
+  // Handle addon confirmation (quota exceeded)
+  async function handleAddonConfirm() {
+    setUpdatingAddon(true);
+    try {
+      const newAddonQty = currentEstablishmentCount; // -1 for included + 1 for new = same as count
+      
+      // ======= CREATOR BYPASS =======
+      if (isCreator()) {
+        console.log("[SaveEstablishmentButton] Creator bypass for addon");
+        const addonResult = await activateCreatorSubscription(PRODUCT_KEYS.ADDON_MULTI_ETABLISSEMENTS);
+        if (!addonResult.success) {
+          sonnerToast.error(addonResult.error || "Erreur d'activation addon");
+          return;
+        }
+        setShowAddonModal(false);
+        await performSave();
+        return;
+      }
+
+      // ======= NORMAL STRIPE FLOW =======
+      console.log("[SaveEstablishmentButton] Updating addon quantity to:", newAddonQty);
+      const { data, error } = await supabase.functions.invoke("update-addon-quantity", {
+        body: { new_addon_quantity: newAddonQty }
+      });
+      
+      if (error) {
+        console.error("[SaveEstablishmentButton] Update addon error:", error);
+        sonnerToast.error(`Erreur: ${error.message}`);
+        return;
+      }
+      
+      if (data?.success) {
+        sonnerToast.success("Établissement supplémentaire ajouté à votre abonnement !");
+        setShowAddonModal(false);
+        await performSave();
+      } else {
+        sonnerToast.error(data?.error || "Erreur lors de la mise à jour");
+      }
+    } catch (err) {
+      console.error("[SaveEstablishmentButton] Addon error:", err);
+      sonnerToast.error("Une erreur est survenue");
+    } finally {
+      setUpdatingAddon(false);
+    }
+  }
+
   async function handleSave() {
     if (!selected) return;
 
@@ -192,16 +253,28 @@ export default function SaveEstablishmentButton({
       console.log("[SaveEstablishmentButton] Checking subscription status...");
       const subscriptionStatus = await checkSubscription();
       console.log("[SaveEstablishmentButton] Subscription status:", subscriptionStatus);
+      console.log("[SaveEstablishmentButton] Current establishment count:", currentEstablishmentCount);
 
       if (!subscriptionStatus.subscribed) {
-        // Pas d'abonnement -> afficher modal
-        console.log("[SaveEstablishmentButton] No subscription, showing modal");
+        // Pas d'abonnement -> afficher modal abonnement
+        console.log("[SaveEstablishmentButton] No subscription, showing subscription modal");
         setShowSubscriptionModal(true);
         return;
       }
 
-      // A un abonnement -> procéder à la sauvegarde
-      console.log("[SaveEstablishmentButton] Has subscription, proceeding to save");
+      // 4) QUOTA CHECK: Vérifier si le quota inclus est dépassé
+      if (currentEstablishmentCount >= INCLUDED_ESTABLISHMENTS) {
+        // Quota dépassé -> afficher modal addon
+        console.log("[SaveEstablishmentButton] Quota exceeded, showing addon modal", {
+          current: currentEstablishmentCount,
+          included: INCLUDED_ESTABLISHMENTS
+        });
+        setShowAddonModal(true);
+        return;
+      }
+
+      // Sous le quota -> procéder à la sauvegarde immédiate
+      console.log("[SaveEstablishmentButton] Under quota, saving immediately");
       await performSave();
 
     } catch (err) {
@@ -265,6 +338,97 @@ export default function SaveEstablishmentButton({
               className="gap-2"
             >
               {redirectingToCheckout ? "Redirection..." : "Procéder au paiement"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Établissement supplémentaire (quota dépassé) */}
+      <Dialog open={showAddonModal} onOpenChange={setShowAddonModal}>
+        <DialogContent className="sm:max-w-md" hideCloseButton>
+          <div className="absolute -top-3 -right-3 bg-purple-600 text-white px-3 py-1 text-xs font-semibold rounded-lg shadow-md z-10">
+            +4,99 €/mois
+          </div>
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-base font-bold">Établissement supplémentaire</DialogTitle>
+            <DialogDescription className="text-sm">
+              Vous avez déjà {currentEstablishmentCount} établissement{currentEstablishmentCount > 1 ? 's' : ''}.
+              L'ajout d'un nouvel établissement entraîne un coût supplémentaire.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-2 space-y-2">
+            <div className="relative bg-white rounded-xl shadow-lg border-2 border-purple-200">
+              <div className="p-3">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div>
+                    <h4 className="text-base font-bold text-foreground">
+                      Établissement #{currentEstablishmentCount + 1}
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      Sera ajouté à votre abonnement
+                    </p>
+                  </div>
+                  <div className="text-right whitespace-nowrap">
+                    <span className="text-xl font-bold text-purple-600">
+                      +{establishmentAddon.price.toFixed(2).replace('.', ',')} €
+                      <span className="text-xs font-normal text-muted-foreground">/mois</span>
+                    </span>
+                  </div>
+                </div>
+                
+                <ul className="space-y-1.5">
+                  <li className="flex items-center gap-2">
+                    <span className="inline-flex w-4 h-4 rounded-full bg-purple-100 items-center justify-center flex-shrink-0">
+                      <Check className="w-2.5 h-2.5 text-purple-600" />
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Analyse des avis pour cet établissement
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="inline-flex w-4 h-4 rounded-full bg-purple-100 items-center justify-center flex-shrink-0">
+                      <Check className="w-2.5 h-2.5 text-purple-600" />
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Réponses IA personnalisées
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="inline-flex w-4 h-4 rounded-full bg-purple-100 items-center justify-center flex-shrink-0">
+                      <Check className="w-2.5 h-2.5 text-purple-600" />
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Facturation immédiate au prorata
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowAddonModal(false)}
+              disabled={updatingAddon}
+              className="w-full sm:w-auto"
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleAddonConfirm}
+              disabled={updatingAddon}
+              className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700"
+            >
+              {updatingAddon ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Ajout en cours...
+                </>
+              ) : (
+                "Confirmer +4,99 €/mois"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
