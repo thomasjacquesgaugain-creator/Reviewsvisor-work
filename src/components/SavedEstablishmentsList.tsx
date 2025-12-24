@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Etab, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
 import EstablishmentItem from "./EstablishmentItem";
-import { Building2, Plus, Loader2 } from "lucide-react";
+import { Building2, Plus, Loader2, Store } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
 import { checkSubscription } from "@/lib/stripe";
@@ -289,16 +289,48 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-4">
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Abonnement Pro</span>
-                <span className="font-medium">19,99 €/mois</span>
+          <div className="py-4 space-y-3">
+            {/* Plan principal */}
+            <div className="bg-muted/50 rounded-xl p-4 border border-border">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-foreground">Abonnement Pro</span>
+                <span className="text-lg font-bold text-primary">19,99 €<span className="text-sm font-normal text-muted-foreground">/mois</span></span>
               </div>
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Établissement supplémentaire</span>
-                <span>+4,99 €/mois</span>
+            </div>
+            
+            {/* Établissement supplémentaire - styled as add-on */}
+            <div className="relative bg-gradient-to-br from-muted/30 to-muted/60 rounded-xl p-4 border border-border shadow-sm">
+              {/* Badge Add-on */}
+              <div className="absolute -top-2 right-3">
+                <span className="bg-purple-600 text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-full shadow-sm">
+                  + Add-on
+                </span>
               </div>
+              
+              <div className="flex items-start gap-3 mt-1">
+                {/* Icon */}
+                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                  <Store className="w-5 h-5 text-purple-600" />
+                </div>
+                
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-semibold text-foreground text-sm">Établissement supplémentaire</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">Facturé par mois</p>
+                    </div>
+                    <span className="text-lg font-bold text-purple-600 whitespace-nowrap">
+                      +4,99 €<span className="text-xs font-normal text-muted-foreground">/mois</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Note explicative */}
+              <p className="text-[11px] text-muted-foreground mt-3 pl-[52px] italic">
+                Ajouté uniquement à partir du 2ᵉ établissement
+              </p>
             </div>
           </div>
           
