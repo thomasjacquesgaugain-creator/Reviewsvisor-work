@@ -460,7 +460,7 @@ export default function SavedEstablishmentsList({
             </div>
 
             {/* Total mensuel dynamique */}
-            <div className="rounded-xl p-3 border-2 border-primary bg-primary/5">
+            <div className="rounded-xl p-3 border-2 border-blue-600 bg-blue-50">
               <div className="flex justify-between items-center">
                 <div>
                   <span className="text-base font-bold text-foreground">Total mensuel</span>
@@ -468,7 +468,7 @@ export default function SavedEstablishmentsList({
                     {pricingInfo.newCount} établissement{pricingInfo.newCount > 1 ? 's' : ''} après ajout
                   </p>
                 </div>
-                <span className="text-xl font-bold text-primary">
+                <span className="text-xl font-bold text-blue-600">
                   {pricingInfo.formattedTotal}
                   <span className="text-sm font-normal text-muted-foreground">/mois</span>
                 </span>
