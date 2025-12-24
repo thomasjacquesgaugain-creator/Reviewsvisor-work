@@ -282,7 +282,7 @@ export default function SavedEstablishmentsList({
             </div>
             
             {/* Établissement supplémentaire - styled as mini pricing card */}
-            <div className="relative overflow-hidden bg-white rounded-xl shadow-md border-2 border-border">
+            <div className="relative bg-white rounded-xl shadow-md border-2 border-border">
               {/* Badge Multi-établissements - same style as pricing cards */}
               <div className="absolute top-0 right-0 bg-purple-600 text-white px-3 py-1 text-xs font-semibold rounded-bl-lg">
                 Multi-établissements
