@@ -260,9 +260,9 @@ export default function SavedEstablishmentsList({
 
       {/* Subscription required modal */}
       <Dialog open={showSubscriptionModal} onOpenChange={setShowSubscriptionModal}>
-        <DialogContent className="sm:max-w-md relative max-h-[90vh] overflow-visible" hideCloseButton>
+        <DialogContent className="sm:max-w-md" hideCloseButton>
           {/* Badge Multi-établissements - positioned in modal header */}
-          <div className="absolute top-0 right-0 bg-purple-600 text-white px-3 py-1 text-xs font-semibold rounded-bl-lg rounded-tr-lg">
+          <div className="absolute -top-3 -right-3 bg-purple-600 text-white px-3 py-1 text-xs font-semibold rounded-lg shadow-md z-10">
             Multi-établissements
           </div>
           <DialogHeader className="pb-2">
