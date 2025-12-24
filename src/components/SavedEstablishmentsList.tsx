@@ -301,24 +301,24 @@ export default function SavedEstablishmentsList({
                 </div>
                 
                 {/* Feature list - same style as pricing cards */}
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-2">
-                    <div className="w-4 h-4 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <ul className="space-y-2.5">
+                  <li className="flex items-center gap-2">
+                    <span className="inline-flex w-4 h-4 rounded-full bg-purple-100 items-center justify-center flex-shrink-0">
                       <Check className="w-2.5 h-2.5 text-purple-600" />
-                    </div>
-                    <span className="text-sm text-foreground">Centralisez la gestion de tous vos lieux</span>
+                    </span>
+                    <span className="text-sm text-foreground leading-normal">Centralisez la gestion de tous vos lieux</span>
                   </li>
-                  <li className="flex items-start gap-2">
-                    <div className="w-4 h-4 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <li className="flex items-center gap-2">
+                    <span className="inline-flex w-4 h-4 rounded-full bg-purple-100 items-center justify-center flex-shrink-0">
                       <Check className="w-2.5 h-2.5 text-purple-600" />
-                    </div>
-                    <span className="text-sm text-foreground">Idéal pour groupes et franchises</span>
+                    </span>
+                    <span className="text-sm text-foreground leading-normal">Idéal pour groupes et franchises</span>
                   </li>
-                  <li className="flex items-start gap-2">
-                    <div className="w-4 h-4 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <li className="flex items-center gap-2">
+                    <span className="inline-flex w-4 h-4 rounded-full bg-purple-100 items-center justify-center flex-shrink-0">
                       <Check className="w-2.5 h-2.5 text-purple-600" />
-                    </div>
-                    <span className="text-sm text-foreground">Suivi indépendant par établissement</span>
+                    </span>
+                    <span className="text-sm text-foreground leading-normal">Suivi indépendant par établissement</span>
                   </li>
                 </ul>
               </div>
