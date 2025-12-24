@@ -271,7 +271,7 @@ export default function SavedEstablishmentsList({
           
           <div className="py-4 space-y-3">
             {/* Plan principal */}
-            <div className="rounded-xl p-4 border border-border bg-primary-foreground">
+            <div className="rounded-xl p-4 border border-border bg-white">
               <div className="flex justify-between items-center">
                 <div>
                   <span className="font-semibold text-foreground">Abonnement Pro</span>
