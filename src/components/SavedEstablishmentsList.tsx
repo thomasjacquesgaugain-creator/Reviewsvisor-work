@@ -266,7 +266,7 @@ export default function SavedEstablishmentsList({
             Multi-établissements
           </div>
           <DialogHeader className="pb-2">
-            <DialogTitle>Abonnement requis</DialogTitle>
+            <DialogTitle className="text-base font-bold">Abonnement requis</DialogTitle>
             <DialogDescription className="text-sm">
               Pour ajouter des établissements, vous devez souscrire à un abonnement.
               Votre premier établissement est inclus dans l'abonnement de base.
@@ -278,7 +278,7 @@ export default function SavedEstablishmentsList({
             <div className="rounded-xl p-3 border border-border bg-white">
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="font-semibold text-foreground">Abonnement Pro</span>
+                  <span className="text-base font-bold text-foreground">Abonnement Pro</span>
                   <p className="text-xs text-muted-foreground">Engagement 12 mois</p>
                 </div>
                 <span className="text-lg font-bold text-blue-600">14,99 €<span className="text-sm font-normal text-muted-foreground">/mois</span></span>
