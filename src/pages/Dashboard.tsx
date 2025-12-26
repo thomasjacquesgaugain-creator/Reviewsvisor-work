@@ -1378,6 +1378,22 @@ const Dashboard = () => {
                     </div>
                   );
                 })()}
+                
+                {/* Légende globale sous les graphiques */}
+                <div className="flex items-center justify-center gap-6 mt-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(0, 84%, 60%)' }}></div>
+                    <span className="text-muted-foreground">Service / attente</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(25, 95%, 53%)' }}></div>
+                    <span className="text-muted-foreground">Qualité des plats</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(45, 93%, 47%)' }}></div>
+                    <span className="text-muted-foreground">Prix</span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>}
