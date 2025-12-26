@@ -1269,7 +1269,22 @@ const Dashboard = () => {
                     value: item.count
                   }));
                   const total = pieData.reduce((sum: number, item: any) => sum + item.value, 0);
-                  const COLORS = ['hsl(var(--destructive))', 'hsl(346, 77%, 50%)', 'hsl(346, 77%, 65%)', 'hsl(346, 77%, 75%)'];
+                  
+                  // Mapping couleurs par catégorie: Rouge (critique), Orange (important), Jaune (secondaire)
+                  const getCategoryColor = (name: string): string => {
+                    const lowerName = name.toLowerCase();
+                    if (lowerName.includes('service') || lowerName.includes('attente')) {
+                      return 'hsl(0, 84%, 60%)'; // Rouge
+                    }
+                    if (lowerName.includes('qualité') || lowerName.includes('plat')) {
+                      return 'hsl(25, 95%, 53%)'; // Orange
+                    }
+                    if (lowerName.includes('prix')) {
+                      return 'hsl(45, 93%, 47%)'; // Jaune
+                    }
+                    // Fallback pour autres catégories
+                    return 'hsl(0, 84%, 60%)';
+                  };
                   
                   if (total === 0) {
                     return (
@@ -1296,7 +1311,7 @@ const Dashboard = () => {
                               label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                             >
                               {pieData.map((entry: any, index: number) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                <Cell key={`cell-${index}`} fill={getCategoryColor(entry.name)} />
                               ))}
                             </Pie>
                             <Tooltip 
@@ -1331,7 +1346,7 @@ const Dashboard = () => {
                             />
                             <Bar dataKey="value" radius={[4, 4, 0, 0]} label={{ position: 'top', fontSize: 11, fill: 'hsl(var(--foreground))' }}>
                               {pieData.map((entry: any, index: number) => (
-                                <Cell key={`bar-${index}`} fill={COLORS[index % COLORS.length]} />
+                                <Cell key={`bar-${index}`} fill={getCategoryColor(entry.name)} />
                               ))}
                             </Bar>
                           </BarChart>
