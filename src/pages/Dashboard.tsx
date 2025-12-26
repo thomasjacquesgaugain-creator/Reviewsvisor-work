@@ -1261,8 +1261,8 @@ const Dashboard = () => {
               <p className="text-sm text-gray-500 mt-4">Les barres représentent le nombre d'occurrences, la ligne le pourcentage cumulé</p>
               
               {/* Camembert - Répartition des problèmes */}
-              <div className="mt-3">
-                <h4 className="text-sm font-medium text-gray-700 mb-1">Répartition des problèmes</h4>
+              <div className="mt-6">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Répartition des problèmes</h4>
                 {(() => {
                   const pieData = paretoData.map((item: any) => ({
                     name: item.name,
@@ -1273,21 +1273,21 @@ const Dashboard = () => {
                   
                   if (total === 0) {
                     return (
-                      <p className="text-sm text-gray-500 text-center py-2">
+                      <p className="text-sm text-gray-500 text-center py-4">
                         Aucune donnée pour afficher le camembert.
                       </p>
                     );
                   }
                   
                   return (
-                    <ResponsiveContainer width="100%" height={200}>
-                      <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <PieChart>
                         <Pie
                           data={pieData}
                           cx="50%"
-                          cy="45%"
+                          cy="50%"
                           labelLine={false}
-                          outerRadius={70}
+                          outerRadius={80}
                           fill="#8884d8"
                           dataKey="value"
                           label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
@@ -1302,10 +1302,7 @@ const Dashboard = () => {
                             return [`${value} occurrences (${pct}%)`, name];
                           }}
                         />
-                        <Legend 
-                          iconSize={10}
-                          wrapperStyle={{ paddingTop: 0, fontSize: '12px', lineHeight: '16px' }}
-                        />
+                        <Legend />
                       </PieChart>
                     </ResponsiveContainer>
                   );
