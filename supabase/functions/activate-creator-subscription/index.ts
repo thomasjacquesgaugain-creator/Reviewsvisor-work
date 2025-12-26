@@ -178,11 +178,6 @@ serve(async (req) => {
       .select('*')
       .eq('user_id', user.id)
       .single();
-    const { data: finalEntitlement, error: fetchError } = await supabaseClient
-      .from('user_entitlements')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
 
     if (fetchError) {
       logStep("Fetch error after upsert", { error: fetchError });
