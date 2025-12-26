@@ -1283,17 +1283,17 @@ const Dashboard = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Camembert */}
                       <div>
-                        <ResponsiveContainer width="100%" height={280}>
-                          <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                        <ResponsiveContainer width="100%" height={260}>
+                          <PieChart>
                             <Pie
                               data={pieData}
                               cx="50%"
-                              cy="45%"
-                              labelLine={true}
-                              outerRadius={65}
+                              cy="50%"
+                              labelLine={false}
+                              outerRadius={80}
                               fill="#8884d8"
                               dataKey="value"
-                              label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                              label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                             >
                               {pieData.map((entry: any, index: number) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -1305,12 +1305,7 @@ const Dashboard = () => {
                                 return [`${value} occurrences (${pct}%)`, name];
                               }}
                             />
-                            <Legend 
-                              layout="horizontal" 
-                              verticalAlign="bottom" 
-                              align="center"
-                              wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
-                            />
+                            <Legend />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
@@ -1321,12 +1316,11 @@ const Dashboard = () => {
                           <BarChart data={pieData} margin={{ top: 20, right: 20, left: 0, bottom: 40 }}>
                             <XAxis 
                               dataKey="name" 
-                              tick={{ fontSize: 9, width: 100 }} 
+                              tick={{ fontSize: 10 }} 
                               interval={0}
-                              angle={-15}
+                              angle={-20}
                               textAnchor="end"
-                              height={60}
-                              tickLine={false}
+                              height={50}
                             />
                             <YAxis hide />
                             <Tooltip 
