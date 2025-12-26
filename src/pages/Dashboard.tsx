@@ -1310,19 +1310,26 @@ const Dashboard = () => {
                         </ResponsiveContainer>
                       </div>
                       
-                      {/* Diagramme en barres */}
+                      {/* Diagramme en barres verticales */}
                       <div>
                         <ResponsiveContainer width="100%" height={260}>
-                          <BarChart data={pieData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                            <XAxis type="number" hide />
-                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 12 }} />
+                          <BarChart data={pieData} margin={{ top: 20, right: 20, left: 0, bottom: 40 }}>
+                            <XAxis 
+                              dataKey="name" 
+                              tick={{ fontSize: 10 }} 
+                              interval={0}
+                              angle={-20}
+                              textAnchor="end"
+                              height={50}
+                            />
+                            <YAxis hide />
                             <Tooltip 
                               formatter={(value: number, name: string) => {
                                 const pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
                                 return [`${value} occurrences (${pct}%)`, 'Occurrences'];
                               }}
                             />
-                            <Bar dataKey="value" radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 11, fill: 'hsl(var(--foreground))' }}>
+                            <Bar dataKey="value" radius={[4, 4, 0, 0]} label={{ position: 'top', fontSize: 11, fill: 'hsl(var(--foreground))' }}>
                               {pieData.map((entry: any, index: number) => (
                                 <Cell key={`bar-${index}`} fill={COLORS[index % COLORS.length]} />
                               ))}
