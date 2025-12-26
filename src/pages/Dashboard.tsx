@@ -1343,7 +1343,7 @@ const Dashboard = () => {
                                 return [`${value} occurrences (${pct}%)`, name];
                               }}
                             />
-                            <Legend />
+                            <Legend align="center" wrapperStyle={{ display: 'flex', justifyContent: 'center' }} />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
