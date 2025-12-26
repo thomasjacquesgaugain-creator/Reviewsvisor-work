@@ -2096,24 +2096,6 @@ const Dashboard = () => {
               </div>
             </CardContent>}
         </Card>
-
-        {/* Légende globale des couleurs */}
-        <div className="mt-10 mb-6 flex justify-center">
-          <div className="flex items-center gap-8 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(0, 84%, 60%)' }}></span>
-              <span>Service / attente</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(25, 95%, 53%)' }}></span>
-              <span>Qualité des plats</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(45, 93%, 47%)' }}></span>
-              <span>Prix</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>;
 };
