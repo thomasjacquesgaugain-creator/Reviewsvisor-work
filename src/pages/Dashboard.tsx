@@ -1234,29 +1234,52 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={paretoData} margin={{
-                top: 20,
-                right: 30,
-                left: 20,
-                bottom: 60
-              }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={12} />
-                    <YAxis yAxisId="left" orientation="left" />
-                    <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
-                    <Tooltip formatter={(value, name) => {
-                  if (name === 'Cumulative') return [`${value}%`, 'Cumul %'];
-                  return [value, 'Occurrences'];
-                }} />
-                    <Bar yAxisId="left" dataKey="count" fill="hsl(var(--destructive))" name="Occurrences" />
-                    <Line yAxisId="right" type="monotone" dataKey="cumulative" stroke="hsl(var(--primary))" strokeWidth={2} dot={{
-                  fill: "hsl(var(--primary))",
-                  strokeWidth: 2,
-                  r: 4
-                }} name="Cumulative" />
-                  </ComposedChart>
-                </ResponsiveContainer>
+                {(() => {
+                  // Mapping couleurs par catégorie: Rouge (critique), Orange (important), Jaune (secondaire)
+                  const getCategoryColor = (name: string): string => {
+                    const lowerName = name.toLowerCase();
+                    if (lowerName.includes('service') || lowerName.includes('attente') || lowerName.includes('lent')) {
+                      return 'hsl(0, 84%, 60%)'; // Rouge
+                    }
+                    if (lowerName.includes('qualité') || lowerName.includes('plat') || lowerName.includes('qualite')) {
+                      return 'hsl(25, 95%, 53%)'; // Orange
+                    }
+                    if (lowerName.includes('prix') || lowerName.includes('cher')) {
+                      return 'hsl(45, 93%, 47%)'; // Jaune
+                    }
+                    return 'hsl(0, 84%, 60%)'; // Fallback rouge
+                  };
+                  
+                  return (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={paretoData} margin={{
+                        top: 20,
+                        right: 30,
+                        left: 20,
+                        bottom: 60
+                      }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={12} />
+                        <YAxis yAxisId="left" orientation="left" />
+                        <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
+                        <Tooltip formatter={(value, name) => {
+                          if (name === 'Cumulative') return [`${value}%`, 'Cumul %'];
+                          return [value, 'Occurrences'];
+                        }} />
+                        <Bar yAxisId="left" dataKey="count" name="Occurrences">
+                          {paretoData.map((entry: any, index: number) => (
+                            <Cell key={`pareto-cell-${index}`} fill={getCategoryColor(entry.name)} />
+                          ))}
+                        </Bar>
+                        <Line yAxisId="right" type="monotone" dataKey="cumulative" stroke="hsl(var(--primary))" strokeWidth={2} dot={{
+                          fill: "hsl(var(--primary))",
+                          strokeWidth: 2,
+                          r: 4
+                        }} name="Cumulative" />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  );
+                })()}
               </div>
               <p className="text-sm text-gray-500 mt-4">Les barres représentent le nombre d'occurrences, la ligne le pourcentage cumulé</p>
               
