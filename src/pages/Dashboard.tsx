@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area, PieChart, Pie, Cell, Legend } from 'recharts';
 import { getRatingEvolution, formatRegistrationDate, Granularity } from "@/utils/ratingEvolution";
 import { validateReponse } from "@/lib/reponses";
 import { generatePdfReport } from "@/utils/generatePdfReport";
@@ -1259,6 +1259,55 @@ const Dashboard = () => {
                 </ResponsiveContainer>
               </div>
               <p className="text-sm text-gray-500 mt-4">Les barres représentent le nombre d'occurrences, la ligne le pourcentage cumulé</p>
+              
+              {/* Camembert - Répartition des problèmes */}
+              <div className="mt-6">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Répartition des problèmes</h4>
+                {(() => {
+                  const pieData = paretoData.map((item: any) => ({
+                    name: item.name,
+                    value: item.count
+                  }));
+                  const total = pieData.reduce((sum: number, item: any) => sum + item.value, 0);
+                  const COLORS = ['hsl(var(--destructive))', 'hsl(346, 77%, 50%)', 'hsl(346, 77%, 65%)', 'hsl(346, 77%, 75%)'];
+                  
+                  if (total === 0) {
+                    return (
+                      <p className="text-sm text-gray-500 text-center py-4">
+                        Aucune donnée pour afficher le camembert.
+                      </p>
+                    );
+                  }
+                  
+                  return (
+                    <ResponsiveContainer width="100%" height={260}>
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                        >
+                          {pieData.map((entry: any, index: number) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value: number, name: string) => {
+                            const pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return [`${value} occurrences (${pct}%)`, name];
+                          }}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  );
+                })()}
+              </div>
             </CardContent>
           </Card>}
 
