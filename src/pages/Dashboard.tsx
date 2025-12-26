@@ -1317,9 +1317,32 @@ const Dashboard = () => {
                     );
                   }
                   
+                  // Custom active shape for pie hover effect
+                  const renderActiveShape = (props: any) => {
+                    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent } = props;
+                    return (
+                      <g filter="url(#pie-shadow)">
+                        <defs>
+                          <filter id="pie-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.3"/>
+                          </filter>
+                        </defs>
+                        <path
+                          d={`M ${cx + (outerRadius + 6) * Math.cos(-startAngle * Math.PI / 180)},${cy + (outerRadius + 6) * Math.sin(-startAngle * Math.PI / 180)}
+                             A ${outerRadius + 6},${outerRadius + 6} 0 ${endAngle - startAngle > 180 ? 1 : 0},0 ${cx + (outerRadius + 6) * Math.cos(-endAngle * Math.PI / 180)},${cy + (outerRadius + 6) * Math.sin(-endAngle * Math.PI / 180)}
+                             L ${cx + innerRadius * Math.cos(-endAngle * Math.PI / 180)},${cy + innerRadius * Math.sin(-endAngle * Math.PI / 180)}
+                             A ${innerRadius},${innerRadius} 0 ${endAngle - startAngle > 180 ? 1 : 0},1 ${cx + innerRadius * Math.cos(-startAngle * Math.PI / 180)},${cy + innerRadius * Math.sin(-startAngle * Math.PI / 180)}
+                             Z`}
+                          fill={fill}
+                          style={{ transition: 'all 0.2s ease', transform: 'translateY(-4px)' }}
+                        />
+                      </g>
+                    );
+                  };
+                  
                   return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Camembert */}
+                      {/* Camembert avec hover effect */}
                       <div>
                         <ResponsiveContainer width="100%" height={260}>
                           <PieChart>
@@ -1332,9 +1355,21 @@ const Dashboard = () => {
                               fill="#8884d8"
                               dataKey="value"
                               label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                              activeShape={renderActiveShape}
+                              activeIndex={pieData.map((_: any, i: number) => i)}
+                              style={{ cursor: 'pointer' }}
                             >
                               {pieData.map((entry: any, index: number) => (
-                                <Cell key={`cell-${index}`} fill={getCategoryColor(entry.name)} />
+                                <Cell 
+                                  key={`cell-${index}`} 
+                                  fill={getCategoryColor(entry.name)}
+                                  style={{ 
+                                    transition: 'all 0.25s ease',
+                                    cursor: 'pointer',
+                                    filter: 'drop-shadow(0 0 0 transparent)'
+                                  }}
+                                  className="hover:brightness-110"
+                                />
                               ))}
                             </Pie>
                             <Tooltip 
@@ -1348,8 +1383,18 @@ const Dashboard = () => {
                         </ResponsiveContainer>
                       </div>
                       
-                      {/* Diagramme en barres verticales */}
-                      <div>
+                      {/* Diagramme en barres verticales avec hover effect */}
+                      <div className="chart-bars-hover">
+                        <style>{`
+                          .chart-bars-hover .recharts-bar-rectangle {
+                            transition: all 0.25s ease;
+                            cursor: pointer;
+                          }
+                          .chart-bars-hover .recharts-bar-rectangle:hover {
+                            transform: translateY(-4px);
+                            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+                          }
+                        `}</style>
                         <ResponsiveContainer width="100%" height={260}>
                           <BarChart data={pieData} margin={{ top: 20, right: 20, left: 0, bottom: 40 }}>
                             <XAxis 
