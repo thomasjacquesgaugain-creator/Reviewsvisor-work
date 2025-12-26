@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Area, PieChart, Pie, Cell, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, BarChart, Area, PieChart, Pie, Cell, Legend } from 'recharts';
 import { getRatingEvolution, formatRegistrationDate, Granularity } from "@/utils/ratingEvolution";
 import { validateReponse } from "@/lib/reponses";
 import { generatePdfReport } from "@/utils/generatePdfReport";
@@ -1260,7 +1260,7 @@ const Dashboard = () => {
               </div>
               <p className="text-sm text-gray-500 mt-4">Les barres représentent le nombre d'occurrences, la ligne le pourcentage cumulé</p>
               
-              {/* Camembert - Répartition des problèmes */}
+              {/* Camembert + Barres - Répartition des problèmes */}
               <div className="mt-6">
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Répartition des problèmes</h4>
                 {(() => {
@@ -1274,37 +1274,63 @@ const Dashboard = () => {
                   if (total === 0) {
                     return (
                       <p className="text-sm text-gray-500 text-center py-4">
-                        Aucune donnée pour afficher le camembert.
+                        Aucune donnée pour afficher les graphiques.
                       </p>
                     );
                   }
                   
                   return (
-                    <ResponsiveContainer width="100%" height={260}>
-                      <PieChart>
-                        <Pie
-                          data={pieData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                        >
-                          {pieData.map((entry: any, index: number) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          formatter={(value: number, name: string) => {
-                            const pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                            return [`${value} occurrences (${pct}%)`, name];
-                          }}
-                        />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Camembert */}
+                      <div>
+                        <ResponsiveContainer width="100%" height={260}>
+                          <PieChart>
+                            <Pie
+                              data={pieData}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="value"
+                              label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                            >
+                              {pieData.map((entry: any, index: number) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip 
+                              formatter={(value: number, name: string) => {
+                                const pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return [`${value} occurrences (${pct}%)`, name];
+                              }}
+                            />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      
+                      {/* Diagramme en barres */}
+                      <div>
+                        <ResponsiveContainer width="100%" height={260}>
+                          <BarChart data={pieData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                            <XAxis type="number" hide />
+                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 12 }} />
+                            <Tooltip 
+                              formatter={(value: number, name: string) => {
+                                const pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return [`${value} occurrences (${pct}%)`, 'Occurrences'];
+                              }}
+                            />
+                            <Bar dataKey="value" radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 11, fill: 'hsl(var(--foreground))' }}>
+                              {pieData.map((entry: any, index: number) => (
+                                <Cell key={`bar-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
                   );
                 })()}
               </div>
