@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Etab, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
 import EstablishmentItem from "./EstablishmentItem";
-import { Building2, Plus, Loader2, Check, Mail } from "lucide-react";
+import { Building2, Plus, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
 import { checkSubscription } from "@/lib/stripe";
@@ -10,11 +10,6 @@ import { useCreatorBypass, PRODUCT_KEYS } from "@/hooks/useCreatorBypass";
 import { subscriptionPlans, establishmentAddon } from "@/config/subscriptionPlans";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
-// Limite maximale d'établissements par utilisateur
-const MAX_ESTABLISHMENTS = 5;
-
 interface SavedEstablishmentsListProps {
   onAddClick?: () => void;
 }
@@ -27,7 +22,6 @@ export default function SavedEstablishmentsList({
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [creatingCheckout, setCreatingCheckout] = useState(false);
-  const [showQuotaContact, setShowQuotaContact] = useState(false);
   const {
     subscription,
     refresh: refreshSubscription
@@ -154,14 +148,6 @@ export default function SavedEstablishmentsList({
   // Handle add button click with subscription AND quota check
   const handleAddClick = async () => {
     console.log("[SavedEstablishmentsList] handleAddClick triggered");
-    
-    // CASE 0: Maximum limit reached (5 establishments)
-    if (establishments.length >= MAX_ESTABLISHMENTS) {
-      console.log("[SavedEstablishmentsList] Max limit reached:", establishments.length);
-      setShowQuotaContact(true);
-      return;
-    }
-    
     setCheckingSubscription(true);
     try {
       const status = await checkSubscription();
@@ -398,24 +384,6 @@ export default function SavedEstablishmentsList({
         {establishments.length === 0 && <p className="text-muted-foreground text-sm mt-3">
             Aucun établissement enregistré pour le moment.
           </p>}
-
-        {/* Encart contact limite atteinte */}
-        {showQuotaContact && (
-          <Alert className="mt-4 border-amber-300 bg-amber-50">
-            <Mail className="h-4 w-4 text-amber-600" />
-            <AlertTitle className="text-amber-800">Limite atteinte</AlertTitle>
-            <AlertDescription className="text-amber-700">
-              Vous avez atteint la limite de {MAX_ESTABLISHMENTS} établissements. Contactez{" "}
-              <a 
-                href="mailto:team@reviewsvisor.fr" 
-                className="underline font-medium hover:text-amber-900"
-              >
-                team@reviewsvisor.fr
-              </a>{" "}
-              pour augmenter votre quota.
-            </AlertDescription>
-          </Alert>
-        )}
       </section>
 
       {/* Subscription required modal */}

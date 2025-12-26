@@ -6,7 +6,7 @@ import { checkSubscription } from "@/lib/stripe";
 import { syncEstablishmentBilling } from "@/lib/establishmentBilling";
 import { useCreatorBypass, PRODUCT_KEYS } from "@/hooks/useCreatorBypass";
 import { establishmentAddon } from "@/config/subscriptionPlans";
-import { Check, Loader2, Mail } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,12 +16,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Quota included in base plan
 const INCLUDED_ESTABLISHMENTS = 1;
-// Limite maximale d'établissements par utilisateur
-const MAX_ESTABLISHMENTS = 5;
 
 export default function SaveEstablishmentButton({
   selected,
@@ -41,7 +38,6 @@ export default function SaveEstablishmentButton({
   const [redirectingToCheckout, setRedirectingToCheckout] = useState(false);
   const [currentEstablishmentCount, setCurrentEstablishmentCount] = useState(0);
   const [updatingAddon, setUpdatingAddon] = useState(false);
-  const [showQuotaContact, setShowQuotaContact] = useState(false);
   
   const { isCreator, activateCreatorSubscription } = useCreatorBypass();
 
@@ -237,9 +233,6 @@ export default function SaveEstablishmentButton({
 
   async function handleSave() {
     if (!selected) return;
-    
-    // Reset quota contact state
-    setShowQuotaContact(false);
 
     // 1) Vérifier l'authentification
     const { data: { user }, error: authErr } = await supabase.auth.getUser();
@@ -251,13 +244,6 @@ export default function SaveEstablishmentButton({
     // 2) Si déjà enregistré, informer l'utilisateur
     if (isAlreadySaved) {
       sonnerToast.info("Cet établissement est déjà enregistré.", { duration: 3000 });
-      return;
-    }
-    
-    // 2.5) LIMITE MAXIMALE: Vérifier si l'utilisateur a déjà 5 établissements
-    if (currentEstablishmentCount >= MAX_ESTABLISHMENTS) {
-      console.log("[SaveEstablishmentButton] Max limit reached:", currentEstablishmentCount);
-      setShowQuotaContact(true);
       return;
     }
 
@@ -315,24 +301,6 @@ export default function SaveEstablishmentButton({
               ? "✅ Déjà enregistré" 
               : "💾 Enregistrer l'établissement"}
       </button>
-      
-      {/* Encart contact limite atteinte */}
-      {showQuotaContact && (
-        <Alert className="mt-3 border-amber-300 bg-amber-50">
-          <Mail className="h-4 w-4 text-amber-600" />
-          <AlertTitle className="text-amber-800">Limite atteinte</AlertTitle>
-          <AlertDescription className="text-amber-700">
-            Vous avez atteint la limite de {MAX_ESTABLISHMENTS} établissements. Contactez{" "}
-            <a 
-              href="mailto:team@reviewsvisor.fr" 
-              className="underline font-medium hover:text-amber-900"
-            >
-              team@reviewsvisor.fr
-            </a>{" "}
-            pour augmenter votre quota.
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* Modal Abonnement Requis */}
       <Dialog open={showSubscriptionModal} onOpenChange={setShowSubscriptionModal}>
