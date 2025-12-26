@@ -1316,11 +1316,12 @@ const Dashboard = () => {
                           <BarChart data={pieData} margin={{ top: 20, right: 20, left: 0, bottom: 40 }}>
                             <XAxis 
                               dataKey="name" 
-                              tick={{ fontSize: 10 }} 
+                              tick={{ fontSize: 9, width: 100 }} 
                               interval={0}
-                              angle={-20}
+                              angle={-15}
                               textAnchor="end"
-                              height={50}
+                              height={60}
+                              tickLine={false}
                             />
                             <YAxis hide />
                             <Tooltip 
