@@ -1283,17 +1283,17 @@ const Dashboard = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Camembert */}
                       <div>
-                        <ResponsiveContainer width="100%" height={260}>
-                          <PieChart>
+                        <ResponsiveContainer width="100%" height={280}>
+                          <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                             <Pie
                               data={pieData}
                               cx="50%"
-                              cy="50%"
-                              labelLine={false}
-                              outerRadius={80}
+                              cy="45%"
+                              labelLine={true}
+                              outerRadius={65}
                               fill="#8884d8"
                               dataKey="value"
-                              label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                              label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                             >
                               {pieData.map((entry: any, index: number) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -1305,7 +1305,12 @@ const Dashboard = () => {
                                 return [`${value} occurrences (${pct}%)`, name];
                               }}
                             />
-                            <Legend />
+                            <Legend 
+                              layout="horizontal" 
+                              verticalAlign="bottom" 
+                              align="center"
+                              wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
+                            />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
