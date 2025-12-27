@@ -1334,7 +1334,7 @@ const Dashboard = () => {
                                 stroke: 'currentColor',
                                 strokeWidth: 1
                               }}
-                              outerRadius={80}
+                              outerRadius={95}
                               fill="#8884d8"
                               dataKey="value"
                               label={({ cx, cy, midAngle, outerRadius, name, percent }) => {
