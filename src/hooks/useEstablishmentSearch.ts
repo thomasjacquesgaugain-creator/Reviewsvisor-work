@@ -56,7 +56,6 @@ export function useEstablishmentSearch() {
           {
             input: q,
             types: ['establishment'],
-            componentRestrictions: { country: 'fr' },
             sessionToken: sessionRef.current
           },
           (predictions: any, status: string) => {
