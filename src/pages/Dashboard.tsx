@@ -1195,29 +1195,61 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={paretoPointsData} margin={{
-                top: 20,
-                right: 30,
-                left: 20,
-                bottom: 60
-              }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={12} />
-                    <YAxis yAxisId="left" orientation="left" />
-                    <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
-                    <Tooltip formatter={(value, name) => {
-                  if (name === 'Cumulative') return [`${value}%`, 'Cumul %'];
-                  return [value, 'Mentions positives'];
-                }} />
-                    <Bar yAxisId="left" dataKey="count" fill="hsl(var(--primary))" name="Mentions positives" />
-                    <Line yAxisId="right" type="monotone" dataKey="cumulative" stroke="hsl(var(--green-600))" strokeWidth={2} dot={{
-                  fill: "hsl(var(--green-600))",
-                  strokeWidth: 2,
-                  r: 4
-                }} name="Cumulative" />
-                  </ComposedChart>
-                </ResponsiveContainer>
+                {(() => {
+                  // Helper pour espaces insécables
+                  const nbsp = (s: string) => s.split(" ").join("\u00A0");
+                  
+                  // Mapping couleurs pour points forts (identique aux autres graphiques)
+                  const getStrengthColor = (name: string): string => {
+                    const lowerName = name.toLowerCase();
+                    if (lowerName.includes('qualité') || lowerName.includes('goût') || lowerName.includes('gout') || lowerName.includes('plat')) {
+                      return 'hsl(142, 76%, 36%)'; // Vert
+                    }
+                    if (lowerName.includes('ambiance') || lowerName.includes('cadre') || lowerName.includes('décor')) {
+                      return 'hsl(221, 83%, 53%)'; // Bleu
+                    }
+                    if (lowerName.includes('service') || lowerName.includes('accueil') || lowerName.includes('personnel')) {
+                      return 'hsl(280, 65%, 60%)'; // Violet
+                    }
+                    if (lowerName.includes('rapport') || lowerName.includes('prix')) {
+                      return 'hsl(45, 93%, 47%)'; // Jaune
+                    }
+                    return 'hsl(142, 76%, 36%)'; // Fallback vert
+                  };
+                  
+                  return (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={paretoPointsData} margin={{
+                        top: 20,
+                        right: 30,
+                        left: 20,
+                        bottom: 60
+                      }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={12} />
+                        <YAxis yAxisId="left" orientation="left" />
+                        <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
+                        <Tooltip 
+                          cursor={false}
+                          formatter={(value, name) => {
+                            if (name === 'Cumulative') return [`${value}%`, 'Cumul %'];
+                            return [value, 'Mentions positives'];
+                          }} 
+                        />
+                        <Bar yAxisId="left" dataKey="count" name="Mentions positives">
+                          {paretoPointsData.map((entry: any, index: number) => (
+                            <Cell key={`pareto-strength-${index}`} fill={getStrengthColor(entry.name)} />
+                          ))}
+                        </Bar>
+                        <Line yAxisId="right" type="monotone" dataKey="cumulative" stroke="hsl(215, 16%, 47%)" strokeWidth={2} dot={{
+                          fill: "hsl(215, 16%, 47%)",
+                          strokeWidth: 2,
+                          r: 4
+                        }} name="Cumulative" />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  );
+                })()}
               </div>
               <p className="text-sm text-gray-500 mt-1 mb-0 leading-tight">Les barres représentent les mentions positives, la ligne le pourcentage cumulé des forces</p>
               
