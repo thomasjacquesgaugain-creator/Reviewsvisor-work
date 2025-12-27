@@ -306,6 +306,57 @@
     "thisWeek": "Esta semana",
     "thisMonth": "Este mês",
     "thisYear": "Este ano",
-    "lastDays": "Últimos {{count}} dias"
+    "lastDays": "Últimos {{count}} dias",
+    "daysAgo": "há {{count}} dias",
+    "hoursAgo": "há {{count}} horas",
+    "minutesAgo": "há {{count}} minutos",
+    "justNow": "agora mesmo"
+  },
+  "analysis": {
+    "title": "Painel de análise",
+    "selectEstablishment": "Selecione um estabelecimento e clique em \"Analisar\" para ver os resultados da análise.",
+    "noAnalysis": "Nenhuma análise disponível para este estabelecimento. Clique em \"Analisar\" no cartão do estabelecimento para começar.",
+    "summary": "Resumo",
+    "averageScore": "Pontuação média",
+    "positivePercent": "% positivos",
+    "negativePercent": "% negativos",
+    "sentiment": "Sentimento",
+    "keyThemes": "Temas-chave",
+    "trends": "Tendências",
+    "praisesTop3": "Elogios (Top 3)",
+    "irritantsTop3": "Irritantes (Top 3)",
+    "recommendationsList": "Recomendações"
+  },
+  "pricing": {
+    "badge": {
+      "engagement": "COMPROMISSO",
+      "flexible": "FLEXÍVEL"
+    }
+  },
+  "whySection": {
+    "title": "💡 Por que o Reviewsvisor funciona?",
+    "feature1Title": "Análise relâmpago",
+    "feature1Desc": "Reviewsvisor transforma suas avaliações em insights em segundos, permitindo que você tome decisões rápidas e confiáveis. Com uma síntese clara e visual, você identifica as tendências-chave e prioridades de ação que importam para o seu estabelecimento. A análise também destaca seus pontos fortes para consolidar o que funciona.",
+    "feature2Title": "Acionável imediatamente",
+    "feature2Desc": "Reviewsvisor não apenas identifica problemas… ele propõe soluções concretas e hierarquizadas. Cada recomendação é mensurável, ligada à satisfação do cliente, para ajudá-lo a agir eficazmente e acompanhar seu progresso ao longo do tempo.",
+    "feature3Title": "Análise Ultra-Precisa",
+    "feature3Desc": "A IA detecta emoções, problemas recorrentes e oportunidades de melhoria com precisão excepcional. Ela mede o tom das avaliações e destaca sinais fracos para revelar os verdadeiros impulsionadores de fidelização do cliente.",
+    "feature4Title": "Crescimento Mensurável",
+    "feature4Desc": "Reviewsvisor ajuda você a aumentar sua classificação online, atrair mais clientes e melhorar sua receita.",
+    "stat1": "veem até +25% mais avaliações positivas,",
+    "stat2": "geram em média +10% a +20% mais receita,",
+    "stat3": "ganham +0,5 a +1 ponto de classificação em poucas semanas."
+  },
+  "resetPassword": {
+    "title": "Redefinição de senha",
+    "subtitle": "Esqueceu sua senha?",
+    "description": "Digite seu email para receber um link de redefinição",
+    "emailLabel": "Endereço de email",
+    "sending": "Enviando...",
+    "sendLink": "Enviar link de redefinição",
+    "emailSentTitle": "Email enviado",
+    "emailSentDesc": "Um email de redefinição foi enviado para",
+    "checkSpam": "Dica: Verifique também sua pasta de Spam ou Lixo Eletrônico, pode ter ido parar lá.",
+    "invalidEmail": "Endereço de email inválido"
   }
 }

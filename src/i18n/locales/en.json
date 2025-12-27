@@ -306,6 +306,57 @@
     "thisWeek": "This week",
     "thisMonth": "This month",
     "thisYear": "This year",
-    "lastDays": "Last {{count}} days"
+    "lastDays": "Last {{count}} days",
+    "daysAgo": "{{count}} days ago",
+    "hoursAgo": "{{count}} hours ago",
+    "minutesAgo": "{{count}} minutes ago",
+    "justNow": "just now"
+  },
+  "analysis": {
+    "title": "Analysis Dashboard",
+    "selectEstablishment": "Select an establishment then click \"Analyze\" to see the analysis results.",
+    "noAnalysis": "No analysis available for this establishment. Click \"Analyze\" on the establishment card to start.",
+    "summary": "Summary",
+    "averageScore": "Average score",
+    "positivePercent": "% positive",
+    "negativePercent": "% negative",
+    "sentiment": "Sentiment",
+    "keyThemes": "Key themes",
+    "trends": "Trends",
+    "praisesTop3": "Praises (Top 3)",
+    "irritantsTop3": "Irritants (Top 3)",
+    "recommendationsList": "Recommendations"
+  },
+  "pricing": {
+    "badge": {
+      "engagement": "COMMITMENT",
+      "flexible": "FLEXIBLE"
+    }
+  },
+  "whySection": {
+    "title": "💡 Why does Reviewsvisor work?",
+    "feature1Title": "Lightning-fast analysis",
+    "feature1Desc": "Reviewsvisor transforms your reviews into insights in seconds, enabling you to make quick and reliable decisions. With a clear and visual synthesis, you spot key trends and action priorities that matter to your establishment. The analysis also highlights your strengths to consolidate what works.",
+    "feature2Title": "Immediately actionable",
+    "feature2Desc": "Reviewsvisor doesn't just identify problems... it proposes concrete and prioritized solutions. Each recommendation is measurable, linked to customer satisfaction, to help you act effectively and track your progress over time.",
+    "feature3Title": "Ultra-Precise Analysis",
+    "feature3Desc": "AI detects emotions, recurring problems and improvement opportunities with exceptional precision. It measures the tone of reviews and highlights weak signals to reveal true customer loyalty drivers.",
+    "feature4Title": "Measurable Growth",
+    "feature4Desc": "Reviewsvisor helps you increase your online rating, attract more customers and improve your revenue.",
+    "stat1": "see up to +25% more positive reviews,",
+    "stat2": "generate on average +10% to +20% more revenue,",
+    "stat3": "gain +0.5 to +1 point in rating in a few weeks."
+  },
+  "resetPassword": {
+    "title": "Password Reset",
+    "subtitle": "Forgot your password?",
+    "description": "Enter your email to receive a reset link",
+    "emailLabel": "Email address",
+    "sending": "Sending...",
+    "sendLink": "Send reset link",
+    "emailSentTitle": "Email sent",
+    "emailSentDesc": "A reset email has been sent to",
+    "checkSpam": "Tip: Also check your Spam or Junk folder, it may have ended up there.",
+    "invalidEmail": "Invalid email address"
   }
 }
