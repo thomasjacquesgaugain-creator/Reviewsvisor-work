@@ -1281,11 +1281,11 @@ const Dashboard = () => {
                   );
                 })()}
               </div>
-              <p className="text-sm text-gray-500 mt-4 mb-0">Les barres représentent le nombre d'occurrences, la ligne le pourcentage cumulé</p>
+              <p className="text-sm text-gray-500 mt-1 mb-0 leading-tight">Les barres représentent le nombre d'occurrences, la ligne le pourcentage cumulé</p>
               
               {/* Camembert + Barres - Répartition des problèmes */}
-              <div className="mt-6">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">Répartition des problèmes</h4>
+              <div className="mt-2">
+                <h4 className="text-sm font-medium text-gray-700 mb-3 mt-0">Répartition des problèmes</h4>
                 {(() => {
                   const pieData = paretoData.map((item: any) => ({
                     name: item.name,
