@@ -389,13 +389,13 @@ const Dashboard = () => {
   // Formatage de la date et de l'heure
   const formatDateTime = (date: Date) => {
     return {
-      date: date.toLocaleDateString("fr-FR", {
+      date: date.toLocaleDateString(i18n.language, {
         weekday: "long",
         year: "numeric",
         month: "long",
         day: "numeric"
       }),
-      time: date.toLocaleTimeString("fr-FR", {
+      time: date.toLocaleTimeString(i18n.language, {
         hour: "2-digit",
         minute: "2-digit"
       })
@@ -441,7 +441,7 @@ const Dashboard = () => {
     const count = strength.count || strength.mentions || 0;
     const percentage = totalAnalyzed > 0 ? count / totalAnalyzed * 100 : 0;
     return {
-      name: strength.theme || strength.strength || `Point fort ${index + 1}`,
+      name: strength.theme || strength.strength || t('dashboard.strength') + ` ${index + 1}`,
       count,
       percentage,
       cumulative: 0 // Will be calculated below
@@ -456,9 +456,9 @@ const Dashboard = () => {
   });
   // Formatter une date pour l'affichage
   const formatReviewDate = (dateStr: string | null) => {
-    if (!dateStr) return 'Date inconnue';
+    if (!dateStr) return t('dashboard.unknownDate');
     const date = new Date(dateStr);
-    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return date.toLocaleDateString(i18n.language, { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
   // Calculer l'évolution de la note depuis l'enregistrement
@@ -490,7 +490,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-6 h-6 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard d'analyse</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{t('dashboard.analysisDashboard')}</h1>
             </div>
             {/* Bouton Télécharger le rapport */}
             {(selectedEtab || selectedEstablishment) && (
@@ -501,15 +501,15 @@ const Dashboard = () => {
                   
                   const currentEstab = selectedEtab || selectedEstablishment;
                   if (!currentEstab) {
-                    toast.error('Erreur', {
-                      description: 'Aucun établissement sélectionné.',
+                    toast.error(t('common.error'), {
+                      description: t('dashboard.noEstablishmentSelected'),
                     });
                     return;
                   }
 
                   if (!hasReviews || allReviewsForChart.length === 0) {
-                    toast.info('Aucun rapport disponible', {
-                      description: 'Importez des avis pour générer un rapport.',
+                    toast.info(t('dashboard.noReportAvailable'), {
+                      description: t('dashboard.importReviewsForReport'),
                     });
                     return;
                   }
@@ -535,28 +535,28 @@ const Dashboard = () => {
                     // Générer et télécharger le PDF
                     generatePdfReport(reportData);
 
-                    toast.success('Rapport téléchargé', {
-                      description: 'Le rapport PDF a été généré avec succès.',
+                    toast.success(t('dashboard.reportDownloaded'), {
+                      description: t('dashboard.reportDownloadedDesc'),
                     });
                   } catch (error) {
                     console.error('[Dashboard] ❌ Erreur génération PDF:', error);
-                    toast.error('Erreur', {
-                      description: 'Une erreur est survenue lors de la génération du rapport.',
+                    toast.error(t('common.error'), {
+                      description: t('dashboard.errorOccurred'),
                     });
                   } finally {
                     setIsDownloadingReport(false);
                   }
                 }}
               >
-                {isDownloadingReport ? (
+              {isDownloadingReport ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Génération...
+                    {t('dashboard.generating')}
                   </>
                 ) : (
                   <>
                     <Download className="w-4 h-4" />
-                    Télécharger le rapport
+                    {t('dashboard.downloadReport')}
                   </>
                 )}
               </Button>
@@ -564,7 +564,7 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center gap-2 text-gray-600">
             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-            <span>Analyse de {totalAnalyzed} avis clients</span>
+            <span>{t('dashboard.analysisOf', { count: totalAnalyzed })}</span>
           </div>
         </div>
 
@@ -595,23 +595,23 @@ const Dashboard = () => {
                     {/* Flèche vers le bas en haut à droite de l'icône */}
                     <Popover open={showEstablishmentsDropdown} onOpenChange={setShowEstablishmentsDropdown}>
                       <PopoverTrigger asChild>
-                        <Button variant="ghost" size="sm" className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 p-0.5 h-auto w-auto bg-white border border-gray-200 rounded-full shadow-sm" title="Choisir un autre établissement">
+                        <Button variant="ghost" size="sm" className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 p-0.5 h-auto w-auto bg-white border border-gray-200 rounded-full shadow-sm" title={t('dashboard.chooseOther')}>
                           <ChevronDown className="w-3 h-3" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-80 p-2 bg-white z-50 shadow-lg border" align="start">
                         <div className="space-y-1">
                           <div className="text-sm font-medium text-gray-700 px-3 py-2">
-                            Mes Établissements
+                            {t('dashboard.myEstablishments')}
                           </div>
                           {establishmentsLoading ? (
                             <div className="text-sm text-gray-500 px-3 py-2 flex items-center gap-2">
                               <Loader2 className="w-4 h-4 animate-spin" />
-                              Chargement...
+                              {t('dashboard.loading')}
                             </div>
                           ) : establishments.length === 0 ? (
                             <div className="text-sm text-gray-500 px-3 py-2">
-                              Aucun établissement enregistré
+                              {t('dashboard.noEstablishmentSaved')}
                             </div>
                           ) : establishments.map(etab => (
                             <button
@@ -653,12 +653,12 @@ const Dashboard = () => {
                                 <Building2 className="w-4 h-4 text-blue-600" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium text-gray-900 truncate">{etab.name}</span>
-                                  {selectedEtab?.place_id === etab.place_id && (
-                                    <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Actif</span>
-                                  )}
-                                </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-gray-900 truncate">{etab.name}</span>
+                                    {selectedEtab?.place_id === etab.place_id && (
+                                      <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{t('dashboard.active')}</span>
+                                    )}
+                                  </div>
                                 <div className="text-sm text-gray-500 truncate">{etab.address}</div>
                               </div>
                             </button>
@@ -769,7 +769,7 @@ const Dashboard = () => {
                     }} 
                     disabled={isAnalyzing}
                     className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto" 
-                    title="Analyser cet établissement"
+                    title={t('dashboard.analyzeThis')}
                   >
                     {isAnalyzing ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -782,7 +782,7 @@ const Dashboard = () => {
                   <Button variant="ghost" size="sm" onClick={() => {
                 localStorage.removeItem(STORAGE_KEY);
                 setSelectedEtab(null);
-              }} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto" title="Oublier cet établissement">
+              }} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto" title={t('dashboard.forgetThis')}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -795,10 +795,10 @@ const Dashboard = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">Historique des analyses</CardTitle>
+                <CardTitle className="text-lg">{t('dashboard.analysisHistory')}</CardTitle>
               </div>
             </div>
-            <p className="text-sm text-gray-500 mt-2">Les analyses précédentes et terminées. Les résultats</p>
+            <p className="text-sm text-gray-500 mt-2">{t('dashboard.previousAnalyses')}</p>
           </CardHeader>
           <CardContent>
             <div className="p-4 bg-gray-50 rounded-lg">
@@ -909,19 +909,19 @@ const Dashboard = () => {
                 <div>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Star className="w-5 h-5 text-yellow-500" />
-                    Évolution de la note moyenne
+                    {t('dashboard.ratingEvolution')}
                   </CardTitle>
-                  <p className="text-sm text-gray-600">Progression de votre note depuis l'enregistrement de l'établissement — par {granularityEvolution}</p>
+                  <p className="text-sm text-gray-600">{t('dashboard.ratingEvolutionDesc')} — {t('dashboard.by')} {granularityEvolution}</p>
                 </div>
                 <Select value={granularityEvolution} onValueChange={(value) => setGranularityEvolution(value as Granularity)}>
                   <SelectTrigger className="w-32">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white z-50">
-                    <SelectItem value="jour">Jour</SelectItem>
-                    <SelectItem value="semaine">Semaine</SelectItem>
-                    <SelectItem value="mois">Mois</SelectItem>
-                    <SelectItem value="année">Année</SelectItem>
+                    <SelectItem value="jour">{t('dashboard.day')}</SelectItem>
+                    <SelectItem value="semaine">{t('dashboard.week')}</SelectItem>
+                    <SelectItem value="mois">{t('dashboard.month')}</SelectItem>
+                    <SelectItem value="année">{t('dashboard.year')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -931,8 +931,8 @@ const Dashboard = () => {
                 <>
                   {courbeNoteData.length < 2 ? (
                     <div className="text-center py-8">
-                      <p className="text-sm text-gray-500">Données limitées pour cette granularité</p>
-                      <p className="text-xs text-gray-400 mt-1">Sélectionnez une période plus large ou attendez plus d'avis</p>
+                      <p className="text-sm text-gray-500">{t('dashboard.limitedData')}</p>
+                      <p className="text-xs text-gray-400 mt-1">{t('dashboard.selectLargerPeriod')}</p>
                     </div>
                   ) : (
                     <>
@@ -942,7 +942,7 @@ const Dashboard = () => {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="mois" />
                             <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
-                            <Tooltip formatter={value => [`${value}/5`, 'Note moyenne']} />
+                            <Tooltip formatter={value => [`${value}/5`, t('dashboard.averageRating')]} />
                             <Line type="monotone" dataKey="note" stroke="#eab308" strokeWidth={3} dot={{
                           fill: '#eab308',
                           strokeWidth: 2,
@@ -952,14 +952,14 @@ const Dashboard = () => {
                         </ResponsiveContainer>
                       </div>
                       <p className="text-sm text-gray-500 mt-4">
-                        Date d'enregistrement : {establishmentCreatedAt ? formatRegistrationDate(establishmentCreatedAt) : 'Inconnue'}
+                        {t('dashboard.registrationDate')} : {establishmentCreatedAt ? formatRegistrationDate(establishmentCreatedAt) : t('dashboard.unknownDate')}
                       </p>
                     </>
                   )}
                 </>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-8">
-                  Aucune donnée disponible pour afficher l'évolution de la note
+                  {t('dashboard.noDataForRatingEvolution')}
                 </p>
               )}
             </CardContent>
@@ -970,9 +970,9 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-red-500" />
-                Top 5 des mauvais avis
+                {t('dashboard.top5BadReviews')}
               </CardTitle>
-              <p className="text-sm text-gray-600">Les avis les moins bien notés nécessitant votre attention</p>
+              <p className="text-sm text-gray-600">{t('dashboard.badReviewsNeedAttention')}</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -982,7 +982,7 @@ const Dashboard = () => {
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-red-700">#{index + 1}</span>
-                          <span className="font-medium">{avis.author || 'Anonyme'}</span>
+                          <span className="font-medium">{avis.author || t('dashboard.anonymous')}</span>
                           <span className="text-yellow-500">{'★'.repeat(Math.round(avis.rating || 0))}{'☆'.repeat(5 - Math.round(avis.rating || 0))}</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -990,11 +990,11 @@ const Dashboard = () => {
                           <span className="text-xs text-gray-500">{formatReviewDate(avis.published_at)}</span>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-700 italic">"{avis.text || 'Pas de commentaire'}"</p>
+                      <p className="text-sm text-gray-700 italic">"{avis.text || t('dashboard.noComment')}"</p>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">Aucun avis négatif trouvé</p>
+                  <p className="text-sm text-gray-500 text-center py-4">{t('dashboard.noBadReviewFound')}</p>
                 )}
               </div>
             </CardContent>
@@ -1005,9 +1005,9 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-500" />
-                Top 5 des meilleurs avis
+                {t('dashboard.top5BestReviews')}
               </CardTitle>
-              <p className="text-sm text-gray-600">Les avis les mieux notés de vos clients</p>
+              <p className="text-sm text-gray-600">{t('dashboard.bestRatedReviews')}</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -1017,7 +1017,7 @@ const Dashboard = () => {
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-green-700">#{index + 1}</span>
-                          <span className="font-medium">{avis.author || 'Anonyme'}</span>
+                          <span className="font-medium">{avis.author || t('dashboard.anonymous')}</span>
                           <span className="text-yellow-500">{'★'.repeat(Math.round(avis.rating || 0))}</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1025,11 +1025,11 @@ const Dashboard = () => {
                           <span className="text-xs text-gray-500">{formatReviewDate(avis.published_at)}</span>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-700 italic">"{avis.text || 'Pas de commentaire'}"</p>
+                      <p className="text-sm text-gray-700 italic">"{avis.text || t('dashboard.noComment')}"</p>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">Aucun avis positif trouvé</p>
+                  <p className="text-sm text-gray-500 text-center py-4">{t('dashboard.noGoodReviewFound')}</p>
                 )}
               </div>
             </CardContent>
@@ -1038,8 +1038,8 @@ const Dashboard = () => {
         {/* Plateformes connectées - Affichées en dessous des métriques */}
         {showPlateformes && <Card className="mb-8">
             <CardHeader>
-              <CardTitle className="text-xl">Plateformes connectées</CardTitle>
-              <p className="text-sm text-gray-600">Gérer vos présences sur les différentes plateformes</p>
+              <CardTitle className="text-xl">{t('dashboard.connectedPlatforms')}</CardTitle>
+              <p className="text-sm text-gray-600">{t('dashboard.managePlatforms')}</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -1068,18 +1068,18 @@ const Dashboard = () => {
                           <div>
                             <div className="font-medium">{config.name}</div>
                             <div className="text-sm text-gray-500">
-                              {stats.count} avis • {stats.avgRating.toFixed(1)} étoiles
+                              {stats.count} {t('dashboard.reviews')} • {stats.avgRating.toFixed(1)} {t('dashboard.stars')}
                             </div>
                           </div>
                         </div>
-                        <Badge className="bg-green-100 text-green-700">Connecté</Badge>
+                        <Badge className="bg-green-100 text-green-700">{t('dashboard.connected')}</Badge>
                       </div>
                     );
                   })
                 ) : (
                   <div className="text-center py-4 text-gray-500">
-                    <p className="text-sm">Aucune plateforme connectée</p>
-                    <p className="text-xs mt-1">Analysez votre établissement pour voir les plateformes</p>
+                    <p className="text-sm">{t('dashboard.noPlatform')}</p>
+                    <p className="text-xs mt-1">{t('dashboard.analyzeToPlatforms')}</p>
                   </div>
                 )}
               </div>
@@ -1094,18 +1094,18 @@ const Dashboard = () => {
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5 text-red-500" />
-                  <CardTitle className="text-lg">Top 3 Problèmes prioritaires</CardTitle>
+                  <CardTitle className="text-lg">{t('dashboard.top3Problems')}</CardTitle>
                 </div>
                 <ChevronDown className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoChart ? 'rotate-180' : ''}`} onClick={() => setShowParetoChart(!showParetoChart)} />
               </div>
-              <p className="text-sm text-gray-500">Les plus mentionnés par fréquence et pourcentage en priorité</p>
+              <p className="text-sm text-gray-500">{t('dashboard.mostMentionedByFrequency')}</p>
             </CardHeader>
             <CardContent className="space-y-4">
               {!hasReviews ? (
                 <div className="text-center py-8 text-gray-500">
                   <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className="text-sm font-medium">Aucun avis disponible</p>
-                  <p className="text-xs mt-1">Importez des avis pour voir les problèmes identifiés</p>
+                  <p className="text-sm font-medium">{t('dashboard.noReviewsAvailable')}</p>
+                  <p className="text-xs mt-1">{t('dashboard.importToSeeProblems')}</p>
                 </div>
               ) : topIssues.length > 0 ? (
                 topIssues.slice(0, 3).map((issue: any, index: number) => {
@@ -1120,10 +1120,10 @@ const Dashboard = () => {
                     <div key={index} className={`flex items-center justify-between p-3 ${isCritical ? 'bg-red-50' : 'bg-yellow-50'} rounded-lg`}>
                       <div className="flex items-center gap-2">
                         <AlertTriangle className={`w-4 h-4 ${isCritical ? 'text-red-500' : 'text-yellow-600'}`} />
-                        <div>
-                          <div className="font-medium">{issue.theme || issue.issue || 'Problème non spécifié'}</div>
-                          <div className="text-sm text-gray-500">
-                            {percentage > 0 ? `${percentage}% des avis` : 'Identifié par l\'IA'}
+                          <div>
+                            <div className="font-medium">{issue.theme || issue.issue || t('dashboard.notIdentified')}</div>
+                            <div className="text-sm text-gray-500">
+                              {percentage > 0 ? `${percentage}% ${t('dashboard.ofReviews')}` : t('dashboard.identifiedByAI')}
                           </div>
                         </div>
                       </div>
@@ -1135,8 +1135,8 @@ const Dashboard = () => {
                 })
               ) : (
                 <div className="text-center py-4 text-gray-500">
-                  <p className="text-sm">Aucun problème identifié</p>
-                  <p className="text-xs mt-1">Analysez votre établissement pour voir les problèmes</p>
+                  <p className="text-sm">{t('dashboard.noProblemIdentified')}</p>
+                  <p className="text-xs mt-1">{t('dashboard.analyzeToSeeProblems')}</p>
                 </div>
               )}
             </CardContent>
@@ -1148,18 +1148,18 @@ const Dashboard = () => {
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-green-500" />
-                  <CardTitle className="text-lg">Top 3 Points forts</CardTitle>
+                  <CardTitle className="text-lg">{t('dashboard.top3Strengths')}</CardTitle>
                 </div>
                 <ChevronDown className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoPoints ? 'rotate-180' : ''}`} onClick={() => setShowParetoPoints(!showParetoPoints)} />
               </div>
-              <p className="text-sm text-gray-500">Les points forts les plus mentionnés par vos clients</p>
+              <p className="text-sm text-gray-500">{t('dashboard.strengthsMostMentioned')}</p>
             </CardHeader>
             <CardContent className="space-y-4">
               {!hasReviews ? (
                 <div className="text-center py-8 text-gray-500">
                   <CheckCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className="text-sm font-medium">Aucun avis disponible</p>
-                  <p className="text-xs mt-1">Importez des avis pour voir les points forts identifiés</p>
+                  <p className="text-sm font-medium">{t('dashboard.noReviewsAvailable')}</p>
+                  <p className="text-xs mt-1">{t('dashboard.importToSeeStrengths')}</p>
                 </div>
               ) : topStrengths.length > 0 ? (
                 topStrengths.slice(0, 3).map((strength: any, index: number) => {
@@ -1172,10 +1172,10 @@ const Dashboard = () => {
                     <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-green-500" />
-                        <div>
-                          <div className="font-medium">{strength.theme || strength.strength || 'Point fort non spécifié'}</div>
-                          <div className="text-sm text-gray-500">
-                            {percentage > 0 ? `${percentage}% des avis` : 'Identifié par l\'IA'}
+                          <div>
+                            <div className="font-medium">{strength.theme || strength.strength || t('dashboard.notIdentified')}</div>
+                            <div className="text-sm text-gray-500">
+                              {percentage > 0 ? `${percentage}% ${t('dashboard.ofReviews')}` : t('dashboard.identifiedByAI')}
                           </div>
                         </div>
                       </div>

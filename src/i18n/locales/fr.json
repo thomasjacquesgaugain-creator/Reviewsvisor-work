@@ -506,7 +506,18 @@
     "isActive": "Établissement actif",
     "noRating": "Pas de note",
     "reviews": "avis",
-    "cancelSearch": "Annuler"
+    "cancelSearch": "Annuler",
+    "selected": "sélectionné",
+    "clickSaveToAdd": "Cliquez sur 'Enregistrer' pour l'ajouter à votre liste.",
+    "unableToGetDetails": "Impossible de récupérer les détails",
+    "placesNotLoaded": "Google Places non chargé",
+    "invalidKey": "Clé Google invalide ou non autorisée.",
+    "quotaExceeded": "Quota dépassé. Réessayez plus tard.",
+    "invalidRequest": "Requête invalide (paramètre manquant).",
+    "unknownError": "Erreur inconnue Google Places",
+    "googleMapsError": "Erreur Google Maps.",
+    "missingApiKey": "Clé API manquante dans la configuration.",
+    "domainNotAuthorized": "Vérifiez que votre domaine est autorisé dans Google Cloud Console"
   },
   "import": {
     "title": "Importer des avis",
@@ -559,6 +570,21 @@
     "imported": "Importé avec succès",
     "exported": "Exporté avec succès",
     "sent": "Envoyé avec succès"
+  },
+  "contact": {
+    "title": "Nous contacter",
+    "subtitle": "Vous pouvez nous écrire à cette adresse pour toute demande.",
+    "emailTitle": "Email de contact",
+    "replyPromise": "Nous vous répondrons dans les plus brefs délais.",
+    "support": "Support",
+    "technicalHelp": "Aide technique",
+    "productQuestions": "Questions produit",
+    "features": "Fonctionnalités",
+    "partnerships": "Partenariats",
+    "proOffers": "Offres Pro"
+  },
+  "notFound": {
+    "returnHome": "Retour à l'accueil"
   },
   "modals": {
     "confirmDelete": "Confirmer la suppression",
