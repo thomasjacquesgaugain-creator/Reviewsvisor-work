@@ -750,5 +750,36 @@
     "emailSentDesc": "Un email de réinitialisation a été envoyé à",
     "checkSpam": "Astuce : Vérifie aussi ton dossier Spam ou Courrier indésirable, il peut parfois s'y glisser par erreur.",
     "invalidEmail": "Adresse email invalide"
+  },
+  "analytics": {
+    "analysisFor": "Analyse pour",
+    "whatCustomersSay": "Voici ce que vos clients disent de votre établissement",
+    "totalReviews": "Total Avis",
+    "averageRating": "Note Moyenne",
+    "positiveSentiment": "Sentiment Positif",
+    "improvementRequired": "Amélioration Requise",
+    "areasToImprove": "domaines à améliorer",
+    "thisMonthGrowth": "+{{percent}}% ce mois",
+    "sinceLastMonth": "+{{delta}} depuis le mois dernier",
+    "sentimentDistribution": "Distribution des Sentiments",
+    "sentimentDistributionDesc": "Répartition des avis par sentiment analysé par l'IA",
+    "mainThemes": "Thèmes Principaux",
+    "mainThemesDesc": "Les sujets les plus mentionnés dans vos avis",
+    "popularKeywords": "Mots-clés Populaires",
+    "popularKeywordsDesc": "Les termes les plus fréquents dans vos avis",
+    "score": "Score",
+    "times": "fois",
+    "sentiment": {
+      "positive": "Positif",
+      "neutral": "Neutre",
+      "negative": "Négatif"
+    },
+    "keywords": {
+      "delicious": "délicieux",
+      "fastService": "service rapide",
+      "excellent": "excellent",
+      "expensive": "cher",
+      "waiting": "attente"
+    }
   }
 }
