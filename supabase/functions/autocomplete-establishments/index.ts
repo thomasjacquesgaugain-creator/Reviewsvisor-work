@@ -77,12 +77,10 @@ serve(async (req) => {
       );
     }
 
-    // Use Google Places Autocomplete API
+    // Use Google Places Autocomplete API - worldwide search
     const apiUrl = new URL('https://maps.googleapis.com/maps/api/place/autocomplete/json');
     apiUrl.searchParams.append('input', input);
     apiUrl.searchParams.append('types', 'establishment');
-    apiUrl.searchParams.append('components', 'country:fr'); // France uniquement
-    apiUrl.searchParams.append('language', 'fr');
     if (sessionToken) {
       apiUrl.searchParams.append('sessiontoken', sessionToken);
     }
