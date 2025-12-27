@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,19 +9,24 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useCreatorBypass, PRODUCT_KEYS } from "@/hooks/useCreatorBypass";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { fr, enUS, it, es, pt } from "date-fns/locale";
 
 export function SubscriptionCard() {
+  const { t, i18n } = useTranslation();
   const { subscription, loading, refresh } = useSubscription();
   const { isCreator, activateCreatorSubscription } = useCreatorBypass();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const { toast } = useToast();
 
+  const getDateLocale = () => {
+    const locales: Record<string, typeof fr> = { fr, en: enUS, it, es, pt };
+    return locales[i18n.language] || fr;
+  };
+
   const handleUpgrade = async () => {
     setCheckoutLoading(true);
     try {
-      // ======= CREATOR BYPASS =======
       if (isCreator()) {
         console.log("[SubscriptionCard] Creator bypass - activating pro plan");
         const result = await activateCreatorSubscription(PRODUCT_KEYS.PRO_1499_12M);
@@ -29,28 +35,25 @@ export function SubscriptionCard() {
           return;
         } else {
           toast({
-            title: "Erreur",
-            description: result.error || "Erreur d'activation",
+            title: t("common.error"),
+            description: result.error || t("errors.generic"),
             variant: "destructive",
           });
           return;
         }
       }
 
-      // ======= NORMAL STRIPE FLOW =======
       const url = await createCheckoutSession();
       if (url) {
         window.open(url, "_blank");
-        
-        // Refresh subscription status after 3 seconds
         setTimeout(() => {
           refresh();
         }, 3000);
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible de créer la session de paiement",
+        title: t("common.error"),
+        description: t("subscription.checkoutError"),
         variant: "destructive",
       });
     } finally {
@@ -59,11 +62,10 @@ export function SubscriptionCard() {
   };
 
   const handleManageSubscription = async () => {
-    // Creator bypass users don't have Stripe portal
     if (subscription.creator_bypass) {
       toast({
-        title: "Mode créateur",
-        description: "La gestion d'abonnement n'est pas disponible en mode créateur",
+        title: t("subscription.creatorMode"),
+        description: t("subscription.creatorModeDesc"),
       });
       return;
     }
@@ -76,8 +78,8 @@ export function SubscriptionCard() {
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible d'accéder au portail client",
+        title: t("common.error"),
+        description: t("subscription.portalError"),
         variant: "destructive",
       });
     } finally {
@@ -103,33 +105,33 @@ export function SubscriptionCard() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Crown className="h-5 w-5 text-primary" />
-                Abonnement Pro
+                {t("subscription.proPlan")}
               </CardTitle>
-              <CardDescription>Accédez à toutes les fonctionnalités premium</CardDescription>
+              <CardDescription>{t("subscription.proDesc")}</CardDescription>
             </div>
-            <Badge variant="outline">Gratuit</Badge>
+            <Badge variant="outline">{t("subscription.free")}</Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-        <div className="text-3xl font-bold text-primary">
+          <div className="text-3xl font-bold text-primary">
             {STRIPE_PRODUCTS.pro.price}
           </div>
           <ul className="space-y-2">
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-primary" />
-              <span className="text-sm">Analyses illimitées d'établissements</span>
+              <span className="text-sm">{t("subscription.feature1")}</span>
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-primary" />
-              <span className="text-sm">Réponses automatiques aux avis</span>
+              <span className="text-sm">{t("subscription.feature2")}</span>
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-primary" />
-              <span className="text-sm">Statistiques avancées</span>
+              <span className="text-sm">{t("subscription.feature3")}</span>
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-primary" />
-              <span className="text-sm">Support prioritaire</span>
+              <span className="text-sm">{t("subscription.feature4")}</span>
             </li>
           </ul>
         </CardContent>
@@ -143,12 +145,12 @@ export function SubscriptionCard() {
             {checkoutLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Chargement...
+                {t("common.loading")}
               </>
             ) : (
               <>
                 <Crown className="mr-2 h-4 w-4" />
-                Passer en Pro
+                {t("subscription.upgradeToPro")}
               </>
             )}
           </Button>
@@ -158,7 +160,7 @@ export function SubscriptionCard() {
   }
 
   const subscriptionEndDate = subscription.subscription_end
-    ? format(new Date(subscription.subscription_end), "d MMMM yyyy", { locale: fr })
+    ? format(new Date(subscription.subscription_end), "d MMMM yyyy", { locale: getDateLocale() })
     : null;
 
   return (
@@ -168,31 +170,31 @@ export function SubscriptionCard() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Crown className="h-5 w-5 text-primary" />
-              Abonnement Pro
+              {t("subscription.proPlan")}
             </CardTitle>
             <CardDescription>
-              Votre abonnement est actif
-              {subscription.creator_bypass && " (mode créateur)"}
+              {t("subscription.activeDesc")}
+              {subscription.creator_bypass && ` (${t("subscription.creatorMode")})`}
             </CardDescription>
           </div>
           <Badge className="bg-primary">
-            {subscription.creator_bypass ? "Créateur" : "Actif"}
+            {subscription.creator_bypass ? t("subscription.creator") : t("subscription.active")}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-lg bg-muted p-4 space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Formule</span>
+            <span className="text-muted-foreground">{t("subscription.plan")}</span>
             <span className="font-medium">{STRIPE_PRODUCTS.pro.name}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Prix</span>
+            <span className="text-muted-foreground">{t("subscription.price")}</span>
             <span className="font-medium">{STRIPE_PRODUCTS.pro.price}</span>
           </div>
           {subscriptionEndDate && (
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Renouvellement</span>
+              <span className="text-muted-foreground">{t("subscription.renewal")}</span>
               <span className="font-medium">{subscriptionEndDate}</span>
             </div>
           )}
@@ -208,12 +210,12 @@ export function SubscriptionCard() {
           {portalLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Chargement...
+              {t("common.loading")}
             </>
           ) : (
             <>
               <CreditCard className="mr-2 h-4 w-4" />
-              Gérer mon abonnement
+              {t("subscription.manage")}
             </>
           )}
         </Button>
