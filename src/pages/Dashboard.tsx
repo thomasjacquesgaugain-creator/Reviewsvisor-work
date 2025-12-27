@@ -1330,24 +1330,29 @@ const Dashboard = () => {
                               data={pieData}
                               cx="50%"
                               cy="50%"
-                              labelLine={true}
-                              outerRadius={70}
+                              labelLine={{
+                                stroke: 'currentColor',
+                                strokeWidth: 1
+                              }}
+                              outerRadius={80}
                               fill="#8884d8"
                               dataKey="value"
                               label={({ cx, cy, midAngle, outerRadius, name, percent }) => {
                                 const RADIAN = Math.PI / 180;
-                                const radius = outerRadius + 25;
+                                const radius = outerRadius + 30;
                                 const x = cx + radius * Math.cos(-midAngle * RADIAN);
                                 const y = cy + radius * Math.sin(-midAngle * RADIAN);
                                 const labelText = `${nbsp(name)}\u00A0(${(percent * 100).toFixed(0)}%)`;
+                                const color = getCategoryColor(name);
                                 return (
                                   <text
                                     x={x}
                                     y={y}
-                                    fill="hsl(var(--foreground))"
+                                    fill={color}
                                     textAnchor={x > cx ? 'start' : 'end'}
                                     dominantBaseline="central"
                                     fontSize={10}
+                                    fontWeight={500}
                                     style={{ whiteSpace: 'nowrap' }}
                                   >
                                     {labelText}
