@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, BarChart, Area, PieChart, Pie, Cell, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, BarChart, Area, PieChart, Pie, Cell, Legend, Sector } from 'recharts';
 import { getRatingEvolution, formatRegistrationDate, Granularity } from "@/utils/ratingEvolution";
 import { validateReponse } from "@/lib/reponses";
 import { generatePdfReport } from "@/utils/generatePdfReport";
@@ -45,6 +45,32 @@ const Dashboard = () => {
   const [showParetoPoints, setShowParetoPoints] = useState(false);
   const [granularityEvolution, setGranularityEvolution] = useState<Granularity>("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [activePieIndex, setActivePieIndex] = useState<number | null>(null);
+
+  // Render active shape pour l'effet hover "carte abonnement" sur le camembert
+  const renderActivePieShape = (props: any) => {
+    const {
+      cx, cy, innerRadius, outerRadius, startAngle, endAngle,
+      fill, payload, percent, value
+    } = props;
+    
+    return (
+      <g style={{ filter: 'drop-shadow(0px 8px 16px rgba(0,0,0,0.15))' }}>
+        <Sector
+          cx={cx}
+          cy={cy - 4}
+          innerRadius={innerRadius}
+          outerRadius={outerRadius + 8}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+          style={{
+            transition: 'all 0.25s ease-out',
+          }}
+        />
+      </g>
+    );
+  };
 
   // Établissement sélectionné (depuis DB)
   const [selectedEtab, setSelectedEtab] = useState<Etab | null>(null);
@@ -1332,9 +1358,20 @@ const Dashboard = () => {
                               fill="#8884d8"
                               dataKey="value"
                               label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                              activeIndex={activePieIndex ?? -1}
+                              activeShape={renderActivePieShape}
+                              onMouseEnter={(_, index) => setActivePieIndex(index)}
+                              onMouseLeave={() => setActivePieIndex(null)}
                             >
                               {pieData.map((entry: any, index: number) => (
-                                <Cell key={`cell-${index}`} fill={getCategoryColor(entry.name)} />
+                                <Cell 
+                                  key={`cell-${index}`} 
+                                  fill={getCategoryColor(entry.name)}
+                                  style={{ 
+                                    cursor: 'pointer',
+                                    transition: 'all 0.25s ease-out'
+                                  }}
+                                />
                               ))}
                             </Pie>
                             <Tooltip 
