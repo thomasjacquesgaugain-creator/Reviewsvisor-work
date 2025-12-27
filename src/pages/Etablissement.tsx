@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { loadGooglePlaces } from "@/lib/loadGooglePlaces";
 import MonEtablissementCard from "@/components/MonEtablissementCard";
 import SaveEstablishmentButton from "@/components/SaveEstablishmentButton";
@@ -13,7 +14,9 @@ import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { useAuth } from "@/contexts/AuthProvider";
 import { toast } from "sonner";
 import { getCurrentEstablishment } from "@/services/establishments";
+
 export default function EtablissementPage() {
+  const { t, i18n } = useTranslation();
   const {
     displayName,
     loading,
@@ -98,19 +101,19 @@ export default function EtablissementPage() {
   // Mapping des erreurs Google Places
   function mapPlacesStatus(status: string, errorMessage?: string): string | null {
     const g = (window as any).google;
-    if (!g?.maps?.places) return 'Google Places non chargé';
+    if (!g?.maps?.places) return t('establishment.placesNotLoaded');
     switch (status) {
       case g.maps.places.PlacesServiceStatus.OK:
       case g.maps.places.PlacesServiceStatus.ZERO_RESULTS:
         return null;
       case g.maps.places.PlacesServiceStatus.REQUEST_DENIED:
-        return 'Clé Google invalide ou non autorisée (référents/API).';
+        return t('establishment.invalidKey');
       case g.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT:
-        return 'Quota dépassé. Réessayez plus tard.';
+        return t('establishment.quotaExceeded');
       case g.maps.places.PlacesServiceStatus.INVALID_REQUEST:
-        return 'Requête invalide (paramètre manquant).';
+        return t('establishment.invalidRequest');
       default:
-        return errorMessage || status || 'Erreur inconnue Google Places';
+        return errorMessage || status || t('establishment.unknownError');
     }
   }
 
@@ -130,7 +133,7 @@ export default function EtablissementPage() {
         } else if (result) {
           resolve(result);
         } else {
-          reject(new Error('Aucun résultat'));
+          reject(new Error(t('common.noResults')));
         }
       });
     });
@@ -205,30 +208,30 @@ export default function EtablissementPage() {
 
             // UNIQUEMENT mettre à jour l'état local (pas de sauvegarde DB)
             setSelected(etab);
-            toast.success(`${etab.name} sélectionné`, {
-              description: "Cliquez sur 'Enregistrer' pour l'ajouter à votre liste."
+            toast.success(`${etab.name} ${t('establishment.selected')}`, {
+              description: t('establishment.clickSaveToAdd')
             });
           } catch (error: any) {
             console.error('Erreur lors de la récupération des détails:', error);
-            toast.error(error?.message || 'Impossible de récupérer les détails');
+            toast.error(error?.message || t('establishment.unableToGetDetails'));
           }
         });
         console.log('✅ Autocomplete initialisé avec succès');
       } catch (error: any) {
         console.error('❌ Erreur de chargement Google Places:', error);
-        let errorMsg = 'Erreur Google Maps. ';
+        let errorMsg = t('establishment.googleMapsError') + ' ';
         if (error?.message?.includes('manquante')) {
-          errorMsg += 'Clé API manquante dans la configuration.';
+          errorMsg += t('establishment.missingApiKey');
         } else if (error?.message?.includes('Échec')) {
-          errorMsg += 'Vérifiez que votre domaine est autorisé dans Google Cloud Console (https://reviewsvisor.fr/*)';
+          errorMsg += t('establishment.domainNotAuthorized');
         } else {
-          errorMsg += error?.message || 'Erreur inconnue';
+          errorMsg += error?.message || t('establishment.unknownError');
         }
         setPlacesError(errorMsg);
       }
     };
     initPlaces();
-  }, []);
+  }, [t]);
 
   // Handle import button click and analysis button click and ESC key
   useEffect(() => {
@@ -276,26 +279,27 @@ export default function EtablissementPage() {
       document.removeEventListener('click', handleDocumentClick, true);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [showImportBar, showReviewsVisual]);
+  }, [showImportBar, showReviewsVisual, currentEstablishment]);
+
   return <div className="bg-background">
       {/* Main content */}
       <div className="container mx-auto px-4 py-8 pb-16">
-        <h1 className="text-3xl font-bold mb-8">Établissement</h1>
+        <h1 className="text-3xl font-bold mb-8">{t('establishment.title')}</h1>
         
         <div className="space-y-6">
           {/* Section de recherche d'établissement - toujours montée, masquée via CSS */}
           <div className={showSearch ? "space-y-4" : "hidden"}>
-            <h2 className="text-xl font-semibold">Rechercher un établissement</h2>
+            <h2 className="text-xl font-semibold">{t('establishment.search')}</h2>
             
             <div className="space-y-2">
               <div className="relative">
-                <input id="places-input" className="w-full border border-border rounded-lg px-3 py-2 pr-24 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Rechercher un établissement…" />
+                <input id="places-input" className="w-full border border-border rounded-lg px-3 py-2 pr-24 focus:outline-none focus:ring-2 focus:ring-primary" placeholder={t('establishment.searchPlaceholder')} />
                 <button
                   type="button"
                   onClick={resetSearchAndClose}
                   className="absolute right-2 top-1/2 -translate-y-1/2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-3 py-1.5 rounded-md cursor-pointer transition-colors"
                 >
-                  Annuler
+                  {t('establishment.cancelSearch')}
                 </button>
               </div>
               
@@ -304,11 +308,11 @@ export default function EtablissementPage() {
                 </div>}
               
               <div className="text-xs text-muted-foreground">
-                Powered by Google
+                {t('common.poweredBy')} Google
               </div>
               
               {selected && <div className="inline-flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
-                  <span>✅ Sélectionné :</span>
+                  <span>✅ {t('common.selected')} :</span>
                   <strong>{selected.name}</strong>
                 </div>}
             </div>
@@ -318,7 +322,7 @@ export default function EtablissementPage() {
 
           {/* Section Mon Établissement */}
           <section data-testid="card-mon-etablissement" className="border border-border rounded-lg p-4 bg-primary-foreground">
-            <h2 className="text-xl font-semibold mb-3">🏢 Mon Établissement</h2>
+            <h2 className="text-xl font-semibold mb-3">🏢 {t('establishment.myEstablishment')}</h2>
             <MonEtablissementCard onAddClick={openSearch} />
           </section>
 
