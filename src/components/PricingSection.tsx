@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
@@ -10,6 +11,7 @@ import { useCreatorBypass, ProductKey } from "@/hooks/useCreatorBypass";
 import { useSubscription } from "@/hooks/useSubscription";
 
 export function PricingSection() {
+  const { t } = useTranslation();
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
   const { isCreator, activateCreatorSubscription } = useCreatorBypass();
   const { refresh: refreshSubscription } = useSubscription();
@@ -17,7 +19,6 @@ export function PricingSection() {
   const handleCheckout = async (priceId: string, productKey: string) => {
     setLoadingPriceId(priceId);
     try {
-      // ======= CREATOR BYPASS =======
       if (isCreator()) {
         console.log("[PricingSection] Creator bypass for", productKey);
         const result = await activateCreatorSubscription(productKey as ProductKey);
@@ -25,12 +26,11 @@ export function PricingSection() {
           await refreshSubscription();
           return;
         } else {
-          toast.error(result.error || "Erreur d'activation");
+          toast.error(result.error || t("errors.generic"));
           return;
         }
       }
 
-      // ======= NORMAL STRIPE FLOW =======
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { priceId },
       });
@@ -39,11 +39,11 @@ export function PricingSection() {
       if (data?.url) {
         window.location.href = data.url;
       } else {
-        throw new Error("URL de paiement non reçue");
+        throw new Error(t("pricing.urlNotReceived"));
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      toast.error("Erreur lors de la redirection vers le paiement");
+      toast.error(t("pricing.checkoutError"));
     } finally {
       setLoadingPriceId(null);
     }
@@ -74,7 +74,7 @@ export function PricingSection() {
                 className="relative overflow-hidden bg-white rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-2 border-border h-full flex flex-col"
               >
                 <div className={cn("absolute top-0 right-0 text-white px-4 py-1.5 text-xs font-semibold rounded-bl-xl", colorClasses.badge)}>
-                  {plan.badge}
+                  {t(`pricing.badge.${plan.badge.toLowerCase().replace(/\s+/g, '')}`)}
                 </div>
                 <CardHeader className="pb-4 pt-8">
                   <CardTitle className="text-2xl font-bold text-foreground mb-2">
@@ -85,7 +85,7 @@ export function PricingSection() {
                   </p>
                   <div className="mt-4">
                     <span className={cn("text-5xl font-bold", colorClasses.price)}>{plan.priceLabel}</span>
-                    <span className="text-lg text-muted-foreground ml-2">/mois</span>
+                    <span className="text-lg text-muted-foreground ml-2">{t("common.perMonth")}</span>
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-col flex-1 pb-8">
@@ -103,10 +103,10 @@ export function PricingSection() {
                     disabled={loadingPriceId === plan.priceId}
                   >
                     {loadingPriceId === plan.priceId 
-                      ? "Redirection..." 
+                      ? t("pricing.redirecting") 
                       : plan.id === "pro-engagement" 
-                        ? "Profiter des 14 jours offerts" 
-                        : "S'abonner maintenant"}
+                        ? t("pricing.tryFree14Days") 
+                        : t("pricing.subscribeNow")}
                   </Button>
                 </CardContent>
               </Card>
@@ -115,7 +115,7 @@ export function PricingSection() {
         </div>
 
         <p className="text-center text-sm text-muted-foreground mt-10">
-          🔒 Paiement sécurisé par Stripe • Annulation simple en ligne
+          🔒 {t("pricing.securePayment")}
         </p>
       </div>
     </section>
