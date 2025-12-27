@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import BackArrow from "@/components/BackArrow";
 
 const Login = () => {
+  const { t } = useTranslation();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -37,8 +39,8 @@ const Login = () => {
         // Inscription
         if (password !== confirmPassword) {
           toast({
-            title: "Erreur",
-            description: "Les mots de passe ne correspondent pas.",
+            title: t("common.error"),
+            description: t("auth.passwordMismatch"),
             variant: "destructive",
           });
           setLoading(false);
@@ -47,8 +49,8 @@ const Login = () => {
 
         if (!firstName.trim() || !lastName.trim()) {
           toast({
-            title: "Erreur",
-            description: "Veuillez remplir votre prénom et nom.",
+            title: t("common.error"),
+            description: t("auth.fillNameFields"),
             variant: "destructive",
           });
           setLoading(false);
@@ -69,7 +71,7 @@ const Login = () => {
 
         if (error) {
           toast({
-            title: "Erreur d'inscription",
+            title: t("auth.signupError"),
             description: error.message,
             variant: "destructive",
           });
@@ -95,8 +97,8 @@ const Login = () => {
           }
 
           toast({
-            title: "Inscription réussie",
-            description: "Bienvenue ! Vous pouvez maintenant utiliser l'application.",
+            title: t("auth.signupSuccess"),
+            description: t("auth.signupSuccessDesc"),
           });
           navigate('/tableau-de-bord');
         }
@@ -109,22 +111,22 @@ const Login = () => {
 
         if (error) {
           toast({
-            title: "Erreur de connexion",
+            title: t("auth.loginError"),
             description: error.message,
             variant: "destructive",
           });
         } else {
           toast({
-            title: "Connexion réussie",
-            description: "Vous êtes maintenant connecté !",
+            title: t("auth.loginSuccess"),
+            description: t("auth.loginSuccessDesc"),
           });
           navigate('/tableau-de-bord');
         }
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Une erreur inattendue s'est produite.",
+        title: t("common.error"),
+        description: t("errors.generic"),
         variant: "destructive",
       });
     } finally {
@@ -147,7 +149,7 @@ const Login = () => {
         {/* Header */}
         <div className="text-center py-8">
           <h1 className="text-2xl font-medium text-gray-600">
-            {isSignUp ? "Créez votre espace d'analyse" : "Connectez-vous à votre espace d'analyse"}
+            {isSignUp ? t("auth.createAnalysisSpace") : t("auth.connectToAnalysisSpace")}
           </h1>
         </div>
 
@@ -157,12 +159,12 @@ const Login = () => {
             <CardContent className="p-8 space-y-6">
               <div className="text-center space-y-2">
                 <h2 className="text-3xl font-bold text-gray-900">
-                  {isSignUp ? "Créer un compte" : "Connexion"}
+                  {isSignUp ? t("auth.signup") : t("auth.login")}
                 </h2>
                 <p className="text-gray-600">
                   {isSignUp 
-                    ? "Commencez à analyser vos avis clients" 
-                    : "Accédez à vos analyses d'avis clients"
+                    ? t("auth.startAnalyzing") 
+                    : t("auth.accessAnalytics")
                   }
                 </p>
               </div>
@@ -172,14 +174,14 @@ const Login = () => {
                   <>
                     <div className="space-y-2">
                       <label htmlFor="firstName" className="text-sm font-medium text-gray-700">
-                        Prénom
+                        {t("auth.firstName")}
                       </label>
                       <div className="relative">
                         <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <Input
                           id="firstName"
                           type="text"
-                          placeholder="Votre prénom"
+                          placeholder={t("auth.firstNamePlaceholder")}
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
                           className="h-12 pl-12 pr-4 bg-gray-50 border-gray-200 rounded-xl"
@@ -191,14 +193,14 @@ const Login = () => {
 
                     <div className="space-y-2">
                       <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
-                        Nom
+                        {t("auth.lastName")}
                       </label>
                       <div className="relative">
                         <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <Input
                           id="lastName"
                           type="text"
-                          placeholder="Votre nom"
+                          placeholder={t("auth.lastNamePlaceholder")}
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
                           className="h-12 pl-12 pr-4 bg-gray-50 border-gray-200 rounded-xl"
@@ -212,12 +214,12 @@ const Login = () => {
 
                 <div className="space-y-2">
                   <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                    Email
+                    {t("auth.email")}
                   </label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="votre@email.com"
+                    placeholder={t("auth.emailPlaceholder")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
@@ -228,13 +230,13 @@ const Login = () => {
 
                 <div className="space-y-2">
                   <label htmlFor="password" className="text-sm font-medium text-gray-700">
-                    Mot de passe
+                    {t("auth.password")}
                   </label>
                   <div className="relative">
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Votre mot de passe"
+                      placeholder={t("auth.passwordPlaceholder")}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="h-12 px-4 pr-12 bg-gray-50 border-gray-200 rounded-xl"
@@ -257,12 +259,12 @@ const Login = () => {
                 {isSignUp && (
                   <div className="space-y-2">
                     <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
-                      Confirmer le mot de passe
+                      {t("auth.confirmPassword")}
                     </label>
                     <Input
                       id="confirmPassword"
                       type="password"
-                      placeholder="Confirmez votre mot de passe"
+                      placeholder={t("auth.confirmPasswordPlaceholder")}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
@@ -277,8 +279,8 @@ const Login = () => {
                   disabled={loading}
                 >
                   {loading 
-                    ? (isSignUp ? "Inscription..." : "Connexion...") 
-                    : (isSignUp ? "S'inscrire" : "Se connecter")
+                    ? (isSignUp ? t("auth.signingUp") : t("auth.loggingIn")) 
+                    : (isSignUp ? t("auth.signupAction") : t("auth.login"))
                   }
                 </Button>
               </form>
@@ -289,27 +291,27 @@ const Login = () => {
                     to="/reset-password" 
                     className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
                   >
-                    🔒 Mot de passe oublié ?
+                    🔒 {t("auth.forgotPassword")}
                   </Link>
                 </div>
               )}
 
               <div className="text-center space-y-4">
                 <p className="text-gray-600">
-                  {isSignUp ? "Déjà un compte ?" : "Pas encore de compte ?"}{" "}
+                  {isSignUp ? t("auth.hasAccount") : t("auth.noAccount")}{" "}
                   {isSignUp ? (
                     <button 
                       onClick={() => setIsSignUp(false)}
                       className="text-blue-600 font-medium hover:underline"
                     >
-                      Se connecter
+                      {t("auth.login")}
                     </button>
                   ) : (
                     <a 
                       href="/abonnement"
                       className="text-blue-600 font-medium hover:underline"
                     >
-                      Créer un compte
+                      {t("auth.signup")}
                     </a>
                   )}
                 </p>
@@ -317,7 +319,7 @@ const Login = () => {
                 <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
                   <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                   <p className="text-sm text-yellow-800">
-                    Un compte est requis pour analyser vos avis clients
+                    {t("auth.accountRequired")}
                   </p>
                 </div>
               </div>

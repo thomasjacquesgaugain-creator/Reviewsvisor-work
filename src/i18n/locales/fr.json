@@ -459,5 +459,31 @@
       "engagement": "ENGAGEMENT",
       "flexible": "FLEXIBLE"
     }
+  },
+  "whySection": {
+    "title": "💡 Pourquoi Reviewsvisor fonctionne ?",
+    "feature1Title": "Analyse éclair",
+    "feature1Desc": "Reviewsvisor transforme vos avis en insights en quelques secondes, vous permettant de prendre des décisions rapides et fiables. Grâce à une synthèse claire et visuelle, vous repérez les tendances clés et priorités d'action qui comptent pour votre établissement. L'analyse met aussi en avant vos points forts pour consolider ce qui fonctionne.",
+    "feature2Title": "Actionnable immédiatement",
+    "feature2Desc": "Reviewsvisor ne se contente pas d'identifier des problèmes… il propose des solutions concrètes et hiérarchisées. Chaque recommandation est mesurable, liée à la satisfaction client, pour vous aider à agir efficacement et suivre vos progrès dans le temps.",
+    "feature3Title": "Analyse Ultra-Précise",
+    "feature3Desc": "L'IA détecte émotions, problèmes récurrents et opportunités d'amélioration avec une précision exceptionnelle. Elle mesure la tonalité des avis et met en évidence les signaux faibles pour révéler les vrais leviers de fidélisation client.",
+    "feature4Title": "Croissance Mesurable",
+    "feature4Desc": "Reviewsvisor vous aide à augmenter votre note en ligne, attirer davantage de clients et améliorer vos revenus.",
+    "stat1": "voient jusqu'à +25 % d'avis positifs,",
+    "stat2": "génèrent en moyenne +10 % à +20 % de chiffre d'affaires,",
+    "stat3": "gagnent +0,5 à +1 point de note en quelques semaines."
+  },
+  "resetPassword": {
+    "title": "Réinitialisation de mot de passe",
+    "subtitle": "Mot de passe oublié ?",
+    "description": "Entrez votre email pour recevoir un lien de réinitialisation",
+    "emailLabel": "Adresse email",
+    "sending": "Envoi en cours...",
+    "sendLink": "Envoyer le lien de réinitialisation",
+    "emailSentTitle": "Email envoyé",
+    "emailSentDesc": "Un email de réinitialisation a été envoyé à",
+    "checkSpam": "Astuce : Vérifie aussi ton dossier Spam ou Courrier indésirable, il peut parfois s'y glisser par erreur.",
+    "invalidEmail": "Adresse email invalide"
   }
 }

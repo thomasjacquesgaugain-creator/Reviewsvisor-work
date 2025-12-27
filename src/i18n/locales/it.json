@@ -306,6 +306,57 @@
     "thisWeek": "Questa settimana",
     "thisMonth": "Questo mese",
     "thisYear": "Quest'anno",
-    "lastDays": "Ultimi {{count}} giorni"
+    "lastDays": "Ultimi {{count}} giorni",
+    "daysAgo": "{{count}} giorni fa",
+    "hoursAgo": "{{count}} ore fa",
+    "minutesAgo": "{{count}} minuti fa",
+    "justNow": "proprio ora"
+  },
+  "analysis": {
+    "title": "Dashboard di analisi",
+    "selectEstablishment": "Seleziona uno stabilimento poi clicca su \"Analizza\" per vedere i risultati dell'analisi.",
+    "noAnalysis": "Nessuna analisi disponibile per questo stabilimento. Clicca su \"Analizza\" sulla scheda dello stabilimento per iniziare.",
+    "summary": "Riepilogo",
+    "averageScore": "Punteggio medio",
+    "positivePercent": "% positivi",
+    "negativePercent": "% negativi",
+    "sentiment": "Sentimento",
+    "keyThemes": "Temi chiave",
+    "trends": "Tendenze",
+    "praisesTop3": "Elogi (Top 3)",
+    "irritantsTop3": "Irritanti (Top 3)",
+    "recommendationsList": "Raccomandazioni"
+  },
+  "pricing": {
+    "badge": {
+      "engagement": "IMPEGNO",
+      "flexible": "FLESSIBILE"
+    }
+  },
+  "whySection": {
+    "title": "💡 Perché funziona Reviewsvisor?",
+    "feature1Title": "Analisi fulminea",
+    "feature1Desc": "Reviewsvisor trasforma le tue recensioni in insights in pochi secondi, permettendoti di prendere decisioni rapide e affidabili. Grazie a una sintesi chiara e visiva, individui le tendenze chiave e le priorità d'azione che contano per il tuo stabilimento. L'analisi evidenzia anche i tuoi punti di forza per consolidare ciò che funziona.",
+    "feature2Title": "Immediatamente azionabile",
+    "feature2Desc": "Reviewsvisor non si limita a identificare problemi… propone soluzioni concrete e gerarchizzate. Ogni raccomandazione è misurabile, collegata alla soddisfazione del cliente, per aiutarti ad agire efficacemente e seguire i tuoi progressi nel tempo.",
+    "feature3Title": "Analisi Ultra-Precisa",
+    "feature3Desc": "L'IA rileva emozioni, problemi ricorrenti e opportunità di miglioramento con precisione eccezionale. Misura il tono delle recensioni e mette in evidenza i segnali deboli per rivelare i veri driver di fidelizzazione del cliente.",
+    "feature4Title": "Crescita Misurabile",
+    "feature4Desc": "Reviewsvisor ti aiuta ad aumentare il tuo rating online, attirare più clienti e migliorare i tuoi ricavi.",
+    "stat1": "vedono fino a +25% di recensioni positive,",
+    "stat2": "generano in media +10% a +20% di fatturato,",
+    "stat3": "guadagnano +0,5 a +1 punto di rating in poche settimane."
+  },
+  "resetPassword": {
+    "title": "Reimpostazione password",
+    "subtitle": "Password dimenticata?",
+    "description": "Inserisci la tua email per ricevere un link di reimpostazione",
+    "emailLabel": "Indirizzo email",
+    "sending": "Invio in corso...",
+    "sendLink": "Invia link di reimpostazione",
+    "emailSentTitle": "Email inviata",
+    "emailSentDesc": "È stata inviata un'email di reimpostazione a",
+    "checkSpam": "Suggerimento: Controlla anche la cartella Spam o Posta indesiderata, potrebbe essere finita lì.",
+    "invalidEmail": "Indirizzo email non valido"
   }
 }
