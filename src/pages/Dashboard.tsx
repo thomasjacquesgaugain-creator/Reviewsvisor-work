@@ -1219,7 +1219,167 @@ const Dashboard = () => {
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
-              <p className="text-sm text-gray-500 mt-4">Les barres représentent les mentions positives, la ligne le pourcentage cumulé des forces</p>
+              <p className="text-sm text-gray-500 mt-1 mb-0 leading-tight">Les barres représentent les mentions positives, la ligne le pourcentage cumulé des forces</p>
+              
+              {/* Camembert + Barres - Répartition des points forts */}
+              <div className="mt-2">
+                <h4 className="text-sm font-medium text-gray-700 mb-3 mt-0">Répartition des points forts</h4>
+                {(() => {
+                  const strengthPieData = paretoPointsData.map((item: any) => ({
+                    name: item.name,
+                    value: item.count
+                  }));
+                  const strengthTotal = strengthPieData.reduce((sum: number, item: any) => sum + item.value, 0);
+                  
+                  // Helper pour espaces insécables
+                  const nbsp = (s: string) => s.split(" ").join("\u00A0");
+                  
+                  // Mapping couleurs pour points forts: Vert (qualité), Bleu (ambiance), Violet (autre)
+                  const getStrengthColor = (name: string): string => {
+                    const lowerName = name.toLowerCase();
+                    if (lowerName.includes('qualité') || lowerName.includes('goût') || lowerName.includes('gout') || lowerName.includes('plat')) {
+                      return 'hsl(142, 76%, 36%)'; // Vert
+                    }
+                    if (lowerName.includes('ambiance') || lowerName.includes('cadre') || lowerName.includes('décor')) {
+                      return 'hsl(221, 83%, 53%)'; // Bleu
+                    }
+                    if (lowerName.includes('service') || lowerName.includes('accueil') || lowerName.includes('personnel')) {
+                      return 'hsl(280, 65%, 60%)'; // Violet
+                    }
+                    if (lowerName.includes('rapport') || lowerName.includes('prix')) {
+                      return 'hsl(45, 93%, 47%)'; // Jaune
+                    }
+                    return 'hsl(142, 76%, 36%)'; // Fallback vert
+                  };
+                  
+                  if (strengthTotal === 0) {
+                    return (
+                      <p className="text-sm text-gray-500 text-center py-4">
+                        Aucune donnée pour afficher les graphiques.
+                      </p>
+                    );
+                  }
+                  
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Camembert */}
+                      <div>
+                        <ResponsiveContainer width="100%" height={260}>
+                          <PieChart>
+                            <Pie
+                              data={strengthPieData}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={{
+                                stroke: 'currentColor',
+                                strokeWidth: 1
+                              }}
+                              outerRadius={95}
+                              fill="#8884d8"
+                              dataKey="value"
+                              label={({ cx, cy, midAngle, outerRadius, name, percent }) => {
+                                const RADIAN = Math.PI / 180;
+                                const radius = outerRadius + 30;
+                                const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                                const labelText = `${nbsp(name)}\u00A0(${(percent * 100).toFixed(0)}%)`;
+                                const color = getStrengthColor(name);
+                                return (
+                                  <text
+                                    x={x}
+                                    y={y}
+                                    fill={color}
+                                    textAnchor={x > cx ? 'start' : 'end'}
+                                    dominantBaseline="central"
+                                    fontSize={10}
+                                    fontWeight={500}
+                                    style={{ whiteSpace: 'nowrap' }}
+                                  >
+                                    {labelText}
+                                  </text>
+                                );
+                              }}
+                            >
+                              {strengthPieData.map((entry: any, index: number) => (
+                                <Cell key={`strength-cell-${index}`} fill={getStrengthColor(entry.name)} />
+                              ))}
+                            </Pie>
+                            <Tooltip 
+                              formatter={(value: number, name: string) => {
+                                const pct = strengthTotal > 0 ? ((value / strengthTotal) * 100).toFixed(1) : 0;
+                                return [`${value} mentions (${pct}%)`, name];
+                              }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      
+                      {/* Diagramme en barres verticales */}
+                      <div>
+                        <ResponsiveContainer width="100%" height={260}>
+                          <BarChart data={strengthPieData} margin={{ top: 20, right: 20, left: 0, bottom: 40 }}>
+                            <XAxis 
+                              dataKey="name" 
+                              interval={0}
+                              height={50}
+                              tick={(props: any) => {
+                                const { x, y, payload } = props;
+                                const value = nbsp(String(payload?.value ?? ""));
+                                return (
+                                  <text
+                                    x={x}
+                                    y={y}
+                                    dy={16}
+                                    textAnchor="middle"
+                                    fill="#6b7280"
+                                    fontSize={9}
+                                    style={{ pointerEvents: "none" }}
+                                  >
+                                    {value}
+                                  </text>
+                                );
+                              }}
+                            />
+                            <YAxis hide />
+                            <Tooltip 
+                              cursor={false}
+                              formatter={(value: number, name: string) => {
+                                const pct = strengthTotal > 0 ? ((value / strengthTotal) * 100).toFixed(1) : 0;
+                                return [`${value} mentions (${pct}%)`, 'Mentions'];
+                              }}
+                            />
+                            <Bar dataKey="value" radius={[4, 4, 0, 0]} label={{ position: 'top', fontSize: 11, fill: 'hsl(var(--foreground))' }}>
+                              {strengthPieData.map((entry: any, index: number) => (
+                                <Cell key={`strength-bar-${index}`} fill={getStrengthColor(entry.name)} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  );
+                })()}
+                
+                {/* Légende globale sous les graphiques */}
+                <div className="flex flex-wrap items-center justify-center gap-4 mt-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(142, 76%, 36%)' }}></div>
+                    <span className="text-muted-foreground">Qualité / goût</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(221, 83%, 53%)' }}></div>
+                    <span className="text-muted-foreground">Ambiance</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(280, 65%, 60%)' }}></div>
+                    <span className="text-muted-foreground">Service / accueil</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(45, 93%, 47%)' }}></div>
+                    <span className="text-muted-foreground">Rapport qualité-prix</span>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>}
 
