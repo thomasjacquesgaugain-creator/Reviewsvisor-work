@@ -1293,6 +1293,9 @@ const Dashboard = () => {
                   }));
                   const total = pieData.reduce((sum: number, item: any) => sum + item.value, 0);
                   
+                  // Helper pour espaces insécables (empêche les retours à la ligne)
+                  const nbsp = (s: string) => s.split(" ").join("\u00A0");
+                  
                   // Mapping couleurs par catégorie: Rouge (critique), Orange (important), Jaune (secondaire)
                   const getCategoryColor = (name: string): string => {
                     const lowerName = name.toLowerCase();
@@ -1331,7 +1334,7 @@ const Dashboard = () => {
                               outerRadius={80}
                               fill="#8884d8"
                               dataKey="value"
-                              label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                              label={({ name, percent }) => `${nbsp(name)} (${(percent * 100).toFixed(0)}%)`}
                             >
                               {pieData.map((entry: any, index: number) => (
                                 <Cell key={`cell-${index}`} fill={getCategoryColor(entry.name)} />
@@ -1359,6 +1362,7 @@ const Dashboard = () => {
                               angle={-20}
                               textAnchor="end"
                               height={50}
+                              tickFormatter={(v) => nbsp(String(v))}
                             />
                             <YAxis hide />
                             <Tooltip 
