@@ -1362,6 +1362,7 @@ const Dashboard = () => {
                             />
                             <YAxis hide />
                             <Tooltip 
+                              cursor={false}
                               formatter={(value: number, name: string) => {
                                 const pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
                                 return [`${value} occurrences (${pct}%)`, 'Occurrences'];
