@@ -1,36 +1,33 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Brain, Target, TrendingUp, CheckCircle, Menu, X, Globe, ChevronRight, Check } from "lucide-react";
+import { Brain, Target, TrendingUp, CheckCircle, Menu, Globe, Check } from "lucide-react";
 import logoHeader from "@/assets/reviewsvisor-logo-header.png";
 import { WhyReviewsvisor } from "@/components/WhyReviewsvisor";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
 import { LANGUAGE_FLAGS, LANGUAGE_LABELS, SupportedLanguage, SUPPORTED_LANGUAGES } from "@/i18n/config";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
+} from "@/components/ui/dropdown-menu";
 
 export const HeroSection = () => {
   const { t } = useTranslation();
   const { lang, setLang } = useLanguage();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [langMenuOpen, setLangMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-        setLangMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleLanguageChange = (newLang: SupportedLanguage) => {
     setLang(newLang);
-    setLangMenuOpen(false);
     setMenuOpen(false);
   };
 
@@ -63,76 +60,62 @@ export const HeroSection = () => {
             </div>
           </div>
           
-          {/* Hamburger menu - positioned absolute to not affect trust indicators */}
-          <div className="absolute right-4 top-1/2 -translate-y-1/2" ref={menuRef}>
-            <button
-              onClick={() => {
-                setMenuOpen(!menuOpen);
-                if (!menuOpen) setLangMenuOpen(false);
-              }}
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-              aria-label="Menu"
-            >
-              {menuOpen ? (
-                <X className="w-5 h-5 text-gray-700" />
-              ) : (
-                <Menu className="w-5 h-5 text-gray-700" />
-              )}
-            </button>
-
-            {/* Dropdown menu */}
-            {menuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-[9999] overflow-visible">
-                {/* Se connecter */}
+          {/* Hamburger menu - using Radix Portal for true overlay */}
+          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+              <DropdownMenuTrigger asChild>
                 <button
-                  onClick={() => {
-                    navigate("/login");
-                    setMenuOpen(false);
-                  }}
-                  className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  aria-label="Menu"
                 >
-                  <span>🔐</span>
-                  {t("auth.login")}
+                  <Menu className="w-5 h-5 text-gray-700" />
                 </button>
-
-                <div className="border-t border-gray-100"></div>
-
-                {/* Langue */}
-                <div className="relative">
-                  <button
-                    onClick={() => setLangMenuOpen(!langMenuOpen)}
-                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between"
+              </DropdownMenuTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuContent 
+                  side="bottom" 
+                  align="end" 
+                  sideOffset={8}
+                  className="z-[99999] w-[200px] bg-white"
+                >
+                  {/* Se connecter */}
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/login")}
+                    className="cursor-pointer"
                   >
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-gray-500" />
-                      {t("common.language")}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs text-gray-500">{lang.toUpperCase()}</span>
-                      <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${langMenuOpen ? "rotate-90" : ""}`} />
-                    </div>
-                  </button>
+                    <span className="mr-2">🔐</span>
+                    {t("auth.login")}
+                  </DropdownMenuItem>
 
-                  {/* Language submenu - All 5 languages */}
-                  {langMenuOpen && (
-                    <div className="border-t border-gray-100 bg-gray-50">
-                      {SUPPORTED_LANGUAGES.map((code) => (
-                        <button
-                          key={code}
-                          onClick={() => handleLanguageChange(code)}
-                          className={`w-full text-left px-6 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center justify-between ${lang === code ? "text-blue-600 font-medium bg-blue-50" : "text-gray-700"}`}
-                        >
-                          <span className="flex items-center gap-2">
-                            {LANGUAGE_FLAGS[code]} {LANGUAGE_LABELS[code]}
-                          </span>
-                          {lang === code && <Check className="w-4 h-4" />}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+                  <DropdownMenuSeparator />
+
+                  {/* Langue - Submenu */}
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="cursor-pointer">
+                      <Globe className="w-4 h-4 mr-2 text-gray-500" />
+                      {t("common.language")}
+                      <span className="ml-auto text-xs text-gray-500">{lang.toUpperCase()}</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent className="z-[99999] bg-white">
+                        {SUPPORTED_LANGUAGES.map((code) => (
+                          <DropdownMenuItem
+                            key={code}
+                            onClick={() => handleLanguageChange(code)}
+                            className={`cursor-pointer ${lang === code ? "text-blue-600 font-medium bg-blue-50" : ""}`}
+                          >
+                            <span className="flex items-center gap-2 flex-1">
+                              {LANGUAGE_FLAGS[code]} {LANGUAGE_LABELS[code]}
+                            </span>
+                            {lang === code && <Check className="w-4 h-4 ml-2" />}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                </DropdownMenuContent>
+              </DropdownMenuPortal>
+            </DropdownMenu>
           </div>
         </div>
 
