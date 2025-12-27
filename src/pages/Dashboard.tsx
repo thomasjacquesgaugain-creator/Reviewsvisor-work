@@ -1330,11 +1330,30 @@ const Dashboard = () => {
                               data={pieData}
                               cx="50%"
                               cy="50%"
-                              labelLine={false}
-                              outerRadius={80}
+                              labelLine={true}
+                              outerRadius={70}
                               fill="#8884d8"
                               dataKey="value"
-                              label={({ name, percent }) => `${nbsp(name)} (${(percent * 100).toFixed(0)}%)`}
+                              label={({ cx, cy, midAngle, outerRadius, name, percent }) => {
+                                const RADIAN = Math.PI / 180;
+                                const radius = outerRadius + 25;
+                                const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                                const labelText = `${nbsp(name)}\u00A0(${(percent * 100).toFixed(0)}%)`;
+                                return (
+                                  <text
+                                    x={x}
+                                    y={y}
+                                    fill="hsl(var(--foreground))"
+                                    textAnchor={x > cx ? 'start' : 'end'}
+                                    dominantBaseline="central"
+                                    fontSize={10}
+                                    style={{ whiteSpace: 'nowrap' }}
+                                  >
+                                    {labelText}
+                                  </text>
+                                );
+                              }}
                             >
                               {pieData.map((entry: any, index: number) => (
                                 <Cell key={`cell-${index}`} fill={getCategoryColor(entry.name)} />
