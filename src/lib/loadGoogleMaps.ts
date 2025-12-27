@@ -23,11 +23,13 @@ export async function loadGoogleMaps(): Promise<any> {
   // Démarrer le chargement
   loadingPromise = (async () => {
     try {
+      const lang = (localStorage.getItem('i18nextLng') || navigator.language || 'en').split('-')[0];
+
       const loader = new Loader({
         apiKey,
         libraries: ['places'],
-        language: 'fr',
-        region: 'FR'
+        language: lang,
+        // IMPORTANT: no region/country bias here (worldwide)
       });
 
       const g = await loader.load();

@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { loadGooglePlaces } from '@/lib/loadGooglePlaces';
+import { supabase } from '@/integrations/supabase/client';
 
+function getI18nLang(): string {
+  const raw = (localStorage.getItem('i18nextLng') || navigator.language || 'en').trim();
+  return raw.split('-')[0] || 'en';
+}
 function mapPlacesStatus(status: string, errorMessage?: string): string | null {
   const g = (window as any).google;
   if (!g?.maps?.places) return 'Google Places non chargé';
@@ -24,9 +29,11 @@ export function useEstablishmentSearch() {
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rawStatus, setRawStatus] = useState<string | null>(null);
   const [results, setResults] = useState<any[]>([]);
   const sessionRef = useRef<any>(null);
   const debounceRef = useRef<number | null>(null);
+  const fallbackSessionRef = useRef<string>(Math.random().toString(36).slice(2) + Date.now().toString(36));
 
   useEffect(() => {
     if (q.trim().length < 2) {
@@ -58,9 +65,50 @@ export function useEstablishmentSearch() {
             types: ['establishment'],
             sessionToken: sessionRef.current
           },
-          (predictions: any, status: string) => {
+          async (predictions: any, status: string) => {
             setLoading(false);
-            
+            setRawStatus(status);
+
+            const g = (window as any).google;
+            const ok = status === g.maps.places.PlacesServiceStatus.OK;
+            const zero = status === g.maps.places.PlacesServiceStatus.ZERO_RESULTS;
+
+            // Log raw status so we can debug instantly
+            if (!ok && !zero) {
+              console.error('[Places] getPlacePredictions error', { status });
+            }
+
+            // If empty predictions, run a robust fallback via edge function (which itself falls back to Text Search)
+            const shouldFallback = zero || (ok && (!predictions || predictions.length === 0));
+            if (shouldFallback) {
+              try {
+                const lang = getI18nLang();
+                const { data, error: fnError } = await supabase.functions.invoke('autocomplete-establishments', {
+                  body: { input: q, sessionToken: fallbackSessionRef.current, lang }
+                });
+
+                if (fnError) throw fnError;
+
+                const suggestions = (data as any)?.suggestions ?? [];
+                const mapped = suggestions.map((s: any) => ({
+                  place_id: s.place_id,
+                  description: s.description,
+                  structured_formatting: s.structured ?? s.structured_formatting,
+                  __source: s.__source ?? 'fallback'
+                }));
+
+                setError(null);
+                setResults(mapped);
+                return;
+              } catch (e: any) {
+                console.error('[Places] fallback autocomplete-establishments failed', e);
+                // No fallback available -> show empty results but keep dropdown logic in UI
+                setError(null);
+                setResults([]);
+                return;
+              }
+            }
+
             const err = mapPlacesStatus(status);
             if (err) {
               setError(err);
@@ -87,7 +135,11 @@ export function useEstablishmentSearch() {
     setQ, 
     results, 
     loading, 
-    error, 
-    resetSession: () => { sessionRef.current = null; } 
+    error,
+    rawStatus,
+    resetSession: () => { 
+      sessionRef.current = null;
+      fallbackSessionRef.current = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    } 
   };
 }
