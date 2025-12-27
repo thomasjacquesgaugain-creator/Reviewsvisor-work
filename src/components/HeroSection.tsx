@@ -35,7 +35,7 @@ export const HeroSection = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative">
       {/* Background with organic shapes */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-purple-100">
         <div className="absolute top-20 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full blur-3xl opacity-30"></div>
@@ -82,7 +82,7 @@ export const HeroSection = () => {
 
             {/* Dropdown menu */}
             {menuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-[9999] overflow-visible">
                 {/* Se connecter */}
                 <button
                   onClick={() => {
