@@ -1,5 +1,6 @@
 import { AnalyseDashboard } from "@/components/AnalyseDashboard";
 import { useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,9 +18,11 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { getRatingEvolution, formatRegistrationDate, Granularity } from "@/utils/ratingEvolution";
 import { validateReponse } from "@/lib/reponses";
 import { generatePdfReport } from "@/utils/generatePdfReport";
+import { fr, enUS, it, es, pt, Locale } from "date-fns/locale";
 
 
 const Dashboard = () => {
+  const { t, i18n } = useTranslation();
   const [searchParams] = useSearchParams();
   const etablissementId = searchParams.get('etablissementId');
   const {
@@ -31,6 +34,12 @@ const Dashboard = () => {
   const {
     selectedEstablishment
   } = useEstablishmentStore();
+
+  // Helper to get date-fns locale based on current language
+  const getDateLocale = (): Locale => {
+    const locales: Record<string, Locale> = { fr, en: enUS, it, es, pt };
+    return locales[i18n.language] || fr;
+  };
   const [showAvis, setShowAvis] = useState(false);
   const [showPlateformes, setShowPlateformes] = useState(false);
   const [showCourbeNote, setShowCourbeNote] = useState(false);
