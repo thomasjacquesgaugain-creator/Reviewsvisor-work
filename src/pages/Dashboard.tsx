@@ -1357,12 +1357,25 @@ const Dashboard = () => {
                           <BarChart data={pieData} margin={{ top: 20, right: 20, left: 0, bottom: 40 }}>
                             <XAxis 
                               dataKey="name" 
-                              tick={{ fontSize: 10 }} 
                               interval={0}
-                              angle={-20}
-                              textAnchor="end"
                               height={50}
-                              tickFormatter={(v) => nbsp(String(v))}
+                              tick={(props: any) => {
+                                const { x, y, payload } = props;
+                                const value = nbsp(String(payload?.value ?? ""));
+                                return (
+                                  <text
+                                    x={x}
+                                    y={y}
+                                    dy={16}
+                                    textAnchor="middle"
+                                    fill="#6b7280"
+                                    fontSize={9}
+                                    style={{ pointerEvents: "none" }}
+                                  >
+                                    {value}
+                                  </text>
+                                );
+                              }}
                             />
                             <YAxis hide />
                             <Tooltip 
