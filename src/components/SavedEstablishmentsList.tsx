@@ -45,11 +45,6 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
     [i18n.language]
   );
 
-  const planI18nKey = useMemo(() => {
-    if (activePlanId === "pro-flexible") return "pricing.plans.proFlexible";
-    return "pricing.plans.proEngagement";
-  }, []);
-
   // Détermine le plan actif de l'utilisateur basé sur le price_id
   const activePlan = useMemo(() => {
     if (!subscription.subscribed || !subscription.price_id) {
