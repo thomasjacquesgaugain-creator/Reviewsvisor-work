@@ -1281,7 +1281,7 @@ const Dashboard = () => {
                   );
                 })()}
               </div>
-              <p className="text-sm text-gray-500 mt-4 mb-2">Les barres représentent le nombre d'occurrences, la ligne le pourcentage cumulé</p>
+              <p className="text-sm text-gray-500 mt-4 mb-1">Les barres représentent le nombre d'occurrences, la ligne le pourcentage cumulé</p>
               
               {/* Camembert + Barres - Répartition des problèmes */}
               <div className="mt-6">
