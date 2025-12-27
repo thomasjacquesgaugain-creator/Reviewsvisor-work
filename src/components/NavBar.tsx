@@ -1,8 +1,10 @@
 import { NavLink, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
 import { UserRound } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function NavBar() {
+  const { t } = useTranslation();
   const location = useLocation();
   const { user, displayName, signOut } = useAuth();
 
@@ -38,15 +40,15 @@ export default function NavBar() {
         </div>
 
         <NavLink to="/tableau-de-bord" className={getLinkClass("/tableau-de-bord")}>
-          🏠 Accueil
+          🏠 {t("nav.home")}
         </NavLink>
 
         <NavLink to="/dashboard" className={getLinkClass("/dashboard")}>
-          📈 Dashboard
+          📈 {t("nav.dashboard")}
         </NavLink>
 
         <NavLink to="/etablissement" className={getLinkClass("/etablissement")}>
-          🏢 Établissement
+          🏢 {t("nav.establishment")}
         </NavLink>
       </div>
 
@@ -71,7 +73,7 @@ export default function NavBar() {
         </Link>
 
         <button onClick={handleLogout} className={logoutStyle}>
-          Déconnexion
+          {t("auth.logout")}
         </button>
       </div>
     </nav>
