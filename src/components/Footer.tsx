@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { Mail, Shield, Cookie, FileText, HelpCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthProvider";
+import { useTranslation } from "react-i18next";
 
 export function Footer() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const reviewsvisorLink = user ? "/tableau-de-bord" : "/";
   
@@ -19,23 +21,23 @@ export function Footer() {
               <li>
                 <Link to="/aide" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
                   <HelpCircle className="h-4 w-4" />
-                  Aide
+                  {t("nav.help")}
                 </Link>
               </li>
               <li>
                 <Link to="/contact" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  Contact
+                  {t("nav.contact")}
                 </Link>
               </li>
               <li>
                 <Link to="/a-propos" className="text-white hover:underline hover:opacity-80 transition-all">
-                  À propos
+                  {t("nav.about")}
                 </Link>
               </li>
               <li>
                 <Link to="/fonctionnalites" className="text-white hover:underline hover:opacity-80 transition-all">
-                  Fonctionnalités
+                  {t("nav.features")}
                 </Link>
               </li>
             </ul>
@@ -43,16 +45,16 @@ export function Footer() {
 
           {/* Colonne 2 - Compte */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Compte</h3>
+            <h3 className="text-white font-bold text-lg mb-4">{t("nav.account")}</h3>
             <ul className="space-y-3">
               <li>
                 <Link to="/login" className="text-white hover:underline hover:opacity-80 transition-all">
-                  Se connecter
+                  {t("auth.login")}
                 </Link>
               </li>
               <li>
                 <Link to="/onboarding/signup" className="text-white hover:underline hover:opacity-80 transition-all">
-                  Créer un compte
+                  {t("auth.signup")}
                 </Link>
               </li>
             </ul>
@@ -60,29 +62,29 @@ export function Footer() {
 
           {/* Colonne 3 - Légal */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Légal</h3>
+            <h3 className="text-white font-bold text-lg mb-4">{t("footer.legal")}</h3>
             <ul className="space-y-3">
               <li>
                 <Link to="/mentions-legales" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  Mentions légales
+                  {t("footer.legalNotice")}
                 </Link>
               </li>
               <li>
                 <Link to="/conditions" className="text-white hover:underline hover:opacity-80 transition-all">
-                  Conditions d'utilisation
+                  {t("footer.termsOfUse")}
                 </Link>
               </li>
               <li>
                 <Link to="/confidentialite" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
                   <Shield className="h-4 w-4" />
-                  Politique de confidentialité
+                  {t("footer.privacyPolicy")}
                 </Link>
               </li>
               <li>
                 <Link to="/cookies" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
                   <Cookie className="h-4 w-4" />
-                  Cookies
+                  {t("footer.cookies")}
                 </Link>
               </li>
             </ul>
@@ -92,7 +94,7 @@ export function Footer() {
         {/* Séparateur */}
         <div className="border-t border-white/20 pt-8">
           <p className="text-center text-sm text-white">
-            © 2025 <span translate="no">Reviewsvisor</span>. Tous droits réservés.
+            © 2025 <span translate="no">Reviewsvisor</span>. {t("common.allRightsReserved")}.
           </p>
         </div>
       </div>

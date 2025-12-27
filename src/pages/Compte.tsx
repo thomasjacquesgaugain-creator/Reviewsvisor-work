@@ -4,13 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail, MapPin, Building2, User, Globe } from "lucide-react";
+import { Mail, MapPin, Building2, User, Globe, Check } from "lucide-react";
 import { toast } from "sonner";
 import { STORAGE_KEY, EVT_SAVED, EVT_ESTABLISHMENT_UPDATED } from "@/types/etablissement";
 import { supabase } from "@/integrations/supabase/client";
 import { EstablishmentSelector, EstablishmentOption } from "@/components/EstablishmentSelector";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/hooks/useLanguage";
+import { LANGUAGE_FLAGS, LANGUAGE_LABELS, SUPPORTED_LANGUAGES, SupportedLanguage } from "@/i18n/config";
 
 const Compte = () => {
+  const { t } = useTranslation();
+  const { lang, setLang } = useLanguage();
   const { user, displayName } = useAuth();
 
   // Selected establishment (from Supabase)
@@ -22,7 +27,6 @@ const Compte = () => {
   const [email, setEmail] = useState(user?.email || "");
   const [etablissement, setEtablissement] = useState("");
   const [adresse, setAdresse] = useState("");
-  const [language, setLanguage] = useState("fr");
 
   // Load current establishment from Supabase on mount (source de vérité = DB)
   useEffect(() => {
@@ -156,7 +160,7 @@ const Compte = () => {
     e.preventDefault();
 
     if (!user) {
-      toast.error("Vous devez être connecté pour modifier vos informations");
+      toast.error(t("account.mustBeLoggedIn"));
       return;
     }
 
@@ -164,7 +168,7 @@ const Compte = () => {
     const addr = adresse.trim();
 
     if (!etabName) {
-      toast.error("Veuillez renseigner le nom de l'établissement");
+      toast.error(t("account.fillEstablishmentName"));
       return;
     }
 
@@ -256,10 +260,10 @@ const Compte = () => {
         }
       }
 
-      toast.success("Informations mises à jour");
+      toast.success(t("account.updateSuccess"));
     } catch (err) {
       console.error("Erreur lors de la mise à jour du compte:", err);
-      toast.error("Impossible de mettre à jour vos informations");
+      toast.error(t("account.updateError"));
     }
   };
 
@@ -268,7 +272,7 @@ const Compte = () => {
       <div className="w-full max-w-4xl">
         {/* Header avec titre */}
         <h1 className="text-3xl font-semibold text-foreground mb-8">
-          Informations personnelles
+          {t("account.title")}
         </h1>
 
         {/* AVATAR + NOM + SÉLECTEUR ÉTABLISSEMENT */}
@@ -278,7 +282,7 @@ const Compte = () => {
               {initials || "??"}
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Compte</p>
+              <p className="text-sm font-medium text-muted-foreground">{t("nav.account")}</p>
               <p className="text-xl font-semibold text-foreground">{fullName || "Utilisateur"}</p>
               <p className="text-muted-foreground">{etablissement}</p>
             </div>
@@ -296,7 +300,7 @@ const Compte = () => {
             <div className="flex items-center gap-3">
               <User className="h-6 w-6 text-primary flex-shrink-0" />
               <div className="w-full">
-                <Label className="text-xs uppercase text-muted-foreground">Prénom</Label>
+                <Label className="text-xs uppercase text-muted-foreground">{t("account.firstName")}</Label>
                 <Input
                   type="text"
                   value={firstName}
@@ -310,7 +314,7 @@ const Compte = () => {
             <div className="flex items-center gap-3">
               <User className="h-6 w-6 text-primary flex-shrink-0" />
               <div className="w-full">
-                <Label className="text-xs uppercase text-muted-foreground">Nom</Label>
+                <Label className="text-xs uppercase text-muted-foreground">{t("account.lastName")}</Label>
                 <Input
                   type="text"
                   value={lastName}
@@ -324,7 +328,7 @@ const Compte = () => {
             <div className="flex items-center gap-3">
               <Mail className="h-6 w-6 text-primary flex-shrink-0" />
               <div className="w-full">
-                <Label className="text-xs uppercase text-muted-foreground">Email</Label>
+                <Label className="text-xs uppercase text-muted-foreground">{t("account.email")}</Label>
                 <Input
                   type="email"
                   value={email}
@@ -338,7 +342,7 @@ const Compte = () => {
             <div className="flex items-center gap-3">
               <MapPin className="h-6 w-6 text-primary flex-shrink-0" />
               <div className="w-full">
-                <Label className="text-xs uppercase text-muted-foreground">Adresse du restaurant</Label>
+                <Label className="text-xs uppercase text-muted-foreground">{t("account.establishmentAddress")}</Label>
                 <Input
                   type="text"
                   value={adresse}
@@ -352,7 +356,7 @@ const Compte = () => {
             <div className="flex items-center gap-3">
               <Building2 className="h-6 w-6 text-primary flex-shrink-0" />
               <div className="w-full">
-                <Label className="text-xs uppercase text-muted-foreground">Établissement</Label>
+                <Label className="text-xs uppercase text-muted-foreground">{t("account.establishment")}</Label>
                 <Input
                   type="text"
                   value={etablissement}
@@ -366,14 +370,19 @@ const Compte = () => {
             <div className="flex items-center gap-3">
               <Globe className="h-6 w-6 text-primary flex-shrink-0" />
               <div className="w-full">
-                <Label className="text-xs uppercase text-muted-foreground">Langue de l'interface</Label>
-                <Select value={language} onValueChange={setLanguage}>
+                <Label className="text-xs uppercase text-muted-foreground">{t("account.interfaceLanguage")}</Label>
+                <Select value={lang} onValueChange={(value) => setLang(value as SupportedLanguage)}>
                   <SelectTrigger className="mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="fr">🇫🇷 Français</SelectItem>
-                    <SelectItem value="en">🇬🇧 English</SelectItem>
+                  <SelectContent className="bg-white z-50">
+                    {SUPPORTED_LANGUAGES.map((code) => (
+                      <SelectItem key={code} value={code}>
+                        <span className="flex items-center gap-2">
+                          {LANGUAGE_FLAGS[code]} {LANGUAGE_LABELS[code]}
+                        </span>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -383,7 +392,7 @@ const Compte = () => {
 
           <div className="mt-8 flex justify-end">
             <Button type="submit">
-              Modifier mes informations
+              {t("account.updateInfo")}
             </Button>
           </div>
         </form>
