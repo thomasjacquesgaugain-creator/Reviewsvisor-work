@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { loadGooglePlaces } from "@/lib/loadGooglePlaces";
+import { useEstablishmentSearch } from "@/hooks/useEstablishmentSearch";
 import MonEtablissementCard from "@/components/MonEtablissementCard";
 import SaveEstablishmentButton from "@/components/SaveEstablishmentButton";
 import SavedEstablishmentsList from "@/components/SavedEstablishmentsList";
@@ -34,6 +35,16 @@ export default function EtablissementPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [placesError, setPlacesError] = useState<string | null>(null);
   const currentEstablishment = useCurrentEstablishment();
+
+  const {
+    q: placesQuery,
+    setQ: setPlacesQuery,
+    results: placesResults,
+    loading: placesLoading,
+    error: placesSearchError,
+    rawStatus: placesRawStatus,
+    resetSession: resetPlacesSession,
+  } = useEstablishmentSearch();
 
   // Sync the local establishment card from the DB (source of truth)
   // IMPORTANT: préserver le rating local si la DB n'en a pas
@@ -143,10 +154,8 @@ export default function EtablissementPage() {
   const resetSearchAndClose = () => {
     setSelected(null);
     setShowSearch(false);
-    const input = document.getElementById('places-input') as HTMLInputElement;
-    if (input) {
-      input.value = '';
-    }
+    setPlacesQuery("");
+    resetPlacesSession();
   };
 
   // Ouvrir la barre de recherche
@@ -176,49 +185,16 @@ export default function EtablissementPage() {
     };
   }
 
-  // Initialize Google Places autocomplete
+  // Initialize Google Places (load script only). Suggestions are handled by our hook + fallback.
   useEffect(() => {
     const initPlaces = async () => {
-      const input = document.getElementById('places-input') as HTMLInputElement;
-      if (!input) return;
       try {
         setPlacesError(null);
-        console.log('🔍 Initialisation de l\'autocomplete Google Places...');
+        console.log('[Places] Loading Google Places JS...');
         await loadGooglePlaces();
-        const g = (window as any).google;
-        if (!g?.maps?.places) {
-          throw new Error('Google Maps Places API non disponible');
-        }
-        const autocomplete = new g.maps.places.Autocomplete(input, {
-          types: ['establishment'],
-          componentRestrictions: {
-            country: 'fr'
-          },
-          fields: ['place_id'] // Only get place_id from autocomplete
-        });
-        autocomplete.addListener('place_changed', async () => {
-          const autocompletePlace = autocomplete.getPlace();
-          if (!autocompletePlace || !autocompletePlace.place_id) return;
-          try {
-            // Récupérer les détails complets via Places Details API
-            const placeDetails = await fetchPlaceDetails(autocompletePlace.place_id);
-
-            // Sérialiser les détails
-            const etab = serializePlace(placeDetails);
-
-            // UNIQUEMENT mettre à jour l'état local (pas de sauvegarde DB)
-            setSelected(etab);
-            toast.success(`${etab.name} ${t('establishment.selected')}`, {
-              description: t('establishment.clickSaveToAdd')
-            });
-          } catch (error: any) {
-            console.error('Erreur lors de la récupération des détails:', error);
-            toast.error(error?.message || t('establishment.unableToGetDetails'));
-          }
-        });
-        console.log('✅ Autocomplete initialisé avec succès');
+        console.log('[Places] Google Places JS loaded');
       } catch (error: any) {
-        console.error('❌ Erreur de chargement Google Places:', error);
+        console.error('[Places] Failed to load Google Places JS:', error);
         let errorMsg = t('establishment.googleMapsError') + ' ';
         if (error?.message?.includes('manquante')) {
           errorMsg += t('establishment.missingApiKey');
@@ -230,8 +206,19 @@ export default function EtablissementPage() {
         setPlacesError(errorMsg);
       }
     };
+
     initPlaces();
   }, [t]);
+
+  // Visible error handling for debugging
+  useEffect(() => {
+    if (!placesSearchError) return;
+
+    // If hook exposes a raw status, show it; otherwise show the message.
+    const msg = placesRawStatus ? `Google Places error: ${placesRawStatus}` : `Google Places error: ${placesSearchError}`;
+    console.error('[Places] Search error', { rawStatus: placesRawStatus, message: placesSearchError });
+    toast.error(msg);
+  }, [placesSearchError, placesRawStatus]);
 
   // Handle import button click and analysis button click and ESC key
   useEffect(() => {
@@ -293,7 +280,14 @@ export default function EtablissementPage() {
             
             <div className="space-y-2">
               <div className="relative">
-                <input id="places-input" className="w-full border border-border rounded-lg px-3 py-2 pr-24 focus:outline-none focus:ring-2 focus:ring-primary" placeholder={t('establishment.searchPlaceholder')} />
+                <input
+                  id="places-input"
+                  className="w-full border border-border rounded-lg px-3 py-2 pr-24 focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder={t('establishment.searchPlaceholder')}
+                  value={placesQuery}
+                  onChange={(e) => setPlacesQuery(e.target.value)}
+                  autoComplete="off"
+                />
                 <button
                   type="button"
                   onClick={resetSearchAndClose}
@@ -301,20 +295,63 @@ export default function EtablissementPage() {
                 >
                   {t('establishment.cancelSearch')}
                 </button>
+
+                {/* Suggestions dropdown (never completely empty: shows fallback + no-results item) */}
+                {(placesQuery.trim().length >= 2) && (
+                  <div className="absolute left-0 right-0 top-full z-30 mt-1 rounded-lg border border-border bg-popover shadow-lg overflow-hidden">
+                    {placesLoading ? (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">{t('common.loading')}</div>
+                    ) : placesResults.length > 0 ? (
+                      placesResults.map((p: any) => (
+                        <button
+                          key={p.place_id}
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const placeDetails = await fetchPlaceDetails(p.place_id);
+                              const etab = serializePlace(placeDetails);
+                              setSelected(etab);
+                              setPlacesQuery([etab.name, etab.address].filter(Boolean).join(' — '));
+                              resetPlacesSession();
+                              toast.success(`${etab.name} ${t('establishment.selected')}`, {
+                                description: t('establishment.clickSaveToAdd')
+                              });
+                            } catch (error: any) {
+                              console.error('[Places] Details error:', error);
+                              toast.error(error?.message || t('establishment.unableToGetDetails'));
+                            }
+                          }}
+                          className="w-full text-left px-3 py-2 hover:bg-accent"
+                        >
+                          <div className="text-sm font-medium text-foreground">
+                            {p.structured_formatting?.main_text || p.structured?.main_text || p.description}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {p.structured_formatting?.secondary_text || p.structured?.secondary_text || ''}
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">{t('common.noResults')}</div>
+                    )}
+                  </div>
+                )}
               </div>
-              
-              {placesError && <div className="text-sm text-destructive">
-                  {placesError}
-                </div>}
-              
+
+              {placesError && (
+                <div className="text-sm text-destructive">{placesError}</div>
+              )}
+
               <div className="text-xs text-muted-foreground">
                 {t('common.poweredBy')} Google
               </div>
-              
-              {selected && <div className="inline-flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
+
+              {selected && (
+                <div className="inline-flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
                   <span>✅ {t('common.selected')} :</span>
                   <strong>{selected.name}</strong>
-                </div>}
+                </div>
+              )}
             </div>
             
             <SaveEstablishmentButton selected={selected} onSaveSuccess={resetSearchAndClose} />
