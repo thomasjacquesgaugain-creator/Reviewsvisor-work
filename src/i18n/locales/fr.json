@@ -32,7 +32,39 @@
     "refresh": "Actualiser",
     "language": "Langue",
     "perMonth": "/ mois",
-    "allRightsReserved": "Tous droits réservés"
+    "perYear": "/ an",
+    "allRightsReserved": "Tous droits réservés",
+    "poweredBy": "Propulsé par",
+    "selected": "Sélectionné",
+    "add": "Ajouter",
+    "remove": "Supprimer",
+    "view": "Voir",
+    "details": "Détails",
+    "actions": "Actions",
+    "status": "Statut",
+    "date": "Date",
+    "name": "Nom",
+    "description": "Description",
+    "submit": "Soumettre",
+    "reset": "Réinitialiser",
+    "tryAgain": "Réessayer",
+    "continue": "Continuer",
+    "skip": "Ignorer",
+    "finish": "Terminer",
+    "start": "Commencer",
+    "stop": "Arrêter",
+    "pause": "Pause",
+    "resume": "Reprendre",
+    "pending": "En attente",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "show": "Afficher",
+    "hide": "Masquer",
+    "more": "Plus",
+    "less": "Moins",
+    "redirecting": "Redirection..."
   },
   "auth": {
     "login": "Se connecter",
@@ -51,6 +83,9 @@
     "lastNamePlaceholder": "Votre nom",
     "forgotPassword": "Mot de passe oublié ?",
     "resetPassword": "Réinitialiser le mot de passe",
+    "sendResetLink": "Envoyer le lien",
+    "resetEmailSent": "Email envoyé",
+    "resetEmailSentDesc": "Consultez votre boîte mail pour réinitialiser votre mot de passe.",
     "noAccount": "Pas encore de compte ?",
     "hasAccount": "Déjà un compte ?",
     "loginSuccess": "Connexion réussie",
@@ -67,7 +102,10 @@
     "startAnalyzing": "Commencez à analyser vos avis clients",
     "accessAnalytics": "Accédez à vos analyses d'avis clients",
     "loggingIn": "Connexion...",
-    "signingUp": "Inscription..."
+    "signingUp": "Inscription...",
+    "enterEmail": "Entrez votre email",
+    "enterEmailDesc": "Nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+    "backToLogin": "Retour à la connexion"
   },
   "nav": {
     "home": "Accueil",
@@ -99,23 +137,30 @@
     "startNow": "Commencer maintenant",
     "haveAccount": "J'ai déjà un compte",
     "card1Title": "Centralisation & Analyse Essentielle",
-    "card1Desc1": "Un outil",
-    "card1Desc2": "une centralisation",
-    "card1Desc3": "pour votre établissement qui transforme vos",
-    "card1Desc4": "retours en conception",
-    "card1Desc5": "Avec Reviewsvisor, vos retours clients deviennent une véritable",
-    "card1Desc6": "source de croissance",
+    "card1Desc": "Un outil, une centralisation pour votre établissement qui transforme vos retours en conception. Avec Reviewsvisor, vos retours clients deviennent une véritable source de croissance.",
     "card2Title": "Pourquoi les avis comptent vraiment",
-    "card2Desc1": "Parce qu'un avis n'est pas qu'un commentaire",
-    "card2Stat1": "des clients consultent les avis avant de choisir un établissement.",
-    "card2Stat2": "hésitent à acheter auprès d'un établissement avec des avis négatifs.",
+    "card2Desc": "Parce qu'un avis n'est pas qu'un commentaire",
+    "card2Stat1": "94% des clients consultent les avis avant de choisir un établissement.",
+    "card2Stat2": "86% hésitent à acheter auprès d'un établissement avec des avis négatifs.",
     "card3Title": "Décisions Basées sur Vos Données",
-    "card3Desc1": "Nous croyons que chaque avis contient",
-    "card3Desc2": "une opportunité d'évolution",
-    "card3Desc3": "et que des données bien analysées deviennent",
-    "card3Desc4": "un véritable moteur de croissance",
-    "card3Desc5": "Prenez des",
-    "card3Desc6": "décisions stratégiques basées sur vos propres données"
+    "card3Desc": "Nous croyons que chaque avis contient une opportunité d'évolution – et que des données bien analysées deviennent un véritable moteur de croissance. Prenez des décisions stratégiques basées sur vos propres données."
+  },
+  "why": {
+    "title": "Pourquoi Reviewsvisor ?",
+    "subtitle": "Transformez vos avis clients en actions concrètes",
+    "feature1Title": "Analyse IA Avancée",
+    "feature1Desc": "Notre intelligence artificielle analyse automatiquement vos avis pour en extraire les insights clés.",
+    "feature2Title": "Réponses Automatiques",
+    "feature2Desc": "Générez des réponses personnalisées et professionnelles en un clic.",
+    "feature3Title": "Tableaux de Bord",
+    "feature3Desc": "Visualisez l'évolution de votre réputation avec des graphiques intuitifs.",
+    "feature4Title": "Multi-Plateformes",
+    "feature4Desc": "Centralisez les avis de Google, TripAdvisor, et autres plateformes."
+  },
+  "cta": {
+    "title": "Prêt à transformer vos avis ?",
+    "subtitle": "Rejoignez des milliers d'établissements qui ont déjà amélioré leur réputation.",
+    "button": "Commencer gratuitement"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -178,7 +223,24 @@
     "allReviewsProcessed": "Tous les avis ont été traités",
     "pendingReviews": "avis en attente",
     "barRepresentsProblems": "Les barres représentent les problèmes récurrents, la ligne le pourcentage cumulé des critiques",
-    "barRepresentsStrengths": "Les barres représentent les mentions positives, la ligne le pourcentage cumulé des forces"
+    "barRepresentsStrengths": "Les barres représentent les mentions positives, la ligne le pourcentage cumulé des forces",
+    "loadingData": "Chargement des données...",
+    "noData": "Aucune donnée disponible",
+    "generatingResponse": "Génération de la réponse...",
+    "responseGenerated": "Réponse générée",
+    "responseSaved": "Réponse sauvegardée",
+    "downloadingReport": "Téléchargement du rapport...",
+    "reportDownloaded": "Rapport téléchargé",
+    "analyzing": "Analyse en cours...",
+    "analysisComplete": "Analyse terminée",
+    "period": "Période",
+    "from": "Du",
+    "to": "Au",
+    "allTime": "Tout le temps",
+    "last7Days": "7 derniers jours",
+    "last30Days": "30 derniers jours",
+    "last90Days": "90 derniers jours",
+    "thisYear": "Cette année"
   },
   "charts": {
     "problems": {
@@ -202,7 +264,11 @@
       "largePortions": "Portions généreuses",
       "niceDecor": "Décor agréable",
       "goodLocation": "Bonne localisation"
-    }
+    },
+    "mentions": "mentions",
+    "cumulative": "Cumul",
+    "count": "Nombre",
+    "percentage": "Pourcentage"
   },
   "account": {
     "title": "Informations personnelles",
@@ -210,14 +276,23 @@
     "firstName": "Prénom",
     "lastName": "Nom",
     "email": "Email",
+    "phone": "Téléphone",
+    "company": "Entreprise",
     "establishment": "Établissement",
-    "establishmentAddress": "Adresse du restaurant",
+    "establishmentAddress": "Adresse de l'établissement",
     "interfaceLanguage": "Langue de l'interface",
     "updateInfo": "Modifier mes informations",
     "updateSuccess": "Informations mises à jour",
     "updateError": "Impossible de mettre à jour vos informations",
     "mustBeLoggedIn": "Vous devez être connecté pour modifier vos informations",
-    "fillEstablishmentName": "Veuillez renseigner le nom de l'établissement"
+    "fillEstablishmentName": "Veuillez renseigner le nom de l'établissement",
+    "changePassword": "Changer le mot de passe",
+    "currentPassword": "Mot de passe actuel",
+    "newPassword": "Nouveau mot de passe",
+    "confirmNewPassword": "Confirmer le nouveau mot de passe",
+    "passwordUpdated": "Mot de passe mis à jour",
+    "deleteAccount": "Supprimer mon compte",
+    "deleteAccountWarning": "Cette action est irréversible. Toutes vos données seront supprimées."
   },
   "subscription": {
     "title": "Abonnement",
@@ -235,30 +310,37 @@
     "cancel": "Annuler l'abonnement",
     "features": "Fonctionnalités incluses",
     "subscribe": "S'abonner",
-    "freeFeatures": [
-      "1 établissement",
-      "Analyse basique des avis",
-      "Rapport mensuel"
-    ],
-    "proFeatures": [
-      "3 établissements",
-      "Analyse avancée IA",
-      "Réponses automatiques",
-      "Rapports détaillés",
-      "Support prioritaire"
-    ],
-    "businessFeatures": [
-      "Établissements illimités",
-      "Toutes les fonctionnalités Pro",
-      "API access",
-      "Support dédié",
-      "Formation personnalisée"
-    ]
+    "subscribeNow": "S'abonner maintenant",
+    "tryFree": "Essayer gratuitement",
+    "trialDays": "14 jours d'essai offerts",
+    "enjoyTrial": "Profiter des 14 jours offerts",
+    "popular": "Populaire",
+    "recommended": "Recommandé",
+    "securePayment": "Paiement sécurisé par Stripe • Annulation simple en ligne",
+    "manageBilling": "Gérer la facturation",
+    "billingHistory": "Historique de facturation",
+    "nextPayment": "Prochain paiement",
+    "cancelConfirm": "Êtes-vous sûr de vouloir annuler votre abonnement ?",
+    "cancelSuccess": "Abonnement annulé",
+    "upgradeSuccess": "Abonnement amélioré",
+    "feature1Establishment": "1 établissement",
+    "feature3Establishments": "3 établissements",
+    "featureUnlimitedEstablishments": "Établissements illimités",
+    "featureBasicAnalysis": "Analyse basique des avis",
+    "featureAdvancedAIAnalysis": "Analyse avancée IA",
+    "featureAutoResponses": "Réponses automatiques",
+    "featureDetailedReports": "Rapports détaillés",
+    "featurePrioritySupport": "Support prioritaire",
+    "featureAPIAccess": "Accès API",
+    "featureDedicatedSupport": "Support dédié",
+    "featureCustomTraining": "Formation personnalisée",
+    "featureMonthlyReport": "Rapport mensuel"
   },
   "establishment": {
     "title": "Mon établissement",
+    "myEstablishment": "Mon Établissement",
     "search": "Rechercher un établissement",
-    "searchPlaceholder": "Nom ou adresse de l'établissement",
+    "searchPlaceholder": "Rechercher un établissement…",
     "name": "Nom de l'établissement",
     "address": "Adresse",
     "phone": "Téléphone",
@@ -272,7 +354,40 @@
     "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cet établissement ?",
     "deleted": "Établissement supprimé",
     "noEstablishments": "Aucun établissement enregistré",
-    "addFirst": "Ajoutez votre premier établissement"
+    "addFirst": "Ajoutez votre premier établissement",
+    "addNew": "Ajouter un établissement",
+    "savedEstablishments": "Établissements enregistrés",
+    "selectToManage": "Sélectionnez un établissement pour le gérer",
+    "importReviews": "Importer des avis",
+    "analyzeEstablishment": "Analyser l'établissement",
+    "viewDetails": "Voir les détails",
+    "setAsActive": "Définir comme actif",
+    "isActive": "Établissement actif",
+    "noRating": "Pas de note",
+    "reviews": "avis",
+    "cancelSearch": "Annuler"
+  },
+  "import": {
+    "title": "Importer des avis",
+    "selectSource": "Sélectionner la source",
+    "google": "Google",
+    "tripadvisor": "TripAdvisor",
+    "yelp": "Yelp",
+    "csv": "Fichier CSV",
+    "paste": "Coller du texte",
+    "manual": "Ajout manuel",
+    "uploading": "Téléchargement...",
+    "uploaded": "Fichier téléchargé",
+    "processing": "Traitement en cours...",
+    "processed": "Traitement terminé",
+    "importSuccess": "Import réussi",
+    "importError": "Erreur lors de l'import",
+    "reviewsImported": "avis importés",
+    "dragDrop": "Glissez-déposez un fichier ou cliquez pour sélectionner",
+    "supportedFormats": "Formats supportés : CSV, JSON",
+    "pasteInstructions": "Collez vos avis ci-dessous (un avis par ligne)",
+    "analyzeFile": "Analyser le fichier",
+    "close": "Fermer"
   },
   "errors": {
     "generic": "Une erreur inattendue s'est produite.",
@@ -285,20 +400,32 @@
     "required": "Ce champ est requis",
     "invalidEmail": "Email invalide",
     "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères",
-    "tryAgain": "Veuillez réessayer"
+    "tryAgain": "Veuillez réessayer",
+    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+    "rateLimited": "Trop de tentatives. Veuillez réessayer plus tard.",
+    "loadingFailed": "Échec du chargement",
+    "saveFailed": "Échec de l'enregistrement",
+    "deleteFailed": "Échec de la suppression"
   },
   "toasts": {
     "saved": "Enregistré avec succès",
     "deleted": "Supprimé avec succès",
     "copied": "Copié dans le presse-papiers",
     "error": "Une erreur s'est produite",
-    "loading": "Chargement en cours..."
+    "loading": "Chargement en cours...",
+    "updated": "Mis à jour avec succès",
+    "created": "Créé avec succès",
+    "imported": "Importé avec succès",
+    "exported": "Exporté avec succès",
+    "sent": "Envoyé avec succès"
   },
   "modals": {
     "confirmDelete": "Confirmer la suppression",
     "confirmDeleteDesc": "Cette action est irréversible.",
     "confirmAction": "Confirmer l'action",
-    "areYouSure": "Êtes-vous sûr ?"
+    "areYouSure": "Êtes-vous sûr ?",
+    "deleteButton": "Supprimer",
+    "cancelButton": "Annuler"
   },
   "dates": {
     "today": "Aujourd'hui",
@@ -306,6 +433,31 @@
     "thisWeek": "Cette semaine",
     "thisMonth": "Ce mois",
     "thisYear": "Cette année",
-    "lastDays": "{{count}} derniers jours"
+    "lastDays": "{{count}} derniers jours",
+    "daysAgo": "il y a {{count}} jours",
+    "hoursAgo": "il y a {{count}} heures",
+    "minutesAgo": "il y a {{count}} minutes",
+    "justNow": "à l'instant"
+  },
+  "analysis": {
+    "title": "Dashboard d'analyse",
+    "selectEstablishment": "Sélectionnez un établissement puis cliquez sur \"Analyser\" pour voir les résultats d'analyse.",
+    "noAnalysis": "Aucune analyse disponible pour cet établissement. Cliquez sur \"Analyser\" dans la carte de l'établissement pour commencer.",
+    "summary": "Résumé",
+    "averageScore": "Note moyenne",
+    "positivePercent": "% positifs",
+    "negativePercent": "% négatifs",
+    "sentiment": "Sentiment",
+    "keyThemes": "Thèmes clés",
+    "trends": "Tendances",
+    "praisesTop3": "Éloges (Top 3)",
+    "irritantsTop3": "Irritants (Top 3)",
+    "recommendationsList": "Recommandations"
+  },
+  "pricing": {
+    "badge": {
+      "engagement": "ENGAGEMENT",
+      "flexible": "FLEXIBLE"
+    }
   }
 }
