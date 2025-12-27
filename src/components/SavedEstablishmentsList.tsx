@@ -555,5 +555,3 @@ export default function SavedEstablishmentsList({ onAddClick }: SavedEstablishme
     </>
   );
 }
-
-}
