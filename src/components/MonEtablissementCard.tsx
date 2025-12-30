@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from "react";
-import { useTranslation } from "react-i18next";
 import { Etab, EVT_SAVED, EVT_LIST_UPDATED } from "../types/etablissement";
 import { Trash2, BarChart3, Download, ExternalLink, Star, Phone, Globe, MapPin, Building2, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,6 @@ interface MonEtablissementCardProps {
 }
 
 export default function MonEtablissementCard({ onAddClick }: MonEtablissementCardProps) {
-  const { t } = useTranslation();
   const [etab, setEtab] = useState<Etab | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -131,7 +129,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
       window.dispatchEvent(new CustomEvent(EVT_LIST_UPDATED));
 
       // 5. Toast rouge en bas à droite (même système que import)
-      sonnerToast.error(t("establishment.deletedSuccess"), {
+      sonnerToast.error("L'établissement et tous ses avis ont été supprimés.", {
         duration: 5000,
       });
 
@@ -141,7 +139,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
       console.error('Erreur lors de la suppression de l\'établissement:', error);
       
       // Toast d'erreur rouge en bas à droite
-      sonnerToast.error(t("establishment.deleteError"), {
+      sonnerToast.error("Impossible de supprimer l'établissement. Veuillez réessayer.", {
         duration: 5000,
       });
     } finally {
@@ -162,16 +160,16 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
       });
 
       if (result.ok) {
-        sonnerToast.success(t("establishment.reviewsAnalyzedSuccess", { count: result.counts?.collected || 0 }), {
+        sonnerToast.success(`${result.counts?.collected || 0} avis analysés avec succès`, {
           duration: 5000,
         });
       } else {
-        sonnerToast.error(t("establishment.analysisError"), {
+        sonnerToast.error("Erreur lors de l'analyse", {
           duration: 5000,
         });
       }
     } catch (error) {
-      sonnerToast.error(t("errors.unexpected"), {
+      sonnerToast.error("Une erreur inattendue s'est produite", {
         duration: 5000,
       });
     } finally {
@@ -183,7 +181,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
     return (
       <div className="p-6 flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">{t("common.loading")}</span>
+        <span className="ml-2 text-muted-foreground">Chargement...</span>
       </div>
     );
   }
@@ -205,7 +203,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
             <Plus className="w-5 h-5 text-primary" />
           </div>
-          <span className="text-xs text-muted-foreground font-medium">{t("common.add")}</span>
+          <span className="text-xs text-muted-foreground font-medium">Ajouter</span>
         </button>
       </div>
     );
@@ -217,13 +215,13 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
       <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-10">
         {/* Nom */}
         <div className="space-y-1">
-          <p className="text-sm text-muted-foreground font-medium">{t("establishment.name")}</p>
+          <p className="text-sm text-muted-foreground font-medium">Nom</p>
           <p className="text-base font-medium text-foreground">{etab.name}</p>
         </div>
 
         {/* Note Google */}
         <div className="space-y-1">
-          <p className="text-sm text-muted-foreground font-medium">{t("establishment.googleRating")}</p>
+          <p className="text-sm text-muted-foreground font-medium">Note Google</p>
           {etab.rating ? (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 font-medium text-sm">
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
@@ -238,7 +236,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
         <div className="space-y-1 md:col-span-2">
           <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5" />
-            {t("establishment.address")}
+            Adresse
           </p>
           <p className="text-base font-medium text-foreground">{etab.address}</p>
         </div>
@@ -247,7 +245,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
             <Phone className="w-3.5 h-3.5" />
-            {t("establishment.phone")}
+            Téléphone
           </p>
           <p className="text-base font-medium text-foreground">{etab.phone || "—"}</p>
         </div>
@@ -256,7 +254,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
             <Globe className="w-3.5 h-3.5" />
-            {t("establishment.website")}
+            Site web
           </p>
           {etab.website ? (
             <a 
@@ -265,7 +263,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
               rel="noopener noreferrer"
               className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
             >
-              {t("common.open")}
+              Ouvrir
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           ) : (
@@ -283,7 +281,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
               rel="noopener noreferrer"
               className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
             >
-              {t("establishment.viewListing")}
+              Voir la fiche
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           ) : etab.address ? (
@@ -293,7 +291,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
               rel="noopener noreferrer"
               className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
             >
-              {t("establishment.viewListing")}
+              Voir la fiche
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           ) : (
@@ -318,7 +316,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
             variant="ghost"
             size="sm"
             className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto"
-            title={t("import.importReviews")}
+            title="Importer vos avis"
             data-testid="btn-import-avis"
           >
             <Download className="w-4 h-4" />
@@ -334,7 +332,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
             onClick={handleAnalyze}
             disabled={isAnalyzing}
             className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto disabled:opacity-50"
-            title={t("establishment.reviewsVisual")}
+            title="Visuel des avis"
             data-testid="btn-analyser-etablissement"
           >
             <BarChart3 className={`w-4 h-4 ${isAnalyzing ? 'animate-spin' : ''}`} />
@@ -347,7 +345,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
             onClick={handleDeleteEstablishment}
             disabled={isDeleting}
             className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto disabled:opacity-50"
-            title={t("establishment.deleteEstablishmentAndReviews")}
+            title="Supprimer l'établissement et tous ses avis"
           >
             <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
           </Button>

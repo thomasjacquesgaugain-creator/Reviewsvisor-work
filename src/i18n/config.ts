@@ -50,19 +50,6 @@ i18n
       lookupLocalStorage: 'rv_lang',
       caches: ['localStorage'],
     },
-    // Détection des clés manquantes en dev
-    saveMissing: import.meta.env.DEV,
-    missingKeyHandler: (lngs, ns, key, fallbackValue) => {
-      if (import.meta.env.DEV) {
-        console.warn(`⚠️ MISSING i18n KEY: [${ns}] ${key} (lang: ${lngs.join(', ')})`);
-      }
-    },
   });
-
-// Mettre à jour html lang quand la langue change
-i18n.on('languageChanged', (lng) => {
-  document.documentElement.lang = lng;
-  localStorage.setItem('rv_lang', lng);
-});
 
 export default i18n;

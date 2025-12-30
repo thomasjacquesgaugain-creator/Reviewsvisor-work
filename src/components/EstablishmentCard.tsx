@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Building, MapPin, Phone, Globe, Star, Users, ExternalLink, LineChart, Loader2 } from "lucide-react";
@@ -17,7 +16,6 @@ interface EstablishmentCardProps {
 }
 
 export default function EstablishmentCard({ establishment, isLoading }: EstablishmentCardProps) {
-  const { t, i18n } = useTranslation();
   const [placeDetails, setPlaceDetails] = useState<PlaceDetailsResponse | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [analyzingEstablishment, setAnalyzingEstablishment] = useState(false);
@@ -50,8 +48,8 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
 
       if (data?.empty) {
         toast({
-          title: t("establishment.noReviews"),
-          description: data.message || t("establishment.noReviewsToAnalyze"),
+          title: "Aucun avis",
+          description: data.message || "Aucun avis à analyser pour cet établissement.",
           variant: "default"
         });
         return;
@@ -59,8 +57,8 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
 
       if (data?.analyse) {
         toast({
-          title: t("establishment.analysisComplete"),
-          description: t("establishment.analysisSuccess"),
+          title: "Analyse terminée",
+          description: "L'analyse de l'établissement a été réalisée avec succès.",
           variant: "default"
         });
         navigate(`/dashboard?etablissementId=${establishment.place_id}`);
@@ -68,8 +66,8 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
     } catch (error) {
       console.error('Error analyzing establishment:', error);
       toast({
-        title: t("errors.error"),
-        description: t("establishment.analysisError"),
+        title: "Erreur",
+        description: "Échec de l'analyse de l'établissement.",
         variant: "destructive"
       });
     } finally {
@@ -101,12 +99,12 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building className="w-5 h-5 text-muted-foreground" />
-            {t("establishment.myEstablishment")}
+            Mon Établissement
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            {t("establishment.noEstablishmentSelected")}
+            Aucun établissement sélectionné. Utilisez l'autocomplétion ci-dessus pour en choisir un.
           </p>
         </CardContent>
       </Card>
@@ -117,15 +115,15 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
     if (!types || !Array.isArray(types) || types.length === 0) return null;
     
     const typeTranslations: Record<string, string> = {
-      'restaurant': t("categories.restaurant"),
-      'food': t("categories.restaurant"),
-      'establishment': t("categories.establishment"),
-      'point_of_interest': t("categories.pointOfInterest"),
-      'store': t("categories.store"),
-      'cafe': t("categories.cafe"),
-      'bar': t("categories.bar"),
-      'lodging': t("categories.lodging"),
-      'tourist_attraction': t("categories.touristAttraction")
+      'restaurant': 'Restaurant',
+      'food': 'Restaurant',
+      'establishment': 'Établissement',
+      'point_of_interest': 'Point d\'intérêt',
+      'store': 'Magasin',
+      'cafe': 'Café',
+      'bar': 'Bar',
+      'lodging': 'Hébergement',
+      'tourist_attraction': 'Attraction touristique'
     };
 
     const primaryType = types[0];
@@ -142,7 +140,7 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Building className="w-5 h-5 text-primary" />
-              {t("establishment.myEstablishment")}
+              Mon Établissement
             </div>
             <div className="flex items-center gap-2">
               {displayPhone && (
@@ -153,13 +151,13 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
                       size="sm"
                       className="h-8 w-8 p-0 rounded-xl"
                       onClick={() => window.location.href = `tel:${normalizePhoneNumber(displayPhone)}`}
-                      aria-label={t("establishment.call")}
+                      aria-label="Appeler"
                     >
                       <Phone className="w-4 h-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{t("establishment.call")}</p>
+                    <p>Appeler</p>
                   </TooltipContent>
                 </Tooltip>
               )}
@@ -171,13 +169,13 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
                       size="sm"
                       className="h-8 w-8 p-0 rounded-xl"
                       onClick={() => window.open(displayMapsUrl, '_blank', 'noopener,noreferrer')}
-                      aria-label={t("establishment.openInGoogleMaps")}
+                      aria-label="Ouvrir dans Google Maps"
                     >
                       <MapPin className="w-4 h-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{t("establishment.openInGoogleMaps")}</p>
+                    <p>Ouvrir dans Google Maps</p>
                   </TooltipContent>
                 </Tooltip>
               )}
@@ -189,7 +187,7 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
                     className="h-8 w-8 p-0 rounded-xl"
                     onClick={handleAnalyzeEstablishment}
                     disabled={analyzingEstablishment || !establishment.place_id}
-                    aria-label={t("establishment.analyzeThis")}
+                    aria-label="Analyser cet établissement"
                   >
                     {analyzingEstablishment ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -199,7 +197,7 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{t("establishment.analyzeThis")}</p>
+                  <p>Analyser cet établissement</p>
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -221,7 +219,7 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
           )}
 
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">{t("establishment.phone")} :</span>
+            <span className="text-sm font-medium">Téléphone :</span>
             <span className="text-sm">
               {displayPhone ? (
                 <a 
@@ -230,20 +228,20 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
                 >
                   {displayPhone}
                 </a>
-              ) : (loadingDetails ? t("common.loading") : "—")}
+              ) : (loadingDetails ? "Chargement..." : "—")}
             </span>
           </div>
 
           {establishment.website && (
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">{t("establishment.website")} :</span>
+              <span className="text-sm font-medium">Site web :</span>
               <a 
                 href={establishment.website}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-primary hover:underline flex items-center gap-1"
               >
-                {t("common.open")} <ExternalLink className="w-3 h-3" />
+                Ouvrir <ExternalLink className="w-3 h-3" />
               </a>
             </div>
           )}
@@ -258,9 +256,9 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
                   rel="noopener noreferrer"
                   className="text-primary hover:underline flex items-center gap-1"
                 >
-                  {t("common.open")} <ExternalLink className="w-3 h-3" />
+                  Ouvrir <ExternalLink className="w-3 h-3" />
                 </a>
-              ) : (loadingDetails ? t("common.loading") : "—")}
+              ) : (loadingDetails ? "Chargement..." : "—")}
             </span>
           </div>
 
@@ -274,7 +272,7 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
-                    {establishment.user_ratings_total} {t("common.reviews")}
+                    {establishment.user_ratings_total} avis
                   </span>
                 </div>
               )}
@@ -286,8 +284,8 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
               Place ID: {establishment.place_id}
             </p>
             <p className="text-xs text-muted-foreground">
-              {t("establishment.source")}: {establishment.source || 'Google'} • 
-              {t("establishment.addedOn")} {establishment.created_at ? new Date(establishment.created_at).toLocaleDateString(i18n.language) : t("common.unknownDate")}
+              Source: {establishment.source || 'Google'} • 
+              Ajouté le {establishment.created_at ? new Date(establishment.created_at).toLocaleDateString('fr-FR') : 'Date inconnue'}
             </p>
           </div>
         </CardContent>

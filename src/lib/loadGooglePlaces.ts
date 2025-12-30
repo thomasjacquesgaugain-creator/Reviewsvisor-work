@@ -14,17 +14,7 @@ export function loadGooglePlaces(): Promise<void> {
 
   loading = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-
-    const lang = (localStorage.getItem('i18nextLng') || navigator.language || 'en').split('-')[0];
-    const params = new URLSearchParams({
-      key,
-      libraries: 'places',
-      loading: 'async',
-      language: lang,
-    });
-
-    // IMPORTANT: no region/country bias here (worldwide)
-    script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&language=fr&region=FR&loading=async`;
     script.async = true;
     script.defer = true;
     script.onload = () => {

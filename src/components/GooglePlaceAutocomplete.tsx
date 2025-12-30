@@ -8,7 +8,6 @@ import { saveEstablishmentFromPlaceId } from '@/services/establishments';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 // Interface pour le résultat d'un lieu Google
 interface PlaceResult {
@@ -92,7 +91,6 @@ export default function GooglePlaceAutocomplete({
   const [services, setServices] = useState<any>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { i18n } = useTranslation();
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -154,54 +152,24 @@ export default function GooglePlaceAutocomplete({
     try {
       const request = {
         input: query,
+        componentRestrictions: { country: 'fr' },
+        language: 'fr',
         sessionToken: sessionToken,
-        // JS library only: keep establishment filtering, but no geo bias
         types: ['establishment']
       };
 
-      services.autocompleteService.getPlacePredictions(request, async (predictions: any[], status: any) => {
+      services.autocompleteService.getPlacePredictions(request, (predictions: any[], status: any) => {
         setIsLoading(false);
-
-        const g = (window as any).google;
-        const ok = status === g.maps.places.PlacesServiceStatus.OK;
-        const zero = status === g.maps.places.PlacesServiceStatus.ZERO_RESULTS;
-
-        // Log raw status for fast debugging
-        if (!ok && !zero) {
-          console.error('[Places] AutocompleteService error', { status });
-          toast({
-            title: `Google Places error: ${status}`,
-            description: 'AutocompleteService failed',
-            variant: 'destructive',
-            duration: 4000,
-          });
-          setSuggestions([]);
-          setShowSuggestions(false);
-          return;
-        }
-
-        if (ok && predictions?.length) {
+        
+        if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && predictions) {
           setSuggestions(predictions);
           setShowSuggestions(true);
           setSelectedIndex(-1);
-          return;
-        }
-
-        // ZERO_RESULTS or empty predictions -> fallback to edge function (which itself falls back to Text Search)
-        try {
-          const lang = (i18n.language || 'en').split('-')[0];
-          const { data, error } = await supabase.functions.invoke('autocomplete-establishments', {
-            body: { input: query, lang }
-          });
-
-          if (error) throw error;
-
-          const suggestions = (data as any)?.suggestions ?? [];
-          setSuggestions(suggestions);
-          setShowSuggestions(suggestions.length > 0);
-          setSelectedIndex(-1);
-        } catch (e) {
-          console.error('[Places] Fallback search failed', e);
+        } else if (status === (window as any).google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+          setSuggestions([]);
+          setShowSuggestions(false);
+        } else {
+          console.error('Erreur AutocompleteService:', status);
           setSuggestions([]);
           setShowSuggestions(false);
         }

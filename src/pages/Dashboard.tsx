@@ -1,6 +1,5 @@
 import { AnalyseDashboard } from "@/components/AnalyseDashboard";
 import { useSearchParams } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,11 +17,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { getRatingEvolution, formatRegistrationDate, Granularity } from "@/utils/ratingEvolution";
 import { validateReponse } from "@/lib/reponses";
 import { generatePdfReport } from "@/utils/generatePdfReport";
-import { fr, enUS, it, es, pt, Locale } from "date-fns/locale";
 
 
 const Dashboard = () => {
-  const { t, i18n } = useTranslation();
   const [searchParams] = useSearchParams();
   const etablissementId = searchParams.get('etablissementId');
   const {
@@ -34,12 +31,6 @@ const Dashboard = () => {
   const {
     selectedEstablishment
   } = useEstablishmentStore();
-
-  // Helper to get date-fns locale based on current language
-  const getDateLocale = (): Locale => {
-    const locales: Record<string, Locale> = { fr, en: enUS, it, es, pt };
-    return locales[i18n.language] || fr;
-  };
   const [showAvis, setShowAvis] = useState(false);
   const [showPlateformes, setShowPlateformes] = useState(false);
   const [showCourbeNote, setShowCourbeNote] = useState(false);
@@ -389,13 +380,13 @@ const Dashboard = () => {
   // Formatage de la date et de l'heure
   const formatDateTime = (date: Date) => {
     return {
-      date: date.toLocaleDateString(i18n.language, {
+      date: date.toLocaleDateString("fr-FR", {
         weekday: "long",
         year: "numeric",
         month: "long",
         day: "numeric"
       }),
-      time: date.toLocaleTimeString(i18n.language, {
+      time: date.toLocaleTimeString("fr-FR", {
         hour: "2-digit",
         minute: "2-digit"
       })
@@ -441,7 +432,7 @@ const Dashboard = () => {
     const count = strength.count || strength.mentions || 0;
     const percentage = totalAnalyzed > 0 ? count / totalAnalyzed * 100 : 0;
     return {
-      name: strength.theme || strength.strength || t('dashboard.strength') + ` ${index + 1}`,
+      name: strength.theme || strength.strength || `Point fort ${index + 1}`,
       count,
       percentage,
       cumulative: 0 // Will be calculated below
@@ -456,9 +447,9 @@ const Dashboard = () => {
   });
   // Formatter une date pour l'affichage
   const formatReviewDate = (dateStr: string | null) => {
-    if (!dateStr) return t('dashboard.unknownDate');
+    if (!dateStr) return 'Date inconnue';
     const date = new Date(dateStr);
-    return date.toLocaleDateString(i18n.language, { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
   // Calculer l'évolution de la note depuis l'enregistrement
@@ -490,7 +481,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-6 h-6 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">{t('dashboard.analysisDashboard')}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Dashboard d'analyse</h1>
             </div>
             {/* Bouton Télécharger le rapport */}
             {(selectedEtab || selectedEstablishment) && (
@@ -501,15 +492,15 @@ const Dashboard = () => {
                   
                   const currentEstab = selectedEtab || selectedEstablishment;
                   if (!currentEstab) {
-                    toast.error(t('common.error'), {
-                      description: t('dashboard.noEstablishmentSelected'),
+                    toast.error('Erreur', {
+                      description: 'Aucun établissement sélectionné.',
                     });
                     return;
                   }
 
                   if (!hasReviews || allReviewsForChart.length === 0) {
-                    toast.info(t('dashboard.noReportAvailable'), {
-                      description: t('dashboard.importReviewsForReport'),
+                    toast.info('Aucun rapport disponible', {
+                      description: 'Importez des avis pour générer un rapport.',
                     });
                     return;
                   }
@@ -535,28 +526,28 @@ const Dashboard = () => {
                     // Générer et télécharger le PDF
                     generatePdfReport(reportData);
 
-                    toast.success(t('dashboard.reportDownloaded'), {
-                      description: t('dashboard.reportDownloadedDesc'),
+                    toast.success('Rapport téléchargé', {
+                      description: 'Le rapport PDF a été généré avec succès.',
                     });
                   } catch (error) {
                     console.error('[Dashboard] ❌ Erreur génération PDF:', error);
-                    toast.error(t('common.error'), {
-                      description: t('dashboard.errorOccurred'),
+                    toast.error('Erreur', {
+                      description: 'Une erreur est survenue lors de la génération du rapport.',
                     });
                   } finally {
                     setIsDownloadingReport(false);
                   }
                 }}
               >
-              {isDownloadingReport ? (
+                {isDownloadingReport ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    {t('dashboard.generating')}
+                    Génération...
                   </>
                 ) : (
                   <>
                     <Download className="w-4 h-4" />
-                    {t('dashboard.downloadReport')}
+                    Télécharger le rapport
                   </>
                 )}
               </Button>
@@ -564,7 +555,7 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center gap-2 text-gray-600">
             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-            <span>{t('dashboard.analysisOf', { count: totalAnalyzed })}</span>
+            <span>Analyse de {totalAnalyzed} avis clients</span>
           </div>
         </div>
 
@@ -595,23 +586,23 @@ const Dashboard = () => {
                     {/* Flèche vers le bas en haut à droite de l'icône */}
                     <Popover open={showEstablishmentsDropdown} onOpenChange={setShowEstablishmentsDropdown}>
                       <PopoverTrigger asChild>
-                        <Button variant="ghost" size="sm" className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 p-0.5 h-auto w-auto bg-white border border-gray-200 rounded-full shadow-sm" title={t('dashboard.chooseOther')}>
+                        <Button variant="ghost" size="sm" className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 p-0.5 h-auto w-auto bg-white border border-gray-200 rounded-full shadow-sm" title="Choisir un autre établissement">
                           <ChevronDown className="w-3 h-3" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-80 p-2 bg-white z-50 shadow-lg border" align="start">
                         <div className="space-y-1">
                           <div className="text-sm font-medium text-gray-700 px-3 py-2">
-                            {t('dashboard.myEstablishments')}
+                            Mes Établissements
                           </div>
                           {establishmentsLoading ? (
                             <div className="text-sm text-gray-500 px-3 py-2 flex items-center gap-2">
                               <Loader2 className="w-4 h-4 animate-spin" />
-                              {t('dashboard.loading')}
+                              Chargement...
                             </div>
                           ) : establishments.length === 0 ? (
                             <div className="text-sm text-gray-500 px-3 py-2">
-                              {t('dashboard.noEstablishmentSaved')}
+                              Aucun établissement enregistré
                             </div>
                           ) : establishments.map(etab => (
                             <button
@@ -653,12 +644,12 @@ const Dashboard = () => {
                                 <Building2 className="w-4 h-4 text-blue-600" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium text-gray-900 truncate">{etab.name}</span>
-                                    {selectedEtab?.place_id === etab.place_id && (
-                                      <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{t('dashboard.active')}</span>
-                                    )}
-                                  </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-gray-900 truncate">{etab.name}</span>
+                                  {selectedEtab?.place_id === etab.place_id && (
+                                    <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Actif</span>
+                                  )}
+                                </div>
                                 <div className="text-sm text-gray-500 truncate">{etab.address}</div>
                               </div>
                             </button>
@@ -769,7 +760,7 @@ const Dashboard = () => {
                     }} 
                     disabled={isAnalyzing}
                     className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto" 
-                    title={t('dashboard.analyzeThis')}
+                    title="Analyser cet établissement"
                   >
                     {isAnalyzing ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -782,7 +773,7 @@ const Dashboard = () => {
                   <Button variant="ghost" size="sm" onClick={() => {
                 localStorage.removeItem(STORAGE_KEY);
                 setSelectedEtab(null);
-              }} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto" title={t('dashboard.forgetThis')}>
+              }} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto" title="Oublier cet établissement">
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -795,10 +786,10 @@ const Dashboard = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">{t('dashboard.analysisHistory')}</CardTitle>
+                <CardTitle className="text-lg">Historique des analyses</CardTitle>
               </div>
             </div>
-            <p className="text-sm text-gray-500 mt-2">{t('dashboard.previousAnalyses')}</p>
+            <p className="text-sm text-gray-500 mt-2">Les analyses précédentes et terminées. Les résultats</p>
           </CardHeader>
           <CardContent>
             <div className="p-4 bg-gray-50 rounded-lg">
@@ -909,19 +900,19 @@ const Dashboard = () => {
                 <div>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Star className="w-5 h-5 text-yellow-500" />
-                    {t('dashboard.ratingEvolution')}
+                    Évolution de la note moyenne
                   </CardTitle>
-                  <p className="text-sm text-gray-600">{t('dashboard.ratingEvolutionDesc')} — {t('dashboard.by')} {granularityEvolution}</p>
+                  <p className="text-sm text-gray-600">Progression de votre note depuis l'enregistrement de l'établissement — par {granularityEvolution}</p>
                 </div>
                 <Select value={granularityEvolution} onValueChange={(value) => setGranularityEvolution(value as Granularity)}>
                   <SelectTrigger className="w-32">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white z-50">
-                    <SelectItem value="jour">{t('dashboard.day')}</SelectItem>
-                    <SelectItem value="semaine">{t('dashboard.week')}</SelectItem>
-                    <SelectItem value="mois">{t('dashboard.month')}</SelectItem>
-                    <SelectItem value="année">{t('dashboard.year')}</SelectItem>
+                    <SelectItem value="jour">Jour</SelectItem>
+                    <SelectItem value="semaine">Semaine</SelectItem>
+                    <SelectItem value="mois">Mois</SelectItem>
+                    <SelectItem value="année">Année</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -931,8 +922,8 @@ const Dashboard = () => {
                 <>
                   {courbeNoteData.length < 2 ? (
                     <div className="text-center py-8">
-                      <p className="text-sm text-gray-500">{t('dashboard.limitedData')}</p>
-                      <p className="text-xs text-gray-400 mt-1">{t('dashboard.selectLargerPeriod')}</p>
+                      <p className="text-sm text-gray-500">Données limitées pour cette granularité</p>
+                      <p className="text-xs text-gray-400 mt-1">Sélectionnez une période plus large ou attendez plus d'avis</p>
                     </div>
                   ) : (
                     <>
@@ -942,7 +933,7 @@ const Dashboard = () => {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="mois" />
                             <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
-                            <Tooltip formatter={value => [`${value}/5`, t('dashboard.averageRating')]} />
+                            <Tooltip formatter={value => [`${value}/5`, 'Note moyenne']} />
                             <Line type="monotone" dataKey="note" stroke="#eab308" strokeWidth={3} dot={{
                           fill: '#eab308',
                           strokeWidth: 2,
@@ -952,14 +943,14 @@ const Dashboard = () => {
                         </ResponsiveContainer>
                       </div>
                       <p className="text-sm text-gray-500 mt-4">
-                        {t('dashboard.registrationDate')} : {establishmentCreatedAt ? formatRegistrationDate(establishmentCreatedAt) : t('dashboard.unknownDate')}
+                        Date d'enregistrement : {establishmentCreatedAt ? formatRegistrationDate(establishmentCreatedAt) : 'Inconnue'}
                       </p>
                     </>
                   )}
                 </>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-8">
-                  {t('dashboard.noDataForRatingEvolution')}
+                  Aucune donnée disponible pour afficher l'évolution de la note
                 </p>
               )}
             </CardContent>
@@ -970,9 +961,9 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-red-500" />
-                {t('dashboard.top5BadReviews')}
+                Top 5 des mauvais avis
               </CardTitle>
-              <p className="text-sm text-gray-600">{t('dashboard.badReviewsNeedAttention')}</p>
+              <p className="text-sm text-gray-600">Les avis les moins bien notés nécessitant votre attention</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -982,7 +973,7 @@ const Dashboard = () => {
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-red-700">#{index + 1}</span>
-                          <span className="font-medium">{avis.author || t('dashboard.anonymous')}</span>
+                          <span className="font-medium">{avis.author || 'Anonyme'}</span>
                           <span className="text-yellow-500">{'★'.repeat(Math.round(avis.rating || 0))}{'☆'.repeat(5 - Math.round(avis.rating || 0))}</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -990,11 +981,11 @@ const Dashboard = () => {
                           <span className="text-xs text-gray-500">{formatReviewDate(avis.published_at)}</span>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-700 italic">"{avis.text || t('dashboard.noComment')}"</p>
+                      <p className="text-sm text-gray-700 italic">"{avis.text || 'Pas de commentaire'}"</p>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">{t('dashboard.noBadReviewFound')}</p>
+                  <p className="text-sm text-gray-500 text-center py-4">Aucun avis négatif trouvé</p>
                 )}
               </div>
             </CardContent>
@@ -1005,9 +996,9 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-500" />
-                {t('dashboard.top5BestReviews')}
+                Top 5 des meilleurs avis
               </CardTitle>
-              <p className="text-sm text-gray-600">{t('dashboard.bestRatedReviews')}</p>
+              <p className="text-sm text-gray-600">Les avis les mieux notés de vos clients</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -1017,7 +1008,7 @@ const Dashboard = () => {
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-green-700">#{index + 1}</span>
-                          <span className="font-medium">{avis.author || t('dashboard.anonymous')}</span>
+                          <span className="font-medium">{avis.author || 'Anonyme'}</span>
                           <span className="text-yellow-500">{'★'.repeat(Math.round(avis.rating || 0))}</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1025,11 +1016,11 @@ const Dashboard = () => {
                           <span className="text-xs text-gray-500">{formatReviewDate(avis.published_at)}</span>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-700 italic">"{avis.text || t('dashboard.noComment')}"</p>
+                      <p className="text-sm text-gray-700 italic">"{avis.text || 'Pas de commentaire'}"</p>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">{t('dashboard.noGoodReviewFound')}</p>
+                  <p className="text-sm text-gray-500 text-center py-4">Aucun avis positif trouvé</p>
                 )}
               </div>
             </CardContent>
@@ -1038,8 +1029,8 @@ const Dashboard = () => {
         {/* Plateformes connectées - Affichées en dessous des métriques */}
         {showPlateformes && <Card className="mb-8">
             <CardHeader>
-              <CardTitle className="text-xl">{t('dashboard.connectedPlatforms')}</CardTitle>
-              <p className="text-sm text-gray-600">{t('dashboard.managePlatforms')}</p>
+              <CardTitle className="text-xl">Plateformes connectées</CardTitle>
+              <p className="text-sm text-gray-600">Gérer vos présences sur les différentes plateformes</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -1068,18 +1059,18 @@ const Dashboard = () => {
                           <div>
                             <div className="font-medium">{config.name}</div>
                             <div className="text-sm text-gray-500">
-                              {stats.count} {t('dashboard.reviews')} • {stats.avgRating.toFixed(1)} {t('dashboard.stars')}
+                              {stats.count} avis • {stats.avgRating.toFixed(1)} étoiles
                             </div>
                           </div>
                         </div>
-                        <Badge className="bg-green-100 text-green-700">{t('dashboard.connected')}</Badge>
+                        <Badge className="bg-green-100 text-green-700">Connecté</Badge>
                       </div>
                     );
                   })
                 ) : (
                   <div className="text-center py-4 text-gray-500">
-                    <p className="text-sm">{t('dashboard.noPlatform')}</p>
-                    <p className="text-xs mt-1">{t('dashboard.analyzeToPlatforms')}</p>
+                    <p className="text-sm">Aucune plateforme connectée</p>
+                    <p className="text-xs mt-1">Analysez votre établissement pour voir les plateformes</p>
                   </div>
                 )}
               </div>
@@ -1094,18 +1085,18 @@ const Dashboard = () => {
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5 text-red-500" />
-                  <CardTitle className="text-lg">{t('dashboard.top3Problems')}</CardTitle>
+                  <CardTitle className="text-lg">Top 3 Problèmes prioritaires</CardTitle>
                 </div>
                 <ChevronDown className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoChart ? 'rotate-180' : ''}`} onClick={() => setShowParetoChart(!showParetoChart)} />
               </div>
-              <p className="text-sm text-gray-500">{t('dashboard.mostMentionedByFrequency')}</p>
+              <p className="text-sm text-gray-500">Les plus mentionnés par fréquence et pourcentage en priorité</p>
             </CardHeader>
             <CardContent className="space-y-4">
               {!hasReviews ? (
                 <div className="text-center py-8 text-gray-500">
                   <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className="text-sm font-medium">{t('dashboard.noReviewsAvailable')}</p>
-                  <p className="text-xs mt-1">{t('dashboard.importToSeeProblems')}</p>
+                  <p className="text-sm font-medium">Aucun avis disponible</p>
+                  <p className="text-xs mt-1">Importez des avis pour voir les problèmes identifiés</p>
                 </div>
               ) : topIssues.length > 0 ? (
                 topIssues.slice(0, 3).map((issue: any, index: number) => {
@@ -1120,23 +1111,23 @@ const Dashboard = () => {
                     <div key={index} className={`flex items-center justify-between p-3 ${isCritical ? 'bg-red-50' : 'bg-yellow-50'} rounded-lg`}>
                       <div className="flex items-center gap-2">
                         <AlertTriangle className={`w-4 h-4 ${isCritical ? 'text-red-500' : 'text-yellow-600'}`} />
-                          <div>
-                            <div className="font-medium">{issue.theme || issue.issue || t('dashboard.notIdentified')}</div>
-                            <div className="text-sm text-gray-500">
-                              {percentage > 0 ? `${percentage}% ${t('dashboard.ofReviews')}` : t('dashboard.identifiedByAI')}
+                        <div>
+                          <div className="font-medium">{issue.theme || issue.issue || 'Problème non spécifié'}</div>
+                          <div className="text-sm text-gray-500">
+                            {percentage > 0 ? `${percentage}% des avis` : 'Identifié par l\'IA'}
                           </div>
                         </div>
                       </div>
                       <Badge variant={isCritical ? 'destructive' : 'default'} className={!isCritical ? 'bg-yellow-500 text-white' : ''}>
-                        {isCritical ? t('dashboard.critical') : t('dashboard.medium')}
+                        {isCritical ? 'Critique' : 'Moyen'}
                       </Badge>
                     </div>
                   );
                 })
               ) : (
                 <div className="text-center py-4 text-gray-500">
-                  <p className="text-sm">{t('dashboard.noProblemIdentified')}</p>
-                  <p className="text-xs mt-1">{t('dashboard.analyzeToSeeProblems')}</p>
+                  <p className="text-sm">Aucun problème identifié</p>
+                  <p className="text-xs mt-1">Analysez votre établissement pour voir les problèmes</p>
                 </div>
               )}
             </CardContent>
@@ -1148,18 +1139,18 @@ const Dashboard = () => {
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-green-500" />
-                  <CardTitle className="text-lg">{t('dashboard.top3Strengths')}</CardTitle>
+                  <CardTitle className="text-lg">Top 3 Points forts</CardTitle>
                 </div>
                 <ChevronDown className={`w-4 h-4 text-muted-foreground cursor-pointer transition-transform ${showParetoPoints ? 'rotate-180' : ''}`} onClick={() => setShowParetoPoints(!showParetoPoints)} />
               </div>
-              <p className="text-sm text-gray-500">{t('dashboard.strengthsMostMentioned')}</p>
+              <p className="text-sm text-gray-500">Les points forts les plus mentionnés par vos clients</p>
             </CardHeader>
             <CardContent className="space-y-4">
               {!hasReviews ? (
                 <div className="text-center py-8 text-gray-500">
                   <CheckCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className="text-sm font-medium">{t('dashboard.noReviewsAvailable')}</p>
-                  <p className="text-xs mt-1">{t('dashboard.importToSeeStrengths')}</p>
+                  <p className="text-sm font-medium">Aucun avis disponible</p>
+                  <p className="text-xs mt-1">Importez des avis pour voir les points forts identifiés</p>
                 </div>
               ) : topStrengths.length > 0 ? (
                 topStrengths.slice(0, 3).map((strength: any, index: number) => {
@@ -1172,21 +1163,21 @@ const Dashboard = () => {
                     <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-green-500" />
-                          <div>
-                            <div className="font-medium">{strength.theme || strength.strength || t('dashboard.notIdentified')}</div>
-                            <div className="text-sm text-gray-500">
-                              {percentage > 0 ? `${percentage}% ${t('dashboard.ofReviews')}` : t('dashboard.identifiedByAI')}
+                        <div>
+                          <div className="font-medium">{strength.theme || strength.strength || 'Point fort non spécifié'}</div>
+                          <div className="text-sm text-gray-500">
+                            {percentage > 0 ? `${percentage}% des avis` : 'Identifié par l\'IA'}
                           </div>
                         </div>
                       </div>
-                      <Badge className="bg-green-500 text-white">{t('dashboard.strength')}</Badge>
+                      <Badge className="bg-green-500 text-white">Force</Badge>
                     </div>
                   );
                 })
               ) : (
                 <div className="text-center py-4 text-gray-500">
-                  <p className="text-sm">{t('dashboard.noStrengthIdentified')}</p>
-                  <p className="text-xs mt-1">{t('dashboard.analyzeToSeeStrengths')}</p>
+                  <p className="text-sm">Aucun point fort identifié</p>
+                  <p className="text-xs mt-1">Analysez votre établissement pour voir les points forts</p>
                 </div>
               )}
             </CardContent>
@@ -1198,9 +1189,9 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-500" />
-                {t('dashboard.paretoStrengths')}
+                Diagramme de Pareto - Analyse des points forts
               </CardTitle>
-              <p className="text-sm text-gray-600">{t('dashboard.paretoStrengthsDesc')}</p>
+              <p className="text-sm text-gray-600">Identification des 20% de points forts qui génèrent 80% de la satisfaction</p>
             </CardHeader>
             <CardContent>
               <div className="h-80">
@@ -1405,19 +1396,19 @@ const Dashboard = () => {
                 <div className="flex flex-wrap items-center justify-center gap-4 mt-4 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(142, 76%, 36%)' }}></div>
-                    <span className="text-muted-foreground">{t('charts.strengths.tasteQuality')}</span>
+                    <span className="text-muted-foreground">Qualité / goût</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(221, 83%, 53%)' }}></div>
-                    <span className="text-muted-foreground">{t('charts.strengths.niceAmbiance')}</span>
+                    <span className="text-muted-foreground">Ambiance</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(280, 65%, 60%)' }}></div>
-                    <span className="text-muted-foreground">{t('dashboard.legendServiceAccueil')}</span>
+                    <span className="text-muted-foreground">Service / accueil</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(45, 93%, 47%)' }}></div>
-                    <span className="text-muted-foreground">{t('charts.strengths.valueForMoney')}</span>
+                    <span className="text-muted-foreground">Rapport qualité-prix</span>
                   </div>
                 </div>
               </div>
@@ -1429,9 +1420,9 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-red-500" />
-                {t('dashboard.paretoProblems')}
+                Diagramme de Pareto - Analyse des problèmes
               </CardTitle>
-              <p className="text-sm text-gray-600">{t('dashboard.paretoProblemsDesc')}</p>
+              <p className="text-sm text-gray-600">Identification des 20% de causes qui génèrent 80% des problèmes</p>
             </CardHeader>
             <CardContent>
               <div className="h-80">
@@ -1464,8 +1455,8 @@ const Dashboard = () => {
                         <YAxis yAxisId="left" orientation="left" />
                         <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
                         <Tooltip formatter={(value, name) => {
-                          if (name === 'Cumulative') return [`${value}%`, t('dashboard.cumulativePercent')];
-                          return [value, t('dashboard.occurrences')];
+                          if (name === 'Cumulative') return [`${value}%`, 'Cumul %'];
+                          return [value, 'Occurrences'];
                         }} />
                         <Bar yAxisId="left" dataKey="count" name="Occurrences">
                           {paretoData.map((entry: any, index: number) => (
@@ -1482,11 +1473,11 @@ const Dashboard = () => {
                   );
                 })()}
               </div>
-              <p className="text-sm text-gray-500 mt-1 mb-0 leading-tight">{t('dashboard.barRepresentsProblems')}</p>
+              <p className="text-sm text-gray-500 mt-1 mb-0 leading-tight">Les barres représentent le nombre d'occurrences, la ligne le pourcentage cumulé</p>
               
               {/* Camembert + Barres - Répartition des problèmes */}
               <div className="mt-2">
-                <h4 className="text-sm font-medium text-gray-700 mb-3 mt-0">{t('dashboard.problemsDistribution')}</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-3 mt-0">Répartition des problèmes</h4>
                 {(() => {
                   const pieData = paretoData.map((item: any) => ({
                     name: item.name,
@@ -1516,7 +1507,7 @@ const Dashboard = () => {
                   if (total === 0) {
                     return (
                       <p className="text-sm text-gray-500 text-center py-4">
-                        {t('dashboard.noDataForChart')}
+                        Aucune donnée pour afficher les graphiques.
                       </p>
                     );
                   }
@@ -1626,15 +1617,15 @@ const Dashboard = () => {
                 <div className="flex items-center justify-center gap-6 mt-4 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(0, 84%, 60%)' }}></div>
-                    <span className="text-muted-foreground">{t('dashboard.legendService')}</span>
+                    <span className="text-muted-foreground">Service / attente</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(25, 95%, 53%)' }}></div>
-                    <span className="text-muted-foreground">{t('dashboard.legendQuality')}</span>
+                    <span className="text-muted-foreground">Qualité des plats</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(45, 93%, 47%)' }}></div>
-                    <span className="text-muted-foreground">{t('dashboard.legendPrice')}</span>
+                    <span className="text-muted-foreground">Prix</span>
                   </div>
                 </div>
               </div>
@@ -1647,13 +1638,13 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Lightbulb className="w-5 h-5 text-blue-500" />
-                <CardTitle className="text-lg">{t('dashboard.actionableRecommendations')}</CardTitle>
+                <CardTitle className="text-lg">Recommandations actionnables</CardTitle>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setShowRecommandations(!showRecommandations)} className="h-6 w-6 p-0 hover:bg-blue-50">
                 {showRecommandations ? <ChevronUp className="w-3 h-3 text-blue-500" /> : <ChevronDown className="w-3 h-3 text-blue-500" />}
               </Button>
             </div>
-            <p className="text-sm text-gray-500">{t('dashboard.actionsToPut')}</p>
+            <p className="text-sm text-gray-500">Actions concrètes à mettre en place</p>
           </CardHeader>
           {showRecommandations && <CardContent>
             <div className="space-y-3">
@@ -1666,8 +1657,8 @@ const Dashboard = () => {
                 ))
               ) : (
                 <div className="text-center py-4 text-gray-500">
-                  <p className="text-sm">{t('dashboard.noRecommendationAvailable')}</p>
-                  <p className="text-xs mt-1">{t('dashboard.analyzeForRecommendations')}</p>
+                  <p className="text-sm">Aucune recommandation disponible</p>
+                  <p className="text-xs mt-1">Analysez votre établissement pour obtenir des recommandations</p>
                 </div>
               )}
             </div>
@@ -1680,47 +1671,47 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ClipboardList className="w-5 h-5 text-emerald-600" />
-                <CardTitle className="text-lg">{t('dashboard.operationalChecklist')}</CardTitle>
+                <CardTitle className="text-lg">Checklist opérationnelle</CardTitle>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setShowChecklist(!showChecklist)} className="h-6 w-6 p-0 hover:bg-emerald-50">
                 {showChecklist ? <ChevronUp className="w-3 h-3 text-emerald-600" /> : <ChevronDown className="w-3 h-3 text-emerald-600" />}
               </Button>
             </div>
-            <p className="text-sm text-gray-500">{t('dashboard.operationalChecklistDesc')}</p>
+            <p className="text-sm text-gray-500">Actions concrètes et priorisées à mettre en place</p>
           </CardHeader>
           {showChecklist && <CardContent>
             <div className="space-y-8">
               {/* Section 1 - Checklist opérationnelle */}
               <div>
-                <h4 className="font-semibold text-gray-800 mb-4">{t('dashboard.operationalChecklist')}</h4>
+                <h4 className="font-semibold text-gray-800 mb-4">Checklist opérationnelle</h4>
                 <div className="space-y-3">
                   {/* Action prioritaire */}
                   <div className="p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge className="bg-red-500 text-white text-xs">{t('dashboard.priorityAction')}</Badge>
+                      <Badge className="bg-red-500 text-white text-xs">Action prioritaire</Badge>
                     </div>
                     <p className="text-sm text-gray-700">
                       {topIssues.length > 0 
-                        ? `${t('dashboard.fixMainFriction')} : ${topIssues[0]?.theme || topIssues[0]?.issue || t('dashboard.notIdentified')}`
-                        : t('dashboard.analyzeToIdentify')}
+                        ? `Corriger le principal point de friction : ${topIssues[0]?.theme || topIssues[0]?.issue || 'Non identifié'}`
+                        : 'Analyser les avis pour identifier les points de friction prioritaires'}
                     </p>
                   </div>
                   
                   {/* Court terme */}
                   <div className="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge className="bg-yellow-500 text-white text-xs">{t('dashboard.shortTerm')}</Badge>
+                      <Badge className="bg-yellow-500 text-white text-xs">Court terme</Badge>
                     </div>
                     <ul className="space-y-2">
                       <li className="text-sm text-gray-700 flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                        {t('dashboard.trainTeam')}
+                        Former l'équipe sur les points d'amélioration identifiés
                       </li>
                       <li className="text-sm text-gray-700 flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                         {topStrengths.length > 0 
-                          ? `${t('dashboard.highlightStrengths')} : ${topStrengths[0]?.theme || topStrengths[0]?.strength || t('dashboard.notIdentified')}`
-                          : t('dashboard.identifyHighlightStrengths')}
+                          ? `Valoriser les points forts : ${topStrengths[0]?.theme || topStrengths[0]?.strength || 'Non identifié'}`
+                          : 'Identifier et valoriser les points forts existants'}
                       </li>
                     </ul>
                   </div>
@@ -1728,16 +1719,16 @@ const Dashboard = () => {
                   {/* Gestion des avis */}
                   <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge className="bg-blue-500 text-white text-xs">{t('dashboard.reviewManagement')}</Badge>
+                      <Badge className="bg-blue-500 text-white text-xs">Gestion des avis</Badge>
                     </div>
                     <ul className="space-y-2">
                       <li className="text-sm text-gray-700 flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                        {t('dashboard.respondToNegativeReviews')}
+                        Répondre systématiquement aux avis clients (positifs et négatifs)
                       </li>
                       <li className="text-sm text-gray-700 flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                        {t('dashboard.encouragePositiveReviews')}
+                        Mettre en place un suivi régulier de la satisfaction client
                       </li>
                     </ul>
                   </div>
@@ -1749,51 +1740,51 @@ const Dashboard = () => {
 
               {/* Section 2 - Priorisation des actions */}
               <div>
-                <h4 className="font-semibold text-gray-800 mb-4">{t('dashboard.actionPrioritization')}</h4>
+                <h4 className="font-semibold text-gray-800 mb-4">Priorisation des actions – Impact vs Effort</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">{t('dashboard.action')}</th>
-                        <th className="text-center py-3 px-4 font-semibold text-gray-700">{t('dashboard.impact')}</th>
-                        <th className="text-center py-3 px-4 font-semibold text-gray-700">{t('dashboard.effort')}</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Action</th>
+                        <th className="text-center py-3 px-4 font-semibold text-gray-700">Impact</th>
+                        <th className="text-center py-3 px-4 font-semibold text-gray-700">Effort</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr className="border-b border-gray-100">
-                        <td className="py-3 px-4 text-gray-700">{t('dashboard.fixMainFriction')}</td>
+                        <td className="py-3 px-4 text-gray-700">Corriger le principal point de friction identifié</td>
                         <td className="py-3 px-4 text-center">
-                          <Badge className="bg-red-100 text-red-700 border-red-200">{t('dashboard.high')}</Badge>
+                          <Badge className="bg-red-100 text-red-700 border-red-200">Élevé</Badge>
                         </td>
                         <td className="py-3 px-4 text-center">
-                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">{t('dashboard.medium')}</Badge>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-gray-100">
-                        <td className="py-3 px-4 text-gray-700">{t('dashboard.trainTeam')}</td>
-                        <td className="py-3 px-4 text-center">
-                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">{t('dashboard.medium')}</Badge>
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <Badge className="bg-green-100 text-green-700 border-green-200">{t('dashboard.low')}</Badge>
+                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Moyen</Badge>
                         </td>
                       </tr>
                       <tr className="border-b border-gray-100">
-                        <td className="py-3 px-4 text-gray-700">{t('dashboard.respondToNegativeReviews')}</td>
+                        <td className="py-3 px-4 text-gray-700">Former l'équipe sur les points d'amélioration</td>
                         <td className="py-3 px-4 text-center">
-                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">{t('dashboard.medium')}</Badge>
+                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Moyen</Badge>
                         </td>
                         <td className="py-3 px-4 text-center">
-                          <Badge className="bg-green-100 text-green-700 border-green-200">{t('dashboard.low')}</Badge>
+                          <Badge className="bg-green-100 text-green-700 border-green-200">Faible</Badge>
                         </td>
                       </tr>
                       <tr className="border-b border-gray-100">
-                        <td className="py-3 px-4 text-gray-700">{t('dashboard.highlightStrengths')}</td>
+                        <td className="py-3 px-4 text-gray-700">Répondre systématiquement aux avis clients</td>
                         <td className="py-3 px-4 text-center">
-                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">{t('dashboard.medium')}</Badge>
+                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Moyen</Badge>
                         </td>
                         <td className="py-3 px-4 text-center">
-                          <Badge className="bg-green-100 text-green-700 border-green-200">{t('dashboard.low')}</Badge>
+                          <Badge className="bg-green-100 text-green-700 border-green-200">Faible</Badge>
+                        </td>
+                      </tr>
+                      <tr className="border-b border-gray-100">
+                        <td className="py-3 px-4 text-gray-700">Valoriser les points forts identifiés</td>
+                        <td className="py-3 px-4 text-center">
+                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Moyen</Badge>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <Badge className="bg-green-100 text-green-700 border-green-200">Faible</Badge>
                         </td>
                       </tr>
                     </tbody>
@@ -1898,13 +1889,13 @@ const Dashboard = () => {
                       return (
                         <div className={`flex items-center gap-2 ${className ?? ""}`}>
                           <span
-                            title={t('dashboard.positives')}
+                            title="Positifs"
                             className="inline-flex items-center justify-center min-w-[48px] h-9 px-3 rounded-xl text-sm font-semibold shadow-sm bg-green-50 text-green-600"
                           >
                             {p}%
                           </span>
                           <span
-                            title={t('dashboard.negatives')}
+                            title="Négatifs"
                             className="inline-flex items-center justify-center min-w-[48px] h-9 px-3 rounded-xl text-sm font-semibold shadow-sm bg-red-50 text-red-600"
                           >
                             {n}%
@@ -1919,7 +1910,7 @@ const Dashboard = () => {
                           {getThemeIcon(theme.theme)}
                           <div className="flex-1">
                             <div className="font-medium">{theme.theme}</div>
-                            <div className="text-sm text-gray-500">{theme.percentage}% {t('dashboard.ofReviews')}</div>
+                            <div className="text-sm text-gray-500">{theme.percentage}% des avis</div>
                           </div>
                           <div className="ml-auto">
                             <SentimentBadges
@@ -1933,8 +1924,8 @@ const Dashboard = () => {
                   })()
                 ) : (
                   <div className="text-center py-4 text-gray-500">
-                    <p className="text-sm">{t('dashboard.noThemeIdentified')}</p>
-                    <p className="text-xs mt-1">{t('dashboard.analyzeToSeeThemes')}</p>
+                    <p className="text-sm">Aucune thématique identifiée</p>
+                    <p className="text-xs mt-1">Analysez votre établissement pour voir les thématiques</p>
                   </div>
                 )}
               </div>
@@ -1948,26 +1939,26 @@ const Dashboard = () => {
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-indigo-600" />
                 <span className="text-2xl font-bold text-indigo-600">{totalReviews}</span>
-                <CardTitle className="text-lg">{t('dashboard.decryptReviews')}</CardTitle>
+                <CardTitle className="text-lg">Décryptage des avis</CardTitle>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setShowAnalyseDetaillee(!showAnalyseDetaillee)} className="h-6 w-6 p-0 hover:bg-indigo-50">
                 {showAnalyseDetaillee ? <ChevronUp className="w-3 h-3 text-indigo-600" /> : <ChevronDown className="w-3 h-3 text-indigo-600" />}
               </Button>
             </div>
-            <p className="text-sm text-gray-500">{t('dashboard.detailsRatingsThemes')}</p>
+            <p className="text-sm text-gray-500">Détails complets des notes et thématiques</p>
           </CardHeader>
           {showAnalyseDetaillee && <CardContent>
             <div className="space-y-6">
               {/* Répartition des avis par note */}
               <div>
-                <h4 className="font-semibold text-gray-800 mb-3">{t('dashboard.ratingDistribution')}</h4>
+                <h4 className="font-semibold text-gray-800 mb-3">Répartition des avis par note</h4>
                 <div className="space-y-2">
                   {[5, 4, 3, 2, 1].map((rating) => {
                     const count = allReviewsForChart.filter(r => r.rating === rating).length;
                     const percentage = allReviewsForChart.length > 0 ? (count / allReviewsForChart.length) * 100 : 0;
                     return (
                       <div key={rating} className="flex items-center gap-3">
-                        <span className="w-16 text-sm font-medium text-gray-600">{rating} {rating > 1 ? t('dashboard.stars') : t('dashboard.star')}</span>
+                        <span className="w-16 text-sm font-medium text-gray-600">{rating} étoile{rating > 1 ? 's' : ''}</span>
                         <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
                           <div 
                             className={`h-full rounded-full ${rating >= 4 ? 'bg-green-500' : rating === 3 ? 'bg-yellow-500' : 'bg-red-500'}`}
@@ -1983,7 +1974,7 @@ const Dashboard = () => {
 
               {/* Thématiques récurrentes */}
               <div>
-                <h4 className="font-semibold text-gray-800 mb-3">{t('dashboard.recurringThemes')}</h4>
+                <h4 className="font-semibold text-gray-800 mb-3">Thématiques récurrentes</h4>
                 {insight?.themes && insight.themes.length > 0 ? (
                   <div className="space-y-2">
                     {insight.themes.map((theme: any, index: number) => {
@@ -1993,7 +1984,7 @@ const Dashboard = () => {
                         <div key={index} className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg">
                           <span className="font-medium text-gray-700">{theme.theme}</span>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-500">{themeCount} {themeCount > 1 ? t('dashboard.mentions') : t('dashboard.mention')}</span>
+                            <span className="text-sm text-gray-500">{themeCount} mention{themeCount > 1 ? 's' : ''}</span>
                             <Badge variant="outline" className="text-indigo-600 border-indigo-600">{percentage.toFixed(1)}%</Badge>
                           </div>
                         </div>
@@ -2002,31 +1993,31 @@ const Dashboard = () => {
                   </div>
                 ) : (
                   <div className="text-center py-4 text-gray-500">
-                    <p className="text-sm">{t('dashboard.noThemeIdentified')}</p>
-                    <p className="text-xs mt-1">{t('dashboard.analyzeToSeeThemes')}</p>
+                    <p className="text-sm">Aucune thématique identifiée</p>
+                    <p className="text-xs mt-1">Analysez votre établissement pour voir les thématiques</p>
                   </div>
                 )}
               </div>
 
               {/* Indicateurs clés */}
               <div>
-                <h4 className="font-semibold text-gray-800 mb-3">{t('dashboard.keyIndicators')}</h4>
+                <h4 className="font-semibold text-gray-800 mb-3">Indicateurs clés</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="p-3 bg-blue-50 rounded-lg text-center">
                     <p className="text-2xl font-bold text-blue-600">{avgRating.toFixed(1)}</p>
-                    <p className="text-xs text-gray-600">{t('dashboard.averageRating')}</p>
+                    <p className="text-xs text-gray-600">Note moyenne</p>
                   </div>
                   <div className="p-3 bg-green-50 rounded-lg text-center">
                     <p className="text-2xl font-bold text-green-600">{positivePct}%</p>
-                    <p className="text-xs text-gray-600">{t('dashboard.positiveReviews')}</p>
+                    <p className="text-xs text-gray-600">Avis positifs</p>
                   </div>
                   <div className="p-3 bg-red-50 rounded-lg text-center">
                     <p className="text-2xl font-bold text-red-600">{negativePct}%</p>
-                    <p className="text-xs text-gray-600">{t('dashboard.negativeReviews')}</p>
+                    <p className="text-xs text-gray-600">Avis négatifs</p>
                   </div>
                   <div className="p-3 bg-indigo-50 rounded-lg text-center">
                     <p className="text-2xl font-bold text-indigo-600">{totalReviews}</p>
-                    <p className="text-xs text-gray-600">{t('dashboard.totalReviews')}</p>
+                    <p className="text-xs text-gray-600">Total avis</p>
                   </div>
                 </div>
               </div>
@@ -2042,13 +2033,13 @@ const Dashboard = () => {
                 <span className="text-2xl font-bold text-purple-600">
                   <Info className="w-6 h-6" />
                 </span>
-                <CardTitle className="text-lg">{t('dashboard.autoResponse')}</CardTitle>
+                <CardTitle className="text-lg">Réponse automatique</CardTitle>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setShowReponseAuto(!showReponseAuto)} className="h-6 w-6 p-0 hover:bg-purple-50">
                 {showReponseAuto ? <ChevronUp className="w-3 h-3 text-purple-600" /> : <ChevronDown className="w-3 h-3 text-purple-600" />}
               </Button>
             </div>
-            <p className="text-sm text-gray-500">{t('dashboard.autoResponseDesc')}</p>
+            <p className="text-sm text-gray-500">Système automatisé aux avis clients</p>
           </CardHeader>
           {showReponseAuto && <CardContent>
               <div className="space-y-4">
@@ -2061,8 +2052,8 @@ const Dashboard = () => {
                     
                     const rating = review.rating || 0;
                     const isPositive = rating >= 4;
-                    const authorName = review.author || t('dashboard.anonymous');
-                    const reviewText = review.text || t('dashboard.noComment');
+                    const authorName = review.author || 'Anonyme';
+                    const reviewText = review.text || 'Pas de commentaire';
                     const reviewId = review.id || `review-${currentReviewIndex}`;
                     
                     // Fonction pour générer une réponse IA personnalisée
@@ -2072,8 +2063,8 @@ const Dashboard = () => {
                       try {
                         const { data: { session } } = await supabase.auth.getSession();
                         if (!session?.access_token) {
-                          toast.error(t('dashboard.sessionExpired'), {
-                            description: t('dashboard.pleaseReconnect'),
+                          toast.error('Session expirée', {
+                            description: 'Veuillez vous reconnecter.',
                           });
                           return;
                         }
@@ -2108,16 +2099,16 @@ const Dashboard = () => {
 
                         if (!response.ok) {
                           if (response.status === 429) {
-                            toast.error(t('dashboard.tooManyRequests'), {
-                              description: t('dashboard.pleaseWait'),
+                            toast.error('Trop de requêtes', {
+                              description: 'Veuillez patienter quelques instants avant de réessayer.',
                             });
                           } else if (response.status === 402) {
-                            toast.error(t('dashboard.insufficientCredits'), {
-                              description: t('dashboard.rechargeCredits'),
+                            toast.error('Crédits insuffisants', {
+                              description: 'Veuillez recharger vos crédits IA.',
                             });
                           } else {
-                            toast.error(t('common.error'), {
-                              description: data.error || t('dashboard.unableToGenerate'),
+                            toast.error('Erreur', {
+                              description: data.error || 'Impossible de générer la réponse.',
                             });
                           }
                           return;
@@ -2126,14 +2117,14 @@ const Dashboard = () => {
                         if (data.response) {
                           setAiGeneratedResponses(prev => ({ ...prev, [reviewId]: data.response }));
                           setEditedResponses(prev => ({ ...prev, [reviewId]: data.response }));
-                          toast.success(t('dashboard.responseGenerated'), {
-                            description: t('dashboard.responseGeneratedDesc'),
+                          toast.success('Réponse générée', {
+                            description: 'Vous pouvez la modifier avant de valider.',
                           });
                         }
                       } catch (error) {
                         console.error('Erreur génération réponse IA:', error);
-                        toast.error(t('common.error'), {
-                          description: t('dashboard.errorOccurred'),
+                        toast.error('Erreur', {
+                          description: 'Une erreur est survenue lors de la génération.',
                         });
                       } finally {
                         setIsGeneratingResponse(prev => ({ ...prev, [reviewId]: false }));
@@ -2166,12 +2157,12 @@ const Dashboard = () => {
                             </div>
                           </div>
                           <Badge variant="outline" className={isPositive ? "text-green-600 border-green-600" : "text-orange-600 border-orange-600"}>
-                            {t('dashboard.validate')}
+                            À valider
                           </Badge>
                         </div>
                         <p className="text-sm text-gray-700 mb-3">"{reviewText.substring(0, 150)}{reviewText.length > 150 ? '...' : ''}"</p>
                         <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
-                          <p className="text-sm text-gray-600 font-medium mb-1">{t('dashboard.aiSuggestion')} :</p>
+                          <p className="text-sm text-gray-600 font-medium mb-1">Réponse automatique proposée :</p>
                           {isEditing ? (
                             <textarea
                               value={currentResponse}
@@ -2191,7 +2182,7 @@ const Dashboard = () => {
                                   className="bg-green-600 hover:bg-green-700 text-white"
                                   onClick={() => setEditingReviewId(null)}
                                 >
-                                  {t('dashboard.saveResponse')}
+                                  Enregistrer
                                 </Button>
                                 <Button 
                                   size="sm" 
@@ -2205,7 +2196,7 @@ const Dashboard = () => {
                                     setEditingReviewId(null);
                                   }}
                                 >
-                                  {t('dashboard.cancelEdit')}
+                                  Annuler
                                 </Button>
                               </>
                             ) : (
@@ -2220,17 +2211,17 @@ const Dashboard = () => {
                                   {isGenerating ? (
                                     <>
                                       <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                      {t('dashboard.generatingAI')}
+                                      Génération en cours...
                                     </>
                                   ) : hasAiResponse ? (
                                     <>
                                       <Lightbulb className="w-3 h-3 mr-1" />
-                                      {t('dashboard.regenerateWithAI')}
+                                      Régénérer avec IA
                                     </>
                                   ) : (
                                     <>
                                       <Lightbulb className="w-3 h-3 mr-1" />
-                                      {t('dashboard.generateWithAI')}
+                                      Générer avec IA
                                     </>
                                   )}
                                 </Button>
@@ -2241,8 +2232,8 @@ const Dashboard = () => {
                                   onClick={async () => {
                                     try {
                                       if (!user?.id || !selectedEtab?.place_id) {
-                                        toast.error(t('common.error'), {
-                                          description: t('dashboard.userOrEstNotDefined'),
+                                        toast.error('Erreur', {
+                                          description: 'Utilisateur ou établissement non défini',
                                           duration: 4000
                                         });
                                         return;
@@ -2262,8 +2253,8 @@ const Dashboard = () => {
                                       setValidatedReviews(prev => new Set([...prev, reviewId]));
                                       
                                       // Afficher le toast de succès
-                                      toast.success(t('dashboard.responseValidated'), {
-                                        description: t('dashboard.responseValidatedDesc'),
+                                      toast.success('Réponse validée et enregistrée ✅', {
+                                        description: 'La réponse a bien été enregistrée.',
                                         duration: 3000
                                       });
                                       
@@ -2289,8 +2280,8 @@ const Dashboard = () => {
                                       
                                     } catch (error: any) {
                                       console.error('validateReponse', error);
-                                      toast.error(t('dashboard.saveFailed'), {
-                                        description: error.message || t('dashboard.errorOccurred'),
+                                      toast.error('Échec de l\'enregistrement', {
+                                        description: error.message || 'Une erreur est survenue.',
                                         duration: 4000
                                       });
                                     } finally {
@@ -2301,10 +2292,10 @@ const Dashboard = () => {
                                   {isValidatingReview[reviewId] ? (
                                     <>
                                       <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                                      {t('dashboard.validating')}
+                                      Validation...
                                     </>
                                   ) : (
-                                    t('dashboard.validate')
+                                    'Valider'
                                   )}
                                 </Button>
                                 <Button 
@@ -2317,7 +2308,7 @@ const Dashboard = () => {
                                     }
                                   }}
                                 >
-                                  {t('dashboard.modify')}
+                                  Modifier
                                 </Button>
                               </>
                             )}
@@ -2328,18 +2319,18 @@ const Dashboard = () => {
                             className="h-8 w-8"
                             onClick={() => {
                               navigator.clipboard.writeText(currentResponse);
-                              toast.success(t('dashboard.copied'), {
-                                description: t('dashboard.copiedToClipboard'),
+                              toast.success("Copié !", {
+                                description: "La réponse a été copiée dans le presse-papier.",
                               });
                             }}
-                            title={t('dashboard.copyResponse')}
+                            title="Copier la réponse"
                           >
                             <Copy className="h-4 w-4" />
                           </Button>
                         </div>
                         {hasAiResponse && (
                           <div className="mt-3 text-green-600 text-sm flex items-center gap-1">
-                            ✅ {t('dashboard.responseGeneratedDesc')}
+                            ✅ Réponse générée — Vous pouvez la modifier avant de valider.
                           </div>
                         )}
                       </div>
@@ -2348,8 +2339,8 @@ const Dashboard = () => {
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
-                    <p className="text-lg font-medium text-gray-900">🎉 {t('dashboard.allReviewsProcessed')}</p>
-                    <p className="text-sm mt-1">{t('dashboard.noMorePendingReviews')}</p>
+                    <p className="text-lg font-medium text-gray-900">🎉 Vous avez traité toutes les réponses automatiques.</p>
+                    <p className="text-sm mt-1">Aucun avis en attente de validation pour le moment.</p>
                   </div>
                 )}
               </div>

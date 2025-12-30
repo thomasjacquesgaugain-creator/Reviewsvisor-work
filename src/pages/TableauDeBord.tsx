@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, CheckCircle, ArrowDownRight, Minus, Award } from "lucide-react";
@@ -7,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow, format } from "date-fns";
-import { fr, enUS, it, es, pt, Locale } from "date-fns/locale";
+import { fr } from "date-fns/locale";
 import { getBaselineScore, formatDelta, getEvolutionStatus, computeSatisfactionPct, ensureBaselineSatisfaction, computeSatisfactionDelta } from "@/utils/baselineScore";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { getReponsesStats } from "@/lib/reponses";
@@ -15,7 +14,6 @@ import { SubscriptionCard } from "@/components/SubscriptionCard";
 
 
 const Dashboard = () => {
-  const { t, i18n } = useTranslation();
   const [userProfile, setUserProfile] = useState<{ first_name: string; last_name: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [recentReviewsCount, setRecentReviewsCount] = useState(0);
@@ -27,12 +25,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const currentEstablishment = useCurrentEstablishment();
-
-  // Helper to get date-fns locale based on current language
-  const getDateLocale = () => {
-    const locales: Record<string, Locale> = { fr, en: enUS, it, es, pt };
-    return locales[i18n.language] || fr;
-  };
 
   useEffect(() => {
     const getUserProfile = async () => {
@@ -46,7 +38,7 @@ const Dashboard = () => {
 
         // Pour l'instant, utiliser les données de base de l'utilisateur
         const profile = {
-          first_name: session.user.user_metadata?.first_name || t('dashboard.defaultUser'),
+          first_name: session.user.user_metadata?.first_name || 'Utilisateur',
           last_name: session.user.user_metadata?.last_name || ''
         };
 
@@ -129,7 +121,7 @@ const Dashboard = () => {
       supabase.removeChannel(channel);
       window.removeEventListener('response-validated', handleResponseValidated);
     };
-  }, [navigate, toast, currentEstablishment?.place_id, t]);
+  }, [navigate, toast, currentEstablishment?.place_id]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -177,14 +169,14 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">{t('common.loading')}</div>
+        <div className="text-lg">Chargement...</div>
       </div>
     );
   }
 
   const displayName = userProfile 
     ? `${userProfile.first_name} ${userProfile.last_name}` 
-    : t('dashboard.defaultUser');
+    : "Utilisateur";
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -201,22 +193,22 @@ const Dashboard = () => {
           {/* Welcome card */}
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-6">
             <CardContent className="p-8 text-center space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900">{t('dashboard.welcomeMessage', { name: displayName })}</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Bienvenue, {displayName} !</h2>
               <p className="text-gray-600">
-                {t('dashboard.connectedDesc')}
+                Vous êtes connecté et pouvez maintenant analyser vos avis clients.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Link to="/etablissement">
                   <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
                     <Building className="w-5 h-5 mr-2" />
-                    {t('nav.establishment')}
+                    Établissement
                   </Button>
                 </Link>
                 <Link to="/dashboard">
                   <Button variant="outline" className="border-gray-300 text-gray-700 px-8 py-3 rounded-full font-medium">
                     <BarChart3 className="w-5 h-5 mr-2" />
-                    {t('dashboard.viewDashboard')}
+                    Voir mon dashboard
                   </Button>
                 </Link>
                 </div>
@@ -228,7 +220,7 @@ const Dashboard = () => {
               <CardContent className="p-8">
                 <div className="flex items-center gap-2 mb-6">
                   <Bell className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-xl font-bold text-gray-900">{t('dashboard.notifications')}</h3>
+                  <h3 className="text-xl font-bold text-gray-900">Notifications</h3>
                 </div>
                 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -239,12 +231,12 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">
-                          {recentReviewsCount} {recentReviewsCount <= 1 ? t('dashboard.review') : t('dashboard.reviews')}
+                          {recentReviewsCount} {recentReviewsCount <= 1 ? 'avis' : 'avis'}
                         </p>
                         <p className="text-sm text-gray-600">
                           {lastReviewDate 
-                            ? t('dashboard.receivedAgo', { time: formatDistanceToNow(lastReviewDate, { addSuffix: false, locale: getDateLocale() }) })
-                            : t('dashboard.noReviewsYet')
+                            ? `Reçus ${formatDistanceToNow(lastReviewDate, { addSuffix: true, locale: fr })}`
+                            : 'Aucun avis pour le moment'
                           }
                         </p>
                       </div>
@@ -261,10 +253,7 @@ const Dashboard = () => {
                     }`}
                     title={
                       ratingEvolution 
-                        ? t('dashboard.baselineTooltip', { 
-                            score: ratingEvolution.baseline.toLocaleString(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }), 
-                            date: format(new Date(ratingEvolution.baselineDate), 'dd/MM/yyyy', { locale: getDateLocale() }) 
-                          })
+                        ? `Baseline : ${ratingEvolution.baseline.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} fixée le ${format(new Date(ratingEvolution.baselineDate), 'dd/MM/yyyy', { locale: fr })}`
                         : undefined
                     }
                   >
@@ -289,16 +278,16 @@ const Dashboard = () => {
                       <div>
                         <p className="font-medium text-gray-900">
                           {!ratingEvolution 
-                            ? t('dashboard.rating')
+                            ? 'Note'
                             : ratingEvolution.status === 'increase'
-                              ? t('dashboard.ratingIncreased', { delta: ratingEvolution.formattedDelta })
+                              ? `Augmentée de ${ratingEvolution.formattedDelta}`
                               : ratingEvolution.status === 'decrease'
-                                ? t('dashboard.ratingDecreased', { delta: ratingEvolution.formattedDelta })
-                                : t('dashboard.ratingStable', { delta: ratingEvolution.formattedDelta })
+                                ? `Baisse de ${ratingEvolution.formattedDelta}`
+                                : `Stable (${ratingEvolution.formattedDelta})`
                           }
                         </p>
                         <p className="text-sm text-gray-600">
-                          {!ratingEvolution ? t('dashboard.awaitingData') : t('dashboard.sinceRegistration')}
+                          {!ratingEvolution ? 'En attente de données' : 'depuis l\'enregistrement'}
                         </p>
                       </div>
                     </CardContent>
@@ -311,9 +300,9 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">
-                          {validatedResponsesCount}/{totalReviewsForEstablishment || recentReviewsCount} {t('dashboard.responses')}
+                          {validatedResponsesCount}/{totalReviewsForEstablishment || recentReviewsCount} réponses
                         </p>
-                        <p className="text-sm text-gray-600">{t('dashboard.validated')}</p>
+                        <p className="text-sm text-gray-600">Validées</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -322,10 +311,7 @@ const Dashboard = () => {
                     className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 border rounded-xl"
                     title={
                       satisfactionEvolution 
-                        ? t('dashboard.satisfactionBaselineTooltip', { 
-                            pct: satisfactionEvolution.baselinePct, 
-                            date: format(new Date(satisfactionEvolution.baselineDate), 'dd/MM/yyyy', { locale: getDateLocale() }) 
-                          })
+                        ? `Baseline : ${satisfactionEvolution.baselinePct}% fixée le ${format(new Date(satisfactionEvolution.baselineDate), 'dd/MM/yyyy', { locale: fr })}`
                         : undefined
                     }
                   >
@@ -336,12 +322,12 @@ const Dashboard = () => {
                       <div>
                         <p className="font-medium text-gray-900">
                           {!satisfactionEvolution 
-                            ? t('dashboard.satisfaction')
-                            : t('dashboard.satisfactionDelta', { delta: satisfactionEvolution.delta })
+                            ? 'Satisfaction'
+                            : `Satisfaction +${satisfactionEvolution.delta}%`
                           }
                         </p>
                         <p className="text-sm text-gray-600">
-                          {!satisfactionEvolution ? t('dashboard.awaitingReviews') : t('dashboard.sinceRegistration')}
+                          {!satisfactionEvolution ? 'En attente d\'avis' : 'depuis l\'enregistrement'}
                         </p>
                       </div>
                     </CardContent>
@@ -356,19 +342,19 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
                   <Award className="w-6 h-6 text-purple-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">{t('dashboard.globalPerformance')}</h3>
+                <h3 className="text-xl font-bold text-gray-900">Performance globale</h3>
                 
                 {/* Badge central */}
                 <div className="flex justify-center">
                   <div className="inline-flex items-center gap-2 bg-emerald-500 rounded-full px-5 py-3 shadow-md">
                     <Award className="w-5 h-5 text-white" />
                     <span className="text-amber-300 text-lg">★</span>
-                    <span className="text-white font-semibold text-base">{t('dashboard.performanceGood')}</span>
+                    <span className="text-white font-semibold text-base">Bon</span>
                   </div>
                 </div>
                 
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  {t('dashboard.globalPerformanceDesc')}
+                  Basé sur la note moyenne, la proportion d'avis positifs et l'évolution récente.
                 </p>
               </CardContent>
             </Card>
@@ -377,7 +363,7 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                   <Star className="w-6 h-6 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">{t('dashboard.satisfactionIndex')}</h3>
+                <h3 className="text-xl font-bold text-gray-900">Indice de satisfaction</h3>
                 
                 {/* Badge central */}
                 <div className="flex justify-center">
@@ -388,7 +374,7 @@ const Dashboard = () => {
                 </div>
                 
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  {t('dashboard.satisfactionIndexDesc')}
+                  Identification des 3 problèmes les plus critiques à résoudre en priorité.
                 </p>
               </CardContent>
             </Card>
@@ -398,18 +384,18 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-amber-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">{t('dashboard.perceivedValue')}</h3>
+                <h3 className="text-xl font-bold text-gray-900">Valeur ressentie</h3>
                 
                 {/* Badge central */}
                 <div className="flex justify-center">
                   <div className="inline-flex items-center gap-2 bg-amber-500 rounded-full px-5 py-3 shadow-md">
                     <TrendingUp className="w-5 h-5 text-white" />
-                    <span className="text-white font-semibold text-base">{t('dashboard.valueHigh')}</span>
+                    <span className="text-white font-semibold text-base">Élevée</span>
                   </div>
                 </div>
                 
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  {t('dashboard.perceivedValueDesc')}
+                  Calcul automatique de votre score moyen basé sur l'analyse des sentiments.
                 </p>
               </CardContent>
             </Card>
@@ -419,18 +405,18 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
                   <Clock className="w-6 h-6 text-violet-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">{t('dashboard.deliveredExperience')}</h3>
+                <h3 className="text-xl font-bold text-gray-900">Expérience délivrée</h3>
                 
                 {/* Badge central */}
                 <div className="flex justify-center">
                   <div className="inline-flex items-center gap-2 bg-violet-500 rounded-full px-5 py-3 shadow-md">
                     <Clock className="w-5 h-5 text-white" />
-                    <span className="text-white font-semibold text-base">{t('dashboard.experienceFluid')}</span>
+                    <span className="text-white font-semibold text-base">Fluide</span>
                   </div>
                 </div>
                 
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  {t('dashboard.deliveredExperienceDesc')}
+                  Résumé express et recommandations personnalisées en quelques clics.
                 </p>
               </CardContent>
             </Card>

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,31 +10,34 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-export default function SignUpForm({ prefilledEmail }: { prefilledEmail?: string } = {}) {
-  const { t } = useTranslation();
+const signUpSchema = z.object({
+  email: z.string().min(1, { message: "Veuillez renseigner ce champ." }).email({ message: "Veuillez renseigner un email valide." }),
+  firstName: z.string().min(1, { message: "Veuillez renseigner ce champ." }),
+  lastName: z.string().min(1, { message: "Veuillez renseigner ce champ." }),
+  company: z.string().min(1, { message: "Veuillez renseigner ce champ." }),
+  address: z.string().min(1, { message: "Veuillez renseigner ce champ." }),
+  password: z.string()
+    .min(1, { message: "Veuillez renseigner ce champ." })
+    .min(8, { message: "Le mot de passe doit contenir au moins 8 caractères" })
+    .regex(/[A-Z]/, { message: "Le mot de passe doit contenir au moins une majuscule" })
+    .regex(/[a-z]/, { message: "Le mot de passe doit contenir au moins une minuscule" })
+    .regex(/[0-9]/, { message: "Le mot de passe doit contenir au moins un chiffre" }),
+  confirmPassword: z.string().min(1, { message: "Veuillez renseigner ce champ." }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
+});
+
+type SignUpFormData = z.infer<typeof signUpSchema>;
+
+interface SignUpFormProps {
+  prefilledEmail?: string;
+}
+
+export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  const signUpSchema = z.object({
-    email: z.string().min(1, { message: t("validations.required") }).email({ message: t("validations.invalidEmail") }),
-    firstName: z.string().min(1, { message: t("validations.required") }),
-    lastName: z.string().min(1, { message: t("validations.required") }),
-    company: z.string().min(1, { message: t("validations.required") }),
-    address: z.string().min(1, { message: t("validations.required") }),
-    password: z.string()
-      .min(1, { message: t("validations.required") })
-      .min(8, { message: t("validations.passwordMinLength") })
-      .regex(/[A-Z]/, { message: t("validations.passwordUppercase") })
-      .regex(/[a-z]/, { message: t("validations.passwordLowercase") })
-      .regex(/[0-9]/, { message: t("validations.passwordNumber") }),
-    confirmPassword: z.string().min(1, { message: t("validations.required") }),
-  }).refine((data) => data.password === data.confirmPassword, {
-    message: t("auth.passwordMismatch"),
-    path: ["confirmPassword"],
-  });
-
-  type SignUpFormData = z.infer<typeof signUpSchema>;
 
   const {
     register,
@@ -68,6 +70,7 @@ export default function SignUpForm({ prefilledEmail }: { prefilledEmail?: string
     try {
       const redirectUrl = `${window.location.origin}/`;
       
+      // 1. Créer le compte avec metadata
       const { data, error } = await supabase.auth.signUp({
         email: formData.email.trim(),
         password: formData.password,
@@ -84,12 +87,13 @@ export default function SignUpForm({ prefilledEmail }: { prefilledEmail?: string
       if (error) {
         toast({
           variant: "destructive",
-          title: t("auth.signupError"),
+          title: "Erreur d'inscription",
           description: error.message
         });
         return;
       }
 
+      // 2. Upsert dans profiles
       if (data.user) {
         const { error: profileError } = await supabase
           .from('profiles')
@@ -106,18 +110,20 @@ export default function SignUpForm({ prefilledEmail }: { prefilledEmail?: string
           });
 
         if (profileError) {
-          console.error('Profile error:', profileError);
+          console.error('Erreur lors de la mise à jour du profil:', profileError);
         }
 
+        // 3. Link subscription by email
         const { error: subError } = await supabase
           .from('subscriptions')
           .update({ user_id: data.user.id })
           .or(`user_id.is.null,email.eq.${formData.email.trim()}`);
 
         if (subError) {
-          console.error('Subscription link error:', subError);
+          console.error('Erreur lors du lien de l\'abonnement:', subError);
         }
 
+        // 4. Envoyer l'email de bienvenue (non bloquant)
         supabase.functions.invoke('send-welcome-email', {
           body: {
             email: formData.email.trim(),
@@ -126,27 +132,31 @@ export default function SignUpForm({ prefilledEmail }: { prefilledEmail?: string
           },
         }).then(({ error: emailError }) => {
           if (emailError) {
-            console.error('Welcome email error:', emailError);
+            console.error('Erreur lors de l\'envoi de l\'email de bienvenue:', emailError);
+          } else {
+            console.log('Email de bienvenue envoyé avec succès');
           }
         });
 
+        // Clean up local storage
         localStorage.removeItem("subscribed_ok");
         localStorage.removeItem("subscribed_email");
       }
 
       toast({
-        title: t("auth.signupSuccess"),
-        description: t("auth.signupSuccessDesc")
+        title: "Compte créé avec succès !",
+        description: "Bienvenue ! Vous allez être redirigé."
       });
 
+      // Redirection vers la page de remerciement
       navigate("/merci-inscription");
       
     } catch (err) {
-      console.error('Unexpected error:', err);
+      console.error('Erreur inattendue:', err);
       toast({
         variant: "destructive",
-        title: t("common.error"),
-        description: t("errors.generic")
+        title: "Erreur",
+        description: "Une erreur inattendue s'est produite"
       });
     } finally {
       setLoading(false);
@@ -156,11 +166,11 @@ export default function SignUpForm({ prefilledEmail }: { prefilledEmail?: string
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">{t("auth.email")}</Label>
+        <Label htmlFor="email">Email</Label>
         <Input
           id="email"
           type="email"
-          placeholder={t("auth.emailPlaceholder")}
+          placeholder="Votre email"
           autoComplete="email"
           {...register("email")}
           aria-invalid={!!errors.email}
@@ -173,12 +183,12 @@ export default function SignUpForm({ prefilledEmail }: { prefilledEmail?: string
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="firstName">{t("auth.firstName")}</Label>
+        <Label htmlFor="firstName">Prénom</Label>
         <div className="relative">
           <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             id="firstName"
-            placeholder={t("auth.firstNamePlaceholder")}
+            placeholder="Votre prénom"
             autoComplete="given-name"
             {...register("firstName")}
             aria-invalid={!!errors.firstName}
@@ -194,12 +204,12 @@ export default function SignUpForm({ prefilledEmail }: { prefilledEmail?: string
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="lastName">{t("auth.lastName")}</Label>
+        <Label htmlFor="lastName">Nom</Label>
         <div className="relative">
           <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             id="lastName"
-            placeholder={t("auth.lastNamePlaceholder")}
+            placeholder="Votre nom"
             autoComplete="family-name"
             {...register("lastName")}
             aria-invalid={!!errors.lastName}
@@ -215,12 +225,12 @@ export default function SignUpForm({ prefilledEmail }: { prefilledEmail?: string
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="company">{t("signup.company")}</Label>
+        <Label htmlFor="company">Entreprise</Label>
         <div className="relative">
           <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             id="company"
-            placeholder={t("signup.companyPlaceholder")}
+            placeholder="Nom de votre entreprise"
             autoComplete="organization"
             {...register("company")}
             aria-invalid={!!errors.company}
@@ -236,12 +246,12 @@ export default function SignUpForm({ prefilledEmail }: { prefilledEmail?: string
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="address">{t("signup.establishmentAddress")}</Label>
+        <Label htmlFor="address">Adresse de l'établissement</Label>
         <div className="relative">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             id="address"
-            placeholder={t("signup.addressPlaceholder")}
+            placeholder="Adresse complète du restaurant"
             autoComplete="street-address"
             {...register("address")}
             aria-invalid={!!errors.address}
@@ -257,11 +267,11 @@ export default function SignUpForm({ prefilledEmail }: { prefilledEmail?: string
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="password">{t("auth.password")}</Label>
+        <Label htmlFor="password">Mot de passe</Label>
         <Input
           id="password"
           type="password"
-          placeholder={t("auth.passwordPlaceholder")}
+          placeholder="Votre mot de passe"
           autoComplete="new-password"
           {...register("password")}
           aria-invalid={!!errors.password}
@@ -274,11 +284,11 @@ export default function SignUpForm({ prefilledEmail }: { prefilledEmail?: string
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword">{t("auth.confirmPassword")}</Label>
+        <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
         <Input
           id="confirmPassword"
           type="password"
-          placeholder={t("auth.confirmPasswordPlaceholder")}
+          placeholder="Confirmez votre mot de passe"
           autoComplete="new-password"
           {...register("confirmPassword")}
           aria-invalid={!!errors.confirmPassword}
@@ -295,7 +305,7 @@ export default function SignUpForm({ prefilledEmail }: { prefilledEmail?: string
         disabled={loading}
         className="w-full"
       >
-        {loading ? t("auth.signingUp") : t("auth.signupAction")}
+        {loading ? "Création..." : "Créer mon compte"}
       </Button>
     </form>
   );

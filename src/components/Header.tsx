@@ -1,38 +1,25 @@
 import { useState, useRef, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { Menu, X, Globe, Check } from "lucide-react";
+import { Menu, X, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useLanguage } from "@/hooks/useLanguage";
-import { LANGUAGE_FLAGS, LANGUAGE_LABELS, SupportedLanguage, SUPPORTED_LANGUAGES } from "@/i18n/config";
 
 interface HeaderProps {
   theme?: string;
 }
 
 function Header({ theme = "light" }: HeaderProps) {
-  const { t } = useTranslation();
-  const { lang, setLang } = useLanguage();
   const isDark = theme === "dark";
   const [menuOpen, setMenuOpen] = useState(false);
-  const [langMenuOpen, setLangMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
-        setLangMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const handleLanguageChange = (newLang: SupportedLanguage) => {
-    setLang(newLang);
-    setLangMenuOpen(false);
-    setMenuOpen(false);
-  };
 
   return (
     <header
@@ -69,7 +56,7 @@ function Header({ theme = "light" }: HeaderProps) {
 
         {menuOpen && (
           <div
-            className={`absolute right-0 mt-2 w-56 rounded-lg shadow-lg border z-50 ${
+            className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg border z-50 ${
               isDark
                 ? "bg-gray-900 border-gray-700 text-gray-100"
                 : "bg-white border-gray-200 text-gray-900"
@@ -82,48 +69,21 @@ function Header({ theme = "light" }: HeaderProps) {
               }`}
               onClick={() => setMenuOpen(false)}
             >
-              🔐 {t("auth.login")}
+              🔐 Se connecter
             </Link>
 
             <div className={`border-t my-1 ${isDark ? "border-gray-700" : "border-gray-200"}`}></div>
 
-            {/* Language submenu */}
-            <div className="relative">
-              <button
-                onClick={() => setLangMenuOpen(!langMenuOpen)}
-                className={`w-full flex items-center justify-between px-4 py-2 ${
-                  isDark ? "hover:bg-gray-800" : "hover:bg-blue-50"
+            <div className="px-4 py-2 flex items-center space-x-2">
+              <Globe className={`w-4 h-4 ${isDark ? "text-purple-400" : "text-blue-500"}`} />
+              <select
+                className={`text-sm bg-transparent outline-none cursor-pointer ${
+                  isDark ? "text-gray-100" : "text-gray-800"
                 }`}
               >
-                <span className="flex items-center gap-2">
-                  <Globe className={`w-4 h-4 ${isDark ? "text-purple-400" : "text-blue-500"}`} />
-                  {t("common.language")}
-                </span>
-                <span className="text-xs text-gray-500">{lang.toUpperCase()}</span>
-              </button>
-
-              {langMenuOpen && (
-                <div className={`absolute left-full top-0 ml-1 w-48 rounded-lg shadow-lg border z-50 ${
-                  isDark
-                    ? "bg-gray-900 border-gray-700 text-gray-100"
-                    : "bg-white border-gray-200 text-gray-900"
-                }`}>
-                  {SUPPORTED_LANGUAGES.map((code) => (
-                    <button
-                      key={code}
-                      onClick={() => handleLanguageChange(code)}
-                      className={`w-full flex items-center justify-between px-4 py-2 ${
-                        isDark ? "hover:bg-gray-800" : "hover:bg-blue-50"
-                      } ${lang === code ? "bg-blue-50 text-blue-600 font-medium" : ""}`}
-                    >
-                      <span className="flex items-center gap-2">
-                        {LANGUAGE_FLAGS[code]} {LANGUAGE_LABELS[code]}
-                      </span>
-                      {lang === code && <Check className="w-4 h-4" />}
-                    </button>
-                  ))}
-                </div>
-              )}
+                <option>🇫🇷 Français</option>
+                <option>🇬🇧 English</option>
+              </select>
             </div>
           </div>
         )}
