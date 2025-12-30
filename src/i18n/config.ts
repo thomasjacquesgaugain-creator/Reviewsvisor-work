@@ -40,8 +40,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    // Use the detected/selected language as fallback - never fall back to French
-    fallbackLng: false,
+    fallbackLng: 'fr',
     defaultNS: 'translation',
     interpolation: {
       escapeValue: false,
@@ -51,9 +50,7 @@ i18n
       lookupLocalStorage: 'rv_lang',
       caches: ['localStorage'],
     },
-    // Show key if translation is missing (debug visible)
-    returnEmptyString: false,
-    // Detect missing keys in dev
+    // Détection des clés manquantes en dev
     saveMissing: import.meta.env.DEV,
     missingKeyHandler: (lngs, ns, key, fallbackValue) => {
       if (import.meta.env.DEV) {

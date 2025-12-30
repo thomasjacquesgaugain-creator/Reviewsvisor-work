@@ -35,10 +35,9 @@ const renderStars = (rating: number) => {
 export function ReviewsTable({
   rows,
   isLoading = false,
-  emptyLabel,
+  emptyLabel = "Aucun avis",
   "data-testid": dataTestId = "reviews-table"
 }: ReviewsTableProps) {
-  // Default emptyLabel handled via prop or caller should pass t("reviewsTable.noReviews")
   if (isLoading) {
     return (
       <div className="space-y-4">

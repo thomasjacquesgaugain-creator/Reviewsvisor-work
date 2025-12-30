@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const UpdatePassword = () => {
-  const { t } = useTranslation();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -22,8 +20,8 @@ const UpdatePassword = () => {
     
     if (password !== confirmPassword) {
       toast({
-        title: t("common.error"),
-        description: t("updatePassword.passwordMismatch"),
+        title: "Erreur",
+        description: "Les mots de passe ne correspondent pas.",
         variant: "destructive",
       });
       return;
@@ -31,8 +29,8 @@ const UpdatePassword = () => {
 
     if (password.length < 8) {
       toast({
-        title: t("common.error"),
-        description: t("updatePassword.passwordMinLength"),
+        title: "Erreur",
+        description: "Le mot de passe doit contenir au moins 8 caractères.",
         variant: "destructive",
       });
       return;
@@ -40,8 +38,8 @@ const UpdatePassword = () => {
 
     if (!/[A-Z]/.test(password)) {
       toast({
-        title: t("common.error"),
-        description: t("updatePassword.passwordUppercase"),
+        title: "Erreur",
+        description: "Le mot de passe doit contenir au moins une majuscule.",
         variant: "destructive",
       });
       return;
@@ -49,8 +47,8 @@ const UpdatePassword = () => {
 
     if (!/[a-z]/.test(password)) {
       toast({
-        title: t("common.error"),
-        description: t("updatePassword.passwordLowercase"),
+        title: "Erreur",
+        description: "Le mot de passe doit contenir au moins une minuscule.",
         variant: "destructive",
       });
       return;
@@ -58,8 +56,8 @@ const UpdatePassword = () => {
 
     if (!/[0-9]/.test(password)) {
       toast({
-        title: t("common.error"),
-        description: t("updatePassword.passwordNumber"),
+        title: "Erreur",
+        description: "Le mot de passe doit contenir au moins un chiffre.",
         variant: "destructive",
       });
       return;
@@ -74,21 +72,21 @@ const UpdatePassword = () => {
 
       if (error) {
         toast({
-          title: t("common.error"),
+          title: "Erreur",
           description: error.message,
           variant: "destructive",
         });
       } else {
         toast({
-          title: t("updatePassword.passwordChanged"),
-          description: t("updatePassword.passwordChangedDesc"),
+          title: "Mot de passe modifié",
+          description: "Votre mot de passe a été mis à jour avec succès.",
         });
         navigate('/login');
       }
     } catch (error) {
       toast({
-        title: t("common.error"),
-        description: t("updatePassword.unexpectedError"),
+        title: "Erreur",
+        description: "Une erreur inattendue s'est produite.",
         variant: "destructive",
       });
     } finally {
@@ -109,7 +107,7 @@ const UpdatePassword = () => {
         {/* Header */}
         <div className="text-center py-8">
           <h1 className="text-2xl font-medium text-gray-600">
-            {t("updatePassword.title")}
+            Nouveau mot de passe
           </h1>
         </div>
 
@@ -122,23 +120,23 @@ const UpdatePassword = () => {
                   <Lock className="w-8 h-8 text-blue-600" />
                 </div>
                 <h2 className="text-3xl font-bold text-gray-900">
-                  {t("updatePassword.title")}
+                  Nouveau mot de passe
                 </h2>
                 <p className="text-gray-600">
-                  {t("updatePassword.subtitle")}
+                  Choisissez un nouveau mot de passe sécurisé
                 </p>
               </div>
 
               <form className="space-y-6" onSubmit={handleSubmit}>
                 <div className="space-y-2">
                   <label htmlFor="password" className="text-sm font-medium text-gray-700">
-                    {t("updatePassword.newPassword")}
+                    Nouveau mot de passe
                   </label>
                   <div className="relative">
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder={t("updatePassword.placeholder")}
+                      placeholder="Minimum 6 caractères"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="h-12 px-4 pr-12 bg-gray-50 border-gray-200 rounded-xl"
@@ -160,12 +158,12 @@ const UpdatePassword = () => {
 
                 <div className="space-y-2">
                   <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
-                    {t("updatePassword.confirmPassword")}
+                    Confirmer le mot de passe
                   </label>
                   <Input
                     id="confirmPassword"
                     type="password"
-                    placeholder={t("updatePassword.confirmPlaceholder")}
+                    placeholder="Confirmez votre mot de passe"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
@@ -178,7 +176,7 @@ const UpdatePassword = () => {
                   className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium"
                   disabled={loading}
                 >
-                  {loading ? t("updatePassword.updating") : t("updatePassword.updateButton")}
+                  {loading ? "Mise à jour..." : "Mettre à jour le mot de passe"}
                 </Button>
               </form>
             </CardContent>

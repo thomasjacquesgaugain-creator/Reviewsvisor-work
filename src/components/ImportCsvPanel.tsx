@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { useTranslation } from "react-i18next";
 import { Upload, File, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +21,6 @@ interface ImportCsvPanelProps {
 }
 
 export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPanel, onClose, onImportSuccess }: ImportCsvPanelProps) {
-  const { t } = useTranslation();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -32,6 +30,7 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
   const navigate = useNavigate();
   const currentEstablishment = useCurrentEstablishment();
   
+  // Utiliser l'établissement actuel si placeId n'est pas fourni en prop
   const activeEstablishment = placeId || currentEstablishment?.place_id;
 
   const handleFileSelect = useCallback((file: File) => {
@@ -40,24 +39,24 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
     
     if (!isCSV && !isJSON) {
       toast({
-        title: t("csvImport.invalidFormat"),
-        description: t("csvImport.invalidFormatDesc"),
+        title: "Format de fichier invalide",
+        description: "Veuillez sélectionner un fichier CSV ou JSON.",
         variant: "destructive",
       });
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
       toast({
-        title: t("csvImport.fileTooLarge"),
-        description: t("csvImport.fileTooLargeDesc"),
+        title: "Fichier trop volumineux",
+        description: "La taille du fichier ne doit pas dépasser 10MB.",
         variant: "destructive",
       });
       return;
     }
 
     setSelectedFile(file);
-  }, [toast, t]);
+  }, [toast]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -69,6 +68,7 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
     }
   }, [handleFileSelect]);
 
+  // Mapping pour convertir les notes textuelles en nombres
   const convertStarRating = (starRating: any): number => {
     if (typeof starRating === 'number') return starRating;
     
@@ -82,10 +82,10 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
     
     if (typeof starRating === 'string') {
       const upperRating = starRating.toUpperCase();
-      return ratingMap[upperRating] || 3;
+      return ratingMap[upperRating] || 3; // Par défaut 3 étoiles si non reconnu
     }
     
-    return 3;
+    return 3; // Par défaut 3 étoiles
   };
 
   const parseGoogleTakeoutJSON = async (file: File): Promise<any[]> => {
@@ -96,30 +96,49 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
           const content = e.target?.result as string;
           const data = JSON.parse(content);
           
+          console.log('📄 Structure du fichier JSON importé:', data);
+          console.log('📊 Clés disponibles:', Object.keys(data));
+          
           if (!data.reviews || !Array.isArray(data.reviews)) {
-            reject(new Error(t("csvImport.jsonFormatError")));
+            reject(new Error("Le fichier JSON ne correspond pas au format Google Takeout attendu (reviews.json)."));
             return;
           }
           
-          const reviews = data.reviews.map((review: any) => {
+          console.log(`📝 Nombre d'avis trouvés dans le fichier: ${data.reviews.length}`);
+          
+          if (data.reviews.length > 0) {
+            console.log('🔍 Exemple d\'avis (premier):', data.reviews[0]);
+            console.log('🔑 Clés de l\'avis:', Object.keys(data.reviews[0]));
+          }
+          
+          const reviews = data.reviews.map((review: any, index: number) => {
             const rating = convertStarRating(review.starRating);
             const displayAuthor = getDisplayAuthor(review);
             
-            return {
+            const parsedReview = {
               text: review.comment || "",
               rating: rating,
               author_name: displayAuthor,
               published_at: review.publishedAtDate ? new Date(review.publishedAtDate).toISOString() : null,
               source: "Google"
             };
+            
+            if (index === 0) {
+              console.log('👤 Auteur extrait:', displayAuthor);
+              console.log('✅ Avis normalisé (premier):', parsedReview);
+            }
+            
+            return parsedReview;
           });
           
+          console.log(`✨ Total d'avis normalisés: ${reviews.length}`);
           resolve(reviews);
         } catch (error) {
-          reject(new Error(t("csvImport.jsonFormatError")));
+          console.error('❌ Erreur lors du parsing JSON:', error);
+          reject(new Error("Le fichier JSON ne correspond pas au format Google Takeout attendu (reviews.json)."));
         }
       };
-      reader.onerror = () => reject(new Error(t("csvImport.fileReadError")));
+      reader.onerror = () => reject(new Error("Erreur de lecture du fichier"));
       reader.readAsText(file);
     });
   };
@@ -133,20 +152,29 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
           const lines = content.split('\n').filter(line => line.trim());
           
           if (lines.length < 2) {
-            reject(new Error(t("csvImport.csvEmpty")));
+            reject(new Error("Le fichier CSV est vide ou invalide"));
             return;
           }
 
           const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
           
-          const reviews = lines.slice(1).map((line) => {
+          console.log('📋 En-têtes CSV détectés:', headers);
+          
+          const reviews = lines.slice(1).map((line, lineIndex) => {
             const values = line.split(',').map(v => v.trim());
             const rawReview: any = {};
             
+            // D'abord, mapper toutes les colonnes avec leurs noms originaux
             headers.forEach((header, index) => {
               rawReview[header] = values[index];
             });
             
+            if (lineIndex === 0) {
+              console.log('🔍 Premier avis brut CSV:', rawReview);
+              console.log('🔑 Clés disponibles:', Object.keys(rawReview));
+            }
+            
+            // Ensuite extraire les champs normalisés
             const review: any = {};
             
             headers.forEach((header, index) => {
@@ -159,8 +187,13 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
               }
             });
             
+            // Utiliser la fonction getDisplayAuthor pour extraire le nom
             const displayAuthor = getDisplayAuthor(rawReview);
             review.author_name = displayAuthor;
+            
+            if (lineIndex === 0) {
+              console.log('👤 Auteur extrait:', displayAuthor);
+            }
 
             return {
               ...review,
@@ -168,12 +201,13 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
             };
           });
 
+          console.log(`✅ ${reviews.length} avis CSV parsés`);
           resolve(reviews);
         } catch (error) {
-          reject(new Error(t("csvImport.csvReadError")));
+          reject(new Error("Erreur lors de la lecture du fichier CSV"));
         }
       };
-      reader.onerror = () => reject(new Error(t("csvImport.fileReadError")));
+      reader.onerror = () => reject(new Error("Erreur de lecture du fichier"));
       reader.readAsText(file);
     });
   };
@@ -181,18 +215,18 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
   const handleAnalyze = async () => {
     if (!selectedFile) {
       toast({
-        title: t("common.error"),
-        description: t("csvImport.selectFileFirst"),
+        title: "Erreur",
+        description: "Veuillez sélectionner un fichier.",
         variant: "destructive",
       });
       return;
     }
     
     if (!activeEstablishment) {
-      setError(t("csvImport.noEstablishment"));
+      setError("Aucun établissement sélectionné. Ajoutez ou enregistrez un établissement avant d'importer des avis.");
       toast({
-        title: t("common.error"),
-        description: t("csvImport.noEstablishment"),
+        title: "Erreur",
+        description: "Aucun établissement sélectionné. Ajoutez ou enregistrez un établissement avant d'importer des avis.",
         variant: "destructive",
       });
       return;
@@ -206,19 +240,26 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
       const isJSON = selectedFile.name.endsWith(".json");
       let reviews: any[];
       
-      const establishmentName = currentEstablishment?.name || t("categories.establishment");
+      // Déterminer le nom de l'établissement dès le début
+      const establishmentName = currentEstablishment?.name || "Établissement";
       const establishmentIdForService = currentEstablishment?.id || activeEstablishment;
       
+      // Parse le fichier selon son type
       if (isJSON) {
         reviews = await parseGoogleTakeoutJSON(selectedFile);
       } else {
         reviews = await parseCSV(selectedFile);
       }
       
+      // Validation : vérifier qu'il y a au moins un avis
       if (!reviews || reviews.length === 0) {
-        throw new Error(t("csvImport.noReviewsInFile"));
+        throw new Error("Le fichier ne contient aucun avis reconnu. Vérifiez que vous importez bien le fichier reviews.json de Google.");
       }
+      
+      console.log(`📦 Avis à importer: ${reviews.length} avis pour l'établissement "${establishmentName}"`);
+      console.log('📋 Premiers avis:', reviews.slice(0, 3));
 
+      // Préparer les avis pour l'import
       const reviewsToCreate = reviews.map(review => {
         const nameParts = (review.author_name || "").split(" ");
         return {
@@ -235,15 +276,21 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
         };
       });
       
+      // Import des avis dans la base de données
       const result = await bulkCreateReviews(reviewsToCreate);
       
+      console.log(`✅ Résultat de l'import: ${result.inserted} insérés, ${result.skipped} ignorés`);
+      
+      // Lancer l'analyse des avis
+      console.log('Lancement de l\'analyse pour place_id:', activeEstablishment);
       await runAnalyze({ 
         place_id: activeEstablishment,
         name: establishmentName,
       });
       
+      // TOAST bas-droite avec rapport détaillé (même format que "Coller des avis")
       const duplicates = result.reasons?.duplicate || 0;
-      sonnerToast.success(t("establishment.reviewsAnalyzedSuccess", { count: result.inserted }) + ` (${t("dashboard.duplicates") || 'duplicates'}: ${duplicates})`, {
+      sonnerToast.success(`✅ ${result.inserted} avis enregistrés pour ${establishmentName} (doublons: ${duplicates})`, {
         duration: 5000,
       });
       
@@ -251,6 +298,7 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
       onFileAnalyzed?.();
       onImportSuccess?.();
       
+      // Ouvrir le panneau visuel et scroll
       if (onOpenVisualPanel) {
         onOpenVisualPanel();
         setTimeout(() => {
@@ -261,17 +309,21 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
         }, 100);
       }
       
+      // Signal de refresh pour le panneau
       window.dispatchEvent(new CustomEvent("reviews:imported", { 
         detail: { establishmentId: establishmentIdForService } 
       }));
       
+      // Fermer la modale après succès
       if (onClose) {
         onClose();
       }
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : t("errors.generic");
+      console.error('Erreur lors de l\'import/analyse:', error);
+      const errorMsg = error instanceof Error ? error.message : "Une erreur est survenue lors de l'import des avis. Veuillez vérifier votre fichier.";
       setError(errorMsg);
       
+      // Toast d'erreur rouge en bas à droite
       sonnerToast.error(errorMsg, {
         duration: 5000,
       });
@@ -285,7 +337,7 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
       <CollapsibleInstructionsHeader>
         <ul className="space-y-2 text-sm text-muted-foreground list-disc list-inside pl-1">
           <li>
-            {t("csvImport.instructions.step1")}{" "}
+            Rendez-vous sur Google Takeout via le lien officiel{" "}
             <a 
               href="https://takeout.google.com/" 
               target="_blank" 
@@ -295,12 +347,12 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
               Google Takeout
             </a>.
           </li>
-          <li>{t("csvImport.instructions.step2")}</li>
-          <li>{t("csvImport.instructions.step3")}</li>
-          <li>{t("csvImport.instructions.step4")}</li>
-          <li>{t("csvImport.instructions.step5")}</li>
-          <li>{t("csvImport.instructions.step6")}</li>
-          <li>{t("csvImport.instructions.step7")}</li>
+          <li>Cliquez sur « Tout désélectionner ».</li>
+          <li>Faites défiler vers le bas et activez « Profil Google Business ».</li>
+          <li>Cliquez sur « Étape suivante » et suivez les instructions pour exporter vos données.</li>
+          <li>Une fois l'exportation terminée et le téléchargement effectué, extrayez le fichier.</li>
+          <li>Sur cette page, cliquez sur « Choisir un fichier » et sélectionnez le dossier que vous venez d'extraire (reviews).</li>
+          <li>Cliquez ensuite sur « Importer les avis ».</li>
         </ul>
       </CollapsibleInstructionsHeader>
       
@@ -321,10 +373,10 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
           <>
             <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-lg font-medium mb-2">
-              {t("csvImport.dropzone")}
+              Glissez-déposez votre fichier ici
             </p>
             <p className="text-sm text-muted-foreground mb-4">
-              {t("csvImport.dropzoneDesc")}
+              ou cliquez pour sélectionner un fichier CSV ou JSON
             </p>
             <input
               type="file"
@@ -340,7 +392,7 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
               variant="outline"
               onClick={() => document.getElementById("file-upload")?.click()}
             >
-              {t("csvImport.selectFile")}
+              Sélectionner un fichier
             </Button>
           </>
         ) : (
@@ -375,10 +427,10 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
           {isUploading ? (
             <>
               <Upload className="mr-2 h-4 w-4 animate-spin" />
-              {t("csvImport.importInProgress")}
+              Import en cours...
             </>
           ) : (
-            t("csvImport.importButton")
+            "Importer avis"
           )}
         </Button>
       )}
