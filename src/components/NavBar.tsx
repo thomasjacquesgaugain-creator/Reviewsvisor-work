@@ -30,19 +30,14 @@ export default function NavBar() {
     <nav className="w-full flex justify-between items-center px-8 py-3 bg-white shadow-sm">
       {/* Logo + liens */}
       <div className="flex items-center space-x-4">
-        <Link to="/" className="flex items-center space-x-2">
-          <img 
-            src="/reviewsvisor-logo.png" 
-            alt="Reviewsvisor" 
-            className="h-8 w-8 object-contain"
-          />
+        <div className="flex items-center space-x-2">
+          <span className="text-xl">📊</span>
           <div className="text-2xl font-bold text-blue-600">Reviewsvisor</div>
-        </Link>
-        
-        {/* Barre verticale */}
-        <div
-          className="relative mx-3 h-10 w-px bg-blue-300 before:absolute before:top-0 before:left-0 before:w-full before:h-2 before:bg-gradient-to-b before:from-white before:to-transparent after:absolute after:bottom-0 after:left-0 after:w-full after:h-2 after:bg-gradient-to-t after:from-white after:to-transparent"
-        ></div>
+          {/* Barre verticale */}
+          <div
+            className="relative mx-3 h-10 w-px bg-blue-300 before:absolute before:top-0 before:left-0 before:w-full before:h-2 before:bg-gradient-to-b before:from-white before:to-transparent after:absolute after:bottom-0 after:left-0 after:w-full after:h-2 after:bg-gradient-to-t after:from-white after:to-transparent"
+          ></div>
+        </div>
 
         <NavLink to="/tableau-de-bord" className={getLinkClass("/tableau-de-bord")}>
           🏠 {t("nav.home")}
