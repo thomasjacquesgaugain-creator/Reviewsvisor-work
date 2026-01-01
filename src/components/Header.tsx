@@ -31,11 +31,18 @@ function Header({ theme = "light" }: HeaderProps) {
       <div className="flex items-center space-x-6">
         <Link
           to="/"
-          className={`text-xl font-bold ${
-            isDark ? "text-purple-400" : "text-blue-600"
-          }`}
+          className="flex items-center space-x-2"
         >
-          Reviewsvisor
+          <img 
+            src="/reviewsvisor-logo.png" 
+            alt="Reviewsvisor" 
+            className="h-8 w-8 object-contain"
+          />
+          <span className={`text-xl font-bold ${
+            isDark ? "text-purple-400" : "text-blue-600"
+          }`}>
+            Reviewsvisor
+          </span>
         </Link>
       </div>
 
