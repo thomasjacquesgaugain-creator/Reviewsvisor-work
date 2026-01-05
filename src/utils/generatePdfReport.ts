@@ -982,23 +982,32 @@ export function generatePdfReport(data: ReportData): void {
   const ritualsBoxTop = yPos;
   const ritualsBoxHeight = 25;
   const ritualTextStartY = ritualsBoxTop + 16; // hauteur fixe identique pour toutes les colonnes
+  
+  // Calculer la largeur de chaque colonne (égale pour les 3)
+  const columnWidth = CONTENT_WIDTH / 3;
 
   rituals.forEach((ritual, idx) => {
-    const ritualX = MARGINS.left + 10 + (idx * 55);
+    // Centrer chaque élément dans sa colonne
+    const ritualX = MARGINS.left + (idx + 0.5) * columnWidth;
 
+    // Cercle bleu centré dans sa colonne
     doc.setFillColor(...COLORS.primary);
     doc.circle(ritualX, ritualsBoxTop + 8, 4, 'F');
+    
+    // Numéro dans le cercle (centré)
     doc.setTextColor(...COLORS.white);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
     doc.text(ritual.icon, ritualX, ritualsBoxTop + 9.5, { align: 'center', baseline: 'middle' });
 
+    // Texte centré sous le cercle
     doc.setTextColor(...COLORS.text);
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
 
-    // Bloc texte à hauteur contrôlée: même y de départ pour chaque rituel, centrage horizontal strict.
-    const ritualLines = doc.splitTextToSize(ritual.text, 50);
+    // Largeur du texte = 80% de la largeur de colonne pour éviter les débordements
+    const textWidth = columnWidth * 0.8;
+    const ritualLines = doc.splitTextToSize(ritual.text, textWidth);
     doc.text(ritualLines, ritualX, ritualTextStartY, { align: 'center' });
   });
 

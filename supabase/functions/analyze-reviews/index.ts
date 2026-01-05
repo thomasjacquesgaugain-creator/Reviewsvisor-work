@@ -42,7 +42,7 @@ function env(key: string, fallback = "") {
 const SUPABASE_URL = env("SUPABASE_URL");
 const SERVICE_ROLE = env("SUPABASE_SERVICE_ROLE_KEY");
 const GOOGLE_KEY   = env("GOOGLE_PLACES_API_KEY");
-const OPENAI_KEY   = env("OPENAI_API_KEY", "");
+const OPENAI_KEY   = env("CLÉ_API_OPENAI", "");
 
 const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false },

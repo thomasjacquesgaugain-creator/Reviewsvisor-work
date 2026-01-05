@@ -14,7 +14,7 @@ serve(async (req) => {
   try {
     console.log('[generate-review-response] ========== DÉBUT ==========');
     
-    // STEP 1: Validate authentication
+    // STEP 1: Validate authentication (même méthode que ai-assistance qui fonctionne)
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       console.error('[generate-review-response] Missing Authorization header');
@@ -25,17 +25,14 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    // Extract JWT token from Authorization header
-    const token = authHeader.replace('Bearer ', '');
-    
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
 
-    // Verify the JWT token and get user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      console.error('[generate-review-response] Authentication failed:', authError?.message || 'No user found');
+      console.error('[generate-review-response] Authentication failed:', authError?.message);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -84,11 +81,36 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      console.error('[generate-review-response] LOVABLE_API_KEY non configurée');
+    // DEBUG: Vérifier toutes les variables d'environnement disponibles
+    const allEnvKeys = Object.keys(Deno.env.toObject());
+    console.log('[generate-review-response] Variables d\'environnement disponibles:', allEnvKeys.filter(k => k.includes('API') || k.includes('KEY') || k.includes('OPENAI')));
+    
+    const CLÉ_API_OPENAI = Deno.env.get('CLÉ_API_OPENAI');
+    
+    // DEBUG: Log sécurisé (premiers et derniers caractères seulement)
+    if (CLÉ_API_OPENAI) {
+      const preview = CLÉ_API_OPENAI.length > 10 
+        ? `${CLÉ_API_OPENAI.substring(0, 4)}...${CLÉ_API_OPENAI.substring(CLÉ_API_OPENAI.length - 4)}`
+        : '***';
+      console.log('[generate-review-response] ✅ CLÉ_API_OPENAI trouvée (longueur:', CLÉ_API_OPENAI.length, 'preview:', preview, ')');
+    } else {
+      console.error('[generate-review-response] ❌ CLÉ_API_OPENAI non trouvée dans Deno.env');
+      console.error('[generate-review-response] Vérifiez que la clé est bien configurée dans Supabase Dashboard → Edge Functions → Secrets');
+      
+      // Vérifier aussi les variantes possibles
+      const alternativeKeys = ['LOVABLE_API_KEY', 'VITE_LOVABLE_API_KEY', 'LOVABLE_KEY'];
+      for (const altKey of alternativeKeys) {
+        const altValue = Deno.env.get(altKey);
+        if (altValue) {
+          console.warn(`[generate-review-response] ⚠️  ${altKey} trouvée mais CLÉ_API_OPENAI attendue`);
+        }
+      }
+      
       return new Response(
-        JSON.stringify({ error: 'Configuration IA manquante' }),
+        JSON.stringify({ 
+          error: 'Configuration IA manquante',
+          debug: 'CLÉ_API_OPENAI non trouvée dans les secrets Supabase. Vérifiez Dashboard → Edge Functions → Secrets'
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -163,16 +185,18 @@ ${review.language || review.language_code ? `- Langue : ${review.language || rev
 
 TÂCHE : Génère une réponse professionnelle, personnalisée et chaleureuse à cet avis. Respecte TOUTES les règles ci-dessus.`;
 
-    console.log('[generate-review-response] Appel à Lovable AI...');
+    console.log('[generate-review-response] Appel à OpenAI API...');
+    console.log('[generate-review-response] URL:', 'https://api.openai.com/v1/chat/completions');
+    console.log('[generate-review-response] Headers Authorization:', `Bearer ${CLÉ_API_OPENAI.substring(0, 10)}...`);
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${CLÉ_API_OPENAI}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: reviewContext }
@@ -184,7 +208,23 @@ TÂCHE : Génère une réponse professionnelle, personnalisée et chaleureuse à
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('[generate-review-response] Erreur API IA:', aiResponse.status, errorText);
+      console.error('[generate-review-response] ❌ Erreur API IA:', aiResponse.status);
+      console.error('[generate-review-response] Status:', aiResponse.status);
+      console.error('[generate-review-response] Status Text:', aiResponse.statusText);
+      console.error('[generate-review-response] Response Body:', errorText.substring(0, 500));
+      
+      // Log spécifique pour 401 Unauthorized
+      if (aiResponse.status === 401) {
+        console.error('[generate-review-response] 🔐 401 Unauthorized - La clé API est invalide ou expirée');
+        console.error('[generate-review-response] Vérifiez que CLÉ_API_OPENAI dans Supabase Secrets est correcte');
+        return new Response(
+          JSON.stringify({ 
+            error: 'Clé API invalide',
+            debug: 'La clé CLÉ_API_OPENAI est invalide ou expirée. Vérifiez dans Supabase Dashboard → Edge Functions → Secrets'
+          }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       
       if (aiResponse.status === 429) {
         return new Response(
@@ -200,7 +240,7 @@ TÂCHE : Génère une réponse professionnelle, personnalisée et chaleureuse à
         );
       }
       
-      throw new Error(`Erreur API IA: ${aiResponse.status}`);
+      throw new Error(`Erreur API IA: ${aiResponse.status} - ${errorText.substring(0, 200)}`);
     }
 
     const aiData = await aiResponse.json();

@@ -15,6 +15,7 @@ type AuthCtx = {
   displayName: string;
   loading: boolean;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 function getDisplayName(user: User | null, profile: Profile | null): string {
@@ -25,7 +26,16 @@ function getDisplayName(user: User | null, profile: Profile | null): string {
     return profile.display_name.trim();
   }
   
-  // Priority 2: user_metadata first_name + last_name
+  // Priority 2: profiles.first_name + last_name (from database)
+  if (profile) {
+    const firstName = profile.first_name?.trim() || "";
+    const lastName = profile.last_name?.trim() || "";
+    if (firstName || lastName) {
+      return `${firstName} ${lastName}`.trim();
+    }
+  }
+  
+  // Priority 3: user_metadata first_name + last_name
   const m = user.user_metadata ?? {};
   const firstName = m.first_name?.trim() || "";
   const lastName = m.last_name?.trim() || "";
@@ -34,18 +44,18 @@ function getDisplayName(user: User | null, profile: Profile | null): string {
     return `${firstName} ${lastName}`.trim();
   }
   
-  // Priority 3: user_metadata.name or full_name (OAuth)
+  // Priority 4: user_metadata.name or full_name (OAuth)
   if (m.name?.trim()) return m.name.trim();
   if (m.full_name?.trim()) return m.full_name.trim();
   
-  // Priority 4: given_name + family_name (Google OAuth)
+  // Priority 5: given_name + family_name (Google OAuth)
   const givenName = m.given_name?.trim() || "";
   const familyName = m.family_name?.trim() || "";
   if (givenName || familyName) {
     return `${givenName} ${familyName}`.trim();
   }
   
-  // Priority 5: email fallback
+  // Priority 6: email fallback
   if (user.email) {
     return user.email.split("@")[0];
   }
@@ -58,7 +68,8 @@ const AuthContext = createContext<AuthCtx>({
   user: null,
   displayName: "",
   loading: true, 
-  signOut: async () => {} 
+  signOut: async () => {},
+  refreshProfile: async () => {}
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -106,7 +117,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, display_name, full_name')
-        .eq('id', userId)
+        .eq('user_id', userId)
         .maybeSingle();
       
       if (!error && data) {
@@ -123,6 +134,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (err) {
       console.error('Erreur lors de la récupération du profil:', err);
       setProfile(null);
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (session?.user) {
+      await fetchProfile(session.user.id);
     }
   };
 
@@ -158,7 +175,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       user,
       displayName: getDisplayName(user, profile),
       loading, 
-      signOut 
+      signOut,
+      refreshProfile
     }}>
       {children}
     </AuthContext.Provider>

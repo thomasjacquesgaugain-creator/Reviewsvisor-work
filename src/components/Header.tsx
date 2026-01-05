@@ -75,7 +75,7 @@ function Header({ theme = "light" }: HeaderProps) {
             <div className={`border-t my-1 ${isDark ? "border-gray-700" : "border-gray-200"}`}></div>
 
             <div className="px-4 py-2 flex items-center space-x-2">
-              <Globe className={`w-4 h-4 ${isDark ? "text-purple-400" : "text-blue-500"}`} />
+              <Globe className={`w-4 h-4 ${isDark ? "text-purple-400" : "text-blue-600"}`} />
               <select
                 className={`text-sm bg-transparent outline-none cursor-pointer ${
                   isDark ? "text-gray-100" : "text-gray-800"

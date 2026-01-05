@@ -147,33 +147,43 @@ export default function SavedEstablishmentsList({
 
   // Handle add button click with subscription AND quota check
   const handleAddClick = async () => {
-    console.log("[SavedEstablishmentsList] handleAddClick triggered");
+    if (!import.meta.env.PROD) {
+      console.log("[SavedEstablishmentsList] handleAddClick triggered");
+    }
     setCheckingSubscription(true);
     try {
       const status = await checkSubscription();
-      console.log("[SavedEstablishmentsList] Subscription status:", status);
-      console.log("[SavedEstablishmentsList] Current establishments:", establishments.length);
+      if (!import.meta.env.PROD) {
+        console.log("[SavedEstablishmentsList] Subscription status:", status);
+        console.log("[SavedEstablishmentsList] Current establishments:", establishments.length);
+      }
 
       // CASE 1: Not subscribed at all
       if (!status.subscribed) {
-        console.log("[SavedEstablishmentsList] User NOT subscribed, showing subscription modal");
+        if (!import.meta.env.PROD) {
+          console.log("[SavedEstablishmentsList] User NOT subscribed, showing subscription modal");
+        }
         setShowSubscriptionModal(true);
         return;
       }
 
       // CASE 2: Subscribed but quota exceeded (already has 1+ establishments)
       if (establishments.length >= INCLUDED_ESTABLISHMENTS) {
-        console.log("[SavedEstablishmentsList] Quota exceeded, showing addon modal", {
-          current: establishments.length,
-          included: INCLUDED_ESTABLISHMENTS
-        });
+        if (!import.meta.env.PROD) {
+          console.log("[SavedEstablishmentsList] Quota exceeded, showing addon modal", {
+            current: establishments.length,
+            included: INCLUDED_ESTABLISHMENTS
+          });
+        }
         // Show addon modal instead of navigating
         setShowSubscriptionModal(true);
         return;
       }
 
       // CASE 3: Subscribed and under quota - navigate directly
-      console.log("[SavedEstablishmentsList] Under quota, allowing navigation");
+      if (!import.meta.env.PROD) {
+        console.log("[SavedEstablishmentsList] Under quota, allowing navigation");
+      }
       onAddClick?.();
     } catch (error) {
       console.error("[SavedEstablishmentsList] Error checking subscription:", error);
@@ -185,7 +195,9 @@ export default function SavedEstablishmentsList({
 
   // Create Stripe checkout session, update addon quantity, or use creator bypass
   const handleProceedToCheckout = async () => {
-    console.log("[SavedEstablishmentsList] handleProceedToCheckout triggered");
+    if (!import.meta.env.PROD) {
+      console.log("[SavedEstablishmentsList] handleProceedToCheckout triggered");
+    }
     setCreatingCheckout(true);
     try {
       const {
@@ -201,11 +213,15 @@ export default function SavedEstablishmentsList({
 
       // ======= CREATOR BYPASS =======
       if (isCreator()) {
-        console.log("[SavedEstablishmentsList] Creator bypass mode");
+        if (!import.meta.env.PROD) {
+          console.log("[SavedEstablishmentsList] Creator bypass mode");
+        }
 
         // If not subscribed yet, activate pro plan first
         if (!subscription.subscribed) {
-          console.log("[SavedEstablishmentsList] Creator: Activating pro plan first");
+          if (!import.meta.env.PROD) {
+            console.log("[SavedEstablishmentsList] Creator: Activating pro plan first");
+          }
           const proResult = await activateCreatorSubscription(PRODUCT_KEYS.PRO_1499_12M);
           if (!proResult.success) {
             sonnerToast.error(proResult.error || "Erreur d'activation du plan Pro");
@@ -215,9 +231,11 @@ export default function SavedEstablishmentsList({
 
         // If adding an addon (additional establishment beyond the first)
         if (newAddonQty > 0) {
-          console.log("[SavedEstablishmentsList] Creator: Activating addon", {
-            newAddonQty
-          });
+          if (!import.meta.env.PROD) {
+            console.log("[SavedEstablishmentsList] Creator: Activating addon", {
+              newAddonQty
+            });
+          }
           const addonResult = await activateCreatorSubscription(PRODUCT_KEYS.ADDON_MULTI_ETABLISSEMENTS);
           if (!addonResult.success) {
             sonnerToast.error(addonResult.error || "Erreur d'activation addon");
@@ -235,9 +253,11 @@ export default function SavedEstablishmentsList({
       // Check if user already has an active subscription
       if (subscription.subscribed) {
         // User is subscribed - update addon quantity
-        console.log("[SavedEstablishmentsList] Updating addon quantity", {
-          newAddonQty
-        });
+        if (!import.meta.env.PROD) {
+          console.log("[SavedEstablishmentsList] Updating addon quantity", {
+            newAddonQty
+          });
+        }
         const {
           data,
           error
@@ -264,10 +284,12 @@ export default function SavedEstablishmentsList({
 
       // New subscription checkout
       const establishmentsCount = establishments.length;
-      console.log("[SavedEstablishmentsList] Creating new subscription", {
-        establishmentsCount,
-        newTotal: establishmentsCount + 1
-      });
+      if (!import.meta.env.PROD) {
+        console.log("[SavedEstablishmentsList] Creating new subscription", {
+          establishmentsCount,
+          newTotal: establishmentsCount + 1
+        });
+      }
       const {
         data,
         error
@@ -277,10 +299,12 @@ export default function SavedEstablishmentsList({
           priceId: activePlan.priceId
         }
       });
-      console.log("[SavedEstablishmentsList] create-subscription response:", {
-        data,
-        error
-      });
+      if (!import.meta.env.PROD) {
+        console.log("[SavedEstablishmentsList] create-subscription response:", {
+          data,
+          error
+        });
+      }
       if (error) {
         console.error("[SavedEstablishmentsList] Edge function error:", error);
         sonnerToast.error(`Erreur: ${error.message}`);
@@ -298,7 +322,10 @@ export default function SavedEstablishmentsList({
         return;
       }
       if (data?.url) {
-        console.log("[SavedEstablishmentsList] Redirecting to Stripe checkout:", data.url);
+        if (!import.meta.env.PROD) {
+          console.log("[SavedEstablishmentsList] Redirecting to Stripe checkout:", data.url);
+        }
+        sessionStorage.setItem("stripeCheckoutStarted", "true");
         window.location.href = data.url;
       } else {
         console.error("[SavedEstablishmentsList] No URL in response:", data);

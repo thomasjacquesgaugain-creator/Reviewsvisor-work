@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Eye, EyeOff, AlertTriangle, User, UserCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import BackArrow from "@/components/BackArrow";
 
 const Login = () => {
@@ -17,8 +17,8 @@ const Login = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -28,29 +28,27 @@ const Login = () => {
     }
   }, []);
 
+  // Réinitialiser l'erreur quand l'utilisateur change de mode ou commence à taper
+  useEffect(() => {
+    setLoginError("");
+  }, [isSignUp, email, password]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setLoginError("");
 
     try {
       if (isSignUp) {
         // Inscription
         if (password !== confirmPassword) {
-          toast({
-            title: "Erreur",
-            description: "Les mots de passe ne correspondent pas.",
-            variant: "destructive",
-          });
+          toast.error("Les mots de passe ne correspondent pas.");
           setLoading(false);
           return;
         }
 
         if (!firstName.trim() || !lastName.trim()) {
-          toast({
-            title: "Erreur",
-            description: "Veuillez remplir votre prénom et nom.",
-            variant: "destructive",
-          });
+          toast.error("Veuillez remplir votre prénom et nom.");
           setLoading(false);
           return;
         }
@@ -68,10 +66,8 @@ const Login = () => {
         });
 
         if (error) {
-          toast({
-            title: "Erreur d'inscription",
+          toast.error("Erreur d'inscription", {
             description: error.message,
-            variant: "destructive",
           });
         } else {
           // Upsert dans profiles
@@ -94,8 +90,7 @@ const Login = () => {
             }
           }
 
-          toast({
-            title: "Inscription réussie",
+          toast.success("Inscription réussie", {
             description: "Bienvenue ! Vous pouvez maintenant utiliser l'application.",
           });
           navigate('/tableau-de-bord');
@@ -108,25 +103,23 @@ const Login = () => {
         });
 
         if (error) {
-          toast({
-            title: "Erreur de connexion",
-            description: error.message,
-            variant: "destructive",
-          });
+          // Vider les champs email et mot de passe
+          setEmail("");
+          setPassword("");
+          
+          // Afficher un message d'erreur sur la page et en toast
+          const errorMessage = "Email ou mot de passe incorrect";
+          setLoginError(errorMessage);
+          toast.error(errorMessage);
         } else {
-          toast({
-            title: "Connexion réussie",
+          toast.success("Connexion réussie", {
             description: "Vous êtes maintenant connecté !",
           });
           navigate('/tableau-de-bord');
         }
       }
     } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Une erreur inattendue s'est produite.",
-        variant: "destructive",
-      });
+      toast.error("Une erreur inattendue s'est produite.");
     } finally {
       setLoading(false);
     }
@@ -281,12 +274,20 @@ const Login = () => {
                     : (isSignUp ? "S'inscrire" : "Se connecter")
                   }
                 </Button>
+
+                {!isSignUp && loginError && (
+                  <div className="text-center">
+                    <p className="text-sm text-red-600 font-medium">
+                      {loginError}
+                    </p>
+                  </div>
+                )}
               </form>
 
               {!isSignUp && (
                 <div className="text-center">
                   <Link 
-                    to="/reset-password" 
+                    to="/mot-de-passe-oublie" 
                     className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
                   >
                     🔒 Mot de passe oublié ?

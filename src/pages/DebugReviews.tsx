@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,6 +8,9 @@ import { Loader2 } from 'lucide-react';
 import { runAnalyze } from '@/lib/runAnalyze';
 
 export default function DebugReviews() {
+  if (import.meta.env.PROD) {
+    return <Navigate to="/" replace />;
+  }
   const [formData, setFormData] = useState({
     place_id: '',
     name: '',

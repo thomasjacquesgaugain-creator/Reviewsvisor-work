@@ -315,7 +315,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
           <Button
             variant="ghost"
             size="sm"
-            className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto"
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto"
             title="Importer vos avis"
             data-testid="btn-import-avis"
           >

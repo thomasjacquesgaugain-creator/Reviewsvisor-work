@@ -7,6 +7,7 @@ import { StepHeader } from "@/components/StepHeader";
 import { SubscriptionPlanCard } from "@/components/SubscriptionPlanCard";
 import { subscriptionPlans, getPlanBySlug, getDefaultPlan } from "@/config/subscriptionPlans";
 import { supabase } from "@/integrations/supabase/client";
+import BackArrow from "@/components/BackArrow";
 
 const Onboarding = () => {
   const [searchParams] = useSearchParams();
@@ -36,6 +37,7 @@ const Onboarding = () => {
       
       if (error) throw error;
       if (data?.url) {
+        sessionStorage.setItem("stripeCheckoutStarted", "true");
         window.location.href = data.url;
       } else {
         throw new Error("URL de paiement non reçue");
@@ -49,6 +51,7 @@ const Onboarding = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
+      <BackArrow />
       <div className="w-full max-w-5xl">
         <StepHeader currentStep={1} />
         

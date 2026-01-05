@@ -22,7 +22,9 @@ export function SubscriptionCard() {
     try {
       // ======= CREATOR BYPASS =======
       if (isCreator()) {
-        console.log("[SubscriptionCard] Creator bypass - activating pro plan");
+        if (!import.meta.env.PROD) {
+          console.log("[SubscriptionCard] Creator bypass - activating pro plan");
+        }
         const result = await activateCreatorSubscription(PRODUCT_KEYS.PRO_1499_12M);
         if (result.success) {
           await refresh();

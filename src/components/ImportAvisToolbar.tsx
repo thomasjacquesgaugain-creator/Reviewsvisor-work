@@ -131,7 +131,7 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all",
                   isActive
-                    ? "bg-blue-500 text-white shadow-sm"
+                    ? "bg-blue-600 text-white shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                 )}
               >

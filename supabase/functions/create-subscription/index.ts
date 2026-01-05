@@ -11,6 +11,16 @@ const corsHeaders = {
 const ADDITIONAL_ESTABLISHMENT_PRICE_ID = "price_1ShiPzGkt979eNWBSDapH7aJ";
 const DEFAULT_PLAN_PRICE_ID = "price_1SSJ0sGkt979eNWBhN9cZmG2"; // Pro plan
 
+// Admin email for bypass
+const ADMIN_EMAIL = "thomas.jacquesgaugain@gmail.com";
+
+// Map priceId to productKey for admin bypass
+const PRICE_ID_TO_PRODUCT_KEY: Record<string, string> = {
+  "price_1SZT7tGkt979eNWB0MF2xczP": "pro_1499_12m", // Pro engagement
+  "price_1SXnCbGkt979eNWBttiTM124": "pro_2499_monthly", // Pro flexible
+  "price_1SSJ0sGkt979eNWBhN9cZmG2": "pro_1499_12m", // Default Pro plan
+};
+
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-SUBSCRIPTION] ${step}${detailsStr}`);
@@ -106,7 +116,80 @@ serve(async (req) => {
       logStep("Created new customer", { customerId });
     }
 
-    const origin = req.headers.get("origin") || "https://reviewsvisor.fr";
+    const origin = req.headers.get("origin") || Deno.env.get("APP_URL") || Deno.env.get("SITE_URL") || "https://reviewsvisor.fr";
+    
+    // ======= ADMIN BYPASS =======
+    if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      logStep("Admin bypass detected", { email: user.email, priceId: mainPriceId });
+      
+      const productKey = PRICE_ID_TO_PRODUCT_KEY[mainPriceId];
+      if (!productKey) {
+        logStep("ERROR: Unknown priceId for admin bypass", { priceId: mainPriceId });
+        throw new Error("PriceId non reconnu pour le bypass admin");
+      }
+      
+      // Activate subscription directly
+      const periodEnd = new Date();
+      periodEnd.setDate(periodEnd.getDate() + 30);
+      const periodEndISO = periodEnd.toISOString();
+      
+      const planKey = productKey === "pro_1499_12m" ? "pro_1499_12m" : "pro_2499_monthly";
+      
+      // Check if user already has an entitlement record
+      const { data: existingEntitlement } = await supabaseClient
+        .from('user_entitlements')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      const upsertData: Record<string, any> = {
+        user_id: user.id,
+        source: 'admin_bypass',
+        pro_plan_key: planKey,
+        pro_status: 'active',
+        pro_current_period_end: periodEndISO,
+        updated_at: new Date().toISOString(),
+      };
+      
+      if (existingEntitlement) {
+        const { error: updateError } = await supabaseClient
+          .from('user_entitlements')
+          .update(upsertData)
+          .eq('user_id', user.id);
+        
+        if (updateError) {
+          throw new Error(`Failed to update entitlements: ${updateError.message}`);
+        }
+      } else {
+        const insertData = {
+          ...upsertData,
+          addon_multi_etablissements_status: 'inactive',
+          addon_multi_etablissements_qty: 0,
+        };
+        
+        const { error: insertError } = await supabaseClient
+          .from('user_entitlements')
+          .insert(insertData);
+        
+        if (insertError) {
+          throw new Error(`Failed to insert entitlements: ${insertError.message}`);
+        }
+      }
+      
+      logStep("Admin subscription activated", { userId: user.id, productKey, periodEnd: periodEndISO });
+      
+      // Return success URL instead of Stripe checkout URL
+      const successUrl = `${origin}/etablissement?success=true&session_id=admin_bypass_${Date.now()}`;
+      return new Response(JSON.stringify({ 
+        url: successUrl,
+        session_id: `admin_bypass_${Date.now()}`,
+        establishments_count: totalEstablishments,
+        additional_establishments: additionalEstablishments
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
     
     // Build line items: main subscription + additional establishments if any
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
@@ -128,6 +211,17 @@ serve(async (req) => {
     // Check if this is an engagement plan (14-day trial)
     const isEngagementPlan = mainPriceId === "price_1SZT7tGkt979eNWB0MF2xczP";
 
+    const cancelUrl = `${origin}/billing/cancel`;
+    const successUrl = `${origin}/etablissement?success=true&session_id={CHECKOUT_SESSION_ID}`;
+    
+    logStep("Creating checkout session", { 
+      cancelUrl, 
+      successUrl, 
+      origin,
+      lineItemsCount: lineItems.length,
+      additionalEstablishments
+    });
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: lineItems,
@@ -135,14 +229,17 @@ serve(async (req) => {
       payment_method_types: ["card"],
       billing_address_collection: "auto",
       allow_promotion_codes: false,
+      locale: "fr",
       ...(isEngagementPlan && { subscription_data: { trial_period_days: 14 } }),
-      success_url: `${origin}/etablissement?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/etablissement?canceled=true`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
     });
 
     logStep("Checkout session created", { 
       sessionId: session.id, 
       url: session.url,
+      cancelUrl: cancelUrl,
+      successUrl: successUrl,
       lineItemsCount: lineItems.length,
       additionalEstablishments
     });

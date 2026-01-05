@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2, ThumbsUp, ThumbsDown, ShieldAlert, List } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
+import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2, ThumbsUp, ThumbsDown, ShieldAlert, List, LineChart, PieChart } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line as RechartsLine, AreaChart, Area } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { getReviewsSummary, listAllReviews, listAll, deleteAllReviews } from "@/services/reviewsService";
@@ -11,6 +11,10 @@ import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable
 import { toast as sonnerToast } from "sonner";
 import { getDisplayAuthor } from "@/utils/getDisplayAuthor";
 import { Badge } from "@/components/ui/badge";
+import { TrendModal } from "@/components/TrendModal";
+import { RatingDistributionModal } from "@/components/RatingDistributionModal";
+import { extractOriginalText } from "@/utils/extractOriginalText";
+import { formatReviewDate } from "@/utils/formatReviewDate";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,6 +87,8 @@ export function ReviewsVisualPanel({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [activeFilter, setActiveFilter] = useState<ReviewFilter>("all");
+  const [showTrendModal, setShowTrendModal] = useState(false);
+  const [showRatingDistributionModal, setShowRatingDistributionModal] = useState(false);
   const currentEstablishment = useCurrentEstablishment();
   
   // Use props first, fallback to current establishment
@@ -112,9 +118,9 @@ export function ReviewsVisualPanel({
         const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
           authorName: getDisplayAuthor(review),
           rating: review.rating || 0,
-          comment: review.text || "",
+          comment: extractOriginalText(review.text) || "",
           platform: review.source || "Google",
-          reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
+          reviewDate: formatReviewDate(review)
         }));
         
         setReviewsList(mappedRows);
@@ -151,9 +157,9 @@ export function ReviewsVisualPanel({
       const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
         authorName: getDisplayAuthor(review),
         rating: review.rating || 0,
-        comment: review.text || "",
+        comment: extractOriginalText(review.text) || "",
         platform: review.source || "Google",
-        reviewDate: review.published_at ? new Date(review.published_at).toLocaleDateString('fr-FR') : null
+        reviewDate: formatReviewDate(review)
       }));
       
       setReviewsList(mappedRows);
@@ -306,7 +312,7 @@ export function ReviewsVisualPanel({
               <Card>
                 <CardContent className="flex items-center justify-between p-4" data-testid="metric-total-reviews">
                   <div className="flex items-center">
-                    <BarChart3 className="w-8 h-8 text-blue-500 mr-3" />
+                    <BarChart3 className="w-8 h-8 text-blue-600 mr-3" />
                     <div>
                       <p className="text-sm text-muted-foreground">Total d'avis</p>
                       <p className="text-2xl font-bold">{summary.total}</p>
@@ -411,7 +417,7 @@ export function ReviewsVisualPanel({
                       <YAxis />
                       <Tooltip labelFormatter={value => `Mois: ${value}`} formatter={(value, name) => [value, name === 'count' ? 'Nombre d\'avis' : 'Note moyenne']} />
                       <Area type="monotone" dataKey="count" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.3} />
-                      {summary.byMonth.some(m => m.avg) && <Line type="monotone" dataKey="avg" stroke="hsl(var(--destructive))" strokeWidth={2} />}
+                      {summary.byMonth.some(m => m.avg) && <RechartsLine type="monotone" dataKey="avg" stroke="hsl(var(--destructive))" strokeWidth={2} />}
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -419,12 +425,74 @@ export function ReviewsVisualPanel({
 
             {/* Reviews List with Filter */}
             <div>
-              <Badge variant="secondary" className="text-sm mb-4">
-                Filtre : {activeFilter === 'all' ? 'tous les avis' :
-                         activeFilter === 'positive' ? 'avis positifs (≥ 4 étoiles)' : 
-                         activeFilter === 'negative' ? 'avis négatifs (≤ 2 étoiles)' : 
-                         'avis suspects'}
-              </Badge>
+              <div className="flex items-center justify-between mb-4">
+                <Badge variant="secondary" className="text-sm">
+                  Filtre : {activeFilter === 'all' ? 'tous les avis' :
+                           activeFilter === 'positive' ? 'avis positifs (≥ 4 étoiles)' : 
+                           activeFilter === 'negative' ? 'avis négatifs (≤ 2 étoiles)' : 
+                           'avis suspects'}
+                </Badge>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-primary hover:text-primary/80 hover:bg-primary/10 transition-colors"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'hsl(var(--primary))',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                    }}
+                    onClick={() => setShowRatingDistributionModal(true)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = 'hsl(var(--primary) / 0.8)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = 'hsl(var(--primary))';
+                    }}
+                  >
+                    <PieChart 
+                      className="w-4 h-4 mr-2" 
+                      style={{
+                        color: 'hsl(var(--primary))',
+                        display: 'block',
+                      }}
+                    />
+                    <span style={{ color: 'hsl(var(--primary))' }}>Répartition</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-primary hover:text-primary/80 hover:bg-primary/10 transition-colors"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'hsl(var(--primary))',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                    }}
+                    onClick={() => setShowTrendModal(true)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = 'hsl(var(--primary) / 0.8)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = 'hsl(var(--primary))';
+                    }}
+                  >
+                    <LineChart 
+                      className="w-4 h-4 mr-2" 
+                      style={{
+                        color: 'hsl(var(--primary))',
+                        display: 'block',
+                      }}
+                    />
+                    <span style={{ color: 'hsl(var(--primary))' }}>Tendance</span>
+                  </Button>
+                </div>
+              </div>
               <ReviewsTable
                 rows={(() => {
                   switch (activeFilter) {
@@ -465,5 +533,18 @@ export function ReviewsVisualPanel({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+        <TrendModal
+          open={showTrendModal}
+          onOpenChange={setShowTrendModal}
+          establishmentId={effectiveId || ""}
+          establishmentName={displayName}
+        />
+        <RatingDistributionModal
+          open={showRatingDistributionModal}
+          onOpenChange={setShowRatingDistributionModal}
+          establishmentId={effectiveId || ""}
+          establishmentName={displayName}
+        />
     </Card>;
 }

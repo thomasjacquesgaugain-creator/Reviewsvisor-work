@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 
 // Quota included in base plan
 const INCLUDED_ESTABLISHMENTS = 1;
+const ADMIN_EMAIL = "thomas.jacquesgaugain@gmail.com";
 
 export default function SaveEstablishmentButton({
   selected,
@@ -87,7 +88,32 @@ export default function SaveEstablishmentButton({
   async function redirectToCheckout() {
     setRedirectingToCheckout(true);
     try {
-      console.log("[SaveEstablishmentButton] Creating subscription checkout...");
+      // ======= ADMIN BYPASS - Vérification explicite AVANT Stripe =======
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user?.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        if (!import.meta.env.PROD) {
+          console.log("[SaveEstablishmentButton] Admin bypass detected for", user.email);
+        }
+        
+        // Activer l'abonnement Pro directement
+        const result = await activateCreatorSubscription(PRODUCT_KEYS.PRO_1499_12M);
+        
+        if (result.success) {
+          setShowSubscriptionModal(false);
+          sonnerToast.success("Abonnement activé avec succès !");
+          // Re-run the save process
+          await performSave();
+          return;
+        } else {
+          sonnerToast.error(result.error || "Erreur d'activation");
+          return;
+        }
+      }
+      
+      if (!import.meta.env.PROD) {
+        console.log("[SaveEstablishmentButton] Creating subscription checkout...");
+      }
       
       const { data, error } = await supabase.functions.invoke("create-subscription", {
         body: {}
@@ -102,7 +128,10 @@ export default function SaveEstablishmentButton({
       }
 
       if (data?.url) {
-        console.log("[SaveEstablishmentButton] Redirecting to:", data.url);
+        if (!import.meta.env.PROD) {
+          console.log("[SaveEstablishmentButton] Redirecting to:", data.url);
+        }
+        sessionStorage.setItem("stripeCheckoutStarted", "true");
         window.location.href = data.url;
       } else if (data?.has_subscription) {
         // User already has a subscription, close modal and proceed
@@ -168,7 +197,9 @@ export default function SaveEstablishmentButton({
       // Sync billing with Stripe (update quantity if subscribed)
       syncEstablishmentBilling().then(result => {
         if (result.success) {
-          console.log('[SaveEstablishmentButton] Billing synced:', result);
+          if (!import.meta.env.PROD) {
+            console.log('[SaveEstablishmentButton] Billing synced:', result);
+          }
         } else {
           console.warn('[SaveEstablishmentButton] Billing sync issue:', result.error);
         }
@@ -193,7 +224,9 @@ export default function SaveEstablishmentButton({
       
       // ======= CREATOR BYPASS =======
       if (isCreator()) {
-        console.log("[SaveEstablishmentButton] Creator bypass for addon");
+        if (!import.meta.env.PROD) {
+          console.log("[SaveEstablishmentButton] Creator bypass for addon");
+        }
         const addonResult = await activateCreatorSubscription(PRODUCT_KEYS.ADDON_MULTI_ETABLISSEMENTS);
         if (!addonResult.success) {
           sonnerToast.error(addonResult.error || "Erreur d'activation addon");
@@ -205,7 +238,9 @@ export default function SaveEstablishmentButton({
       }
 
       // ======= NORMAL STRIPE FLOW =======
-      console.log("[SaveEstablishmentButton] Updating addon quantity to:", newAddonQty);
+      if (!import.meta.env.PROD) {
+        console.log("[SaveEstablishmentButton] Updating addon quantity to:", newAddonQty);
+      }
       const { data, error } = await supabase.functions.invoke("update-addon-quantity", {
         body: { new_addon_quantity: newAddonQty }
       });
@@ -250,14 +285,20 @@ export default function SaveEstablishmentButton({
     // 3) BILLING GATE: Vérifier l'abonnement AVANT de sauvegarder
     setCheckingSubscription(true);
     try {
-      console.log("[SaveEstablishmentButton] Checking subscription status...");
+      if (!import.meta.env.PROD) {
+        console.log("[SaveEstablishmentButton] Checking subscription status...");
+      }
       const subscriptionStatus = await checkSubscription();
-      console.log("[SaveEstablishmentButton] Subscription status:", subscriptionStatus);
-      console.log("[SaveEstablishmentButton] Current establishment count:", currentEstablishmentCount);
+      if (!import.meta.env.PROD) {
+        console.log("[SaveEstablishmentButton] Subscription status:", subscriptionStatus);
+        console.log("[SaveEstablishmentButton] Current establishment count:", currentEstablishmentCount);
+      }
 
       if (!subscriptionStatus.subscribed) {
         // Pas d'abonnement -> afficher modal abonnement
-        console.log("[SaveEstablishmentButton] No subscription, showing subscription modal");
+        if (!import.meta.env.PROD) {
+          console.log("[SaveEstablishmentButton] No subscription, showing subscription modal");
+        }
         setShowSubscriptionModal(true);
         return;
       }
@@ -265,16 +306,20 @@ export default function SaveEstablishmentButton({
       // 4) QUOTA CHECK: Vérifier si le quota inclus est dépassé
       if (currentEstablishmentCount >= INCLUDED_ESTABLISHMENTS) {
         // Quota dépassé -> afficher modal addon
-        console.log("[SaveEstablishmentButton] Quota exceeded, showing addon modal", {
-          current: currentEstablishmentCount,
-          included: INCLUDED_ESTABLISHMENTS
-        });
+        if (!import.meta.env.PROD) {
+          console.log("[SaveEstablishmentButton] Quota exceeded, showing addon modal", {
+            current: currentEstablishmentCount,
+            included: INCLUDED_ESTABLISHMENTS
+          });
+        }
         setShowAddonModal(true);
         return;
       }
 
       // Sous le quota -> procéder à la sauvegarde immédiate
-      console.log("[SaveEstablishmentButton] Under quota, saving immediately");
+      if (!import.meta.env.PROD) {
+        console.log("[SaveEstablishmentButton] Under quota, saving immediately");
+      }
       await performSave();
 
     } catch (err) {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
@@ -6,20 +6,58 @@ import { subscriptionPlans } from "@/config/subscriptionPlans";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useCreatorBypass, ProductKey } from "@/hooks/useCreatorBypass";
+import { useCreatorBypass, ProductKey, PRODUCT_KEYS } from "@/hooks/useCreatorBypass";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthProvider";
+
+const ADMIN_EMAIL = "thomas.jacquesgaugain@gmail.com";
 
 export function PricingSection() {
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
   const { isCreator, activateCreatorSubscription } = useCreatorBypass();
   const { refresh: refreshSubscription } = useSubscription();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleCheckout = async (priceId: string, productKey: string) => {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (currentUser?.email === "thomas.jacquesgaugain@gmail.com") {
+      toast.success("Activé (mode créateur)");
+      navigate("/etablissement");
+      return;
+    }
+
     setLoadingPriceId(priceId);
     try {
-      // ======= CREATOR BYPASS =======
+      // ======= ADMIN BYPASS - Vérification explicite AVANT Stripe =======
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user?.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        if (!import.meta.env.PROD) {
+          console.log("[PricingSection] Admin bypass detected for", user.email);
+        }
+        
+        // Activer l'abonnement Pro directement (même logique que SaveEstablishmentButton)
+        const result = await activateCreatorSubscription(PRODUCT_KEYS.PRO_1499_12M);
+        
+        if (result.success) {
+          await refreshSubscription();
+          toast.success("Abonnement activé avec succès !");
+          // Rediriger vers le dashboard
+          navigate("/tableau-de-bord");
+          return;
+        } else {
+          toast.error(result.error || "Erreur d'activation");
+          return;
+        }
+      }
+
+      // ======= CREATOR BYPASS (pour autres créateurs si besoin) =======
       if (isCreator()) {
-        console.log("[PricingSection] Creator bypass for", productKey);
+        if (!import.meta.env.PROD) {
+          console.log("[PricingSection] Creator bypass for", productKey);
+        }
         const result = await activateCreatorSubscription(productKey as ProductKey);
         if (result.success) {
           await refreshSubscription();
@@ -37,6 +75,7 @@ export function PricingSection() {
       
       if (error) throw error;
       if (data?.url) {
+        sessionStorage.setItem("stripeCheckoutStarted", "true");
         window.location.href = data.url;
       } else {
         throw new Error("URL de paiement non reçue");

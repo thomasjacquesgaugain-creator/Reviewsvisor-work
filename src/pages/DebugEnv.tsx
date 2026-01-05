@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +7,9 @@ import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { pingAnalyzeFunction } from '@/lib/runAnalyze';
 
 export default function DebugEnv() {
+  if (import.meta.env.PROD) {
+    return <Navigate to="/" replace />;
+  }
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
 

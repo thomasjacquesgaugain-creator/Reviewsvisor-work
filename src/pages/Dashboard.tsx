@@ -17,6 +17,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { getRatingEvolution, formatRegistrationDate, Granularity } from "@/utils/ratingEvolution";
 import { validateReponse } from "@/lib/reponses";
 import { generatePdfReport } from "@/utils/generatePdfReport";
+import { extractOriginalText } from "@/utils/extractOriginalText";
 
 
 const Dashboard = () => {
@@ -222,7 +223,9 @@ const Dashboard = () => {
         if (error) {
           console.error('[dashboard] review_insights error:', error);
         } else {
-          console.log('[dashboard] Insights loaded:', insightData);
+          if (!import.meta.env.PROD) {
+            console.log('[dashboard] Insights loaded:', insightData);
+          }
           setInsight(insightData);
         }
         
@@ -315,18 +318,22 @@ const Dashboard = () => {
           .eq('user_id', user.id)
           .maybeSingle();
         
-        console.log('[Dashboard] Récupération établissement:', {
-          place_id: currentEstab.place_id,
-          user_id: user.id,
-          found: !!establishmentData,
-          error: estError,
-          data: establishmentData
-        });
+        if (!import.meta.env.PROD) {
+          console.log('[Dashboard] Récupération établissement:', {
+            place_id: currentEstab.place_id,
+            user_id: user.id,
+            found: !!establishmentData,
+            error: estError,
+            data: establishmentData
+          });
+        }
         
         if (!estError && establishmentData) {
           setEstablishmentCreatedAt(establishmentData.created_at);
           setEstablishmentDbId(establishmentData.id);
-          console.log('[Dashboard] ✅ Établissement ID récupéré:', establishmentData.id);
+          if (!import.meta.env.PROD) {
+            console.log('[Dashboard] ✅ Établissement ID récupéré:', establishmentData.id);
+          }
         } else {
           console.warn('[Dashboard] ⚠️ Établissement non trouvé dans la base pour:', {
             place_id: currentEstab.place_id,
@@ -488,7 +495,9 @@ const Dashboard = () => {
               <Button
                 className="download-report-btn"
                 onClick={() => {
-                  console.log('[Dashboard] 🔘 Clic sur Télécharger le rapport PDF');
+                  if (!import.meta.env.PROD) {
+                    console.log('[Dashboard] 🔘 Clic sur Télécharger le rapport PDF');
+                  }
                   
                   const currentEstab = selectedEtab || selectedEstablishment;
                   if (!currentEstab) {
@@ -521,7 +530,9 @@ const Dashboard = () => {
                       summary: insight?.summary || '',
                     };
 
-                    console.log('[Dashboard] 📄 Génération du PDF avec:', reportData);
+                    if (!import.meta.env.PROD) {
+                      console.log('[Dashboard] 📄 Génération du PDF avec:', reportData);
+                    }
 
                     // Générer et télécharger le PDF
                     generatePdfReport(reportData);
@@ -818,7 +829,7 @@ const Dashboard = () => {
                             <span className="text-xs text-gray-500">{formatReviewDate(avis.published_at)}</span>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600">{avis.text || 'Pas de commentaire'}</p>
+                        <p className="text-sm text-gray-600">{extractOriginalText(avis.text) || 'Pas de commentaire'}</p>
                       </div>
                     ))
                   ) : (
@@ -981,7 +992,7 @@ const Dashboard = () => {
                           <span className="text-xs text-gray-500">{formatReviewDate(avis.published_at)}</span>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-700 italic">"{avis.text || 'Pas de commentaire'}"</p>
+                      <p className="text-sm text-gray-700 italic">"{extractOriginalText(avis.text) || 'Pas de commentaire'}"</p>
                     </div>
                   ))
                 ) : (
@@ -1016,7 +1027,7 @@ const Dashboard = () => {
                           <span className="text-xs text-gray-500">{formatReviewDate(avis.published_at)}</span>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-700 italic">"{avis.text || 'Pas de commentaire'}"</p>
+                      <p className="text-sm text-gray-700 italic">"{extractOriginalText(avis.text) || 'Pas de commentaire'}"</p>
                     </div>
                   ))
                 ) : (
@@ -2053,7 +2064,7 @@ const Dashboard = () => {
                     const rating = review.rating || 0;
                     const isPositive = rating >= 4;
                     const authorName = review.author || 'Anonyme';
-                    const reviewText = review.text || 'Pas de commentaire';
+                    const reviewText = extractOriginalText(review.text) || 'Pas de commentaire';
                     const reviewId = review.id || `review-${currentReviewIndex}`;
                     
                     // Fonction pour générer une réponse IA personnalisée
@@ -2079,7 +2090,7 @@ const Dashboard = () => {
                             },
                             body: JSON.stringify({
                               review: {
-                                text: review.text,
+                                text: extractOriginalText(review.text) || review.text,
                                 rating: review.rating,
                                 author: review.author || review.author_name,
                                 published_at: review.published_at,

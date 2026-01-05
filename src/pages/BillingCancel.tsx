@@ -2,15 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { XCircle } from "lucide-react";
-import { useEffect } from "react";
-import { toast } from "sonner";
 
 export default function BillingCancel() {
   const navigate = useNavigate();
-
-  useEffect(() => {
-    toast.error("Paiement annulé. Aucun montant n'a été débité.");
-  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
@@ -25,10 +19,6 @@ export default function BillingCancel() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Vous pouvez réessayer à tout moment pour profiter de toutes les fonctionnalités premium.
-          </p>
-
           <div className="space-y-2">
             <Button 
               className="w-full" 

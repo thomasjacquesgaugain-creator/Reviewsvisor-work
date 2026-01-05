@@ -107,8 +107,10 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
           console.log(`📝 Nombre d'avis trouvés dans le fichier: ${data.reviews.length}`);
           
           if (data.reviews.length > 0) {
-            console.log('🔍 Exemple d\'avis (premier):', data.reviews[0]);
-            console.log('🔑 Clés de l\'avis:', Object.keys(data.reviews[0]));
+            if (!import.meta.env.PROD) {
+              console.log('🔍 Exemple d\'avis (premier):', data.reviews[0]);
+              console.log('🔑 Clés de l\'avis:', Object.keys(data.reviews[0]));
+            }
           }
           
           const reviews = data.reviews.map((review: any, index: number) => {

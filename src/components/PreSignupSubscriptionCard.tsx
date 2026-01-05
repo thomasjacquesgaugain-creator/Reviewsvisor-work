@@ -21,6 +21,7 @@ export function PreSignupSubscriptionCard({ onLoginClick }: PreSignupSubscriptio
       
       const url = await createCheckoutSession();
       if (url) {
+        sessionStorage.setItem("stripeCheckoutStarted", "true");
         window.location.href = url;
       }
     } catch (error) {

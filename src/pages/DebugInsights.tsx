@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { runAnalyze } from '@/lib/runAnalyze';
 
 export default function DebugInsights() {
+  if (import.meta.env.PROD) {
+    return <Navigate to="/" replace />;
+  }
   const [placeId, setPlaceId] = useState('');
   const [loading, setLoading] = useState(false);
   const [analyzingLoading, setAnalyzingLoading] = useState(false);

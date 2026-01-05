@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail, MapPin, Building2, User, Globe, Check } from "lucide-react";
+import { Mail, MapPin, Building2, User, Globe, Check, CreditCard, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { STORAGE_KEY, EVT_SAVED, EVT_ESTABLISHMENT_UPDATED } from "@/types/etablissement";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,11 +12,18 @@ import { EstablishmentSelector, EstablishmentOption } from "@/components/Establi
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/hooks/useLanguage";
 import { LANGUAGE_FLAGS, LANGUAGE_LABELS, SUPPORTED_LANGUAGES, SupportedLanguage } from "@/i18n/config";
+import { useSubscription } from "@/hooks/useSubscription";
+import { subscriptionPlans } from "@/config/subscriptionPlans";
+import { SubscriptionManagementModal } from "@/components/SubscriptionManagementModal";
+import { ChangePasswordModal } from "@/components/ChangePasswordModal";
 
 const Compte = () => {
   const { t } = useTranslation();
   const { lang, setLang } = useLanguage();
-  const { user, displayName } = useAuth();
+  const { user, displayName, refreshProfile } = useAuth();
+  const { subscription } = useSubscription();
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   // Selected establishment (from Supabase)
   const [selectedEstablishment, setSelectedEstablishment] = useState<EstablishmentOption | null>(null);
@@ -149,6 +156,12 @@ const Compte = () => {
 
   const fullName = `${firstName} ${lastName}`.trim();
 
+  // Détermine le plan actif de l'utilisateur
+  const activePlan = subscription.subscribed && subscription.price_id
+    ? subscriptionPlans.find(p => p.priceId === subscription.price_id)
+    : null;
+  const subscriptionName = activePlan ? activePlan.name : "Gratuit";
+
   const initials = fullName
     .split(" ")
     .filter(Boolean)
@@ -173,52 +186,104 @@ const Compte = () => {
     }
 
     try {
-      // 1) Sauvegarder le profil utilisateur (prénom/nom + display_name)
-      const computedFullName = `${firstName} ${lastName}`.trim();
+      // 1) Sauvegarder le profil utilisateur (prénom/nom)
+      // Récupérer l'utilisateur actuel pour s'assurer qu'on a le bon ID
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        toast.error(t("account.mustBeLoggedIn"));
+        return;
+      }
 
+      // Mise à jour du profil avec update simple (pas d'upsert)
+      // Note: user_id est UNIQUE dans profiles, donc on utilise .eq("user_id", currentUser.id)
       const { error: profileError } = await supabase
         .from("profiles")
-        .upsert(
-          {
-            user_id: user.id,
-            first_name: firstName.trim() || null,
-            last_name: lastName.trim() || null,
-            display_name: computedFullName || null,
-          },
-          { onConflict: "user_id" }
-        );
+        .update({
+          first_name: firstName.trim() || null,
+          last_name: lastName.trim() || null,
+        })
+        .eq("user_id", currentUser.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Erreur détaillée:', profileError);
+        throw profileError;
+      }
+
+      // Rafraîchir le profil dans le contexte pour mettre à jour le displayName partout
+      await refreshProfile();
+
+      // Mettre à jour les états locaux pour refléter les changements immédiatement
+      const newDisplayName = `${firstName.trim()} ${lastName.trim()}`.trim();
+      if (newDisplayName) {
+        // Le displayName sera mis à jour via refreshProfile, mais on peut aussi mettre à jour les états locaux
+        setFirstName(firstName.trim());
+        setLastName(lastName.trim());
+      }
 
       // 2) Mettre à jour l'email si modifié
       const nextEmail = email.trim();
-      if (nextEmail && nextEmail !== (user.email || "")) {
+      if (nextEmail && nextEmail !== (currentUser.email || "")) {
         const { error: emailError } = await supabase.auth.updateUser({ email: nextEmail });
-        if (emailError) throw emailError;
+        if (emailError) {
+          console.error('Erreur lors de la mise à jour de l\'email:', emailError);
+          throw emailError;
+        }
       }
 
       // 3) Update the selected establishment in Supabase
+      // Utiliser la table "établissements" avec les colonnes "nom" et "adresse"
       if (selectedEstablishment?.id) {
+        if (!import.meta.env.PROD) {
+          console.log('[Compte] Tentative de mise à jour de l\'établissement:', {
+            id: selectedEstablishment.id,
+            nom: etabName,
+            adresse: addr || null,
+          });
+        }
+
         const { data: updatedEst, error: estError } = await supabase
-          .from("establishments")
+          .from("établissements")
           .update({
-            name: etabName,
-            formatted_address: addr || null,
+            nom: etabName,
+            adresse: addr || null,
           })
           .eq("id", selectedEstablishment.id)
-          .select("id, place_id, name, formatted_address")
+          .select("id, place_id, nom, adresse")
           .single();
 
-        if (estError) throw estError;
+        if (estError) {
+          console.error('[Compte] Erreur lors de la mise à jour de l\'établissement:', {
+            error: estError,
+            message: estError.message,
+            details: estError.details,
+            hint: estError.hint,
+            code: estError.code,
+          });
+          throw estError;
+        }
+
+        if (!import.meta.env.PROD) {
+          console.log('[Compte] Établissement mis à jour avec succès:', updatedEst);
+        }
 
         if (updatedEst) {
-          setSelectedEstablishment(updatedEst as EstablishmentOption);
+          const estData: EstablishmentOption = {
+            id: updatedEst.id,
+            place_id: updatedEst.place_id,
+            name: updatedEst.nom,
+            formatted_address: updatedEst.adresse ?? null,
+          };
+          setSelectedEstablishment(estData);
+
+          // Mettre à jour les états locaux pour refléter les changements immédiatement
+          setEtablissement(updatedEst.nom);
+          setAdresse(updatedEst.adresse || "");
 
           // 4) Update localStorage for other components
           const localData = {
             place_id: updatedEst.place_id,
-            name: updatedEst.name,
-            address: updatedEst.formatted_address || "",
+            name: updatedEst.nom,
+            address: updatedEst.adresse || "",
           };
           localStorage.setItem(STORAGE_KEY, JSON.stringify(localData));
           window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: localData }));
@@ -226,33 +291,65 @@ const Compte = () => {
         }
       } else {
         // Create new establishment if none selected
-        const placeId = `manual_${user.id}_${Date.now()}`;
-        const { data: newEst, error: createError } = await supabase
-          .from("establishments")
-          .insert({
-            user_id: user.id,
+        const placeId = `manual_${currentUser.id}_${Date.now()}`;
+        if (!import.meta.env.PROD) {
+          console.log('[Compte] Tentative de création d\'un nouvel établissement:', {
+            user_id: currentUser.id,
             place_id: placeId,
-            name: etabName,
-            formatted_address: addr || null,
-            source: "manual",
+            nom: etabName,
+            adresse: addr || null,
+          });
+        }
+
+        const { data: newEst, error: createError } = await supabase
+          .from("établissements")
+          .insert({
+            user_id: currentUser.id,
+            place_id: placeId,
+            nom: etabName,
+            adresse: addr || null,
           })
-          .select("id, place_id, name, formatted_address")
+          .select("id, place_id, nom, adresse")
           .single();
 
-        if (createError) throw createError;
+        if (createError) {
+          console.error('[Compte] Erreur lors de la création de l\'établissement:', {
+            error: createError,
+            message: createError.message,
+            details: createError.details,
+            hint: createError.hint,
+            code: createError.code,
+          });
+          throw createError;
+        }
+
+        if (!import.meta.env.PROD) {
+          console.log('[Compte] Établissement créé avec succès:', newEst);
+        }
 
         if (newEst) {
-          setSelectedEstablishment(newEst as EstablishmentOption);
+          const estData: EstablishmentOption = {
+            id: newEst.id,
+            place_id: newEst.place_id,
+            name: newEst.nom,
+            formatted_address: newEst.adresse ?? null,
+          };
+          setSelectedEstablishment(estData);
 
-          // Update profile with current establishment
+          // Mettre à jour les états locaux pour refléter les changements immédiatement
+          setEtablissement(newEst.nom);
+          setAdresse(newEst.adresse || "");
+
+          // Update profile with current establishment using update (not upsert)
           await supabase
             .from("profiles")
-            .upsert({ user_id: user.id, current_establishment_id: newEst.id }, { onConflict: "user_id" });
+            .update({ current_establishment_id: newEst.id })
+            .eq("user_id", currentUser.id);
 
           const localData = {
             place_id: newEst.place_id,
-            name: newEst.name,
-            address: newEst.formatted_address || "",
+            name: newEst.nom,
+            address: newEst.adresse || "",
           };
           localStorage.setItem(STORAGE_KEY, JSON.stringify(localData));
           window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: localData }));
@@ -261,8 +358,15 @@ const Compte = () => {
       }
 
       toast.success(t("account.updateSuccess"));
-    } catch (err) {
-      console.error("Erreur lors de la mise à jour du compte:", err);
+    } catch (err: any) {
+      console.error("[Compte] Erreur complète lors de la mise à jour du compte:", {
+        error: err,
+        message: err?.message,
+        details: err?.details,
+        hint: err?.hint,
+        code: err?.code,
+        stack: err?.stack,
+      });
       toast.error(t("account.updateError"));
     }
   };
@@ -388,6 +492,48 @@ const Compte = () => {
               </div>
             </div>
 
+            {/* Abonnement */}
+            <div className="flex items-center gap-3">
+              <CreditCard className="h-6 w-6 text-primary flex-shrink-0" />
+              <div className="w-full">
+                <Label className="text-xs uppercase text-muted-foreground">ABONNEMENT</Label>
+                <div className="mt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      if (subscription.subscribed) {
+                        setShowSubscriptionModal(true);
+                      } else {
+                        window.location.href = "/onboarding";
+                      }
+                    }}
+                    className="whitespace-nowrap"
+                  >
+                    {subscription.subscribed ? "Gérer mon abonnement" : "Changer d'abonnement"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Mot de passe */}
+            <div className="flex items-center gap-3">
+              <Lock className="h-6 w-6 text-primary flex-shrink-0" />
+              <div className="w-full">
+                <Label className="text-xs uppercase text-muted-foreground">MOT DE PASSE</Label>
+                <div className="mt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowPasswordModal(true)}
+                    className="whitespace-nowrap"
+                  >
+                    Modifier le mot de passe
+                  </Button>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <div className="mt-8 flex justify-end">
@@ -396,6 +542,20 @@ const Compte = () => {
             </Button>
           </div>
         </form>
+
+        {/* Modal de gestion d'abonnement */}
+        {subscription.subscribed && (
+          <SubscriptionManagementModal
+            open={showSubscriptionModal}
+            onOpenChange={setShowSubscriptionModal}
+          />
+        )}
+
+        {/* Modal de modification du mot de passe */}
+        <ChangePasswordModal
+          open={showPasswordModal}
+          onOpenChange={setShowPasswordModal}
+        />
       </div>
     </div>
   );

@@ -152,7 +152,6 @@ export default function GooglePlaceAutocomplete({
     try {
       const request = {
         input: query,
-        componentRestrictions: { country: 'fr' },
         language: 'fr',
         sessionToken: sessionToken,
         types: ['establishment']

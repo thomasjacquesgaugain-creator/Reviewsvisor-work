@@ -227,7 +227,7 @@ serve(async (req) => {
     const themes = insights?.themes || [];
     
     // Formater les données des problèmes
-    let formattedIssues = [];
+    let formattedIssues: Array<{ label: string; percentage: number }> = [];
     if (Array.isArray(topIssues) && topIssues.length > 0) {
       formattedIssues = topIssues.slice(0, 3).map((item: any) => {
         if (typeof item === 'object' && item !== null) {
@@ -241,7 +241,7 @@ serve(async (req) => {
     }
     
     // Formater les données des points forts
-    let formattedPraises = [];
+    let formattedPraises: Array<{ label: string; percentage: number }> = [];
     if (Array.isArray(topPraises) && topPraises.length > 0) {
       formattedPraises = topPraises.slice(0, 3).map((item: any) => {
         if (typeof item === 'object' && item !== null) {
@@ -255,7 +255,7 @@ serve(async (req) => {
     }
     
     // Formater les thématiques
-    let formattedThemes = [];
+    let formattedThemes: Array<{ theme: string; percentage: number }> = [];
     if (Array.isArray(themes) && themes.length > 0) {
       formattedThemes = themes.map((item: any) => {
         if (typeof item === 'object' && item !== null) {
@@ -731,8 +731,9 @@ Rédige uniquement le paragraphe d'analyse, sans titre ni introduction.`;
           <div>
             ${formattedThemes.map((themeItem) => {
               // Calculer les % positifs et négatifs pour cette thématique
-              const themePositive = themeItem.positivePercentage || Math.round(themeItem.percentage * 0.7); // Estimation
-              const themeNegative = themeItem.negativePercentage || Math.round(themeItem.percentage * 0.3); // Estimation
+              const themeItemAny = themeItem as any;
+              const themePositive = themeItemAny.positivePercentage || Math.round(themeItem.percentage * 0.7); // Estimation
+              const themeNegative = themeItemAny.negativePercentage || Math.round(themeItem.percentage * 0.3); // Estimation
               return `
                 <div class="theme-item">
                   <div class="theme-header">

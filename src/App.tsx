@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthProvider";
 import { Toaster } from "sonner";
 import Protected from "@/components/Protected";
@@ -30,6 +30,7 @@ import Fonctionnalites from "./pages/Fonctionnalites";
 import Aide from "./pages/Aide";
 import ResetPassword from "./pages/ResetPassword";
 import UpdatePassword from "./pages/UpdatePassword";
+import ForgotPassword from "./pages/ForgotPassword";
 import Abonnement from "./pages/Abonnement";
 import Compte from "./pages/Compte";
 
@@ -49,11 +50,31 @@ const ScrollToTop = () => {
   return null;
 };
 
+// Composant global pour détecter le retour depuis Stripe
+const StripeReturnDetector = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Ne vérifier que si on n'est pas déjà sur la page d'annulation
+    if (location.pathname !== "/billing/cancel") {
+      console.log("Checking stripe return");
+      if (sessionStorage.getItem("stripeCheckoutStarted") === "true") {
+        sessionStorage.removeItem("stripeCheckoutStarted");
+        navigate("/billing/cancel");
+      }
+    }
+  }, [location.pathname, navigate]);
+
+  return null;
+};
+
 const App = () => {
   return (
     <AuthProvider>
       <BrowserRouter>
         <ScrollToTop />
+        <StripeReturnDetector />
         <Toaster position="bottom-right" richColors closeButton toastOptions={{ className: "z-[9999]" }} />
         <AppLayout>
           <Routes>
@@ -76,6 +97,7 @@ const App = () => {
             } />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/update-password" element={<UpdatePassword />} />
+            <Route path="/mot-de-passe-oublie" element={<ForgotPassword />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/a-propos" element={<APropos />} />
             <Route path="/fonctionnalites" element={<Fonctionnalites />} />

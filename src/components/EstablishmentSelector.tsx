@@ -149,19 +149,31 @@ export function EstablishmentSelector({
             <div className="text-sm font-medium text-muted-foreground px-3 py-2">
               Mes Établissements
             </div>
-            {establishments.map(est => <Button key={est.id} variant="ghost" className={`w-full justify-start p-3 h-auto text-left hover:bg-muted ${selectedEstablishment?.id === est.id ? "bg-muted" : ""}`} onClick={() => handleSelect(est)}>
-                <div className="flex items-center gap-3 min-w-0 w-full">
-                  <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-4 h-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-foreground truncate">{est.name}</div>
-                    {est.formatted_address && <div className="text-sm text-muted-foreground truncate">
-                        {est.formatted_address}
-                      </div>}
-                  </div>
+            {establishments.map(est => (
+              <button
+                key={est.id}
+                type="button"
+                className={`w-full flex items-center gap-3 p-3 text-left rounded-lg cursor-pointer transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+                  selectedEstablishment?.id === est.id ? 'bg-blue-50 border-2 border-blue-600' : ''
+                }`}
+                onClick={() => handleSelect(est)}
+              >
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-4 h-4 text-blue-600" />
                 </div>
-              </Button>)}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-900 truncate">{est.name}</span>
+                    {est.is_active && (
+                      <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded flex-shrink-0">Actif</span>
+                    )}
+                  </div>
+                  {est.formatted_address && (
+                    <div className="text-sm text-gray-500 truncate">{est.formatted_address}</div>
+                  )}
+                </div>
+              </button>
+            ))}
             
             {/* Option pour ajouter un nouvel établissement */}
             <div className="border-t border-border mt-2 pt-2">

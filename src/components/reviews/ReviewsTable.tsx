@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { extractOriginalText } from "@/utils/extractOriginalText";
 
 export interface ReviewsTableRow {
   authorName: string;
@@ -112,9 +113,9 @@ export function ReviewsTable({
                 {renderStars(review.rating)}
               </td>
               <td className="border border-border px-3 py-2 text-sm max-w-md">
-                <div className="truncate" title={review.comment || "Pas de commentaire"}>
+                <div className="truncate" title={extractOriginalText(review.comment) || "Pas de commentaire"}>
                   {review.comment ? (
-                    review.comment
+                    extractOriginalText(review.comment)
                   ) : (
                     <span className="text-muted-foreground italic">Pas de commentaire</span>
                   )}

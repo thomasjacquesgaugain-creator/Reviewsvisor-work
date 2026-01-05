@@ -51,7 +51,7 @@ export default function ImportAvisModal({ children }: ImportAvisModalProps) {
                 className="w-full h-12 flex items-center justify-start gap-3 text-left"
                 onClick={() => setCurrentView('manual')}
               >
-                <FileText className="w-5 h-5 text-blue-500" />
+                <FileText className="w-5 h-5 text-blue-600" />
                 <span>Saisie manuelle</span>
               </Button>
               

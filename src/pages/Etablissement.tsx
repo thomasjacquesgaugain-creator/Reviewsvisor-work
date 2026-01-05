@@ -188,9 +188,6 @@ export default function EtablissementPage() {
         }
         const autocomplete = new g.maps.places.Autocomplete(input, {
           types: ['establishment'],
-          componentRestrictions: {
-            country: 'fr'
-          },
           fields: ['place_id'] // Only get place_id from autocomplete
         });
         autocomplete.addListener('place_changed', async () => {
@@ -289,7 +286,7 @@ export default function EtablissementPage() {
             
             <div className="space-y-2">
               <div className="relative">
-                <input id="places-input" className="w-full border border-border rounded-lg px-3 py-2 pr-24 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Rechercher un établissement…" />
+                <input id="places-input" className="w-full bg-white border border-border rounded-lg px-3 py-2 pr-24 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Rechercher un établissement…" />
                 <button
                   type="button"
                   onClick={resetSearchAndClose}
