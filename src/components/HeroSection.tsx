@@ -66,7 +66,7 @@ export const HeroSection = () => {
               <DropdownMenuTrigger asChild>
                 <button
                   className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                  aria-label="Menu"
+                  aria-label={t("common.menu")}
                 >
                   <Menu className="w-5 h-5 text-gray-700" />
                 </button>
@@ -188,10 +188,10 @@ export const HeroSection = () => {
                 <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center">
                   <Brain className="w-6 h-6 text-pink-600" />
                 </div>
-            <h3 className="text-xl font-bold text-gray-900">Centralisation & Analyse Essentielle</h3>
+            <h3 className="text-xl font-bold text-gray-900">{t("hero.card1Title")}</h3>
             <p className="text-gray-600 text-sm leading-relaxed">
-              <span style={{ color: '#23C55E' }}>Un outil</span>, <span style={{ color: '#23C55E' }}>une centralisation</span> pour votre établissement qui transforme vos <span style={{ color: '#23C55E' }}>retours en conception</span>.
-              Avec Reviewsvisor, vos retours clients deviennent une véritable <span style={{ color: '#23C55E' }}>source de croissance</span>.
+              <span style={{ color: '#23C55E' }}>{t("hero.card1Desc1")}</span>, <span style={{ color: '#23C55E' }}>{t("hero.card1Desc2")}</span> {t("hero.card1Desc3")} <span style={{ color: '#23C55E' }}>{t("hero.card1Desc4")}</span>.
+              {t("hero.card1Desc5")} <span style={{ color: '#23C55E' }}>{t("hero.card1Desc6")}</span>.
             </p>
               </CardContent>
             </Card>
@@ -201,11 +201,11 @@ export const HeroSection = () => {
                 <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
                   <Target className="w-6 h-6 text-red-600" />
                 </div>
-            <h3 className="text-xl font-bold text-gray-900">Pourquoi les avis comptent vraiment</h3>
+            <h3 className="text-xl font-bold text-gray-900">{t("hero.card2Title")}</h3>
             <p className="text-gray-600 text-sm leading-relaxed">
-              <span style={{ color: '#23C55E' }}>Parce qu&apos;un avis n&apos;est pas qu&apos;un commentaire</span> :<br />
-              ➡️ <span style={{ color: '#2563EB' }}>94%</span> des clients consultent les avis avant de choisir un établissement.<br />
-              ➡️ <span style={{ color: '#2563EB' }}>86%</span> hésitent à acheter auprès d&apos;un établissement avec des avis négatifs.
+              <span style={{ color: '#23C55E' }}>{t("hero.card2Desc1")}</span> :<br />
+              ➡️ <span style={{ color: '#2563EB' }}>94%</span> {t("hero.card2Stat1")}<br />
+              ➡️ <span style={{ color: '#2563EB' }}>86%</span> {t("hero.card2Stat2")}
             </p>
               </CardContent>
             </Card>
@@ -215,10 +215,10 @@ export const HeroSection = () => {
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-purple-600" />
                 </div>
-            <h3 className="text-xl font-bold text-gray-900">Décisions Basées sur Vos Données</h3>
+            <h3 className="text-xl font-bold text-gray-900">{t("hero.card3Title")}</h3>
             <p className="text-gray-600 text-sm leading-relaxed">
-              Nous croyons que chaque avis contient <span style={{ color: '#23C55E' }}>une opportunité d&apos;évolution</span> – et que des données bien analysées deviennent <span style={{ color: '#23C55E' }}>un véritable moteur de croissance</span>.<br /><br />
-              Prenez des <span style={{ color: '#23C55E' }}>décisions stratégiques basées sur vos propres données</span>.
+              {t("hero.card3Desc1")} <span style={{ color: '#23C55E' }}>{t("hero.card3Desc2")}</span> {t("hero.card3Desc3")} <span style={{ color: '#23C55E' }}>{t("hero.card3Desc4")}</span>.<br /><br />
+              {t("hero.card3Desc5")} <span style={{ color: '#23C55E' }}>{t("hero.card3Desc6")}</span>.
             </p>
               </CardContent>
             </Card>

@@ -6,6 +6,7 @@ import { Upload, FileText, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ManualReviewPanel from "./ManualReviewPanel";
 import InstructionsHeader from "./InstructionsHeader";
+import { useTranslation } from "react-i18next";
 
 interface ImportAvisPopoverProps {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ interface ImportAvisPopoverProps {
  * - Offset : ajuster `sideOffset` prop
  */
 export default function ImportAvisPopover({ children, locationId }: ImportAvisPopoverProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("csv");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -36,8 +38,8 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
       setSelectedFile(file);
     } else {
       toast({
-        title: "Format incorrect",
-        description: "Veuillez sélectionner un fichier CSV valide",
+        title: t("import.invalidFileFormat"),
+        description: t("import.selectCsvOrJson"),
         variant: "destructive",
       });
     }
@@ -64,8 +66,8 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
       setSelectedFile(csvFile);
     } else {
       toast({
-        title: "Format incorrect",
-        description: "Veuillez déposer un fichier CSV valide",
+        title: t("import.invalidFileFormat"),
+        description: t("import.selectCsvOrJson"),
         variant: "destructive",
       });
     }
@@ -90,8 +92,8 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
       if (response.ok) {
         const result = await response.json();
         toast({
-          title: "Import réussi",
-          description: `${result.imported || 0} avis importés avec succès`,
+          title: t("import.importSuccess"),
+          description: t("import.reviewsImported", { count: result.imported || 0 }),
         });
         
         // Fermer le popover et reset
@@ -105,12 +107,12 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
         window.location.reload();
       } else {
         const error = await response.json();
-        throw new Error(error.message || 'Erreur lors de l\'import');
+        throw new Error(error.message || t("import.importError"));
       }
     } catch (error) {
       toast({
-        title: "Erreur d'import",
-        description: error instanceof Error ? error.message : "Une erreur inattendue s'est produite",
+        title: t("import.importError"),
+        description: error instanceof Error ? error.message : t("errors.generic"),
         variant: "destructive",
       });
     } finally {
@@ -140,20 +142,20 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
 
       if (response.ok) {
         toast({
-          title: "Avis ajouté",
-          description: `L'avis de ${review.firstName} ${review.lastName} a été ajouté avec succès`,
+          title: t("import.reviewAdded"),
+          description: t("import.reviewAddedSuccess", { firstName: review.firstName, lastName: review.lastName }),
         });
         
         // Rafraîchir les données
         window.location.reload();
       } else {
         const error = await response.json();
-        throw new Error(error.message || 'Erreur lors de l\'ajout de l\'avis');
+        throw new Error(error.message || t("import.errorAddingReview"));
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur inattendue s'est produite",
+        title: t("common.error"),
+        description: error instanceof Error ? error.message : t("errors.generic"),
         variant: "destructive",
       });
     }
@@ -189,10 +191,10 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
           <div className="flex items-start justify-between">
             <div className="space-y-2">
               <h2 className="text-2xl font-semibold text-gray-900">
-                Analysez vos avis clients
+                {t("import.analyzeReviews")}
               </h2>
               <p className="text-sm text-muted-foreground">
-                Importez vos avis manuellement ou via un fichier CSV pour obtenir une analyse détaillée.
+                {t("import.analyzeReviewsDesc")}
               </p>
             </div>
             <Button
@@ -200,7 +202,7 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
               size="sm"
               onClick={resetAndClose}
               className="text-gray-400 hover:text-gray-600 p-1 h-auto"
-              aria-label="Fermer"
+              aria-label={t("common.close")}
             >
               <X className="w-4 h-4" />
             </Button>
@@ -213,19 +215,19 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
                 value="manual" 
                 className="rounded-full px-3 py-1.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
               >
-                Saisie manuelle
+                {t("import.manualEntry")}
               </TabsTrigger>
               <TabsTrigger 
                 value="csv"
                 className="rounded-full px-3 py-1.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
               >
-                Import CSV
+                {t("import.importCsv")}
               </TabsTrigger>
               <TabsTrigger 
                 value="auto"
                 className="rounded-full px-3 py-1.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
               >
-                Récupération auto
+                {t("import.autoRecovery")}
               </TabsTrigger>
             </TabsList>
 
@@ -240,7 +242,7 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fichier CSV (colonnes : avis, source, date)
+                  {t("import.csvFileColumns")}
                 </label>
                 
                 {/* Zone de drop */}
@@ -257,17 +259,17 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
                   <Upload className="w-8 h-8 mx-auto mb-3 text-gray-400" />
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-gray-900">
-                      Déposez votre fichier CSV ici ou{" "}
+                      {t("import.dragAndDropFile")} {t("common.or")}{" "}
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         className="text-primary hover:text-primary/80 underline"
                       >
-                        parcourez
+                        {t("import.clickToSelectFile")}
                       </button>
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Format attendu : première colonne = texte de l'avis
+                      {t("import.expectedFormat")}
                     </p>
                   </div>
                   
@@ -277,7 +279,7 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
                     accept=".csv"
                     onChange={handleFileSelect}
                     className="hidden"
-                    aria-label="Sélectionner un fichier CSV"
+                    aria-label={t("import.selectFile")}
                   />
                 </div>
 
@@ -318,7 +320,7 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
                 disabled={!selectedFile || isUploading}
                 className="mt-4 h-12 text-base font-semibold w-full"
               >
-                {isUploading ? "Analyse en cours..." : "Analyser le fichier importé"}
+                {isUploading ? t("import.importing") : t("import.analyzeImportedFile")}
               </Button>
             </TabsContent>
 
@@ -330,7 +332,7 @@ export default function ImportAvisPopover({ children, locationId }: ImportAvisPo
                 <div className="w-12 h-12 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                   <span className="text-xl">🔄</span>
                 </div>
-                <p>Fonctionnalité de récupération automatique à venir...</p>
+                <p>{t("import.autoRecoveryComingSoon")}</p>
               </div>
             </TabsContent>
           </Tabs>

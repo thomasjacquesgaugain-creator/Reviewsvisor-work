@@ -9,6 +9,7 @@ import { User, UserCircle, Building2, MapPin } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useTranslation } from "react-i18next";
 
 const signUpSchema = z.object({
   email: z.string().min(1, { message: "Veuillez renseigner ce champ." }).email({ message: "Veuillez renseigner un email valide." }),
@@ -38,6 +39,26 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  // Create schema with translated messages
+  const signUpSchemaTranslated = z.object({
+    email: z.string().min(1, { message: t("errors.required") }).email({ message: t("errors.invalidEmail") }),
+    firstName: z.string().min(1, { message: t("errors.required") }),
+    lastName: z.string().min(1, { message: t("errors.required") }),
+    company: z.string().min(1, { message: t("errors.required") }),
+    address: z.string().min(1, { message: t("errors.required") }),
+    password: z.string()
+      .min(1, { message: t("errors.required") })
+      .min(8, { message: t("auth.passwordMinLength") })
+      .regex(/[A-Z]/, { message: t("auth.passwordRequiresUppercase") })
+      .regex(/[a-z]/, { message: t("auth.passwordRequiresLowercase") })
+      .regex(/[0-9]/, { message: t("auth.passwordRequiresNumber") }),
+    confirmPassword: z.string().min(1, { message: t("errors.required") }),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: t("auth.passwordMismatch"),
+    path: ["confirmPassword"],
+  });
 
   const {
     register,
@@ -45,7 +66,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
     setValue,
     formState: { errors },
   } = useForm<SignUpFormData>({
-    resolver: zodResolver(signUpSchema),
+    resolver: zodResolver(signUpSchemaTranslated),
     mode: "onSubmit",
     defaultValues: {
       email: prefilledEmail || "",
@@ -87,7 +108,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
       if (error) {
         toast({
           variant: "destructive",
-          title: "Erreur d'inscription",
+          title: t("auth.signupError"),
           description: error.message
         });
         return;
@@ -144,8 +165,8 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
       }
 
       toast({
-        title: "Compte créé avec succès !",
-        description: "Bienvenue ! Vous allez être redirigé."
+        title: t("auth.signupSuccess"),
+        description: t("auth.signupSuccessDesc")
       });
 
       // Redirection vers la page de remerciement
@@ -155,8 +176,8 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
       console.error('Erreur inattendue:', err);
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur inattendue s'est produite"
+        title: t("errors.title"),
+        description: t("errors.generic")
       });
     } finally {
       setLoading(false);
@@ -170,7 +191,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
         <Input
           id="email"
           type="email"
-          placeholder="Votre email"
+          placeholder={t("auth.emailPlaceholder")}
           autoComplete="email"
           {...register("email")}
           aria-invalid={!!errors.email}
@@ -188,7 +209,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
           <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             id="firstName"
-            placeholder="Votre prénom"
+            placeholder={t("auth.firstNamePlaceholder")}
             autoComplete="given-name"
             {...register("firstName")}
             aria-invalid={!!errors.firstName}
@@ -209,7 +230,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
           <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             id="lastName"
-            placeholder="Votre nom"
+            placeholder={t("auth.lastNamePlaceholder")}
             autoComplete="family-name"
             {...register("lastName")}
             aria-invalid={!!errors.lastName}
@@ -230,7 +251,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
           <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             id="company"
-            placeholder="Nom de votre entreprise"
+            placeholder={t("auth.companyNamePlaceholder")}
             autoComplete="organization"
             {...register("company")}
             aria-invalid={!!errors.company}
@@ -251,7 +272,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             id="address"
-            placeholder="Adresse complète du restaurant"
+            placeholder={t("auth.addressPlaceholder")}
             autoComplete="street-address"
             {...register("address")}
             aria-invalid={!!errors.address}
@@ -271,7 +292,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
         <Input
           id="password"
           type="password"
-          placeholder="Votre mot de passe"
+          placeholder={t("auth.passwordPlaceholder")}
           autoComplete="new-password"
           {...register("password")}
           aria-invalid={!!errors.password}
@@ -288,7 +309,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
         <Input
           id="confirmPassword"
           type="password"
-          placeholder="Confirmez votre mot de passe"
+          placeholder={t("auth.confirmPasswordPlaceholder")}
           autoComplete="new-password"
           {...register("confirmPassword")}
           aria-invalid={!!errors.confirmPassword}
@@ -305,7 +326,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
         disabled={loading}
         className="w-full"
       >
-        {loading ? "Création..." : "Créer mon compte"}
+        {loading ? t("auth.signingUp") : t("auth.signupAction")}
       </Button>
     </form>
   );

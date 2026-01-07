@@ -6,11 +6,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow, format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { fr, enUS, it, es, ptBR } from "date-fns/locale";
 import { getBaselineScore, formatDelta, getEvolutionStatus, computeSatisfactionPct, ensureBaselineSatisfaction, computeSatisfactionDelta } from "@/utils/baselineScore";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { getReponsesStats } from "@/lib/reponses";
 import { SubscriptionCard } from "@/components/SubscriptionCard";
+import { useTranslation } from "react-i18next";
 
 
 const Dashboard = () => {
@@ -25,6 +26,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const currentEstablishment = useCurrentEstablishment();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     const getUserProfile = async () => {
@@ -44,11 +46,24 @@ const Dashboard = () => {
 
         setUserProfile(profile);
 
-        // Récupérer le nombre d'avis et la date du dernier avis
+        // Si aucun établissement n'est sélectionné, réinitialiser les données
+        if (!currentEstablishment?.place_id) {
+          setRecentReviewsCount(0);
+          setAllReviews([]);
+          setLastReviewDate(null);
+          setAvgRating(0);
+          setValidatedResponsesCount(0);
+          setTotalReviewsForEstablishment(0);
+          setLoading(false);
+          return;
+        }
+
+        // Récupérer les avis UNIQUEMENT pour l'établissement actif
         const { data: reviews, error } = await supabase
           .from('reviews')
           .select('inserted_at, rating, text, place_id')
           .eq('user_id', session.user.id)
+          .eq('place_id', currentEstablishment.place_id) // ← Filtrer par place_id de l'établissement actif
           .order('inserted_at', { ascending: false });
 
         if (!error && reviews) {
@@ -57,22 +72,31 @@ const Dashboard = () => {
           
           if (reviews.length > 0 && reviews[0].inserted_at) {
             setLastReviewDate(new Date(reviews[0].inserted_at));
+          } else {
+            setLastReviewDate(null);
           }
           
-          // Calculer la moyenne des notes
+          // Calculer la moyenne des notes pour CET établissement
           const ratingsWithValue = reviews.filter(r => r.rating !== null && r.rating !== undefined);
           if (ratingsWithValue.length > 0) {
             const sum = ratingsWithValue.reduce((acc, r) => acc + (r.rating || 0), 0);
             const average = sum / ratingsWithValue.length;
             setAvgRating(average);
+          } else {
+            setAvgRating(0);
           }
 
-          // Si un établissement est sélectionné, utiliser getReponsesStats
-          if (currentEstablishment?.place_id && session.user.id) {
+          // Utiliser getReponsesStats pour les réponses validées
+          if (currentEstablishment.place_id && session.user.id) {
             const stats = await getReponsesStats(currentEstablishment.place_id, session.user.id);
             setValidatedResponsesCount(stats.validated);
             setTotalReviewsForEstablishment(stats.total);
           }
+        } else if (error) {
+          console.error('Error fetching reviews:', error);
+          setRecentReviewsCount(0);
+          setAllReviews([]);
+          setAvgRating(0);
         }
       } catch (error) {
         console.error('Error:', error);
@@ -82,25 +106,6 @@ const Dashboard = () => {
     };
 
     getUserProfile();
-
-    // S'abonner aux changements en temps réel
-    const channel = supabase
-      .channel('reviews-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'reviews'
-        },
-        (payload) => {
-          setRecentReviewsCount(prev => prev + 1);
-          if (payload.new.inserted_at) {
-            setLastReviewDate(new Date(payload.new.inserted_at));
-          }
-        }
-      )
-      .subscribe();
 
     // Écouter les validations de réponses
     const handleResponseValidated = async () => {
@@ -117,11 +122,39 @@ const Dashboard = () => {
 
     window.addEventListener('response-validated', handleResponseValidated);
 
+    // S'abonner aux changements en temps réel UNIQUEMENT pour l'établissement actif
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    if (currentEstablishment?.place_id) {
+      channel = supabase
+        .channel(`reviews-changes-${currentEstablishment.place_id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'reviews',
+            filter: `place_id=eq.${currentEstablishment.place_id}` // ← Filtrer par place_id
+          },
+          (payload) => {
+            // Vérifier que le nouvel avis appartient bien à l'établissement actif
+            if (payload.new.place_id === currentEstablishment.place_id) {
+              setRecentReviewsCount(prev => prev + 1);
+              if (payload.new.inserted_at) {
+                setLastReviewDate(new Date(payload.new.inserted_at));
+              }
+            }
+          }
+        )
+        .subscribe();
+    }
+
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
       window.removeEventListener('response-validated', handleResponseValidated);
     };
-  }, [navigate, toast, currentEstablishment?.place_id]);
+  }, [navigate, currentEstablishment?.place_id]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -130,11 +163,11 @@ const Dashboard = () => {
 
   // Calcul de l'évolution de la note depuis l'enregistrement (avant le return conditionnel)
   const ratingEvolution = useMemo(() => {
-    if (!currentEstablishment?.id || avgRating === 0) {
+    if (!currentEstablishment?.place_id || avgRating === 0 || allReviews.length === 0) {
       return null;
     }
     
-    const baseline = getBaselineScore(currentEstablishment.id, avgRating);
+    const baseline = getBaselineScore(currentEstablishment.place_id, avgRating);
     const delta = avgRating - baseline.score;
     const status = getEvolutionStatus(delta);
     const formattedDelta = formatDelta(delta);
@@ -146,16 +179,16 @@ const Dashboard = () => {
       baseline: baseline.score,
       baselineDate: baseline.date,
     };
-  }, [currentEstablishment?.id, avgRating]);
+  }, [currentEstablishment?.place_id, avgRating, allReviews.length]);
 
   // Calcul de l'évolution de la satisfaction depuis l'enregistrement
   const satisfactionEvolution = useMemo(() => {
-    if (!currentEstablishment?.id || allReviews.length === 0) {
+    if (!currentEstablishment?.place_id || allReviews.length === 0) {
       return null;
     }
     
     const currentSatisfactionPct = computeSatisfactionPct(allReviews);
-    const baseline = ensureBaselineSatisfaction(currentEstablishment.id, currentSatisfactionPct);
+    const baseline = ensureBaselineSatisfaction(currentEstablishment.place_id, currentSatisfactionPct);
     const delta = computeSatisfactionDelta(currentSatisfactionPct, baseline.percentage);
     
     return {
@@ -164,19 +197,19 @@ const Dashboard = () => {
       baselinePct: baseline.percentage,
       baselineDate: baseline.date,
     };
-  }, [currentEstablishment?.id, allReviews]);
+  }, [currentEstablishment?.place_id, allReviews]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Chargement...</div>
+        <div className="text-lg">{t("common.loading")}</div>
       </div>
     );
   }
 
   const displayName = userProfile 
     ? `${userProfile.first_name} ${userProfile.last_name}` 
-    : "Utilisateur";
+    : t("dashboard.user");
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -193,22 +226,25 @@ const Dashboard = () => {
           {/* Welcome card */}
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-6">
             <CardContent className="p-8 text-center space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900">Bienvenue, {displayName} !</h2>
-              <p className="text-gray-600">
-                Vous êtes connecté et pouvez maintenant analyser vos avis clients.
-              </p>
+              <h2 className="text-2xl font-bold text-gray-900">{t("dashboard.welcomeWithName", { name: displayName })}</h2>
+              {currentEstablishment?.name && (
+                <div className="flex items-center justify-center gap-2 text-blue-600 font-semibold">
+                  <Building className="w-5 h-5" />
+                  <span>{currentEstablishment.name}</span>
+                </div>
+              )}
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Link to="/etablissement">
                   <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
                     <Building className="w-5 h-5 mr-2" />
-                    Établissement
+                    {t("nav.establishment")}
                   </Button>
                 </Link>
                 <Link to="/dashboard">
                   <Button variant="outline" className="border-gray-300 text-gray-700 px-8 py-3 rounded-full font-medium">
                     <BarChart3 className="w-5 h-5 mr-2" />
-                    Voir mon dashboard
+                    {t("dashboard.viewDashboard")}
                   </Button>
                 </Link>
                 </div>
@@ -220,7 +256,7 @@ const Dashboard = () => {
               <CardContent className="p-8">
                 <div className="flex items-center gap-2 mb-6">
                   <Bell className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-xl font-bold text-gray-900">Notifications</h3>
+                  <h3 className="text-xl font-bold text-gray-900">{t("dashboard.notifications")}</h3>
                 </div>
                 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -231,12 +267,21 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">
-                          {recentReviewsCount} {recentReviewsCount <= 1 ? 'avis' : 'avis'}
+                          {recentReviewsCount} {t("dashboard.reviews")}
                         </p>
                         <p className="text-sm text-gray-600">
                           {lastReviewDate 
-                            ? `Reçus ${formatDistanceToNow(lastReviewDate, { addSuffix: true, locale: fr })}`
-                            : 'Aucun avis pour le moment'
+                            ? t("dashboard.reviewsReceived", { 
+                                time: formatDistanceToNow(lastReviewDate, { 
+                                  addSuffix: true, 
+                                  locale: i18n.language === 'fr' ? fr : 
+                                         i18n.language === 'en' ? enUS :
+                                         i18n.language === 'it' ? it :
+                                         i18n.language === 'es' ? es :
+                                         i18n.language === 'pt' ? ptBR : enUS
+                                }) 
+                              })
+                            : t("dashboard.noReviewsYet")
                           }
                         </p>
                       </div>
@@ -253,7 +298,15 @@ const Dashboard = () => {
                     }`}
                     title={
                       ratingEvolution 
-                        ? `Baseline : ${ratingEvolution.baseline.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} fixée le ${format(new Date(ratingEvolution.baselineDate), 'dd/MM/yyyy', { locale: fr })}`
+                        ? t("dashboard.baselineInfo", { 
+                            value: ratingEvolution.baseline.toLocaleString(i18n.language === 'fr' ? 'fr-FR' : i18n.language === 'it' ? 'it-IT' : i18n.language === 'es' ? 'es-ES' : i18n.language === 'pt' ? 'pt-BR' : 'en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), 
+                            date: format(new Date(ratingEvolution.baselineDate), 'dd/MM/yyyy', { 
+                              locale: i18n.language === 'fr' ? fr : 
+                                     i18n.language === 'it' ? it :
+                                     i18n.language === 'es' ? es :
+                                     i18n.language === 'pt' ? ptBR : enUS
+                            })
+                          })
                         : undefined
                     }
                   >
@@ -278,16 +331,16 @@ const Dashboard = () => {
                       <div>
                         <p className="font-medium text-gray-900">
                           {!ratingEvolution 
-                            ? 'Note'
+                            ? t("dashboard.rating")
                             : ratingEvolution.status === 'increase'
-                              ? `Augmentée de ${ratingEvolution.formattedDelta}`
+                              ? t("dashboard.ratingIncreased", { delta: ratingEvolution.formattedDelta })
                               : ratingEvolution.status === 'decrease'
-                                ? `Baisse de ${ratingEvolution.formattedDelta}`
-                                : `Stable (${ratingEvolution.formattedDelta})`
+                                ? t("dashboard.ratingDecreased", { delta: ratingEvolution.formattedDelta })
+                                : t("dashboard.ratingStable", { delta: ratingEvolution.formattedDelta })
                           }
                         </p>
                         <p className="text-sm text-gray-600">
-                          {!ratingEvolution ? 'En attente de données' : 'depuis l\'enregistrement'}
+                          {!ratingEvolution ? t("dashboard.waitingForData") : t("dashboard.sinceRegistration")}
                         </p>
                       </div>
                     </CardContent>
@@ -300,9 +353,9 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">
-                          {validatedResponsesCount}/{totalReviewsForEstablishment || recentReviewsCount} réponses
+                          {t("dashboard.responsesCount", { validated: validatedResponsesCount, total: totalReviewsForEstablishment || recentReviewsCount })}
                         </p>
-                        <p className="text-sm text-gray-600">Validées</p>
+                        <p className="text-sm text-gray-600">{t("dashboard.validated")}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -311,7 +364,15 @@ const Dashboard = () => {
                     className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 border rounded-xl"
                     title={
                       satisfactionEvolution 
-                        ? `Baseline : ${satisfactionEvolution.baselinePct}% fixée le ${format(new Date(satisfactionEvolution.baselineDate), 'dd/MM/yyyy', { locale: fr })}`
+                        ? t("dashboard.baselineInfo", { 
+                            value: `${satisfactionEvolution.baselinePct}%`, 
+                            date: format(new Date(satisfactionEvolution.baselineDate), 'dd/MM/yyyy', { 
+                              locale: i18n.language === 'fr' ? fr : 
+                                     i18n.language === 'it' ? it :
+                                     i18n.language === 'es' ? es :
+                                     i18n.language === 'pt' ? ptBR : enUS
+                            })
+                          })
                         : undefined
                     }
                   >
@@ -322,12 +383,12 @@ const Dashboard = () => {
                       <div>
                         <p className="font-medium text-gray-900">
                           {!satisfactionEvolution 
-                            ? 'Satisfaction'
-                            : `Satisfaction +${satisfactionEvolution.delta}%`
+                            ? t("dashboard.satisfaction")
+                            : t("dashboard.satisfactionIncreased", { delta: satisfactionEvolution.delta })
                           }
                         </p>
                         <p className="text-sm text-gray-600">
-                          {!satisfactionEvolution ? 'En attente d\'avis' : 'depuis l\'enregistrement'}
+                          {!satisfactionEvolution ? t("dashboard.waitingForReviews") : t("dashboard.sinceRegistration")}
                         </p>
                       </div>
                     </CardContent>
@@ -342,19 +403,19 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
                   <Award className="w-6 h-6 text-purple-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Performance globale</h3>
+                <h3 className="text-xl font-bold text-gray-900">{t("dashboard.globalPerformance")}</h3>
                 
                 {/* Badge central */}
                 <div className="flex justify-center">
                   <div className="inline-flex items-center gap-2 bg-emerald-500 rounded-full px-5 py-3 shadow-md">
                     <Award className="w-5 h-5 text-white" />
                     <span className="text-amber-300 text-lg">★</span>
-                    <span className="text-white font-semibold text-base">Bon</span>
+                    <span className="text-white font-semibold text-base">{t("dashboard.good")}</span>
                   </div>
                 </div>
                 
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Basé sur la note moyenne, la proportion d'avis positifs et l'évolution récente.
+                  {t("dashboard.basedOnRating")}
                 </p>
               </CardContent>
             </Card>
@@ -363,7 +424,7 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                   <Star className="w-6 h-6 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Indice de satisfaction</h3>
+                <h3 className="text-xl font-bold text-gray-900">{t("dashboard.satisfactionIndex")}</h3>
                 
                 {/* Badge central */}
                 <div className="flex justify-center">
@@ -374,7 +435,7 @@ const Dashboard = () => {
                 </div>
                 
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Identification des 3 problèmes les plus critiques à résoudre en priorité.
+                  {t("dashboard.identifyProblems")}
                 </p>
               </CardContent>
             </Card>
@@ -384,18 +445,18 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-amber-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Valeur ressentie</h3>
+                <h3 className="text-xl font-bold text-gray-900">{t("dashboard.perceivedValue")}</h3>
                 
                 {/* Badge central */}
                 <div className="flex justify-center">
                   <div className="inline-flex items-center gap-2 bg-amber-500 rounded-full px-5 py-3 shadow-md">
                     <TrendingUp className="w-5 h-5 text-white" />
-                    <span className="text-white font-semibold text-base">Élevée</span>
+                    <span className="text-white font-semibold text-base">{t("dashboard.high")}</span>
                   </div>
                 </div>
                 
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Calcul automatique de votre score moyen basé sur l'analyse des sentiments.
+                  {t("dashboard.calculateScore")}
                 </p>
               </CardContent>
             </Card>
@@ -405,18 +466,18 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
                   <Clock className="w-6 h-6 text-violet-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Expérience délivrée</h3>
+                <h3 className="text-xl font-bold text-gray-900">{t("dashboard.deliveredExperience")}</h3>
                 
                 {/* Badge central */}
                 <div className="flex justify-center">
                   <div className="inline-flex items-center gap-2 bg-violet-500 rounded-full px-5 py-3 shadow-md">
                     <Clock className="w-5 h-5 text-white" />
-                    <span className="text-white font-semibold text-base">Fluide</span>
+                    <span className="text-white font-semibold text-base">{t("dashboard.smooth")}</span>
                   </div>
                 </div>
                 
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Résumé express et recommandations personnalisées en quelques clics.
+                  {t("dashboard.summaryRecommendations")}
                 </p>
               </CardContent>
             </Card>

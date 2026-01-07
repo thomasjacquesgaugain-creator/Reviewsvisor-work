@@ -8,8 +8,10 @@ import { SubscriptionPlanCard } from "@/components/SubscriptionPlanCard";
 import { subscriptionPlans, getPlanBySlug, getDefaultPlan } from "@/config/subscriptionPlans";
 import { supabase } from "@/integrations/supabase/client";
 import BackArrow from "@/components/BackArrow";
+import { useTranslation } from "react-i18next";
 
 const Onboarding = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   
   // Pré-sélection via URL param ?plan=pro-14 ou ?plan=pro-24
@@ -40,11 +42,11 @@ const Onboarding = () => {
         sessionStorage.setItem("stripeCheckoutStarted", "true");
         window.location.href = data.url;
       } else {
-        throw new Error("URL de paiement non reçue");
+        throw new Error(t("subscription.paymentUrlNotReceived"));
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      toast.error("Le paiement n'a pas pu être initialisé. Réessayez.");
+      toast.error(t("subscription.paymentInitError"));
       setLoading(false);
     }
   };
@@ -79,19 +81,19 @@ const Onboarding = () => {
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Redirection vers Stripe...
+                {t("subscription.redirectingToStripe")}
               </>
             ) : (
-              `Continuer – ${selectedPlan.priceLabel}/mois`
+              t("onboarding.continueWithPrice", { price: selectedPlan.priceLabel })
             )}
           </Button>
 
           <a href="/login" className="text-sm text-muted-foreground underline hover:text-foreground">
-            J'ai déjà un compte
+            {t("hero.haveAccount")}
           </a>
 
           <p className="text-center text-sm text-muted-foreground">
-            🔒 Paiement sécurisé par Stripe • Annulation simple en ligne
+            🔒 {t("subscription.securePaymentStripe")} • {t("subscription.easyCancellation")}
           </p>
         </div>
       </div>

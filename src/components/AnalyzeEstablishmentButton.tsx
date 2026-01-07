@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { runAnalyze } from '@/lib/runAnalyze';
+import { useTranslation } from 'react-i18next';
 
 interface AnalyzeEstablishmentButtonProps {
   place_id: string;
@@ -11,14 +12,15 @@ interface AnalyzeEstablishmentButtonProps {
 }
 
 export function AnalyzeEstablishmentButton({ place_id, name, address }: AnalyzeEstablishmentButtonProps) {
+  const { t } = useTranslation();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
 
   const handleAnalyze = async () => {
     if (!place_id) {
       toast({
-        title: "Erreur",
-        description: "Place ID manquant pour l'analyse",
+        title: t("common.error"),
+        description: t("errors.missingPlaceIdForAnalysis"),
         variant: "destructive",
       });
       return;
@@ -35,22 +37,22 @@ export function AnalyzeEstablishmentButton({ place_id, name, address }: AnalyzeE
 
       if (result.ok) {
         toast({
-          title: "Analyse terminée",
-          description: `${result.counts?.collected || 0} avis analysés avec succès`,
+          title: t("establishment.analysisComplete"),
+          description: t("establishment.reviewsAnalyzedSuccess", { count: result.counts?.collected || 0 }),
         });
       } else {
-        let errorMessage = "Erreur lors de l'analyse";
+        let errorMessage = t("establishment.analysisError");
         
         if (result.error === 'google_fetch_failed') {
-          errorMessage = "Impossible de récupérer les avis Google";
+          errorMessage = t("establishment.cannotFetchGoogleReviews");
         } else if (result.error === 'upsert_failed') {
-          errorMessage = "Erreur lors de l'enregistrement des résultats";
+          errorMessage = t("establishment.errorSavingResults");
         } else if (result.details) {
           errorMessage = result.details;
         }
 
         toast({
-          title: "Erreur d'analyse",
+          title: t("establishment.analysisError"),
           description: errorMessage,
           variant: "destructive",
         });
@@ -58,8 +60,8 @@ export function AnalyzeEstablishmentButton({ place_id, name, address }: AnalyzeE
     } catch (error) {
       console.error('Analyze error:', error);
       toast({
-        title: "Erreur",
-        description: "Une erreur inattendue s'est produite",
+        title: t("common.error"),
+        description: t("errors.generic"),
         variant: "destructive",
       });
     } finally {
@@ -76,10 +78,10 @@ export function AnalyzeEstablishmentButton({ place_id, name, address }: AnalyzeE
       {isAnalyzing ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Analyse en cours...
+          {t("establishment.analysisInProgress")}
         </>
       ) : (
-        "Analyser cet établissement"
+        t("establishment.analyzeThisEstablishment")
       )}
     </Button>
   );

@@ -338,3 +338,35 @@ All colors MUST be HSL.
 .download-report-btn svg {
   stroke: white !important;
 }
+
+/* Styles pour l'empilement des notifications Sonner */
+[data-sonner-toaster] {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  max-width: 420px !important;
+  align-items: flex-end !important;
+  pointer-events: none !important;
+}
+
+[data-sonner-toaster] > * {
+  pointer-events: auto !important;
+}
+
+[data-sonner-toast] {
+  position: relative !important;
+  margin: 0 !important;
+  width: auto !important;
+  min-width: 300px !important;
+  max-width: 420px !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+[data-sonner-toast] + [data-sonner-toast] {
+  margin-top: 0 !important;
+}

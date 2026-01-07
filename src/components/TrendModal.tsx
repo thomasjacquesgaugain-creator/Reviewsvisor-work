@@ -20,6 +20,7 @@ import {
 } from "recharts";
 import { listAll } from "@/services/reviewsService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "react-i18next";
 
 interface TrendModalProps {
   open: boolean;
@@ -44,6 +45,7 @@ export function TrendModal({
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [maxCount, setMaxCount] = useState(50);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!open || !establishmentId) {
@@ -134,11 +136,11 @@ export function TrendModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Tendance des avis</DialogTitle>
+          <DialogTitle>{t("dashboard.ratingEvolution")}</DialogTitle>
           <DialogDescription>
             {establishmentName
-              ? `Évolution des avis pour ${establishmentName}`
-              : "Évolution des avis sur les 12 derniers mois"}
+              ? t("dashboard.ratingEvolutionFor", { name: establishmentName })
+              : t("dashboard.ratingEvolutionLast12Months")}
           </DialogDescription>
         </DialogHeader>
 
@@ -149,7 +151,7 @@ export function TrendModal({
         ) : hasInsufficientData ? (
           <div className="h-96 flex flex-col items-center justify-center">
             <p className="text-sm text-muted-foreground text-center">
-              Pas assez de données pour afficher une tendance.
+              {t("dashboard.insufficientData")}
             </p>
           </div>
         ) : (
@@ -176,7 +178,7 @@ export function TrendModal({
                     yAxisId="left"
                     orientation="left"
                     label={{
-                      value: "Note",
+                      value: t("dashboard.rating"),
                       angle: -90,
                       position: "insideLeft",
                       offset: -10,
@@ -188,7 +190,7 @@ export function TrendModal({
                     yAxisId="right"
                     orientation="right"
                     label={{
-                      value: "Avis",
+                      value: t("dashboard.reviews"),
                       angle: 90,
                       position: "insideRight",
                       offset: -10,
@@ -198,17 +200,17 @@ export function TrendModal({
                   />
                   <Tooltip
                     formatter={(value: any, name: string) => {
-                      if (name === "avgRating" || name === "Note moyenne") {
-                        return [`${value}/5`, "Note moyenne"];
+                      if (name === "avgRating" || name === t("dashboard.averageRating")) {
+                        return [`${value}/5`, t("dashboard.averageRating")];
                       }
-                      return [value, "Nombre d'avis"];
+                      return [value, t("dashboard.totalReviews")];
                     }}
-                    labelFormatter={(label) => `Mois: ${label}`}
+                    labelFormatter={(label) => `${t("dashboard.month")}: ${label}`}
                   />
                   <Legend
                     formatter={(value) => {
-                      if (value === "avgRating" || value === "Note moyenne") return "Note moyenne";
-                      if (value === "totalCount" || value === "Nombre d'avis") return "Nombre d'avis";
+                      if (value === "avgRating" || value === t("dashboard.averageRating")) return t("dashboard.averageRating");
+                      if (value === "totalCount" || value === t("dashboard.totalReviews")) return t("dashboard.totalReviews");
                       return value;
                     }}
                   />
@@ -216,7 +218,7 @@ export function TrendModal({
                     yAxisId="right"
                     dataKey="totalCount"
                     fill="#F59E0B"
-                    name="Nombre d'avis"
+                    name={t("dashboard.totalReviews")}
                   >
                     <LabelList 
                       dataKey="totalCount" 
@@ -231,7 +233,7 @@ export function TrendModal({
                     stroke="#8B5CF6"
                     strokeWidth={2}
                     dot={{ fill: "#8B5CF6", r: 5, strokeWidth: 2 }}
-                    name="Note moyenne"
+                    name={t("dashboard.averageRating")}
                     label={{ 
                       formatter: (value: number) => value > 0 ? value.toFixed(1) : '',
                       position: 'top',

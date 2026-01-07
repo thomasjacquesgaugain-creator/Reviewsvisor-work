@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 // Quota included in base plan
 const INCLUDED_ESTABLISHMENTS = 1;
@@ -41,6 +42,7 @@ export default function SaveEstablishmentButton({
   const [updatingAddon, setUpdatingAddon] = useState(false);
   
   const { isCreator, activateCreatorSubscription } = useCreatorBypass();
+  const { t } = useTranslation();
 
   // Fonction de vérification DB + count
   const checkIfSavedAndCount = async () => {
@@ -101,12 +103,12 @@ export default function SaveEstablishmentButton({
         
         if (result.success) {
           setShowSubscriptionModal(false);
-          sonnerToast.success("Abonnement activé avec succès !");
+          sonnerToast.success(t("subscription.activatedSuccess"));
           // Re-run the save process
           await performSave();
           return;
         } else {
-          sonnerToast.error(result.error || "Erreur d'activation");
+          sonnerToast.error(result.error || t("subscription.activationError"));
           return;
         }
       }
@@ -121,7 +123,7 @@ export default function SaveEstablishmentButton({
 
       if (error) {
         console.error("[SaveEstablishmentButton] Error creating checkout:", error);
-        sonnerToast.error("Erreur lors de la création du paiement", {
+        sonnerToast.error(t("subscription.paymentInitError"), {
           description: error.message
         });
         return;
@@ -136,16 +138,16 @@ export default function SaveEstablishmentButton({
       } else if (data?.has_subscription) {
         // User already has a subscription, close modal and proceed
         setShowSubscriptionModal(false);
-        sonnerToast.success("Vous avez déjà un abonnement actif !");
+        sonnerToast.success(t("subscription.alreadySubscribed"));
         // Re-run the save process
         await performSave();
       } else {
         console.error("[SaveEstablishmentButton] No URL in response:", data);
-        sonnerToast.error("Erreur: URL de paiement non reçue");
+        sonnerToast.error(t("subscription.paymentUrlNotReceived"));
       }
     } catch (err) {
       console.error("[SaveEstablishmentButton] Checkout error:", err);
-      sonnerToast.error("Erreur lors de la redirection vers le paiement");
+      sonnerToast.error(t("subscription.paymentRedirectError"));
     } finally {
       setRedirectingToCheckout(false);
     }
@@ -157,7 +159,7 @@ export default function SaveEstablishmentButton({
 
     const { data: { user }, error: authErr } = await supabase.auth.getUser();
     if (authErr || !user) {
-      sonnerToast.info("Connectez-vous pour enregistrer un établissement.", { duration: 5000 });
+      sonnerToast.info(t("auth.mustBeLoggedInToSaveEstablishment"), { duration: 5000 });
       return;
     }
 
@@ -185,7 +187,7 @@ export default function SaveEstablishmentButton({
       
       if (etabError) {
         console.error("Erreur sauvegarde établissements:", etabError);
-        sonnerToast.error("Impossible d'enregistrer l'établissement");
+        sonnerToast.error(t("establishment.saveError"));
         return;
       }
 
@@ -205,8 +207,8 @@ export default function SaveEstablishmentButton({
         }
       }).catch(err => console.warn('[SaveEstablishmentButton] Billing sync error:', err));
 
-      sonnerToast.success("Établissement enregistré", {
-        description: "L'établissement a été ajouté à votre liste.",
+      sonnerToast.success(t("establishment.establishmentSaved"), {
+        description: t("establishment.addedToYourList"),
         duration: 3000,
       });
 
@@ -229,7 +231,7 @@ export default function SaveEstablishmentButton({
         }
         const addonResult = await activateCreatorSubscription(PRODUCT_KEYS.ADDON_MULTI_ETABLISSEMENTS);
         if (!addonResult.success) {
-          sonnerToast.error(addonResult.error || "Erreur d'activation addon");
+          sonnerToast.error(addonResult.error || t("subscription.addonActivationError"));
           return;
         }
         setShowAddonModal(false);
@@ -247,20 +249,20 @@ export default function SaveEstablishmentButton({
       
       if (error) {
         console.error("[SaveEstablishmentButton] Update addon error:", error);
-        sonnerToast.error(`Erreur: ${error.message}`);
+        sonnerToast.error(`${t("common.error")}: ${error.message}`);
         return;
       }
       
       if (data?.success) {
-        sonnerToast.success("Établissement supplémentaire ajouté à votre abonnement !");
+        sonnerToast.success(t("subscription.establishmentAdded"));
         setShowAddonModal(false);
         await performSave();
       } else {
-        sonnerToast.error(data?.error || "Erreur lors de la mise à jour");
+        sonnerToast.error(data?.error || t("common.updateError"));
       }
     } catch (err) {
       console.error("[SaveEstablishmentButton] Addon error:", err);
-      sonnerToast.error("Une erreur est survenue");
+      sonnerToast.error(t("errors.generic"));
     } finally {
       setUpdatingAddon(false);
     }
@@ -272,13 +274,13 @@ export default function SaveEstablishmentButton({
     // 1) Vérifier l'authentification
     const { data: { user }, error: authErr } = await supabase.auth.getUser();
     if (authErr || !user) {
-      sonnerToast.info("Connectez-vous pour enregistrer un établissement.", { duration: 5000 });
+      sonnerToast.info(t("auth.mustBeLoggedInToSaveEstablishment"), { duration: 5000 });
       return;
     }
 
     // 2) Si déjà enregistré, informer l'utilisateur
     if (isAlreadySaved) {
-      sonnerToast.info("Cet établissement est déjà enregistré.", { duration: 3000 });
+      sonnerToast.info(t("establishment.alreadySaved"), { duration: 3000 });
       return;
     }
 
@@ -324,7 +326,7 @@ export default function SaveEstablishmentButton({
 
     } catch (err) {
       console.error("[SaveEstablishmentButton] Error checking subscription:", err);
-      sonnerToast.error("Erreur lors de la vérification de l'abonnement");
+      sonnerToast.error(t("subscription.checkError"));
     } finally {
       setCheckingSubscription(false);
     }
@@ -336,36 +338,35 @@ export default function SaveEstablishmentButton({
         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded px-4 py-3 disabled:opacity-50 transition-colors"
         onClick={handleSave}
         disabled={!selected || disabled || saving || isAlreadySaved || checkingSubscription}
-        title={isAlreadySaved ? "Déjà enregistré" : "Enregistrer l'établissement"}
+        title={isAlreadySaved ? t("subscription.alreadySaved") : t("subscription.saveEstablishment")}
       >
         {checkingSubscription 
-          ? "⏳ Vérification..." 
+          ? `⏳ ${t("common.checking")}` 
           : saving 
-            ? "⏳ Enregistrement..." 
+            ? `⏳ ${t("common.saving")}` 
             : isAlreadySaved 
-              ? "✅ Déjà enregistré" 
-              : "💾 Enregistrer l'établissement"}
+              ? `✅ ${t("subscription.alreadySaved")}` 
+              : `💾 ${t("subscription.saveEstablishment")}`}
       </button>
 
       {/* Modal Abonnement Requis */}
       <Dialog open={showSubscriptionModal} onOpenChange={setShowSubscriptionModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Abonnement requis</DialogTitle>
+            <DialogTitle>{t("subscription.subscriptionRequired")}</DialogTitle>
             <DialogDescription>
-              Pour ajouter un établissement, vous devez disposer d'un abonnement actif.
-              Notre formule Pro vous permet de gérer vos avis et d'analyser vos performances.
+              {t("subscription.toAddEstablishment")}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <div className="bg-muted rounded-lg p-4 space-y-2">
-              <p className="font-semibold">Abonnement Pro - 14,99€/mois</p>
+              <p className="font-semibold">{t("subscription.proPlan1499")}</p>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>✓ 1 établissement inclus</li>
-                <li>✓ Analyse des avis illimitée</li>
-                <li>✓ Génération de réponses IA</li>
-                <li>✓ Tableau de bord complet</li>
-                <li className="text-xs italic">+4,99€/mois par établissement supplémentaire</li>
+                <li>✓ {t("subscription.oneEstablishmentIncluded")}</li>
+                <li>✓ {t("subscription.unlimitedReviewAnalysis")}</li>
+                <li>✓ {t("subscription.aiResponseGeneration")}</li>
+                <li>✓ {t("subscription.completeDashboard")}</li>
+                <li className="text-xs italic">{t("subscription.perAdditionalEstablishment")}</li>
               </ul>
             </div>
           </div>
@@ -375,14 +376,14 @@ export default function SaveEstablishmentButton({
               onClick={() => setShowSubscriptionModal(false)}
               disabled={redirectingToCheckout}
             >
-              Annuler
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={redirectToCheckout}
               disabled={redirectingToCheckout}
               className="gap-2"
             >
-              {redirectingToCheckout ? "Redirection..." : "Procéder au paiement"}
+              {redirectingToCheckout ? t("common.redirecting") : t("subscription.proceedToPayment")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -395,10 +396,10 @@ export default function SaveEstablishmentButton({
             +4,99 €/mois
           </div>
           <DialogHeader className="pb-2">
-            <DialogTitle className="text-base font-bold">Établissement supplémentaire</DialogTitle>
+            <DialogTitle className="text-base font-bold">{t("subscription.additionalEstablishment")}</DialogTitle>
             <DialogDescription className="text-sm">
-              Vous avez déjà {currentEstablishmentCount} établissement{currentEstablishmentCount > 1 ? 's' : ''}.
-              L'ajout d'un nouvel établissement entraîne un coût supplémentaire.
+              {t("subscription.youAlreadyHaveEstablishments", { count: currentEstablishmentCount })}.
+              {t("subscription.addingNewEstablishmentCostsExtra")}
             </DialogDescription>
           </DialogHeader>
           
@@ -408,10 +409,10 @@ export default function SaveEstablishmentButton({
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
                     <h4 className="text-base font-bold text-foreground">
-                      Établissement #{currentEstablishmentCount + 1}
+                      {t("subscription.establishmentNumber", { number: currentEstablishmentCount + 1 })}
                     </h4>
                     <p className="text-xs text-muted-foreground">
-                      Sera ajouté à votre abonnement
+                      {t("subscription.willBeAddedToSubscription")}
                     </p>
                   </div>
                   <div className="text-right whitespace-nowrap">
@@ -428,7 +429,7 @@ export default function SaveEstablishmentButton({
                       <Check className="w-2.5 h-2.5 text-purple-600" />
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      Analyse des avis pour cet établissement
+                      {t("subscription.reviewAnalysisForThisEstablishment")}
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
@@ -436,7 +437,7 @@ export default function SaveEstablishmentButton({
                       <Check className="w-2.5 h-2.5 text-purple-600" />
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      Réponses IA personnalisées
+                      {t("subscription.personalizedAIResponses")}
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
@@ -444,7 +445,7 @@ export default function SaveEstablishmentButton({
                       <Check className="w-2.5 h-2.5 text-purple-600" />
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      Facturation immédiate au prorata
+                      {t("subscription.immediateProratedBilling")}
                     </span>
                   </li>
                 </ul>
@@ -459,7 +460,7 @@ export default function SaveEstablishmentButton({
               disabled={updatingAddon}
               className="w-full sm:w-auto"
             >
-              Annuler
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={handleAddonConfirm}
@@ -469,10 +470,10 @@ export default function SaveEstablishmentButton({
               {updatingAddon ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Ajout en cours...
+                  {t("subscription.addingInProgress")}
                 </>
               ) : (
-                "Confirmer +4,99 €/mois"
+                t("subscription.confirmAddonPrice", { price: "4,99" })
               )}
             </Button>
           </DialogFooter>

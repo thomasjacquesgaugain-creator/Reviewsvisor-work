@@ -4,8 +4,10 @@ import { AnalyseIA } from "@/types/analyse";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 export function AnalyseDashboard() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const etablissementId = searchParams.get('etablissementId');
   const [analyse, setAnalyse] = useState<AnalyseIA | null>(null);
@@ -60,8 +62,8 @@ export function AnalyseDashboard() {
   if (!etablissementId) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">Dashboard d'analyse</h1>
-        <p className="text-muted-foreground">Sélectionnez un établissement puis cliquez sur "Analyser" pour voir les résultats d'analyse.</p>
+        <h1 className="text-2xl font-bold mb-4">{t("dashboard.analysisDashboard")}</h1>
+        <p className="text-muted-foreground">{t("dashboard.selectEstablishmentToAnalyze")}</p>
       </div>
     );
   }
@@ -69,7 +71,7 @@ export function AnalyseDashboard() {
   if (loading) {
     return (
       <div className="p-6 space-y-6">
-        <h1 className="text-2xl font-bold">Dashboard d'analyse</h1>
+        <h1 className="text-2xl font-bold">{t("dashboard.analysisDashboard")}</h1>
         <div className="space-y-4">
           <Skeleton className="h-32 w-full" />
           <div className="grid md:grid-cols-4 gap-4">
@@ -86,29 +88,29 @@ export function AnalyseDashboard() {
   if (!analyse) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">Dashboard d'analyse</h1>
-        <p className="text-muted-foreground">Aucune analyse disponible pour cet établissement. Cliquez sur "Analyser" dans la carte de l'établissement pour commencer.</p>
+        <h1 className="text-2xl font-bold mb-4">{t("dashboard.analysisDashboard")}</h1>
+        <p className="text-muted-foreground">{t("dashboard.noAnalysisAvailable")}</p>
       </div>
     );
   }
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Dashboard d'analyse</h1>
+      <h1 className="text-2xl font-bold">{t("dashboard.analysisDashboard")}</h1>
 
       <Card>
         <CardHeader>
-          <CardTitle>Résumé</CardTitle>
+          <CardTitle>{t("dashboard.summary")}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="whitespace-pre-wrap mb-4">{analyse.resume}</p>
 
           <div className="grid md:grid-cols-4 gap-4">
-            <CardStat label="Note moyenne" value={analyse.stats.moyenne.toFixed(2)} />
-            <CardStat label="% positifs" value={`${Math.round(analyse.stats.positifsPct)}%`} />
-            <CardStat label="% négatifs" value={`${Math.round(analyse.stats.negatifsPct)}%`} />
+            <CardStat label={t("dashboard.averageRating")} value={analyse.stats.moyenne.toFixed(2)} />
+            <CardStat label={t("dashboard.positivePercentage")} value={`${Math.round(analyse.stats.positifsPct)}%`} />
+            <CardStat label={t("dashboard.negativePercentage")} value={`${Math.round(analyse.stats.negatifsPct)}%`} />
             <CardStat 
-              label="Sentiment" 
+              label={t("dashboard.sentiment")} 
               value={`${analyse.sentimentGlobal.label} (${(analyse.sentimentGlobal.score*100).toFixed(0)}%)`} 
             />
           </div>
@@ -117,15 +119,15 @@ export function AnalyseDashboard() {
 
       <div className="grid md:grid-cols-2 gap-6">
         <CardList 
-          title="Thèmes clés" 
+          title={t("dashboard.keyThemes")} 
           items={analyse.themes.map(t => `${t.theme} • ${(t.score*100).toFixed(0)}%`)} 
         />
-        <CardList title="Tendances" items={[analyse.tendances]} />
-        <CardList title="Éloges (Top 3)" items={analyse.elogesTop3} />
-        <CardList title="Irritants (Top 3)" items={analyse.irritantsTop3} />
+        <CardList title={t("dashboard.trends")} items={[analyse.tendances]} />
+        <CardList title={t("dashboard.praisesTop3")} items={analyse.elogesTop3} />
+        <CardList title={t("dashboard.irritantsTop3")} items={analyse.irritantsTop3} />
       </div>
 
-      <CardList title="Recommandations" items={analyse.recommandations} />
+      <CardList title={t("dashboard.recommendations")} items={analyse.recommandations} />
     </div>
   );
 }

@@ -75,7 +75,20 @@ const App = () => {
       <BrowserRouter>
         <ScrollToTop />
         <StripeReturnDetector />
-        <Toaster position="bottom-right" richColors closeButton toastOptions={{ className: "z-[9999]" }} />
+        <Toaster 
+          position="bottom-right" 
+          richColors 
+          closeButton 
+          expand={true}
+          visibleToasts={5}
+          gap={10}
+          toastOptions={{ 
+            className: "z-[9999]",
+            style: {
+              position: 'relative',
+            }
+          }} 
+        />
         <AppLayout>
           <Routes>
             {/* Public routes - redirect to dashboard if authenticated */}

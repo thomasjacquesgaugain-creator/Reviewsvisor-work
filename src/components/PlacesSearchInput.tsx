@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { MapPin, Star, Loader2, Search, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 
 interface PlaceItem {
   place_id: string;
@@ -47,10 +48,11 @@ function useDebounce(value: string, delay: number) {
 
 const PlacesSearchInput: React.FC<PlacesSearchInputProps> = ({
   onSelect,
-  placeholder = "Rechercher un établissement... (ex: Chez Guy Paris 11)",
+  placeholder,
   value: controlledValue,
   onChange: controlledOnChange
 }) => {
+  const { t } = useTranslation();
   const [inputValue, setInputValue] = useState(controlledValue || '');
   const [suggestions, setSuggestions] = useState<PlaceItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -59,6 +61,8 @@ const PlacesSearchInput: React.FC<PlacesSearchInputProps> = ({
   const [showUrlInput, setShowUrlInput] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  
+  const defaultPlaceholder = placeholder || t("establishment.searchLocationPlaceholder");
 
   // Debounce the search query
   const debouncedQuery = useDebounce(inputValue, 300);
@@ -89,8 +93,8 @@ const PlacesSearchInput: React.FC<PlacesSearchInputProps> = ({
       if (error) {
         console.error('Error searching places:', error);
         toast({
-          title: "Erreur de recherche",
-          description: "Impossible d'effectuer la recherche. Vérifiez votre connexion.",
+          title: t("errors.searchError"),
+          description: t("errors.cannotPerformSearch"),
           variant: "destructive",
         });
         setSuggestions([]);
@@ -100,20 +104,20 @@ const PlacesSearchInput: React.FC<PlacesSearchInputProps> = ({
       if (data?.error) {
         if (data.code === 'REQUEST_DENIED') {
           toast({
-            title: "API non autorisée",
-            description: "L'API Google Places n'est pas activée. Veuillez vérifier la configuration.",
+            title: t("errors.apiUnauthorized"),
+            description: t("errors.googlePlacesApiNotEnabled"),
             variant: "destructive",
           });
         } else if (data.code === 'OVER_QUERY_LIMIT') {
           toast({
-            title: "Quota dépassé",
-            description: "Limite de recherche atteinte. Veuillez réessayer plus tard.",
+            title: t("errors.quotaExceeded"),
+            description: t("errors.searchLimitReached"),
             variant: "destructive",
           });
         } else {
           toast({
-            title: "Erreur de recherche",
-            description: data.error || "Une erreur s'est produite lors de la recherche.",
+            title: t("errors.searchError"),
+            description: data.error || t("errors.searchErrorOccurred"),
             variant: "destructive",
           });
         }
@@ -128,8 +132,8 @@ const PlacesSearchInput: React.FC<PlacesSearchInputProps> = ({
     } catch (error) {
       console.error('Search error:', error);
       toast({
-        title: "Erreur",
-        description: "Une erreur inattendue s'est produite.",
+        title: t("common.error"),
+        description: t("errors.generic"),
         variant: "destructive",
       });
       setSuggestions([]);
@@ -198,8 +202,8 @@ const PlacesSearchInput: React.FC<PlacesSearchInputProps> = ({
       onSelect(place);
     }
     toast({
-      title: "Établissement sélectionné",
-      description: `${place.name} a été sélectionné`,
+      title: t("establishment.selectedEstablishment"),
+      description: t("establishment.hasBeenSelected", { name: place.name }),
     });
   };
 
@@ -207,8 +211,8 @@ const PlacesSearchInput: React.FC<PlacesSearchInputProps> = ({
   const handleUrlSearch = async () => {
     if (!inputValue || !inputValue.includes('maps.google')) {
       toast({
-        title: "URL invalide",
-        description: "Veuillez coller une URL Google Maps valide",
+        title: t("errors.invalidUrl"),
+        description: t("errors.pleasePasteValidGoogleMapsUrl"),
         variant: "destructive",
       });
       return;
@@ -234,7 +238,7 @@ const PlacesSearchInput: React.FC<PlacesSearchInputProps> = ({
                 setShowSuggestions(true);
               }
             }}
-            placeholder={placeholder}
+            placeholder={defaultPlaceholder}
             className="pl-10"
           />
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -259,7 +263,7 @@ const PlacesSearchInput: React.FC<PlacesSearchInputProps> = ({
       {showUrlInput && (
         <div className="mt-2 p-3 border rounded-lg bg-gray-50">
           <p className="text-sm text-gray-600 mb-2">
-            Collez l'URL Google Maps de votre établissement :
+            {t("restaurant.pasteGoogleMapsUrl")}
           </p>
           <div className="flex gap-2">
             <Input
@@ -268,7 +272,7 @@ const PlacesSearchInput: React.FC<PlacesSearchInputProps> = ({
               onChange={(e) => handleValueChange(e.target.value)}
             />
             <Button onClick={handleUrlSearch} disabled={isLoading}>
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Rechercher"}
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("common.search")}
             </Button>
           </div>
         </div>
@@ -316,7 +320,7 @@ const PlacesSearchInput: React.FC<PlacesSearchInputProps> = ({
                           ? 'bg-green-100 text-green-600' 
                           : 'bg-red-100 text-red-600'
                       }`}>
-                        {place.business_status === 'OPERATIONAL' ? 'Ouvert' : 'Fermé'}
+                        {place.business_status === 'OPERATIONAL' ? t("restaurant.open") : t("restaurant.closed")}
                       </span>
                     )}
                   </div>
@@ -331,7 +335,7 @@ const PlacesSearchInput: React.FC<PlacesSearchInputProps> = ({
       {showSuggestions && suggestions.length === 0 && !isLoading && debouncedQuery && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4">
           <p className="text-gray-500 text-center">
-            Aucun établissement trouvé pour "{debouncedQuery}"
+            {t("restaurant.noEstablishmentFound", { query: debouncedQuery })}
           </p>
         </div>
       )}

@@ -6,8 +6,10 @@ import SignUpForm from "@/components/SignUpForm";
 import { CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { StepHeader } from "@/components/StepHeader";
+import { useTranslation } from "react-i18next";
 
 const OnboardingSignup = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [verifying, setVerifying] = useState(true);
   const [subscribedEmail, setSubscribedEmail] = useState("");
@@ -18,7 +20,7 @@ const OnboardingSignup = () => {
       const email = localStorage.getItem("subscribed_email");
 
       if (subscribed !== "1" || !email) {
-        toast.error("Accès refusé - Vous devez d'abord souscrire à l'abonnement");
+        toast.error(t("onboarding.accessDeniedMustSubscribe"));
         navigate("/onboarding");
         return;
       }
@@ -35,7 +37,7 @@ const OnboardingSignup = () => {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Vérification de votre abonnement...</p>
+          <p className="text-muted-foreground">{t("onboarding.verifyingSubscription")}</p>
         </div>
       </div>
     );
@@ -50,12 +52,12 @@ const OnboardingSignup = () => {
             <div className="flex justify-center mb-2">
               <Badge variant="default" className="gap-1">
                 <CheckCircle2 className="h-3 w-3" />
-                Abonnement actif
+                {t("onboarding.activeSubscription")}
               </Badge>
             </div>
-            <CardTitle className="text-2xl font-bold">Créer mon compte</CardTitle>
+            <CardTitle className="text-2xl font-bold">{t("onboarding.createMyAccount")}</CardTitle>
             <CardDescription>
-              Complétez votre inscription pour accéder à votre tableau de bord
+              {t("onboarding.completeSignupToAccessDashboard")}
             </CardDescription>
         </CardHeader>
         <CardContent>

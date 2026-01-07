@@ -387,7 +387,7 @@ const Compte = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">{t("nav.account")}</p>
-              <p className="text-xl font-semibold text-foreground">{fullName || "Utilisateur"}</p>
+              <p className="text-xl font-semibold text-foreground">{fullName || t("dashboard.user")}</p>
               <p className="text-muted-foreground">{etablissement}</p>
             </div>
           </div>
@@ -496,7 +496,7 @@ const Compte = () => {
             <div className="flex items-center gap-3">
               <CreditCard className="h-6 w-6 text-primary flex-shrink-0" />
               <div className="w-full">
-                <Label className="text-xs uppercase text-muted-foreground">ABONNEMENT</Label>
+                <Label className="text-xs uppercase text-muted-foreground">{t("account.subscription")}</Label>
                 <div className="mt-1">
                   <Button
                     type="button"
@@ -510,7 +510,7 @@ const Compte = () => {
                     }}
                     className="whitespace-nowrap"
                   >
-                    {subscription.subscribed ? "Gérer mon abonnement" : "Changer d'abonnement"}
+                    {subscription.subscribed ? t("account.manageSubscription") : t("subscription.choosePlan")}
                   </Button>
                 </div>
               </div>
@@ -520,7 +520,7 @@ const Compte = () => {
             <div className="flex items-center gap-3">
               <Lock className="h-6 w-6 text-primary flex-shrink-0" />
               <div className="w-full">
-                <Label className="text-xs uppercase text-muted-foreground">MOT DE PASSE</Label>
+                <Label className="text-xs uppercase text-muted-foreground">{t("account.password")}</Label>
                 <div className="mt-1">
                   <Button
                     type="button"
@@ -528,7 +528,7 @@ const Compte = () => {
                     onClick={() => setShowPasswordModal(true)}
                     className="whitespace-nowrap"
                   >
-                    Modifier le mot de passe
+                    {t("account.changePassword")}
                   </Button>
                 </div>
               </div>

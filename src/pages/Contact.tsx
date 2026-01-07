@@ -1,8 +1,10 @@
 import { Mail, Headphones, HelpCircle, Handshake } from "lucide-react";
 import BackArrow from "@/components/BackArrow";
 import { Card, CardContent } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 export default function Contact() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <BackArrow />
@@ -16,12 +18,12 @@ export default function Contact() {
             
             {/* Title */}
             <h1 className="text-3xl md:text-4xl font-bold mb-1.5 text-foreground tracking-tight">
-              Nous contacter
+              {t("contact.title")}
             </h1>
             
             {/* Subtitle */}
             <p className="text-base text-muted-foreground max-w-md mx-auto">
-              Vous pouvez nous écrire à cette adresse pour toute demande.
+              {t("contact.subtitle")}
             </p>
           </div>
         </div>
@@ -38,7 +40,7 @@ export default function Contact() {
                 </div>
                 
                 <h2 className="text-lg font-semibold mb-2 text-foreground">
-                  Email de contact
+                  {t("contact.emailTitle")}
                 </h2>
                 
                 <a 
@@ -51,7 +53,7 @@ export default function Contact() {
                 </a>
                 
                 <p className="mt-3 text-sm text-muted-foreground">
-                  Nous vous répondrons dans les plus brefs délais.
+                  {t("contact.responseTime")}
                 </p>
               </CardContent>
             </Card>
@@ -70,9 +72,9 @@ export default function Contact() {
                   <div className="mb-2.5 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
                     <Headphones className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm">Support</h3>
+                  <h3 className="font-semibold text-foreground text-sm">{t("contact.support")}</h3>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Aide technique
+                    {t("contact.supportDesc")}
                   </p>
                 </CardContent>
               </Card>
@@ -83,9 +85,9 @@ export default function Contact() {
                   <div className="mb-2.5 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
                     <HelpCircle className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm">Questions produit</h3>
+                  <h3 className="font-semibold text-foreground text-sm">{t("contact.productQuestions")}</h3>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Fonctionnalités
+                    {t("contact.productQuestionsDesc")}
                   </p>
                 </CardContent>
               </Card>
@@ -96,9 +98,9 @@ export default function Contact() {
                   <div className="mb-2.5 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
                     <Handshake className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm">Partenariats</h3>
+                  <h3 className="font-semibold text-foreground text-sm">{t("contact.partnerships")}</h3>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Offres Pro
+                    {t("contact.partnershipsDesc")}
                   </p>
                 </CardContent>
               </Card>

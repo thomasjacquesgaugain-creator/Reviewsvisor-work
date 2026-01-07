@@ -11,6 +11,7 @@ import { toast as sonnerToast } from "sonner";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
 import { getDisplayAuthor } from "@/utils/getDisplayAuthor";
 import CollapsibleInstructionsHeader from "./CollapsibleInstructionsHeader";
+import { useTranslation } from "react-i18next";
 
 interface PasteImportPanelProps {
   onImportBulk?: (reviews: any[]) => void;
@@ -20,6 +21,7 @@ interface PasteImportPanelProps {
 }
 
 export default function PasteImportPanel({ onImportBulk, onClose, onImportSuccess, onOpenVisualPanel }: PasteImportPanelProps) {
+  const { t } = useTranslation();
   const [pastedText, setPastedText] = useState("");
   const [parsedReviews, setParsedReviews] = useState<ParsedReview[]>([]);
   const [showPreview, setShowPreview] = useState(false);
@@ -42,8 +44,8 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
 
     if (!est) {
       toast({
-        title: "Erreur",
-        description: "Impossible d'identifier l'établissement courant.",
+        title: t("common.error"),
+        description: t("establishment.cannotIdentifyCurrent"),
         variant: "destructive",
       });
       return;
@@ -71,10 +73,10 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
       
       // TOAST bas-droite avec rapport détaillé
       const duplicates = reasons?.duplicate || 0;
-      sonnerToast.success(`✅ ${inserted} avis enregistrés pour ${est.name} (doublons: ${duplicates})`, {
+      sonnerToast.success(t("import.reviewsSaved", { count: inserted, name: est.name, duplicates }), {
         duration: 5000,
         action: {
-          label: "Détails",
+          label: t("common.details"),
           onClick: () => {
             console.log("Rapport d'import:", { inserted, skipped, reasons, sampleSkipped });
             if (sampleSkipped && sampleSkipped.length > 0) {
@@ -122,9 +124,9 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
       }
     } catch (e) {
       toast({
-        title: "Erreur d'import",
+        title: t("import.importError"),
         description: (
-          <span data-testid="toast-import-error">Échec de l'import des avis.</span>
+          <span data-testid="toast-import-error">{t("import.importFailed")}</span>
         ),
         variant: "destructive",
       });
@@ -169,7 +171,7 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
       <CollapsibleInstructionsHeader>
         <ul className="space-y-2 text-sm text-muted-foreground list-disc list-inside pl-1">
           <li>
-            Rendez-vous sur Google Takeout via le lien officiel{" "}
+            {t("import.instruction1")}{" "}
             <a 
               href="https://takeout.google.com/" 
               target="_blank" 
@@ -179,13 +181,13 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
               Google Takeout
             </a>.
           </li>
-          <li>Cliquez sur « Tout désélectionner ».</li>
-          <li>Faites défiler vers le bas et activez « Profil Google Business ».</li>
-          <li>Cliquez sur « Étape suivante » et suivez les instructions pour exporter vos données.</li>
-          <li>Une fois l'exportation terminée et le téléchargement effectué, extrayez le fichier.</li>
-          <li>Ouvrez le fichier avec le Bloc-notes.</li>
-          <li>Copiez le contenu et collez-le ici.</li>
-          <li>Cliquez ensuite sur « Importer les avis ».</li>
+          <li>{t("import.instruction2")}</li>
+          <li>{t("import.instruction3")}</li>
+          <li>{t("import.instruction4")}</li>
+          <li>{t("import.instruction5")}</li>
+          <li>{t("import.instruction6")}</li>
+          <li>{t("import.instruction7")}</li>
+          <li>{t("import.instruction8")}</li>
         </ul>
       </CollapsibleInstructionsHeader>
 
@@ -194,14 +196,14 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
         <div className="space-y-2">
           <Textarea
             data-testid="paste-input"
-            placeholder="Collez ici les avis copiés depuis Google Maps ou Tripadvisor..."
+            placeholder={t("import.pastePlaceholder")}
             value={pastedText}
             onChange={(e) => setPastedText(e.target.value)}
             className="min-h-[200px] resize-none"
             aria-describedby="paste-help"
           />
           <p id="paste-help" className="text-xs text-muted-foreground">
-            Collez plusieurs avis en une fois. Le système détectera automatiquement les notes, auteurs et commentaires.
+            {t("import.pasteHelp")}
           </p>
         </div>
       </div>
@@ -216,7 +218,7 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
             onClick={handlePreview}
             disabled={!pastedText.trim()}
           >
-            Aperçu
+            {t("import.preview")}
           </Button>
           
           <Button
@@ -229,10 +231,10 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
             {isImporting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Import en cours...
+                {t("import.importing")}
               </>
             ) : (
-              `Importer (${validReviews.length} avis)`
+              t("import.importWithCount", { count: validReviews.length })
             )}
           </Button>
         </div>
@@ -244,19 +246,19 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
           <Card>
             <CardContent className="p-4">
               <h4 className="font-medium mb-4">
-                Aperçu des avis détectés ({parsedReviews.length} total, {validReviews.length} valides)
+                {t("import.previewDetected", { total: parsedReviews.length, valid: validReviews.length })}
               </h4>
               
               <ReviewsTable
                 rows={reviewsTableData}
                 isLoading={false}
-                emptyLabel="Aucun avis détecté"
+                emptyLabel={t("import.noReviewsDetected")}
                 data-testid="paste-preview-table"
               />
               
               {parsedReviews.some(r => !r.isValid) && (
                 <p className="text-xs text-destructive mt-2">
-                  Les lignes en rouge sont incomplètes et ne seront pas importées.
+                  {t("import.incompleteRowsWarning")}
                 </p>
               )}
             </CardContent>
@@ -269,7 +271,7 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
           <Card>
             <CardContent className="p-4">
               <p className="text-sm text-muted-foreground">
-                Aucun avis détecté dans le texte collé. Vérifiez le format ou essayez de coller un autre contenu.
+                {t("import.noReviewsInPastedText")}
               </p>
             </CardContent>
           </Card>

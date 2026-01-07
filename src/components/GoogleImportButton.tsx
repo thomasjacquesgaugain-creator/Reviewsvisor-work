@@ -4,6 +4,7 @@ import { toast as sonnerToast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Loader2, RefreshCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -120,6 +121,7 @@ async function callEdgeFunction<T = any>(
 }
 
 export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPanel, onClose }: GoogleImportButtonProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [showLocationSelector, setShowLocationSelector] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -265,16 +267,16 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
           popup?.close();
           setHasExistingConnection(true);
           toast({
-            title: "Connexion réussie",
-            description: "Récupération des emplacements...",
+            title: t("googleImport.connectionSuccess"),
+            description: t("googleImport.fetchingLocations"),
           });
           await fetchAccountsAndLocations();
         } else if (event.data.type === 'oauth-error') {
           window.removeEventListener('message', handleMessage);
           popup?.close();
           toast({
-            title: "Erreur OAuth",
-            description: event.data.error || "Échec de la connexion",
+            title: t("errors.oauthError"),
+            description: event.data.error || t("errors.connectionFailed"),
             variant: "destructive",
           });
         }
@@ -294,8 +296,8 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
     } catch (error: any) {
       console.error('❌ Error initiating OAuth:', error);
       toast({
-        title: "Erreur",
-        description: error.message || "Impossible de démarrer l'authentification",
+        title: t("common.error"),
+        description: error.message || t("errors.cannotStartAuthentication"),
         variant: "destructive",
       });
     } finally {
@@ -331,11 +333,11 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
         if (accountsRes.status === 401 || accountsRes.status === 403) {
           setHasExistingConnection(false);
           toast({
-            title: `❌ Erreur: ${msg}`,
-            description: "Session expirée ou accès refusé. Reconnectez Google puis réessayez.",
+            title: `${t("common.error")}: ${msg}`,
+            description: t("googleImport.sessionExpiredOrAccessDenied"),
             variant: "destructive",
             action: {
-              label: "Reconnecter Google",
+              label: t("googleImport.reconnectGoogle"),
               onClick: () => initiateGoogleOAuth(),
             },
           });
@@ -343,8 +345,8 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
         }
 
         toast({
-          title: `❌ Erreur: ${msg}`,
-          description: "Impossible de récupérer les comptes Google Business.",
+          title: `${t("common.error")}: ${msg}`,
+          description: t("googleImport.cannotRetrieveGoogleBusinessAccounts"),
           variant: "destructive",
         });
         return;
@@ -361,9 +363,8 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
           errorMessage.includes("Enable it by visiting")
         ) {
           toast({
-            title: "❌ Erreur: API Google Business non activée",
-            description:
-              "Activez l’API 'My Business Account Management' dans Google Cloud puis réessayez.",
+            title: `${t("common.error")}: ${t("googleImport.googleBusinessApiNotEnabled")}`,
+            description: t("googleImport.enableMyBusinessApiInGoogleCloud"),
             variant: "destructive",
           });
           return;
@@ -379,11 +380,11 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
         ) {
           setHasExistingConnection(false);
           toast({
-            title: `❌ Erreur: ${errorMessage}`,
-            description: "Reconnectez Google Business puis réessayez.",
+            title: `${t("common.error")}: ${errorMessage}`,
+            description: t("googleImport.reconnectGoogleBusiness"),
             variant: "destructive",
             action: {
-              label: "Reconnecter Google",
+              label: t("googleImport.reconnectGoogle"),
               onClick: () => initiateGoogleOAuth(),
             },
           });
@@ -391,8 +392,8 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
         }
 
         toast({
-          title: `❌ Erreur: ${errorMessage}`,
-          description: "Erreur côté Google Business Accounts.",
+          title: `${t("common.error")}: ${errorMessage}`,
+          description: t("googleImport.errorGoogleBusinessAccounts"),
           variant: "destructive",
         });
         return;
@@ -401,9 +402,8 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
       const accounts = accountsPayload?.accounts || [];
       if (accounts.length === 0) {
         toast({
-          title: "❌ Erreur: Aucun compte Google Business",
-          description:
-            "Aucun compte Google Business trouvé. Vérifiez que votre compte Google est bien propriétaire/gestionnaire d’un établissement.",
+          title: `${t("common.error")}: ${t("googleImport.noGoogleBusinessAccount")}`,
+          description: t("googleImport.noGoogleBusinessAccountFound"),
           variant: "destructive",
         });
         return;
@@ -429,8 +429,8 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
       if (!locationsRes.ok) {
         const msg = locationsPayload?.error || `HTTP ${locationsRes.status}`;
         toast({
-          title: `❌ Erreur: ${msg}`,
-          description: "Impossible de récupérer les emplacements Google Business.",
+          title: `${t("common.error")}: ${msg}`,
+          description: t("googleImport.cannotRetrieveGoogleBusinessLocations"),
           variant: "destructive",
         });
         return;
@@ -438,8 +438,8 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
 
       if (locationsPayload?.error) {
         toast({
-          title: `❌ Erreur: ${locationsPayload.error}`,
-          description: "Erreur côté Google Business Locations.",
+          title: `${t("common.error")}: ${locationsPayload.error}`,
+          description: t("googleImport.errorGoogleBusinessLocations"),
           variant: "destructive",
         });
         return;
@@ -448,8 +448,8 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
       const locs = locationsPayload?.locations || [];
       if (locs.length === 0) {
         toast({
-          title: "❌ Erreur: Aucun emplacement trouvé",
-          description: "Aucun emplacement trouvé pour ce compte Google Business.",
+          title: `${t("common.error")}: ${t("googleImport.noLocationFound")}`,
+          description: t("googleImport.noLocationFoundForAccount"),
           variant: "destructive",
         });
         return;
@@ -469,8 +469,8 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
     } catch (error: any) {
       console.error("[google-sync] fetchAccountsAndLocations:error", error);
       toast({
-        title: `❌ Erreur: ${error?.message || "Erreur inconnue"}`,
-        description: "Échec de la synchronisation (accounts/locations).",
+        title: `${t("common.error")}: ${error?.message || t("errors.unknownError")}`,
+        description: t("googleImport.syncFailure"),
         variant: "destructive",
       });
     } finally {
@@ -516,11 +516,11 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
         if (importRes.status === 401 || importRes.status === 403) {
           setHasExistingConnection(false);
           toast({
-            title: `❌ Erreur: ${msg}`,
-            description: "Session Google expirée. Reconnectez Google puis réessayez.",
+            title: `${t("common.error")}: ${msg}`,
+            description: t("googleImport.googleSessionExpired"),
             variant: "destructive",
             action: {
-              label: "Reconnecter Google",
+              label: t("googleImport.reconnectGoogle"),
               onClick: () => initiateGoogleOAuth(),
             },
           });
@@ -528,8 +528,8 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
         }
 
         toast({
-          title: `❌ Erreur: ${msg}`,
-          description: "La route de synchro a répondu en erreur.",
+          title: `${t("common.error")}: ${msg}`,
+          description: t("googleImport.syncRouteError"),
           variant: "destructive",
         });
         return;
@@ -537,8 +537,8 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
 
       if (payload?.error) {
         toast({
-          title: `❌ Erreur: ${payload.error}`,
-          description: "Erreur lors de l’import des avis Google.",
+          title: `${t("common.error")}: ${payload.error}`,
+          description: t("googleImport.errorImportingGoogleReviews"),
           variant: "destructive",
         });
         return;
@@ -584,8 +584,8 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
     } catch (error: any) {
       console.error("[google-sync] importReviews:error", error);
       toast({
-        title: `❌ Erreur: ${error?.message || "Erreur inconnue"}`,
-        description: "Échec de la synchronisation des avis Google. Veuillez réessayer.",
+        title: `${t("common.error")}: ${error?.message || t("errors.unknownError")}`,
+        description: t("googleImport.googleReviewsSyncFailure"),
         variant: "destructive",
       });
     } finally {

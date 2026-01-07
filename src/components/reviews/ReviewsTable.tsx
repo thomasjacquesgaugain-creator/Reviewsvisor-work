@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { extractOriginalText } from "@/utils/extractOriginalText";
+import { useTranslation } from "react-i18next";
 
 export interface ReviewsTableRow {
   authorName: string;
@@ -36,9 +37,11 @@ const renderStars = (rating: number) => {
 export function ReviewsTable({
   rows,
   isLoading = false,
-  emptyLabel = "Aucun avis",
+  emptyLabel,
   "data-testid": dataTestId = "reviews-table"
 }: ReviewsTableProps) {
+  const { t } = useTranslation();
+  const defaultEmptyLabel = emptyLabel || t("dashboard.noReviewsYet");
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -53,7 +56,7 @@ export function ReviewsTable({
   if (rows.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        {emptyLabel}
+        {defaultEmptyLabel}
       </div>
     );
   }
@@ -71,35 +74,35 @@ export function ReviewsTable({
               className="border border-border px-3 py-2 text-left text-sm font-medium"
               data-testid="col-author"
             >
-              Auteur
+              {t("subscription.author")}
             </th>
             <th 
               scope="col" 
               className="border border-border px-3 py-2 text-left text-sm font-medium"
               data-testid="col-rating"
             >
-              Note
+              {t("dashboard.rating")}
             </th>
             <th 
               scope="col" 
               className="border border-border px-3 py-2 text-left text-sm font-medium"
               data-testid="col-comment"
             >
-              Commentaire
+              {t("import.comment")}
             </th>
             <th 
               scope="col" 
               className="border border-border px-3 py-2 text-left text-sm font-medium"
               data-testid="col-platform"
             >
-              Source
+              {t("subscription.source")}
             </th>
             <th 
               scope="col" 
               className="border border-border px-3 py-2 text-left text-sm font-medium"
               data-testid="col-date"
             >
-              Date
+              {t("dashboard.date")}
             </th>
           </tr>
         </thead>
@@ -113,11 +116,11 @@ export function ReviewsTable({
                 {renderStars(review.rating)}
               </td>
               <td className="border border-border px-3 py-2 text-sm max-w-md">
-                <div className="truncate" title={extractOriginalText(review.comment) || "Pas de commentaire"}>
+                <div className="truncate" title={extractOriginalText(review.comment) || t("dashboard.noComment")}>
                   {review.comment ? (
                     extractOriginalText(review.comment)
                   ) : (
-                    <span className="text-muted-foreground italic">Pas de commentaire</span>
+                    <span className="text-muted-foreground italic">{t("dashboard.noComment")}</span>
                   )}
                 </div>
               </td>

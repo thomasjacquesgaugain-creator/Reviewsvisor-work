@@ -9,6 +9,7 @@ import { useCreatorBypass, PRODUCT_KEYS } from "@/hooks/useCreatorBypass";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 
 export function SubscriptionCard() {
   const { subscription, loading, refresh } = useSubscription();
@@ -16,6 +17,7 @@ export function SubscriptionCard() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleUpgrade = async () => {
     setCheckoutLoading(true);
@@ -31,8 +33,8 @@ export function SubscriptionCard() {
           return;
         } else {
           toast({
-            title: "Erreur",
-            description: result.error || "Erreur d'activation",
+            title: t("errors.title"),
+            description: result.error || t("subscription.activationError"),
             variant: "destructive",
           });
           return;
@@ -51,8 +53,8 @@ export function SubscriptionCard() {
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible de créer la session de paiement",
+        title: t("errors.title"),
+        description: t("subscription.cannotCreatePaymentSession"),
         variant: "destructive",
       });
     } finally {
@@ -64,8 +66,8 @@ export function SubscriptionCard() {
     // Creator bypass users don't have Stripe portal
     if (subscription.creator_bypass) {
       toast({
-        title: "Mode créateur",
-        description: "La gestion d'abonnement n'est pas disponible en mode créateur",
+        title: t("subscription.creatorMode"),
+        description: t("subscription.subscriptionManagementNotAvailable"),
       });
       return;
     }
@@ -78,8 +80,8 @@ export function SubscriptionCard() {
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible d'accéder au portail client",
+        title: t("errors.title"),
+        description: t("subscription.cannotAccessCustomerPortal"),
         variant: "destructive",
       });
     } finally {
@@ -105,11 +107,11 @@ export function SubscriptionCard() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Crown className="h-5 w-5 text-primary" />
-                Abonnement Pro
+                {t("subscription.proSubscription")}
               </CardTitle>
-              <CardDescription>Accédez à toutes les fonctionnalités premium</CardDescription>
+              <CardDescription>{t("subscription.accessAllPremiumFeatures")}</CardDescription>
             </div>
-            <Badge variant="outline">Gratuit</Badge>
+            <Badge variant="outline">{t("account.free")}</Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -119,19 +121,19 @@ export function SubscriptionCard() {
           <ul className="space-y-2">
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-primary" />
-              <span className="text-sm">Analyses illimitées d'établissements</span>
+              <span className="text-sm">{t("subscription.unlimitedEstablishmentAnalyses")}</span>
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-primary" />
-              <span className="text-sm">Réponses automatiques aux avis</span>
+              <span className="text-sm">{t("subscription.automaticResponsesToReviews")}</span>
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-primary" />
-              <span className="text-sm">Statistiques avancées</span>
+              <span className="text-sm">{t("subscription.advancedStatistics")}</span>
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-primary" />
-              <span className="text-sm">Support prioritaire</span>
+              <span className="text-sm">{t("subscription.prioritySupport")}</span>
             </li>
           </ul>
         </CardContent>
@@ -145,12 +147,12 @@ export function SubscriptionCard() {
             {checkoutLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Chargement...
+                {t("common.loading")}
               </>
             ) : (
               <>
                 <Crown className="mr-2 h-4 w-4" />
-                Passer en Pro
+                {t("subscription.upgradeToPro")}
               </>
             )}
           </Button>
@@ -170,31 +172,31 @@ export function SubscriptionCard() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Crown className="h-5 w-5 text-primary" />
-              Abonnement Pro
+              {t("subscription.proSubscription")}
             </CardTitle>
             <CardDescription>
-              Votre abonnement est actif
-              {subscription.creator_bypass && " (mode créateur)"}
+              {t("subscription.yourSubscriptionIsActive")}
+              {subscription.creator_bypass && ` (${t("subscription.creatorMode")})`}
             </CardDescription>
           </div>
           <Badge className="bg-primary">
-            {subscription.creator_bypass ? "Créateur" : "Actif"}
+            {subscription.creator_bypass ? t("subscription.creator") : t("subscription.active")}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-lg bg-muted p-4 space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Formule</span>
+            <span className="text-muted-foreground">{t("subscription.plan")}</span>
             <span className="font-medium">{STRIPE_PRODUCTS.pro.name}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Prix</span>
+            <span className="text-muted-foreground">{t("subscription.currentPrice")}</span>
             <span className="font-medium">{STRIPE_PRODUCTS.pro.price}</span>
           </div>
           {subscriptionEndDate && (
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Renouvellement</span>
+              <span className="text-muted-foreground">{t("subscription.renewal")}</span>
               <span className="font-medium">{subscriptionEndDate}</span>
             </div>
           )}
@@ -210,12 +212,12 @@ export function SubscriptionCard() {
           {portalLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Chargement...
+              {t("common.loading")}
             </>
           ) : (
             <>
               <CreditCard className="mr-2 h-4 w-4" />
-              Gérer mon abonnement
+              {t("account.manageSubscription")}
             </>
           )}
         </Button>

@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthProvider";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export default function BillingSuccess() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
@@ -15,7 +17,7 @@ export default function BillingSuccess() {
 
   useEffect(() => {
     // Show success toast
-    toast.success("Paiement réussi ! Votre abonnement est activé.");
+    toast.success(t("billing.paymentSuccess"));
 
     // Auto-redirect authenticated users to dashboard after 3 seconds
     if (user) {
@@ -44,37 +46,37 @@ export default function BillingSuccess() {
           <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
             <CheckCircle2 className="w-10 h-10 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold text-primary">Paiement réussi !</CardTitle>
+          <CardTitle className="text-2xl font-bold text-primary">{t("billing.paymentSuccessTitle")}</CardTitle>
           <CardDescription>
-            Votre abonnement Pro a été activé avec succès
+            {t("billing.proSubscriptionActivated")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {sessionId && (
             <div className="bg-muted/50 rounded-lg p-3">
-              <p className="text-xs text-muted-foreground">Session ID</p>
+              <p className="text-xs text-muted-foreground">{t("billing.sessionId")}</p>
               <p className="text-xs font-mono break-all">{sessionId}</p>
             </div>
           )}
 
           <div className="space-y-3 text-left">
-            <h3 className="font-semibold text-sm">Vos avantages :</h3>
+            <h3 className="font-semibold text-sm">{t("billing.yourBenefits")}:</h3>
             <ul className="space-y-2 text-sm">
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                Analyses illimitées d'établissements
+                {t("billing.benefit1")}
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                Réponses automatiques aux avis
+                {t("billing.benefit2")}
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                Statistiques avancées
+                {t("billing.benefit3")}
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                Support prioritaire
+                {t("billing.benefit4")}
               </li>
             </ul>
           </div>
@@ -87,18 +89,18 @@ export default function BillingSuccess() {
             {redirecting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Redirection...
+                {t("common.redirecting")}
               </>
             ) : user ? (
-              "Accéder au tableau de bord"
+              t("billing.accessDashboard")
             ) : (
-              "Créer mon compte"
+              t("auth.signupAction")
             )}
           </Button>
 
           {user && (
             <p className="text-xs text-muted-foreground">
-              Redirection automatique dans quelques secondes...
+              {t("billing.autoRedirectMessage")}
             </p>
           )}
         </CardContent>

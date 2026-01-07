@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface ManualReview {
   firstName: string;
@@ -19,6 +20,7 @@ interface ManualReviewPanelProps {
 }
 
 export default function ManualReviewPanel({ onSubmit }: ManualReviewPanelProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -33,19 +35,19 @@ export default function ManualReviewPanel({ onSubmit }: ManualReviewPanelProps) 
     const newErrors: Record<string, string> = {};
     
     if (!formData.firstName.trim()) {
-      newErrors.firstName = "Le prénom est obligatoire";
+      newErrors.firstName = t("import.firstNameRequired");
     }
     
     if (!formData.lastName.trim()) {
-      newErrors.lastName = "Le nom est obligatoire";
+      newErrors.lastName = t("import.lastNameRequired");
     }
     
     if (formData.rating === 0) {
-      newErrors.rating = "La note est obligatoire";
+      newErrors.rating = t("import.ratingRequired");
     }
     
     if (!formData.comment.trim()) {
-      newErrors.comment = "Le commentaire est obligatoire";
+      newErrors.comment = t("import.commentRequired");
     }
     
     setErrors(newErrors);
@@ -103,13 +105,13 @@ export default function ManualReviewPanel({ onSubmit }: ManualReviewPanelProps) 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName" className="text-sm font-medium">
-                Prénom *
+                {t("import.firstName")} *
               </Label>
               <Input
                 id="firstName"
                 value={formData.firstName}
                 onChange={(e) => handleInputChange("firstName", e.target.value)}
-                placeholder="Entrez le prénom"
+                placeholder={t("import.enterFirstName")}
                 className={cn(
                   "w-full",
                   errors.firstName && "border-destructive focus-visible:ring-destructive"
@@ -122,13 +124,13 @@ export default function ManualReviewPanel({ onSubmit }: ManualReviewPanelProps) 
 
             <div className="space-y-2">
               <Label htmlFor="lastName" className="text-sm font-medium">
-                Nom *
+                {t("import.lastName")} *
               </Label>
               <Input
                 id="lastName"
                 value={formData.lastName}
                 onChange={(e) => handleInputChange("lastName", e.target.value)}
-                placeholder="Entrez le nom"
+                placeholder={t("import.enterLastName")}
                 className={cn(
                   "w-full",
                   errors.lastName && "border-destructive focus-visible:ring-destructive"
@@ -142,7 +144,7 @@ export default function ManualReviewPanel({ onSubmit }: ManualReviewPanelProps) 
 
           {/* Note avec étoiles */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Note *</Label>
+            <Label className="text-sm font-medium">{t("import.rating")} *</Label>
             <div className="flex items-center gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -152,7 +154,7 @@ export default function ManualReviewPanel({ onSubmit }: ManualReviewPanelProps) 
                   onMouseEnter={() => setHoveredRating(star)}
                   onMouseLeave={() => setHoveredRating(0)}
                   className="p-1 transition-colors hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
-                  aria-label={`Noter ${star} étoile${star > 1 ? 's' : ''}`}
+                  aria-label={star === 1 ? t("import.rateStars", { count: star }) : t("import.rateStarsPlural", { count: star })}
                 >
                   <Star
                     className={cn(
@@ -178,13 +180,13 @@ export default function ManualReviewPanel({ onSubmit }: ManualReviewPanelProps) 
           {/* Commentaire */}
           <div className="space-y-2">
             <Label htmlFor="comment" className="text-sm font-medium">
-              Commentaire *
+              {t("import.comment")} *
             </Label>
             <Textarea
               id="comment"
               value={formData.comment}
               onChange={(e) => handleInputChange("comment", e.target.value)}
-              placeholder="Rédigez le commentaire de l'avis..."
+              placeholder={t("import.writeReviewComment")}
               className={cn(
                 "min-h-[100px] resize-none",
                 errors.comment && "border-destructive focus-visible:ring-destructive"
@@ -201,7 +203,7 @@ export default function ManualReviewPanel({ onSubmit }: ManualReviewPanelProps) 
               type="submit"
               className="flex-1 h-12 text-base font-semibold"
             >
-              Ajouter cet avis
+              {t("import.addThisReview")}
             </Button>
             <Button
               type="button"
@@ -209,7 +211,7 @@ export default function ManualReviewPanel({ onSubmit }: ManualReviewPanelProps) 
               onClick={handleReset}
               className="px-6 h-12"
             >
-              Réinitialiser
+              {t("import.reset")}
             </Button>
           </div>
         </form>

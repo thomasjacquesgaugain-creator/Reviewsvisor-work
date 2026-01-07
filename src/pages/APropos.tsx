@@ -2,8 +2,10 @@ import logoReviewsvisor from "@/assets/logo-reviewsvisor.png";
 import BackArrow from "@/components/BackArrow";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Target, Cpu, Lightbulb, CheckCircle2, Sparkles, Building2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const APropos = () => {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen flex flex-col relative bg-gradient-to-br from-background via-background to-primary/5">
       {/* Subtle noise/grain overlay */}
@@ -23,24 +25,24 @@ const APropos = () => {
             {/* Badge */}
             <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-sm font-medium bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
               <Eye className="w-3.5 h-3.5 mr-1.5" />
-              Notre vision
+              {t("about.ourVision")}
             </Badge>
             
             {/* Title */}
             <h1 className="flex items-center justify-center gap-3 text-3xl md:text-4xl lg:text-5xl font-bold mb-8 text-foreground tracking-tight">
-              À propos de 
+              {t("about.about")} 
               <span className="text-primary">Reviewsvisor</span>
-              <img src={logoReviewsvisor} alt="Logo Reviewsvisor" className="h-8 w-8 md:h-10 md:w-10 object-contain" />
+              <img src={logoReviewsvisor} alt={t("common.logoAlt")} className="h-8 w-8 md:h-10 md:w-10 object-contain" />
             </h1>
             
             {/* Intro text */}
             <div className="max-w-2xl mx-auto space-y-4 text-lg md:text-xl text-muted-foreground leading-relaxed mb-8">
               <p className="flex items-center justify-center gap-2">
-                <span className="text-blue">Reviewsvisor</span> est une plateforme d'analyse intelligente des avis clients.
+                <span className="text-blue">Reviewsvisor</span> {t("about.isIntelligentPlatform")}
               </p>
               
               <p>
-                <span className="text-green">Un outil, une centralisation</span> pour votre établissement qui transforme <span className="text-green">vos retours en conception</span>.
+                <span className="text-green">{t("hero.card1Desc1")}, {t("hero.card1Desc2")}</span> {t("about.forYourEstablishment")} <span className="text-green">{t("hero.card1Desc4")}</span>.
               </p>
             </div>
             
@@ -48,15 +50,15 @@ const APropos = () => {
             <div className="grid grid-cols-3 gap-4 md:gap-6 max-w-xl mx-auto">
               <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
                 <Eye className="w-5 h-5 text-primary mx-auto mb-2" />
-                <p className="text-sm font-medium text-foreground">Vision</p>
+                <p className="text-sm font-medium text-foreground">{t("about.vision")}</p>
               </div>
               <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
                 <Target className="w-5 h-5 text-success mx-auto mb-2" />
-                <p className="text-sm font-medium text-foreground">Mission</p>
+                <p className="text-sm font-medium text-foreground">{t("about.mission")}</p>
               </div>
               <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
                 <Cpu className="w-5 h-5 text-accent mx-auto mb-2" />
-                <p className="text-sm font-medium text-foreground">Technologie</p>
+                <p className="text-sm font-medium text-foreground">{t("about.technology")}</p>
               </div>
             </div>
           </div>
@@ -70,11 +72,11 @@ const APropos = () => {
                 <div className="hidden sm:block w-1 bg-gradient-to-b from-success to-success/30 rounded-full shrink-0" />
                 <div className="flex-1 space-y-4 text-base md:text-lg text-muted-foreground leading-relaxed">
                   <p>
-                    Notre technologie transforme vos avis clients en insights précis pour vous aider à améliorer l'expérience, augmenter votre note en ligne et optimiser vos services au sein de votre établissement, <span className="text-green">vos avis deviennent maintenant une source de croissance</span>.
+                    {t("about.technologyTransforms")} <span className="text-green">{t("about.reviewsBecomeGrowth")}</span>.
                   </p>
                   
                   <p>
-                    Restaurants, hôtels, commerces : <span className="text-green">prenez les meilleures décisions grâce à vos propres données</span>.
+                    {t("about.restaurantsHotels")} : <span className="text-green">{t("about.makeBestDecisions")}</span>.
                   </p>
                 </div>
               </div>
@@ -93,10 +95,10 @@ const APropos = () => {
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                       <Target className="w-5 h-5 text-primary" />
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-foreground">Notre mission</h2>
+                    <h2 className="text-2xl md:text-3xl font-bold text-foreground">{t("about.ourMission")}</h2>
                   </div>
                   <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-prose">
-                    Chez <span className="text-blue">Reviewsvisor</span>, notre objectif est simple : aider chaque établissement à comprendre ce que ressentent réellement ses clients. Nous croyons que chaque <span className="text-green">avis contient une opportunité d'évolution</span>, et que les données bien analysées peuvent devenir un véritable <span className="text-green">moteur de croissance</span>.
+                    {t("about.missionText1")} <span className="text-blue">Reviewsvisor</span>, {t("about.missionText2")} <span className="text-green">{t("about.reviewContainsOpportunity")}</span>, {t("about.missionText3")} <span className="text-green">{t("about.growthEngine")}</span>.
                   </p>
                 </div>
               </div>
@@ -112,40 +114,40 @@ const APropos = () => {
                 <Lightbulb className="w-5 h-5 text-success" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                Pourquoi nous avons créé <span className="text-blue">Reviewsvisor</span>
+                {t("about.whyWeCreated")} <span className="text-blue">Reviewsvisor</span>
               </h2>
             </div>
             
             {/* Intro card */}
             <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm mb-6">
               <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-                Les restaurateurs, hôteliers et commerçants reçoivent chaque jour des avis, mais ont rarement le temps de les analyser en profondeur. Les plateformes sont nombreuses, les commentaires s'accumulent, et il devient difficile d'identifier rapidement ce qui fonctionne… ou ce qui doit être amélioré.
+                {t("about.problemDescription")}
               </p>
             </div>
             
             {/* Principles intro */}
             <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm">
               <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-6">
-                C'est pour résoudre ce problème que <span className="text-blue">Reviewsvisor</span> a été conçu :
+                {t("about.solutionIntro")} <span className="text-blue">Reviewsvisor</span> {t("about.solutionIntro2")} :
               </p>
               
               {/* Principles list */}
               <div className="grid gap-3">
                 <div className="flex items-center gap-4 p-4 bg-secondary/40 rounded-xl border border-border/40 hover:bg-secondary/60 transition-colors duration-200">
                   <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
-                  <span className="text-foreground font-medium">👉 Un outil simple,</span>
+                  <span className="text-foreground font-medium">👉 {t("about.principle1")}</span>
                 </div>
                 <div className="flex items-center gap-4 p-4 bg-secondary/40 rounded-xl border border-border/40 hover:bg-secondary/60 transition-colors duration-200">
                   <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
-                  <span className="text-foreground font-medium">👉 Une analyse intelligente,</span>
+                  <span className="text-foreground font-medium">👉 {t("about.principle2")}</span>
                 </div>
                 <div className="flex items-center gap-4 p-4 bg-secondary/40 rounded-xl border border-border/40 hover:bg-secondary/60 transition-colors duration-200">
                   <CheckCircle2 className="w-5 h-5 text-accent shrink-0" />
-                  <span className="text-foreground font-medium">👉 Une vision claire,</span>
+                  <span className="text-foreground font-medium">👉 {t("about.principle3")}</span>
                 </div>
                 <div className="flex items-center gap-4 p-4 bg-secondary/40 rounded-xl border border-border/40 hover:bg-secondary/60 transition-colors duration-200">
                   <CheckCircle2 className="w-5 h-5 text-warning shrink-0" />
-                  <span className="text-foreground font-medium">👉 Et des actions concrètes.</span>
+                  <span className="text-foreground font-medium">👉 {t("about.principle4")}</span>
                 </div>
               </div>
             </div>
@@ -164,16 +166,16 @@ const APropos = () => {
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                     <Cpu className="w-5 h-5 text-primary" />
                   </div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-foreground">Notre technologie</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold text-foreground">{t("about.ourTechnology")}</h2>
                 </div>
                 
                 <div className="space-y-4 text-base md:text-lg text-muted-foreground leading-relaxed">
                   <p>
-                    <span className="text-blue">Reviewsvisor</span> utilise un modèle d'analyse avancé capable de comprendre le ton, l'émotion et les sujets importants dans chaque commentaire. L'outil identifie automatiquement les tendances, détecte les points forts récurrents et met en avant les <span className="text-green">axes d'amélioration prioritaires</span>.
+                    <span className="text-blue">Reviewsvisor</span> {t("about.technologyDescription1")} <span className="text-green">{t("about.priorityImprovements")}</span>.
                   </p>
                   
                   <p>
-                    Plus qu'un simple tableau de bord, <span className="text-blue">Reviewsvisor</span> est un véritable <span className="text-green">assistant d'amélioration continue</span> pour votre établissement.
+                    {t("about.moreThanDashboard")} <span className="text-blue">Reviewsvisor</span> {t("about.isContinuousImprovement")} <span className="text-green">{t("about.continuousImprovementAssistant")}</span> {t("about.forYourEstablishment")}.
                   </p>
                 </div>
               </div>
@@ -188,14 +190,14 @@ const APropos = () => {
               <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
                 <Building2 className="w-5 h-5 text-accent" />
               </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Une plateforme pensée pour vous</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">{t("about.platformForYou")}</h2>
             </div>
             
             <div className="grid md:grid-cols-2 gap-6">
               {/* Text card */}
               <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
                 <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-                  Que vous soyez un restaurant, un hôtel ou un commerce, <span className="text-blue">Reviewsvisor</span> s'adapte à votre quotidien. Notre interface a été conçue pour être intuitive, rapide et efficace, même pour les utilisateurs les moins technophiles.
+                  {t("about.platformDescription")} <span className="text-blue">Reviewsvisor</span> {t("about.adaptsToDaily")}. {t("about.interfaceDesigned")}
                 </p>
               </div>
               
@@ -205,8 +207,8 @@ const APropos = () => {
                   <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-card/80 border border-border/50 flex items-center justify-center shadow-sm">
                     <Sparkles className="w-8 h-8 text-primary" />
                   </div>
-                  <p className="text-sm text-muted-foreground font-medium">Interface intuitive</p>
-                  <p className="text-xs text-muted-foreground/70 mt-1">Simple • Rapide • Efficace</p>
+                  <p className="text-sm text-muted-foreground font-medium">{t("about.intuitiveInterface")}</p>
+                  <p className="text-xs text-muted-foreground/70 mt-1">{t("about.simpleFastEffective")}</p>
                 </div>
               </div>
             </div>

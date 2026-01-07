@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Etab, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
+import { Etab, EVT_LIST_UPDATED, EVT_SAVED, STORAGE_KEY } from "../types/etablissement";
 import EstablishmentItem from "./EstablishmentItem";
 import { Building2, Plus, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { useCreatorBypass, PRODUCT_KEYS } from "@/hooks/useCreatorBypass";
 import { subscriptionPlans, establishmentAddon } from "@/config/subscriptionPlans";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 interface SavedEstablishmentsListProps {
   onAddClick?: () => void;
 }
@@ -30,6 +31,7 @@ export default function SavedEstablishmentsList({
     isCreator,
     activateCreatorSubscription
   } = useCreatorBypass();
+  const { t } = useTranslation();
 
   // Détermine le plan actif de l'utilisateur basé sur le price_id
   const activePlan = useMemo(() => {
@@ -132,12 +134,12 @@ export default function SavedEstablishmentsList({
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("success") === "true") {
-      sonnerToast.success("Paiement réussi ! Vous pouvez maintenant ajouter des établissements.");
+      sonnerToast.success(t("subscription.paymentSuccess"));
       // Clean URL
       window.history.replaceState({}, "", window.location.pathname);
     }
     if (params.get("canceled") === "true") {
-      sonnerToast.info("Paiement annulé");
+      sonnerToast.info(t("subscription.paymentCanceled"));
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
@@ -187,7 +189,7 @@ export default function SavedEstablishmentsList({
       onAddClick?.();
     } catch (error) {
       console.error("[SavedEstablishmentsList] Error checking subscription:", error);
-      sonnerToast.error("Erreur lors de la vérification de l'abonnement");
+      sonnerToast.error(t("subscription.checkError"));
     } finally {
       setCheckingSubscription(false);
     }
@@ -206,7 +208,7 @@ export default function SavedEstablishmentsList({
         }
       } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        sonnerToast.error("Vous devez être connecté pour vous abonner");
+        sonnerToast.error(t("auth.mustBeLoggedIn"));
         return;
       }
       const newAddonQty = pricingInfo.additionalCount;
@@ -224,7 +226,7 @@ export default function SavedEstablishmentsList({
           }
           const proResult = await activateCreatorSubscription(PRODUCT_KEYS.PRO_1499_12M);
           if (!proResult.success) {
-            sonnerToast.error(proResult.error || "Erreur d'activation du plan Pro");
+            sonnerToast.error(proResult.error || t("subscription.proActivationError"));
             return;
           }
         }
@@ -238,7 +240,7 @@ export default function SavedEstablishmentsList({
           }
           const addonResult = await activateCreatorSubscription(PRODUCT_KEYS.ADDON_MULTI_ETABLISSEMENTS);
           if (!addonResult.success) {
-            sonnerToast.error(addonResult.error || "Erreur d'activation addon");
+            sonnerToast.error(addonResult.error || t("subscription.addonActivationError"));
             return;
           }
         }
@@ -268,16 +270,16 @@ export default function SavedEstablishmentsList({
         });
         if (error) {
           console.error("[SavedEstablishmentsList] Update addon error:", error);
-          sonnerToast.error(`Erreur: ${error.message}`);
+          sonnerToast.error(`${t("common.error")}: ${error.message}`);
           return;
         }
         if (data?.success) {
-          sonnerToast.success("Établissement ajouté à votre abonnement !");
+          sonnerToast.success(t("subscription.establishmentAdded"));
           await refreshSubscription();
           setShowSubscriptionModal(false);
           onAddClick?.();
         } else {
-          sonnerToast.error(data?.error || "Erreur lors de la mise à jour");
+          sonnerToast.error(data?.error || t("common.updateError"));
         }
         return;
       }
@@ -307,13 +309,13 @@ export default function SavedEstablishmentsList({
       }
       if (error) {
         console.error("[SavedEstablishmentsList] Edge function error:", error);
-        sonnerToast.error(`Erreur: ${error.message}`);
+        sonnerToast.error(`${t("common.error")}: ${error.message}`);
         return;
       }
       if (data?.error) {
         console.error("[SavedEstablishmentsList] Response error:", data.error);
         if (data.has_subscription) {
-          sonnerToast.success("Vous êtes déjà abonné ! Vous pouvez ajouter des établissements.");
+          sonnerToast.success(t("subscription.alreadySubscribed"));
           setShowSubscriptionModal(false);
           onAddClick?.();
         } else {
@@ -329,11 +331,11 @@ export default function SavedEstablishmentsList({
         window.location.href = data.url;
       } else {
         console.error("[SavedEstablishmentsList] No URL in response:", data);
-        sonnerToast.error("Impossible de créer la session de paiement");
+        sonnerToast.error(t("subscription.cannotCreatePaymentSession"));
       }
     } catch (error) {
       console.error("[SavedEstablishmentsList] Unexpected error:", error);
-      sonnerToast.error("Une erreur est survenue lors de la création du paiement");
+      sonnerToast.error(t("subscription.paymentCreationError"));
     } finally {
       setCreatingCheckout(false);
     }
@@ -349,7 +351,7 @@ export default function SavedEstablishmentsList({
         }
       } = await supabase.auth.getUser();
       if (!user) {
-        sonnerToast.error("Vous devez être connecté");
+        sonnerToast.error(t("auth.mustBeLoggedIn"));
         return;
       }
 
@@ -362,22 +364,25 @@ export default function SavedEstablishmentsList({
       }).eq("user_id", user.id).eq("place_id", etab.place_id);
       if (error) {
         console.error("Erreur définition établissement actif:", error);
-        sonnerToast.error("Impossible de sélectionner cet établissement");
+        sonnerToast.error(t("establishment.cannotSelect"));
         return;
       }
 
-      // Notifier MonEtablissementCard de recharger depuis la DB
-      window.dispatchEvent(new CustomEvent(EVT_SAVED));
+      // Mettre à jour localStorage pour synchroniser avec useCurrentEstablishment
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(etab));
+      
+      // Notifier MonEtablissementCard et autres composants de recharger depuis la DB
+      window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));
 
       // Scroll smooth vers le haut
       document.querySelector('[data-testid="card-mon-etablissement"]')?.scrollIntoView({
         behavior: 'smooth',
         block: 'start'
       });
-      sonnerToast.success(`"${etab.name}" défini comme établissement actif`);
+      sonnerToast.success(t("establishment.setAsActive", { name: etab.name }));
     } catch (err) {
       console.error("Erreur:", err);
-      sonnerToast.error("Une erreur est survenue");
+      sonnerToast.error(t("common.error"));
     } finally {
       setSettingActive(null);
     }
@@ -391,25 +396,25 @@ export default function SavedEstablishmentsList({
       <section className="p-4 border border-border rounded-lg bg-card/50">
         <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-2">
           <Building2 className="h-5 w-5 text-primary" />
-          Établissements enregistrés
+          {t("establishment.savedEstablishments")}
         </h3>
         
         <div className="flex flex-wrap gap-3">
           {establishments.map(etab => <EstablishmentItem key={etab.place_id} etab={etab} onSelect={handleSelectEstablishment} />)}
           
           {/* Bouton Ajouter un établissement - with billing gate */}
-          <button onClick={handleAddClick} disabled={checkingSubscription} className="cursor-pointer bg-card border border-dashed border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/10 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-2 min-h-[80px] disabled:opacity-50 disabled:cursor-not-allowed" title="Ajouter un établissement">
+          <button onClick={handleAddClick} disabled={checkingSubscription} className="cursor-pointer bg-card border border-dashed border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/10 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-2 min-h-[80px] disabled:opacity-50 disabled:cursor-not-allowed" title={t("establishment.add")}>
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               {checkingSubscription ? <Loader2 className="w-5 h-5 text-primary animate-spin" /> : <Plus className="w-5 h-5 text-primary" />}
             </div>
             <span className="text-xs text-muted-foreground font-medium">
-              {checkingSubscription ? "Vérification..." : "Ajouter"}
+              {checkingSubscription ? t("common.loading") : t("establishment.add")}
             </span>
           </button>
         </div>
         
         {establishments.length === 0 && <p className="text-muted-foreground text-sm mt-3">
-            Aucun établissement enregistré pour le moment.
+            {t("establishment.noEstablishmentsSaved")}
           </p>}
       </section>
 
@@ -418,13 +423,12 @@ export default function SavedEstablishmentsList({
         <DialogContent className="sm:max-w-md" hideCloseButton>
           {/* Badge Multi-établissements - positioned in modal header */}
           <div className="absolute -top-3 -right-3 bg-purple-600 text-white px-3 py-1 text-xs font-semibold rounded-lg shadow-md z-10">
-            Multi-établissements
+            {t("subscription.multiEstablishments")}
           </div>
           <DialogHeader className="pb-2">
-            <DialogTitle className="text-base font-bold">Abonnement requis</DialogTitle>
+            <DialogTitle className="text-base font-bold">{t("subscription.subscriptionRequired")}</DialogTitle>
             <DialogDescription className="text-sm">
-              Pour ajouter des établissements, vous devez souscrire à un abonnement.
-              Votre premier établissement est inclus dans l'abonnement de base.
+              {t("subscription.mustSubscribeToAddEstablishments")}
             </DialogDescription>
           </DialogHeader>
           
@@ -435,7 +439,7 @@ export default function SavedEstablishmentsList({
                 <div>
                   <span className="text-base font-bold text-foreground">{activePlan.name}</span>
                   <p className="text-xs text-muted-foreground">
-                    {activePlan.id === "pro-engagement" ? "Engagement 12 mois" : "Sans engagement"}
+                    {activePlan.id === "pro-engagement" ? t("subscription.commitment12Months") : t("subscription.withoutCommitment")}
                   </p>
                 </div>
                 <span className="text-lg font-bold text-blue-600">{activePlan.priceLabel}<span className="text-sm font-normal text-muted-foreground">/mois</span></span>
@@ -449,13 +453,13 @@ export default function SavedEstablishmentsList({
                 <div className="flex items-start justify-between gap-2 mb-0.5">
                   <div>
                     <h4 className="text-base font-bold text-foreground">
-                      Établissement supplémentaire
+                      {t("subscription.additionalEstablishment")}
                       {pricingInfo.additionalCount > 0 && <span className="ml-2 text-xs font-normal text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
                           ×{pricingInfo.additionalCount}
                         </span>}
                     </h4>
                     <p className="text-xs text-muted-foreground">
-                      {pricingInfo.additionalCount === 0 ? "1er établissement inclus dans le plan" : `${pricingInfo.additionalCount} × 4,99 €/mois`}
+                      {pricingInfo.additionalCount === 0 ? t("subscription.firstEstablishmentIncluded") : t("subscription.additionalEstablishmentPrice", { count: pricingInfo.additionalCount, price: "4,99" })}
                     </p>
                   </div>
                   <div className="text-right whitespace-nowrap">
@@ -472,19 +476,19 @@ export default function SavedEstablishmentsList({
                     <span className="inline-flex w-4 h-4 rounded-full bg-purple-100 items-center justify-center flex-shrink-0">
                       <Check className="w-2.5 h-2.5 text-purple-600" />
                     </span>
-                    <span className="text-sm text-foreground leading-tight">Centralisez la gestion de tous vos lieux</span>
+                    <span className="text-sm text-foreground leading-tight">{t("subscription.centralizeAllLocations")}</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="inline-flex w-4 h-4 rounded-full bg-purple-100 items-center justify-center flex-shrink-0">
                       <Check className="w-2.5 h-2.5 text-purple-600" />
                     </span>
-                    <span className="text-sm text-foreground leading-tight">Idéal pour groupes et franchises</span>
+                    <span className="text-sm text-foreground leading-tight">{t("subscription.idealForGroupsFranchises")}</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="inline-flex w-4 h-4 rounded-full bg-purple-100 items-center justify-center flex-shrink-0">
                       <Check className="w-2.5 h-2.5 text-purple-600" />
                     </span>
-                    <span className="text-sm text-foreground leading-tight">Suivi indépendant par établissement</span>
+                    <span className="text-sm text-foreground leading-tight">{t("subscription.independentTrackingPerEstablishment")}</span>
                   </li>
                 </ul>
               </div>
@@ -494,9 +498,11 @@ export default function SavedEstablishmentsList({
             <div className="rounded-xl p-3 border-2 border-blue-600 bg-primary-foreground">
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-base font-bold text-foreground">Total mensuel</span>
+                  <span className="text-base font-bold text-foreground">{t("subscription.monthlyTotal")}</span>
                   <p className="text-xs text-muted-foreground">
-                    {pricingInfo.newCount} établissement{pricingInfo.newCount > 1 ? 's' : ''} après ajout
+                    {pricingInfo.newCount === 1 
+                      ? t("subscription.establishmentAfterAdd") 
+                      : t("subscription.establishmentsAfterAdd", { count: pricingInfo.newCount })}
                   </p>
                 </div>
                 <span className="text-xl font-bold text-blue-600">
@@ -509,13 +515,13 @@ export default function SavedEstablishmentsList({
           
           <DialogFooter className="flex gap-2 sm:gap-0 pt-1">
             <Button variant="outline" onClick={() => setShowSubscriptionModal(false)} disabled={creatingCheckout}>
-              Annuler
+              {t("common.cancel")}
             </Button>
             <Button onClick={handleProceedToCheckout} disabled={creatingCheckout} className="bg-blue-600 hover:bg-blue-700 text-white">
               {creatingCheckout ? <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Redirection...
-                </> : "S'abonner"}
+                  {t("common.redirecting")}
+                </> : t("subscription.subscribe")}
             </Button>
           </DialogFooter>
         </DialogContent>

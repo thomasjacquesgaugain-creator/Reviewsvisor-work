@@ -10,6 +10,7 @@ interface PreSignupSubscriptionCardProps {
 }
 
 export function PreSignupSubscriptionCard({ onLoginClick }: PreSignupSubscriptionCardProps) {
+  const { t } = useTranslation();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const { toast } = useToast();
 
@@ -26,8 +27,8 @@ export function PreSignupSubscriptionCard({ onLoginClick }: PreSignupSubscriptio
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible de créer la session de paiement. Veuillez vous connecter d'abord.",
+        title: t("common.error"),
+        description: t("errors.cannotCreatePaymentSession"),
         variant: "destructive",
       });
     } finally {
@@ -42,9 +43,9 @@ export function PreSignupSubscriptionCard({ onLoginClick }: PreSignupSubscriptio
           <div>
             <CardTitle className="flex items-center gap-2">
               <Crown className="h-5 w-5 text-primary" />
-              Abonnement Pro
+              {t("subscription.proSubscription")}
             </CardTitle>
-            <CardDescription>Accédez à toutes les fonctionnalités premium</CardDescription>
+            <CardDescription>{t("subscription.accessAllPremiumFeatures")}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -55,19 +56,19 @@ export function PreSignupSubscriptionCard({ onLoginClick }: PreSignupSubscriptio
         <ul className="space-y-2">
           <li className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="text-sm">Analyses illimitées d'établissements</span>
+            <span className="text-sm">{t("billing.benefit1")}</span>
           </li>
           <li className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="text-sm">Réponses automatiques aux avis</span>
+            <span className="text-sm">{t("billing.benefit2")}</span>
           </li>
           <li className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="text-sm">Statistiques avancées</span>
+            <span className="text-sm">{t("billing.benefit3")}</span>
           </li>
           <li className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="text-sm">Support prioritaire</span>
+            <span className="text-sm">{t("billing.benefit4")}</span>
           </li>
         </ul>
       </CardContent>
@@ -81,12 +82,12 @@ export function PreSignupSubscriptionCard({ onLoginClick }: PreSignupSubscriptio
           {checkoutLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Chargement...
+              {t("common.loading")}
             </>
           ) : (
             <>
               <Crown className="mr-2 h-4 w-4" />
-              S'abonner et créer mon compte
+              {t("subscription.subscribeAndCreateAccount")}
             </>
           )}
         </Button>
@@ -95,7 +96,7 @@ export function PreSignupSubscriptionCard({ onLoginClick }: PreSignupSubscriptio
           onClick={onLoginClick}
           className="text-sm text-muted-foreground hover:text-primary transition-colors underline"
         >
-          J'ai déjà un compte
+          {t("auth.alreadyHaveAccount")}
         </button>
       </CardFooter>
     </Card>

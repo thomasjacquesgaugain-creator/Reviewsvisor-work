@@ -1,8 +1,7 @@
-// ✅ Version finale équilibrée : tous les blocs alignés
-// ✅ Bloc bleu élargi conservé
-// ✅ "Croissance Mesurable" inchangé
+import { useTranslation, Trans } from "react-i18next";
 
 export function WhyReviewsvisor() {
+  const { t } = useTranslation();
   return (
     <section
       className="
@@ -15,7 +14,7 @@ export function WhyReviewsvisor() {
     >
       <div className="w-[98%] lg:w-[96%] rounded-[40px] bg-[#2555FF] text-white px-8 py-12 lg:px-16 lg:py-16 shadow-xl mx-auto transition-all duration-300">
         <h2 className="text-2xl lg:text-3xl font-bold mb-10 text-center">
-          💡 Pourquoi Reviewsvisor fonctionne ?
+          💡 {t("whyWorks.title")}
         </h2>
 
         <div className="grid gap-10 lg:grid-cols-4">
@@ -24,15 +23,11 @@ export function WhyReviewsvisor() {
             <div className="flex items-start gap-2 mb-3">
               <span className="text-2xl lg:text-3xl leading-none">⚡</span>
               <h3 className="font-semibold text-lg lg:text-xl">
-                Analyse éclair
+                {t("whyWorks.lightningAnalysis")}
               </h3>
             </div>
             <p className="text-sm lg:text-base leading-relaxed flex-1">
-              Reviewsvisor transforme vos avis en insights en quelques secondes,
-              vous permettant de prendre des décisions rapides et fiables.  
-              Grâce à une synthèse claire et visuelle, vous repérez les tendances
-              clés et priorités d'action qui comptent pour votre établissement.  
-              L'analyse met aussi en avant vos points forts pour consolider ce qui fonctionne.
+              {t("whyWorks.lightningAnalysisDesc")}
             </p>
           </div>
 
@@ -41,14 +36,11 @@ export function WhyReviewsvisor() {
             <div className="flex items-start gap-2 mb-3">
               <span className="text-2xl lg:text-3xl leading-none">🎯</span>
               <h3 className="font-semibold text-lg lg:text-xl">
-                Actionnable immédiatement
+                {t("whyWorks.immediatelyActionable")}
               </h3>
             </div>
             <p className="text-sm lg:text-base leading-relaxed flex-1">
-              Reviewsvisor ne se contente pas d'identifier des problèmes… il
-              propose des solutions concrètes et hiérarchisées.  
-              Chaque recommandation est mesurable, liée à la satisfaction client,
-              pour vous aider à agir efficacement et suivre vos progrès dans le temps.
+              {t("whyWorks.immediatelyActionableDesc")}
             </p>
           </div>
 
@@ -57,14 +49,11 @@ export function WhyReviewsvisor() {
             <div className="flex items-start gap-2 mb-3">
               <span className="text-2xl lg:text-3xl leading-none">🧠</span>
               <h3 className="font-semibold text-lg lg:text-xl">
-                Analyse Ultra-Précise
+                {t("whyWorks.ultraPreciseAnalysis")}
               </h3>
             </div>
             <p className="text-sm lg:text-base leading-relaxed flex-1">
-              L'IA détecte émotions, problèmes récurrents et opportunités
-              d'amélioration avec une précision exceptionnelle.  
-              Elle mesure la tonalité des avis et met en évidence les signaux
-              faibles pour révéler les vrais leviers de fidélisation client.
+              {t("whyWorks.ultraPreciseAnalysisDesc")}
             </p>
           </div>
 
@@ -75,25 +64,22 @@ export function WhyReviewsvisor() {
                 📈
               </span>
               <h3 className="font-semibold text-lg lg:text-xl">
-                Croissance Mesurable
+                {t("whyWorks.measurableGrowth")}
               </h3>
             </div>
 
             <p className="text-sm lg:text-base leading-tight">
-              Reviewsvisor vous aide à augmenter votre note en ligne, attirer
-              davantage de clients et améliorer vos revenus.
+              {t("whyWorks.measurableGrowthDesc")}
             </p>
             <ul className="mt-2 text-sm lg:text-base leading-tight list-disc list-inside space-y-0.5">
               <li>
-                ✅ voient jusqu'à <strong>+25 %</strong> d'avis positifs,
+                ✅ <Trans i18nKey="whyWorks.growthStat1" components={{ strong: <strong /> }} />
               </li>
               <li>
-                💵 génèrent en moyenne <strong>+10 % à +20 %</strong> de chiffre
-                d'affaires,
+                💵 <Trans i18nKey="whyWorks.growthStat2" components={{ strong: <strong /> }} />
               </li>
               <li>
-                ⭐ gagnent <strong>+0,5 à +1 point</strong> de note en quelques
-                semaines.
+                ⭐ <Trans i18nKey="whyWorks.growthStat3" components={{ strong: <strong /> }} />
               </li>
             </ul>
           </div>

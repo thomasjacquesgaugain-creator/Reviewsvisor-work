@@ -5,35 +5,27 @@ import { HelpCircle, MessageCircle, LifeBuoy } from "lucide-react";
 import AiAssistance from "@/components/AiAssistance";
 import BackArrow from "@/components/BackArrow";
 import { Badge } from "@/components/ui/badge";
-const faqItems = [{
-  question: "Comment importer mes avis Google ?",
-  answer: `Vous pouvez importer vos avis Google de deux façons :
-- en important un fichier via Google Takeout,
-- ou via la récupération automatique si votre établissement est connecté.
-
-Chaque méthode est expliquée étape par étape directement dans la section "Instructions".`
-}, {
-  question: "Que faire si je ne trouve pas mon établissement ?",
-  answer: `Assurez-vous que votre établissement est bien visible sur Google Maps et associé au bon compte Google Business Profile.
-
-Si le problème persiste, vous pouvez importer vos avis manuellement via Google Takeout ou contacter notre support pour vérification.`
-}, {
-  question: "Puis-je utiliser Reviewsvisor pour plusieurs établissements ?",
-  answer: `Oui. Reviewsvisor permet d'analyser plusieurs établissements depuis un seul compte.
-
-Chaque établissement dispose de ses propres analyses, recommandations et historiques d'avis.`
-}, {
-  question: "Puis-je partager les analyses avec mon équipe ?",
-  answer: `Oui. Les analyses peuvent être partagées avec votre équipe afin d'aligner tout le monde sur les priorités à améliorer (service, prix, qualité, organisation).
-
-Cela permet de transformer les avis clients en actions concrètes.`
-}, {
-  question: "Puis-je répondre automatiquement aux avis clients ?",
-  answer: `Oui. Reviewsvisor propose un système de réponses automatiques assistées par IA.
-
-Vous pouvez générer des réponses adaptées au ton des avis (positifs ou négatifs), tout en gardant le contrôle avant publication.`
-}];
+import { useTranslation } from "react-i18next";
 const Aide = () => {
+  const { t } = useTranslation();
+  
+  const faqItems = [{
+    question: t("help.faq1Question"),
+    answer: t("help.faq1Answer")
+  }, {
+    question: t("help.faq2Question"),
+    answer: t("help.faq2Answer")
+  }, {
+    question: t("help.faq3Question"),
+    answer: t("help.faq3Answer")
+  }, {
+    question: t("help.faq4Question"),
+    answer: t("help.faq4Answer")
+  }, {
+    question: t("help.faq5Question"),
+    answer: t("help.faq5Answer")
+  }];
+  
   return <div className="min-h-screen flex flex-col relative bg-gradient-to-br from-background via-background to-primary/5">
       {/* Subtle noise/grain overlay */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.015] z-0" style={{
@@ -49,17 +41,17 @@ const Aide = () => {
             {/* Badge */}
             <Badge variant="secondary" className="mb-5 px-4 py-1.5 text-sm font-medium bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
               <LifeBuoy className="w-3.5 h-3.5 mr-1.5" />
-              Support & FAQ
+              {t("help.supportFaq")}
             </Badge>
             
             {/* Title */}
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-foreground tracking-tight">
-              Centre d'aide <span className="text-primary">Reviewsvisor</span>
+              {t("help.helpCenter")} <span className="text-primary">Reviewsvisor</span>
             </h1>
             
             {/* Subtitle */}
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-              Trouvez des réponses rapides à vos questions et découvrez comment utiliser <span className="text-primary">Reviewsvisor</span> efficacement.
+              {t("help.subtitle")} <span className="text-primary">Reviewsvisor</span> {t("help.subtitle2")}.
             </p>
           </div>
         </section>
@@ -77,7 +69,7 @@ const Aide = () => {
                     <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
                       <MessageCircle className="w-4.5 h-4.5 text-primary" />
                     </div>
-                    <h2 className="text-xl md:text-2xl font-bold text-foreground">Assistance IA</h2>
+                    <h2 className="text-xl md:text-2xl font-bold text-foreground">{t("help.aiAssistance")}</h2>
                   </div>
                   
                   <AiAssistance className="text-primary-foreground border-primary-foreground bg-primary-foreground" />
@@ -94,7 +86,7 @@ const Aide = () => {
               <div className="w-9 h-9 rounded-xl bg-success/10 flex items-center justify-center">
                 <HelpCircle className="w-4.5 h-4.5 text-success" />
               </div>
-              <h2 className="text-xl md:text-2xl font-bold text-foreground">Questions fréquentes</h2>
+              <h2 className="text-xl md:text-2xl font-bold text-foreground">{t("help.frequentQuestions")}</h2>
             </div>
             
             <div className="bg-card border border-border/60 rounded-2xl p-4 md:p-6 shadow-sm">
@@ -120,14 +112,14 @@ const Aide = () => {
           <div className="max-w-4xl mx-auto">
             <div className="bg-gradient-to-br from-primary/10 via-accent/5 to-success/10 border border-primary/20 rounded-2xl p-6 md:p-8 shadow-sm text-center">
               <h3 className="text-xl md:text-2xl font-bold mb-3 text-foreground">
-                Besoin d'aide ?
+                {t("help.needHelp")}
               </h3>
               <p className="text-muted-foreground mb-5 max-w-lg mx-auto">
-                Notre équipe est là pour vous accompagner dans l'utilisation de <span className="text-primary">Reviewsvisor</span>.
+                {t("help.teamHere")} <span className="text-primary">Reviewsvisor</span>.
               </p>
               <Link to="/contact">
                 <Button size="lg" className="font-semibold shadow-sm hover:shadow-md transition-shadow">
-                  Contactez-nous
+                  {t("help.contactUs")}
                 </Button>
               </Link>
             </div>

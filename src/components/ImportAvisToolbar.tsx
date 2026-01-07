@@ -7,6 +7,7 @@ import ImportCsvPanel from "./ImportCsvPanel";
 import PasteImportPanel from "./PasteImportPanel";
 import GoogleImportButton from "./GoogleImportButton";
 import CollapsibleInstructionsHeader from "./CollapsibleInstructionsHeader";
+import { useTranslation } from "react-i18next";
 
 interface ImportAvisToolbarProps {
   onClose: () => void;
@@ -20,6 +21,7 @@ interface ImportAvisToolbarProps {
 type ActiveTab = "csv" | "paste" | "auto";
 
 export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuccess, onOpenVisualPanel, placeId, establishmentName }: ImportAvisToolbarProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<ActiveTab>("auto"); // Start with auto tab for Google import
 
   const handleManualReviewSubmit = (review: { firstName: string; lastName: string; rating: number; comment: string }) => {
@@ -38,19 +40,19 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
   const tabs = [
     {
       id: "paste" as const,
-      label: "Coller des avis",
+      label: t("import.pasteReviews"),
       icon: Clipboard,
       testId: "tab-paste"
     },
     {
       id: "csv" as const,
-      label: "Import CSV",
+      label: t("import.importCsv"),
       icon: Upload,
       testId: "tab-csv"
     },
     {
       id: "auto" as const,
-      label: "Récupération auto",
+      label: t("import.autoRecovery"),
       icon: Zap,
       testId: "tab-auto"
     }
@@ -72,8 +74,8 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
             <div className="py-6">
               <p className="text-sm text-gray-600 mb-4">
                 {placeId 
-                  ? `Importation automatique des avis Google pour "${establishmentName || 'cet établissement'}"`
-                  : "Sélectionnez un établissement pour importer les avis Google"}
+                  ? t("import.autoImportForEstablishment", { name: establishmentName || t("establishment.thisEstablishment") })
+                  : t("import.selectEstablishmentToImport")}
               </p>
               <GoogleImportButton onSuccess={onImportSuccess} placeId={placeId} onOpenVisualPanel={onOpenVisualPanel} onClose={onClose} />
             </div>
@@ -93,9 +95,9 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
         {/* Header avec titre et bouton fermer */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-2xl font-semibold mb-2">Analysez vos avis clients</h3>
+            <h3 className="text-2xl font-semibold mb-2">{t("import.analyzeReviews")}</h3>
             <p className="text-sm text-muted-foreground">
-              Importez vos avis manuellement ou via un fichier CSV pour obtenir une analyse détaillée.
+              {t("import.analyzeReviewsDesc")}
             </p>
           </div>
           <Button

@@ -4,12 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface AiAssistanceProps {
   className?: string;
 }
 
 const AiAssistance = ({ className }: AiAssistanceProps) => {
+  const { t } = useTranslation();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -20,15 +22,15 @@ const AiAssistance = ({ className }: AiAssistanceProps) => {
     
     if (!question.trim()) {
       toast({
-        title: "Question vide",
-        description: "Veuillez poser une question.",
+        title: t("aiAssistance.emptyQuestion"),
+        description: t("aiAssistance.pleaseAskQuestion"),
         variant: "destructive",
       });
       return;
     }
 
     setIsLoading(true);
-    setAnswer("Analyse en cours…");
+    setAnswer(t("aiAssistance.analysisInProgress"));
 
     try {
       const { data, error } = await supabase.functions.invoke("ai-assistance", {
@@ -37,10 +39,10 @@ const AiAssistance = ({ className }: AiAssistanceProps) => {
 
       if (error) {
         console.error("Erreur:", error);
-        setAnswer("Une erreur est survenue. Veuillez réessayer.");
+        setAnswer(t("aiAssistance.errorOccurred"));
         toast({
-          title: "Erreur",
-          description: "Impossible de contacter l'assistant IA.",
+          title: t("common.error"),
+          description: t("aiAssistance.cannotContactAI"),
           variant: "destructive",
         });
         return;
@@ -48,9 +50,9 @@ const AiAssistance = ({ className }: AiAssistanceProps) => {
 
       if (data?.error) {
         setAnswer(data.error);
-        if (data.error.includes("Trop de requêtes")) {
+        if (data.error.includes("Trop de requêtes") || data.error.includes(t("aiAssistance.tooManyRequests"))) {
           toast({
-            title: "Limite atteinte",
+            title: t("aiAssistance.limitReached"),
             description: data.error,
             variant: "destructive",
           });
@@ -58,13 +60,13 @@ const AiAssistance = ({ className }: AiAssistanceProps) => {
         return;
       }
 
-      setAnswer(data?.answer || "Aucune réponse reçue.");
+      setAnswer(data?.answer || t("aiAssistance.noAnswerReceived"));
     } catch (err) {
       console.error("Erreur inattendue:", err);
-      setAnswer("Une erreur inattendue est survenue.");
+      setAnswer(t("errors.generic"));
       toast({
-        title: "Erreur",
-        description: "Une erreur inattendue est survenue.",
+        title: t("common.error"),
+        description: t("errors.generic"),
         variant: "destructive",
       });
     } finally {
@@ -75,17 +77,17 @@ const AiAssistance = ({ className }: AiAssistanceProps) => {
   return (
     <div className="w-full my-8 p-6 bg-card border border-border rounded-lg shadow-sm">
       <h2 className="text-2xl font-bold mb-2 text-foreground">
-        Assistance IA
+        {t("help.aiAssistance")}
       </h2>
       <p className="text-foreground/70 mb-4 text-sm">
-        Posez ici vos questions concernant uniquement <span className="text-blue font-semibold">Reviewsvisor</span>.
+        {t("aiAssistance.askQuestionsAboutReviewsvisor")}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex gap-2">
           <Input
             type="text"
-            placeholder="Ex : Comment importer mes avis ?"
+            placeholder={t("aiAssistance.placeholderExample")}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             disabled={isLoading}
@@ -97,7 +99,7 @@ const AiAssistance = ({ className }: AiAssistanceProps) => {
             ) : (
               <Send className="h-4 w-4 !text-white" stroke="white" />
             )}
-            <span className="ml-2">Demander</span>
+            <span className="ml-2">{t("aiAssistance.ask")}</span>
           </Button>
         </div>
 

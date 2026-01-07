@@ -27,14 +27,19 @@ export default function NavBar() {
   }
 
   return (
-    <nav className="w-full flex justify-between items-center px-8 py-3 bg-white shadow-sm">
-      {/* Logo + liens */}
-      <div className="flex items-center gap-8">
+    <nav className="w-full flex items-center justify-between px-8 py-3 bg-white shadow-sm">
+      {/* Gauche : Logo + barre */}
+      <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <span className="text-xl">📊</span>
           <div className="text-2xl font-bold text-blue-600">Reviewsvisor</div>
         </div>
+        {/* Barre de séparation bleue */}
+        <div className="h-10 w-px bg-gradient-to-b from-transparent via-blue-500 to-transparent opacity-70"></div>
+      </div>
 
+      {/* Centre : Navigation */}
+      <div className="flex items-center gap-8">
         <NavLink to="/tableau-de-bord" className={`flex items-center gap-2 ${getLinkClass("/tableau-de-bord")}`}>
           🏠 {t("nav.home")}
         </NavLink>
@@ -48,8 +53,8 @@ export default function NavBar() {
         </NavLink>
       </div>
 
-      {/* Avatar utilisateur + Déconnexion */}
-      <div className="flex items-center space-x-4">
+      {/* Droite : User + Déconnexion */}
+      <div className="flex items-center gap-4">
         <Link 
           to="/compte" 
           className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 ${

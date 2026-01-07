@@ -80,6 +80,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Nettoyer les anciennes sessions dans localStorage au démarrage
+    // (Supabase utilise maintenant sessionStorage, donc on nettoie les anciennes données)
+    if (typeof window !== 'undefined') {
+      // Clés spécifiques que Supabase pourrait utiliser dans localStorage
+      const supabaseKeys = [
+        'sb-zzjmtipdsccxmmoaetlp-auth-token',
+        'supabase.auth.token',
+        'supabase.auth.session',
+        'sb-zzjmtipdsccxmmoaetlp-auth-token-code-verifier',
+      ];
+      
+      // Supprimer les clés Supabase connues
+      supabaseKeys.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          // Ignorer les erreurs
+        }
+      });
+      
+      // Supprimer aussi les clés génériques d'auth si elles existent
+      const genericAuthKeys = ['auth_token', 'user', 'session'];
+      genericAuthKeys.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          // Ignorer les erreurs
+        }
+      });
+    }
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -109,7 +140,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Nettoyer sessionStorage quand l'utilisateur quitte la page
+    const handleBeforeUnload = () => {
+      if (typeof window !== 'undefined') {
+        // Nettoyer sessionStorage
+        sessionStorage.clear();
+        // S'assurer que Supabase se déconnecte
+        supabase.auth.signOut().catch(() => {
+          // Ignorer les erreurs si déjà déconnecté
+        });
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // Optionnel : nettoyer quand l'onglet devient invisible
+        // On peut aussi attendre beforeunload
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const fetchProfile = async (userId: string) => {
@@ -148,7 +205,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // 1️⃣ Déconnexion Supabase (supprime automatiquement ses propres tokens)
       await supabase.auth.signOut();
 
-      // 2️⃣ Supprimer uniquement les clés d'auth personnalisées (si utilisées)
+      // 2️⃣ Nettoyer sessionStorage (où la session est stockée maintenant)
+      if (typeof window !== 'undefined') {
+        sessionStorage.clear();
+      }
+
+      // 3️⃣ Supprimer les anciennes clés d'auth de localStorage (nettoyage)
       const authKeys = ['auth_token', 'user', 'session'];
       authKeys.forEach((key) => {
         localStorage.removeItem(key);

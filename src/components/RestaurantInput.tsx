@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Search, MapPin, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface Establishment {
   place_id: string;
@@ -24,6 +25,7 @@ interface RestaurantInputProps {
 }
 
 export const RestaurantInput = ({ onAnalyze }: RestaurantInputProps) => {
+  const { t } = useTranslation();
   const [restaurantName, setRestaurantName] = useState("");
   const [googleUrl, setGoogleUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -60,8 +62,8 @@ export const RestaurantInput = ({ onAnalyze }: RestaurantInputProps) => {
       if (error) {
         console.error('Error searching establishments:', error);
         toast({
-          title: "Erreur de recherche",
-          description: "Impossible de rechercher les établissements.",
+          title: t("errors.searchError"),
+          description: t("errors.cannotSearchEstablishments"),
           variant: "destructive",
         });
         return;
@@ -73,8 +75,8 @@ export const RestaurantInput = ({ onAnalyze }: RestaurantInputProps) => {
     } catch (error) {
       console.error('Error in searchEstablishments:', error);
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la recherche.",
+        title: t("common.error"),
+        description: t("errors.searchErrorOccurred"),
         variant: "destructive",
       });
     } finally {
@@ -153,10 +155,10 @@ export const RestaurantInput = ({ onAnalyze }: RestaurantInputProps) => {
       <div className="container mx-auto max-w-2xl">
         <div className="text-center space-y-4 mb-8">
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground">
-            Analysez votre restaurant
+            {t("restaurant.analyzeYourRestaurant")}
           </h2>
           <p className="text-lg text-muted-foreground">
-            Entrez le nom de votre restaurant ou l'URL de votre page Google Maps
+            {t("restaurant.enterNameOrUrl")}
           </p>
         </div>
 
@@ -164,23 +166,23 @@ export const RestaurantInput = ({ onAnalyze }: RestaurantInputProps) => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="w-5 h-5 text-primary" />
-              Informations du restaurant
+              {t("restaurant.restaurantInformation")}
             </CardTitle>
             <CardDescription>
-              Nous analyserons automatiquement tous les commentaires disponibles
+              {t("restaurant.weWillAnalyzeAllComments")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2 relative" ref={suggestionRef}>
                 <label htmlFor="restaurant-name" className="text-sm font-medium">
-                  Nom du restaurant *
+                  {t("restaurant.restaurantName")} *
                 </label>
                 <div className="relative">
                   <Input
                     id="restaurant-name"
                     type="text"
-                    placeholder="Ex: Le Bistrot de Paris"
+                    placeholder={t("restaurant.restaurantNamePlaceholder")}
                     value={restaurantName}
                     onChange={(e) => handleInputChange(e.target.value)}
                     onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
@@ -217,7 +219,7 @@ export const RestaurantInput = ({ onAnalyze }: RestaurantInputProps) => {
                                     <span className="text-xs text-gray-500 dark:text-gray-400">
                                       {establishment.rating.toFixed(1)}
                                       {establishment.user_ratings_total && 
-                                        ` (${establishment.user_ratings_total} avis)`
+                                        ` (${t("restaurant.reviewsCount", { count: establishment.user_ratings_total })})`
                                       }
                                     </span>
                                   </div>
@@ -235,7 +237,7 @@ export const RestaurantInput = ({ onAnalyze }: RestaurantInputProps) => {
               
               <div className="space-y-2">
                 <label htmlFor="google-url" className="text-sm font-medium">
-                  URL Google Maps (optionnel)
+                  {t("restaurant.googleMapsUrlOptional")}
                 </label>
                 <Input
                   id="google-url"
@@ -256,12 +258,12 @@ export const RestaurantInput = ({ onAnalyze }: RestaurantInputProps) => {
                 {isLoading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                    Analyse en cours...
+                    {t("restaurant.analysisInProgress")}
                   </>
                 ) : (
                   <>
                     <Search className="w-5 h-5 mr-2" />
-                    Analyser les commentaires
+                    {t("restaurant.analyzeComments")}
                   </>
                 )}
               </Button>

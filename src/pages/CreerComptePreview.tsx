@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import SignUpForm from "@/components/SignUpForm";
 import { CheckCircle2 } from "lucide-react";
 import { StepHeader } from "@/components/StepHeader";
+import { useTranslation } from "react-i18next";
 
 /**
  * Page de prévisualisation du formulaire "Créer un compte"
@@ -13,6 +14,7 @@ import { StepHeader } from "@/components/StepHeader";
  * Pour supprimer: retirer cette page et la route dans App.tsx
  */
 const CreerComptePreview = () => {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
       <div className="w-full max-w-md">
@@ -22,12 +24,12 @@ const CreerComptePreview = () => {
             <div className="flex justify-center mb-2">
               <Badge variant="default" className="gap-1">
                 <CheckCircle2 className="h-3 w-3" />
-                Abonnement actif
+                {t("onboarding.activeSubscription")}
               </Badge>
             </div>
-            <CardTitle className="text-2xl font-bold">Créer mon compte</CardTitle>
+            <CardTitle className="text-2xl font-bold">{t("onboarding.createMyAccount")}</CardTitle>
             <CardDescription>
-              Complétez votre inscription pour accéder à votre tableau de bord
+              {t("onboarding.completeSignupToAccessDashboard")}
             </CardDescription>
           </CardHeader>
           <CardContent>

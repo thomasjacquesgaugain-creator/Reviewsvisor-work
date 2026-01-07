@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { SubscriptionPlan } from "@/config/subscriptionPlans";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface SubscriptionPlanCardProps {
   plan: SubscriptionPlan;
@@ -19,6 +20,7 @@ export function SubscriptionPlanCard({
   showSelectButton = true,
   loading = false,
 }: SubscriptionPlanCardProps) {
+  const { t } = useTranslation();
   const colorClasses = plan.badgeColor === "purple" 
     ? {
         badge: "bg-purple-600",
@@ -76,7 +78,7 @@ export function SubscriptionPlanCard({
             }}
             disabled={loading}
           >
-            {isSelected ? "✓ Sélectionné" : "Choisir ce plan"}
+            {isSelected ? `✓ ${t("subscription.planSelected")}` : t("subscription.chooseThisPlan")}
           </Button>
         )}
       </CardContent>

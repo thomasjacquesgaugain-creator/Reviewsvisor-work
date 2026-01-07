@@ -7,24 +7,26 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BackArrow from "@/components/BackArrow";
+import { useTranslation } from "react-i18next";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email) {
-      toast.error("Veuillez entrer votre adresse email");
+      toast.error(t("auth.enterEmail"));
       return;
     }
 
     // Validation basique de l'email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      toast.error("Veuillez entrer une adresse email valide");
+      toast.error(t("auth.invalidEmail"));
       return;
     }
 
@@ -38,14 +40,14 @@ const ForgotPassword = () => {
 
       if (checkError) {
         console.error("Erreur lors de la vérification de l'email:", checkError);
-        toast.error("Une erreur est survenue lors de la vérification de l'email");
+        toast.error(t("auth.emailCheckError"));
         setLoading(false);
         return;
       }
 
       // Si l'email n'existe pas, afficher l'erreur
       if (!checkData || !checkData.exists) {
-        toast.error("Aucun compte n'est associé à cette adresse email");
+        toast.error(t("auth.noAccountForEmail"));
         setLoading(false);
         return;
       }
@@ -57,17 +59,17 @@ const ForgotPassword = () => {
 
       if (error) {
         console.error("Erreur lors de l'envoi de l'email:", error);
-        toast.error(error.message || "Une erreur est survenue lors de l'envoi de l'email");
+        toast.error(error.message || t("auth.emailSendError"));
         setLoading(false);
         return;
       }
 
       // Succès
-      toast.success("Un email vous a été envoyé avec un lien pour réinitialiser votre mot de passe");
+      toast.success(t("auth.emailSentMessage"));
       setEmailSent(true);
     } catch (error: any) {
       console.error("Erreur inattendue:", error);
-      toast.error(error?.message || "Une erreur est survenue");
+      toast.error(error?.message || t("common.error"));
     } finally {
       setLoading(false);
     }
@@ -88,7 +90,7 @@ const ForgotPassword = () => {
         {/* Header */}
         <div className="text-center py-8">
           <h1 className="text-2xl font-medium text-gray-600">
-            Mot de passe oublié
+            {t("auth.forgotPasswordTitle")}
           </h1>
         </div>
 
@@ -101,12 +103,12 @@ const ForgotPassword = () => {
                   <Mail className="w-8 h-8 text-blue-600" />
                 </div>
                 <h2 className="text-3xl font-bold text-gray-900">
-                  {emailSent ? "Email envoyé !" : "Mot de passe oublié ?"}
+                  {emailSent ? t("auth.emailSent") : t("auth.forgotPassword")}
                 </h2>
                 <p className="text-gray-600">
                   {emailSent 
-                    ? "Un email vous a été envoyé avec un lien pour réinitialiser votre mot de passe"
-                    : "Entrez votre adresse email pour recevoir un lien de réinitialisation"
+                    ? t("auth.emailSentMessage")
+                    : t("auth.forgotPasswordSubtitle")
                   }
                 </p>
               </div>
@@ -117,19 +119,19 @@ const ForgotPassword = () => {
                     <CheckCircle2 className="w-8 h-8 text-green-600" />
                   </div>
                   <p className="text-sm text-gray-600">
-                    Vérifiez votre boîte de réception (et vos spams) pour le lien de réinitialisation.
+                    {t("auth.checkInbox")}
                   </p>
                 </div>
               ) : (
                 <form className="space-y-6" onSubmit={handleSubmit}>
                   <div className="space-y-2">
                     <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                      Adresse email
+                      {t("auth.email")}
                     </label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="votre@email.com"
+                      placeholder={t("auth.emailPlaceholder")}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
@@ -142,7 +144,7 @@ const ForgotPassword = () => {
                     className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium"
                     disabled={loading}
                   >
-                    {loading ? "Envoi en cours..." : "Envoyer le lien de réinitialisation"}
+                    {loading ? t("auth.sending") : t("auth.sendResetLink")}
                   </Button>
                 </form>
               )}
@@ -152,7 +154,7 @@ const ForgotPassword = () => {
                   to="/connexion" 
                   className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
                 >
-                  Retour à la connexion
+                  {t("auth.backToLogin")}
                 </Link>
               </div>
             </CardContent>

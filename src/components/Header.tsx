@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { Menu, X, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 interface HeaderProps {
   theme?: string;
 }
 
 function Header({ theme = "light" }: HeaderProps) {
+  const { t } = useTranslation();
   const isDark = theme === "dark";
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -69,7 +71,7 @@ function Header({ theme = "light" }: HeaderProps) {
               }`}
               onClick={() => setMenuOpen(false)}
             >
-              🔐 Se connecter
+              🔐 {t("auth.login")}
             </Link>
 
             <div className={`border-t my-1 ${isDark ? "border-gray-700" : "border-gray-200"}`}></div>

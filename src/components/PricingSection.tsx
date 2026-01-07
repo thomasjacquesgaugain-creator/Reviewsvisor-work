@@ -10,6 +10,7 @@ import { useCreatorBypass, ProductKey, PRODUCT_KEYS } from "@/hooks/useCreatorBy
 import { useSubscription } from "@/hooks/useSubscription";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
+import { useTranslation } from "react-i18next";
 
 const ADMIN_EMAIL = "thomas.jacquesgaugain@gmail.com";
 
@@ -19,11 +20,12 @@ export function PricingSection() {
   const { refresh: refreshSubscription } = useSubscription();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const handleCheckout = async (priceId: string, productKey: string) => {
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (currentUser?.email === "thomas.jacquesgaugain@gmail.com") {
-      toast.success("Activé (mode créateur)");
+      toast.success(t("subscription.activatedCreatorMode"));
       navigate("/etablissement");
       return;
     }
@@ -43,12 +45,12 @@ export function PricingSection() {
         
         if (result.success) {
           await refreshSubscription();
-          toast.success("Abonnement activé avec succès !");
+          toast.success(t("subscription.activatedSuccess"));
           // Rediriger vers le dashboard
           navigate("/tableau-de-bord");
           return;
         } else {
-          toast.error(result.error || "Erreur d'activation");
+          toast.error(result.error || t("subscription.activationError"));
           return;
         }
       }
@@ -63,7 +65,7 @@ export function PricingSection() {
           await refreshSubscription();
           return;
         } else {
-          toast.error(result.error || "Erreur d'activation");
+          toast.error(result.error || t("subscription.activationError"));
           return;
         }
       }
@@ -78,11 +80,11 @@ export function PricingSection() {
         sessionStorage.setItem("stripeCheckoutStarted", "true");
         window.location.href = data.url;
       } else {
-        throw new Error("URL de paiement non reçue");
+        throw new Error(t("subscription.paymentUrlNotReceived"));
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      toast.error("Erreur lors de la redirection vers le paiement");
+      toast.error(t("subscription.paymentRedirectError"));
     } finally {
       setLoadingPriceId(null);
     }
@@ -124,7 +126,7 @@ export function PricingSection() {
                   </p>
                   <div className="mt-4">
                     <span className={cn("text-5xl font-bold", colorClasses.price)}>{plan.priceLabel}</span>
-                    <span className="text-lg text-muted-foreground ml-2">/mois</span>
+                    <span className="text-lg text-muted-foreground ml-2">{t("common.perMonth")}</span>
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-col flex-1 pb-8">
@@ -142,10 +144,10 @@ export function PricingSection() {
                     disabled={loadingPriceId === plan.priceId}
                   >
                     {loadingPriceId === plan.priceId 
-                      ? "Redirection..." 
+                      ? t("subscription.redirecting") 
                       : plan.id === "pro-engagement" 
-                        ? "Profiter des 14 jours offerts" 
-                        : "S'abonner maintenant"}
+                        ? t("subscription.enjoy14DaysFree") 
+                        : t("subscription.subscribeNow")}
                   </Button>
                 </CardContent>
               </Card>
@@ -154,7 +156,7 @@ export function PricingSection() {
         </div>
 
         <p className="text-center text-sm text-muted-foreground mt-10">
-          🔒 Paiement sécurisé par Stripe • Annulation simple en ligne
+          🔒 {t("subscription.securePaymentStripe")} • {t("subscription.easyCancellation")}
         </p>
       </div>
     </section>

@@ -8,6 +8,7 @@ import { saveEstablishmentFromPlaceId } from '@/services/establishments';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 // Interface pour le résultat d'un lieu Google
 interface PlaceResult {
@@ -78,10 +79,11 @@ export default function GooglePlaceAutocomplete({
   onChange, 
   onSelect, 
   onEstablishmentSaved,
-  placeholder = "Rechercher un lieu...",
+  placeholder,
   className = "",
   id
 }: GooglePlaceAutocompleteProps) {
+  const { t } = useTranslation();
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -238,15 +240,15 @@ export default function GooglePlaceAutocomplete({
           createNewSessionToken().then(setSessionToken);
           
           toast({
-            title: "Établissement sélectionné",
+            title: t("establishment.selectedEstablishment"),
             description: `${place.name} - ${place.formatted_address}`,
             duration: 3000
           });
         } else {
           console.error('Erreur PlacesService:', status);
           toast({
-            title: "Erreur",
-            description: "Impossible de récupérer les détails de l'établissement",
+            title: t("errors.title"),
+            description: t("establishment.cannotRetrieveDetails"),
             variant: "destructive",
             duration: 3000
           });
@@ -264,8 +266,8 @@ export default function GooglePlaceAutocomplete({
     
     if (!user) {
       toast({
-        title: "Connexion requise",
-        description: "Vous devez être connecté pour sélectionner un établissement",
+        title: t("auth.loginRequired"),
+        description: t("auth.mustBeLoggedInToSelectEstablishment"),
         variant: "destructive"
       });
       navigate('/auth');
@@ -340,8 +342,8 @@ export default function GooglePlaceAutocomplete({
           } catch (error) {
             console.error('Error saving establishment:', error);
             toast({
-              title: "Erreur",
-              description: "Impossible d'enregistrer l'établissement",
+              title: t("errors.title"),
+              description: t("establishment.saveError"),
               variant: "destructive",
               duration: 3000
             });
@@ -351,8 +353,8 @@ export default function GooglePlaceAutocomplete({
         } else {
           console.error('Erreur PlacesService:', status);
           toast({
-            title: "Erreur",
-            description: "Impossible de récupérer les détails de l'établissement",
+            title: t("errors.title"),
+            description: t("establishment.cannotRetrieveDetails"),
             variant: "destructive",
             duration: 3000
           });
@@ -363,8 +365,8 @@ export default function GooglePlaceAutocomplete({
     } catch (error) {
       console.error('Error saving establishment:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible d'enregistrer l'établissement",
+        title: t("errors.title"),
+        description: t("establishment.saveError"),
         variant: "destructive",
         duration: 3000
       });
@@ -419,7 +421,7 @@ export default function GooglePlaceAutocomplete({
         <div className="w-full p-4 border rounded-md bg-destructive/10 border-destructive/50">
           <p className="text-sm text-destructive font-medium">{apiError}</p>
           <p className="text-xs text-muted-foreground mt-1">
-            Contactez l'administrateur pour configurer la clé API Google Maps.
+            {t("establishment.contactAdminForApiKey")}
           </p>
         </div>
       </div>
@@ -436,7 +438,7 @@ export default function GooglePlaceAutocomplete({
           value={value}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          placeholder={placeholder}
+          placeholder={placeholder || t("establishment.searchPlaceholder")}
           className={cn("w-full", className)}
           disabled={apiError !== null || isSaving}
         />

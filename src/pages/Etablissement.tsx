@@ -13,6 +13,7 @@ import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { useAuth } from "@/contexts/AuthProvider";
 import { toast } from "sonner";
 import { getCurrentEstablishment } from "@/services/establishments";
+import { useTranslation } from "react-i18next";
 export default function EtablissementPage() {
   const {
     displayName,
@@ -31,6 +32,28 @@ export default function EtablissementPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [placesError, setPlacesError] = useState<string | null>(null);
   const currentEstablishment = useCurrentEstablishment();
+  const { t } = useTranslation();
+
+  // Synchroniser visualEstablishment avec currentEstablishment quand il change
+  // MAIS seulement si le panel n'est pas déjà ouvert (pour éviter d'écraser l'établissement choisi manuellement)
+  useEffect(() => {
+    // Ne pas écraser visualEstablishment si le panel est ouvert
+    // Cela permet au clic sur le bouton d'utiliser l'établissement affiché dans "Mon Établissement"
+    if (showReviewsVisual) {
+      return; // Garder l'établissement actuellement affiché dans le panel
+    }
+    
+    if (currentEstablishment) {
+      setVisualEstablishment({
+        id: currentEstablishment.place_id, // Utiliser place_id comme id car les services utilisent place_id
+        name: currentEstablishment.name,
+        placeId: currentEstablishment.place_id
+      });
+    } else {
+      // Si aucun établissement n'est sélectionné, réinitialiser visualEstablishment
+      setVisualEstablishment(null);
+    }
+  }, [currentEstablishment?.place_id, currentEstablishment?.name, showReviewsVisual]);
 
   // Sync the local establishment card from the DB (source of truth)
   // IMPORTANT: préserver le rating local si la DB n'en a pas
@@ -87,7 +110,7 @@ export default function EtablissementPage() {
   const handleOpenVisualPanel = () => {
     if (currentEstablishment) {
       setVisualEstablishment({
-        id: currentEstablishment.id || currentEstablishment.place_id,
+        id: currentEstablishment.place_id, // Utiliser place_id comme id car les services utilisent place_id
         name: currentEstablishment.name,
         placeId: currentEstablishment.place_id
       });
@@ -202,12 +225,12 @@ export default function EtablissementPage() {
 
             // UNIQUEMENT mettre à jour l'état local (pas de sauvegarde DB)
             setSelected(etab);
-            toast.success(`${etab.name} sélectionné`, {
-              description: "Cliquez sur 'Enregistrer' pour l'ajouter à votre liste."
+            toast.success(t("establishment.selected", { name: etab.name }), {
+              description: t("establishment.clickSaveToAddToList")
             });
           } catch (error: any) {
             console.error('Erreur lors de la récupération des détails:', error);
-            toast.error(error?.message || 'Impossible de récupérer les détails');
+            toast.error(error?.message || t("establishment.cannotRetrieveDetails"));
           }
         });
         console.log('✅ Autocomplete initialisé avec succès');
@@ -241,20 +264,40 @@ export default function EtablissementPage() {
         }, 50);
       }
       if (target && target.closest('[data-testid="btn-analyser-etablissement"]')) {
-        if (currentEstablishment) {
+        // Récupérer l'établissement depuis le bouton (source de vérité : Mon Établissement)
+        const button = target.closest('[data-testid="btn-analyser-etablissement"]') as HTMLElement;
+        const placeId = button?.dataset?.placeId;
+        const name = button?.dataset?.name;
+        
+        if (placeId && name) {
+          // Utiliser l'établissement affiché dans "Mon Établissement" (pas currentEstablishment)
           setVisualEstablishment({
-            id: currentEstablishment.id || currentEstablishment.place_id,
+            id: placeId,
+            name: name,
+            placeId: placeId
+          });
+          setShowReviewsVisual(!showReviewsVisual);
+          setTimeout(() => {
+            document.getElementById('reviews-visual-anchor')?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }, 50);
+        } else if (currentEstablishment) {
+          // Fallback vers currentEstablishment si les data attributes ne sont pas disponibles
+          setVisualEstablishment({
+            id: currentEstablishment.place_id,
             name: currentEstablishment.name,
             placeId: currentEstablishment.place_id
           });
+          setShowReviewsVisual(!showReviewsVisual);
+          setTimeout(() => {
+            document.getElementById('reviews-visual-anchor')?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }, 50);
         }
-        setShowReviewsVisual(!showReviewsVisual);
-        setTimeout(() => {
-          document.getElementById('reviews-visual-anchor')?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
-        }, 50);
       }
     };
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -277,22 +320,22 @@ export default function EtablissementPage() {
   return <div className="bg-background">
       {/* Main content */}
       <div className="container mx-auto px-4 py-8 pb-16">
-        <h1 className="text-3xl font-bold mb-8">Établissement</h1>
+        <h1 className="text-3xl font-bold mb-8">{t("establishment.title")}</h1>
         
         <div className="space-y-6">
           {/* Section de recherche d'établissement - toujours montée, masquée via CSS */}
           <div className={showSearch ? "space-y-4" : "hidden"}>
-            <h2 className="text-xl font-semibold">Rechercher un établissement</h2>
+            <h2 className="text-xl font-semibold">{t("establishment.search")}</h2>
             
             <div className="space-y-2">
               <div className="relative">
-                <input id="places-input" className="w-full bg-white border border-border rounded-lg px-3 py-2 pr-24 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Rechercher un établissement…" />
+                <input id="places-input" className="w-full bg-white border border-border rounded-lg px-3 py-2 pr-24 focus:outline-none focus:ring-2 focus:ring-primary" placeholder={t("establishment.searchPlaceholder")} />
                 <button
                   type="button"
                   onClick={resetSearchAndClose}
                   className="absolute right-2 top-1/2 -translate-y-1/2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-3 py-1.5 rounded-md cursor-pointer transition-colors"
                 >
-                  Annuler
+                  {t("common.cancel")}
                 </button>
               </div>
               
@@ -301,11 +344,11 @@ export default function EtablissementPage() {
                 </div>}
               
               <div className="text-xs text-muted-foreground">
-                Powered by Google
+                {t("establishment.poweredByGoogle")}
               </div>
               
               {selected && <div className="inline-flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
-                  <span>✅ Sélectionné :</span>
+                  <span>{t("establishment.selected")}</span>
                   <strong>{selected.name}</strong>
                 </div>}
             </div>
@@ -315,7 +358,7 @@ export default function EtablissementPage() {
 
           {/* Section Mon Établissement */}
           <section data-testid="card-mon-etablissement" className="border border-border rounded-lg p-4 bg-primary-foreground">
-            <h2 className="text-xl font-semibold mb-3">🏢 Mon Établissement</h2>
+            <h2 className="text-xl font-semibold mb-3">{t("establishment.myEstablishment")}</h2>
             <MonEtablissementCard onAddClick={openSearch} />
           </section>
 
@@ -323,7 +366,7 @@ export default function EtablissementPage() {
           <div id="reviews-visual-anchor" />
 
           {/* Reviews Visual Panel */}
-          {showReviewsVisual && <ReviewsVisualPanel establishmentId={visualEstablishment?.id} establishmentName={visualEstablishment?.name} onClose={() => setShowReviewsVisual(false)} key={refreshTrigger} />}
+          {showReviewsVisual && <ReviewsVisualPanel establishmentId={visualEstablishment?.placeId || visualEstablishment?.id || currentEstablishment?.place_id} establishmentName={visualEstablishment?.name || currentEstablishment?.name} onClose={() => setShowReviewsVisual(false)} key={refreshTrigger} />}
 
           {/* Anchor pour le scroll vers la barre d'import */}
           <div id="import-avis-toolbar-anchor" />

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function SignInForm() {
   const [email, setEmail] = useState("");
@@ -12,6 +13,7 @@ export default function SignInForm() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,15 +29,15 @@ export default function SignInForm() {
     if (error) {
       toast({
         variant: "destructive",
-        title: "Erreur de connexion",
+        title: t("auth.loginError"),
         description: error.message
       });
       return;
     }
 
     toast({
-      title: "Connexion réussie !",
-      description: "Vous êtes maintenant connecté."
+      title: t("auth.loginSuccess"),
+      description: t("auth.loginSuccessDesc")
     });
 
     navigate("/tableau-de-bord");
@@ -44,11 +46,11 @@ export default function SignInForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t("auth.email")}</Label>
         <Input
           id="email"
           type="email"
-          placeholder="votre@email.com"
+          placeholder={t("auth.emailPlaceholder")}
           value={email}
           onChange={e => setEmail(e.target.value)}
           required
@@ -56,11 +58,11 @@ export default function SignInForm() {
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="password">Mot de passe</Label>
+        <Label htmlFor="password">{t("auth.password")}</Label>
         <Input
           id="password"
           type="password"
-          placeholder="Votre mot de passe"
+          placeholder={t("auth.passwordPlaceholder")}
           value={password}
           onChange={e => setPassword(e.target.value)}
           required
@@ -72,7 +74,7 @@ export default function SignInForm() {
         disabled={loading}
         className="w-full"
       >
-        {loading ? "Connexion..." : "Se connecter"}
+        {loading ? t("auth.loggingIn") : t("auth.login")}
       </Button>
     </form>
   );

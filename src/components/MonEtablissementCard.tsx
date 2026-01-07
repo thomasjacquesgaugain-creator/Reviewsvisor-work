@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
-import { Etab, EVT_SAVED, EVT_LIST_UPDATED } from "../types/etablissement";
+import { Etab, EVT_SAVED, EVT_LIST_UPDATED, STORAGE_KEY } from "../types/etablissement";
 import { Trash2, BarChart3, Download, ExternalLink, Star, Phone, Globe, MapPin, Building2, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { runAnalyze } from "@/lib/runAnalyze";
 import { toast as sonnerToast } from "sonner";
 import { deleteAllReviews } from "@/services/reviewsService";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 interface MonEtablissementCardProps {
   onAddClick?: () => void;
@@ -16,6 +17,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
 
   // Charger l'établissement actif depuis la DB (source de vérité)
   const loadActiveEstablishment = useCallback(async () => {
@@ -125,16 +127,66 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
 
       // 3. Plus besoin de localStorage - la DB est la source de vérité
 
-      // 4. Notifier la liste de se recharger depuis la DB
+      // 4. Vérifier s'il reste d'autres établissements et sélectionner le premier
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) {
+        const { data: remainingEstablishments } = await supabase
+          .from("établissements")
+          .select("place_id, nom, adresse, lat, lng, telephone, website, google_maps_url, rating")
+          .eq("user_id", currentUser.id)
+          .order("created_at", { ascending: false });
+
+        if (remainingEstablishments && remainingEstablishments.length > 0) {
+          // Sélectionner automatiquement le premier établissement restant
+          const firstRemaining = remainingEstablishments[0];
+          
+          // Marquer comme actif
+          await supabase
+            .from("établissements")
+            .update({ is_active: true })
+            .eq("user_id", currentUser.id)
+            .eq("place_id", firstRemaining.place_id);
+
+          // Mapper vers le format Etab
+          const newEtab: Etab = {
+            place_id: firstRemaining.place_id,
+            name: firstRemaining.nom,
+            address: firstRemaining.adresse || "",
+            phone: firstRemaining.telephone || undefined,
+            website: firstRemaining.website || undefined,
+            url: firstRemaining.google_maps_url || undefined,
+            rating: firstRemaining.rating || undefined,
+            lat: firstRemaining.lat || null,
+            lng: firstRemaining.lng || null,
+          };
+
+          // Mettre à jour localStorage pour synchroniser avec useCurrentEstablishment
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(newEtab));
+          
+          // Notifier les autres composants
+          window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: newEtab }));
+          
+          // Mettre à jour l'état local avec le nouvel établissement
+          setEtab(newEtab);
+          
+          sonnerToast.success(`"${firstRemaining.nom}" a été sélectionné automatiquement`, {
+            duration: 3000,
+          });
+        } else {
+          // Aucun établissement restant, afficher le bouton d'ajout
+          setEtab(null);
+        }
+      } else {
+        setEtab(null);
+      }
+
+      // 5. Notifier la liste de se recharger depuis la DB
       window.dispatchEvent(new CustomEvent(EVT_LIST_UPDATED));
 
-      // 5. Toast rouge en bas à droite (même système que import)
+      // 6. Toast de confirmation
       sonnerToast.error("L'établissement et tous ses avis ont été supprimés.", {
         duration: 5000,
       });
-
-      // 6. Mettre à jour l'état local
-      setEtab(null);
     } catch (error) {
       console.error('Erreur lors de la suppression de l\'établissement:', error);
       
@@ -181,7 +233,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
     return (
       <div className="p-6 flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Chargement...</span>
+        <span className="ml-2 text-muted-foreground">{t("common.loading")}</span>
       </div>
     );
   }
@@ -203,7 +255,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
             <Plus className="w-5 h-5 text-primary" />
           </div>
-          <span className="text-xs text-muted-foreground font-medium">Ajouter</span>
+          <span className="text-xs text-muted-foreground font-medium">{t("establishment.add")}</span>
         </button>
       </div>
     );
@@ -215,13 +267,13 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
       <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-10">
         {/* Nom */}
         <div className="space-y-1">
-          <p className="text-sm text-muted-foreground font-medium">Nom</p>
+          <p className="text-sm text-muted-foreground font-medium">{t("establishment.nameLabel")}</p>
           <p className="text-base font-medium text-foreground">{etab.name}</p>
         </div>
 
         {/* Note Google */}
         <div className="space-y-1">
-          <p className="text-sm text-muted-foreground font-medium">Note Google</p>
+          <p className="text-sm text-muted-foreground font-medium">{t("establishment.googleRating")}</p>
           {etab.rating ? (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 font-medium text-sm">
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
@@ -236,7 +288,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
         <div className="space-y-1 md:col-span-2">
           <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5" />
-            Adresse
+            {t("establishment.address")}
           </p>
           <p className="text-base font-medium text-foreground">{etab.address}</p>
         </div>
@@ -245,7 +297,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
             <Phone className="w-3.5 h-3.5" />
-            Téléphone
+            {t("establishment.phone")}
           </p>
           <p className="text-base font-medium text-foreground">{etab.phone || "—"}</p>
         </div>
@@ -254,7 +306,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
             <Globe className="w-3.5 h-3.5" />
-            Site web
+            {t("establishment.website")}
           </p>
           {etab.website ? (
             <a 
@@ -263,7 +315,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
               rel="noopener noreferrer"
               className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
             >
-              Ouvrir
+              {t("establishment.websiteOpen")}
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           ) : (
@@ -273,7 +325,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
 
         {/* Google Maps */}
         <div className="space-y-1">
-          <p className="text-sm text-muted-foreground font-medium">Google Maps</p>
+          <p className="text-sm text-muted-foreground font-medium">{t("establishment.googleMaps")}</p>
           {etab.place_id ? (
             <a 
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(etab.name)}&query_place_id=${encodeURIComponent(etab.place_id)}`}
@@ -281,7 +333,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
               rel="noopener noreferrer"
               className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
             >
-              Voir la fiche
+              {t("establishment.viewListing")}
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           ) : etab.address ? (
@@ -291,7 +343,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
               rel="noopener noreferrer"
               className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
             >
-              Voir la fiche
+              {t("establishment.viewListing")}
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           ) : (
@@ -306,7 +358,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
         <div className="flex items-center gap-2 max-w-[40%]">
           <Building2 className="w-4 h-4 text-primary flex-shrink-0" />
           <p className="text-xs text-muted-foreground font-mono truncate">
-            place_id: {etab.place_id}
+            {t("establishment.placeId")}: {etab.place_id}
           </p>
         </div>
 
@@ -316,7 +368,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
             variant="ghost"
             size="sm"
             className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto"
-            title="Importer vos avis"
+            title={t("establishment.importReviews")}
             data-testid="btn-import-avis"
           >
             <Download className="w-4 h-4" />
@@ -332,8 +384,10 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
             onClick={handleAnalyze}
             disabled={isAnalyzing}
             className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto disabled:opacity-50"
-            title="Visuel des avis"
+            title={t("establishment.visualReviews")}
             data-testid="btn-analyser-etablissement"
+            data-place-id={etab.place_id}
+            data-name={etab.name}
           >
             <BarChart3 className={`w-4 h-4 ${isAnalyzing ? 'animate-spin' : ''}`} />
           </Button>
@@ -345,7 +399,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
             onClick={handleDeleteEstablishment}
             disabled={isDeleting}
             className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto disabled:opacity-50"
-            title="Supprimer l'établissement et tous ses avis"
+            title={t("establishment.deleteEstablishmentAndReviews")}
           >
             <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
           </Button>

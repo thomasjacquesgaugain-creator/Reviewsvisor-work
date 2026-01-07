@@ -15,6 +15,7 @@ import { TrendModal } from "@/components/TrendModal";
 import { RatingDistributionModal } from "@/components/RatingDistributionModal";
 import { extractOriginalText } from "@/utils/extractOriginalText";
 import { formatReviewDate } from "@/utils/formatReviewDate";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -90,10 +91,11 @@ export function ReviewsVisualPanel({
   const [showTrendModal, setShowTrendModal] = useState(false);
   const [showRatingDistributionModal, setShowRatingDistributionModal] = useState(false);
   const currentEstablishment = useCurrentEstablishment();
+  const { t } = useTranslation();
   
   // Use props first, fallback to current establishment
   const effectiveId = establishmentId || currentEstablishment?.id || currentEstablishment?.place_id;
-  const displayName = establishmentName ?? currentEstablishment?.name ?? "—";
+  const displayName = establishmentName ?? currentEstablishment?.name ?? null;
   useEffect(() => {
     const loadData = async () => {
       if (!effectiveId) {
@@ -180,7 +182,7 @@ export function ReviewsVisualPanel({
       await deleteAllReviews(effectiveId);
       
       // Toast rouge en bas à droite (même système que import CSV/JSON)
-      sonnerToast.error("Tous les avis de l'établissement ont été supprimés.", {
+      sonnerToast.error(t("dashboard.allReviewsDeleted"), {
         duration: 5000,
       });
       
@@ -191,7 +193,7 @@ export function ReviewsVisualPanel({
       console.error('Error deleting reviews:', error);
       
       // Toast d'erreur rouge en bas à droite
-      sonnerToast.error("Une erreur est survenue lors de la suppression des avis.", {
+      sonnerToast.error(t("dashboard.errorDeletingReviews"), {
         duration: 5000,
       });
       setShowDeleteDialog(false);
@@ -225,12 +227,12 @@ export function ReviewsVisualPanel({
     return null;
   })();
 
-  if (!effectiveId && displayName === "—") {
+  if (!effectiveId && !displayName) {
     return <Card className="relative z-20 max-w-4xl mx-auto" data-testid="reviews-visual-panel">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
-            Aperçu visuel des avis — {fallbackName || "—"}
+            {t("dashboard.reviewsOverview")}
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={onClose} data-testid="btn-close-reviews-visual">
             <X className="w-4 h-4" />
@@ -238,25 +240,25 @@ export function ReviewsVisualPanel({
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-center py-8">
-            {fallbackName || "Aucun établissement sélectionné"}
+            {fallbackName || t("dashboard.noEstablishment")}
           </p>
         </CardContent>
       </Card>;
   }
   const starsData = summary ? [{
-    stars: "5 étoiles",
+    stars: t("dashboard.stars5"),
     count: summary.byStars[5]
   }, {
-    stars: "4 étoiles",
+    stars: t("dashboard.stars4"),
     count: summary.byStars[4]
   }, {
-    stars: "3 étoiles",
+    stars: t("dashboard.stars3"),
     count: summary.byStars[3]
   }, {
-    stars: "2 étoiles",
+    stars: t("dashboard.stars2"),
     count: summary.byStars[2]
   }, {
-    stars: "1 étoile",
+    stars: t("dashboard.stars1"),
     count: summary.byStars[1]
   }] : [];
   return <Card className="relative z-20 max-w-4xl mx-auto" data-testid="reviews-visual-panel">
@@ -266,12 +268,12 @@ export function ReviewsVisualPanel({
             <div className="flex items-center gap-2">
               <Building2 className="h-5 w-5" aria-hidden="true" />
               <h3 className="text-xl font-semibold" data-testid="establishment-title">
-                {displayName}
+                {displayName ? `${t("dashboard.reviewsOverview")} - ${displayName}` : t("dashboard.reviewsOverview")}
               </h3>
             </div>
             <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
               <MessageSquareText className="h-4 w-4" aria-hidden="true" />
-              <span data-testid="establishment-subtitle">Avis de l'établissement</span>
+              <span data-testid="establishment-subtitle">{t("establishment.title")}</span>
             </div>
           </div>
 
@@ -292,9 +294,9 @@ export function ReviewsVisualPanel({
             <Skeleton className="h-64" />
           </div> : !summary || summary.total === 0 ? <div className="text-center py-8">
             <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">{displayName}, 0 avis</h3>
+            <h3 className="text-lg font-medium mb-2">{displayName ? `${displayName}, ${t("dashboard.reviewsCount", { count: 0 })}` : t("dashboard.reviewsCount", { count: 0 })}</h3>
             <p className="text-muted-foreground">
-              Aucun avis enregistré pour cet établissement. Importez des avis pour voir les statistiques.
+              {t("dashboard.noReviewsForEstablishment")}
             </p>
           </div> : <>
             {/* Header Metrics */}
@@ -303,7 +305,7 @@ export function ReviewsVisualPanel({
                 <CardContent className="flex items-center p-4" data-testid="metric-avg-rating">
                   <Star className="w-8 h-8 text-yellow-500 mr-3" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Note moyenne</p>
+                    <p className="text-sm text-muted-foreground">{t("dashboard.averageRating")}</p>
                     <p className="text-2xl font-bold">{summary.avgRating.toFixed(1)}/5</p>
                   </div>
                 </CardContent>
@@ -314,7 +316,7 @@ export function ReviewsVisualPanel({
                   <div className="flex items-center">
                     <BarChart3 className="w-8 h-8 text-blue-600 mr-3" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Total d'avis</p>
+                      <p className="text-sm text-muted-foreground">{t("dashboard.totalReviews")}</p>
                       <p className="text-2xl font-bold">{summary.total}</p>
                     </div>
                   </div>
@@ -326,7 +328,7 @@ export function ReviewsVisualPanel({
                       data-testid="btn-delete-all-reviews"
                       onClick={() => setShowDeleteDialog(true)}
                       disabled={isDeleting}
-                      title="Supprimer tous les avis"
+                      title={t("dashboard.deleteAllReviews")}
                     >
                       <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
                     </Button>
@@ -352,7 +354,7 @@ export function ReviewsVisualPanel({
                     <CardContent className="flex items-center px-4 py-2">
                       <List className="w-8 h-8 text-primary mr-3" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Tous les avis</p>
+                        <p className="text-sm text-muted-foreground">{t("dashboard.allReviews")}</p>
                         <p className="text-2xl font-bold">{totalCount}</p>
                       </div>
                     </CardContent>
@@ -366,7 +368,7 @@ export function ReviewsVisualPanel({
                     <CardContent className="flex items-center px-4 py-2">
                       <ThumbsUp className="w-8 h-8 text-green-500 mr-3" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Avis positifs</p>
+                        <p className="text-sm text-muted-foreground">{t("dashboard.positiveReviews")}</p>
                         <p className="text-2xl font-bold">{positiveCount}</p>
                       </div>
                     </CardContent>
@@ -380,7 +382,7 @@ export function ReviewsVisualPanel({
                     <CardContent className="flex items-center px-4 py-2">
                       <ThumbsDown className="w-8 h-8 text-red-500 mr-3" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Avis négatifs</p>
+                        <p className="text-sm text-muted-foreground">{t("dashboard.negativeReviews")}</p>
                         <p className="text-2xl font-bold">{negativeCount}</p>
                       </div>
                     </CardContent>
@@ -394,7 +396,7 @@ export function ReviewsVisualPanel({
                     <CardContent className="flex items-center px-4 py-2">
                       <ShieldAlert className="w-8 h-8 text-orange-500 mr-3" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Suspicion faux avis</p>
+                        <p className="text-sm text-muted-foreground">{t("dashboard.suspectReviewsTitle")}</p>
                         <p className="text-2xl font-bold">{suspectCount}</p>
                       </div>
                     </CardContent>
@@ -408,14 +410,14 @@ export function ReviewsVisualPanel({
 
             {/* Monthly Trend */}
             {summary.byMonth.length > 0 && <div>
-                <h3 className="text-lg font-medium mb-4">Tendance mensuelle (12 derniers mois)</h3>
+                <h3 className="text-lg font-medium mb-4">{t("dashboard.monthlyTrend")}</h3>
                 <div className="h-64" data-testid="chart-monthly-trend">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={summary.byMonth}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
-                      <Tooltip labelFormatter={value => `Mois: ${value}`} formatter={(value, name) => [value, name === 'count' ? 'Nombre d\'avis' : 'Note moyenne']} />
+                      <Tooltip labelFormatter={value => `${t("dashboard.month")}: ${value}`} formatter={(value, name) => [value, name === 'count' ? t("dashboard.totalReviews") : t("dashboard.averageRating")]} />
                       <Area type="monotone" dataKey="count" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.3} />
                       {summary.byMonth.some(m => m.avg) && <RechartsLine type="monotone" dataKey="avg" stroke="hsl(var(--destructive))" strokeWidth={2} />}
                     </AreaChart>
@@ -427,10 +429,10 @@ export function ReviewsVisualPanel({
             <div>
               <div className="flex items-center justify-between mb-4">
                 <Badge variant="secondary" className="text-sm">
-                  Filtre : {activeFilter === 'all' ? 'tous les avis' :
-                           activeFilter === 'positive' ? 'avis positifs (≥ 4 étoiles)' : 
-                           activeFilter === 'negative' ? 'avis négatifs (≤ 2 étoiles)' : 
-                           'avis suspects'}
+                  {t("dashboard.filter")} : {activeFilter === 'all' ? t("dashboard.allReviews") :
+                           activeFilter === 'positive' ? t("dashboard.positiveReviewsFilter") : 
+                           activeFilter === 'negative' ? t("dashboard.negativeReviewsFilter") : 
+                           t("dashboard.suspectReviews")}
                 </Badge>
                 <div className="flex items-center gap-2">
                   <Button
@@ -460,7 +462,7 @@ export function ReviewsVisualPanel({
                         display: 'block',
                       }}
                     />
-                    <span style={{ color: 'hsl(var(--primary))' }}>Répartition</span>
+                    <span style={{ color: 'hsl(var(--primary))' }}>{t("dashboard.platformDistribution")}</span>
                   </Button>
                   <Button
                     variant="ghost"
@@ -489,7 +491,7 @@ export function ReviewsVisualPanel({
                         display: 'block',
                       }}
                     />
-                    <span style={{ color: 'hsl(var(--primary))' }}>Tendance</span>
+                    <span style={{ color: 'hsl(var(--primary))' }}>{t("dashboard.ratingEvolution")}</span>
                   </Button>
                 </div>
               </div>
@@ -507,7 +509,7 @@ export function ReviewsVisualPanel({
                   }
                 })()}
                 isLoading={isLoadingReviews}
-                emptyLabel={activeFilter === 'all' ? "Aucun avis enregistré" : "Aucun avis correspondant au filtre"}
+                emptyLabel={activeFilter === 'all' ? t("dashboard.noReviewsYet") : t("dashboard.noReviewsYet")}
                 data-testid="establishment-reviews-table"
               />
             </div>
@@ -517,18 +519,18 @@ export function ReviewsVisualPanel({
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogTitle>{t("modals.confirmDelete")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Voulez-vous vraiment supprimer tous les avis de cet établissement ? Cette action est irréversible.
+              {t("modals.confirmDeleteDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAllReviews}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Supprimer
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -538,13 +540,13 @@ export function ReviewsVisualPanel({
           open={showTrendModal}
           onOpenChange={setShowTrendModal}
           establishmentId={effectiveId || ""}
-          establishmentName={displayName}
+          establishmentName={displayName || undefined}
         />
         <RatingDistributionModal
           open={showRatingDistributionModal}
           onOpenChange={setShowRatingDistributionModal}
           establishmentId={effectiveId || ""}
-          establishmentName={displayName}
+          establishmentName={displayName || undefined}
         />
     </Card>;
 }

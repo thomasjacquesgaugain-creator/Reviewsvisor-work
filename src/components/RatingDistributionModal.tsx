@@ -9,6 +9,7 @@ import {
 import { listAll } from "@/services/reviewsService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface RatingDistributionModalProps {
   open: boolean;
@@ -37,6 +38,7 @@ export function RatingDistributionModal({
 }: RatingDistributionModalProps) {
   const [distribution, setDistribution] = useState<RatingDistribution | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!open || !establishmentId) {
@@ -115,11 +117,11 @@ export function RatingDistributionModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Répartition des notes</DialogTitle>
+          <DialogTitle>{t("dashboard.platformDistribution")}</DialogTitle>
           <DialogDescription>
             {establishmentName
-              ? `Distribution des notes pour ${establishmentName}`
-              : "Distribution des notes sur 5 étoiles"}
+              ? t("dashboard.ratingDistributionFor", { name: establishmentName })
+              : t("dashboard.ratingDistribution5Stars")}
           </DialogDescription>
         </DialogHeader>
 
@@ -134,7 +136,7 @@ export function RatingDistributionModal({
               <div className="text-5xl font-bold text-primary mb-2">
                 {distribution.avgRating.toFixed(2)}
               </div>
-              <div className="text-sm text-muted-foreground mb-1">Note moyenne</div>
+              <div className="text-sm text-muted-foreground mb-1">{t("dashboard.averageRating")}</div>
               <div className="text-lg font-semibold text-muted-foreground">
                 {distribution.avgRating.toFixed(2)}/5
               </div>
@@ -173,7 +175,7 @@ export function RatingDistributionModal({
         ) : (
           <div className="h-64 flex flex-col items-center justify-center">
             <p className="text-sm text-muted-foreground text-center">
-              Aucune donnée disponible.
+              {t("dashboard.noReviewsYet")}
             </p>
           </div>
         )}

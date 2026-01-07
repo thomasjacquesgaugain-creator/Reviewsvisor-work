@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 type Suggestion = {
   place_id: string;
@@ -155,13 +156,13 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
         setSelectedPlace(data.result);
         onPicked?.(data.result);
       } else {
-        setError("Aucun détail trouvé pour cet établissement");
+        setError(t("errors.noDetailsFound"));
       }
     } catch (err) {
       clearTimeout(timeout);
       if (err instanceof Error && err.name !== 'AbortError') {
         console.error('Erreur détails:', err);
-        setError(err.name === 'AbortError' ? "Requête trop longue" : "Impossible de récupérer les détails");
+        setError(err.name === 'AbortError' ? t("errors.requestTooLong") : t("errors.cannotRetrieveDetails"));
       }
     } finally {
       setLoading(false);
@@ -205,7 +206,7 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
   return (
     <div ref={containerRef} className="w-full space-y-2">
       <label className="text-sm font-medium text-gray-700">
-        Établissement <span className="text-red-500">*</span>
+        {t("establishment.establishment")} <span className="text-red-500">*</span>
       </label>
       
       <div className="relative">
