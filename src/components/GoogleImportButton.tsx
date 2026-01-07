@@ -187,8 +187,8 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
 
     // Toast obligatoire avant tout appel API (preuve visible)
     toast({
-      title: "Sync démarrée…",
-      description: "Récupération des avis Google en cours.",
+      title: t("googleImport.syncStarted"),
+      description: t("googleImport.fetchingGoogleReviews"),
     });
 
     if (hasExistingConnection) {
@@ -215,11 +215,11 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
 
       if (configError || !configData?.clientId) {
         toast({
-          title: "Configuration OAuth incomplète",
-          description: "Ajoutez GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET dans Paramètres → Variables.",
+          title: t("googleImport.incompleteOAuthConfig"),
+          description: t("googleImport.addGoogleClientIdAndSecret"),
           variant: "destructive",
         });
-        throw new Error('Configuration OAuth incomplète');
+        throw new Error(t("googleImport.incompleteOAuthConfig"));
       }
 
       const clientId = configData.clientId;
@@ -462,8 +462,8 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
         setLocations(locs);
         setShowLocationSelector(true);
         toast({
-          title: "Sélectionnez un établissement",
-          description: "Plusieurs emplacements détectés : choisissez celui à synchroniser.",
+          title: t("googleImport.selectEstablishment"),
+          description: t("googleImport.multipleLocationsDetected"),
         });
       }
     } catch (error: any) {
@@ -550,13 +550,13 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
 
       if (!total || total === 0) {
         toast({
-          title: "⚠️ 0 avis trouvés (vérifier compte Google + établissement)",
+          title: `⚠️ ${t("googleImport.noReviewsFound")}`,
           description: `accountId=${accId} • locationId=${locationId} • place_id=${placeId || "(manquant)"}`,
         });
       } else {
         toast({
-          title: `✅ ${total} avis importés / mis à jour`,
-          description: `${inserted} nouveaux • ${updated} mis à jour • place_id=${placeId || "(manquant)"}`,
+          title: `✅ ${t("googleImport.reviewsImportedUpdated", { total })}`,
+          description: `${t("googleImport.newReviews", { inserted })} • ${t("googleImport.updatedReviews", { updated })} • place_id=${placeId || "(manquant)"}`,
         });
       }
 
@@ -616,15 +616,15 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
         {loading ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Importation en cours…
+            {t("googleImport.importingInProgress")}
           </>
         ) : hasExistingConnection ? (
           <>
             <RefreshCw className="w-4 h-4 mr-2" />
-            Synchroniser mes avis Google
+            {t("googleImport.syncMyGoogleReviews")}
           </>
         ) : (
-          "Importer mes avis Google"
+          t("googleImport.importMyGoogleReviews")
         )}
       </button>
 
@@ -638,7 +638,7 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
       }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Sélectionner un emplacement</DialogTitle>
+            <DialogTitle>{t("googleImport.selectLocation")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 mt-4">
             {locations.map((location) => (

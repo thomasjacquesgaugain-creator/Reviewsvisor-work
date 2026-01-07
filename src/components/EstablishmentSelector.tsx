@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { supabase } from "@/integrations/supabase/client";
 import { EVT_SAVED, EVT_ESTABLISHMENT_UPDATED } from "@/types/etablissement";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 export interface EstablishmentOption {
   id: string;
   place_id: string;
@@ -20,6 +21,7 @@ export function EstablishmentSelector({
   selectedEstablishment,
   onSelect
 }: EstablishmentSelectorProps) {
+  const { t } = useTranslation();
   const [establishments, setEstablishments] = useState<EstablishmentOption[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -115,13 +117,13 @@ export function EstablishmentSelector({
   if (loading) {
     return <div className="flex items-center gap-2 text-muted-foreground">
         <Building2 className="w-5 h-5" />
-        <span>Chargement...</span>
+        <span>{t("common.loading")}</span>
       </div>;
   }
   if (establishments.length === 0) {
     return <Button variant="outline" size="sm" onClick={() => navigate("/etablissement")} className="flex items-center gap-2">
         <Plus className="w-4 h-4" />
-        Créer un établissement
+        {t("establishment.createEstablishment")}
       </Button>;
   }
   return <div className="relative">
@@ -134,7 +136,7 @@ export function EstablishmentSelector({
               </div>
               <div className="text-left min-w-0">
                 <div className="font-medium text-foreground truncate max-w-[140px]">
-                  {selectedEstablishment?.name || "Sélectionner"}
+                  {selectedEstablishment?.name || t("establishment.select")}
                 </div>
                 {selectedEstablishment?.formatted_address && <div className="text-xs text-muted-foreground truncate max-w-[140px]">
                     {selectedEstablishment.formatted_address}
@@ -147,7 +149,7 @@ export function EstablishmentSelector({
         <PopoverContent className="w-[280px] max-w-[280px] p-2 overflow-hidden" align="end" sideOffset={4} avoidCollisions={true} collisionPadding={8}>
           <div className="space-y-1">
             <div className="text-sm font-medium text-muted-foreground px-3 py-2">
-              Mes Établissements
+              {t("establishment.myEstablishments")}
             </div>
             {establishments.map(est => (
               <button
@@ -165,7 +167,7 @@ export function EstablishmentSelector({
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-gray-900 truncate">{est.name}</span>
                     {est.is_active && (
-                      <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded flex-shrink-0">Actif</span>
+                      <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded flex-shrink-0">{t("establishment.active")}</span>
                     )}
                   </div>
                   {est.formatted_address && (
@@ -186,7 +188,7 @@ export function EstablishmentSelector({
                     <Plus className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <div className="font-medium text-muted-foreground truncate">
-                    Ajouter un établissement
+                    {t("establishment.addEstablishment")}
                   </div>
                 </div>
               </Button>

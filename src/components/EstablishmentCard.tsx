@@ -153,7 +153,7 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
                       size="sm"
                       className="h-8 w-8 p-0 rounded-xl"
                       onClick={() => window.location.href = `tel:${normalizePhoneNumber(displayPhone)}`}
-                      aria-label="Appeler"
+                      aria-label={t("establishment.call")}
                     >
                       <Phone className="w-4 h-4" />
                     </Button>
@@ -171,7 +171,7 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
                       size="sm"
                       className="h-8 w-8 p-0 rounded-xl"
                       onClick={() => window.open(displayMapsUrl, '_blank', 'noopener,noreferrer')}
-                      aria-label="Ouvrir dans Google Maps"
+                      aria-label={t("establishment.openInGoogleMaps")}
                     >
                       <MapPin className="w-4 h-4" />
                     </Button>
@@ -249,7 +249,7 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
           )}
 
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Google Maps :</span>
+            <span className="text-sm font-medium">{t("establishment.googleMapsLabel")}</span>
             <span className="text-sm">
               {displayMapsUrl ? (
                 <a 
@@ -258,7 +258,7 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
                   rel="noopener noreferrer"
                   className="text-primary hover:underline flex items-center gap-1"
                 >
-                  Ouvrir <ExternalLink className="w-3 h-3" />
+                  {t("common.open")} <ExternalLink className="w-3 h-3" />
                 </a>
               ) : (loadingDetails ? t("common.loading") : "—")}
             </span>

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Search, Loader2 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 type Suggestion = {
   description: string;
@@ -19,6 +20,7 @@ function useDebounce<T>(v: T, d = 250) {
 export default function AutocompleteEtablissementInline({
   onPicked,
 }: { onPicked?: (details: PlaceDetails) => void }) {
+  const { t } = useTranslation();
   const [q, setQ] = useState("");
   const [list, setList] = useState<Suggestion[]>([]);
   const [hi, setHi] = useState(-1);
@@ -165,7 +167,7 @@ export default function AutocompleteEtablissementInline({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="Nom de votre établissement…"
+          placeholder={t("establishment.establishmentNamePlaceholder")}
           className="w-full rounded-2xl border border-border bg-background px-11 py-3 text-foreground placeholder:text-muted-foreground shadow-sm outline-none focus:ring-2 focus:ring-primary focus:border-primary"
           autoComplete="off"
         />

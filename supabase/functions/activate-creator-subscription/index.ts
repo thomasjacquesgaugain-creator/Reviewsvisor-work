@@ -88,7 +88,7 @@ serve(async (req) => {
     const periodEndISO = periodEnd.toISOString();
 
     // Build upsert data based on product type
-    let upsertData: Record<string, any> = {
+    const upsertData: Record<string, any> = {
       user_id: user.id,
       source: 'creator_bypass',
       updated_at: new Date().toISOString(),

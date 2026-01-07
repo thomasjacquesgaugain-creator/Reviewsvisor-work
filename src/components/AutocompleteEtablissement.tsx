@@ -95,7 +95,7 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
         clearTimeout(timeout);
         if (err instanceof Error && err.name !== 'AbortError') {
           console.error('Erreur autocomplétion:', err);
-          setError(err.name === 'AbortError' ? "Requête trop longue" : "Erreur lors de la recherche");
+          setError(err.name === 'AbortError' ? t("errors.requestTooLong") : t("errors.searchErrorOccurredGeneric"));
           setSuggestions([]);
         }
       } finally {
@@ -214,7 +214,7 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Nom de votre établissement..."
+          placeholder={t("establishment.establishmentNamePlaceholder")}
           className="w-full"
           autoComplete="off"
         />
@@ -270,7 +270,7 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:underline"
               >
-                Site web
+                {t("establishment.websiteLabel")}
               </a>
             )}
             {selectedPlace.international_phone_number && (
@@ -282,7 +282,7 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
           
           {typeof selectedPlace.rating === 'number' && (
             <div className="mt-2 text-sm text-gray-600">
-              ⭐ {selectedPlace.rating}/5 ({selectedPlace.user_ratings_total} avis)
+              ⭐ {selectedPlace.rating}/5 ({t("establishment.reviewsCount", { count: selectedPlace.user_ratings_total })})
             </div>
           )}
         </div>

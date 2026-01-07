@@ -184,14 +184,14 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
       window.dispatchEvent(new CustomEvent(EVT_LIST_UPDATED));
 
       // 6. Toast de confirmation
-      sonnerToast.error("L'établissement et tous ses avis ont été supprimés.", {
+      sonnerToast.error(t("establishment.establishmentAndReviewsDeleted"), {
         duration: 5000,
       });
     } catch (error) {
       console.error('Erreur lors de la suppression de l\'établissement:', error);
       
       // Toast d'erreur rouge en bas à droite
-      sonnerToast.error("Impossible de supprimer l'établissement. Veuillez réessayer.", {
+      sonnerToast.error(t("establishment.cannotDeleteEstablishment"), {
         duration: 5000,
       });
     } finally {
@@ -212,16 +212,16 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
       });
 
       if (result.ok) {
-        sonnerToast.success(`${result.counts?.collected || 0} avis analysés avec succès`, {
+        sonnerToast.success(t("establishment.reviewsAnalyzedSuccessCount", { count: result.counts?.collected || 0 }), {
           duration: 5000,
         });
       } else {
-        sonnerToast.error("Erreur lors de l'analyse", {
+        sonnerToast.error(t("establishment.analysisErrorOccurred"), {
           duration: 5000,
         });
       }
     } catch (error) {
-      sonnerToast.error("Une erreur inattendue s'est produite", {
+      sonnerToast.error(t("establishment.unexpectedErrorOccurred"), {
         duration: 5000,
       });
     } finally {

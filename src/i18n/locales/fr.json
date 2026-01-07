@@ -69,10 +69,16 @@
     "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
     "firstName": "Prénom",
     "firstNamePlaceholder": "Votre prénom",
+    "firstNameLabel": "Prénom",
     "lastName": "Nom",
     "lastNamePlaceholder": "Votre nom",
+    "lastNameLabel": "Nom",
     "companyNamePlaceholder": "Nom de votre entreprise",
+    "companyLabel": "Entreprise",
     "addressPlaceholder": "Adresse complète du restaurant",
+    "addressLabel": "Adresse de l'établissement",
+    "passwordLabel": "Mot de passe",
+    "confirmPasswordLabel": "Confirmer le mot de passe",
     "forgotPassword": "Mot de passe oublié ?",
     "resetPassword": "Réinitialiser le mot de passe",
     "noAccount": "Pas encore de compte ?",
@@ -393,6 +399,7 @@
     "effort": "Effort",
     "trainTeamOnIdentifiedImprovements": "Former l'équipe sur les points d'amélioration identifiés",
     "enhanceStrengths": "Valoriser les points forts : {{strength}}",
+    "enhanceStrengthsGeneric": "Valoriser les points forts identifiés",
     "identifyAndEnhanceExistingStrengths": "Identifier et valoriser les points forts existants",
     "fixMainFrictionPoint": "Corriger le principal point de friction : {{issue}}",
     "fixMainFrictionPointIdentified": "Corriger le principal point de friction identifié",
@@ -433,6 +440,7 @@
     "positivePercentage": "% positifs",
     "negativePercentage": "% négatifs",
     "sentiment": "Sentiment",
+    "sentimentNeutral": "Neutre",
     "trends": "Tendances",
     "praisesTop3": "Éloges (Top 3)",
     "irritantsTop3": "Irritants (Top 3)",
@@ -455,8 +463,26 @@
     "mostMentionedStrengths": "Les points forts les plus mentionnés par vos clients",
     "importReviewsToSeeStrengths": "Importez des avis pour voir les points forts identifiés",
     "strength": "Force",
+    "strengthBadge": "Point fort {{number}}",
+    "problemBadge": "Problème {{number}}",
     "noStrengthsIdentified": "Aucun point fort identifié",
-    "paretoStrengthsDescription": "Identification des 20% de points forts qui génèrent 80% de la satisfaction"
+    "paretoStrengthsDescription": "Identification des 20% de points forts qui génèrent 80% de la satisfaction",
+    "actionableRecommendations": "Recommandations actionnables",
+    "noThemesIdentified": "Aucune thématique identifiée",
+    "analysisOfReviews": "Analyse de {{count}} avis clients",
+    "speed": "Rapidité",
+    "cuisine": "Cuisine",
+    "service": "Service",
+    "ambiance": "Ambiance",
+    "problem": "Problème {{number}}",
+    "unknownDate": "Date inconnue",
+    "reviewsBreakdown": "Décryptage des avis"
+  },
+  "platforms": {
+    "google": "Google",
+    "tripadvisor": "TripAdvisor",
+    "facebook": "Facebook",
+    "yelp": "Yelp"
   },
   "charts": {
     "problems": {
@@ -752,7 +778,19 @@
     "typeCafe": "Café",
     "typeBar": "Bar",
     "typeLodging": "Hébergement",
-    "typeTouristAttraction": "Attraction touristique"
+    "typeTouristAttraction": "Attraction touristique",
+    "establishmentNamePlaceholder": "Nom de votre établissement...",
+    "websiteLabel": "Site web",
+    "googleMapsLabel": "Google Maps :",
+    "establishmentAndReviewsDeleted": "L'établissement et tous ses avis ont été supprimés.",
+    "cannotDeleteEstablishment": "Impossible de supprimer l'établissement. Veuillez réessayer.",
+    "reviewsAnalyzedSuccessCount": "{{count}} avis analysés avec succès",
+    "analysisErrorOccurred": "Erreur lors de l'analyse",
+    "unexpectedErrorOccurred": "Une erreur inattendue s'est produite",
+    "select": "Sélectionner",
+    "createEstablishment": "Créer un établissement",
+    "myEstablishments": "Mes Établissements",
+    "addEstablishment": "Ajouter un établissement"
   },
     "errors": {
     "title": "Erreur",
@@ -785,7 +823,8 @@
     "cannotRetrieveDetails": "Impossible de récupérer les détails",
     "noDetailsFound": "Aucun détail trouvé pour cet établissement",
     "missingPlaceIdForAnalysis": "Place ID manquant pour l'analyse",
-    "unknownError": "Erreur inconnue"
+    "unknownError": "Erreur inconnue",
+    "searchErrorOccurredGeneric": "Erreur lors de la recherche"
   },
   "toasts": {
     "saved": "Enregistré avec succès",
@@ -1011,7 +1050,17 @@
     "syncRouteError": "La route de synchro a répondu en erreur.",
     "errorImportingGoogleReviews": "Erreur lors de l'import des avis Google.",
     "addGoogleClientIdAndSecret": "Ajoutez GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET dans Paramètres → Variables.",
-    "incompleteOAuthConfig": "Configuration OAuth incomplète"
+    "incompleteOAuthConfig": "Configuration OAuth incomplète",
+    "syncStarted": "Sync démarrée…",
+    "fetchingGoogleReviews": "Récupération des avis Google en cours.",
+    "selectLocation": "Sélectionner un emplacement",
+    "importingInProgress": "Importation en cours…",
+    "syncMyGoogleReviews": "Synchroniser mes avis Google",
+    "importMyGoogleReviews": "Importer mes avis Google",
+    "reviewsImportedUpdated": "{{total}} avis importés / mis à jour",
+    "newReviews": "{{inserted}} nouveaux",
+    "updatedReviews": "{{updated}} mis à jour",
+    "noReviewsFound": "0 avis trouvés (vérifier compte Google + établissement)"
   },
   "aiAssistance": {
     "emptyQuestion": "Question vide",
@@ -1025,6 +1074,45 @@
     "askQuestionsAboutReviewsvisor": "Posez ici vos questions concernant uniquement Reviewsvisor.",
     "placeholderExample": "Ex : Comment importer mes avis ?",
     "ask": "Demander"
+  },
+  "about": {
+    "ourVision": "Notre Vision",
+    "about": "À propos de",
+    "isIntelligentPlatform": "est une plateforme intelligente",
+    "forYourEstablishment": "pour votre établissement qui transforme vos retours en conception",
+    "vision": "Vision",
+    "mission": "Mission",
+    "technology": "Technologie",
+    "technologyTransforms": "La technologie transforme la façon dont vous comprenez vos clients.",
+    "reviewsBecomeGrowth": "vos avis deviennent des leviers de croissance",
+    "restaurantsHotels": "Restaurants, hôtels, commerces",
+    "makeBestDecisions": "prenez les meilleures décisions basées sur les retours réels",
+    "ourMission": "Notre Mission",
+    "missionText1": "Chez",
+    "missionText2": "nous croyons que chaque avis contient",
+    "reviewContainsOpportunity": "une opportunité d'évolution",
+    "missionText3": "et que des données bien analysées deviennent",
+    "growthEngine": "un véritable moteur de croissance",
+    "whyWeCreated": "Pourquoi nous avons créé",
+    "problemDescription": "Les établissements reçoivent des centaines d'avis, mais la plupart ne savent pas comment les transformer en actions concrètes. Les données sont dispersées, les insights sont cachés, et les opportunités d'amélioration passent inaperçues.",
+    "solutionIntro": "C'est pourquoi",
+    "solutionIntro2": "existe. Nous avons conçu une solution qui",
+    "principle1": "Centralise tous vos avis en un seul endroit",
+    "principle2": "Analyse chaque commentaire avec une IA avancée",
+    "principle3": "Identifie les priorités d'action claires et mesurables",
+    "principle4": "Vous guide vers l'excellence avec des recommandations personnalisées",
+    "ourTechnology": "Notre Technologie",
+    "technologyDescription1": "utilise l'intelligence artificielle pour analyser vos avis et identifier",
+    "priorityImprovements": "les axes d'amélioration prioritaires",
+    "moreThanDashboard": "Plus qu'un simple tableau de bord,",
+    "isContinuousImprovement": "est un",
+    "continuousImprovementAssistant": "assistant d'amélioration continue",
+    "platformForYou": "Une Plateforme Pour Vous",
+    "platformDescription": "Que vous gériez un restaurant, un hôtel ou un commerce,",
+    "adaptsToDaily": "s'adapte à votre quotidien",
+    "interfaceDesigned": "Notre interface est conçue pour être intuitive, rapide et efficace.",
+    "intuitiveInterface": "Interface intuitive",
+    "simpleFastEffective": "Simple, rapide, efficace"
   },
   "restaurant": {
     "analyzeYourRestaurant": "Analysez votre restaurant",
@@ -1041,5 +1129,11 @@
     "open": "Ouvert",
     "closed": "Fermé",
     "noEstablishmentFound": "Aucun établissement trouvé pour \"{{query}}\""
+  },
+  "platforms": {
+    "google": "Google",
+    "tripadvisor": "TripAdvisor",
+    "facebook": "Facebook",
+    "yelp": "Yelp"
   }
 }

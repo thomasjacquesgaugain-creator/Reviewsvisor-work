@@ -19,10 +19,39 @@ import { validateReponse } from "@/lib/reponses";
 import { generatePdfReport } from "@/utils/generatePdfReport";
 import { extractOriginalText } from "@/utils/extractOriginalText";
 import { useTranslation } from "react-i18next";
+import { format } from "date-fns";
+import { fr, enUS, it, es, ptBR } from "date-fns/locale";
 
 
 const Dashboard = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  
+  // Fonction pour traduire les thèmes dynamiques
+  const translateTheme = (theme: string): string => {
+    const themeLower = theme.toLowerCase();
+    const translations: Record<string, string> = {
+      "service / attente": t("charts.problems.serviceWait"),
+      "qualité des plats": t("charts.problems.foodQuality"),
+      "prix": t("charts.problems.price"),
+      "qualité / goût": t("charts.strengths.tasteQuality"),
+      "ambiance agréable": t("charts.strengths.niceAmbiance"),
+      "rapidité": t("dashboard.speed"),
+      "cuisine": t("dashboard.cuisine"),
+      "service": t("dashboard.service"),
+      "ambiance": t("dashboard.ambiance"),
+      "rapport qualité/prix": t("charts.strengths.valueForMoney"),
+    };
+    
+    // Chercher une correspondance exacte ou partielle
+    for (const [key, translation] of Object.entries(translations)) {
+      if (themeLower.includes(key.toLowerCase()) || key.toLowerCase().includes(themeLower)) {
+        return translation;
+      }
+    }
+    
+    // Si aucune traduction trouvée, retourner le thème original
+    return theme;
+  };
   const [searchParams] = useSearchParams();
   const etablissementId = searchParams.get('etablissementId');
   const {
@@ -388,17 +417,13 @@ const Dashboard = () => {
 
   // Formatage de la date et de l'heure
   const formatDateTime = (date: Date) => {
+    const locale = i18n.language === 'fr' ? fr : 
+                  i18n.language === 'it' ? it :
+                  i18n.language === 'es' ? es :
+                  i18n.language === 'pt' ? ptBR : enUS;
     return {
-      date: date.toLocaleDateString("fr-FR", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-      }),
-      time: date.toLocaleTimeString("fr-FR", {
-        hour: "2-digit",
-        minute: "2-digit"
-      })
+      date: format(date, "EEEE d MMMM yyyy", { locale }),
+      time: format(date, "HH:mm", { locale })
     };
   };
   const {
@@ -422,7 +447,7 @@ const Dashboard = () => {
     const count = issue.count || issue.mentions || 0;
     const percentage = totalAnalyzed > 0 ? count / totalAnalyzed * 100 : 0;
     return {
-      name: issue.theme || issue.issue || `Problème ${index + 1}`,
+      name: translateTheme(issue.theme || issue.issue || t("dashboard.problemBadge", { number: index + 1 })),
       count,
       percentage,
       cumulative: 0 // Will be calculated below
@@ -441,7 +466,7 @@ const Dashboard = () => {
     const count = strength.count || strength.mentions || 0;
     const percentage = totalAnalyzed > 0 ? count / totalAnalyzed * 100 : 0;
     return {
-      name: strength.theme || strength.strength || `Point fort ${index + 1}`,
+      name: translateTheme(strength.theme || strength.strength || t("dashboard.strengthBadge", { number: index + 1 })),
       count,
       percentage,
       cumulative: 0 // Will be calculated below
@@ -458,7 +483,11 @@ const Dashboard = () => {
   const formatReviewDate = (dateStr: string | null) => {
     if (!dateStr) return t("dashboard.unknownDate");
     const date = new Date(dateStr);
-    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const locale = i18n.language === 'fr' ? fr : 
+                  i18n.language === 'it' ? it :
+                  i18n.language === 'es' ? es :
+                  i18n.language === 'pt' ? ptBR : enUS;
+    return format(date, "dd/MM/yyyy", { locale });
   };
 
   // Calculer l'évolution de la note depuis l'enregistrement
@@ -490,7 +519,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-6 h-6 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard d'analyse</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{t("dashboard.analysisDashboard")}</h1>
             </div>
             {/* Bouton Télécharger le rapport */}
             {(selectedEtab || selectedEstablishment) && (
@@ -555,12 +584,12 @@ const Dashboard = () => {
                 {isDownloadingReport ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Génération...
+                    {t("dashboard.generating")}
                   </>
                 ) : (
                   <>
                     <Download className="w-4 h-4" />
-                    Télécharger le rapport
+                    {t("dashboard.downloadReport")}
                   </>
                 )}
               </Button>
@@ -568,7 +597,7 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center gap-2 text-gray-600">
             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-            <span>Analyse de {totalAnalyzed} avis clients</span>
+            <span>{t("dashboard.analysisOfReviews", { count: totalAnalyzed })}</span>
           </div>
         </div>
 
@@ -1125,7 +1154,7 @@ const Dashboard = () => {
                       <div className="flex items-center gap-2">
                         <AlertTriangle className={`w-4 h-4 ${isCritical ? 'text-red-500' : 'text-yellow-600'}`} />
                         <div>
-                          <div className="font-medium">{issue.theme || issue.issue || t("dashboard.unspecifiedProblem")}</div>
+                          <div className="font-medium">{translateTheme(issue.theme || issue.issue || t("dashboard.unspecifiedProblem"))}</div>
                           <div className="text-sm text-gray-500">
                             {percentage > 0 ? t("dashboard.percentageOfReviews", { percentage }) : t("dashboard.identifiedByAI")}
                           </div>
@@ -1177,7 +1206,7 @@ const Dashboard = () => {
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-green-500" />
                         <div>
-                          <div className="font-medium">{strength.theme || strength.strength || t("dashboard.unspecifiedStrength")}</div>
+                          <div className="font-medium">{translateTheme(strength.theme || strength.strength || t("dashboard.unspecifiedStrength"))}</div>
                           <div className="text-sm text-gray-500">
                             {percentage > 0 ? t("dashboard.percentageOfReviews", { percentage }) : t("dashboard.identifiedByAI")}
                           </div>
@@ -1630,15 +1659,15 @@ const Dashboard = () => {
                 <div className="flex items-center justify-center gap-6 mt-4 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(0, 84%, 60%)' }}></div>
-                    <span className="text-muted-foreground">Service / attente</span>
+                    <span className="text-muted-foreground">{t("charts.problems.serviceWait")}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(25, 95%, 53%)' }}></div>
-                    <span className="text-muted-foreground">Qualité des plats</span>
+                    <span className="text-muted-foreground">{t("charts.problems.foodQuality")}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(45, 93%, 47%)' }}></div>
-                    <span className="text-muted-foreground">Prix</span>
+                    <span className="text-muted-foreground">{t("charts.problems.price")}</span>
                   </div>
                 </div>
               </div>
@@ -1651,13 +1680,13 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Lightbulb className="w-5 h-5 text-blue-500" />
-                <CardTitle className="text-lg">Recommandations actionnables</CardTitle>
+                <CardTitle className="text-lg">{t("dashboard.actionableRecommendations")}</CardTitle>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setShowRecommandations(!showRecommandations)} className="h-6 w-6 p-0 hover:bg-blue-50">
                 {showRecommandations ? <ChevronUp className="w-3 h-3 text-blue-500" /> : <ChevronDown className="w-3 h-3 text-blue-500" />}
               </Button>
             </div>
-            <p className="text-sm text-gray-500">Actions concrètes à mettre en place</p>
+            <p className="text-sm text-gray-500">{t("dashboard.concreteActions")}</p>
           </CardHeader>
           {showRecommandations && <CardContent>
             <div className="space-y-3">
@@ -1705,7 +1734,7 @@ const Dashboard = () => {
                     </div>
                     <p className="text-sm text-gray-700">
                       {topIssues.length > 0 
-                        ? t("dashboard.fixMainFrictionPoint", { issue: topIssues[0]?.theme || topIssues[0]?.issue || t("dashboard.notIdentified") })
+                        ? t("dashboard.fixMainFrictionPoint", { issue: translateTheme(topIssues[0]?.theme || topIssues[0]?.issue || t("dashboard.notIdentified")) })
                         : t("dashboard.analyzeReviewsToIdentifyFrictionPoints")}
                     </p>
                   </div>
@@ -1723,7 +1752,7 @@ const Dashboard = () => {
                       <li className="text-sm text-gray-700 flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                         {topStrengths.length > 0 
-                          ? t("dashboard.enhanceStrengths", { strength: topStrengths[0]?.theme || topStrengths[0]?.strength || t("dashboard.notIdentified") })
+                          ? t("dashboard.enhanceStrengths", { strength: translateTheme(topStrengths[0]?.theme || topStrengths[0]?.strength || t("dashboard.notIdentified")) })
                           : t("dashboard.identifyAndEnhanceExistingStrengths")}
                       </li>
                     </ul>
@@ -1779,20 +1808,20 @@ const Dashboard = () => {
                           <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">{t("dashboard.medium")}</Badge>
                         </td>
                         <td className="py-3 px-4 text-center">
-                          <Badge className="bg-green-100 text-green-700 border-green-200">Faible</Badge>
+                          <Badge className="bg-green-100 text-green-700 border-green-200">{t("dashboard.low")}</Badge>
                         </td>
                       </tr>
                       <tr className="border-b border-gray-100">
-                        <td className="py-3 px-4 text-gray-700">Répondre systématiquement aux avis clients</td>
+                        <td className="py-3 px-4 text-gray-700">{t("dashboard.respondSystematically")}</td>
                         <td className="py-3 px-4 text-center">
-                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Moyen</Badge>
+                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">{t("dashboard.medium")}</Badge>
                         </td>
                         <td className="py-3 px-4 text-center">
-                          <Badge className="bg-green-100 text-green-700 border-green-200">Faible</Badge>
+                          <Badge className="bg-green-100 text-green-700 border-green-200">{t("dashboard.low")}</Badge>
                         </td>
                       </tr>
                       <tr className="border-b border-gray-100">
-                        <td className="py-3 px-4 text-gray-700">{t("dashboard.enhanceStrengths", { strength: "" })}</td>
+                        <td className="py-3 px-4 text-gray-700">{t("dashboard.enhanceStrengthsGeneric")}</td>
                         <td className="py-3 px-4 text-center">
                           <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">{t("dashboard.medium")}</Badge>
                         </td>
@@ -1922,7 +1951,7 @@ const Dashboard = () => {
                         <div className="flex items-center gap-3">
                           {getThemeIcon(theme.theme)}
                           <div className="flex-1">
-                            <div className="font-medium">{theme.theme}</div>
+                            <div className="font-medium">{translateTheme(theme.theme)}</div>
                             <div className="text-sm text-gray-500">{t("dashboard.percentageOfReviews", { percentage: theme.percentage })}</div>
                           </div>
                           <div className="ml-auto">
@@ -1995,7 +2024,7 @@ const Dashboard = () => {
                       const percentage = totalAnalyzed > 0 ? (themeCount / totalAnalyzed) * 100 : 0;
                       return (
                         <div key={index} className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg">
-                          <span className="font-medium text-gray-700">{theme.theme}</span>
+                          <span className="font-medium text-gray-700">{translateTheme(theme.theme)}</span>
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-500">{themeCount} {themeCount === 1 ? t("dashboard.mention") : t("dashboard.mentions")}</span>
                             <Badge variant="outline" className="text-indigo-600 border-indigo-600">{percentage.toFixed(1)}%</Badge>

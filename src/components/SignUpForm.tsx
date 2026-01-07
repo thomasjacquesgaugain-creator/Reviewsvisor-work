@@ -11,25 +11,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslation } from "react-i18next";
 
-const signUpSchema = z.object({
-  email: z.string().min(1, { message: "Veuillez renseigner ce champ." }).email({ message: "Veuillez renseigner un email valide." }),
-  firstName: z.string().min(1, { message: "Veuillez renseigner ce champ." }),
-  lastName: z.string().min(1, { message: "Veuillez renseigner ce champ." }),
-  company: z.string().min(1, { message: "Veuillez renseigner ce champ." }),
-  address: z.string().min(1, { message: "Veuillez renseigner ce champ." }),
-  password: z.string()
-    .min(1, { message: "Veuillez renseigner ce champ." })
-    .min(8, { message: "Le mot de passe doit contenir au moins 8 caractères" })
-    .regex(/[A-Z]/, { message: "Le mot de passe doit contenir au moins une majuscule" })
-    .regex(/[a-z]/, { message: "Le mot de passe doit contenir au moins une minuscule" })
-    .regex(/[0-9]/, { message: "Le mot de passe doit contenir au moins un chiffre" }),
-  confirmPassword: z.string().min(1, { message: "Veuillez renseigner ce champ." }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Les mots de passe ne correspondent pas",
-  path: ["confirmPassword"],
-});
-
-type SignUpFormData = z.infer<typeof signUpSchema>;
+type SignUpFormData = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  company: string;
+  address: string;
+  password: string;
+  confirmPassword: string;
+};
 
 interface SignUpFormProps {
   prefilledEmail?: string;
@@ -204,7 +194,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="firstName">Prénom</Label>
+        <Label htmlFor="firstName">{t("auth.firstNameLabel")}</Label>
         <div className="relative">
           <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -225,7 +215,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="lastName">Nom</Label>
+        <Label htmlFor="lastName">{t("auth.lastNameLabel")}</Label>
         <div className="relative">
           <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -246,7 +236,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="company">Entreprise</Label>
+        <Label htmlFor="company">{t("auth.companyLabel")}</Label>
         <div className="relative">
           <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -267,7 +257,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="address">Adresse de l'établissement</Label>
+        <Label htmlFor="address">{t("auth.addressLabel")}</Label>
         <div className="relative">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -288,7 +278,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="password">Mot de passe</Label>
+        <Label htmlFor="password">{t("auth.passwordLabel")}</Label>
         <Input
           id="password"
           type="password"
@@ -305,7 +295,7 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+        <Label htmlFor="confirmPassword">{t("auth.confirmPasswordLabel")}</Label>
         <Input
           id="confirmPassword"
           type="password"

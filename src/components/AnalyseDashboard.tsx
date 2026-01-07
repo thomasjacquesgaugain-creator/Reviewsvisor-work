@@ -39,7 +39,7 @@ export function AnalyseDashboard() {
             etablissementId: data.place_id,
             createdAt: data.last_analyzed_at || new Date().toISOString(),
             resume: summary.resume || '',
-            sentimentGlobal: summary.sentimentGlobal || { score: 0, label: "Neutre" },
+            sentimentGlobal: summary.sentimentGlobal || { score: 0, label: t("dashboard.sentimentNeutral") },
             stats: summary.stats || { totalAvis: 0, moyenne: 0, positifsPct: 0, negatifsPct: 0, periode: {} },
             themes: summary.themes || [],
             elogesTop3: summary.elogesTop3 || [],

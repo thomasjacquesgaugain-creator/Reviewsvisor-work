@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2, Crown } from "lucide-react";
 import { createCheckoutSession, STRIPE_PRODUCTS } from "@/lib/stripe";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface PreSignupSubscriptionCardProps {
   onLoginClick: () => void;
