@@ -945,21 +945,29 @@ export function generatePdfReport(data: ReportData): void {
     const isLeftCol = idx < halfItems;
     const colX = isLeftCol ? MARGINS.left : MARGINS.left + halfColWidth + 5;
     const rowIdx = isLeftCol ? idx : idx - halfItems;
-    const itemY = yPos + (rowIdx * 10);
+    const itemY = yPos + (rowIdx * 12);
 
     // Case a cocher
     doc.setDrawColor(...COLORS.textLight);
     doc.setLineWidth(0.3);
     doc.rect(colX, itemY, 4, 4, 'S');
 
-    // Texte de l'action
+    // Texte de l'action avec retour à la ligne automatique
     doc.setTextColor(...COLORS.text);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text(truncateText(action, 50), colX + 6, itemY + 3);
+    // Utiliser splitTextToSize pour permettre le retour à la ligne
+    const textWidth = halfColWidth - 10; // Largeur disponible pour le texte
+    const actionLines = doc.splitTextToSize(action, textWidth);
+    doc.text(actionLines, colX + 6, itemY + 3);
   });
 
-  yPos += (halfItems * 10) + 8;
+  // Calculer la hauteur réelle nécessaire en fonction du nombre de lignes
+  const maxLines = Math.max(...checklistActions.slice(0, 8).map(action => {
+    const textWidth = (CONTENT_WIDTH - 5) / 2 - 10;
+    return doc.splitTextToSize(action, textWidth).length;
+  }));
+  yPos += (halfItems * 12) + (maxLines > 1 ? (maxLines - 1) * 4 : 0) + 5;
 
   // SECTION: RITUELS D'EQUIPE
   doc.setFillColor(...COLORS.warning);
@@ -968,7 +976,7 @@ export function generatePdfReport(data: ReportData): void {
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
   doc.text('RITUELS D\'EQUIPE', MARGINS.left + 5, yPos + 5.5);
-  yPos += 12;
+  yPos += 10;
 
   const rituals = [
     { icon: '1', text: 'Brief d\'equipe quotidien (2 min avant service)' },
@@ -977,11 +985,10 @@ export function generatePdfReport(data: ReportData): void {
   ];
 
   doc.setFillColor(...COLORS.background);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 25, 2, 2, 'F');
+  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 20, 2, 2, 'F');
 
   const ritualsBoxTop = yPos;
-  const ritualsBoxHeight = 25;
-  const ritualTextStartY = ritualsBoxTop + 16; // hauteur fixe identique pour toutes les colonnes
+  const ritualTextStartY = ritualsBoxTop + 13; // hauteur réduite
   
   // Calculer la largeur de chaque colonne (égale pour les 3)
   const columnWidth = CONTENT_WIDTH / 3;
@@ -992,13 +999,13 @@ export function generatePdfReport(data: ReportData): void {
 
     // Cercle bleu centré dans sa colonne
     doc.setFillColor(...COLORS.primary);
-    doc.circle(ritualX, ritualsBoxTop + 8, 4, 'F');
+    doc.circle(ritualX, ritualsBoxTop + 6, 3.5, 'F');
     
     // Numéro dans le cercle (centré)
     doc.setTextColor(...COLORS.white);
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
-    doc.text(ritual.icon, ritualX, ritualsBoxTop + 9.5, { align: 'center', baseline: 'middle' });
+    doc.text(ritual.icon, ritualX, ritualsBoxTop + 7.5, { align: 'center', baseline: 'middle' });
 
     // Texte centré sous le cercle
     doc.setTextColor(...COLORS.text);
@@ -1011,7 +1018,7 @@ export function generatePdfReport(data: ReportData): void {
     doc.text(ritualLines, ritualX, ritualTextStartY, { align: 'center' });
   });
 
-  yPos += 32;
+  yPos += 23;
 
   // SECTION: ENGAGEMENT EQUIPE
   doc.setFillColor(...COLORS.secondary);
@@ -1020,38 +1027,31 @@ export function generatePdfReport(data: ReportData): void {
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
   doc.text('ENGAGEMENT EQUIPE', MARGINS.left + 5, yPos + 5.5);
-  yPos += 12;
+  yPos += 10;
 
-  // Zone d'engagement
+  // Zone d'engagement - hauteur réduite pour tenir sur la page
   doc.setFillColor(...COLORS.white);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 35, 2, 2, 'F');
+  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 45, 2, 2, 'F');
   doc.setDrawColor(...COLORS.textLight);
   doc.setLineWidth(0.3);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 35, 2, 2, 'S');
+  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 45, 2, 2, 'S');
 
   doc.setTextColor(...COLORS.text);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'italic');
-  doc.text('"Nous nous engageons a appliquer ces actions au quotidien."', PAGE_WIDTH / 2, yPos + 8, { align: 'center' });
+  doc.text('"Nous nous engageons a appliquer ces actions au quotidien."', PAGE_WIDTH / 2, yPos + 12, { align: 'center' });
 
-  // Lignes de signature
+  // Lignes de signature - organisées verticalement
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   
-  doc.text('Responsable : ______________________________', MARGINS.left + 10, yPos + 20);
-  doc.text('Date : ______________', MARGINS.left + 120, yPos + 20);
-  doc.text('Signature : ______________________________', MARGINS.left + 10, yPos + 30);
+  // Responsable
+  doc.text('Responsable : ______________________________', MARGINS.left + 10, yPos + 26);
+  
+  // Date
+  doc.text('Date : ______________', MARGINS.left + 10, yPos + 36);
 
-  // Footer special pour cette page
-  yPos = PAGE_HEIGHT - 18;
-  doc.setFillColor(245, 247, 250);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 10, 1, 1, 'F');
-  doc.setTextColor(...COLORS.textLight);
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'italic');
-  doc.text('Document genere par Reviewsvisor - A afficher dans l\'etablissement', PAGE_WIDTH / 2, yPos + 6, { align: 'center' });
-
-  addFooter(doc, pageNumber);
+  // Pas de footer pour cette page (page 8) pour gagner de la place
 
   // Generer le nom du fichier
   const sanitizedName = data.establishmentName

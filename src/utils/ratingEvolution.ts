@@ -1,7 +1,16 @@
-import { format, eachMonthOfInterval, eachWeekOfInterval, eachDayOfInterval, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, startOfYear, endOfYear, eachYearOfInterval, isAfter, isBefore, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { format, eachMonthOfInterval, eachWeekOfInterval, eachDayOfInterval, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, startOfYear, endOfYear, eachYearOfInterval, isAfter, isBefore, parseISO, Locale } from 'date-fns';
+import { fr, enUS, it, es, ptBR } from 'date-fns/locale';
 
 export type Granularity = 'jour' | 'semaine' | 'mois' | 'année';
+
+// Map i18n language codes to date-fns locales
+const localeMap: Record<string, Locale> = {
+  'fr': fr,
+  'en': enUS,
+  'it': it,
+  'es': es,
+  'pt': ptBR,
+};
 
 interface Review {
   rating: number | null;
@@ -25,7 +34,8 @@ interface RatingDataPoint {
 export function getRatingEvolution(
   reviews: Review[],
   registrationDate: string | Date,
-  granularity: Granularity = 'mois'
+  granularity: Granularity = 'mois',
+  language: string = 'fr'
 ): RatingDataPoint[] {
   // Convertir la date d'enregistrement en objet Date
   const startDate = typeof registrationDate === 'string' 
@@ -39,11 +49,14 @@ export function getRatingEvolution(
     r => r.rating !== null && r.rating !== undefined && (r.published_at || r.inserted_at)
   );
   
+  // Obtenir la locale appropriée
+  const locale = localeMap[language] || fr;
+  
   // Si aucun avis, retourner une courbe plate à 0
   if (validReviews.length === 0) {
     const periods = getPeriods(startDate, today, granularity);
     return periods.map(period => ({
-      mois: formatPeriodLabel(period, granularity),
+      mois: formatPeriodLabel(period, granularity, locale),
       note: 0,
       fullDate: format(period, 'yyyy-MM-dd'),
     }));
@@ -82,7 +95,7 @@ export function getRatingEvolution(
     }
     
     return {
-      mois: formatPeriodLabel(period, granularity),
+      mois: formatPeriodLabel(period, granularity, locale),
       note: Number(avgRating.toFixed(2)),
       fullDate: format(period, 'yyyy-MM-dd'),
     };
@@ -128,24 +141,25 @@ function getPeriodEnd(date: Date, granularity: Granularity): Date {
 /**
  * Formate le label de la période
  */
-function formatPeriodLabel(date: Date, granularity: Granularity): string {
+function formatPeriodLabel(date: Date, granularity: Granularity, locale: Locale = fr): string {
   switch (granularity) {
     case 'jour':
-      return format(date, 'dd MMM', { locale: fr });
+      return format(date, 'dd MMM', { locale });
     case 'semaine':
-      return format(date, "'S'w", { locale: fr });
+      return format(date, "'S'w", { locale });
     case 'année':
-      return format(date, 'yyyy', { locale: fr });
+      return format(date, 'yyyy', { locale });
     case 'mois':
     default:
-      return format(date, 'MMM', { locale: fr });
+      return format(date, 'MMM', { locale });
   }
 }
 
 /**
  * Formate une date pour l'affichage
  */
-export function formatRegistrationDate(date: string | Date): string {
+export function formatRegistrationDate(date: string | Date, language: string = 'fr'): string {
   const d = typeof date === 'string' ? parseISO(date) : date;
-  return format(d, 'dd/MM/yyyy', { locale: fr });
+  const locale = localeMap[language] || fr;
+  return format(d, 'dd/MM/yyyy', { locale });
 }

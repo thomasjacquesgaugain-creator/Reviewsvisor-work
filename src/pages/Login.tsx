@@ -110,7 +110,7 @@ const Login = () => {
           setPassword("");
           
           // Afficher un message d'erreur sur la page et en toast
-          const errorMessage = t("auth.loginError");
+          const errorMessage = t("auth.invalidCredentials");
           setLoginError(errorMessage);
           toast.error(errorMessage);
         } else {

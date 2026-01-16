@@ -12,10 +12,16 @@ interface RequireGuestProps {
 export default function RequireGuest({ children }: RequireGuestProps) {
   const { user, loading } = useAuth();
   const isAuthenticated = !!user;
+  const isCreator = user?.email === "thomas.jacquesgaugain@gmail.com";
 
   // Show nothing while loading to prevent flash
   if (loading) {
     return null;
+  }
+
+  // Allow creator to access public pages even when authenticated
+  if (isCreator) {
+    return <>{children}</>;
   }
 
   // Redirect authenticated users to dashboard

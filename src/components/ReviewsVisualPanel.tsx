@@ -121,7 +121,7 @@ export function ReviewsVisualPanel({
           authorName: getDisplayAuthor(review),
           rating: review.rating || 0,
           comment: extractOriginalText(review.text) || "",
-          platform: review.source || "Google",
+          platform: review.source || t("platforms.google"),
           reviewDate: formatReviewDate(review)
         }));
         

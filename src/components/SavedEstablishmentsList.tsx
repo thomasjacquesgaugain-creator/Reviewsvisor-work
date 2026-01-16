@@ -393,7 +393,7 @@ export default function SavedEstablishmentsList({
     return null;
   }
   return <>
-      <section className="p-4 border border-border rounded-lg bg-card/50">
+      <section className="p-4 border border-border rounded-lg bg-white shadow-sm">
         <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-2">
           <Building2 className="h-5 w-5 text-primary" />
           {t("establishment.savedEstablishments")}

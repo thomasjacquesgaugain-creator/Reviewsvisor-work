@@ -13,18 +13,18 @@ import { useTranslation } from "react-i18next";
 const Fonctionnalites = () => {
   const { t } = useTranslation();
   return (
-    <div className="min-h-screen flex flex-col relative bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Subtle noise/grain overlay */}
-      <div 
-        className="fixed inset-0 pointer-events-none opacity-[0.015] z-0"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-        }}
-      />
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
+      {/* Background with organic shapes */}
+      <div className="absolute inset-0">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-violet-200 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-200 to-yellow-200 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-full blur-3xl opacity-30"></div>
+      </div>
       
+      <div className="relative z-10">
       <BackArrow />
       
-      <main className="flex-1 relative z-10">
+      <main className="flex-1">
         {/* HERO SECTION */}
         <section className="pt-12 pb-6 px-4 md:px-8 bg-gradient-to-b from-primary/5 via-transparent to-transparent">
           <div className="max-w-4xl mx-auto text-center">
@@ -290,6 +290,7 @@ const Fonctionnalites = () => {
           </div>
         </section>
       </main>
+      </div>
     </div>
   );
 };

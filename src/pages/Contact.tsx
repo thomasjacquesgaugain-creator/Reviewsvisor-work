@@ -6,7 +6,15 @@ import { useTranslation } from "react-i18next";
 export default function Contact() {
   const { t } = useTranslation();
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
+      {/* Background with organic shapes */}
+      <div className="absolute inset-0">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-violet-200 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-200 to-yellow-200 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-full blur-3xl opacity-30"></div>
+      </div>
+
+      <div className="relative z-10">
       <BackArrow />
       
       {/* Hero Section - plus compact */}
@@ -108,7 +116,7 @@ export default function Contact() {
           </div>
         </div>
       </section>
-
+      </div>
     </div>
   );
 }

@@ -121,19 +121,19 @@ export default function EtablissementPage() {
   // Mapping des erreurs Google Places
   function mapPlacesStatus(status: string, errorMessage?: string): string | null {
     const g = (window as any).google;
-    if (!g?.maps?.places) return 'Google Places non chargé';
+    if (!g?.maps?.places) return t("googlePlaces.notLoaded");
     switch (status) {
       case g.maps.places.PlacesServiceStatus.OK:
       case g.maps.places.PlacesServiceStatus.ZERO_RESULTS:
         return null;
       case g.maps.places.PlacesServiceStatus.REQUEST_DENIED:
-        return 'Clé Google invalide ou non autorisée (référents/API).';
+        return t("googlePlaces.invalidKey");
       case g.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT:
-        return 'Quota dépassé. Réessayez plus tard.';
+        return t("googlePlaces.quotaExceeded");
       case g.maps.places.PlacesServiceStatus.INVALID_REQUEST:
-        return 'Requête invalide (paramètre manquant).';
+        return t("googlePlaces.invalidRequest");
       default:
-        return errorMessage || status || 'Erreur inconnue Google Places';
+        return errorMessage || status || t("googlePlaces.unknownError");
     }
   }
 
@@ -153,7 +153,7 @@ export default function EtablissementPage() {
         } else if (result) {
           resolve(result);
         } else {
-          reject(new Error('Aucun résultat'));
+          reject(new Error(t("googlePlaces.noResults")));
         }
       });
     });
@@ -207,7 +207,7 @@ export default function EtablissementPage() {
         await loadGooglePlaces();
         const g = (window as any).google;
         if (!g?.maps?.places) {
-          throw new Error('Google Maps Places API non disponible');
+          throw new Error(t("googlePlaces.apiNotAvailable"));
         }
         const autocomplete = new g.maps.places.Autocomplete(input, {
           types: ['establishment'],
@@ -236,13 +236,13 @@ export default function EtablissementPage() {
         console.log('✅ Autocomplete initialisé avec succès');
       } catch (error: any) {
         console.error('❌ Erreur de chargement Google Places:', error);
-        let errorMsg = 'Erreur Google Maps. ';
+        let errorMsg = t("googlePlaces.error");
         if (error?.message?.includes('manquante')) {
-          errorMsg += 'Clé API manquante dans la configuration.';
+          errorMsg += t("googlePlaces.missingApiKey");
         } else if (error?.message?.includes('Échec')) {
-          errorMsg += 'Vérifiez que votre domaine est autorisé dans Google Cloud Console (https://reviewsvisor.fr/*)';
+          errorMsg += t("googlePlaces.domainNotAuthorized");
         } else {
-          errorMsg += error?.message || 'Erreur inconnue';
+          errorMsg += error?.message || t("googlePlaces.unknownError");
         }
         setPlacesError(errorMsg);
       }
@@ -317,8 +317,16 @@ export default function EtablissementPage() {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [showImportBar, showReviewsVisual]);
-  return <div className="bg-background">
+  return <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
+      {/* Background with organic shapes */}
+      <div className="absolute inset-0">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-violet-200 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-200 to-yellow-200 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-full blur-3xl opacity-30"></div>
+      </div>
+
       {/* Main content */}
+      <div className="relative z-10">
       <div className="container mx-auto px-4 py-8 pb-16">
         <h1 className="text-3xl font-bold mb-8">{t("establishment.title")}</h1>
         
@@ -379,6 +387,7 @@ export default function EtablissementPage() {
           {/* Liste des établissements enregistrés */}
           <div data-testid="section-etablissements-enregistres">
             <SavedEstablishmentsList onAddClick={openSearch} />
+          </div>
           </div>
         </div>
       </div>

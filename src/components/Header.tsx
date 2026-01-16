@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Menu, X, Globe } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthProvider";
 
 interface HeaderProps {
   theme?: string;
@@ -9,6 +10,8 @@ interface HeaderProps {
 
 function Header({ theme = "light" }: HeaderProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const isDark = theme === "dark";
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -31,14 +34,24 @@ function Header({ theme = "light" }: HeaderProps) {
     >
       {/* Logo */}
       <div className="flex items-center space-x-6">
-        <Link
-          to="/"
-          className={`text-xl font-bold ${
-            isDark ? "text-purple-400" : "text-blue-600"
-          }`}
-        >
-          Reviewsvisor
-        </Link>
+        {user?.email === "thomas.jacquesgaugain@gmail.com" ? (
+          <Link
+            to="/"
+            className={`text-xl font-bold ${
+              isDark ? "text-purple-400" : "text-blue-600"
+            }`}
+          >
+            Reviewsvisor
+          </Link>
+        ) : (
+          <div
+            className={`text-xl font-bold ${
+              isDark ? "text-purple-400" : "text-blue-600"
+            }`}
+          >
+            Reviewsvisor
+          </div>
+        )}
       </div>
 
       {/* MENU BURGER */}

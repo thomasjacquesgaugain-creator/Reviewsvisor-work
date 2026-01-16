@@ -372,8 +372,17 @@ const Compte = () => {
   };
 
   return (
-    <div className="p-6 md:p-10 flex justify-center bg-background min-h-screen">
-      <div className="w-full max-w-4xl">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
+      {/* Background with organic shapes */}
+      <div className="absolute inset-0">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-violet-200 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-200 to-yellow-200 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-full blur-3xl opacity-30"></div>
+      </div>
+
+      <div className="relative z-10">
+        <div className="p-6 md:p-10 flex justify-center">
+          <div className="w-full max-w-4xl">
         {/* Header avec titre */}
         <h1 className="text-3xl font-semibold text-foreground mb-8">
           {t("account.title")}
@@ -556,6 +565,8 @@ const Compte = () => {
           open={showPasswordModal}
           onOpenChange={setShowPasswordModal}
         />
+          </div>
+        </div>
       </div>
     </div>
   );

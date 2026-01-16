@@ -12,6 +12,7 @@ import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { getReponsesStats } from "@/lib/reponses";
 import { SubscriptionCard } from "@/components/SubscriptionCard";
 import { useTranslation } from "react-i18next";
+import { DashboardTabs } from "@/components/DashboardTabs";
 
 
 const Dashboard = () => {
@@ -27,6 +28,8 @@ const Dashboard = () => {
   const { toast } = useToast();
   const currentEstablishment = useCurrentEstablishment();
   const { t, i18n } = useTranslation();
+  const [activeTab, setActiveTab] = useState('apercu');
+  
 
   useEffect(() => {
     const getUserProfile = async () => {
@@ -40,7 +43,7 @@ const Dashboard = () => {
 
         // Pour l'instant, utiliser les données de base de l'utilisateur
         const profile = {
-          first_name: session.user.user_metadata?.first_name || 'Utilisateur',
+          first_name: session.user.user_metadata?.first_name || t("common.user"),
           last_name: session.user.user_metadata?.last_name || ''
         };
 

@@ -1,10 +1,12 @@
 import { CreditCard, UserPlus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface StepHeaderProps {
   currentStep: 1 | 2;
 }
 
 export function StepHeader({ currentStep }: StepHeaderProps) {
+  const { t } = useTranslation();
   const isStep1 = currentStep === 1;
   const isStep2 = currentStep === 2;
 
@@ -22,7 +24,7 @@ export function StepHeader({ currentStep }: StepHeaderProps) {
           <CreditCard className={`${isStep1 ? 'text-white' : 'text-[#96A0B5]'} h-4 w-4 md:h-5 md:w-5`} />
         </div>
         <span className={`text-sm md:text-base whitespace-nowrap ${isStep1 ? 'text-[#2F4FF7] font-semibold' : 'text-[#96A0B5]'}`}>
-          1. Abonnement
+          {t("step.subscription")}
         </span>
       </div>
 
@@ -41,7 +43,7 @@ export function StepHeader({ currentStep }: StepHeaderProps) {
           <UserPlus className={`${isStep2 ? 'text-white' : 'text-[#96A0B5]'} h-4 w-4 md:h-5 md:w-5`} />
         </div>
         <span className={`text-sm md:text-base whitespace-nowrap ${isStep2 ? 'text-[#2F4FF7] font-semibold' : 'text-[#96A0B5]'}`}>
-          2. Créer un compte
+          {t("step.createAccount")}
         </span>
       </div>
     </div>

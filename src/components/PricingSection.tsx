@@ -93,7 +93,7 @@ export function PricingSection() {
   return (
     <section id="abonnements" className="w-full py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto items-stretch">
+        <div className="grid md:grid-cols-2 gap-10 max-w-6xl mx-auto items-stretch">
           {subscriptionPlans.map((plan) => {
             const colorClasses = plan.badgeColor === "purple" 
               ? {
@@ -115,31 +115,34 @@ export function PricingSection() {
                 className="relative overflow-hidden bg-white rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-2 border-border h-full flex flex-col"
               >
                 <div className={cn("absolute top-0 right-0 text-white px-4 py-1.5 text-xs font-semibold rounded-bl-xl", colorClasses.badge)}>
-                  {plan.badge}
+                  {t(`subscription.plans.${plan.id}.badge`)}
                 </div>
-                <CardHeader className="pb-4 pt-8">
-                  <CardTitle className="text-2xl font-bold text-foreground mb-2">
-                    {plan.name}
+                <CardHeader className="pb-6 pt-10 px-8">
+                  <CardTitle className="text-2xl font-bold text-foreground mb-3">
+                    {t(`subscription.plans.${plan.id}.name`)}
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground min-h-[40px]">
-                    {plan.description}
+                  <p className="text-sm text-muted-foreground min-h-[40px] mb-4">
+                    {t(`subscription.plans.${plan.id}.description`)}
                   </p>
-                  <div className="mt-4">
-                    <span className={cn("text-5xl font-bold", colorClasses.price)}>{plan.priceLabel}</span>
+                  <div className="mt-6">
+                    <span className={cn("text-6xl font-bold", colorClasses.price)}>{plan.priceLabel}</span>
                     <span className="text-lg text-muted-foreground ml-2">{t("common.perMonth")}</span>
                   </div>
                 </CardHeader>
-                <CardContent className="flex flex-col flex-1 pb-8">
-                  <ul className="space-y-4 flex-1">
-                    {plan.benefits.map((benefit, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <Check className={cn("w-5 h-5 mt-0.5 flex-shrink-0", colorClasses.check)} />
-                        <span className="text-foreground">{benefit}</span>
-                      </li>
-                    ))}
+                <CardContent className="flex flex-col flex-1 pb-10 px-8">
+                  <ul className="space-y-5 flex-1">
+                    {plan.benefits.map((benefit, index) => {
+                      const benefitKey = `subscription.plans.${plan.id}.benefits.${index}`;
+                      return (
+                        <li key={index} className="flex items-start gap-4">
+                          <Check className={cn("w-5 h-5 mt-0.5 flex-shrink-0", colorClasses.check)} />
+                          <span className="text-foreground">{t(benefitKey)}</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                   <Button 
-                    className={cn("w-full h-12 text-base font-semibold text-white shadow-lg hover:shadow-xl transition-all rounded-lg mt-6", colorClasses.button)}
+                    className={cn("w-full h-12 text-base font-semibold text-white shadow-lg hover:shadow-xl transition-all rounded-lg mt-8", colorClasses.button)}
                     onClick={() => handleCheckout(plan.priceId, plan.productKey)}
                     disabled={loadingPriceId === plan.priceId}
                   >

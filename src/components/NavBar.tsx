@@ -1,12 +1,40 @@
-import { NavLink, Link, useLocation } from "react-router-dom";
+import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
 import { UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 export default function NavBar() {
   const { t } = useTranslation();
   const location = useLocation();
-  const { user, displayName, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { user, displayName, signOut, loading } = useAuth();
+  const [isCreatorChecked, setIsCreatorChecked] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
+
+  // Vérifier si c'est le créateur en vérifiant directement la session Supabase
+  useEffect(() => {
+    const checkCreator = async () => {
+      if (!loading) {
+        // Si user existe dans le contexte, utiliser celui-ci
+        if (user?.email === "thomas.jacquesgaugain@gmail.com") {
+          setIsCreator(true);
+          setIsCreatorChecked(true);
+          return;
+        }
+        
+        // Sinon, vérifier directement la session Supabase
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.email === "thomas.jacquesgaugain@gmail.com") {
+          setIsCreator(true);
+        }
+        setIsCreatorChecked(true);
+      }
+    };
+    
+    checkCreator();
+  }, [user, loading]);
 
   const handleLogout = async () => {
     await signOut();
@@ -22,15 +50,42 @@ export default function NavBar() {
   const logoutStyle =
     "px-4 py-2 rounded-md font-medium bg-red-600 text-white border border-red-600 transition-all duration-200";
 
-  if (!user) {
+  // Pour le créateur : toujours afficher la NavBar une fois vérifié
+  if (isCreator && isCreatorChecked) {
+    // Le créateur voit toujours la NavBar
+  } else if (!isCreatorChecked || loading) {
+    // Attendre que la vérification soit terminée
+    return null;
+  } else if (!user) {
+    // Pour les autres utilisateurs : ne pas afficher si pas connecté
     return null;
   }
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    if (isCreator) {
+      e.preventDefault();
+      e.stopPropagation();
+      navigate("/");
+    }
+    // Sinon ne rien faire
+  };
 
   return (
     <nav className="w-full flex items-center justify-between px-8 py-3 bg-white shadow-sm">
       {/* Gauche : Logo + barre */}
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
+        <div 
+          className={`flex items-center gap-2 ${isCreator ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+          onClick={handleLogoClick}
+          role={isCreator ? "button" : undefined}
+          tabIndex={isCreator ? 0 : undefined}
+          onKeyDown={isCreator ? (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleLogoClick(e as any);
+            }
+          } : undefined}
+        >
           <span className="text-xl">📊</span>
           <div className="text-2xl font-bold text-blue-600">Reviewsvisor</div>
         </div>

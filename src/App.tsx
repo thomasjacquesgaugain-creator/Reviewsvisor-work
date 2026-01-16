@@ -115,11 +115,7 @@ const App = () => {
             <Route path="/a-propos" element={<APropos />} />
             <Route path="/fonctionnalites" element={<Fonctionnalites />} />
             <Route path="/aide" element={<Aide />} />
-            <Route path="/abonnement" element={
-              <RequireGuest>
-                <Abonnement />
-              </RequireGuest>
-            } />
+            <Route path="/abonnement" element={<Abonnement />} />
             <Route path="/onboarding" element={
               <RequireGuest>
                 <Onboarding />

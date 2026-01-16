@@ -29,7 +29,7 @@ export default function SignInForm() {
     if (error) {
       toast({
         variant: "destructive",
-        title: t("auth.loginError"),
+        title: t("auth.invalidCredentials"),
         description: error.message
       });
       return;
