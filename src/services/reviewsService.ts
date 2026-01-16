@@ -115,11 +115,14 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
       
       // Parse review date safely
       let publishedAt: string | null = null;
+      let createTime: string | null = null;
+      
       if (review.review_date) {
         try {
           const date = new Date(review.review_date);
           if (!isNaN(date.getTime()) && review.review_date !== 'Invalid Date') {
             publishedAt = date.toISOString();
+            createTime = date.toISOString(); // Stocker aussi dans create_time
           }
         } catch (e) {
           // Invalid date, keep null
@@ -137,6 +140,7 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
           rating: review.rating,
           text: review.comment || "",
           published_at: publishedAt,
+          create_time: createTime, // Stocker create_time aussi
           source_review_id: reviewHash,
           raw: {
             import_method: review.import_method,
@@ -144,7 +148,8 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
             author_first_name: review.author_first_name,
             author_last_name: review.author_last_name,
             establishment_name: review.establishment_name,
-            raw_fingerprint: review.raw_fingerprint
+            raw_fingerprint: review.raw_fingerprint,
+            createTime: review.review_date // Conserver createTime dans raw aussi
           }
         });
       

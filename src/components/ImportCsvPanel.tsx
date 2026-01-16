@@ -119,16 +119,33 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
             const rating = convertStarRating(review.starRating);
             const displayAuthor = getDisplayAuthor(review);
             
+            // Mapper createTime vers published_at (priorité à createTime, puis publishedAtDate)
+            let publishedAt: string | null = null;
+            if (review.createTime) {
+              try {
+                publishedAt = new Date(review.createTime).toISOString();
+              } catch (e) {
+                console.warn('Invalid createTime:', review.createTime, e);
+              }
+            } else if (review.publishedAtDate) {
+              try {
+                publishedAt = new Date(review.publishedAtDate).toISOString();
+              } catch (e) {
+                console.warn('Invalid publishedAtDate:', review.publishedAtDate, e);
+              }
+            }
+            
             const parsedReview = {
               text: review.comment || "",
               rating: rating,
               author_name: displayAuthor,
-              published_at: review.publishedAtDate ? new Date(review.publishedAtDate).toISOString() : null,
+              published_at: publishedAt,
               source: "Google"
             };
             
             if (index === 0) {
               console.log('👤 Auteur extrait:', displayAuthor);
+              console.log('📅 Date extraite (createTime):', review.createTime, '→ published_at:', publishedAt);
               console.log('✅ Avis normalisé (premier):', parsedReview);
             }
             
@@ -276,7 +293,7 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
           author_last_name: nameParts.slice(1).join(" ") || "",
           rating: review.rating,
           comment: review.text,
-          review_date: review.published_at,
+          review_date: review.published_at, // published_at contient déjà createTime mappé
           import_method: isJSON ? "json_upload" : "csv_upload",
         };
       });

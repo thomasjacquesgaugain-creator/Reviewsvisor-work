@@ -50,6 +50,8 @@ const Dashboard = () => {
     text: string;
     completed: boolean;
     completedAt?: string;
+    priority: 'high' | 'medium' | 'low';
+    difficulty: 'easy' | 'medium' | 'hard';
   }
 
   // États UI généraux
@@ -105,7 +107,6 @@ const Dashboard = () => {
   // Checklist opérationnelle
   const [checklistActions, setChecklistActions] = useState<ChecklistAction[]>([]);
   const [completedActionsCount, setCompletedActionsCount] = useState<number>(0);
-  const [removingActionId, setRemovingActionId] = useState<string | null>(null);
 
   // États supplémentaires
   const [isDownloadingReport, setIsDownloadingReport] = useState(false);
@@ -462,6 +463,53 @@ const Dashboard = () => {
   // Ton : tutoiement, actions concrètes et rapides que le gérant peut faire lui-même
   // Règle stricte : actions terrain uniquement - JAMAIS suggérer de décisions RH/financières/stratégiques
   // Interdit absolu : recruter, embaucher, former, licencier, changer les prix, modifier l'offre, augmenter les portions
+  // Fonction pour évaluer automatiquement l'effort et l'impact d'une action
+  const evaluateActionDifficulty = (actionText: string): 'easy' | 'medium' | 'hard' => {
+    const text = actionText.toLowerCase();
+    
+    // Critères d'EFFORT (temps, ressources, complexité)
+    const lowEffortKeywords = ['réponds', 'répondre', 'remercie', 'remercier', 'note', 'noter'];
+    const mediumEffortKeywords = ['briefe', 'briefer', 'fais un point', 'discute', 'discuter', 'vérifie', 'vérifier', 'teste', 'tester'];
+    const highEffortKeywords = ['observe', 'observer', 'analyse', 'analyser', 'identifie', 'identifier'];
+    
+    // Critères d'IMPACT (satisfaction client, amélioration service, résultats business)
+    const lowImpactKeywords = ['réponds', 'répondre', 'remercie', 'remercier'];
+    const mediumImpactKeywords = ['briefe', 'briefer', 'fais un point', 'discute', 'discuter', 'vérifie', 'vérifier', 'teste', 'tester'];
+    const highImpactKeywords = ['observe', 'observer', 'analyse', 'analyser', 'identifie', 'identifier', 'problème prioritaire', 'points de blocage', 'causes racines'];
+    
+    // Évaluer l'effort
+    let effort: 'low' | 'medium' | 'high' = 'medium';
+    if (lowEffortKeywords.some(keyword => text.includes(keyword))) {
+      effort = 'low';
+    } else if (highEffortKeywords.some(keyword => text.includes(keyword))) {
+      effort = 'high';
+    } else if (mediumEffortKeywords.some(keyword => text.includes(keyword))) {
+      effort = 'medium';
+    }
+    
+    // Évaluer l'impact
+    let impact: 'low' | 'medium' | 'high' = 'medium';
+    if (lowImpactKeywords.some(keyword => text.includes(keyword))) {
+      impact = 'low';
+    } else if (highImpactKeywords.some(keyword => text.includes(keyword))) {
+      impact = 'high';
+    } else if (mediumImpactKeywords.some(keyword => text.includes(keyword))) {
+      impact = 'medium';
+    }
+    
+    // Règles de coloration :
+    // VERT (easy) : effort faible ET impact faible
+    // BLEU (medium) : effort moyen OU impact moyen
+    // ROUGE (hard) : effort élevé MAIS impact fort
+    if (effort === 'low' && impact === 'low') {
+      return 'easy';
+    } else if (effort === 'high' && impact === 'high') {
+      return 'hard';
+    } else {
+      return 'medium';
+    }
+  };
+
   // Autorisé : répondre aux avis, observer, tester, vérifier, briefer l'équipe, discuter, noter
   const generateChecklistActions = (insightData: any, reviewsData: any[], validatedReviewsSet: Set<number>): ChecklistAction[] => {
     if (!insightData || !reviewsData || reviewsData.length === 0) {
@@ -495,29 +543,38 @@ const Dashboard = () => {
     // Action 1 : Répondre aux avis en attente
     if (pendingReviews.length > 0) {
       const count = Math.min(pendingReviews.length, 10);
+      const actionText = `Réponds à ${count} avis clients`;
       actions.push({
         id: `action-respond-${count}`,
-        text: `Réponds à ${count} avis clients`,
-        completed: false
+        text: actionText,
+        completed: false,
+        priority: 'medium',
+        difficulty: evaluateActionDifficulty(actionText)
       });
     }
 
     // Action 2 : Répondre aux avis négatifs récents
     if (recentNegativeReviews.length > 0) {
       const count = Math.min(recentNegativeReviews.length, 3);
+      const actionText = `Réponds aux ${count} derniers avis négatifs`;
       actions.push({
         id: `action-respond-negative-${count}`,
-        text: `Réponds aux ${count} derniers avis négatifs`,
-        completed: false
+        text: actionText,
+        completed: false,
+        priority: 'high',
+        difficulty: evaluateActionDifficulty(actionText)
       });
     }
 
     // Action 3 : Répondre aux avis de la semaine
     if (thisWeekPendingReviews.length > 0) {
+      const actionText = `Réponds aux avis en attente de cette semaine (${thisWeekPendingReviews.length})`;
       actions.push({
         id: `action-respond-week-${thisWeekPendingReviews.length}`,
-        text: `Réponds aux avis en attente de cette semaine (${thisWeekPendingReviews.length})`,
-        completed: false
+        text: actionText,
+        completed: false,
+        priority: 'medium',
+        difficulty: evaluateActionDifficulty(actionText)
       });
     }
 
@@ -531,10 +588,13 @@ const Dashboard = () => {
       });
       if (recentPositive.length > 0) {
         const count = Math.min(recentPositive.length, 5);
+        const actionText = `Remercie les ${count} derniers clients qui ont laissé 5 étoiles`;
         actions.push({
           id: `action-thank-positive-${count}`,
-          text: `Remercie les ${count} derniers clients qui ont laissé 5 étoiles`,
-          completed: false
+          text: actionText,
+          completed: false,
+          priority: 'low',
+          difficulty: evaluateActionDifficulty(actionText)
         });
       }
     }
@@ -547,85 +607,124 @@ const Dashboard = () => {
       
       if (issueTheme.includes('service') || issueTheme.includes('attente') || issueTheme.includes('lent')) {
         if (issueCount >= 5) {
+          const briefText = 'Briefe l\'équipe sur la rapidité de service';
           actions.push({
             id: 'action-brief-speed',
-            text: 'Briefe l\'équipe sur la rapidité de service',
-            completed: false
+            text: briefText,
+            completed: false,
+            priority: 'high',
+            difficulty: evaluateActionDifficulty(briefText)
           });
+          const observeText = 'Observe le service ce soir pour identifier les points de blocage';
           actions.push({
             id: 'action-observe-service',
-            text: 'Observe le service ce soir pour identifier les points de blocage',
-            completed: false
+            text: observeText,
+            completed: false,
+            priority: 'high',
+            difficulty: evaluateActionDifficulty(observeText)
           });
         } else {
+          const pointText = 'Fais un point avec l\'équipe sur le problème d\'attente';
           actions.push({
             id: 'action-point-wait',
-            text: 'Fais un point avec l\'équipe sur le problème d\'attente',
-            completed: false
+            text: pointText,
+            completed: false,
+            priority: 'medium',
+            difficulty: evaluateActionDifficulty(pointText)
           });
         }
+        const testText = 'Teste le temps d\'attente réel aux heures de pointe';
         actions.push({
           id: 'action-test-wait-time',
-          text: 'Teste le temps d\'attente réel aux heures de pointe',
-          completed: false
+          text: testText,
+          completed: false,
+          priority: issueCount >= 5 ? 'high' : 'medium',
+          difficulty: evaluateActionDifficulty(testText)
         });
       } else if (issueTheme.includes('qualité') || issueTheme.includes('plat') || issueTheme.includes('cuisson') || issueTheme.includes('froid') || issueTheme.includes('chaud')) {
         if (issueCount >= 5) {
+          const checkText = 'Vérifie en cuisine si le problème de qualité est résolu';
           actions.push({
             id: 'action-check-quality',
-            text: 'Vérifie en cuisine si le problème de qualité est résolu',
-            completed: false
+            text: checkText,
+            completed: false,
+            priority: 'high',
+            difficulty: evaluateActionDifficulty(checkText)
           });
+          const observeCuisineText = 'Observe la préparation des plats en cuisine ce soir';
           actions.push({
             id: 'action-observe-cuisine',
-            text: 'Observe la préparation des plats en cuisine ce soir',
-            completed: false
+            text: observeCuisineText,
+            completed: false,
+            priority: 'high',
+            difficulty: evaluateActionDifficulty(observeCuisineText)
           });
         } else {
+          const checkSingleText = 'Vérifie en cuisine si le problème de qualité signalé est résolu';
           actions.push({
             id: 'action-check-quality-single',
-            text: 'Vérifie en cuisine si le problème de qualité signalé est résolu',
-            completed: false
+            text: checkSingleText,
+            completed: false,
+            priority: 'medium',
+            difficulty: evaluateActionDifficulty(checkSingleText)
           });
         }
       } else if (issueTheme.includes('prix') || issueTheme.includes('cher') || issueTheme.includes('coûteux')) {
+        const notePriceText = 'Note les réactions clients sur les prix pendant le service';
         actions.push({
           id: 'action-note-price-reactions',
-          text: 'Note les réactions clients sur les prix pendant le service',
-          completed: false
+          text: notePriceText,
+          completed: false,
+          priority: 'medium',
+          difficulty: evaluateActionDifficulty(notePriceText)
         });
       } else if (issueTheme.includes('accueil') || issueTheme.includes('sourire') || issueTheme.includes('froid') || issueTheme.includes('sympathie')) {
         if (issueCount >= 3) {
+          const discussText = 'Discute avec l\'équipe de l\'importance du sourire et de l\'accueil chaleureux';
           actions.push({
             id: 'action-discuss-welcome',
-            text: 'Discute avec l\'équipe de l\'importance du sourire et de l\'accueil chaleureux',
-            completed: false
+            text: discussText,
+            completed: false,
+            priority: 'medium',
+            difficulty: evaluateActionDifficulty(discussText)
           });
         } else {
+          const pointWelcomeText = 'Fais un point avec l\'équipe sur l\'accueil';
           actions.push({
             id: 'action-point-welcome',
-            text: 'Fais un point avec l\'équipe sur l\'accueil',
-            completed: false
+            text: pointWelcomeText,
+            completed: false,
+            priority: 'low',
+            difficulty: evaluateActionDifficulty(pointWelcomeText)
           });
         }
       } else if (issueTheme.includes('bruit') || issueTheme.includes('bruyant') || issueTheme.includes('ambiance') || issueTheme.includes('musique')) {
+        const identifyNoiseText = 'Identifie les sources de nuisance sonore ce soir';
         actions.push({
           id: 'action-identify-noise',
-          text: 'Identifie les sources de nuisance sonore ce soir',
-          completed: false
+          text: identifyNoiseText,
+          completed: false,
+          priority: 'medium',
+          difficulty: evaluateActionDifficulty(identifyNoiseText)
         });
       } else if (issueTheme.includes('propreté') || issueTheme.includes('sale') || issueTheme.includes('nettoyage')) {
         if (issueCount >= 3) {
+          const checkCleanText = 'Vérifie la propreté des tables et sanitaires ce soir';
           actions.push({
             id: 'action-check-cleanliness',
-            text: 'Vérifie la propreté des tables et sanitaires ce soir',
-            completed: false
+            text: checkCleanText,
+            completed: false,
+            priority: 'medium',
+            difficulty: evaluateActionDifficulty(checkCleanText)
           });
         } else {
+          const observeCleanText = 'Observe le nettoyage des tables entre les services';
           actions.push({
             id: 'action-observe-cleaning',
-            text: 'Observe le nettoyage des tables entre les services',
-            completed: false
+            text: observeCleanText,
+            completed: false,
+            priority: 'low',
+            difficulty: evaluateActionDifficulty(observeCleanText)
           });
         }
       }
@@ -634,28 +733,38 @@ const Dashboard = () => {
     // Action 6 : Informer l'équipe du problème prioritaire (action générique récurrente)
     if (topIssues.length > 0) {
       const mainIssue = topIssues[0];
+      const issueCount = mainIssue.count || 0;
+      const informText = `Informe ton équipe du problème prioritaire : ${translateTheme(mainIssue.theme || mainIssue)}`;
       actions.push({
         id: 'action-inform-team',
-        text: `Informe ton équipe du problème prioritaire : ${translateTheme(mainIssue.theme || mainIssue)}`,
-        completed: false
+        text: informText,
+        completed: false,
+        priority: issueCount >= 5 ? 'high' : 'medium',
+        difficulty: evaluateActionDifficulty(informText)
       });
     }
 
     // Action 7 : Brief avec l'équipe (action générique récurrente)
     if (reviewsData.length >= 10) {
+      const briefTeamText = 'Fais un brief avec ton équipe sur les retours clients de la semaine';
       actions.push({
         id: 'action-brief-team',
-        text: 'Fais un brief avec ton équipe sur les retours clients de la semaine',
-        completed: false
+        text: briefTeamText,
+        completed: false,
+        priority: 'low',
+        difficulty: evaluateActionDifficulty(briefTeamText)
       });
     }
 
     // Action 8 : Analyser les patterns récurrents
     if (topIssues.length >= 2) {
+      const analyzeText = 'Analyse les patterns récurrents dans les avis pour identifier les causes racines';
       actions.push({
         id: 'action-analyze-patterns',
-        text: 'Analyse les patterns récurrents dans les avis pour identifier les causes racines',
-        completed: false
+        text: analyzeText,
+        completed: false,
+        priority: 'medium',
+        difficulty: evaluateActionDifficulty(analyzeText)
       });
     }
 
@@ -675,7 +784,13 @@ const Dashboard = () => {
       
       if (storedActions) {
         const parsed = JSON.parse(storedActions);
-        setChecklistActions(parsed);
+        // Ajouter une priorité et difficulté par défaut si elles manquent (pour les anciennes données)
+        const parsedWithDefaults = parsed.map((action: ChecklistAction) => ({
+          ...action,
+          priority: action.priority || 'medium',
+          difficulty: action.difficulty || 'medium'
+        }));
+        setChecklistActions(parsedWithDefaults);
       } else {
         // Générer de nouvelles actions si aucune n'existe
         const newActions = generateChecklistActions(insight, allReviewsForChart, validatedReviews);
@@ -693,37 +808,31 @@ const Dashboard = () => {
     }
   }, [selectedEtab?.place_id, insight, allReviewsForChart, validatedReviews]);
 
-  // Fonction pour cocher une action
+  // Fonction pour cocher/décocher une action
   const handleChecklistActionComplete = (actionId: string) => {
-    setRemovingActionId(actionId);
-    
-    setTimeout(() => {
-      setChecklistActions(prev => {
-        const updated = prev.filter(action => action.id !== actionId);
-        const completedAction = prev.find(action => action.id === actionId);
+    setChecklistActions(prev => {
+      // Toggle le statut de l'action
+      const updated = prev.map(a => 
+        a.id === actionId 
+          ? { ...a, completed: !a.completed, completedAt: !a.completed ? new Date().toISOString() : undefined }
+          : a
+      );
+      
+      // Vérifier si toutes les actions sont complétées (5/5)
+      const allCompleted = updated.length === 5 && updated.every(a => a.completed);
+      
+      if (allCompleted) {
+        // Générer 5 nouvelles actions
+        const newActions = generateChecklistActions(insight, allReviewsForChart, validatedReviews);
         
-        if (completedAction) {
-          setCompletedActionsCount(prev => {
-            const newCount = prev + 1;
-            if (selectedEtab?.place_id) {
-              const completedKey = `checklist_completed_${selectedEtab.place_id}`;
-              localStorage.setItem(completedKey, newCount.toString());
-            }
-            return newCount;
-          });
+        // Sauvegarder dans localStorage
+        if (selectedEtab?.place_id) {
+          const storageKey = `checklist_actions_${selectedEtab.place_id}`;
+          localStorage.setItem(storageKey, JSON.stringify(newActions));
         }
         
-        // Générer une nouvelle action si nécessaire
-        if (updated.length < 5) {
-          const newActions = generateChecklistActions(insight, allReviewsForChart, validatedReviews);
-          const existingIds = new Set(updated.map(a => a.id));
-          const availableNewActions = newActions.filter(a => !existingIds.has(a.id));
-          
-          if (availableNewActions.length > 0) {
-            updated.push(availableNewActions[0]);
-          }
-        }
-        
+        return newActions;
+      } else {
         // Sauvegarder dans localStorage
         if (selectedEtab?.place_id) {
           const storageKey = `checklist_actions_${selectedEtab.place_id}`;
@@ -731,10 +840,8 @@ const Dashboard = () => {
         }
         
         return updated;
-      });
-      
-      setRemovingActionId(null);
-    }, 300); // Animation de 300ms
+      }
+    });
   };
 
   // Charger les établissements depuis la DB (source de vérité unique)
@@ -1160,6 +1267,20 @@ const Dashboard = () => {
                   i18n.language === 'es' ? es :
                   i18n.language === 'pt' ? ptBR : enUS;
     return format(date, "dd/MM/yyyy", { locale });
+  };
+
+  // Fonction pour récupérer la date de publication réelle de l'avis (jamais la date d'importation)
+  const getReviewPublishedDate = (review: any): string | null => {
+    // Priorité 1 : published_at (date de publication réelle)
+    if (review.published_at) {
+      return review.published_at;
+    }
+    // Priorité 2 : create_time (date de création de l'avis depuis l'API)
+    if (review.create_time) {
+      return review.create_time;
+    }
+    // Ne jamais utiliser inserted_at (date d'importation) pour l'affichage
+    return null;
   };
 
   // Calculer l'évolution de la note depuis l'enregistrement
@@ -1663,7 +1784,7 @@ const Dashboard = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs bg-gray-100 px-2 py-1 rounded">{avis.source}</span>
-                          <span className="text-xs text-gray-500">{formatReviewDate(avis.published_at)}</span>
+                          <span className="text-xs text-gray-500">{formatReviewDate(getReviewPublishedDate(avis))}</span>
                         </div>
                       </div>
                       <p className="text-sm text-gray-700 italic">"{extractOriginalText(avis.text) || t("dashboard.noComment")}"</p>
@@ -1698,7 +1819,7 @@ const Dashboard = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs bg-gray-100 px-2 py-1 rounded">{avis.source}</span>
-                          <span className="text-xs text-gray-500">{formatReviewDate(avis.published_at)}</span>
+                          <span className="text-xs text-gray-500">{formatReviewDate(getReviewPublishedDate(avis))}</span>
                         </div>
                       </div>
                       <p className="text-sm text-gray-700 italic">"{extractOriginalText(avis.text) || t("dashboard.noComment")}"</p>
@@ -2731,41 +2852,70 @@ const Dashboard = () => {
                 <CardTitle className="text-xl">{t("dashboard.operationalChecklist")}</CardTitle>
                 <p className="text-sm text-gray-600">{t("dashboard.concreteActions")}</p>
               </div>
-              {completedActionsCount > 0 && (
-                <Badge className="bg-green-100 text-green-800 border-green-300">
-                  {completedActionsCount} {completedActionsCount === 1 ? 'action complétée' : 'actions complétées'}
-                </Badge>
-              )}
+              {checklistActions.length > 0 && (() => {
+                const completedCount = checklistActions.filter(a => a.completed).length;
+                const totalCount = checklistActions.length;
+                return (
+                  <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+                    {completedCount}/{totalCount} complétées
+                  </Badge>
+                );
+              })()}
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {checklistActions.length > 0 ? (
-                checklistActions.map((action) => (
+                checklistActions.map((action) => {
+                  // Déterminer les classes de style selon la difficulté
+                  // VERT (easy) : effort faible ET impact faible
+                  // BLEU (medium) : effort moyen OU impact moyen
+                  // ROUGE (hard) : effort élevé MAIS impact fort
+                  const difficultyClasses = 
+                    action.difficulty === 'easy' 
+                      ? 'bg-green-50 border-l-4 border-green-500' 
+                      : action.difficulty === 'medium' 
+                      ? 'bg-blue-50 border-l-4 border-blue-500' 
+                      : 'bg-red-50 border-l-4 border-red-500';
+                  
+                  return (
                   <div
                     key={action.id}
-                    className={`flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200 transition-all duration-300 ${
-                      removingActionId === action.id 
-                        ? 'opacity-0 transform scale-95 -translate-x-4' 
-                        : 'opacity-100 transform scale-100 translate-x-0'
-                    } hover:bg-gray-50`}
+                    className={`flex items-center justify-between p-3 rounded-lg ${difficultyClasses} transition-all duration-300 ${
+                      action.completed 
+                        ? 'opacity-60' 
+                        : 'opacity-100 hover:opacity-90'
+                    }`}
                   >
-                    <button
-                      onClick={() => handleChecklistActionComplete(action.id)}
-                      className="mt-0.5 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
-                      aria-label={`Marquer "${action.text}" comme complétée`}
-                    >
-                      {action.completed ? (
-                        <CheckSquare className="w-5 h-5 text-green-600" />
-                      ) : (
-                        <Square className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-                      )}
-                    </button>
-                    <span className={`text-sm flex-1 ${action.completed ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                    <span className={`text-sm flex-1 transition-all duration-200 ${
+                      action.completed 
+                        ? 'line-through text-gray-400' 
+                        : 'text-gray-900'
+                    }`}>
                       {action.text}
                     </span>
+                    <button
+                      onClick={() => handleChecklistActionComplete(action.id)}
+                      className={`flex-shrink-0 w-5 h-5 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded transition-all duration-200 ${
+                        action.completed 
+                          ? 'transform scale-100' 
+                          : 'hover:scale-110'
+                      }`}
+                      aria-label={action.completed ? `Décocher "${action.text}"` : `Marquer "${action.text}" comme complétée`}
+                    >
+                      {action.completed ? (
+                        <div className="w-5 h-5 bg-green-600 border-2 border-green-600 rounded flex items-center justify-center transition-all duration-200 transform scale-100">
+                          <svg className="w-3 h-3 text-white transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      ) : (
+                        <Square className="w-5 h-5 text-gray-400 hover:text-gray-600 transition-all duration-200 hover:border-gray-600 border-2 border-gray-300 rounded" />
+                      )}
+                    </button>
                   </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <p className="text-sm">{t("dashboard.noChecklistActionsAvailable") || "Aucune action disponible"}</p>
@@ -3584,7 +3734,10 @@ const Dashboard = () => {
                                     </Badge>
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-500">
-                                    {review.published_at ? format(new Date(review.published_at), 'dd/MM/yyyy') : '-'}
+                                    {(() => {
+                                      const publishedDate = getReviewPublishedDate(review);
+                                      return publishedDate ? format(new Date(publishedDate), 'dd/MM/yyyy') : '-';
+                                    })()}
                                   </td>
                                   <td className="px-4 py-3">
                                     <Badge className={hasResponse ? "bg-green-100 text-green-800" : isUrgent ? "bg-red-100 text-red-800" : "bg-orange-100 text-orange-800"}>
@@ -3688,7 +3841,10 @@ const Dashboard = () => {
                                     </Badge>
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-500">
-                                    {review.published_at ? format(new Date(review.published_at), 'dd/MM/yyyy') : '-'}
+                                    {(() => {
+                                      const publishedDate = getReviewPublishedDate(review);
+                                      return publishedDate ? format(new Date(publishedDate), 'dd/MM/yyyy') : '-';
+                                    })()}
                                   </td>
                                   <td className="px-4 py-3">
                                     <Badge className={hasResponse ? "bg-green-100 text-green-800" : isUrgent ? "bg-red-100 text-red-800" : "bg-orange-100 text-orange-800"}>
@@ -3779,7 +3935,10 @@ const Dashboard = () => {
                                     </Badge>
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-500">
-                                    {review.published_at ? format(new Date(review.published_at), 'dd/MM/yyyy') : '-'}
+                                    {(() => {
+                                      const publishedDate = getReviewPublishedDate(review);
+                                      return publishedDate ? format(new Date(publishedDate), 'dd/MM/yyyy') : '-';
+                                    })()}
                                   </td>
                                   <td className="px-4 py-3">
                                     <Badge className={hasResponse ? "bg-green-100 text-green-800" : isUrgent ? "bg-red-100 text-red-800" : "bg-orange-100 text-orange-800"}>
@@ -3870,7 +4029,10 @@ const Dashboard = () => {
                                     </Badge>
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-500">
-                                    {review.published_at ? format(new Date(review.published_at), 'dd/MM/yyyy') : '-'}
+                                    {(() => {
+                                      const publishedDate = getReviewPublishedDate(review);
+                                      return publishedDate ? format(new Date(publishedDate), 'dd/MM/yyyy') : '-';
+                                    })()}
                                   </td>
                                   <td className="px-4 py-3">
                                     <Badge className={hasResponse ? "bg-green-100 text-green-800" : isUrgent ? "bg-red-100 text-red-800" : "bg-orange-100 text-orange-800"}>

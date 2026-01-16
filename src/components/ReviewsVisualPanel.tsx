@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2, ThumbsUp, ThumbsDown, ShieldAlert, List, LineChart, PieChart } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line as RechartsLine, AreaChart, Area } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { getReviewsSummary, listAllReviews, listAll, deleteAllReviews } from "@/services/reviewsService";
@@ -116,14 +116,41 @@ export function ReviewsVisualPanel({
         
         setSummary(summaryData);
         
+        // Debug: Log first review to see available date fields
+        if (allReviews.length > 0) {
+          console.log('🔍 Debug - First review data:', {
+            id: allReviews[0].id,
+            published_at: allReviews[0].published_at,
+            create_time: allReviews[0].create_time,
+            inserted_at: allReviews[0].inserted_at,
+            raw: allReviews[0].raw,
+            raw_createTime: allReviews[0].raw?.createTime
+          });
+        }
+        
         // Map ALL reviews to table format
-        const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
-          authorName: getDisplayAuthor(review),
-          rating: review.rating || 0,
-          comment: extractOriginalText(review.text) || "",
-          platform: review.source || t("platforms.google"),
-          reviewDate: formatReviewDate(review)
-        }));
+        const mappedRows: ReviewsTableRow[] = allReviews.map((review, index) => {
+          // Utiliser formatReviewDate qui vérifie tous les champs possibles
+          const reviewDate = formatReviewDate(review);
+          
+          // Log pour debug si pas de date trouvée
+          if (!reviewDate && index < 3) {
+            console.warn(`⚠️ No date found for review ${index}:`, {
+              id: review.id,
+              published_at: review.published_at,
+              create_time: review.create_time,
+              raw_createTime: review.raw?.createTime
+            });
+          }
+          
+          return {
+            authorName: getDisplayAuthor(review),
+            rating: review.rating || 0,
+            comment: extractOriginalText(review.text) || "",
+            platform: review.source || t("platforms.google"),
+            reviewDate: reviewDate || '-' // Afficher '-' seulement si vraiment aucune date n'est trouvée
+          };
+        });
         
         setReviewsList(mappedRows);
       } catch (error) {
@@ -407,23 +434,6 @@ export function ReviewsVisualPanel({
 
             {/* Stars Distribution */}
             
-
-            {/* Monthly Trend */}
-            {summary.byMonth.length > 0 && <div>
-                <h3 className="text-lg font-medium mb-4">{t("dashboard.monthlyTrend")}</h3>
-                <div className="h-64" data-testid="chart-monthly-trend">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={summary.byMonth}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip labelFormatter={value => `${t("dashboard.month")}: ${value}`} formatter={(value, name) => [value, name === 'count' ? t("dashboard.totalReviews") : t("dashboard.averageRating")]} />
-                      <Area type="monotone" dataKey="count" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.3} />
-                      {summary.byMonth.some(m => m.avg) && <RechartsLine type="monotone" dataKey="avg" stroke="hsl(var(--destructive))" strokeWidth={2} />}
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>}
 
             {/* Reviews List with Filter */}
             <div>
