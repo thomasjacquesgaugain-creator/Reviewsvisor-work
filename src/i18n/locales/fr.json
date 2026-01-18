@@ -1004,6 +1004,7 @@
     "orClickToSelectFile": "ou cliquez pour sélectionner un fichier CSV ou JSON",
     "importReviews": "Importer avis",
     "noEstablishmentSelected": "Aucun établissement sélectionné. Ajoutez ou enregistrez un établissement avant d'importer des avis.",
+    "pleaseAddEstablishmentFirst": "Veuillez d'abord ajouter un établissement pour pouvoir importer des avis.",
     "establishment": "Établissement",
     "firstNameRequired": "Le prénom est obligatoire",
     "lastNameRequired": "Le nom est obligatoire",

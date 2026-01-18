@@ -851,6 +851,7 @@
     "orClickToSelectFile": "or click to select a CSV or JSON file",
     "importReviews": "Import reviews",
     "noEstablishmentSelected": "No establishment selected. Add or save an establishment before importing reviews.",
+    "pleaseAddEstablishmentFirst": "Please add an establishment first to import reviews.",
     "establishment": "Establishment",
     "firstNameRequired": "First name is required",
     "lastNameRequired": "Last name is required",

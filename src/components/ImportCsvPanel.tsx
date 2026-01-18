@@ -140,6 +140,7 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
               rating: rating,
               author_name: displayAuthor,
               published_at: publishedAt,
+              createTime: review.createTime, // CONSERVER createTime original
               source: "Google"
             };
             
@@ -147,6 +148,7 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
               console.log('👤 Auteur extrait:', displayAuthor);
               console.log('📅 Date extraite (createTime):', review.createTime, '→ published_at:', publishedAt);
               console.log('✅ Avis normalisé (premier):', parsedReview);
+              console.log('🔍 createTime conservé:', parsedReview.createTime);
             }
             
             return parsedReview;
@@ -282,9 +284,9 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
       console.log('📋 Premiers avis:', reviews.slice(0, 3));
 
       // Préparer les avis pour l'import
-      const reviewsToCreate = reviews.map(review => {
+      const reviewsToCreate = reviews.map((review, index) => {
         const nameParts = (review.author_name || "").split(" ");
-        return {
+        const reviewToCreate = {
           establishment_id: establishmentIdForService!,
           establishment_place_id: activeEstablishment!,
           establishment_name: establishmentName,
@@ -294,9 +296,30 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
           rating: review.rating,
           comment: review.text,
           review_date: review.published_at, // published_at contient déjà createTime mappé
+          createTime: review.createTime || review.published_at, // CONSERVER createTime original
           import_method: isJSON ? "json_upload" : "csv_upload",
         };
+        
+        // Debug pour les 3 premiers avis
+        if (index < 3) {
+          console.log(`📦 Review ${index} à créer:`, {
+            createTime: reviewToCreate.createTime,
+            review_date: reviewToCreate.review_date,
+            published_at: review.published_at,
+            review_original: review
+          });
+        }
+        
+        return reviewToCreate;
       });
+      
+      console.log('📋 Total reviewsToCreate:', reviewsToCreate.length);
+      if (reviewsToCreate.length > 0) {
+        console.log('🔍 Premier reviewToCreate:', {
+          createTime: reviewsToCreate[0].createTime,
+          review_date: reviewsToCreate[0].review_date
+        });
+      }
       
       // Import des avis dans la base de données
       const result = await bulkCreateReviews(reviewsToCreate);

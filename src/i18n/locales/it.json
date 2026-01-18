@@ -528,6 +528,7 @@
     "orClickToSelectFile": "o clicca per selezionare un file CSV o JSON",
     "importReviews": "Importa recensioni",
     "noEstablishmentSelected": "Nessuna struttura selezionata. Aggiungi o salva una struttura prima di importare le recensioni.",
+    "pleaseAddEstablishmentFirst": "Per favore, aggiungi prima una struttura per importare le recensioni.",
     "establishment": "Struttura",
     "firstNameRequired": "Il nome è obbligatorio",
     "lastNameRequired": "Il cognome è obbligatorio",

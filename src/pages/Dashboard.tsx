@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar, Download, ClipboardList, Bot, X, Reply, List, Sparkles, AlertCircle, Frown, ThumbsUp, Flag, Zap, Flame, Globe, Layers, CheckSquare, Square } from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar, Download, ClipboardList, Bot, X, Reply, List, Sparkles, AlertCircle, Frown, ThumbsUp, Flag, Zap, Flame, Globe, Layers, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,8 +50,6 @@ const Dashboard = () => {
     text: string;
     completed: boolean;
     completedAt?: string;
-    priority: 'high' | 'medium' | 'low';
-    difficulty: 'easy' | 'medium' | 'hard';
   }
 
   // États UI généraux
@@ -97,6 +95,53 @@ const Dashboard = () => {
   const [isValidatingReview, setIsValidatingReview] = useState<Record<number, boolean>>({});
   const [pendingReviews, setPendingReviews] = useState<any[]>([]);
   const [reponsesStats, setReponsesStats] = useState<{ validated: number; total: number }>({ validated: 0, total: 0 });
+  const [refreshCounter, setRefreshCounter] = useState(0); // Pour forcer le re-render
+  
+  // Fonction pour obtenir le nombre de validations depuis localStorage
+  const getValidatedCountFromLocalStorage = (placeId?: string): number => {
+    if (!placeId && !selectedEtab?.place_id) return 0;
+    const effectivePlaceId = placeId || selectedEtab?.place_id;
+    
+    try {
+      // Chercher toutes les clés localStorage qui contiennent des validations
+      const storageKey = `validatedReviews_${effectivePlaceId}`;
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const validatedReviews: any[] = JSON.parse(stored);
+        return validatedReviews.length;
+      }
+      
+      // Vérifier aussi l'ancien format (sans placeId)
+      const oldFormat = localStorage.getItem('validatedReviews');
+      if (oldFormat) {
+        const validatedReviews: any[] = JSON.parse(oldFormat);
+        return validatedReviews.length;
+      }
+      
+      return 0;
+    } catch (error) {
+      console.error('Error reading validated reviews from localStorage:', error);
+      return 0;
+    }
+  };
+  
+  // Écouter les changements dans localStorage pour mettre à jour le compteur
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setRefreshCounter(prev => prev + 1);
+    };
+    
+    // Écouter les événements de changement de localStorage
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Écouter les événements personnalisés de validation
+    window.addEventListener('response-validated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('response-validated', handleStorageChange);
+    };
+  }, []);
   const [currentReviewIndex, setCurrentReviewIndex] = useState<number>(0);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'replied'>('pending');
   const [selectedReviewForReply, setSelectedReviewForReply] = useState<any>(null);
@@ -104,9 +149,462 @@ const Dashboard = () => {
   const [isGeneratingResponse, setIsGeneratingResponse] = useState<Record<string, boolean>>({});
   const [aiGeneratedResponses, setAiGeneratedResponses] = useState<Record<string, string>>({});
 
+  const [actionPlanChecks, setActionPlanChecks] = useState<Record<string, boolean>>({});
+
+  const [targetRating, setTargetRating] = useState<number>(4.5);
+
+  const currentAvgRatingForTarget = useMemo(() => {
+    const hasAnyReviews = allReviewsForChart.length > 0;
+    return hasAnyReviews ? (insight?.avg_rating ?? 0) : 0;
+  }, [allReviewsForChart.length, insight?.avg_rating]);
+
+  const targetRatingDisplay = useMemo(() => targetRating.toFixed(1), [targetRating]);
+
+  const targetDifficulty = useMemo(() => {
+    const current = Number(currentAvgRatingForTarget.toFixed(1));
+    const target = Number(targetRating.toFixed(1));
+    const delta = Math.max(0, target - current);
+
+    // Progression exponentielle (non affichée) : utilisée pour refléter que chaque 0.1 devient plus "difficile"
+    // quand on se rapproche de 5.0.
+    const difficultyScore = Math.expm1(delta * 2);
+    void difficultyScore;
+
+    if (delta < 0.3) {
+      return {
+        label: 'Accessible',
+        badgeClassName: 'text-green-700 bg-green-50 border-green-200',
+        cardClassName: 'bg-green-50 border-green-200',
+        labelClassName: 'text-green-800'
+      };
+    }
+    if (delta < 0.5) {
+      return {
+        label: 'Réaliste',
+        badgeClassName: 'text-blue-700 bg-blue-50 border-blue-200',
+        cardClassName: 'bg-blue-50 border-blue-200',
+        labelClassName: 'text-blue-800'
+      };
+    }
+    if (delta < 0.8) {
+      return {
+        label: 'Atteignable',
+        badgeClassName: 'text-orange-700 bg-orange-50 border-orange-200',
+        cardClassName: 'bg-orange-50 border-orange-200',
+        labelClassName: 'text-orange-800'
+      };
+    }
+    return {
+      label: 'Ambitieux',
+      badgeClassName: 'text-red-700 bg-red-50 border-red-200',
+      cardClassName: 'bg-red-50 border-red-200',
+      labelClassName: 'text-red-800'
+    };
+  }, [currentAvgRatingForTarget, targetRating]);
+
+  const targetDateText = useMemo(() => {
+    const current = Number(currentAvgRatingForTarget.toFixed(1));
+    const target = Number(targetRating.toFixed(1));
+    const delta = Math.max(0, target - current);
+
+    const now = Date.now();
+    const ninetyDaysMs = 90 * 24 * 60 * 60 * 1000;
+    const last90DaysCount = allReviewsForChart.reduce((acc, r: any) => {
+      const ds = r?.published_at || r?.create_time || r?.raw?.createTime || r?.inserted_at;
+      const ts = ds ? new Date(ds).getTime() : 0;
+      if (ts > 0 && now - ts <= ninetyDaysMs) return acc + 1;
+      return acc;
+    }, 0);
+    const reviewsPerMonth = last90DaysCount / 3;
+
+    if (delta < 0.3) return "D'ici 1 mois";
+    if (delta < 0.5) return "D'ici 2 mois";
+
+    if (delta < 0.8) {
+      // Si peu d'avis/mois, viser plutôt le haut de la fourchette
+      if (reviewsPerMonth > 0 && reviewsPerMonth < 5) return "D'ici 4 mois";
+      return "D'ici 3-4 mois";
+    }
+
+    // Ambitieux
+    return "D'ici 6 mois ou plus";
+  }, [currentAvgRatingForTarget, targetRating, allReviewsForChart]);
+
+  useEffect(() => {
+    const minTarget = Math.min(5, Math.max(1, currentAvgRatingForTarget));
+    setTargetRating(prev => (prev < minTarget ? minTarget : prev));
+  }, [currentAvgRatingForTarget]);
+
   // Checklist opérationnelle
   const [checklistActions, setChecklistActions] = useState<ChecklistAction[]>([]);
   const [completedActionsCount, setCompletedActionsCount] = useState<number>(0);
+  const [removingActionId, setRemovingActionId] = useState<string | null>(null);
+
+  const [progressBaselinePlaceId, setProgressBaselinePlaceId] = useState<string | null>(null);
+  const [progressBaselineRating, setProgressBaselineRating] = useState<number | null>(null);
+
+  const actionPlanForProgress = useMemo(() => {
+    try {
+      return generateActionPlan(insight, allReviewsForChart);
+    } catch {
+      return [];
+    }
+  }, [insight, allReviewsForChart]);
+
+  useEffect(() => {
+    const currentEstab = selectedEtab || selectedEstablishment;
+    const placeId = currentEstab?.place_id ?? null;
+    if (!placeId) return;
+
+    const hasReviews = allReviewsForChart.length > 0;
+    const currentRating = Number(currentAvgRatingForTarget.toFixed(1));
+
+    // Reset baseline when switching establishment
+    if (progressBaselinePlaceId !== placeId) {
+      setProgressBaselinePlaceId(placeId);
+      setProgressBaselineRating(hasReviews && currentRating > 0 ? currentRating : null);
+      return;
+    }
+
+    // Initialize baseline once when missing
+    if (progressBaselineRating == null) {
+      if (hasReviews && currentRating > 0) {
+        setProgressBaselineRating(currentRating);
+      }
+      return;
+    }
+
+    // Si la baseline a été initialisée trop tôt (ex: 0 avant chargement des avis), la corriger.
+    if (progressBaselineRating === 0 && hasReviews && currentRating > 0) {
+      setProgressBaselineRating(currentRating);
+    }
+  }, [
+    selectedEtab,
+    selectedEstablishment,
+    currentAvgRatingForTarget,
+    progressBaselinePlaceId,
+    progressBaselineRating,
+    allReviewsForChart.length,
+  ]);
+
+  const progressionStats = useMemo(() => {
+    const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+
+    // 1) Checklist opérationnelle (25%)
+    const checklistTotal = checklistActions.length;
+    const checklistChecked = completedActionsCount;
+    const checklistRatio = checklistTotal > 0 ? clamp01(checklistChecked / checklistTotal) : 0;
+
+    // 2) Plan d'actions (25%)
+    const planKeys = actionPlanForProgress.map(a => `${a.title}__${a.issue}`);
+    const planKeysSet = new Set(planKeys);
+    const planTotal = planKeys.length;
+    const planChecked = Object.entries(actionPlanChecks).reduce((acc, [k, v]) => {
+      if (!v) return acc;
+      return planKeysSet.has(k) ? acc + 1 : acc;
+    }, 0);
+    const planRatio = planTotal > 0 ? clamp01(planChecked / planTotal) : 0;
+
+    // 3) Réponses validées (25%)
+    const totalAvis = allReviewsForChart.length;
+    const validated = reponsesStats.validated || 0;
+    const responsesRatio = totalAvis > 0 ? clamp01(validated / totalAvis) : 0;
+
+    // 4) Évolution de la note vers l'objectif (25%)
+    const noteInitiale = progressBaselineRating;
+    const noteActuelle = Number(currentAvgRatingForTarget.toFixed(1));
+    const noteCible = Number(targetRating.toFixed(1));
+    const denom = noteInitiale != null ? (noteCible - noteInitiale) : 0;
+    const ratingRatio = denom > 0 && noteInitiale != null && noteActuelle > noteInitiale
+      ? clamp01((noteActuelle - noteInitiale) / denom)
+      : 0;
+
+    let progressionPourcentage = 0;
+    progressionPourcentage += checklistRatio * 25;
+    progressionPourcentage += planRatio * 25;
+    progressionPourcentage += responsesRatio * 25;
+    progressionPourcentage += ratingRatio * 25;
+    progressionPourcentage = Math.max(0, Math.min(100, progressionPourcentage));
+
+    return {
+      percentage: progressionPourcentage,
+      checklistRatio,
+      planRatio,
+      responsesRatio,
+      ratingRatio,
+    };
+  }, [
+    checklistActions.length,
+    completedActionsCount,
+    actionPlanForProgress,
+    actionPlanChecks,
+    progressBaselineRating,
+    currentAvgRatingForTarget,
+    targetRating,
+    reponsesStats,
+    allReviewsForChart.length,
+  ]);
+
+  const establishmentContext = useMemo(() => {
+    const normalize = (s: string) => (s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+
+    const sectorSignals = {
+      restauration: ['cuisine', 'plat', 'plats', 'serveur', 'serveuse', 'portion', 'goût', 'gout', 'menu', 'table', 'repas', 'frites', 'dessert'],
+      coiffure: ['coupe', 'couleur', 'brushing', 'coiffeur', 'coiffeuse', 'cheveux', 'shampooing', 'balayage'],
+      sport: ['equipement', 'équipement', 'machines', 'machine', 'coach', 'cours', 'vestiaires', 'salle', 'fitness'],
+      commerce: ['produit', 'produits', 'stock', 'choix', 'vendeur', 'vendeuse', 'boutique', 'magasin', 'caisse'],
+      hotel: ['chambre', 'lit', 'petit-dejeuner', 'petit déjeuner', 'reception', 'réception', 'hotel', 'hôtel', 'sejour', 'séjour'],
+    } as const;
+
+    const scores: Record<string, number> = {
+      restauration: 0,
+      coiffure: 0,
+      sport: 0,
+      commerce: 0,
+      hotel: 0,
+    };
+
+    const sample = allReviewsForChart.slice(0, 200);
+    sample.forEach((r: any) => {
+      const txt = normalize(extractOriginalText(r?.text) || r?.text || '');
+      if (!txt) return;
+      (Object.keys(sectorSignals) as Array<keyof typeof sectorSignals>).forEach((k) => {
+        if (sectorSignals[k].some(s => txt.includes(normalize(s)))) scores[k] += 1;
+      });
+    });
+
+    const entries = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+    const [bestKey, bestScore] = entries[0] || ['general', 0];
+    const sector = bestScore >= 3 ? bestKey : 'general';
+
+    return { sector } as { sector: 'restauration' | 'coiffure' | 'sport' | 'commerce' | 'hotel' | 'general' };
+  }, [allReviewsForChart]);
+
+  const linkedKeywords = useMemo(() => {
+    const issues = insight?.top_issues || [];
+    const themes = issues
+      .map((i: any) => (i?.theme || i || '').toString().toLowerCase())
+      .filter(Boolean);
+
+    const keywords: string[] = [];
+    const add = (...words: string[]) => {
+      words.forEach(w => {
+        const s = (w || '').toLowerCase().trim();
+        if (!s) return;
+        if (!keywords.includes(s)) keywords.push(s);
+      });
+    };
+
+    // Mots-clés universels (tous secteurs)
+    add(
+      'attente', 'attentes', 'lent', 'lente', 'lents', 'lentes', 'long', 'rapide',
+      'cher', 'chère', 'chers', 'chères', 'prix', 'tarif',
+      'accueil', 'service', 'services', 'personnel', 'staff',
+      'qualité', 'qualite', 'professionnel',
+      'propre', 'propreté', 'proprete', 'sale',
+      'ambiance', 'atmosphère', 'atmosphere'
+    );
+
+    // Mots-clés spécifiques selon le secteur détecté
+    switch (establishmentContext.sector) {
+      case 'restauration':
+        add('cuisine', 'plat', 'plats', 'froid', 'froide', 'froids', 'froides', 'goût', 'gout', 'portion', 'serveur', 'serveuse');
+        break;
+      case 'coiffure':
+        add('coupe', 'couleur', 'brushing', 'coiffeur', 'coiffeuse', 'cheveux');
+        break;
+      case 'sport':
+        add('équipement', 'equipement', 'machines', 'machine', 'coach', 'cours', 'vestiaires');
+        break;
+      case 'commerce':
+        add('produit', 'produits', 'stock', 'choix', 'vendeur', 'vendeuse');
+        break;
+      case 'hotel':
+        add('chambre', 'lit', 'petit-déjeuner', 'petit déjeuner', 'réception', 'reception');
+        break;
+      default:
+        break;
+    }
+
+    // Prioriser les thèmes d'insights (top issues) en ajoutant quelques tokens nettoyés
+    themes.forEach((t: string) => {
+      if (t.includes('service') || t.includes('attente') || t.includes('wait')) {
+        add('attente', 'service', 'lent', 'lente');
+      } else if (t.includes('prix') || t.includes('cher') || t.includes('chère') || t.includes('chere') || t.includes('tarif')) {
+        add('prix', 'cher', 'chère', 'tarif');
+      } else if (t.includes('propreté') || t.includes('proprete') || t.includes('sale') || t.includes('nettoyage')) {
+        add('propreté', 'sale', 'nettoyage');
+      } else if (t.includes('ambiance') || t.includes('bruit') || t.includes('atmos')) {
+        add('ambiance', 'bruit');
+      } else {
+        const clean = t.replace(/[^a-z0-9àâçéèêëîïôùûüÿñæœ\s-]/gi, ' ').trim();
+        if (clean) add(...clean.split(/\s+/).slice(0, 2));
+      }
+    });
+
+    return keywords.slice(0, 20);
+  }, [insight, establishmentContext.sector]);
+
+  const linkedReviews = useMemo(() => {
+    const normalize = (s: string) => (s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+    const kws = linkedKeywords.map(k => normalize(k)).filter(Boolean);
+    const negativeHints = [
+      'decu',
+      'déçu',
+      'decevant',
+      'décevant',
+      'mauvais',
+      'horrible',
+      'inadmissible',
+      'pas bon',
+      'pas bonne',
+      'trop',
+      'dommage',
+      'probleme',
+      'problème',
+      'a eviter',
+      'à éviter',
+    ].map(normalize);
+    const containsWholeWord = (text: string, term: string) => {
+      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`, 'giu');
+      return re.test(text);
+    };
+    const hasKw = (txt: string) => {
+      const n = normalize(txt);
+      return kws.some(k => k && containsWholeWord(n, k));
+    };
+    const hasNegativeHint = (txt: string) => {
+      const n = normalize(txt);
+      return negativeHints.some(h => h && n.includes(h));
+    };
+    const getTs = (r: any) => {
+      const ds = r?.published_at || r?.create_time || r?.raw?.createTime || r?.inserted_at;
+      const t = ds ? new Date(ds).getTime() : 0;
+      return Number.isFinite(t) ? t : 0;
+    };
+    const negativeOnly = allReviewsForChart.filter((r: any) => {
+      const rating = r?.rating ?? 0;
+      return rating <= 3;
+    });
+
+    const sorted = [...negativeOnly].sort((a, b) => getTs(b) - getTs(a));
+    const filtered = sorted.filter(r => {
+      const txt = extractOriginalText(r?.text) || r?.text || '';
+      if (!txt || !txt.toString().trim()) return false;
+      if (kws.length > 0) return hasKw(txt);
+      return hasNegativeHint(txt);
+    });
+
+    return filtered.slice(0, 3);
+  }, [allReviewsForChart, linkedKeywords]);
+
+  const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const highlightReviewText = (text: string) => {
+    const raw = (text || '').toString();
+    if (!raw) return raw;
+
+    // Surlignage contextuel (universel + spécifique secteur + top issues) sur mots entiers.
+    // Exemple évité: "excellent" ne doit pas surligner "lent".
+    const terms = linkedKeywords
+      .map(t => (t || '').toString().trim())
+      .filter(Boolean);
+    if (!terms.length) return raw;
+
+    const escaped = terms
+      .slice()
+      .sort((a, b) => b.length - a.length)
+      .map(escapeRegExp)
+      .join('|');
+    if (!escaped) return raw;
+
+    // Bornes de mot unicode (lettres/chiffres) pour éviter les match partiels.
+    const re = new RegExp(`(?<![\\p{L}\\p{N}_])(${escaped})(?![\\p{L}\\p{N}_])`, 'giu');
+    const parts = raw.split(re);
+    return parts.map((p, idx) => {
+      // Avec split + groupe capturant: les matchs sont aux index impairs.
+      if (idx % 2 === 1) {
+        return (
+          <mark key={idx} className="bg-yellow-200 text-gray-900 px-0.5 rounded">
+            {p}
+          </mark>
+        );
+      }
+      return <React.Fragment key={idx}>{p}</React.Fragment>;
+    });
+  };
+
+  const impactStats = useMemo(() => {
+    const normalize = (s: string) => (s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+    const neg = allReviewsForChart.filter((r: any) => (r?.rating ?? 0) <= 3);
+
+    const buckets = [
+      {
+        key: 'wait',
+        label: "Temps d'attente",
+        maxImpact: 0.3,
+        keywords: ['attente', 'attendre', 'lent', 'lente', 'lenteur', 'retard', 'queue'],
+      },
+      {
+        key: 'service',
+        label: 'Accueil/Service',
+        maxImpact: 0.2,
+        keywords: ['service', 'serveur', 'serveuse', 'accueil', 'accueillant', 'impoli', 'désagréable', 'desagreable'],
+      },
+      {
+        key: 'quality',
+        label: 'Qualité cuisine',
+        maxImpact: 0.2,
+        keywords: ['froid', 'froide', 'tiède', 'tiede', 'cuisson', 'fade', 'qualité', 'qualite', 'cuisine'],
+      },
+      {
+        key: 'price',
+        label: 'Prix',
+        maxImpact: 0.1,
+        keywords: ['prix', 'cher', 'chère', 'chere', 'coûteux', 'couteux'],
+      },
+    ] as const;
+
+    const counts: Record<string, number> = {};
+    buckets.forEach(b => (counts[b.key] = 0));
+
+    neg.forEach((r: any) => {
+      const txt = normalize(extractOriginalText(r?.text) || r?.text || '');
+      if (!txt) return;
+      buckets.forEach(b => {
+        const hit = b.keywords.some(k => txt.includes(normalize(k)));
+        if (hit) counts[b.key] += 1;
+      });
+    });
+
+    const maxCount = Math.max(1, ...Object.values(counts));
+    const lines = buckets.map(b => {
+      const c = counts[b.key] || 0;
+      const weight = Math.min(1, c / Math.max(1, maxCount));
+      const impact = Number((b.maxImpact * weight).toFixed(2));
+      return {
+        key: b.key,
+        label: b.label,
+        impact,
+        maxImpact: b.maxImpact,
+        count: c,
+        pct: b.maxImpact > 0 ? (impact / b.maxImpact) * 100 : 0,
+      };
+    });
+
+    const current = Number(currentAvgRatingForTarget.toFixed(1));
+    const totalImpact = lines.reduce((acc, l) => acc + l.impact, 0);
+    const projectedMid = Math.min(5, current + totalImpact);
+    const projectedLow = Math.min(5, current + totalImpact * 0.85);
+    const projectedHigh = Math.min(5, current + totalImpact * 1.0);
+
+    return {
+      lines,
+      current,
+      projectedLow,
+      projectedHigh,
+    };
+  }, [allReviewsForChart, currentAvgRatingForTarget]);
 
   // États supplémentaires
   const [isDownloadingReport, setIsDownloadingReport] = useState(false);
@@ -280,6 +778,59 @@ const Dashboard = () => {
     }
 
     const advice: string[] = [];
+
+    const isHRRelated = (text: string): boolean => {
+      const s = (text || '').toLowerCase();
+      return [
+        'licenc',
+        'sanction',
+        'recrut',
+        'embauch',
+        'augmentation',
+        'augmenter le salaire',
+        'prime',
+        'bonus',
+        'rh',
+        'ressources humaines',
+        'disciplin',
+        'renvoyer',
+        'virer',
+        'formation',
+      ].some(k => s.includes(k));
+    };
+
+    const softenAdvice = (text: string): string => {
+      let t = (text || '').trim();
+
+      t = t.replace(/\bvous devez\b/gi, 'tu pourrais');
+      t = t.replace(/\bil faut\b/gi, 'une bonne idée serait de');
+      t = t.replace(/\btu dois\b/gi, 'tu pourrais');
+      t = t.replace(/\bimpérativement\b/gi, 'si possible');
+
+      t = t.replace(
+        /C'est une tendance à analyser\b/gi,
+        'Tu pourrais essayer de creuser ce point, pour comprendre ce qui se passe vraiment'
+      );
+      t = t.replace(/C'est une tendance à surveiller\b/gi, 'Pourquoi ne pas garder un œil bienveillant sur ce point');
+      t = t.replace(/C'est un point récurrent à analyser\b/gi, 'Tu pourrais essayer de regarder ce point de plus près');
+      t = t.replace(/C'est un point (secondaire )?à analyser\b/gi, 'Tu pourrais essayer d’explorer ce sujet tranquillement');
+      t = t.replace(/C'est un point secondaire à surveiller\b/gi, 'Pourquoi ne pas garder ce point en tête');
+
+      t = t.replace(
+        /^Tu réponds à moins de (\d+)% des avis\./i,
+        'Tu pourrais essayer de répondre un peu plus souvent aux avis (actuellement autour de $1%).'
+      );
+      t = t.replace(
+        /^Tu réponds à (\d+)% des avis\./i,
+        'Bravo, tu réponds à $1% des avis. Une bonne idée serait de continuer comme ça.'
+      );
+
+      if (/\bdoit\b/i.test(t) && !t.toLowerCase().includes('doit être')) {
+        t = t.replace(/\bdoit\b/gi, 'pourrait');
+      }
+
+      return t;
+    };
     const topIssues = insightData.top_issues || [];
     const topStrengths = insightData.top_praises || [];
     const avgRating = insightData.avg_rating || 0;
@@ -455,61 +1006,18 @@ const Dashboard = () => {
       }
     }
 
-    // Limiter à 10 conseils maximum
-    return advice.slice(0, 10);
+    const filtered = advice
+      .map(softenAdvice)
+      .filter(a => a && a.trim().length > 0)
+      .filter(a => !isHRRelated(a));
+
+    return filtered.slice(0, 10);
   };
 
   // Fonction pour générer des actions de checklist basées sur les avis réels
   // Ton : tutoiement, actions concrètes et rapides que le gérant peut faire lui-même
   // Règle stricte : actions terrain uniquement - JAMAIS suggérer de décisions RH/financières/stratégiques
   // Interdit absolu : recruter, embaucher, former, licencier, changer les prix, modifier l'offre, augmenter les portions
-  // Fonction pour évaluer automatiquement l'effort et l'impact d'une action
-  const evaluateActionDifficulty = (actionText: string): 'easy' | 'medium' | 'hard' => {
-    const text = actionText.toLowerCase();
-    
-    // Critères d'EFFORT (temps, ressources, complexité)
-    const lowEffortKeywords = ['réponds', 'répondre', 'remercie', 'remercier', 'note', 'noter'];
-    const mediumEffortKeywords = ['briefe', 'briefer', 'fais un point', 'discute', 'discuter', 'vérifie', 'vérifier', 'teste', 'tester'];
-    const highEffortKeywords = ['observe', 'observer', 'analyse', 'analyser', 'identifie', 'identifier'];
-    
-    // Critères d'IMPACT (satisfaction client, amélioration service, résultats business)
-    const lowImpactKeywords = ['réponds', 'répondre', 'remercie', 'remercier'];
-    const mediumImpactKeywords = ['briefe', 'briefer', 'fais un point', 'discute', 'discuter', 'vérifie', 'vérifier', 'teste', 'tester'];
-    const highImpactKeywords = ['observe', 'observer', 'analyse', 'analyser', 'identifie', 'identifier', 'problème prioritaire', 'points de blocage', 'causes racines'];
-    
-    // Évaluer l'effort
-    let effort: 'low' | 'medium' | 'high' = 'medium';
-    if (lowEffortKeywords.some(keyword => text.includes(keyword))) {
-      effort = 'low';
-    } else if (highEffortKeywords.some(keyword => text.includes(keyword))) {
-      effort = 'high';
-    } else if (mediumEffortKeywords.some(keyword => text.includes(keyword))) {
-      effort = 'medium';
-    }
-    
-    // Évaluer l'impact
-    let impact: 'low' | 'medium' | 'high' = 'medium';
-    if (lowImpactKeywords.some(keyword => text.includes(keyword))) {
-      impact = 'low';
-    } else if (highImpactKeywords.some(keyword => text.includes(keyword))) {
-      impact = 'high';
-    } else if (mediumImpactKeywords.some(keyword => text.includes(keyword))) {
-      impact = 'medium';
-    }
-    
-    // Règles de coloration :
-    // VERT (easy) : effort faible ET impact faible
-    // BLEU (medium) : effort moyen OU impact moyen
-    // ROUGE (hard) : effort élevé MAIS impact fort
-    if (effort === 'low' && impact === 'low') {
-      return 'easy';
-    } else if (effort === 'high' && impact === 'high') {
-      return 'hard';
-    } else {
-      return 'medium';
-    }
-  };
-
   // Autorisé : répondre aux avis, observer, tester, vérifier, briefer l'équipe, discuter, noter
   const generateChecklistActions = (insightData: any, reviewsData: any[], validatedReviewsSet: Set<number>): ChecklistAction[] => {
     if (!insightData || !reviewsData || reviewsData.length === 0) {
@@ -543,38 +1051,29 @@ const Dashboard = () => {
     // Action 1 : Répondre aux avis en attente
     if (pendingReviews.length > 0) {
       const count = Math.min(pendingReviews.length, 10);
-      const actionText = `Réponds à ${count} avis clients`;
       actions.push({
         id: `action-respond-${count}`,
-        text: actionText,
-        completed: false,
-        priority: 'medium',
-        difficulty: evaluateActionDifficulty(actionText)
+        text: `Réponds à ${count} avis clients`,
+        completed: false
       });
     }
 
     // Action 2 : Répondre aux avis négatifs récents
     if (recentNegativeReviews.length > 0) {
       const count = Math.min(recentNegativeReviews.length, 3);
-      const actionText = `Réponds aux ${count} derniers avis négatifs`;
       actions.push({
         id: `action-respond-negative-${count}`,
-        text: actionText,
-        completed: false,
-        priority: 'high',
-        difficulty: evaluateActionDifficulty(actionText)
+        text: `Réponds aux ${count} derniers avis négatifs`,
+        completed: false
       });
     }
 
     // Action 3 : Répondre aux avis de la semaine
     if (thisWeekPendingReviews.length > 0) {
-      const actionText = `Réponds aux avis en attente de cette semaine (${thisWeekPendingReviews.length})`;
       actions.push({
         id: `action-respond-week-${thisWeekPendingReviews.length}`,
-        text: actionText,
-        completed: false,
-        priority: 'medium',
-        difficulty: evaluateActionDifficulty(actionText)
+        text: `Réponds aux avis en attente de cette semaine (${thisWeekPendingReviews.length})`,
+        completed: false
       });
     }
 
@@ -588,13 +1087,10 @@ const Dashboard = () => {
       });
       if (recentPositive.length > 0) {
         const count = Math.min(recentPositive.length, 5);
-        const actionText = `Remercie les ${count} derniers clients qui ont laissé 5 étoiles`;
         actions.push({
           id: `action-thank-positive-${count}`,
-          text: actionText,
-          completed: false,
-          priority: 'low',
-          difficulty: evaluateActionDifficulty(actionText)
+          text: `Remercie les ${count} derniers clients qui ont laissé 5 étoiles`,
+          completed: false
         });
       }
     }
@@ -607,124 +1103,85 @@ const Dashboard = () => {
       
       if (issueTheme.includes('service') || issueTheme.includes('attente') || issueTheme.includes('lent')) {
         if (issueCount >= 5) {
-          const briefText = 'Briefe l\'équipe sur la rapidité de service';
           actions.push({
             id: 'action-brief-speed',
-            text: briefText,
-            completed: false,
-            priority: 'high',
-            difficulty: evaluateActionDifficulty(briefText)
+            text: 'Briefe l\'équipe sur la rapidité de service',
+            completed: false
           });
-          const observeText = 'Observe le service ce soir pour identifier les points de blocage';
           actions.push({
             id: 'action-observe-service',
-            text: observeText,
-            completed: false,
-            priority: 'high',
-            difficulty: evaluateActionDifficulty(observeText)
+            text: 'Observe le service ce soir pour identifier les points de blocage',
+            completed: false
           });
         } else {
-          const pointText = 'Fais un point avec l\'équipe sur le problème d\'attente';
           actions.push({
             id: 'action-point-wait',
-            text: pointText,
-            completed: false,
-            priority: 'medium',
-            difficulty: evaluateActionDifficulty(pointText)
+            text: 'Fais un point avec l\'équipe sur le problème d\'attente',
+            completed: false
           });
         }
-        const testText = 'Teste le temps d\'attente réel aux heures de pointe';
         actions.push({
           id: 'action-test-wait-time',
-          text: testText,
-          completed: false,
-          priority: issueCount >= 5 ? 'high' : 'medium',
-          difficulty: evaluateActionDifficulty(testText)
+          text: 'Teste le temps d\'attente réel aux heures de pointe',
+          completed: false
         });
       } else if (issueTheme.includes('qualité') || issueTheme.includes('plat') || issueTheme.includes('cuisson') || issueTheme.includes('froid') || issueTheme.includes('chaud')) {
         if (issueCount >= 5) {
-          const checkText = 'Vérifie en cuisine si le problème de qualité est résolu';
           actions.push({
             id: 'action-check-quality',
-            text: checkText,
-            completed: false,
-            priority: 'high',
-            difficulty: evaluateActionDifficulty(checkText)
+            text: 'Vérifie en cuisine si le problème de qualité est résolu',
+            completed: false
           });
-          const observeCuisineText = 'Observe la préparation des plats en cuisine ce soir';
           actions.push({
             id: 'action-observe-cuisine',
-            text: observeCuisineText,
-            completed: false,
-            priority: 'high',
-            difficulty: evaluateActionDifficulty(observeCuisineText)
+            text: 'Observe la préparation des plats en cuisine ce soir',
+            completed: false
           });
         } else {
-          const checkSingleText = 'Vérifie en cuisine si le problème de qualité signalé est résolu';
           actions.push({
             id: 'action-check-quality-single',
-            text: checkSingleText,
-            completed: false,
-            priority: 'medium',
-            difficulty: evaluateActionDifficulty(checkSingleText)
+            text: 'Vérifie en cuisine si le problème de qualité signalé est résolu',
+            completed: false
           });
         }
       } else if (issueTheme.includes('prix') || issueTheme.includes('cher') || issueTheme.includes('coûteux')) {
-        const notePriceText = 'Note les réactions clients sur les prix pendant le service';
         actions.push({
           id: 'action-note-price-reactions',
-          text: notePriceText,
-          completed: false,
-          priority: 'medium',
-          difficulty: evaluateActionDifficulty(notePriceText)
+          text: 'Note les réactions clients sur les prix pendant le service',
+          completed: false
         });
       } else if (issueTheme.includes('accueil') || issueTheme.includes('sourire') || issueTheme.includes('froid') || issueTheme.includes('sympathie')) {
         if (issueCount >= 3) {
-          const discussText = 'Discute avec l\'équipe de l\'importance du sourire et de l\'accueil chaleureux';
           actions.push({
             id: 'action-discuss-welcome',
-            text: discussText,
-            completed: false,
-            priority: 'medium',
-            difficulty: evaluateActionDifficulty(discussText)
+            text: 'Discute avec l\'équipe de l\'importance du sourire et de l\'accueil chaleureux',
+            completed: false
           });
         } else {
-          const pointWelcomeText = 'Fais un point avec l\'équipe sur l\'accueil';
           actions.push({
             id: 'action-point-welcome',
-            text: pointWelcomeText,
-            completed: false,
-            priority: 'low',
-            difficulty: evaluateActionDifficulty(pointWelcomeText)
+            text: 'Fais un point avec l\'équipe sur l\'accueil',
+            completed: false
           });
         }
       } else if (issueTheme.includes('bruit') || issueTheme.includes('bruyant') || issueTheme.includes('ambiance') || issueTheme.includes('musique')) {
-        const identifyNoiseText = 'Identifie les sources de nuisance sonore ce soir';
         actions.push({
           id: 'action-identify-noise',
-          text: identifyNoiseText,
-          completed: false,
-          priority: 'medium',
-          difficulty: evaluateActionDifficulty(identifyNoiseText)
+          text: 'Identifie les sources de nuisance sonore ce soir',
+          completed: false
         });
       } else if (issueTheme.includes('propreté') || issueTheme.includes('sale') || issueTheme.includes('nettoyage')) {
         if (issueCount >= 3) {
-          const checkCleanText = 'Vérifie la propreté des tables et sanitaires ce soir';
           actions.push({
             id: 'action-check-cleanliness',
-            text: checkCleanText,
-            completed: false,
-            priority: 'medium',
-            difficulty: evaluateActionDifficulty(checkCleanText)
+            text: 'Vérifie la propreté des tables et sanitaires ce soir',
+            completed: false
           });
         } else {
-          const observeCleanText = 'Observe le nettoyage des tables entre les services';
           actions.push({
             id: 'action-observe-cleaning',
-            text: observeCleanText,
-            completed: false,
-            priority: 'low',
-            difficulty: evaluateActionDifficulty(observeCleanText)
+            text: 'Observe le nettoyage des tables entre les services',
+            completed: false
           });
         }
       }
@@ -733,38 +1190,28 @@ const Dashboard = () => {
     // Action 6 : Informer l'équipe du problème prioritaire (action générique récurrente)
     if (topIssues.length > 0) {
       const mainIssue = topIssues[0];
-      const issueCount = mainIssue.count || 0;
-      const informText = `Informe ton équipe du problème prioritaire : ${translateTheme(mainIssue.theme || mainIssue)}`;
       actions.push({
         id: 'action-inform-team',
-        text: informText,
-        completed: false,
-        priority: issueCount >= 5 ? 'high' : 'medium',
-        difficulty: evaluateActionDifficulty(informText)
+        text: `Informe ton équipe du problème prioritaire : ${translateTheme(mainIssue.theme || mainIssue)}`,
+        completed: false
       });
     }
 
     // Action 7 : Brief avec l'équipe (action générique récurrente)
     if (reviewsData.length >= 10) {
-      const briefTeamText = 'Fais un brief avec ton équipe sur les retours clients de la semaine';
       actions.push({
         id: 'action-brief-team',
-        text: briefTeamText,
-        completed: false,
-        priority: 'low',
-        difficulty: evaluateActionDifficulty(briefTeamText)
+        text: 'Fais un brief avec ton équipe sur les retours clients de la semaine',
+        completed: false
       });
     }
 
     // Action 8 : Analyser les patterns récurrents
     if (topIssues.length >= 2) {
-      const analyzeText = 'Analyse les patterns récurrents dans les avis pour identifier les causes racines';
       actions.push({
         id: 'action-analyze-patterns',
-        text: analyzeText,
-        completed: false,
-        priority: 'medium',
-        difficulty: evaluateActionDifficulty(analyzeText)
+        text: 'Analyse les patterns récurrents dans les avis pour identifier les causes racines',
+        completed: false
       });
     }
 
@@ -784,13 +1231,7 @@ const Dashboard = () => {
       
       if (storedActions) {
         const parsed = JSON.parse(storedActions);
-        // Ajouter une priorité et difficulté par défaut si elles manquent (pour les anciennes données)
-        const parsedWithDefaults = parsed.map((action: ChecklistAction) => ({
-          ...action,
-          priority: action.priority || 'medium',
-          difficulty: action.difficulty || 'medium'
-        }));
-        setChecklistActions(parsedWithDefaults);
+        setChecklistActions(parsed);
       } else {
         // Générer de nouvelles actions si aucune n'existe
         const newActions = generateChecklistActions(insight, allReviewsForChart, validatedReviews);
@@ -808,39 +1249,42 @@ const Dashboard = () => {
     }
   }, [selectedEtab?.place_id, insight, allReviewsForChart, validatedReviews]);
 
-  // Fonction pour cocher/décocher une action
+  // Fonction pour cocher une action
   const handleChecklistActionComplete = (actionId: string) => {
     setChecklistActions(prev => {
-      // Toggle le statut de l'action
-      const updated = prev.map(a => 
-        a.id === actionId 
-          ? { ...a, completed: !a.completed, completedAt: !a.completed ? new Date().toISOString() : undefined }
-          : a
-      );
-      
-      // Vérifier si toutes les actions sont complétées (5/5)
-      const allCompleted = updated.length === 5 && updated.every(a => a.completed);
-      
-      if (allCompleted) {
-        // Générer 5 nouvelles actions
-        const newActions = generateChecklistActions(insight, allReviewsForChart, validatedReviews);
-        
-        // Sauvegarder dans localStorage
-        if (selectedEtab?.place_id) {
-          const storageKey = `checklist_actions_${selectedEtab.place_id}`;
-          localStorage.setItem(storageKey, JSON.stringify(newActions));
-        }
-        
-        return newActions;
-      } else {
-        // Sauvegarder dans localStorage
-        if (selectedEtab?.place_id) {
-          const storageKey = `checklist_actions_${selectedEtab.place_id}`;
-          localStorage.setItem(storageKey, JSON.stringify(updated));
-        }
-        
-        return updated;
+      const updated = prev.map(action => {
+        if (action.id !== actionId) return action;
+        return { ...action, completed: !action.completed };
+      });
+
+      const toggledAction = updated.find(a => a.id === actionId);
+      if (toggledAction?.completed) {
+        setCompletedActionsCount(prevCount => {
+          const newCount = prevCount + 1;
+          if (selectedEtab?.place_id) {
+            const completedKey = `checklist_completed_${selectedEtab.place_id}`;
+            localStorage.setItem(completedKey, newCount.toString());
+          }
+          return newCount;
+        });
       }
+
+      const allCompleted = updated.length === 5 && updated.every(a => a.completed);
+      const finalActions = allCompleted
+        ? (() => {
+            const newActions = generateChecklistActions(insight, allReviewsForChart, validatedReviews)
+              .slice(0, 5)
+              .map(a => ({ ...a, completed: false }));
+            return newActions;
+          })()
+        : updated;
+
+      if (selectedEtab?.place_id) {
+        const storageKey = `checklist_actions_${selectedEtab.place_id}`;
+        localStorage.setItem(storageKey, JSON.stringify(finalActions));
+      }
+
+      return finalActions;
     });
   };
 
@@ -1173,6 +1617,68 @@ const Dashboard = () => {
       }
     };
     fetchInsights();
+
+    const currentEstab = selectedEtab || selectedEstablishment;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const scheduleRefresh = () => {
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+      }
+      refreshTimeout = setTimeout(() => {
+        fetchInsights();
+      }, 600);
+    };
+
+    if (user?.id && currentEstab?.place_id) {
+      channel = supabase
+        .channel(`dashboard-live-${currentEstab.place_id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'reviews',
+            filter: `place_id=eq.${currentEstab.place_id}`
+          },
+          (payload) => {
+            // Sécurité: vérifier user_id quand présent
+            const row: any = (payload.new || payload.old);
+            if (row?.user_id && row.user_id !== user.id) return;
+            scheduleRefresh();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'reponses',
+            filter: `etablissement_id=eq.${currentEstab.place_id}`
+          },
+          (payload) => {
+            const row: any = (payload.new || payload.old);
+            if (row?.user_id && row.user_id !== user.id) return;
+            scheduleRefresh();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'review_insights',
+            filter: `place_id=eq.${currentEstab.place_id}`
+          },
+          (payload) => {
+            const row: any = (payload.new || payload.old);
+            if (row?.user_id && row.user_id !== user.id) return;
+            scheduleRefresh();
+          }
+        )
+        .subscribe();
+    }
     
     // Listen to reviews:imported event to reload data
     const handleReviewsImported = () => {
@@ -1183,6 +1689,12 @@ const Dashboard = () => {
     
     return () => {
       window.removeEventListener('reviews:imported', handleReviewsImported);
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+      }
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [user?.id, selectedEstablishment?.place_id, selectedEtab?.place_id]);
 
@@ -1269,18 +1781,16 @@ const Dashboard = () => {
     return format(date, "dd/MM/yyyy", { locale });
   };
 
-  // Fonction pour récupérer la date de publication réelle de l'avis (jamais la date d'importation)
-  const getReviewPublishedDate = (review: any): string | null => {
-    // Priorité 1 : published_at (date de publication réelle)
-    if (review.published_at) {
-      return review.published_at;
-    }
-    // Priorité 2 : create_time (date de création de l'avis depuis l'API)
-    if (review.create_time) {
-      return review.create_time;
-    }
-    // Ne jamais utiliser inserted_at (date d'importation) pour l'affichage
-    return null;
+  const getReviewDisplayDate = (review: any): { dateStr: string | null; isImportDate: boolean } => {
+    const dateStr =
+      review?.published_at ||
+      review?.create_time ||
+      review?.raw?.createTime ||
+      review?.inserted_at ||
+      null;
+
+    const isImportDate = !!(dateStr && !review?.published_at && !review?.create_time && !review?.raw?.createTime);
+    return { dateStr, isImportDate };
   };
 
   // Calculer l'évolution de la note depuis l'enregistrement
@@ -1784,7 +2294,7 @@ const Dashboard = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs bg-gray-100 px-2 py-1 rounded">{avis.source}</span>
-                          <span className="text-xs text-gray-500">{formatReviewDate(getReviewPublishedDate(avis))}</span>
+                          <span className="text-xs text-gray-500">{formatReviewDate(avis.published_at)}</span>
                         </div>
                       </div>
                       <p className="text-sm text-gray-700 italic">"{extractOriginalText(avis.text) || t("dashboard.noComment")}"</p>
@@ -1819,7 +2329,7 @@ const Dashboard = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs bg-gray-100 px-2 py-1 rounded">{avis.source}</span>
-                          <span className="text-xs text-gray-500">{formatReviewDate(getReviewPublishedDate(avis))}</span>
+                          <span className="text-xs text-gray-500">{formatReviewDate(avis.published_at)}</span>
                         </div>
                       </div>
                       <p className="text-sm text-gray-700 italic">"{extractOriginalText(avis.text) || t("dashboard.noComment")}"</p>
@@ -2851,77 +3361,67 @@ const Dashboard = () => {
               <div>
                 <CardTitle className="text-xl">{t("dashboard.operationalChecklist")}</CardTitle>
                 <p className="text-sm text-gray-600">{t("dashboard.concreteActions")}</p>
-              </div>
-              {checklistActions.length > 0 && (() => {
-                const completedCount = checklistActions.filter(a => a.completed).length;
-                const totalCount = checklistActions.length;
-                return (
-                  <Badge className="bg-blue-100 text-blue-800 border-blue-300">
-                    {completedCount}/{totalCount} complétées
+                      </div>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-green-600 text-white border-green-600">
+                  {checklistActions.filter(a => a.completed).length}/{checklistActions.length || 5}
+                </Badge>
+                {completedActionsCount > 0 && (
+                  <Badge className="bg-green-100 text-green-800 border-green-300">
+                    {completedActionsCount} {completedActionsCount === 1 ? 'action complétée' : 'actions complétées'}
                   </Badge>
-                );
-              })()}
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+                <div className="space-y-2">
               {checklistActions.length > 0 ? (
-                checklistActions.map((action) => {
-                  // Déterminer les classes de style selon la difficulté
-                  // VERT (easy) : effort faible ET impact faible
-                  // BLEU (medium) : effort moyen OU impact moyen
-                  // ROUGE (hard) : effort élevé MAIS impact fort
-                  const difficultyClasses = 
-                    action.difficulty === 'easy' 
-                      ? 'bg-green-50 border-l-4 border-green-500' 
-                      : action.difficulty === 'medium' 
-                      ? 'bg-blue-50 border-l-4 border-blue-500' 
-                      : 'bg-red-50 border-l-4 border-red-500';
-                  
-                  return (
+                checklistActions.map((action) => (
                   <div
                     key={action.id}
-                    className={`flex items-center justify-between p-3 rounded-lg ${difficultyClasses} transition-all duration-300 ${
-                      action.completed 
-                        ? 'opacity-60' 
-                        : 'opacity-100 hover:opacity-90'
-                    }`}
+                    className={`flex items-start gap-3 p-3 rounded-lg border border-gray-200 border-l-4 transition-all duration-300 ${
+                      removingActionId === action.id 
+                        ? 'opacity-0 transform scale-95 -translate-x-4' 
+                        : 'opacity-100 transform scale-100 translate-x-0'
+                    } ${(() => {
+                      const text = (action.text || '').toLowerCase();
+                      if (text.includes('teste le temps d\'attente réel aux heures de pointe')) return 'border-l-red-500 bg-red-100 hover:bg-red-200';
+                      if (text.includes('briefe l\'équipe sur la rapidité de service')) return 'border-l-red-500 bg-red-100 hover:bg-red-200';
+                      if (text.includes('observe le service ce soir pour identifier les points de blocage')) return 'border-l-red-500 bg-red-100 hover:bg-red-200';
+                      if (text.includes('réponds à 10 avis clients')) return 'border-l-blue-500 bg-blue-100 hover:bg-blue-200';
+                      if (text.includes('informe ton équipe du problème prioritaire')) return 'border-l-blue-500 bg-blue-100 hover:bg-blue-200';
+                      return 'border-l-blue-500 bg-blue-100 hover:bg-blue-200';
+                    })()}`}
                   >
-                    <span className={`text-sm flex-1 transition-all duration-200 ${
-                      action.completed 
-                        ? 'line-through text-gray-400' 
-                        : 'text-gray-900'
-                    }`}>
+                    <span className={`text-sm flex-1 ${action.completed ? 'line-through text-gray-400' : 'text-gray-900'}`}>
                       {action.text}
                     </span>
                     <button
                       onClick={() => handleChecklistActionComplete(action.id)}
-                      className={`flex-shrink-0 w-5 h-5 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded transition-all duration-200 ${
-                        action.completed 
-                          ? 'transform scale-100' 
-                          : 'hover:scale-110'
-                      }`}
-                      aria-label={action.completed ? `Décocher "${action.text}"` : `Marquer "${action.text}" comme complétée`}
+                      className="mt-0.5 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                      aria-label={`Marquer "${action.text}" comme complétée`}
                     >
-                      {action.completed ? (
-                        <div className="w-5 h-5 bg-green-600 border-2 border-green-600 rounded flex items-center justify-center transition-all duration-200 transform scale-100">
-                          <svg className="w-3 h-3 text-white transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                      ) : (
-                        <Square className="w-5 h-5 text-gray-400 hover:text-gray-600 transition-all duration-200 hover:border-gray-600 border-2 border-gray-300 rounded" />
-                      )}
+                      <div
+                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                          action.completed
+                            ? 'border-green-600 bg-green-50'
+                            : 'border-gray-400 bg-white hover:border-gray-600'
+                        }`}
+                      >
+                        {action.completed ? (
+                          <Check className="w-4 h-4 text-green-600" />
+                        ) : null}
+                      </div>
                     </button>
                   </div>
-                  );
-                })
+                ))
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <p className="text-sm">{t("dashboard.noChecklistActionsAvailable") || "Aucune action disponible"}</p>
                   <p className="text-xs mt-1">{t("dashboard.analyzeEstablishmentToGetActions") || "Analysez votre établissement pour obtenir des actions personnalisées"}</p>
-                </div>
-              )}
+                  </div>
+                )}
             </div>
           </CardContent>
         </Card>}
@@ -2936,7 +3436,7 @@ const Dashboard = () => {
               <div className="flex flex-col items-center mb-2">
                 <Lightbulb className="w-5 h-5 text-yellow-500 mb-2" />
                 <span className="text-lg font-semibold">{t("dashboard.advisor")}</span>
-                      </div>
+              </div>
               <p className="text-sm text-gray-600">{t("dashboard.personalizedAdviceForEstablishment")}</p>
               <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'conseiller' ? null : 'conseiller'); }} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-yellow-50">
                 {openCard === 'conseiller' ? <ChevronUp className="w-3 h-3 text-yellow-500" /> : <ChevronDown className="w-3 h-3 text-yellow-500" />}
@@ -2950,14 +3450,14 @@ const Dashboard = () => {
               <div className="flex flex-col items-center mb-2">
                 <ClipboardList className="w-5 h-5 text-indigo-500 mb-2" />
                 <span className="text-lg font-semibold">{t("dashboard.actionPlan")}</span>
-                        </div>
+              </div>
               <p className="text-sm text-gray-600">{t("dashboard.followImprovementActions")}</p>
               <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'planActions' ? null : 'planActions'); }} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-indigo-50">
                 {openCard === 'planActions' ? <ChevronUp className="w-3 h-3 text-indigo-500" /> : <ChevronDown className="w-3 h-3 text-indigo-500" />}
               </Button>
-          </CardContent>
+            </CardContent>
           </Card>
-              </div>
+        </div>
 
         {/* Contenu Conseiller */}
         {openCard === 'conseiller' && <Card className="mb-8">
@@ -2976,7 +3476,7 @@ const Dashboard = () => {
                     <div className="text-center py-8 text-gray-500">
                       <p className="text-sm">{t("dashboard.noAdviceAvailable") || "Aucun conseil disponible"}</p>
                       <p className="text-xs mt-1">{t("dashboard.analyzeEstablishmentToGetAdvice") || "Analysez votre établissement pour obtenir des conseils personnalisés"}</p>
-                    </div>
+                </div>
                   );
                 }
 
@@ -2984,11 +3484,11 @@ const Dashboard = () => {
                   <div className="space-y-3">
                     {consultantAdvice.map((advice, index) => (
                       <div key={index} className="flex items-start gap-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                        <Lightbulb className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+                  <Lightbulb className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
                         <p className="text-sm text-gray-900 flex-1 leading-relaxed">{advice}</p>
-                      </div>
+                </div>
                     ))}
-                  </div>
+                </div>
                 );
               })()}
 
@@ -3019,7 +3519,7 @@ const Dashboard = () => {
                     <div className="text-center py-8 text-gray-500">
                       <p className="text-sm">{t("dashboard.noActionsAvailable") || "Aucune action disponible"}</p>
                       <p className="text-xs mt-1">{t("dashboard.analyzeEstablishmentToGetActions") || "Analysez votre établissement pour obtenir des actions personnalisées"}</p>
-                    </div>
+                </div>
                   );
                 }
 
@@ -3038,6 +3538,10 @@ const Dashboard = () => {
                         ? 'bg-green-100 text-green-800 border-green-300'
                         : action.status === 'inProgress'
                         ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                        : action.priority === 'high'
+                        ? 'bg-red-500 text-white border-red-500'
+                        : action.priority === 'low'
+                        ? 'bg-blue-500 text-white border-blue-500'
                         : 'border-gray-300 text-gray-700';
                       
                       const statusLabel = action.status === 'completed'
@@ -3063,17 +3567,44 @@ const Dashboard = () => {
                                 </Badge>
                                 <span className="text-xs text-gray-500">
                                   {translateTheme(action.issue)}
-                                </span>
-                              </div>
+                  </span>
+                </div>
+                    </div>
+                            <div className="flex flex-col items-end gap-2">
+                              <Badge 
+                                variant={action.status === 'completed' ? 'default' : 'outline'} 
+                                className={`text-xs ${statusBadgeClass}`}
+                              >
+                                {statusLabel}
+                              </Badge>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const key = `${action.title}__${action.issue}`;
+                                  setActionPlanChecks(prev => ({ ...prev, [key]: !prev[key] }));
+                                }}
+                                className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                                aria-label={`Cocher l'action "${action.title}"`}
+                              >
+                                <div
+                                  className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${(() => {
+                                    const key = `${action.title}__${action.issue}`;
+                                    const checked = !!actionPlanChecks[key];
+                                    return checked
+                                      ? 'border-green-600 bg-green-50'
+                                      : 'border-gray-400 bg-white hover:border-gray-600';
+                                  })()}`}
+                                >
+                                  {(() => {
+                                    const key = `${action.title}__${action.issue}`;
+                                    return actionPlanChecks[key] ? <Check className="w-4 h-4 text-green-600" /> : null;
+                                  })()}
+                                </div>
+                              </button>
                             </div>
-                            <Badge 
-                              variant={action.status === 'completed' ? 'default' : 'outline'} 
-                              className={`text-xs ${statusBadgeClass}`}
-                            >
-                              {statusLabel}
-                            </Badge>
-                          </div>
-                        </div>
+                    </div>
+                  </div>
                       );
                     })}
                   </div>
@@ -3084,9 +3615,9 @@ const Dashboard = () => {
               <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <p className="text-xs text-gray-600">
                   {t("dashboard.actionPlanDescription")}
-                </p>
-              </div>
-            </div>
+                    </p>
+                  </div>
+                </div>
             </CardContent>
         </Card>}
 
@@ -3096,7 +3627,7 @@ const Dashboard = () => {
             <div className="flex flex-col items-center mb-2">
               <Bot className="w-5 h-5 text-purple-500 mb-2" />
               <span className="text-lg font-semibold">Agent</span>
-                          </div>
+                </div>
             <p className="text-sm text-gray-600">Assistant IA pour répondre à vos avis</p>
             <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'agent' ? null : 'agent'); }} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-purple-50">
               {openCard === 'agent' ? <ChevronUp className="w-3 h-3 text-purple-500" /> : <ChevronDown className="w-3 h-3 text-purple-500" />}
@@ -3117,21 +3648,21 @@ const Dashboard = () => {
                   L'agent IA analyse automatiquement vos avis et génère des réponses personnalisées adaptées à chaque situation.
                   </p>
                 </div>
-                <div className="space-y-3">
+              <div className="space-y-3">
                 <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
                   <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">Réponses automatiques intelligentes</p>
                     <p className="text-xs text-gray-600 mt-1">Génération de réponses adaptées au ton et au contenu de chaque avis</p>
-                    </div>
-                    </div>
+                </div>
+                </div>
                 <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
                   <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">Personnalisation avancée</p>
                     <p className="text-xs text-gray-600 mt-1">Adaptation du style et du contenu selon le type d'avis (positif, négatif, neutre)</p>
-                    </div>
-                    </div>
+                </div>
+                </div>
                 <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
                   <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
               <div>
@@ -3403,6 +3934,9 @@ const Dashboard = () => {
                                         setReponsesStats(stats);
                                       }
                                       
+                                      // Forcer le re-render pour mettre à jour le compteur X/10
+                                      setRefreshCounter(prev => prev + 1);
+                                      
                                       // Recalculer les avis en attente
                                       const updatedReviews = allReviewsForChart;
                                       const { data: updatedResponsesData } = await supabase
@@ -3564,12 +4098,13 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <p className="font-semibold">
-                      {allReviewsForChart.filter(review => {
-                        const hasValidatedResponse = validatedReviews.has(review.id);
-                        const hasOwnerReply = !!(review.owner_reply_text && review.owner_reply_text.trim());
-                        const hasRespondedAt = !!review.responded_at;
-                        return hasValidatedResponse || hasOwnerReply || hasRespondedAt;
-                      }).length}/{allReviewsForChart.length} réponses
+                      {(() => {
+                        // Force le re-render avec refreshCounter
+                        const _ = refreshCounter;
+
+                        const total = reponsesStats.total || allReviewsForChart.length;
+                        return `${reponsesStats.validated}/${total} réponses`;
+                      })()}
                     </p>
                     <p className="text-sm text-gray-500">Validées</p>
                 </div>
@@ -3729,14 +4264,18 @@ const Dashboard = () => {
                                     {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                   </td>
                                   <td className="px-4 py-3">
-                                    <Badge variant="outline" className="text-xs">
+                                    <Badge className="text-xs bg-blue-500 text-white border-blue-500">
                                       {review.source || "Google"}
                                     </Badge>
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-500">
                                     {(() => {
-                                      const publishedDate = getReviewPublishedDate(review);
-                                      return publishedDate ? format(new Date(publishedDate), 'dd/MM/yyyy') : '-';
+                                      const { dateStr, isImportDate } = getReviewDisplayDate(review);
+                                      return (
+                                        <span title={isImportDate ? "Date d'importation" : undefined}>
+                                          {dateStr ? formatReviewDate(dateStr) : '-'}
+                                        </span>
+                                      );
                                     })()}
                                   </td>
                                   <td className="px-4 py-3">
@@ -3776,16 +4315,16 @@ const Dashboard = () => {
                                         <p className="text-gray-700">
                                           {review.owner_reply_text || validatedResponsesText.get(review.id) || "Merci pour votre avis, nous sommes ravis que vous ayez apprécié votre expérience !"}
                                         </p>
-                                      </div>
+                  </div>
                                     </td>
                                   </tr>
-                                )}
+                )}
                               </React.Fragment>
                               );
                             })}
                           </tbody>
                         </table>
-                  </div>
+              </div>
                     </div>
                   );
                 })()}
@@ -3797,11 +4336,11 @@ const Dashboard = () => {
                   return (
                     <div className="bg-yellow-50 rounded-lg border border-yellow-200 overflow-hidden">
                       <div className="bg-yellow-100 px-4 py-3 border-b border-yellow-200">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
                             <Lightbulb className="w-5 h-5 text-yellow-600" />
                             <h3 className="font-semibold text-yellow-900">💡 Contient une suggestion</h3>
-                          </div>
+              </div>
                           <Badge className="bg-yellow-600 text-white">{suggestionReviews.length}</Badge>
                         </div>
                       </div>
@@ -3836,14 +4375,18 @@ const Dashboard = () => {
                                     {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                   </td>
                                   <td className="px-4 py-3">
-                                    <Badge variant="outline" className="text-xs">
+                                    <Badge className="text-xs bg-blue-500 text-white border-blue-500">
                                       {review.source || "Google"}
                                     </Badge>
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-500">
                                     {(() => {
-                                      const publishedDate = getReviewPublishedDate(review);
-                                      return publishedDate ? format(new Date(publishedDate), 'dd/MM/yyyy') : '-';
+                                      const { dateStr, isImportDate } = getReviewDisplayDate(review);
+                                      return (
+                                        <span title={isImportDate ? "Date d'importation" : undefined}>
+                                          {dateStr ? formatReviewDate(dateStr) : '-'}
+                                        </span>
+                                      );
                                     })()}
                                   </td>
                                   <td className="px-4 py-3">
@@ -3871,7 +4414,7 @@ const Dashboard = () => {
                                       >
                                         <Reply className="w-3 h-3 mr-1" />
                                         Répondre
-                                      </Button>
+              </Button>
                                     )}
                                   </td>
                                 </tr>
@@ -3879,8 +4422,8 @@ const Dashboard = () => {
                             })}
                           </tbody>
                         </table>
-              </div>
-                    </div>
+            </div>
+                </div>
                   );
                 })()}
 
@@ -3930,14 +4473,18 @@ const Dashboard = () => {
                                     {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                   </td>
                                   <td className="px-4 py-3">
-                                    <Badge variant="outline" className="text-xs">
+                                    <Badge className="text-xs bg-blue-500 text-white border-blue-500">
                                       {review.source || "Google"}
                                     </Badge>
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-500">
                                     {(() => {
-                                      const publishedDate = getReviewPublishedDate(review);
-                                      return publishedDate ? format(new Date(publishedDate), 'dd/MM/yyyy') : '-';
+                                      const { dateStr, isImportDate } = getReviewDisplayDate(review);
+                                      return (
+                                        <span title={isImportDate ? "Date d'importation" : undefined}>
+                                          {dateStr ? formatReviewDate(dateStr) : '-'}
+                                        </span>
+                                      );
                                     })()}
                                   </td>
                                   <td className="px-4 py-3">
@@ -4024,14 +4571,18 @@ const Dashboard = () => {
                                     {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                   </td>
                                   <td className="px-4 py-3">
-                                    <Badge variant="outline" className="text-xs">
+                                    <Badge className="text-xs bg-blue-500 text-white border-blue-500">
                                       {review.source || "Google"}
                                     </Badge>
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-500">
                                     {(() => {
-                                      const publishedDate = getReviewPublishedDate(review);
-                                      return publishedDate ? format(new Date(publishedDate), 'dd/MM/yyyy') : '-';
+                                      const { dateStr, isImportDate } = getReviewDisplayDate(review);
+                                      return (
+                                        <span title={isImportDate ? "Date d'importation" : undefined}>
+                                          {dateStr ? formatReviewDate(dateStr) : '-'}
+                                        </span>
+                                      );
                                     })()}
                                   </td>
                                   <td className="px-4 py-3">
@@ -4106,12 +4657,19 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge variant="outline" className="text-xs">
+                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
                                       <td className="px-4 py-3 text-sm text-gray-500">
-                                        {review.published_at ? format(new Date(review.published_at), 'dd/MM/yyyy') : '-'}
+                                        {(() => {
+                                          const { dateStr, isImportDate } = getReviewDisplayDate(review);
+                                          return (
+                                            <span title={isImportDate ? "Date d'importation" : undefined}>
+                                              {dateStr ? formatReviewDate(dateStr) : '-'}
+                                            </span>
+                                          );
+                                        })()}
                                       </td>
                                       <td className="px-4 py-3">
                                         <Badge className={hasResponse ? "bg-green-100 text-green-800" : isUrgent ? "bg-red-100 text-red-800" : "bg-orange-100 text-orange-800"}>
@@ -4186,7 +4744,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge variant="outline" className="text-xs">
+                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -4266,7 +4824,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge variant="outline" className="text-xs">
+                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -4355,7 +4913,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge variant="outline" className="text-xs">
+                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -4435,7 +4993,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge variant="outline" className="text-xs">
+                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -4515,7 +5073,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge variant="outline" className="text-xs">
+                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -4600,7 +5158,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge variant="outline" className="text-xs">
+                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -4680,7 +5238,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge variant="outline" className="text-xs">
+                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -4760,7 +5318,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge variant="outline" className="text-xs">
+                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -4845,7 +5403,7 @@ const Dashboard = () => {
                                           {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                         </td>
                                         <td className="px-4 py-3">
-                                          <Badge variant="outline" className="text-xs">
+                                          <Badge className="text-xs bg-blue-500 text-white border-blue-500">
                                             {review.source || "Google"}
                                           </Badge>
                                         </td>
@@ -4912,7 +5470,7 @@ const Dashboard = () => {
                                           {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                         </td>
                                         <td className="px-4 py-3">
-                                          <Badge variant="outline" className="text-xs">
+                                          <Badge className="text-xs bg-blue-500 text-white border-blue-500">
                                             {review.source || "Google"}
                                           </Badge>
                                         </td>
@@ -4955,8 +5513,8 @@ const Dashboard = () => {
                                               <p className="font-semibold text-green-700 mb-2">Réponse publiée :</p>
                                               <p className="text-gray-700">
                                                 {review.owner_reply_text || validatedResponsesText.get(review.id) || "Merci pour votre avis, nous sommes ravis que vous ayez apprécié votre expérience !"}
-                                              </p>
-                                            </div>
+                  </p>
+                </div>
                                           </td>
                                         </tr>
                                       )}
@@ -4972,7 +5530,7 @@ const Dashboard = () => {
                                 )}
                               </tbody>
                             </table>
-                          </div>
+              </div>
                         </div>
                       )}
                     </>
@@ -4998,10 +5556,45 @@ const Dashboard = () => {
                 <h4 className="font-semibold text-gray-800 mb-4">{t("dashboard.mainObjective")}</h4>
                 <div className="p-4 bg-green-50 rounded-lg border border-green-200">
                   <p className="text-lg font-medium text-gray-900">
-                    {t("dashboard.reachAverageRating", { rating: "4.5" })}
+                    {t("dashboard.reachAverageRating", { rating: targetRating.toFixed(1) })}
                 </p>
               </div>
-            </div>
+              </div>
+
+              <div className={`p-4 rounded-lg border ${targetDifficulty.cardClassName}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-gray-800">{t("dashboard.targetRating")}</h4>
+                  <span className="text-sm font-semibold">{targetRatingDisplay}/5</span>
+                </div>
+
+                <input
+                  type="range"
+                  min={Number(Math.min(5, Math.max(1, currentAvgRatingForTarget)).toFixed(1))}
+                  max={5}
+                  step={0.1}
+                  value={targetRating}
+                  onChange={(e) => setTargetRating(parseFloat(e.target.value))}
+                  className="rv-target-range-simple"
+                  style={{
+                    width: '100%',
+                    cursor: 'pointer',
+                    pointerEvents: 'auto',
+                    accentColor: '#16a34a',
+                    ['--pct' as any]: `${(() => {
+                      const min = Number(Math.min(5, Math.max(1, currentAvgRatingForTarget)).toFixed(1));
+                      const max = 5;
+                      const v = Number(targetRating);
+                      if (!Number.isFinite(min) || !Number.isFinite(v) || max <= min) return 100;
+                      const clamped = Math.max(min, Math.min(max, v));
+                      return ((clamped - min) / (max - min)) * 100;
+                    })()}%`,
+                  }}
+                />
+
+                <div className={`mt-4 text-center text-lg font-semibold ${targetDifficulty.labelClassName}`}>
+                  {targetDifficulty.label}
+                </div>
+              </div>
 
               {/* Progression actuelle */}
               <div>
@@ -5027,23 +5620,23 @@ const Dashboard = () => {
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm text-gray-600">{t("dashboard.targetRating")}</span>
-                      <span className="text-sm font-medium text-green-600">4.5/5</span>
+                      <span className="text-sm font-medium text-green-600">{targetRatingDisplay}/5</span>
               </div>
                     <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-green-600 rounded-full transition-all"
-                        style={{ width: "90%" }}
+                        style={{ width: `${(targetRating / 5) * 100}%` }}
                       />
               </div>
                       </div>
                   <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                     <p className="text-sm text-gray-700">
                       <span className="font-medium">{t("dashboard.progressPercentage")}: </span>
-                      {((avgRating / 4.5) * 100).toFixed(1)}%
+                      {targetRating > 0 ? Math.min(100, (avgRating / targetRating) * 100).toFixed(1) : '0.0'}%
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      {avgRating < 4.5 
-                        ? t("dashboard.remainingToReach", { remaining: (4.5 - avgRating).toFixed(1) })
+                      {avgRating < targetRating 
+                        ? t("dashboard.remainingToReach", { remaining: (targetRating - avgRating).toFixed(1) })
                         : t("dashboard.objectiveReached")
                       }
                     </p>
@@ -5056,12 +5649,202 @@ const Dashboard = () => {
                 <h4 className="font-semibold text-gray-800 mb-3">{t("dashboard.targetDate")}</h4>
                 <div className="flex items-center gap-2 p-3 bg-indigo-50 rounded-lg">
                   <Calendar className="w-5 h-5 text-indigo-600" />
-                  <span className="text-sm text-gray-700">{t("dashboard.withinMonths", { months: 3 })}</span>
+                  <span className="text-sm text-gray-700">{targetDateText}</span>
               </div>
             </div>
             </div>
           </CardContent>
         </Card>
+
+        <div className="grid md:grid-cols-3 gap-6 mb-6">
+          <Card
+            className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+            onClick={() => setOpenCard(openCard === 'progression' ? null : 'progression')}
+          >
+            <CardContent className="p-6 text-center">
+              <div className="flex flex-col items-center mb-2">
+                <TrendingUp className="w-5 h-5 text-green-600 mb-2" />
+                <span className="text-lg font-semibold">Progression</span>
+              </div>
+              <p className="text-sm text-gray-600">Suivez l'avancement de vos actions</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenCard(openCard === 'progression' ? null : 'progression');
+                }}
+                className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-green-50"
+              >
+                {openCard === 'progression' ? (
+                  <ChevronUp className="w-3 h-3 text-green-600" />
+                ) : (
+                  <ChevronDown className="w-3 h-3 text-green-600" />
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+            onClick={() => setOpenCard(openCard === 'avisLies' ? null : 'avisLies')}
+          >
+            <CardContent className="p-6 text-center">
+              <div className="flex flex-col items-center mb-2">
+                <MessageSquare className="w-5 h-5 text-indigo-600 mb-2" />
+                <span className="text-lg font-semibold">Avis liés</span>
+              </div>
+              <p className="text-sm text-gray-600">Avis freinant votre progression vers l'objectif</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenCard(openCard === 'avisLies' ? null : 'avisLies');
+                }}
+                className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-indigo-50"
+              >
+                {openCard === 'avisLies' ? (
+                  <ChevronUp className="w-3 h-3 text-indigo-600" />
+                ) : (
+                  <ChevronDown className="w-3 h-3 text-indigo-600" />
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+            onClick={() => setOpenCard(openCard === 'impact' ? null : 'impact')}
+          >
+            <CardContent className="p-6 text-center">
+              <div className="flex flex-col items-center mb-2">
+                <BarChart3 className="w-5 h-5 text-emerald-600 mb-2" />
+                <span className="text-lg font-semibold">Impact</span>
+              </div>
+              <p className="text-sm text-gray-600">Estimez l'impact de vos améliorations</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenCard(openCard === 'impact' ? null : 'impact');
+                }}
+                className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-emerald-50"
+              >
+                {openCard === 'impact' ? (
+                  <ChevronUp className="w-3 h-3 text-emerald-600" />
+                ) : (
+                  <ChevronDown className="w-3 h-3 text-emerald-600" />
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {openCard === 'progression' && (
+          <Card className="mb-8">
+            <CardHeader className="pb-1">
+              <CardTitle className="text-xl">Progression</CardTitle>
+              <p className="text-sm text-gray-600">Suivez l'avancement de vos actions</p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="mt-0 space-y-0">
+                <div className="flex items-center justify-end">
+                  <span className="text-sm font-semibold text-gray-900">
+                    {Math.round(progressionStats.percentage)}%
+                  </span>
+                </div>
+                <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-green-600 rounded-full transition-all"
+                    style={{ width: `${Math.min(100, Math.max(0, progressionStats.percentage))}%` }}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {openCard === 'avisLies' && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-xl">Avis liés</CardTitle>
+              <p className="text-sm text-gray-600">Avis freinant votre progression vers l'objectif</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {linkedReviews.length === 0 ? (
+                  <div className="text-sm text-gray-500">Aucun avis lié trouvé.</div>
+                ) : (
+                  linkedReviews.map((r: any, idx: number) => {
+                    const authorName = r?.author || r?.author_name || t("dashboard.anonymous");
+                    const rating = Math.round(r?.rating || 0);
+                    const text = extractOriginalText(r?.text) || r?.text || '';
+                    return (
+                      <div key={r?.id || idx} className="p-3 bg-white/70 rounded-lg border border-gray-200">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-sm font-medium text-gray-900 truncate">{authorName}</div>
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            {[1, 2, 3, 4, 5].map(star => (
+                              <Star
+                                key={star}
+                                className={`w-4 h-4 ${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-700 mt-1 line-clamp-2">
+                          {highlightReviewText(text)}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {openCard === 'impact' && (
+          <Card className="mb-8">
+            <CardHeader className="pb-1">
+              <CardTitle className="text-xl">Impact</CardTitle>
+              <p className="text-sm text-gray-600">Estimez l'impact de vos améliorations</p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="mt-1 space-y-3">
+                <p className="text-sm text-gray-700">
+                  Si vous corrigez ces points, voici l'impact estimé sur votre note :
+                </p>
+                {impactStats.lines.map((l) => (
+                  <div key={l.key} className="p-3 rounded-lg border border-gray-200 bg-white/70">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium text-gray-900">{l.label}</div>
+                      <div className="text-sm font-semibold text-emerald-700">+{l.impact.toFixed(2)}</div>
+                    </div>
+                    <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-green-500 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, Math.max(0, l.pct))}%` }}
+                      />
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">{l.count} mentions dans les avis négatifs</div>
+                  </div>
+                ))}
+
+                <div className="mt-2 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                  <div className="text-sm font-semibold text-gray-900">
+                    Note projetée : {impactStats.projectedLow.toFixed(1)} - {impactStats.projectedHigh.toFixed(1)}
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    Basée sur la note actuelle ({impactStats.current.toFixed(1)}/5) et la fréquence des mentions dans les avis négatifs.
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
           </>
         )}
         </div>

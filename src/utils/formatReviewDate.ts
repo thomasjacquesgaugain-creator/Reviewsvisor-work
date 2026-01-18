@@ -82,8 +82,9 @@ export function formatReviewDate(review: any): string | null {
     }
   }
 
-  // Priorité 5 : Vérifier dans raw si disponible
+  // Priorité 5 : Vérifier dans raw.createTime (champ original depuis JSON)
   if (review.raw && typeof review.raw === 'object') {
+    // Priorité 5a : raw.createTime (valeur originale du JSON)
     if (review.raw.createTime) {
       try {
         const date = new Date(review.raw.createTime);
@@ -95,9 +96,10 @@ export function formatReviewDate(review: any): string | null {
           });
         }
       } catch (e) {
-        // Continue
+        console.warn('Invalid raw.createTime date:', review.raw.createTime, e);
       }
     }
+    // Priorité 5b : raw.publishedAtDate
     if (review.raw.publishedAtDate) {
       try {
         const date = new Date(review.raw.publishedAtDate);

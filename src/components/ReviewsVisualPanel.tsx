@@ -5,7 +5,7 @@ import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2, T
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-import { getReviewsSummary, listAllReviews, listAll, deleteAllReviews } from "@/services/reviewsService";
+import { getReviewsSummary, listAllReviews, listAll, deleteAllReviews, verifyAndRestoreCreateTimes } from "@/services/reviewsService";
 import { STORAGE_KEY } from "@/types/etablissement";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
 import { toast as sonnerToast } from "sonner";
@@ -108,6 +108,9 @@ export function ReviewsVisualPanel({
         setIsLoading(true);
         setIsLoadingReviews(true);
         
+        // RÈGLE CRITIQUE : Vérifier et restaurer createTime au chargement
+        await verifyAndRestoreCreateTimes(effectiveId);
+        
         // Load summary and ALL reviews in parallel
         const [summaryData, allReviews] = await Promise.all([
           getReviewsSummary(effectiveId),
@@ -115,6 +118,16 @@ export function ReviewsVisualPanel({
         ]);
         
         setSummary(summaryData);
+        
+        // VÉRIFICATION CRITIQUE : Vérifier que chaque avis a son createTime
+        const reviewsWithoutCreateTime = allReviews.filter(r => {
+          const hasCreateTime = r.create_time || r.raw?.createTime || r.raw?.originalCreateTime || r.published_at;
+          return !hasCreateTime;
+        });
+        
+        if (reviewsWithoutCreateTime.length > 0) {
+          console.error(`❌ ERREUR CRITIQUE : ${reviewsWithoutCreateTime.length} avis sans createTime!`, reviewsWithoutCreateTime);
+        }
         
         // Debug: Log first review to see available date fields
         if (allReviews.length > 0) {
@@ -124,7 +137,18 @@ export function ReviewsVisualPanel({
             create_time: allReviews[0].create_time,
             inserted_at: allReviews[0].inserted_at,
             raw: allReviews[0].raw,
-            raw_createTime: allReviews[0].raw?.createTime
+            raw_createTime: allReviews[0].raw?.createTime,
+            formattedDate: formatReviewDate(allReviews[0])
+          });
+          
+          // Log les 3 premiers avis pour voir les dates
+          allReviews.slice(0, 3).forEach((review, idx) => {
+            console.log(`📅 Review ${idx} date fields:`, {
+              published_at: review.published_at,
+              create_time: review.create_time,
+              raw_createTime: review.raw?.createTime,
+              formatted: formatReviewDate(review)
+            });
           });
         }
         
@@ -144,10 +168,10 @@ export function ReviewsVisualPanel({
           }
           
           return {
-            authorName: getDisplayAuthor(review),
-            rating: review.rating || 0,
-            comment: extractOriginalText(review.text) || "",
-            platform: review.source || t("platforms.google"),
+          authorName: getDisplayAuthor(review),
+          rating: review.rating || 0,
+          comment: extractOriginalText(review.text) || "",
+          platform: review.source || t("platforms.google"),
             reviewDate: reviewDate || '-' // Afficher '-' seulement si vraiment aucune date n'est trouvée
           };
         });

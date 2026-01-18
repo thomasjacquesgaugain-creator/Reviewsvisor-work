@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Etab, EVT_SAVED, EVT_LIST_UPDATED, STORAGE_KEY } from "../types/etablissement";
+import { Etab, EVT_SAVED, EVT_LIST_UPDATED, EVT_ESTABLISHMENT_UPDATED, STORAGE_KEY } from "../types/etablissement";
 import { Trash2, BarChart3, Download, ExternalLink, Star, Phone, Globe, MapPin, Building2, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { runAnalyze } from "@/lib/runAnalyze";
@@ -125,7 +125,26 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
           .eq("place_id", etab.place_id);
       }
 
-      // 3. Plus besoin de localStorage - la DB est la source de vérité
+      // 3. Nettoyer les données localStorage associées à cet établissement
+      try {
+        // Nettoyer les avis validés dans localStorage
+        const validatedReviewsKey = `validatedReviews_${etab.place_id}`;
+        localStorage.removeItem(validatedReviewsKey);
+        
+        // Nettoyer les actions de checklist
+        const checklistKey = `checklist_actions_${etab.place_id}`;
+        localStorage.removeItem(checklistKey);
+        
+        // Nettoyer les actions complétées
+        const completedKey = `checklist_completed_${etab.place_id}`;
+        localStorage.removeItem(completedKey);
+        
+        // RÈGLE CRITIQUE : Supprimer le backup createTime seulement lors de la suppression de l'établissement
+        const reviewsBackupKey = `reviews_backup_${etab.place_id}`;
+        localStorage.removeItem(reviewsBackupKey);
+      } catch (error) {
+        console.warn('Erreur lors du nettoyage localStorage:', error);
+      }
 
       // 4. Vérifier s'il reste d'autres établissements et sélectionner le premier
       const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -175,13 +194,24 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
         } else {
           // Aucun établissement restant, afficher le bouton d'ajout
           setEtab(null);
+          // Nettoyer le localStorage pour que useCurrentEstablishment retourne null
+          localStorage.removeItem(STORAGE_KEY);
+          // Notifier que l'établissement a été supprimé
+          window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: null }));
         }
       } else {
         setEtab(null);
+        // Nettoyer le localStorage pour que useCurrentEstablishment retourne null
+        localStorage.removeItem(STORAGE_KEY);
+        // Notifier que l'établissement a été supprimé
+        window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: null }));
       }
 
-      // 5. Notifier la liste de se recharger depuis la DB
+      // 5. Notifier la liste de se recharger depuis la DB et forcer la mise à jour immédiate
       window.dispatchEvent(new CustomEvent(EVT_LIST_UPDATED));
+      
+      // Notifier aussi que l'établissement a été supprimé pour fermer les modals
+      window.dispatchEvent(new CustomEvent(EVT_ESTABLISHMENT_UPDATED));
 
       // 6. Toast de confirmation
       sonnerToast.error(t("establishment.establishmentAndReviewsDeleted"), {
@@ -264,144 +294,150 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
   return (
     <div className="p-6">
       {/* Grid des informations */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-10">
-        {/* Nom */}
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground font-medium">{t("establishment.nameLabel")}</p>
-          <p className="text-base font-medium text-foreground">{etab.name}</p>
+      <div className="space-y-5">
+        {/* Ligne 1 (desktop): Nom | Note Google | Site web */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-5 gap-x-10">
+          {/* Nom */}
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground font-medium">{t("establishment.nameLabel")}</p>
+            <p className="text-base font-medium text-foreground">{etab.name}</p>
+          </div>
+
+          {/* Note Google */}
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground font-medium">{t("establishment.googleRating")}</p>
+            {etab.rating ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 font-medium text-sm">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                {etab.rating}
+              </span>
+            ) : (
+              <p className="text-base text-muted-foreground">—</p>
+            )}
+          </div>
+
+          {/* Site web */}
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5" />
+              {t("establishment.website")}
+            </p>
+            {etab.website ? (
+              <a
+                href={etab.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                {t("establishment.websiteOpen")}
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            ) : (
+              <p className="text-base text-muted-foreground">—</p>
+            )}
+          </div>
         </div>
 
-        {/* Note Google */}
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground font-medium">{t("establishment.googleRating")}</p>
-          {etab.rating ? (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 font-medium text-sm">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              {etab.rating}
-            </span>
-          ) : (
-            <p className="text-base text-muted-foreground">—</p>
-          )}
+        {/* Ligne 2 (desktop): Adresse | Google Maps */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-10">
+          {/* Adresse */}
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5" />
+              {t("establishment.address")}
+            </p>
+            <p className="text-base font-medium text-foreground">{etab.address}</p>
+          </div>
+
+          {/* Google Maps */}
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground font-medium">{t("establishment.googleMaps")}</p>
+            {etab.place_id ? (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(etab.name)}&query_place_id=${encodeURIComponent(etab.place_id)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                {t("establishment.viewListing")}
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            ) : etab.address ? (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(etab.address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                {t("establishment.viewListing")}
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            ) : (
+              <p className="text-base text-muted-foreground">—</p>
+            )}
+          </div>
         </div>
 
-        {/* Adresse */}
-        <div className="space-y-1 md:col-span-2">
-          <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5" />
-            {t("establishment.address")}
-          </p>
-          <p className="text-base font-medium text-foreground">{etab.address}</p>
-        </div>
-
-        {/* Téléphone */}
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-            <Phone className="w-3.5 h-3.5" />
-            {t("establishment.phone")}
-          </p>
-          <p className="text-base font-medium text-foreground">{etab.phone || "—"}</p>
-        </div>
-
-        {/* Site web */}
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-            <Globe className="w-3.5 h-3.5" />
-            {t("establishment.website")}
-          </p>
-          {etab.website ? (
-            <a 
-              href={etab.website} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
-            >
-              {t("establishment.websiteOpen")}
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          ) : (
-            <p className="text-base text-muted-foreground">—</p>
-          )}
-        </div>
-
-        {/* Google Maps */}
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground font-medium">{t("establishment.googleMaps")}</p>
-          {etab.place_id ? (
-            <a 
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(etab.name)}&query_place_id=${encodeURIComponent(etab.place_id)}`}
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
-            >
-              {t("establishment.viewListing")}
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          ) : etab.address ? (
-            <a 
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(etab.address)}`}
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
-            >
-              {t("establishment.viewListing")}
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          ) : (
-            <p className="text-base text-muted-foreground">—</p>
-          )}
+        {/* Ligne 3 (desktop): Téléphone */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-10">
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+              <Phone className="w-3.5 h-3.5" />
+              {t("establishment.phone")}
+            </p>
+            <p className="text-base font-medium text-foreground">{etab.phone || "—"}</p>
+          </div>
         </div>
       </div>
 
-      {/* Footer avec place_id et actions */}
-      <div className="border-t border-border mt-6 pt-4 flex items-center justify-between relative">
-        {/* Icône building + place_id à gauche */}
-        <div className="flex items-center gap-2 max-w-[40%]">
+      {/* Ligne du bas: place_id | Importer | Visuel | Supprimer */}
+      <div className="border-t border-border mt-6 pt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        {/* place_id à gauche */}
+        <div className="flex items-center gap-2 md:max-w-[35%]">
           <Building2 className="w-4 h-4 text-primary flex-shrink-0" />
           <p className="text-xs text-muted-foreground font-mono truncate">
             {t("establishment.placeId")}: {etab.place_id}
           </p>
         </div>
 
-        {/* Bouton importer vos avis - centré */}
-        <div className="absolute left-1/2 transform -translate-x-1/2">
+        {/* Importer + Visuel au milieu */}
+        <div className="flex items-center justify-center gap-3">
           <Button
             variant="ghost"
             size="sm"
-            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto"
+            className="p-4 h-auto w-44 flex flex-col items-center justify-center gap-1 rounded-lg border border-border bg-white/70 text-blue-600 shadow-sm hover:shadow-md hover:bg-white hover:text-blue-700"
             title={t("establishment.importReviews")}
             data-testid="btn-import-avis"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-6 h-6" />
+            <span className="text-xs font-medium text-gray-700">Importer vos avis</span>
           </Button>
-        </div>
 
-        {/* 2 icônes/actions à droite */}
-        <div className="flex gap-1">
-          {/* Bouton analyser établissement */}
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleAnalyze}
-            disabled={isAnalyzing}
-            className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 h-auto disabled:opacity-50"
+            className="p-4 h-auto w-44 flex flex-col items-center justify-center gap-1 rounded-lg border border-border bg-white/70 text-blue-600 shadow-sm hover:shadow-md hover:bg-white hover:text-blue-700"
             title={t("establishment.visualReviews")}
             data-testid="btn-analyser-etablissement"
             data-place-id={etab.place_id}
             data-name={etab.name}
           >
-            <BarChart3 className={`w-4 h-4 ${isAnalyzing ? 'animate-spin' : ''}`} />
+            <BarChart3 className="w-6 h-6" />
+            <span className="text-xs font-medium text-gray-700">Visuel des avis</span>
           </Button>
-          
-          {/* Bouton supprimer établissement */}
+        </div>
+
+        {/* Supprimer à droite */}
+        <div className="flex md:justify-end">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleDeleteEstablishment}
             disabled={isDeleting}
-            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto disabled:opacity-50"
+            className="h-auto p-0 text-red-600 hover:text-red-700 hover:bg-transparent disabled:opacity-50 [&_svg]:size-6"
             title={t("establishment.deleteEstablishmentAndReviews")}
           >
-            <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
+            <Trash2 className={`${isDeleting ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </div>

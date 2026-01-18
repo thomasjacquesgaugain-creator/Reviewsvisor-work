@@ -1,19 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { loadGooglePlaces } from "@/lib/loadGooglePlaces";
 import MonEtablissementCard from "@/components/MonEtablissementCard";
 import SaveEstablishmentButton from "@/components/SaveEstablishmentButton";
 import SavedEstablishmentsList from "@/components/SavedEstablishmentsList";
 import ImportAvisToolbar from "@/components/ImportAvisToolbar";
 import { ReviewsVisualPanel } from "@/components/ReviewsVisualPanel";
-import { Etab, STORAGE_KEY, EVT_SAVED, EVT_ESTABLISHMENT_UPDATED } from "@/types/etablissement";
+import { Etab, STORAGE_KEY, EVT_SAVED, EVT_ESTABLISHMENT_UPDATED, EVT_LIST_UPDATED } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
-import { Building2, Home, LogOut, X } from "lucide-react";
+import { Building2, Home, LogOut, X, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { useAuth } from "@/contexts/AuthProvider";
 import { toast } from "sonner";
 import { getCurrentEstablishment } from "@/services/establishments";
 import { useTranslation } from "react-i18next";
+import { supabase } from "@/integrations/supabase/client";
 export default function EtablissementPage() {
   const {
     displayName,
@@ -24,6 +25,9 @@ export default function EtablissementPage() {
   const [showSearch, setShowSearch] = useState(false);
   const [showImportBar, setShowImportBar] = useState(false);
   const [showReviewsVisual, setShowReviewsVisual] = useState(false);
+  const [isEstablishmentBeingAdded, setIsEstablishmentBeingAdded] = useState(false);
+  const isEstablishmentBeingAddedRef = useRef(false);
+  const [hasRegisteredEstablishments, setHasRegisteredEstablishments] = useState(false);
   const [visualEstablishment, setVisualEstablishment] = useState<{
     id: string;
     name: string;
@@ -250,11 +254,67 @@ export default function EtablissementPage() {
     initPlaces();
   }, []);
 
+  // Vérifier s'il y a des établissements enregistrés dans la DB
+  useEffect(() => {
+    const checkRegisteredEstablishments = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setHasRegisteredEstablishments(false);
+          return;
+        }
+        
+        const { data, error } = await supabase
+          .from("établissements")
+          .select("place_id")
+          .eq("user_id", user.id)
+          .limit(1);
+        
+        if (error) {
+          console.error("Erreur lors de la vérification des établissements:", error);
+          setHasRegisteredEstablishments(false);
+          return;
+        }
+        
+        setHasRegisteredEstablishments((data?.length || 0) > 0);
+      } catch (error) {
+        console.error("Erreur lors de la vérification des établissements:", error);
+        setHasRegisteredEstablishments(false);
+      }
+    };
+    
+    checkRegisteredEstablishments();
+    
+    // Écouter les mises à jour de la liste
+    const handleListUpdated = () => {
+      checkRegisteredEstablishments();
+    };
+    
+    window.addEventListener(EVT_LIST_UPDATED, handleListUpdated);
+    window.addEventListener(EVT_SAVED, handleListUpdated);
+    
+    return () => {
+      window.removeEventListener(EVT_LIST_UPDATED, handleListUpdated);
+      window.removeEventListener(EVT_SAVED, handleListUpdated);
+    };
+  }, []);
+
   // Handle import button click and analysis button click and ESC key
   useEffect(() => {
     const handleDocumentClick = (e: MouseEvent) => {
       const target = e.target as Element | null;
       if (target && target.closest('[data-testid="btn-import-avis"]')) {
+        // Vérifier qu'un établissement existe (sélectionné OU enregistré)
+        const hasEstablishment = currentEstablishment?.place_id || selected?.place_id;
+        if (!hasEstablishment && !hasRegisteredEstablishments) {
+          // Ne pas afficher d'erreur si un établissement est en train d'être ajouté
+          if (!isEstablishmentBeingAddedRef.current) {
+            toast.error(t("establishment.noEstablishmentSelected"), {
+              description: t("establishment.pleaseAddEstablishmentFirst")
+            });
+          }
+          return;
+        }
         setShowImportBar(true);
         setTimeout(() => {
           document.getElementById('import-avis-toolbar-anchor')?.scrollIntoView({
@@ -316,7 +376,79 @@ export default function EtablissementPage() {
       document.removeEventListener('click', handleDocumentClick, true);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [showImportBar, showReviewsVisual]);
+  }, [showImportBar, showReviewsVisual, currentEstablishment, selected, hasRegisteredEstablishments, t]);
+
+  // Écouter les événements d'ajout d'établissement pour éviter l'erreur
+  useEffect(() => {
+    const handleEstablishmentSaved = (event: any) => {
+      // Si un établissement vient d'être sauvegardé, marquer qu'on est en train d'ajouter
+      if (event.detail && event.detail.place_id) {
+        setIsEstablishmentBeingAdded(true);
+        isEstablishmentBeingAddedRef.current = true;
+        // Réinitialiser le flag après un court délai pour laisser le temps à currentEstablishment de se mettre à jour
+        setTimeout(() => {
+          setIsEstablishmentBeingAdded(false);
+          isEstablishmentBeingAddedRef.current = false;
+        }, 1000);
+      } else if (event.detail === null) {
+        // Si detail est null, c'est une suppression
+        setIsEstablishmentBeingAdded(false);
+        isEstablishmentBeingAddedRef.current = false;
+      }
+    };
+    
+    window.addEventListener(EVT_SAVED, handleEstablishmentSaved as EventListener);
+    
+    return () => {
+      window.removeEventListener(EVT_SAVED, handleEstablishmentSaved as EventListener);
+    };
+  }, []);
+
+  // Fermer automatiquement la modal d'import si l'établissement est supprimé (instantanément)
+  // MAIS ne pas afficher d'erreur si un établissement vient d'être ajouté
+  useEffect(() => {
+    // Ne rien faire si un établissement est en train d'être ajouté
+    if (isEstablishmentBeingAdded) {
+      return;
+    }
+    
+    const hasEstablishment = currentEstablishment?.place_id || selected?.place_id;
+    if (showImportBar && !hasEstablishment && !hasRegisteredEstablishments) {
+      // Fermer immédiatement sans délai seulement si ce n'est pas un ajout en cours
+      setShowImportBar(false);
+      // Ne pas afficher d'erreur ici car elle sera affichée dans handleDocumentClick
+    }
+  }, [currentEstablishment, selected, showImportBar, isEstablishmentBeingAdded, hasRegisteredEstablishments, t]);
+
+  // Écouter les événements de suppression pour fermer la modal instantanément
+  useEffect(() => {
+    const handleEstablishmentDeleted = () => {
+      // Attendre un peu pour laisser le temps à currentEstablishment de se mettre à jour
+      setTimeout(() => {
+        // Vérifier le flag via la ref pour avoir la valeur actuelle (pas celle capturée par la closure)
+        if (isEstablishmentBeingAddedRef.current) {
+          return; // Ne rien faire si un établissement est en train d'être ajouté
+        }
+        
+        // Vérifier si l'établissement existe (sélectionné OU enregistré)
+        const hasEstablishment = currentEstablishment?.place_id || selected?.place_id;
+        if (showImportBar && !hasEstablishment && !hasRegisteredEstablishments) {
+          setShowImportBar(false);
+          // Ne pas afficher d'erreur ici car elle sera affichée dans handleDocumentClick si nécessaire
+        }
+      }, 200);
+    };
+    
+    // Écouter les événements de mise à jour d'établissement pour réagir instantanément
+    window.addEventListener(EVT_LIST_UPDATED, handleEstablishmentDeleted);
+    window.addEventListener(EVT_ESTABLISHMENT_UPDATED, handleEstablishmentDeleted);
+    
+    return () => {
+      window.removeEventListener(EVT_LIST_UPDATED, handleEstablishmentDeleted);
+      window.removeEventListener(EVT_ESTABLISHMENT_UPDATED, handleEstablishmentDeleted);
+    };
+  }, [currentEstablishment, selected, showImportBar, hasRegisteredEstablishments, t]);
+
   return <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
       {/* Background with organic shapes */}
       <div className="absolute inset-0">
@@ -380,9 +512,38 @@ export default function EtablissementPage() {
           <div id="import-avis-toolbar-anchor" />
 
           {/* Barre d'outils d'import (affichée conditionnellement) */}
-          {showImportBar && <ImportAvisToolbar onClose={() => setShowImportBar(false)} onFileAnalyzed={() => {
+          {showImportBar && (currentEstablishment?.place_id || selected?.place_id) ? (
+            <ImportAvisToolbar 
+              onClose={() => setShowImportBar(false)} 
+              onFileAnalyzed={() => {
             console.log("Fichier analysé, rafraîchissement des données...");
-          }} onImportSuccess={handleImportSuccess} onOpenVisualPanel={handleOpenVisualPanel} placeId={currentEstablishment?.place_id || selected?.place_id} establishmentName={currentEstablishment?.name || selected?.name} />}
+              }} 
+              onImportSuccess={handleImportSuccess} 
+              onOpenVisualPanel={handleOpenVisualPanel} 
+              placeId={currentEstablishment?.place_id || selected?.place_id} 
+              establishmentName={currentEstablishment?.name || selected?.name} 
+            />
+          ) : showImportBar ? (
+            <div className="border border-yellow-200 rounded-lg p-6 bg-yellow-50">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                <div>
+                  <h3 className="font-semibold text-yellow-900">{t("establishment.noEstablishmentSelected") || "Aucun établissement sélectionné"}</h3>
+                  <p className="text-sm text-yellow-700 mt-1">
+                    {t("establishment.pleaseAddEstablishmentFirst") || "Veuillez d'abord ajouter un établissement pour pouvoir importer des avis."}
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={openSearch}
+                    className="mt-3"
+                  >
+                    {t("establishment.addEstablishment") || "Ajouter un établissement"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {/* Liste des établissements enregistrés */}
           <div data-testid="section-etablissements-enregistres">

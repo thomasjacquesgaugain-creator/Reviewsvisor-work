@@ -370,3 +370,131 @@ All colors MUST be HSL.
 [data-sonner-toast] + [data-sonner-toast] {
   margin-top: 0 !important;
 }
+
+.rv-target-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 10px;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.6);
+  background-image: linear-gradient(#16a34a, #16a34a);
+  background-repeat: no-repeat;
+  outline: none;
+  cursor: grab;
+}
+
+.rv-target-range.is-dragging {
+  cursor: grabbing;
+}
+
+.rv-target-range::-webkit-slider-runnable-track {
+  -webkit-appearance: none;
+  height: 10px;
+  border-radius: 9999px;
+  background: transparent;
+}
+
+.rv-target-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 2px solid #15803d;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  margin-top: -4px;
+  cursor: grab;
+  transition: none;
+}
+
+.rv-target-range.is-dragging::-webkit-slider-thumb {
+  cursor: grabbing;
+  transition: none;
+}
+
+.rv-target-range::-moz-range-track {
+  height: 10px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.rv-target-range::-moz-range-progress {
+  height: 10px;
+  border-radius: 9999px;
+  background: #16a34a;
+}
+
+.rv-target-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 2px solid #15803d;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  cursor: grab;
+  transition: none;
+}
+
+.rv-target-range.is-dragging::-moz-range-thumb {
+  cursor: grabbing;
+  transition: none;
+}
+
+.rv-target-range-simple {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 10px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    #16a34a 0%,
+    #16a34a var(--pct, 50%),
+    rgba(255, 255, 255, 0.85) var(--pct, 50%),
+    rgba(255, 255, 255, 0.85) 100%
+  );
+  outline: none;
+  cursor: pointer;
+}
+
+.rv-target-range-simple::-webkit-slider-runnable-track {
+  -webkit-appearance: none;
+  height: 10px;
+  border-radius: 9999px;
+  background: transparent;
+}
+
+.rv-target-range-simple::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 2px solid #15803d;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  margin-top: -4px;
+}
+
+.rv-target-range-simple::-moz-range-track {
+  height: 10px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.rv-target-range-simple::-moz-range-progress {
+  height: 10px;
+  border-radius: 9999px;
+  background: #16a34a;
+}
+
+.rv-target-range-simple::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 2px solid #15803d;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}

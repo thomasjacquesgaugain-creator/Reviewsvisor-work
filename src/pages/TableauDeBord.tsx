@@ -64,17 +64,18 @@ const Dashboard = () => {
         // Récupérer les avis UNIQUEMENT pour l'établissement actif
         const { data: reviews, error } = await supabase
           .from('reviews')
-          .select('inserted_at, rating, text, place_id')
+          .select('published_at, inserted_at, rating, text, place_id')
           .eq('user_id', session.user.id)
           .eq('place_id', currentEstablishment.place_id) // ← Filtrer par place_id de l'établissement actif
-          .order('inserted_at', { ascending: false });
+          .order('published_at', { ascending: false });
 
         if (!error && reviews) {
           setRecentReviewsCount(reviews.length);
           setAllReviews(reviews);
           
-          if (reviews.length > 0 && reviews[0].inserted_at) {
-            setLastReviewDate(new Date(reviews[0].inserted_at));
+          const lastDateStr = reviews.length > 0 ? (reviews[0].published_at || reviews[0].inserted_at) : null;
+          if (lastDateStr) {
+            setLastReviewDate(new Date(lastDateStr));
           } else {
             setLastReviewDate(null);
           }
@@ -291,59 +292,17 @@ const Dashboard = () => {
                     </CardContent>
                   </Card>
 
-                  <Card 
-                    className={`border rounded-xl ${
-                      !ratingEvolution 
-                        ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200'
-                        : ratingEvolution.status === 'decrease'
-                          ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200'
-                          : 'bg-gradient-to-r from-green-50 to-green-100 border-green-200'
-                    }`}
-                    title={
-                      ratingEvolution 
-                        ? t("dashboard.baselineInfo", { 
-                            value: ratingEvolution.baseline.toLocaleString(i18n.language === 'fr' ? 'fr-FR' : i18n.language === 'it' ? 'it-IT' : i18n.language === 'es' ? 'es-ES' : i18n.language === 'pt' ? 'pt-BR' : 'en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), 
-                            date: format(new Date(ratingEvolution.baselineDate), 'dd/MM/yyyy', { 
-                              locale: i18n.language === 'fr' ? fr : 
-                                     i18n.language === 'it' ? it :
-                                     i18n.language === 'es' ? es :
-                                     i18n.language === 'pt' ? ptBR : enUS
-                            })
-                          })
-                        : undefined
-                    }
-                  >
+                  <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200 border rounded-xl">
                     <CardContent className="p-4 flex items-center gap-3">
-                      <div 
-                        className={`w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-md ${
-                          !ratingEvolution
-                            ? 'bg-green-600 border-green-300'
-                            : ratingEvolution.status === 'decrease'
-                              ? 'bg-red-600 border-red-300'
-                              : 'bg-green-600 border-green-300'
-                        }`}
-                      >
-                        {!ratingEvolution ? (
-                          <ArrowUp className="w-5 h-5 text-white" />
-                        ) : ratingEvolution.status === 'decrease' ? (
-                          <ArrowDownRight className="w-5 h-5 text-white" />
-                        ) : (
-                          <ArrowUp className="w-5 h-5 text-white" />
-                        )}
+                      <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center border-2 border-green-300 shadow-md">
+                        <Star className="w-5 h-5 text-white" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">
-                          {!ratingEvolution 
-                            ? t("dashboard.rating")
-                            : ratingEvolution.status === 'increase'
-                              ? t("dashboard.ratingIncreased", { delta: ratingEvolution.formattedDelta })
-                              : ratingEvolution.status === 'decrease'
-                                ? t("dashboard.ratingDecreased", { delta: ratingEvolution.formattedDelta })
-                                : t("dashboard.ratingStable", { delta: ratingEvolution.formattedDelta })
-                          }
+                          {avgRating > 0 ? `${avgRating.toFixed(1)}/5` : t("dashboard.rating")}
                         </p>
                         <p className="text-sm text-gray-600">
-                          {!ratingEvolution ? t("dashboard.waitingForData") : t("dashboard.sinceRegistration")}
+                          {avgRating > 0 ? t("dashboard.averageRating") : t("dashboard.waitingForData")}
                         </p>
                       </div>
                     </CardContent>
@@ -356,42 +315,27 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">
-                          {t("dashboard.responsesCount", { validated: validatedResponsesCount, total: totalReviewsForEstablishment || recentReviewsCount })}
+                          {validatedResponsesCount}/{totalReviewsForEstablishment} {t("dashboard.responses")} {t("dashboard.validated")}
                         </p>
-                        <p className="text-sm text-gray-600">{t("dashboard.validated")}</p>
+                        <p className="text-sm text-gray-600">{t("dashboard.responses")}</p>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card 
-                    className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 border rounded-xl"
-                    title={
-                      satisfactionEvolution 
-                        ? t("dashboard.baselineInfo", { 
-                            value: `${satisfactionEvolution.baselinePct}%`, 
-                            date: format(new Date(satisfactionEvolution.baselineDate), 'dd/MM/yyyy', { 
-                              locale: i18n.language === 'fr' ? fr : 
-                                     i18n.language === 'it' ? it :
-                                     i18n.language === 'es' ? es :
-                                     i18n.language === 'pt' ? ptBR : enUS
-                            })
-                          })
-                        : undefined
-                    }
-                  >
+                  <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 border rounded-xl">
                     <CardContent className="p-4 flex items-center gap-3">
                       <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center border-2 border-purple-300 shadow-md">
-                        <ArrowUp className="w-5 h-5 text-white" />
+                        <TrendingUp className="w-5 h-5 text-white" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">
-                          {!satisfactionEvolution 
-                            ? t("dashboard.satisfaction")
-                            : t("dashboard.satisfactionIncreased", { delta: satisfactionEvolution.delta })
+                          {allReviews.length > 0 
+                            ? `${Math.round(computeSatisfactionPct(allReviews))}%`
+                            : t("dashboard.satisfaction")
                           }
                         </p>
                         <p className="text-sm text-gray-600">
-                          {!satisfactionEvolution ? t("dashboard.waitingForReviews") : t("dashboard.sinceRegistration")}
+                          {allReviews.length > 0 ? t("dashboard.satisfactionIndex") : t("dashboard.waitingForReviews")}
                         </p>
                       </div>
                     </CardContent>

@@ -257,12 +257,30 @@ Deno.serve(async (req) => {
         .single();
 
       if (existing) {
-        // Update existing review
+        // RÈGLE CRITIQUE : Si l'avis existe, PRÉSERVER son createTime original
+        // Charger l'avis existant pour récupérer son createTime
+        const { data: existingReviewData } = await supabase
+          .from('reviews')
+          .select('create_time, raw')
+          .eq('id', existing.id)
+          .single();
+        
+        // PRÉSERVER createTime original (NE JAMAIS L'ÉCRASER)
+        const preservedCreateTime = existingReviewData?.create_time || existingReviewData?.raw?.createTime || review.createTime;
+        const preservedOriginalCreateTime = existingReviewData?.raw?.originalCreateTime || existingReviewData?.raw?.createTime || review.createTime;
+        
+        // Update existing review EN PRÉSERVANT createTime
         const { error: updateError } = await supabase
           .from('reviews')
           .update({
             ...reviewData,
+            create_time: preservedCreateTime, // PRÉSERVER createTime original
             inserted_at: undefined,
+            raw: {
+              ...reviewData.raw,
+              createTime: preservedCreateTime, // PRÉSERVER createTime original
+              originalCreateTime: preservedOriginalCreateTime // PRÉSERVER backup
+            }
           })
           .eq('id', existing.id);
 
