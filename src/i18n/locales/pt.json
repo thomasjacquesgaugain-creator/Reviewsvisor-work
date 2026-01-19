@@ -1,7 +1,6 @@
 {
   "common": {
     "loading": "Carregando...",
-    "brandName": "Reviewsvisor",
     "save": "Salvar",
     "cancel": "Cancelar",
     "delete": "Excluir",
@@ -194,26 +193,13 @@
     "lastUpdate": "Última atualização",
     "granularity": "Granularidade",
     "day": "Dia",
-    "monthlyTrend": "Tendência mensal (últimos 12 meses)",
-    "targetDifficulty": {
-      "accessible": "Acessível",
-      "realistic": "Realista",
-      "achievable": "Atingível",
-      "ambitious": "Ambicioso"
-    },
-    "targetDateEstimate": {
-      "oneMonth": "Em 1 mês",
-      "twoMonths": "Em 2 meses",
-      "threeToFourMonths": "Em 3–4 meses",
-      "fourMonths": "Em 4 meses",
-      "sixMonthsOrMore": "Em 6 meses ou mais"
-    },
-    "ratingDistributionValue": "{{count}} ({{percent}}%)",
-    "stars5": "5 estrelas",
-    "stars4": "4 estrelas",
-    "stars3": "3 estrelas",
-    "stars2": "2 estrelas",
-    "stars1": "1 estrela",
+    "week": "Semana",
+    "month": "Mês",
+    "year": "Ano",
+    "review": "avaliação",
+    "reviews": "avaliações",
+    "stars": "estrelas",
+    "star": "estrela",
     "noComment": "Sem comentário",
     "anonymous": "Anônimo",
     "reviewsAndStars": "{{count}} avaliações • {{rating}} estrelas",
@@ -499,10 +485,7 @@
     "selectedEstablishment": "Estabelecimento selecionado",
     "searchLocationPlaceholder": "Pesquisar um local...",
     "cannotRetrieveDetails": "Não foi possível recuperar os detalhes do estabelecimento",
-    "contactAdminForApiKey": "Entre em contato com o administrador para configurar a chave da API do Google Maps.",
-    "requestTooLong": "Requisição muito longa",
-    "suggestionsError": "Erro de sugestões",
-    "detailsFetchError": "Erro ao obter detalhes"
+    "contactAdminForApiKey": "Entre em contato com o administrador para configurar a chave da API do Google Maps."
   },
   "import": {
     "pasteReviews": "Colar avaliações",
@@ -518,7 +501,7 @@
     "fileSizeLimit": "O tamanho do arquivo não deve exceder 10MB.",
     "fileReadError": "Erro de leitura do arquivo",
     "selectFile": "Por favor, selecione um arquivo.",
-    "reviewsSaved": " {{count}} avaliações salvas para {{name}} (duplicados: {{duplicates}})",
+    "reviewsSaved": "✅ {{count}} avaliações salvas para {{name}} (duplicados: {{duplicates}})",
     "importError": "Erro de importação",
     "importFailed": "Falha ao importar avaliações.",
     "instruction1": "Vá para o Google Takeout através do link oficial",
@@ -566,7 +549,6 @@
     "exampleReview": "Exemplo: \"Excelente restaurante, serviço impecável e pratos deliciosos! Uma torta um pouco cansada mas a qualidade estava lá. Muito muito simpático!\""
   },
   "errors": {
-    "title": "Erro",
     "generic": "Ocorreu um erro inesperado.",
     "network": "Erro de conexão de rede",
     "notFound": "Página não encontrada",
@@ -662,44 +644,5 @@
     "tripadvisor": "TripAdvisor",
     "facebook": "Facebook",
     "yelp": "Yelp"
-  },
-  "sentiment": {
-    "positive": "Positivo",
-    "neutral": "Neutro",
-    "negative": "Negativo"
-  },
-  "demoAnalytics": {
-    "headerTitle": "Análise para",
-    "headerSubtitle": "Veja o que seus clientes dizem sobre seu restaurante",
-    "totalReviews": "Total de avaliações",
-    "averageRating": "Nota média",
-    "positiveSentiment": "Sentimento positivo",
-    "improvementRequired": "Melhoria necessária",
-    "areasToImprove": "áreas a melhorar",
-    "sentimentDistribution": "Distribuição de sentimentos",
-    "sentimentDistributionDesc": "Distribuição das avaliações por sentimento analisado pela IA",
-    "mainThemes": "Temas principais",
-    "mainThemesDesc": "Os tópicos mais mencionados nas suas avaliações",
-    "popularKeywords": "Palavras-chave populares",
-    "popularKeywordsDesc": "Os termos mais frequentes nas suas avaliações",
-    "thisMonthChange": "+{{value}}% este mês",
-    "ratingDeltaSinceLastMonth": "+{{value}} desde o mês passado",
-    "mentionsCount": "{{count}} menções",
-    "score": "Pontuação: {{value}}%",
-    "timesCount": "{{count}} vezes",
-    "themes": {
-      "service": "Serviço",
-      "foodQuality": "Qualidade dos pratos",
-      "ambiance": "Ambiente",
-      "price": "Preço",
-      "waitTime": "Tempo de espera"
-    },
-    "keywords": {
-      "delicious": "delicioso",
-      "fastService": "serviço rápido",
-      "excellent": "excelente",
-      "expensive": "caro",
-      "wait": "espera"
-    }
   }
 }

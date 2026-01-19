@@ -135,10 +135,10 @@ export function EstablishmentSelector({
                 <Building2 className="w-4 h-4 text-primary" />
               </div>
               <div className="text-left min-w-0">
-                <div className="font-medium text-foreground text-base truncate max-w-[300px]">
+                <div className="font-medium text-base text-foreground truncate max-w-[320px]">
                   {selectedEstablishment?.name || t("establishment.select")}
                 </div>
-                {selectedEstablishment?.formatted_address && <div className="text-sm text-muted-foreground truncate max-w-[300px]">
+                {selectedEstablishment?.formatted_address && <div className="text-sm text-muted-foreground truncate max-w-[320px]">
                     {selectedEstablishment.formatted_address}
                   </div>}
               </div>
@@ -165,7 +165,7 @@ export function EstablishmentSelector({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-900 text-base truncate">{est.name}</span>
+                    <span className="font-medium text-base text-gray-900 truncate">{est.name}</span>
                     {est.is_active && (
                       <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded flex-shrink-0">{t("establishment.active")}</span>
                     )}

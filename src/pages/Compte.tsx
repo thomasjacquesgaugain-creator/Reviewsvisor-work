@@ -160,7 +160,7 @@ const Compte = () => {
   const activePlan = subscription.subscribed && subscription.price_id
     ? subscriptionPlans.find(p => p.priceId === subscription.price_id)
     : null;
-  const subscriptionName = activePlan ? activePlan.name : t("account.free");
+  const subscriptionName = activePlan ? activePlan.name : "Gratuit";
 
   const initials = fullName
     .split(" ")

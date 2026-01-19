@@ -172,7 +172,7 @@ const Dashboard = () => {
 
     if (delta < 0.3) {
       return {
-        label: t('dashboard.targetDifficulty.accessible'),
+        label: 'Accessible',
         badgeClassName: 'text-green-700 bg-green-50 border-green-200',
         cardClassName: 'bg-green-50 border-green-200',
         labelClassName: 'text-green-800'
@@ -180,7 +180,7 @@ const Dashboard = () => {
     }
     if (delta < 0.5) {
       return {
-        label: t('dashboard.targetDifficulty.realistic'),
+        label: 'Réaliste',
         badgeClassName: 'text-blue-700 bg-blue-50 border-blue-200',
         cardClassName: 'bg-blue-50 border-blue-200',
         labelClassName: 'text-blue-800'
@@ -188,19 +188,19 @@ const Dashboard = () => {
     }
     if (delta < 0.8) {
       return {
-        label: t('dashboard.targetDifficulty.achievable'),
+        label: 'Atteignable',
         badgeClassName: 'text-orange-700 bg-orange-50 border-orange-200',
         cardClassName: 'bg-orange-50 border-orange-200',
         labelClassName: 'text-orange-800'
       };
     }
     return {
-      label: t('dashboard.targetDifficulty.ambitious'),
+      label: 'Ambitieux',
       badgeClassName: 'text-red-700 bg-red-50 border-red-200',
       cardClassName: 'bg-red-50 border-red-200',
       labelClassName: 'text-red-800'
     };
-  }, [currentAvgRatingForTarget, targetRating, t]);
+  }, [currentAvgRatingForTarget, targetRating]);
 
   const targetDateText = useMemo(() => {
     const current = Number(currentAvgRatingForTarget.toFixed(1));
@@ -217,18 +217,18 @@ const Dashboard = () => {
     }, 0);
     const reviewsPerMonth = last90DaysCount / 3;
 
-    if (delta < 0.3) return t('dashboard.targetDateEstimate.oneMonth');
-    if (delta < 0.5) return t('dashboard.targetDateEstimate.twoMonths');
+    if (delta < 0.3) return "D'ici 1 mois";
+    if (delta < 0.5) return "D'ici 2 mois";
 
     if (delta < 0.8) {
       // Si peu d'avis/mois, viser plutôt le haut de la fourchette
-      if (reviewsPerMonth > 0 && reviewsPerMonth < 5) return t('dashboard.targetDateEstimate.fourMonths');
-      return t('dashboard.targetDateEstimate.threeToFourMonths');
+      if (reviewsPerMonth > 0 && reviewsPerMonth < 5) return "D'ici 4 mois";
+      return "D'ici 3-4 mois";
     }
 
     // Ambitieux
-    return t('dashboard.targetDateEstimate.sixMonthsOrMore');
-  }, [currentAvgRatingForTarget, targetRating, allReviewsForChart, t]);
+    return "D'ici 6 mois ou plus";
+  }, [currentAvgRatingForTarget, targetRating, allReviewsForChart]);
 
   useEffect(() => {
     const minTarget = Math.min(5, Math.max(1, currentAvgRatingForTarget));
@@ -541,25 +541,25 @@ const Dashboard = () => {
     const buckets = [
       {
         key: 'wait',
-        label: t("charts.problems.longWait"),
+        label: "Temps d'attente",
         maxImpact: 0.3,
         keywords: ['attente', 'attendre', 'lent', 'lente', 'lenteur', 'retard', 'queue'],
       },
       {
         key: 'service',
-        label: t("charts.problems.serviceWait"),
+        label: 'Accueil/Service',
         maxImpact: 0.2,
         keywords: ['service', 'serveur', 'serveuse', 'accueil', 'accueillant', 'impoli', 'désagréable', 'desagreable'],
       },
       {
         key: 'quality',
-        label: t("charts.problems.foodQuality"),
+        label: 'Qualité cuisine',
         maxImpact: 0.2,
         keywords: ['froid', 'froide', 'tiède', 'tiede', 'cuisson', 'fade', 'qualité', 'qualite', 'cuisine'],
       },
       {
         key: 'price',
-        label: t("charts.problems.price"),
+        label: 'Prix',
         maxImpact: 0.1,
         keywords: ['prix', 'cher', 'chère', 'chere', 'coûteux', 'couteux'],
       },
@@ -2399,7 +2399,7 @@ const Dashboard = () => {
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <BarChart3 className="w-5 h-5" style={{color: '#9234ea'}} />
-                <p className="text-2xl font-bold" style={{color: '#9234ea'}}>{78}{'%'} </p>
+                <p className="text-2xl font-bold" style={{color: '#9234ea'}}>78%</p>
               </div>
               <p className="text-sm text-gray-600">{t("dashboard.themesAnalysis")}</p>
               <p className="text-xs text-gray-500">{t("dashboard.reviewsDistributionByCategories")}</p>
@@ -2549,75 +2549,86 @@ const Dashboard = () => {
               <div className="mt-6 space-y-8">
                 {/* Répartition des avis par note */}
                 <div>
-                  <h4 className="font-semibold text-lg mb-4">{t("dashboard.reviewsDistributionByRating")}</h4>
-                  {(() => {
-                    const demo = [
-                      { stars: 5, count: 3, percent: 30.0, barClass: 'bg-green-500' },
-                      { stars: 4, count: 4, percent: 40.0, barClass: 'bg-green-500' },
-                      { stars: 3, count: 2, percent: 20.0, barClass: 'bg-yellow-500' },
-                      { stars: 2, count: 1, percent: 10.0, barClass: 'bg-red-500' },
-                      { stars: 1, count: 0, percent: 0.0, barClass: 'bg-gray-300' },
-                    ];
-
-                    const starsLabel = (n: number) => {
-                      switch (n) {
-                        case 5:
-                          return t('dashboard.stars5');
-                        case 4:
-                          return t('dashboard.stars4');
-                        case 3:
-                          return t('dashboard.stars3');
-                        case 2:
-                          return t('dashboard.stars2');
-                        default:
-                          return t('dashboard.stars1');
-                      }
-                    };
-
-                    return (
-                      <div className="space-y-3">
-                        {demo.map((row) => (
-                          <div key={row.stars} className="flex items-center gap-4">
-                            <span className="w-20 text-sm text-gray-600 font-medium">{starsLabel(row.stars)}</span>
-                            <div className="flex-1 bg-gray-100 rounded-full h-3">
-                              <div className={`${row.barClass} h-3 rounded-full`} style={{ width: `${row.percent}%` }} />
-                            </div>
-                            <span className="text-sm text-gray-600 w-20 text-right">
-                              {t('dashboard.ratingDistributionValue', { count: row.count, percent: row.percent.toFixed(1) })}
-                            </span>
-                          </div>
-                        ))}
+                  <h4 className="font-semibold text-lg mb-4">Répartition des avis par note</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4">
+                      <span className="w-20 text-sm text-gray-600 font-medium">5 étoiles</span>
+                      <div className="flex-1 bg-gray-100 rounded-full h-3">
+                        <div className="bg-green-500 h-3 rounded-full" style={{width: '30%'}}></div>
                       </div>
-                    );
-                  })()}
+                      <span className="text-sm text-gray-600 w-20 text-right">3 (30.0%)</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="w-20 text-sm text-gray-600 font-medium">4 étoiles</span>
+                      <div className="flex-1 bg-gray-100 rounded-full h-3">
+                        <div className="bg-green-500 h-3 rounded-full" style={{width: '40%'}}></div>
+                      </div>
+                      <span className="text-sm text-gray-600 w-20 text-right">4 (40.0%)</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="w-20 text-sm text-gray-600 font-medium">3 étoiles</span>
+                      <div className="flex-1 bg-gray-100 rounded-full h-3">
+                        <div className="bg-yellow-500 h-3 rounded-full" style={{width: '20%'}}></div>
+                      </div>
+                      <span className="text-sm text-gray-600 w-20 text-right">2 (20.0%)</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="w-20 text-sm text-gray-600 font-medium">2 étoiles</span>
+                      <div className="flex-1 bg-gray-100 rounded-full h-3">
+                        <div className="bg-red-500 h-3 rounded-full" style={{width: '10%'}}></div>
+                      </div>
+                      <span className="text-sm text-gray-600 w-20 text-right">1 (10.0%)</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="w-20 text-sm text-gray-600 font-medium">1 étoile</span>
+                      <div className="flex-1 bg-gray-100 rounded-full h-3">
+                        <div className="bg-gray-300 h-3 rounded-full" style={{width: '0%'}}></div>
+                      </div>
+                      <span className="text-sm text-gray-600 w-20 text-right">0 (0.0%)</span>
+                    </div>
+                  </div>
                 </div>
                 
                 {/* Thématiques récurrentes */}
                 <div>
-                  <h4 className="font-semibold text-lg mb-4">{t("dashboard.recurringThemes")}</h4>
-                  {(() => {
-                    const demo = [
-                      { theme: t('charts.strengths.fastService'), mentions: 8, percent: 80.0 },
-                      { theme: t('charts.problems.foodQuality'), mentions: 7, percent: 70.0 },
-                      { theme: t('charts.problems.serviceWait'), mentions: 6, percent: 60.0 },
-                      { theme: t('charts.strengths.niceAmbiance'), mentions: 5, percent: 50.0 },
-                      { theme: t('charts.problems.price'), mentions: 1, percent: 10.0 },
-                    ];
-
-                    return (
-                      <div className="space-y-2">
-                        {demo.map((row, idx) => (
-                          <div key={idx} className="flex items-center justify-between bg-[#f0f3ff] rounded-lg px-4 py-3">
-                            <span className="font-medium">{row.theme}</span>
-                            <div className="flex items-center gap-3">
-                              <span className="text-gray-500">{t('dashboard.mentionsCount', { count: row.mentions })}</span>
-                              <span className="px-3 py-1 rounded-full border border-[#5048e5] text-[#5048e5] text-sm font-medium">{row.percent.toFixed(1)}{'%'}</span>
-                            </div>
-                          </div>
-                        ))}
+                  <h4 className="font-semibold text-lg mb-4">Thématiques récurrentes</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between bg-[#f0f3ff] rounded-lg px-4 py-3">
+                      <span className="font-medium">Rapidité</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-gray-500">8 mentions</span>
+                        <span className="px-3 py-1 rounded-full border border-[#5048e5] text-[#5048e5] text-sm font-medium">80.0%</span>
                       </div>
-                    );
-                  })()}
+                    </div>
+                    <div className="flex items-center justify-between bg-[#f0f3ff] rounded-lg px-4 py-3">
+                      <span className="font-medium">Cuisine</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-gray-500">7 mentions</span>
+                        <span className="px-3 py-1 rounded-full border border-[#5048e5] text-[#5048e5] text-sm font-medium">70.0%</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between bg-[#f0f3ff] rounded-lg px-4 py-3">
+                      <span className="font-medium">Service / attente</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-gray-500">6 mentions</span>
+                        <span className="px-3 py-1 rounded-full border border-[#5048e5] text-[#5048e5] text-sm font-medium">60.0%</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between bg-[#f0f3ff] rounded-lg px-4 py-3">
+                      <span className="font-medium">Ambiance agréable</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-gray-500">5 mentions</span>
+                        <span className="px-3 py-1 rounded-full border border-[#5048e5] text-[#5048e5] text-sm font-medium">50.0%</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between bg-[#f0f3ff] rounded-lg px-4 py-3">
+                      <span className="font-medium">Prix</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-gray-500">1 mention</span>
+                        <span className="px-3 py-1 rounded-full border border-[#5048e5] text-[#5048e5] text-sm font-medium">10.0%</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -4035,8 +4046,8 @@ const Dashboard = () => {
           <div className="flex items-center gap-3 mb-6">
             <MessageSquare className="w-6 h-6 text-blue-600" />
             <div className="flex-1">
-              <h2 className="text-xl font-semibold">{t("dashboard.responseCenter.title")}</h2>
-              <p className="text-sm text-gray-600">{t("dashboard.responseCenter.subtitle")}</p>
+              <h2 className="text-xl font-semibold">Centre de réponse</h2>
+              <p className="text-sm text-gray-600">Gérez vos réponses aux avis clients</p>
             </div>
           </div>
 
@@ -4066,7 +4077,7 @@ const Dashboard = () => {
                     <CheckCircle className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">{t("dashboard.status.replied")}</p>
+                    <p className="text-sm text-gray-600">Répondu</p>
                     <p className="text-2xl font-bold">
                       {allReviewsForChart.filter(review => {
                         const hasValidatedResponse = validatedReviews.has(review.id);
@@ -4095,7 +4106,7 @@ const Dashboard = () => {
                         return `${reponsesStats.validated}/${total} réponses`;
                       })()}
                     </p>
-                    <p className="text-sm text-gray-500">{t("dashboard.status.validated")}</p>
+                    <p className="text-sm text-gray-500">Validées</p>
                 </div>
                 </CardContent>
               </Card>
@@ -4110,8 +4121,8 @@ const Dashboard = () => {
                 <div className="flex items-center gap-3">
                   <Sparkles className="w-6 h-6 text-purple-600" />
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold">{t("dashboard.responseCenter.cards.content.title")}</h3>
-                    <p className="text-sm text-gray-600">{t("dashboard.responseCenter.cards.content.subtitle")}</p>
+                    <h3 className="text-lg font-semibold">Analyse du contenu</h3>
+                    <p className="text-sm text-gray-600">Classification IA des avis</p>
               </div>
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'contenu' ? null : 'contenu'); }} className="h-6 w-6 p-0 hover:bg-purple-50">
                     {openCard === 'contenu' ? <ChevronUp className="w-4 h-4 text-purple-600" /> : <ChevronDown className="w-4 h-4 text-purple-600" />}
@@ -4127,8 +4138,8 @@ const Dashboard = () => {
                   <div className="flex items-center gap-3">
                     <Star className="w-6 h-6 text-yellow-600" />
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold">{t("dashboard.responseCenter.cards.rating.title")}</h3>
-                      <p className="text-sm text-gray-600">{t("dashboard.responseCenter.cards.rating.subtitle")}</p>
+                      <h3 className="text-lg font-semibold">Filtrer par note</h3>
+                      <p className="text-sm text-gray-600">Avis classés par étoiles</p>
                 </div>
                     <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'note' ? null : 'note'); }} className="h-6 w-6 p-0 hover:bg-yellow-50">
                       {openCard === 'note' ? <ChevronUp className="w-4 h-4 text-yellow-600" /> : <ChevronDown className="w-4 h-4 text-yellow-600" />}
@@ -4144,8 +4155,8 @@ const Dashboard = () => {
                   <div className="flex items-center gap-3">
                     <Flag className="w-6 h-6 text-red-600" />
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold">{t("dashboard.responseCenter.cards.priority.title")}</h3>
-                      <p className="text-sm text-gray-600">{t("dashboard.responseCenter.cards.priority.subtitle")}</p>
+                      <h3 className="text-lg font-semibold">Priorité</h3>
+                      <p className="text-sm text-gray-600">Avis classés par urgence</p>
                 </div>
                     <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'priorite' ? null : 'priorite'); }} className="h-6 w-6 p-0 hover:bg-red-50">
                       {openCard === 'priorite' ? <ChevronUp className="w-4 h-4 text-red-600" /> : <ChevronDown className="w-4 h-4 text-red-600" />}
@@ -4161,8 +4172,8 @@ const Dashboard = () => {
                   <div className="flex items-center gap-3">
                     <Globe className="w-6 h-6 text-blue-600" />
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold">{t("dashboard.responseCenter.cards.platform.title")}</h3>
-                      <p className="text-sm text-gray-600">{t("dashboard.responseCenter.cards.platform.subtitle")}</p>
+                      <h3 className="text-lg font-semibold">Plateforme</h3>
+                      <p className="text-sm text-gray-600">Avis classés par source</p>
                     </div>
                     <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'plateforme' ? null : 'plateforme'); }} className="h-6 w-6 p-0 hover:bg-blue-50">
                       {openCard === 'plateforme' ? <ChevronUp className="w-4 h-4 text-blue-600" /> : <ChevronDown className="w-4 h-4 text-blue-600" />}
@@ -4216,7 +4227,7 @@ const Dashboard = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <AlertCircle className="w-5 h-5 text-red-600" />
-                            <h3 className="font-semibold text-red-900">{t("dashboard.responseCenter.groups.withComplaint")}</h3>
+                            <h3 className="font-semibold text-red-900">🔴 Avec une plainte</h3>
                           </div>
                           <Badge className="bg-red-600 text-white">{plainteReviews.length}</Badge>
                         </div>
@@ -4225,13 +4236,13 @@ const Dashboard = () => {
                         <table className="w-full">
                           <thead className="bg-red-50">
                             <tr>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">{t("dashboard.responseCenter.table.author")}</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">{t("dashboard.responseCenter.table.rating")}</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">{t("dashboard.responseCenter.table.comment")}</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">{t("dashboard.responseCenter.table.source")}</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">{t("dashboard.responseCenter.table.date")}</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">{t("dashboard.responseCenter.table.status")}</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">{t("dashboard.responseCenter.table.action")}</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">Auteur</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">Note</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">Commentaire</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">Source</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">Date</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">Statut</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">Action</th>
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-red-100">
@@ -4254,14 +4265,14 @@ const Dashboard = () => {
                                   </td>
                                   <td className="px-4 py-3">
                                     <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-                                      {review.source || t("platforms.google")}
+                                      {review.source || "Google"}
                                     </Badge>
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-500">
                                     {(() => {
                                       const { dateStr, isImportDate } = getReviewDisplayDate(review);
                                       return (
-                                        <span title={isImportDate ? t("dashboard.responseCenter.importedAt") : undefined}>
+                                        <span title={isImportDate ? "Date d'importation" : undefined}>
                                           {dateStr ? formatReviewDate(dateStr) : '-'}
                                         </span>
                                       );
@@ -4269,7 +4280,7 @@ const Dashboard = () => {
                                   </td>
                                   <td className="px-4 py-3">
                                     <Badge className={hasResponse ? "bg-green-100 text-green-800" : isUrgent ? "bg-red-100 text-red-800" : "bg-orange-100 text-orange-800"}>
-                                      {hasResponse ? t("dashboard.status.replied") : t("dashboard.status.pending")}
+                                      {hasResponse ? "Répondu" : "En attente"}
                                     </Badge>
                                   </td>
                                   <td className="px-4 py-3">
@@ -4278,7 +4289,7 @@ const Dashboard = () => {
                                         className="bg-green-100 text-green-800 text-xs cursor-pointer hover:bg-green-200"
                                         onClick={() => setExpandedReplyId(expandedReplyId === review.id ? null : review.id)}
                                       >
-                                        {t("dashboard.responseCenter.actions.viewReply")}
+                                        Voir la réponse
                                       </Badge>
                                     ) : (
                                       <Button 
@@ -4291,7 +4302,7 @@ const Dashboard = () => {
                                         }}
                                       >
                                         <Reply className="w-3 h-3 mr-1" />
-                                        {t("dashboard.responseCenter.actions.reply")}
+                                        Répondre
                                       </Button>
                                     )}
                                   </td>
@@ -4300,9 +4311,9 @@ const Dashboard = () => {
                                   <tr>
                                     <td colSpan={7} className="p-4 bg-green-50">
                                       <div className="border-l-4 border-green-500 pl-4">
-                                        <p className="font-semibold text-green-700 mb-2">{t("dashboard.responseCenter.publishedReply")}</p>
+                                        <p className="font-semibold text-green-700 mb-2">Réponse publiée :</p>
                                         <p className="text-gray-700">
-                                          {review.owner_reply_text || validatedResponsesText.get(review.id) || t("dashboard.responseCenter.defaultPublishedReply")}
+                                          {review.owner_reply_text || validatedResponsesText.get(review.id) || "Merci pour votre avis, nous sommes ravis que vous ayez apprécié votre expérience !"}
                                         </p>
                   </div>
                                     </td>
@@ -4328,7 +4339,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                             <Lightbulb className="w-5 h-5 text-yellow-600" />
-                            <h3 className="font-semibold text-yellow-900">{t("dashboard.responseCenter.groups.containsSuggestion")}</h3>
+                            <h3 className="font-semibold text-yellow-900">💡 Contient une suggestion</h3>
               </div>
                           <Badge className="bg-yellow-600 text-white">{suggestionReviews.length}</Badge>
                         </div>
@@ -4337,13 +4348,13 @@ const Dashboard = () => {
                         <table className="w-full">
                           <thead className="bg-yellow-50">
                             <tr>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">{t("dashboard.responseCenter.table.author")}</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">{t("dashboard.responseCenter.table.rating")}</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">{t("dashboard.responseCenter.table.comment")}</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">{t("dashboard.responseCenter.table.source")}</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">{t("dashboard.responseCenter.table.date")}</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">{t("dashboard.responseCenter.table.status")}</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">{t("dashboard.responseCenter.table.action")}</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">Auteur</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">Note</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">Commentaire</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">Source</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">Date</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">Statut</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">Action</th>
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-yellow-100">
@@ -4426,7 +4437,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                             <Frown className="w-5 h-5 text-orange-600" />
-                            <h3 className="font-semibold text-orange-900">{t("dashboard.responseCenter.groups.negativeToneDetected")}</h3>
+                            <h3 className="font-semibold text-orange-900">😠 Ton négatif détecté</h3>
               </div>
                           <Badge className="bg-orange-600 text-white">{negatifReviews.length}</Badge>
                         </div>

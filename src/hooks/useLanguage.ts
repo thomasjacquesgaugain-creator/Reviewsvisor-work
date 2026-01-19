@@ -10,15 +10,7 @@ export function useLanguage() {
   const { i18n } = useTranslation();
   const { user } = useAuth();
 
-  const normalizeLang = (code: string): SupportedLanguage => {
-    if (!code) return 'fr';
-    if (SUPPORTED_LANGUAGES.includes(code as SupportedLanguage)) return code as SupportedLanguage;
-    // i18next can yield 'en' or 'en-US' etc. Canonicalize to en-GB.
-    if (code === 'en' || code.startsWith('en-')) return 'en-GB';
-    return 'fr';
-  };
-
-  const lang = normalizeLang(i18n.language);
+  const lang = i18n.language as SupportedLanguage;
 
   const setLang = useCallback(async (nextLang: SupportedLanguage) => {
     // 1) Change i18n language
@@ -43,9 +35,7 @@ export function useLanguage() {
   }, [i18n, user?.id]);
 
   const isSupported = (code: string): code is SupportedLanguage => {
-    if (SUPPORTED_LANGUAGES.includes(code as SupportedLanguage)) return true;
-    if (code === 'en' || code.startsWith('en-')) return true;
-    return false;
+    return SUPPORTED_LANGUAGES.includes(code as SupportedLanguage);
   };
 
   return {

@@ -90,7 +90,7 @@ export default function NavBar() {
           } : undefined}
         >
           <span className="text-xl">📊</span>
-          <div className="text-2xl font-bold text-blue-600" translate="no">{t("common.brandName")}</div>
+          <div className="text-2xl font-bold text-blue-600">Reviewsvisor</div>
         </div>
         {/* Barre de séparation bleue */}
         <div className="h-10 w-px bg-gradient-to-b from-transparent via-blue-500 to-transparent opacity-70"></div>

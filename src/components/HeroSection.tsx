@@ -123,12 +123,12 @@ export const HeroSection = () => {
         <div className="flex items-center justify-center pt-2 pb-0">
           <img 
             src={logoHeader} 
-            alt={t("common.logoAlt")}
+            alt="Reviewsvisor Logo" 
             className="h-[90px] w-auto -mr-2 mt-4"
             style={{ filter: 'brightness(0) saturate(100%) invert(38%) sepia(89%) saturate(2475%) hue-rotate(214deg) brightness(101%) contrast(101%)' }}
           />
-          <span className="text-[#2F6BFF] text-[48px] font-bold leading-none" translate="no">
-            {t("common.brandName")}
+          <span className="text-[#2F6BFF] text-[48px] font-bold leading-none">
+            Reviewsvisor
           </span>
         </div>
 

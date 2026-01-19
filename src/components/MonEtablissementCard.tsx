@@ -271,7 +271,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
             data-testid="btn-import-avis"
           >
             <Download className="w-4 h-4" />
-            <span className="text-[10px] font-medium">{t("establishment.importReviews")}</span>
+            <span className="text-[10px] font-medium">Importer vos avis</span>
           </button>
         </div>
 
@@ -286,7 +286,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
             data-name={etab.name}
           >
             <BarChart3 className="w-4 h-4" />
-            <span className="text-[10px] font-medium">{t("establishment.visualReviews")}</span>
+            <span className="text-[10px] font-medium">Visuel des avis</span>
           </button>
         </div>
       </div>

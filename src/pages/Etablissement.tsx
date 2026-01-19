@@ -92,7 +92,7 @@ export default function EtablissementPage() {
           detail: etab
         }));
       } catch (err) {
-        console.warn(err);
+        console.warn("Impossible de synchroniser l'établissement depuis la base", err);
       }
     };
     syncFromDb();
@@ -207,6 +207,7 @@ export default function EtablissementPage() {
       if (!input) return;
       try {
         setPlacesError(null);
+        console.log('🔍 Initialisation de l\'autocomplete Google Places...');
         await loadGooglePlaces();
         const g = (window as any).google;
         if (!g?.maps?.places) {
@@ -236,6 +237,7 @@ export default function EtablissementPage() {
             toast.error(error?.message || t("establishment.cannotRetrieveDetails"));
           }
         });
+        console.log('✅ Autocomplete initialisé avec succès');
       } catch (error: any) {
         console.error('❌ Erreur de chargement Google Places:', error);
         let errorMsg = t("googlePlaces.error");
@@ -269,14 +271,14 @@ export default function EtablissementPage() {
           .limit(1);
         
         if (error) {
-          console.error(error);
+          console.error("Erreur lors de la vérification des établissements:", error);
           setHasRegisteredEstablishments(false);
           return;
         }
         
         setHasRegisteredEstablishments((data?.length || 0) > 0);
       } catch (error) {
-        console.error(error);
+        console.error("Erreur lors de la vérification des établissements:", error);
         setHasRegisteredEstablishments(false);
       }
     };
@@ -514,7 +516,7 @@ export default function EtablissementPage() {
             <ImportAvisToolbar 
               onClose={() => setShowImportBar(false)} 
               onFileAnalyzed={() => {
-                void 0;
+            console.log("Fichier analysé, rafraîchissement des données...");
               }} 
               onImportSuccess={handleImportSuccess} 
               onOpenVisualPanel={handleOpenVisualPanel} 
@@ -526,9 +528,9 @@ export default function EtablissementPage() {
               <div className="flex items-center gap-3">
                 <AlertTriangle className="w-5 h-5 text-yellow-600" />
                 <div>
-                  <h3 className="font-semibold text-yellow-900">{t("establishment.noEstablishmentSelected")}</h3>
+                  <h3 className="font-semibold text-yellow-900">{t("establishment.noEstablishmentSelected") || "Aucun établissement sélectionné"}</h3>
                   <p className="text-sm text-yellow-700 mt-1">
-                    {t("establishment.pleaseAddEstablishmentFirst")}
+                    {t("establishment.pleaseAddEstablishmentFirst") || "Veuillez d'abord ajouter un établissement pour pouvoir importer des avis."}
                   </p>
                   <Button 
                     variant="outline" 
@@ -536,7 +538,7 @@ export default function EtablissementPage() {
                     onClick={openSearch}
                     className="mt-3"
                   >
-                    {t("establishment.addEstablishment")}
+                    {t("establishment.addEstablishment") || "Ajouter un établissement"}
                   </Button>
                 </div>
               </div>

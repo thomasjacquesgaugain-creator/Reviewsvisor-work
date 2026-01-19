@@ -8,12 +8,12 @@ import it from './locales/it.json';
 import es from './locales/es.json';
 import pt from './locales/pt.json';
 
-export const SUPPORTED_LANGUAGES = ['fr', 'en-GB', 'it', 'es', 'pt'] as const;
+export const SUPPORTED_LANGUAGES = ['fr', 'en', 'it', 'es', 'pt'] as const;
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
 
 export const LANGUAGE_LABELS: Record<SupportedLanguage, string> = {
   fr: 'Français',
-  'en-GB': 'English (GB)',
+  en: 'English',
   it: 'Italiano',
   es: 'Español',
   pt: 'Português',
@@ -21,7 +21,7 @@ export const LANGUAGE_LABELS: Record<SupportedLanguage, string> = {
 
 export const LANGUAGE_FLAGS: Record<SupportedLanguage, string> = {
   fr: '🇫🇷',
-  'en-GB': '🇬🇧',
+  en: '🇬🇧',
   it: '🇮🇹',
   es: '🇪🇸',
   pt: '🇵🇹',
@@ -29,9 +29,6 @@ export const LANGUAGE_FLAGS: Record<SupportedLanguage, string> = {
 
 const resources = {
   fr: { translation: fr },
-  // English (GB) is our canonical English. Keep a legacy 'en' alias for
-  // navigator/localStorage values like 'en' or 'en-US'.
-  'en-GB': { translation: en },
   en: { translation: en },
   it: { translation: it },
   es: { translation: es },
@@ -43,14 +40,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    // Prefer en-GB for any English variants.
-    fallbackLng: {
-      en: ['en-GB'],
-      default: ['fr'],
-    },
-    supportedLngs: ['fr', 'en-GB', 'en', 'it', 'es', 'pt'],
-    // Helps match e.g. navigator 'en-US' => 'en' => fallback to 'en-GB'.
-    nonExplicitSupportedLngs: true,
+    fallbackLng: 'fr',
     defaultNS: 'translation',
     interpolation: {
       escapeValue: false,

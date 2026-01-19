@@ -1,7 +1,6 @@
 {
   "common": {
     "loading": "Caricamento...",
-    "brandName": "Reviewsvisor",
     "save": "Salva",
     "cancel": "Annulla",
     "delete": "Elimina",
@@ -195,26 +194,12 @@
     "granularity": "Granularità",
     "day": "Giorno",
     "week": "Settimana",
-    "monthlyTrend": "Tendenza mensile (ultimi 12 mesi)",
-    "targetDifficulty": {
-      "accessible": "Accessibile",
-      "realistic": "Realistico",
-      "achievable": "Raggiungibile",
-      "ambitious": "Ambizioso"
-    },
-    "targetDateEstimate": {
-      "oneMonth": "Entro 1 mese",
-      "twoMonths": "Entro 2 mesi",
-      "threeToFourMonths": "Entro 3–4 mesi",
-      "fourMonths": "Entro 4 mesi",
-      "sixMonthsOrMore": "Entro 6 mesi o più"
-    },
-    "ratingDistributionValue": "{{count}} ({{percent}}%)",
-    "stars5": "5 stelle",
-    "stars4": "4 stelle",
-    "stars3": "3 stelle",
-    "stars2": "2 stelle",
-    "stars1": "1 stella",
+    "month": "Mese",
+    "year": "Anno",
+    "review": "recensione",
+    "reviews": "recensioni",
+    "stars": "stelle",
+    "star": "stella",
     "noComment": "Nessun commento",
     "anonymous": "Anonimo",
     "reviewsAndStars": "{{count}} recensioni • {{rating}} stelle",
@@ -500,10 +485,7 @@
     "selectedEstablishment": "Struttura selezionata",
     "searchLocationPlaceholder": "Cerca un luogo...",
     "cannotRetrieveDetails": "Impossibile recuperare i dettagli della struttura",
-    "contactAdminForApiKey": "Contattare l'amministratore per configurare la chiave API di Google Maps.",
-    "requestTooLong": "Richiesta troppo lunga",
-    "suggestionsError": "Errore nei suggerimenti",
-    "detailsFetchError": "Errore durante il recupero dei dettagli"
+    "contactAdminForApiKey": "Contattare l'amministratore per configurare la chiave API di Google Maps."
   },
   "import": {
     "pasteReviews": "Incolla recensioni",
@@ -519,7 +501,7 @@
     "fileSizeLimit": "La dimensione del file non deve superare 10MB.",
     "fileReadError": "Errore di lettura del file",
     "selectFile": "Seleziona un file.",
-    "reviewsSaved": " {{count}} recensioni salvate per {{name}} (duplicati: {{duplicates}})",
+    "reviewsSaved": "✅ {{count}} recensioni salvate per {{name}} (duplicati: {{duplicates}})",
     "importError": "Errore di importazione",
     "importFailed": "Importazione delle recensioni fallita.",
     "instruction1": "Vai su Google Takeout tramite il link ufficiale",
@@ -662,44 +644,5 @@
     "tripadvisor": "TripAdvisor",
     "facebook": "Facebook",
     "yelp": "Yelp"
-  },
-  "sentiment": {
-    "positive": "Positivo",
-    "neutral": "Neutro",
-    "negative": "Negativo"
-  },
-  "demoAnalytics": {
-    "headerTitle": "Analisi per",
-    "headerSubtitle": "Ecco cosa dicono i tuoi clienti del tuo ristorante",
-    "totalReviews": "Totale recensioni",
-    "averageRating": "Valutazione media",
-    "positiveSentiment": "Sentimento positivo",
-    "improvementRequired": "Miglioramento richiesto",
-    "areasToImprove": "aree da migliorare",
-    "sentimentDistribution": "Distribuzione dei sentimenti",
-    "sentimentDistributionDesc": "Ripartizione delle recensioni per sentimento analizzato dall'IA",
-    "mainThemes": "Temi principali",
-    "mainThemesDesc": "Gli argomenti più citati nelle tue recensioni",
-    "popularKeywords": "Parole chiave popolari",
-    "popularKeywordsDesc": "I termini più frequenti nelle tue recensioni",
-    "thisMonthChange": "+{{value}}% questo mese",
-    "ratingDeltaSinceLastMonth": "+{{value}} rispetto al mese scorso",
-    "mentionsCount": "{{count}} menzioni",
-    "score": "Punteggio: {{value}}%",
-    "timesCount": "{{count}} volte",
-    "themes": {
-      "service": "Servizio",
-      "foodQuality": "Qualità dei piatti",
-      "ambiance": "Atmosfera",
-      "price": "Prezzo",
-      "waitTime": "Tempo di attesa"
-    },
-    "keywords": {
-      "delicious": "delizioso",
-      "fastService": "servizio rapido",
-      "excellent": "eccellente",
-      "expensive": "caro",
-      "wait": "attesa"
-    }
   }
 }

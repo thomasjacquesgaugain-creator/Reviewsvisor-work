@@ -1,7 +1,6 @@
 {
   "common": {
     "loading": "Loading...",
-    "brandName": "Reviewsvisor",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
@@ -432,21 +431,7 @@
     "ratingProgressionDescription": "Your rating progression since establishment registration — by {{granularity}}",
     "occurrences": "Occurrences",
     "mentions": "mentions",
-    "monthlyTrend": "Monthly trend (last 12 months)",
-    "targetDifficulty": {
-      "accessible": "Accessible",
-      "realistic": "Realistic",
-      "achievable": "Achievable",
-      "ambitious": "Ambitious"
-    },
-    "targetDateEstimate": {
-      "oneMonth": "Within 1 month",
-      "twoMonths": "Within 2 months",
-      "threeToFourMonths": "Within 3–4 months",
-      "fourMonths": "Within 4 months",
-      "sixMonthsOrMore": "Within 6 months or more"
-    },
-    "ratingDistributionValue": "{{count}} ({{percent}}%)",
+    "mention": "mention",
     "stars5": "5 stars",
     "stars4": "4 stars",
     "stars3": "3 stars",
@@ -699,45 +684,6 @@
     "myEstablishments": "My Establishments",
     "addEstablishment": "Add an establishment"
   },
-  "sentiment": {
-    "positive": "Positive",
-    "neutral": "Neutral",
-    "negative": "Negative"
-  },
-  "demoAnalytics": {
-    "headerTitle": "Analysis for",
-    "headerSubtitle": "Here's what your customers say about your restaurant",
-    "totalReviews": "Total reviews",
-    "averageRating": "Average rating",
-    "positiveSentiment": "Positive sentiment",
-    "improvementRequired": "Improvement required",
-    "areasToImprove": "areas to improve",
-    "sentimentDistribution": "Sentiment distribution",
-    "sentimentDistributionDesc": "Breakdown of reviews by AI-analysed sentiment",
-    "mainThemes": "Main themes",
-    "mainThemesDesc": "The most mentioned topics in your reviews",
-    "popularKeywords": "Popular keywords",
-    "popularKeywordsDesc": "The most frequent terms in your reviews",
-    "thisMonthChange": "+{{value}}% this month",
-    "ratingDeltaSinceLastMonth": "+{{value}} since last month",
-    "mentionsCount": "{{count}} mentions",
-    "score": "Score: {{value}}%",
-    "timesCount": "{{count}} times",
-    "themes": {
-      "service": "Service",
-      "foodQuality": "Food quality",
-      "ambiance": "Ambiance",
-      "price": "Price",
-      "waitTime": "Waiting time"
-    },
-    "keywords": {
-      "delicious": "delicious",
-      "fastService": "fast service",
-      "excellent": "excellent",
-      "expensive": "expensive",
-      "wait": "wait"
-    }
-  },
   "googleImport": {
     "connectionSuccess": "Connection successful",
     "fetchingLocations": "Fetching locations...",
@@ -814,8 +760,6 @@
     "passwordTooShort": "Password must be at least 6 characters",
     "tryAgain": "Please try again",
     "requestTooLong": "Request too long",
-    "suggestionsError": "Suggestions error",
-    "detailsFetchError": "Error fetching details",
     "cannotRetrieveDetails": "Unable to retrieve details",
     "noDetailsFound": "No details found for this establishment",
     "searchErrorOccurredGeneric": "Error occurred during search"

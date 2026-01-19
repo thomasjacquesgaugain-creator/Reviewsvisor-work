@@ -377,7 +377,7 @@ const Dashboard = () => {
                 <div className="flex justify-center">
                   <div className="inline-flex items-center gap-2 bg-blue-500 rounded-full px-5 py-3 shadow-md">
                     <Star className="w-5 h-5 text-white" />
-                    <span className="text-white font-semibold text-base">{78}{'%'} </span>
+                    <span className="text-white font-semibold text-base">78%</span>
                   </div>
                 </div>
                 
