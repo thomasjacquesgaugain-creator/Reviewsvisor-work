@@ -1,0 +1,6027 @@
+{
+  "generatedAt": "2026-01-19T07:40:55.860Z",
+  "root": "src",
+  "total": 860,
+  "items": [
+    {
+      "file": "src/App.tsx",
+      "line": 61,
+      "col": 19,
+      "kind": "string",
+      "text": "Checking stripe return"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 62,
+      "col": 34,
+      "kind": "string",
+      "text": "stripeCheckoutStarted"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 63,
+      "col": 35,
+      "kind": "string",
+      "text": "stripeCheckoutStarted"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 86,
+      "col": 24,
+      "kind": "string",
+      "text": "z-[9999]"
+    },
+    {
+      "file": "src/components/AiAssistance.tsx",
+      "line": 41,
+      "col": 23,
+      "kind": "string",
+      "text": "AI assistance error:"
+    },
+    {
+      "file": "src/components/AiAssistance.tsx",
+      "line": 65,
+      "col": 21,
+      "kind": "string",
+      "text": "Unexpected AI assistance error:"
+    },
+    {
+      "file": "src/components/AutocompleteEtablissementInline.tsx",
+      "line": 28,
+      "col": 47,
+      "kind": "jsx_text",
+      "text": "(null);\n\n  const debounced = useDebounce(q, 250);\n  const abortRef = useRef"
+    },
+    {
+      "file": "src/components/AutocompleteEtablissementInline.tsx",
+      "line": 31,
+      "col": 49,
+      "kind": "jsx_text",
+      "text": "(null);\n  const tokenRef = useRef"
+    },
+    {
+      "file": "src/components/AutocompleteEtablissementInline.tsx",
+      "line": 187,
+      "col": 54,
+      "kind": "string",
+      "text": "sous l'icône"
+    },
+    {
+      "file": "src/components/AutocompleteEtablissementsFR.tsx",
+      "line": 30,
+      "col": 47,
+      "kind": "jsx_text",
+      "text": "(null);\r\n  const debounced = useDebounce(q, 250);\r\n  const boxRef = useRef"
+    },
+    {
+      "file": "src/components/AutocompleteEtablissementsFR.tsx",
+      "line": 53,
+      "col": 18,
+      "kind": "string",
+      "text": "Erreur de recherche"
+    },
+    {
+      "file": "src/components/AutocompleteEtablissementsFR.tsx",
+      "line": 60,
+      "col": 28,
+      "kind": "string",
+      "text": "Erreur de recherche"
+    },
+    {
+      "file": "src/components/ChangePasswordModal.tsx",
+      "line": 8,
+      "col": 8,
+      "kind": "string",
+      "text": "@/components/ui/dialog"
+    },
+    {
+      "file": "src/components/EstablishmentSelector.tsx",
+      "line": 65,
+      "col": 21,
+      "kind": "string",
+      "text": "Erreur chargement établissements:"
+    },
+    {
+      "file": "src/components/EstablishmentSelector.tsx",
+      "line": 110,
+      "col": 21,
+      "kind": "string",
+      "text": "Erreur sélection établissement:"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 54,
+      "col": 40,
+      "kind": "jsx_text",
+      "text": "(\n  name: string,\n  body?: unknown\n): Promise"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 620,
+      "col": 13,
+      "kind": "jsx_text",
+      "text": ") : hasExistingConnection ? ("
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 13,
+      "col": 8,
+      "kind": "string",
+      "text": "@/components/ui/dialog"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 71,
+      "col": 21,
+      "kind": "string",
+      "text": "application/json"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 81,
+      "col": 13,
+      "kind": "string",
+      "text": "(anon)"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 82,
+      "col": 44,
+      "kind": "string",
+      "text": "Bearer ***"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 321,
+      "col": 55,
+      "kind": "string",
+      "text": "google-business-accounts"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 361,
+      "col": 33,
+      "kind": "string",
+      "text": "API has not been used"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 363,
+      "col": 33,
+      "kind": "string",
+      "text": "Enable it by visiting"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 375,
+      "col": 33,
+      "kind": "string",
+      "text": "connection not found"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 379,
+      "col": 33,
+      "kind": "string",
+      "text": "Access denied"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 416,
+      "col": 56,
+      "kind": "string",
+      "text": "google-business-locations"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 493,
+      "col": 53,
+      "kind": "string",
+      "text": "google-business-reviews"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 554,
+      "col": 95,
+      "kind": "string",
+      "text": "(manquant)"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 559,
+      "col": 146,
+      "kind": "string",
+      "text": "(manquant)"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 569,
+      "col": 35,
+      "kind": "string",
+      "text": "reviews-visual-anchor"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 577,
+      "col": 44,
+      "kind": "string",
+      "text": "reviews:imported"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 608,
+      "col": 23,
+      "kind": "string",
+      "text": "SYNC POINTERDOWN"
+    },
+    {
+      "file": "src/components/GoogleImportButton.tsx",
+      "line": 613,
+      "col": 11,
+      "kind": "string",
+      "text": "w-full pointer-events-auto cursor-pointer relative z-50"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 137,
+      "col": 65,
+      "kind": "jsx_text",
+      "text": "🔍 Diagnostic OAuth Google"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 158,
+      "col": 16,
+      "kind": "jsx_text",
+      "text": ") : debugInfo ? ("
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 162,
+      "col": 89,
+      "kind": "jsx_text",
+      "text": "Configuration Frontend"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 187,
+      "col": 89,
+      "kind": "jsx_text",
+      "text": "URL d'autorisation complète"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 198,
+      "col": 89,
+      "kind": "jsx_text",
+      "text": "Configuration Backend (Edge Function)"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 218,
+      "col": 24,
+      "kind": "jsx_text",
+      "text": "Note:"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 218,
+      "col": 38,
+      "kind": "jsx_text",
+      "text": "Les credentials (client_id et client_secret) proviennent des variables d'environnement\r\n                Supabase configurées dans Paramètres → Variables. Le client_id est utilisé côté frontend,\r\n                le client_secret reste côté backend dans l'Edge Function."
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 225,
+      "col": 66,
+      "kind": "jsx_text",
+      "text": "Aucune donnée disponible"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 171,
+      "col": 17,
+      "kind": "attr:label",
+      "text": "Source client_id"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 175,
+      "col": 17,
+      "kind": "attr:label",
+      "text": "redirect_uri (frontend)"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 191,
+      "col": 17,
+      "kind": "attr:label",
+      "text": "URL OAuth"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 202,
+      "col": 17,
+      "kind": "attr:label",
+      "text": "redirect_uri (callback)"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 211,
+      "col": 17,
+      "kind": "attr:label",
+      "text": "Source secret"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 68,
+      "col": 16,
+      "kind": "string",
+      "text": "Diagnostic chargé"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 69,
+      "col": 22,
+      "kind": "string",
+      "text": "Informations OAuth récupérées avec succès"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 103,
+      "col": 14,
+      "kind": "string",
+      "text": "Copié"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 171,
+      "col": 23,
+      "kind": "string",
+      "text": "Source client_id"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 175,
+      "col": 23,
+      "kind": "string",
+      "text": "redirect_uri (frontend)"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 191,
+      "col": 23,
+      "kind": "string",
+      "text": "URL OAuth"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 202,
+      "col": 23,
+      "kind": "string",
+      "text": "redirect_uri (callback)"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 208,
+      "col": 59,
+      "kind": "string",
+      "text": "✅ Configuré (GOOGLE_CLIENT_SECRET)"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 208,
+      "col": 98,
+      "kind": "string",
+      "text": "❌ Non configuré"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 211,
+      "col": 23,
+      "kind": "string",
+      "text": "Source secret"
+    },
+    {
+      "file": "src/components/GoogleOAuthDebugPanel.tsx",
+      "line": 212,
+      "col": 23,
+      "kind": "string",
+      "text": "Variable d'environnement GOOGLE_CLIENT_SECRET (Edge Function)"
+    },
+    {
+      "file": "src/components/GooglePlaceAutocomplete.tsx",
+      "line": 394,
+      "col": 27,
+      "kind": "jsx_text",
+      "text": "= 0 && selectedIndex"
+    },
+    {
+      "file": "src/components/Header.tsx",
+      "line": 99,
+      "col": 24,
+      "kind": "jsx_text",
+      "text": "🇫🇷 Français"
+    },
+    {
+      "file": "src/components/Header.tsx",
+      "line": 100,
+      "col": 24,
+      "kind": "jsx_text",
+      "text": "🇬🇧 English"
+    },
+    {
+      "file": "src/components/Header.tsx",
+      "line": 37,
+      "col": 26,
+      "kind": "string",
+      "text": "thomas.jacquesgaugain@gmail.com"
+    },
+    {
+      "file": "src/components/Header.tsx",
+      "line": 62,
+      "col": 22,
+      "kind": "string",
+      "text": "hover:bg-gray-800"
+    },
+    {
+      "file": "src/components/Header.tsx",
+      "line": 62,
+      "col": 44,
+      "kind": "string",
+      "text": "hover:bg-blue-100"
+    },
+    {
+      "file": "src/components/Header.tsx",
+      "line": 83,
+      "col": 26,
+      "kind": "string",
+      "text": "hover:bg-gray-800"
+    },
+    {
+      "file": "src/components/Header.tsx",
+      "line": 83,
+      "col": 48,
+      "kind": "string",
+      "text": "hover:bg-blue-50"
+    },
+    {
+      "file": "src/components/HeroSection.tsx",
+      "line": 86,
+      "col": 43,
+      "kind": "jsx_text",
+      "text": "🔐"
+    },
+    {
+      "file": "src/components/HeroSection.tsx",
+      "line": 161,
+      "col": 24,
+      "kind": "jsx_text",
+      "text": "👤"
+    },
+    {
+      "file": "src/components/HeroSection.tsx",
+      "line": 206,
+      "col": 86,
+      "kind": "jsx_text",
+      "text": "➡️"
+    },
+    {
+      "file": "src/components/HeroSection.tsx",
+      "line": 207,
+      "col": 52,
+      "kind": "jsx_text",
+      "text": "94%"
+    },
+    {
+      "file": "src/components/HeroSection.tsx",
+      "line": 207,
+      "col": 91,
+      "kind": "jsx_text",
+      "text": "➡️"
+    },
+    {
+      "file": "src/components/HeroSection.tsx",
+      "line": 208,
+      "col": 52,
+      "kind": "jsx_text",
+      "text": "86%"
+    },
+    {
+      "file": "src/components/HeroSection.tsx",
+      "line": 21,
+      "col": 8,
+      "kind": "string",
+      "text": "@/components/ui/dropdown-menu"
+    },
+    {
+      "file": "src/components/ImportAvisPopover.tsx",
+      "line": 333,
+      "col": 44,
+      "kind": "jsx_text",
+      "text": "🔄"
+    },
+    {
+      "file": "src/components/ImportAvisPopover.tsx",
+      "line": 279,
+      "col": 28,
+      "kind": "string",
+      "text": ".csv"
+    },
+    {
+      "file": "src/components/ImportAvisToolbar.tsx",
+      "line": 29,
+      "col": 17,
+      "kind": "string",
+      "text": "Avis manuel:"
+    },
+    {
+      "file": "src/components/ImportAvisToolbar.tsx",
+      "line": 34,
+      "col": 17,
+      "kind": "string",
+      "text": "Import en masse:"
+    },
+    {
+      "file": "src/components/ImportCsvPanel.tsx",
+      "line": 175,
+      "col": 58,
+      "kind": "jsx_text",
+      "text": "line.trim());\n          \n          if (lines.length"
+    },
+    {
+      "file": "src/components/ImportCsvPanel.tsx",
+      "line": 391,
+      "col": 13,
+      "kind": "jsx_text",
+      "text": "Google Takeout"
+    },
+    {
+      "file": "src/components/ImportCsvPanel.tsx",
+      "line": 39,
+      "col": 33,
+      "kind": "string",
+      "text": "text/csv"
+    },
+    {
+      "file": "src/components/ImportCsvPanel.tsx",
+      "line": 39,
+      "col": 66,
+      "kind": "string",
+      "text": ".csv"
+    },
+    {
+      "file": "src/components/ImportCsvPanel.tsx",
+      "line": 40,
+      "col": 34,
+      "kind": "string",
+      "text": "application/json"
+    },
+    {
+      "file": "src/components/ImportCsvPanel.tsx",
+      "line": 40,
+      "col": 75,
+      "kind": "string",
+      "text": ".json"
+    },
+    {
+      "file": "src/components/ImportCsvPanel.tsx",
+      "line": 264,
+      "col": 49,
+      "kind": "string",
+      "text": ".json"
+    },
+    {
+      "file": "src/components/ImportCsvPanel.tsx",
+      "line": 350,
+      "col": 35,
+      "kind": "string",
+      "text": "reviews-visual-anchor"
+    },
+    {
+      "file": "src/components/ImportCsvPanel.tsx",
+      "line": 358,
+      "col": 44,
+      "kind": "string",
+      "text": "reviews:imported"
+    },
+    {
+      "file": "src/components/ImportCsvPanel.tsx",
+      "line": 409,
+      "col": 27,
+      "kind": "string",
+      "text": "bg-muted/50"
+    },
+    {
+      "file": "src/components/ImportCsvPanel.tsx",
+      "line": 429,
+      "col": 22,
+      "kind": "string",
+      "text": ".csv,.json"
+    },
+    {
+      "file": "src/components/ManualReviewPanel.tsx",
+      "line": 161,
+      "col": 23,
+      "kind": "string",
+      "text": "w-6 h-6 transition-colors"
+    },
+    {
+      "file": "src/components/ManualReviewPanel.tsx",
+      "line": 191,
+      "col": 17,
+      "kind": "string",
+      "text": "min-h-[100px] resize-none"
+    },
+    {
+      "file": "src/components/MonEtablissementCard.tsx",
+      "line": 226,
+      "col": 18,
+      "kind": "jsx_text",
+      "text": ") : etab.address ? ("
+    },
+    {
+      "file": "src/components/MonEtablissementCard.tsx",
+      "line": 39,
+      "col": 23,
+      "kind": "string",
+      "text": "Erreur chargement établissement actif:"
+    },
+    {
+      "file": "src/components/MonEtablissementCard.tsx",
+      "line": 58,
+      "col": 21,
+      "kind": "string",
+      "text": "Erreur chargement établissement actif:"
+    },
+    {
+      "file": "src/components/MonEtablissementCard.tsx",
+      "line": 284,
+      "col": 25,
+      "kind": "string",
+      "text": "btn-analyser-etablissement"
+    },
+    {
+      "file": "src/components/NavBar.tsx",
+      "line": 92,
+      "col": 36,
+      "kind": "jsx_text",
+      "text": "📊"
+    },
+    {
+      "file": "src/components/NavBar.tsx",
+      "line": 21,
+      "col": 29,
+      "kind": "string",
+      "text": "thomas.jacquesgaugain@gmail.com"
+    },
+    {
+      "file": "src/components/NavBar.tsx",
+      "line": 29,
+      "col": 38,
+      "kind": "string",
+      "text": "thomas.jacquesgaugain@gmail.com"
+    },
+    {
+      "file": "src/components/NavBar.tsx",
+      "line": 54,
+      "col": 5,
+      "kind": "string",
+      "text": "px-4 py-2 rounded-md font-medium !bg-[#dc2626] !text-white !border !border-[#dc2626] hover:!bg-[#b91c1c] active:!bg-[#991b1b] transition-all duration-200"
+    },
+    {
+      "file": "src/components/PasteImportPanel.tsx",
+      "line": 43,
+      "col": 122,
+      "kind": "jsx_text",
+      "text": "= 1 && r.rating"
+    },
+    {
+      "file": "src/components/PasteImportPanel.tsx",
+      "line": 142,
+      "col": 77,
+      "kind": "jsx_text",
+      "text": "= 1 && r.rating"
+    },
+    {
+      "file": "src/components/PasteImportPanel.tsx",
+      "line": 180,
+      "col": 13,
+      "kind": "jsx_text",
+      "text": "Google Takeout"
+    },
+    {
+      "file": "src/components/PasteImportPanel.tsx",
+      "line": 259,
+      "col": 38,
+      "kind": "jsx_text",
+      "text": "!r.isValid) && ("
+    },
+    {
+      "file": "src/components/PasteImportPanel.tsx",
+      "line": 81,
+      "col": 25,
+      "kind": "string",
+      "text": "Rapport d'import:"
+    },
+    {
+      "file": "src/components/PasteImportPanel.tsx",
+      "line": 90,
+      "col": 19,
+      "kind": "string",
+      "text": "Import terminé:"
+    },
+    {
+      "file": "src/components/PasteImportPanel.tsx",
+      "line": 104,
+      "col": 35,
+      "kind": "string",
+      "text": "reviews-visual-anchor"
+    },
+    {
+      "file": "src/components/PasteImportPanel.tsx",
+      "line": 112,
+      "col": 44,
+      "kind": "string",
+      "text": "reviews:imported"
+    },
+    {
+      "file": "src/components/PreSignupSubscriptionCard.tsx",
+      "line": 26,
+      "col": 32,
+      "kind": "string",
+      "text": "stripeCheckoutStarted"
+    },
+    {
+      "file": "src/components/PricingSection.tsx",
+      "line": 15,
+      "col": 21,
+      "kind": "string",
+      "text": "thomas.jacquesgaugain@gmail.com"
+    },
+    {
+      "file": "src/components/PricingSection.tsx",
+      "line": 27,
+      "col": 32,
+      "kind": "string",
+      "text": "thomas.jacquesgaugain@gmail.com"
+    },
+    {
+      "file": "src/components/PricingSection.tsx",
+      "line": 40,
+      "col": 23,
+      "kind": "string",
+      "text": "[PricingSection] Admin bypass detected for"
+    },
+    {
+      "file": "src/components/PricingSection.tsx",
+      "line": 61,
+      "col": 23,
+      "kind": "string",
+      "text": "[PricingSection] Creator bypass for"
+    },
+    {
+      "file": "src/components/PricingSection.tsx",
+      "line": 80,
+      "col": 32,
+      "kind": "string",
+      "text": "stripeCheckoutStarted"
+    },
+    {
+      "file": "src/components/PricingSection.tsx",
+      "line": 86,
+      "col": 21,
+      "kind": "string",
+      "text": "Checkout error:"
+    },
+    {
+      "file": "src/components/Protected.tsx",
+      "line": 12,
+      "col": 47,
+      "kind": "jsx_text",
+      "text": "Chargement..."
+    },
+    {
+      "file": "src/components/RatingDistributionModal.tsx",
+      "line": 69,
+      "col": 46,
+      "kind": "jsx_text",
+      "text": "= 1 && review.rating"
+    },
+    {
+      "file": "src/components/RatingDistributionModal.tsx",
+      "line": 132,
+      "col": 48,
+      "kind": "jsx_text",
+      "text": "0 ? ("
+    },
+    {
+      "file": "src/components/RatingDistributionModal.tsx",
+      "line": 8,
+      "col": 8,
+      "kind": "string",
+      "text": "@/components/ui/dialog"
+    },
+    {
+      "file": "src/components/RequireGuest.tsx",
+      "line": 15,
+      "col": 37,
+      "kind": "string",
+      "text": "thomas.jacquesgaugain@gmail.com"
+    },
+    {
+      "file": "src/components/RestaurantInput.tsx",
+      "line": 37,
+      "col": 49,
+      "kind": "jsx_text",
+      "text": "();\n  const suggestionRef = useRef"
+    },
+    {
+      "file": "src/components/ReviewsVisualPanel.tsx",
+      "line": 71,
+      "col": 37,
+      "kind": "jsx_text",
+      "text": "pattern.test(trimmed))) return true;\n  \n  // Note extrême (1 ou 5) avec commentaire très court\n  if ((rating === 1 || rating === 5) && trimmed.length"
+    },
+    {
+      "file": "src/components/ReviewsVisualPanel.tsx",
+      "line": 346,
+      "col": 16,
+      "kind": "jsx_text",
+      "text": ": !summary || summary.total === 0 ?"
+    },
+    {
+      "file": "src/components/ReviewsVisualPanel.tsx",
+      "line": 28,
+      "col": 8,
+      "kind": "string",
+      "text": "@/components/ui/alert-dialog"
+    },
+    {
+      "file": "src/components/ReviewsVisualPanel.tsx",
+      "line": 265,
+      "col": 29,
+      "kind": "string",
+      "text": "reviews:imported"
+    },
+    {
+      "file": "src/components/ReviewsVisualPanel.tsx",
+      "line": 266,
+      "col": 45,
+      "kind": "string",
+      "text": "reviews:imported"
+    },
+    {
+      "file": "src/components/ReviewsVisualPanel.tsx",
+      "line": 288,
+      "col": 75,
+      "kind": "string",
+      "text": "btn-close-reviews-visual"
+    },
+    {
+      "file": "src/components/ReviewsVisualPanel.tsx",
+      "line": 327,
+      "col": 33,
+      "kind": "string",
+      "text": "establishment-subtitle"
+    },
+    {
+      "file": "src/components/ReviewsVisualPanel.tsx",
+      "line": 332,
+      "col": 77,
+      "kind": "string",
+      "text": "btn-close-reviews-visual"
+    },
+    {
+      "file": "src/components/ReviewsVisualPanel.tsx",
+      "line": 534,
+      "col": 29,
+      "kind": "string",
+      "text": "establishment-reviews-table"
+    },
+    {
+      "file": "src/components/ReviewsVisualPanel.tsx",
+      "line": 544,
+      "col": 33,
+      "kind": "string",
+      "text": "btn-delete-all-reviews"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 506,
+      "col": 149,
+      "kind": "jsx_text",
+      "text": "/mois"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 529,
+      "col": 82,
+      "kind": "jsx_text",
+      "text": "/mois"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 571,
+      "col": 78,
+      "kind": "jsx_text",
+      "text": "/mois"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 92,
+      "col": 23,
+      "kind": "string",
+      "text": "Erreur chargement établissements:"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 154,
+      "col": 31,
+      "kind": "string",
+      "text": "Erreur lors de la sélection automatique:"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 162,
+      "col": 21,
+      "kind": "string",
+      "text": "Erreur lors du chargement de la liste:"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 205,
+      "col": 19,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] handleAddClick triggered"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 211,
+      "col": 21,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] Subscription status:"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 212,
+      "col": 21,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] Current establishments:"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 218,
+      "col": 23,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] User NOT subscribed, showing subscription modal"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 227,
+      "col": 23,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] Quota exceeded, showing addon modal"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 239,
+      "col": 21,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] Under quota, allowing navigation"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 243,
+      "col": 21,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] Error checking subscription:"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 253,
+      "col": 19,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] handleProceedToCheckout triggered"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 271,
+      "col": 23,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] Creator bypass mode"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 277,
+      "col": 25,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] Creator: Activating pro plan first"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 289,
+      "col": 25,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] Creator: Activating addon"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 311,
+      "col": 23,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] Updating addon quantity"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 318,
+      "col": 45,
+      "kind": "string",
+      "text": "update-addon-quantity"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 324,
+      "col": 25,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] Update addon error:"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 342,
+      "col": 21,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] Creating new subscription"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 357,
+      "col": 21,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] create-subscription response:"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 363,
+      "col": 23,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] Edge function error:"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 368,
+      "col": 23,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] Response error:"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 380,
+      "col": 23,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] Redirecting to Stripe checkout:"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 382,
+      "col": 32,
+      "kind": "string",
+      "text": "stripeCheckoutStarted"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 385,
+      "col": 23,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] No URL in response:"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 389,
+      "col": 21,
+      "kind": "string",
+      "text": "[SavedEstablishmentsList] Unexpected error:"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 418,
+      "col": 23,
+      "kind": "string",
+      "text": "Erreur définition établissement actif:"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 439,
+      "col": 44,
+      "kind": "string",
+      "text": "card-mon-etablissement"
+    },
+    {
+      "file": "src/components/SavedEstablishmentsList.tsx",
+      "line": 445,
+      "col": 21,
+      "kind": "string",
+      "text": "Erreur:"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 395,
+      "col": 135,
+      "kind": "jsx_text",
+      "text": "+4,99 €/mois"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 421,
+      "col": 82,
+      "kind": "jsx_text",
+      "text": "/mois"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 17,
+      "col": 8,
+      "kind": "string",
+      "text": "@/components/ui/dialog"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 23,
+      "col": 21,
+      "kind": "string",
+      "text": "thomas.jacquesgaugain@gmail.com"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 98,
+      "col": 23,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] Admin bypass detected for"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 117,
+      "col": 21,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] Creating subscription checkout..."
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 125,
+      "col": 23,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] Error creating checkout:"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 134,
+      "col": 23,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] Redirecting to:"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 136,
+      "col": 32,
+      "kind": "string",
+      "text": "stripeCheckoutStarted"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 145,
+      "col": 23,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] No URL in response:"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 149,
+      "col": 21,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] Checkout error:"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 189,
+      "col": 23,
+      "kind": "string",
+      "text": "Erreur sauvegarde établissements:"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 230,
+      "col": 23,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] Creator bypass for addon"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 244,
+      "col": 21,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] Updating addon quantity to:"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 246,
+      "col": 63,
+      "kind": "string",
+      "text": "update-addon-quantity"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 251,
+      "col": 23,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] Update addon error:"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 264,
+      "col": 21,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] Addon error:"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 291,
+      "col": 21,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] Checking subscription status..."
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 295,
+      "col": 21,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] Subscription status:"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 296,
+      "col": 21,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] Current establishment count:"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 302,
+      "col": 23,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] No subscription, showing subscription modal"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 312,
+      "col": 23,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] Quota exceeded, showing addon modal"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 323,
+      "col": 21,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] Under quota, saving immediately"
+    },
+    {
+      "file": "src/components/SaveEstablishmentButton.tsx",
+      "line": 328,
+      "col": 21,
+      "kind": "string",
+      "text": "[SaveEstablishmentButton] Error checking subscription:"
+    },
+    {
+      "file": "src/components/SignUpForm.tsx",
+      "line": 306,
+      "col": 54,
+      "kind": "string",
+      "text": "confirmPassword-error"
+    },
+    {
+      "file": "src/components/SignupSection.tsx",
+      "line": 22,
+      "col": 23,
+      "kind": "jsx_text",
+      "text": "Créer un compte"
+    },
+    {
+      "file": "src/components/SignupSection.tsx",
+      "line": 23,
+      "col": 29,
+      "kind": "jsx_text",
+      "text": "Remplissez le formulaire ci-dessous pour créer votre compte"
+    },
+    {
+      "file": "src/components/SubscriptionCard.tsx",
+      "line": 28,
+      "col": 23,
+      "kind": "string",
+      "text": "[SubscriptionCard] Creator bypass - activating pro plan"
+    },
+    {
+      "file": "src/components/SubscriptionManagementModal.tsx",
+      "line": 494,
+      "col": 24,
+      "kind": "jsx_text",
+      "text": ") : establishments.length === 0 ? ("
+    },
+    {
+      "file": "src/components/SubscriptionManagementModal.tsx",
+      "line": 8,
+      "col": 8,
+      "kind": "string",
+      "text": "@/components/ui/dialog"
+    },
+    {
+      "file": "src/components/SubscriptionManagementModal.tsx",
+      "line": 30,
+      "col": 8,
+      "kind": "string",
+      "text": "@/components/ui/alert-dialog"
+    },
+    {
+      "file": "src/components/SubscriptionManagementModal.tsx",
+      "line": 197,
+      "col": 70,
+      "kind": "string",
+      "text": "update-addon-quantity"
+    },
+    {
+      "file": "src/components/SubscriptionManagementModal.tsx",
+      "line": 425,
+      "col": 33,
+      "kind": "string",
+      "text": "bg-[#F59E0B]"
+    },
+    {
+      "file": "src/components/SubscriptionPlanCard.tsx",
+      "line": 60,
+      "col": 63,
+      "kind": "jsx_text",
+      "text": "/mois"
+    },
+    {
+      "file": "src/components/TrendModal.tsx",
+      "line": 150,
+      "col": 16,
+      "kind": "jsx_text",
+      "text": ") : hasInsufficientData ? ("
+    },
+    {
+      "file": "src/components/TrendModal.tsx",
+      "line": 8,
+      "col": 8,
+      "kind": "string",
+      "text": "@/components/ui/dialog"
+    },
+    {
+      "file": "src/components/ui/accordion.tsx",
+      "line": 10,
+      "col": 50,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/accordion.tsx",
+      "line": 17,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nAccordionItem.displayName = \"AccordionItem\"\r\n\r\nconst AccordionTrigger = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/accordion.tsx",
+      "line": 22,
+      "col": 53,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/accordion.tsx",
+      "line": 37,
+      "col": 30,
+      "kind": "jsx_text",
+      "text": "))\r\nAccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName\r\n\r\nconst AccordionContent = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/accordion.tsx",
+      "line": 42,
+      "col": 53,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/accordion.tsx",
+      "line": 29,
+      "col": 9,
+      "kind": "string",
+      "text": "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 14,
+      "col": 55,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 24,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nAlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName\r\n\r\nconst AlertDialogContent = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 29,
+      "col": 55,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 70,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": ")\r\nAlertDialogFooter.displayName = \"AlertDialogFooter\"\r\n\r\nconst AlertDialogTitle = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 75,
+      "col": 53,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 82,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nAlertDialogTitle.displayName = AlertDialogPrimitive.Title.displayName\r\n\r\nconst AlertDialogDescription = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 87,
+      "col": 59,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 94,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nAlertDialogDescription.displayName =\r\n  AlertDialogPrimitive.Description.displayName\r\n\r\nconst AlertDialogAction = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 100,
+      "col": 54,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 107,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nAlertDialogAction.displayName = AlertDialogPrimitive.Action.displayName\r\n\r\nconst AlertDialogCancel = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 112,
+      "col": 54,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 19,
+      "col": 7,
+      "kind": "string",
+      "text": "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 37,
+      "col": 9,
+      "kind": "string",
+      "text": "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 119,
+      "col": 7,
+      "kind": "string",
+      "text": "mt-2 sm:mt-0"
+    },
+    {
+      "file": "src/components/ui/alert.tsx",
+      "line": 24,
+      "col": 38,
+      "kind": "jsx_text",
+      "text": "& VariantProps"
+    },
+    {
+      "file": "src/components/ui/alert.tsx",
+      "line": 31,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nAlert.displayName = \"Alert\"\r\n\r\nconst AlertTitle = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/alert.tsx",
+      "line": 43,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nAlertTitle.displayName = \"AlertTitle\"\r\n\r\nconst AlertDescription = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/alert.tsx",
+      "line": 7,
+      "col": 3,
+      "kind": "string",
+      "text": "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground"
+    },
+    {
+      "file": "src/components/ui/alert.tsx",
+      "line": 13,
+      "col": 11,
+      "kind": "string",
+      "text": "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive"
+    },
+    {
+      "file": "src/components/ui/avatar.tsx",
+      "line": 7,
+      "col": 47,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/avatar.tsx",
+      "line": 17,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nAvatar.displayName = AvatarPrimitive.Root.displayName\r\n\r\nconst AvatarImage = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/avatar.tsx",
+      "line": 22,
+      "col": 48,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/avatar.tsx",
+      "line": 29,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nAvatarImage.displayName = AvatarPrimitive.Image.displayName\r\n\r\nconst AvatarFallback = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/avatar.tsx",
+      "line": 34,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/badge.tsx",
+      "line": 27,
+      "col": 46,
+      "kind": "jsx_text",
+      "text": ",\r\n    VariantProps"
+    },
+    {
+      "file": "src/components/ui/breadcrumb.tsx",
+      "line": 12,
+      "col": 77,
+      "kind": "jsx_text",
+      "text": ")\r\nBreadcrumb.displayName = \"Breadcrumb\"\r\n\r\nconst BreadcrumbList = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/breadcrumb.tsx",
+      "line": 26,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nBreadcrumbList.displayName = \"BreadcrumbList\"\r\n\r\nconst BreadcrumbItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/breadcrumb.tsx",
+      "line": 38,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nBreadcrumbItem.displayName = \"BreadcrumbItem\"\r\n\r\nconst BreadcrumbLink = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/button.tsx",
+      "line": 39,
+      "col": 55,
+      "kind": "jsx_text",
+      "text": ",\r\n    VariantProps"
+    },
+    {
+      "file": "src/components/ui/button.tsx",
+      "line": 8,
+      "col": 3,
+      "kind": "string",
+      "text": "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+    },
+    {
+      "file": "src/components/ui/button.tsx",
+      "line": 25,
+      "col": 18,
+      "kind": "string",
+      "text": "h-10 px-4 py-2"
+    },
+    {
+      "file": "src/components/ui/button.tsx",
+      "line": 28,
+      "col": 15,
+      "kind": "string",
+      "text": "h-10 w-10"
+    },
+    {
+      "file": "src/components/ui/calendar.tsx",
+      "line": 30,
+      "col": 30,
+      "kind": "string",
+      "text": "absolute left-1"
+    },
+    {
+      "file": "src/components/ui/calendar.tsx",
+      "line": 31,
+      "col": 26,
+      "kind": "string",
+      "text": "absolute right-1"
+    },
+    {
+      "file": "src/components/ui/calendar.tsx",
+      "line": 37,
+      "col": 15,
+      "kind": "string",
+      "text": "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20"
+    },
+    {
+      "file": "src/components/ui/calendar.tsx",
+      "line": 40,
+      "col": 11,
+      "kind": "string",
+      "text": "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
+    },
+    {
+      "file": "src/components/ui/card.tsx",
+      "line": 16,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nCard.displayName = \"Card\"\r\n\r\nconst CardHeader = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/card.tsx",
+      "line": 28,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nCardHeader.displayName = \"CardHeader\"\r\n\r\nconst CardTitle = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/card.tsx",
+      "line": 43,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nCardTitle.displayName = \"CardTitle\"\r\n\r\nconst CardDescription = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/card.tsx",
+      "line": 55,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nCardDescription.displayName = \"CardDescription\"\r\n\r\nconst CardContent = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/card.tsx",
+      "line": 63,
+      "col": 68,
+      "kind": "jsx_text",
+      "text": "))\r\nCardContent.displayName = \"CardContent\"\r\n\r\nconst CardFooter = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/carousel.tsx",
+      "line": 23,
+      "col": 50,
+      "kind": "jsx_text",
+      "text": "[0]\r\n  api: ReturnType"
+    },
+    {
+      "file": "src/components/ui/carousel.tsx",
+      "line": 218,
+      "col": 32,
+      "kind": "jsx_text",
+      "text": "Previous slide"
+    },
+    {
+      "file": "src/components/ui/carousel.tsx",
+      "line": 247,
+      "col": 32,
+      "kind": "jsx_text",
+      "text": "Next slide"
+    },
+    {
+      "file": "src/components/ui/carousel.tsx",
+      "line": 37,
+      "col": 21,
+      "kind": "string",
+      "text": "useCarousel must be used within a <Carousel />"
+    },
+    {
+      "file": "src/components/ui/carousel.tsx",
+      "line": 185,
+      "col": 9,
+      "kind": "string",
+      "text": "min-w-0 shrink-0 grow-0 basis-full"
+    },
+    {
+      "file": "src/components/ui/carousel.tsx",
+      "line": 209,
+      "col": 13,
+      "kind": "string",
+      "text": "-left-12 top-1/2 -translate-y-1/2"
+    },
+    {
+      "file": "src/components/ui/carousel.tsx",
+      "line": 210,
+      "col": 13,
+      "kind": "string",
+      "text": "-top-12 left-1/2 -translate-x-1/2 rotate-90"
+    },
+    {
+      "file": "src/components/ui/carousel.tsx",
+      "line": 238,
+      "col": 13,
+      "kind": "string",
+      "text": "-right-12 top-1/2 -translate-y-1/2"
+    },
+    {
+      "file": "src/components/ui/carousel.tsx",
+      "line": 239,
+      "col": 13,
+      "kind": "string",
+      "text": "-bottom-12 left-1/2 -translate-x-1/2 rotate-90"
+    },
+    {
+      "file": "src/components/ui/chart.tsx",
+      "line": 105,
+      "col": 56,
+      "kind": "jsx_text",
+      "text": "&\r\n    React.ComponentProps"
+    },
+    {
+      "file": "src/components/ui/chart.tsx",
+      "line": 204,
+      "col": 41,
+      "kind": "jsx_text",
+      "text": ") : (\r\n                      !hideIndicator && ("
+    },
+    {
+      "file": "src/components/ui/chart.tsx",
+      "line": 261,
+      "col": 29,
+      "kind": "jsx_text",
+      "text": "&\r\n    Pick"
+    },
+    {
+      "file": "src/components/ui/chart.tsx",
+      "line": 7,
+      "col": 35,
+      "kind": "string",
+      "text": ".dark"
+    },
+    {
+      "file": "src/components/ui/chart.tsx",
+      "line": 29,
+      "col": 21,
+      "kind": "string",
+      "text": "useChart must be used within a <ChartContainer />"
+    },
+    {
+      "file": "src/components/ui/chart.tsx",
+      "line": 53,
+      "col": 11,
+      "kind": "string",
+      "text": "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-none [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-sector]:outline-none [&_.recharts-surface]:outline-none"
+    },
+    {
+      "file": "src/components/ui/chart.tsx",
+      "line": 91,
+      "col": 9,
+      "kind": "string",
+      "text": "\\n"
+    },
+    {
+      "file": "src/components/ui/chart.tsx",
+      "line": 95,
+      "col": 17,
+      "kind": "string",
+      "text": "\\n"
+    },
+    {
+      "file": "src/components/ui/chart.tsx",
+      "line": 195,
+      "col": 19,
+      "kind": "string",
+      "text": "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground"
+    },
+    {
+      "file": "src/components/ui/chart.tsx",
+      "line": 211,
+      "col": 31,
+      "kind": "string",
+      "text": "h-2.5 w-2.5"
+    },
+    {
+      "file": "src/components/ui/chart.tsx",
+      "line": 294,
+      "col": 17,
+      "kind": "string",
+      "text": "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground"
+    },
+    {
+      "file": "src/components/ui/checkbox.tsx",
+      "line": 8,
+      "col": 49,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/checkbox.tsx",
+      "line": 14,
+      "col": 7,
+      "kind": "string",
+      "text": "peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 10,
+      "col": 43,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 39,
+      "col": 49,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 52,
+      "col": 8,
+      "kind": "jsx_text",
+      "text": "))\r\n\r\nCommandInput.displayName = CommandPrimitive.Input.displayName\r\n\r\nconst CommandList = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 58,
+      "col": 48,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 65,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\n\r\nCommandList.displayName = CommandPrimitive.List.displayName\r\n\r\nconst CommandEmpty = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 71,
+      "col": 49,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 78,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\n\r\nCommandEmpty.displayName = CommandPrimitive.Empty.displayName\r\n\r\nconst CommandGroup = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 84,
+      "col": 49,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 94,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\n\r\nCommandGroup.displayName = CommandPrimitive.Group.displayName\r\n\r\nconst CommandSeparator = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 100,
+      "col": 53,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 107,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nCommandSeparator.displayName = CommandPrimitive.Separator.displayName\r\n\r\nconst CommandItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 112,
+      "col": 48,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 90,
+      "col": 7,
+      "kind": "string",
+      "text": "overflow-hidden p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 118,
+      "col": 7,
+      "kind": "string",
+      "text": "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[selected='true']:bg-accent data-[selected=true]:text-accent-foreground data-[disabled=true]:opacity-50"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 20,
+      "col": 58,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 36,
+      "col": 36,
+      "kind": "jsx_text",
+      "text": "))\r\nContextMenuSubTrigger.displayName = ContextMenuPrimitive.SubTrigger.displayName\r\n\r\nconst ContextMenuSubContent = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 41,
+      "col": 58,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 51,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nContextMenuSubContent.displayName = ContextMenuPrimitive.SubContent.displayName\r\n\r\nconst ContextMenuContent = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 56,
+      "col": 55,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 68,
+      "col": 32,
+      "kind": "jsx_text",
+      "text": "))\r\nContextMenuContent.displayName = ContextMenuPrimitive.Content.displayName\r\n\r\nconst ContextMenuItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 73,
+      "col": 52,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 86,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nContextMenuItem.displayName = ContextMenuPrimitive.Item.displayName\r\n\r\nconst ContextMenuCheckboxItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 91,
+      "col": 60,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 109,
+      "col": 38,
+      "kind": "jsx_text",
+      "text": "))\r\nContextMenuCheckboxItem.displayName =\r\n  ContextMenuPrimitive.CheckboxItem.displayName\r\n\r\nconst ContextMenuRadioItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 115,
+      "col": 57,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 132,
+      "col": 35,
+      "kind": "jsx_text",
+      "text": "))\r\nContextMenuRadioItem.displayName = ContextMenuPrimitive.RadioItem.displayName\r\n\r\nconst ContextMenuLabel = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 137,
+      "col": 53,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 150,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nContextMenuLabel.displayName = ContextMenuPrimitive.Label.displayName\r\n\r\nconst ContextMenuSeparator = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 155,
+      "col": 57,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 28,
+      "col": 7,
+      "kind": "string",
+      "text": "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 47,
+      "col": 7,
+      "kind": "string",
+      "text": "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 63,
+      "col": 9,
+      "kind": "string",
+      "text": "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+    },
+    {
+      "file": "src/components/ui/dialog.tsx",
+      "line": 16,
+      "col": 50,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/dialog.tsx",
+      "line": 26,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nDialogOverlay.displayName = DialogPrimitive.Overlay.displayName\r\n\r\ninterface DialogContentProps extends React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/dialog.tsx",
+      "line": 84,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": ")\r\nDialogFooter.displayName = \"DialogFooter\"\r\n\r\nconst DialogTitle = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/dialog.tsx",
+      "line": 89,
+      "col": 48,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/dialog.tsx",
+      "line": 99,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nDialogTitle.displayName = DialogPrimitive.Title.displayName\r\n\r\nconst DialogDescription = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/dialog.tsx",
+      "line": 104,
+      "col": 54,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/dialog.tsx",
+      "line": 22,
+      "col": 7,
+      "kind": "string",
+      "text": "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+    },
+    {
+      "file": "src/components/ui/dialog.tsx",
+      "line": 43,
+      "col": 9,
+      "kind": "string",
+      "text": "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg"
+    },
+    {
+      "file": "src/components/ui/drawer.tsx",
+      "line": 13,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": ")\r\nDrawer.displayName = \"Drawer\"\r\n\r\nconst DrawerTrigger = DrawerPrimitive.Trigger\r\n\r\nconst DrawerPortal = DrawerPrimitive.Portal\r\n\r\nconst DrawerClose = DrawerPrimitive.Close\r\n\r\nconst DrawerOverlay = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/drawer.tsx",
+      "line": 24,
+      "col": 50,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/drawer.tsx",
+      "line": 31,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nDrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName\r\n\r\nconst DrawerContent = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/drawer.tsx",
+      "line": 36,
+      "col": 50,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/drawer.tsx",
+      "line": 74,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": ")\r\nDrawerFooter.displayName = \"DrawerFooter\"\r\n\r\nconst DrawerTitle = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/drawer.tsx",
+      "line": 79,
+      "col": 48,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/drawer.tsx",
+      "line": 89,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nDrawerTitle.displayName = DrawerPrimitive.Title.displayName\r\n\r\nconst DrawerDescription = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/drawer.tsx",
+      "line": 94,
+      "col": 54,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 20,
+      "col": 59,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 36,
+      "col": 37,
+      "kind": "jsx_text",
+      "text": "))\r\nDropdownMenuSubTrigger.displayName =\r\n  DropdownMenuPrimitive.SubTrigger.displayName\r\n\r\nconst DropdownMenuSubContent = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 42,
+      "col": 59,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 52,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nDropdownMenuSubContent.displayName =\r\n  DropdownMenuPrimitive.SubContent.displayName\r\n\r\nconst DropdownMenuContent = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 58,
+      "col": 56,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 71,
+      "col": 33,
+      "kind": "jsx_text",
+      "text": "))\r\nDropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName\r\n\r\nconst DropdownMenuItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 76,
+      "col": 53,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 89,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nDropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName\r\n\r\nconst DropdownMenuCheckboxItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 94,
+      "col": 61,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 112,
+      "col": 39,
+      "kind": "jsx_text",
+      "text": "))\r\nDropdownMenuCheckboxItem.displayName =\r\n  DropdownMenuPrimitive.CheckboxItem.displayName\r\n\r\nconst DropdownMenuRadioItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 118,
+      "col": 58,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 135,
+      "col": 36,
+      "kind": "jsx_text",
+      "text": "))\r\nDropdownMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName\r\n\r\nconst DropdownMenuLabel = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 140,
+      "col": 54,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 153,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nDropdownMenuLabel.displayName = DropdownMenuPrimitive.Label.displayName\r\n\r\nconst DropdownMenuSeparator = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 158,
+      "col": 58,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 28,
+      "col": 7,
+      "kind": "string",
+      "text": "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent data-[state=open]:bg-accent"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 48,
+      "col": 7,
+      "kind": "string",
+      "text": "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 66,
+      "col": 9,
+      "kind": "string",
+      "text": "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+    },
+    {
+      "file": "src/components/ui/form.tsx",
+      "line": 20,
+      "col": 39,
+      "kind": "jsx_text",
+      "text": "= FieldPath"
+    },
+    {
+      "file": "src/components/ui/form.tsx",
+      "line": 31,
+      "col": 39,
+      "kind": "jsx_text",
+      "text": "= FieldPath"
+    },
+    {
+      "file": "src/components/ui/form.tsx",
+      "line": 88,
+      "col": 46,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/form.tsx",
+      "line": 105,
+      "col": 31,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/form.tsx",
+      "line": 50,
+      "col": 21,
+      "kind": "string",
+      "text": "useFormField should be used within <FormField>"
+    },
+    {
+      "file": "src/components/ui/hover-card.tsx",
+      "line": 11,
+      "col": 53,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/hover-card.tsx",
+      "line": 19,
+      "col": 7,
+      "kind": "string",
+      "text": "z-50 w-64 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+    },
+    {
+      "file": "src/components/ui/input-otp.tsx",
+      "line": 8,
+      "col": 35,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/input-otp.tsx",
+      "line": 19,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nInputOTP.displayName = \"InputOTP\"\r\n\r\nconst InputOTPGroup = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/input-otp.tsx",
+      "line": 24,
+      "col": 25,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/input-otp.tsx",
+      "line": 27,
+      "col": 77,
+      "kind": "jsx_text",
+      "text": "))\r\nInputOTPGroup.displayName = \"InputOTPGroup\"\r\n\r\nconst InputOTPSlot = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/input-otp.tsx",
+      "line": 32,
+      "col": 25,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/input-otp.tsx",
+      "line": 60,
+      "col": 25,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/input-otp.tsx",
+      "line": 43,
+      "col": 21,
+      "kind": "string",
+      "text": "z-10 ring-2 ring-ring ring-offset-background"
+    },
+    {
+      "file": "src/components/ui/label.tsx",
+      "line": 12,
+      "col": 46,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/label.tsx",
+      "line": 13,
+      "col": 60,
+      "kind": "jsx_text",
+      "text": "&\r\n    VariantProps"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 18,
+      "col": 48,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 28,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nMenubar.displayName = MenubarPrimitive.Root.displayName\r\n\r\nconst MenubarTrigger = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 33,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 43,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nMenubarTrigger.displayName = MenubarPrimitive.Trigger.displayName\r\n\r\nconst MenubarSubTrigger = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 48,
+      "col": 54,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 64,
+      "col": 32,
+      "kind": "jsx_text",
+      "text": "))\r\nMenubarSubTrigger.displayName = MenubarPrimitive.SubTrigger.displayName\r\n\r\nconst MenubarSubContent = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 69,
+      "col": 54,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 79,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nMenubarSubContent.displayName = MenubarPrimitive.SubContent.displayName\r\n\r\nconst MenubarContent = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 84,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 103,
+      "col": 30,
+      "kind": "jsx_text",
+      "text": ")\r\n)\r\nMenubarContent.displayName = MenubarPrimitive.Content.displayName\r\n\r\nconst MenubarItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 109,
+      "col": 48,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 122,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nMenubarItem.displayName = MenubarPrimitive.Item.displayName\r\n\r\nconst MenubarCheckboxItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 127,
+      "col": 56,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 145,
+      "col": 34,
+      "kind": "jsx_text",
+      "text": "))\r\nMenubarCheckboxItem.displayName = MenubarPrimitive.CheckboxItem.displayName\r\n\r\nconst MenubarRadioItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 150,
+      "col": 53,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 167,
+      "col": 31,
+      "kind": "jsx_text",
+      "text": "))\r\nMenubarRadioItem.displayName = MenubarPrimitive.RadioItem.displayName\r\n\r\nconst MenubarLabel = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 172,
+      "col": 49,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 185,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nMenubarLabel.displayName = MenubarPrimitive.Label.displayName\r\n\r\nconst MenubarSeparator = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 190,
+      "col": 53,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 39,
+      "col": 7,
+      "kind": "string",
+      "text": "flex cursor-default select-none items-center rounded-sm px-3 py-1.5 text-sm font-medium outline-none focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 56,
+      "col": 7,
+      "kind": "string",
+      "text": "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 75,
+      "col": 7,
+      "kind": "string",
+      "text": "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+    },
+    {
+      "file": "src/components/ui/menubar.tsx",
+      "line": 98,
+      "col": 11,
+      "kind": "string",
+      "text": "z-50 min-w-[12rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+    },
+    {
+      "file": "src/components/ui/navigation-menu.tsx",
+      "line": 9,
+      "col": 55,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/navigation-menu.tsx",
+      "line": 22,
+      "col": 33,
+      "kind": "jsx_text",
+      "text": "))\r\nNavigationMenu.displayName = NavigationMenuPrimitive.Root.displayName\r\n\r\nconst NavigationMenuList = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/navigation-menu.tsx",
+      "line": 27,
+      "col": 55,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/navigation-menu.tsx",
+      "line": 37,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nNavigationMenuList.displayName = NavigationMenuPrimitive.List.displayName\r\n\r\nconst NavigationMenuItem = NavigationMenuPrimitive.Item\r\n\r\nconst navigationMenuTriggerStyle = cva(\r\n  \"group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50\"\r\n)\r\n\r\nconst NavigationMenuTrigger = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/navigation-menu.tsx",
+      "line": 48,
+      "col": 58,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/navigation-menu.tsx",
+      "line": 61,
+      "col": 36,
+      "kind": "jsx_text",
+      "text": "))\r\nNavigationMenuTrigger.displayName = NavigationMenuPrimitive.Trigger.displayName\r\n\r\nconst NavigationMenuContent = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/navigation-menu.tsx",
+      "line": 66,
+      "col": 58,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/navigation-menu.tsx",
+      "line": 76,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nNavigationMenuContent.displayName = NavigationMenuPrimitive.Content.displayName\r\n\r\nconst NavigationMenuLink = NavigationMenuPrimitive.Link\r\n\r\nconst NavigationMenuViewport = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/navigation-menu.tsx",
+      "line": 83,
+      "col": 59,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/navigation-menu.tsx",
+      "line": 95,
+      "col": 8,
+      "kind": "jsx_text",
+      "text": "))\r\nNavigationMenuViewport.displayName =\r\n  NavigationMenuPrimitive.Viewport.displayName\r\n\r\nconst NavigationMenuIndicator = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/navigation-menu.tsx",
+      "line": 101,
+      "col": 60,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/navigation-menu.tsx",
+      "line": 44,
+      "col": 3,
+      "kind": "string",
+      "text": "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+    },
+    {
+      "file": "src/components/ui/navigation-menu.tsx",
+      "line": 72,
+      "col": 7,
+      "kind": "string",
+      "text": "left-0 top-0 w-full data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out data-[motion=from-end]:slide-in-from-right-52 data-[motion=from-start]:slide-in-from-left-52 data-[motion=to-end]:slide-out-to-right-52 data-[motion=to-start]:slide-out-to-left-52 md:absolute md:w-auto"
+    },
+    {
+      "file": "src/components/ui/navigation-menu.tsx",
+      "line": 89,
+      "col": 9,
+      "kind": "string",
+      "text": "origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 md:w-[var(--radix-navigation-menu-viewport-width)]"
+    },
+    {
+      "file": "src/components/ui/navigation-menu.tsx",
+      "line": 107,
+      "col": 7,
+      "kind": "string",
+      "text": "top-full z-[1] flex h-1.5 items-end justify-center overflow-hidden data-[state=visible]:animate-in data-[state=hidden]:animate-out data-[state=hidden]:fade-out data-[state=visible]:fade-in"
+    },
+    {
+      "file": "src/components/ui/pagination.tsx",
+      "line": 13,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": ")\r\nPagination.displayName = \"Pagination\"\r\n\r\nconst PaginationContent = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/pagination.tsx",
+      "line": 25,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nPaginationContent.displayName = \"PaginationContent\"\r\n\r\nconst PaginationItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/pagination.tsx",
+      "line": 39,
+      "col": 29,
+      "kind": "jsx_text",
+      "text": "&\r\n  React.ComponentProps"
+    },
+    {
+      "file": "src/components/ui/pagination.tsx",
+      "line": 104,
+      "col": 30,
+      "kind": "jsx_text",
+      "text": "More pages"
+    },
+    {
+      "file": "src/components/ui/pagination.tsx",
+      "line": 67,
+      "col": 5,
+      "kind": "attr:aria-label",
+      "text": "Go to previous page"
+    },
+    {
+      "file": "src/components/ui/pagination.tsx",
+      "line": 83,
+      "col": 5,
+      "kind": "attr:aria-label",
+      "text": "Go to next page"
+    },
+    {
+      "file": "src/components/ui/pagination.tsx",
+      "line": 67,
+      "col": 16,
+      "kind": "string",
+      "text": "Go to previous page"
+    },
+    {
+      "file": "src/components/ui/pagination.tsx",
+      "line": 83,
+      "col": 16,
+      "kind": "string",
+      "text": "Go to next page"
+    },
+    {
+      "file": "src/components/ui/popover.tsx",
+      "line": 11,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/popover.tsx",
+      "line": 20,
+      "col": 9,
+      "kind": "string",
+      "text": "z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+    },
+    {
+      "file": "src/components/ui/progress.tsx",
+      "line": 7,
+      "col": 49,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/radio-group.tsx",
+      "line": 8,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/radio-group.tsx",
+      "line": 22,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/resizable.tsx",
+      "line": 12,
+      "col": 7,
+      "kind": "string",
+      "text": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col"
+    },
+    {
+      "file": "src/components/ui/resizable.tsx",
+      "line": 30,
+      "col": 7,
+      "kind": "string",
+      "text": "relative flex w-px items-center justify-center bg-border after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full data-[panel-group-direction=vertical]:after:left-0 data-[panel-group-direction=vertical]:after:h-1 data-[panel-group-direction=vertical]:after:w-full data-[panel-group-direction=vertical]:after:-translate-y-1/2 data-[panel-group-direction=vertical]:after:translate-x-0 [&[data-panel-group-direction=vertical]>div]:rotate-90"
+    },
+    {
+      "file": "src/components/ui/scroll-area.tsx",
+      "line": 7,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/scroll-area.tsx",
+      "line": 20,
+      "col": 29,
+      "kind": "jsx_text",
+      "text": "))\r\nScrollArea.displayName = ScrollAreaPrimitive.Root.displayName\r\n\r\nconst ScrollBar = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/scroll-area.tsx",
+      "line": 25,
+      "col": 66,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 14,
+      "col": 50,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 29,
+      "col": 28,
+      "kind": "jsx_text",
+      "text": "))\r\nSelectTrigger.displayName = SelectPrimitive.Trigger.displayName\r\n\r\nconst SelectScrollUpButton = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 34,
+      "col": 57,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 46,
+      "col": 35,
+      "kind": "jsx_text",
+      "text": "))\r\nSelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName\r\n\r\nconst SelectScrollDownButton = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 51,
+      "col": 59,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 63,
+      "col": 37,
+      "kind": "jsx_text",
+      "text": "))\r\nSelectScrollDownButton.displayName =\r\n  SelectPrimitive.ScrollDownButton.displayName\r\n\r\nconst SelectContent = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 69,
+      "col": 50,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 96,
+      "col": 27,
+      "kind": "jsx_text",
+      "text": "))\r\nSelectContent.displayName = SelectPrimitive.Content.displayName\r\n\r\nconst SelectLabel = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 101,
+      "col": 48,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 108,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nSelectLabel.displayName = SelectPrimitive.Label.displayName\r\n\r\nconst SelectItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 113,
+      "col": 47,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 131,
+      "col": 25,
+      "kind": "jsx_text",
+      "text": "))\r\nSelectItem.displayName = SelectPrimitive.Item.displayName\r\n\r\nconst SelectSeparator = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 136,
+      "col": 52,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 20,
+      "col": 7,
+      "kind": "string",
+      "text": "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 76,
+      "col": 9,
+      "kind": "string",
+      "text": "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 78,
+      "col": 11,
+      "kind": "string",
+      "text": "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 89,
+      "col": 13,
+      "kind": "string",
+      "text": "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
+    },
+    {
+      "file": "src/components/ui/separator.tsx",
+      "line": 7,
+      "col": 50,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/separator.tsx",
+      "line": 20,
+      "col": 40,
+      "kind": "string",
+      "text": "h-[1px] w-full"
+    },
+    {
+      "file": "src/components/ui/separator.tsx",
+      "line": 20,
+      "col": 59,
+      "kind": "string",
+      "text": "h-full w-[1px]"
+    },
+    {
+      "file": "src/components/ui/sheet.tsx",
+      "line": 17,
+      "col": 49,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/sheet.tsx",
+      "line": 51,
+      "col": 71,
+      "kind": "jsx_text",
+      "text": ",\r\n  VariantProps"
+    },
+    {
+      "file": "src/components/ui/sheet.tsx",
+      "line": 99,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": ")\r\nSheetFooter.displayName = \"SheetFooter\"\r\n\r\nconst SheetTitle = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/sheet.tsx",
+      "line": 104,
+      "col": 47,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/sheet.tsx",
+      "line": 111,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nSheetTitle.displayName = SheetPrimitive.Title.displayName\r\n\r\nconst SheetDescription = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/sheet.tsx",
+      "line": 116,
+      "col": 53,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/sheet.tsx",
+      "line": 22,
+      "col": 7,
+      "kind": "string",
+      "text": "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+    },
+    {
+      "file": "src/components/ui/sheet.tsx",
+      "line": 32,
+      "col": 3,
+      "kind": "string",
+      "text": "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500"
+    },
+    {
+      "file": "src/components/ui/sheet.tsx",
+      "line": 36,
+      "col": 14,
+      "kind": "string",
+      "text": "inset-x-0 top-0 border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top"
+    },
+    {
+      "file": "src/components/ui/sheet.tsx",
+      "line": 38,
+      "col": 11,
+      "kind": "string",
+      "text": "inset-x-0 bottom-0 border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom"
+    },
+    {
+      "file": "src/components/ui/sheet.tsx",
+      "line": 39,
+      "col": 15,
+      "kind": "string",
+      "text": "inset-y-0 left-0 h-full w-3/4 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm"
+    },
+    {
+      "file": "src/components/ui/sheet.tsx",
+      "line": 41,
+      "col": 11,
+      "kind": "string",
+      "text": "inset-y-0 right-0 h-full w-3/4  border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 261,
+      "col": 33,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentProps"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 280,
+      "col": 32,
+      "kind": "jsx_text",
+      "text": "Toggle Sidebar"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 334,
+      "col": 32,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentProps"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 382,
+      "col": 36,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentProps"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 482,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nSidebarGroupContent.displayName = \"SidebarGroupContent\"\r\n\r\nconst SidebarMenu = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 495,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nSidebarMenu.displayName = \"SidebarMenu\"\r\n\r\nconst SidebarMenuItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 641,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nSidebarMenuBadge.displayName = \"SidebarMenuBadge\"\r\n\r\nconst SidebarMenuSkeleton = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 696,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nSidebarMenuSub.displayName = \"SidebarMenuSub\"\r\n\r\nconst SidebarMenuSubItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 703,
+      "col": 52,
+      "kind": "jsx_text",
+      "text": ")\r\nSidebarMenuSubItem.displayName = \"SidebarMenuSubItem\"\r\n\r\nconst SidebarMenuSubButton = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 296,
+      "col": 7,
+      "kind": "attr:aria-label",
+      "text": "Toggle Sidebar"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 299,
+      "col": 7,
+      "kind": "attr:title",
+      "text": "Toggle Sidebar"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 18,
+      "col": 8,
+      "kind": "string",
+      "text": "@/components/ui/tooltip"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 20,
+      "col": 29,
+      "kind": "string",
+      "text": "sidebar:state"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 42,
+      "col": 21,
+      "kind": "string",
+      "text": "useSidebar must be used within a SidebarProvider."
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 142,
+      "col": 15,
+      "kind": "string",
+      "text": "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 226,
+      "col": 13,
+      "kind": "string",
+      "text": "group-data-[collapsible=offcanvas]:w-0"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 227,
+      "col": 13,
+      "kind": "string",
+      "text": "group-data-[side=right]:rotate-180"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 229,
+      "col": 17,
+      "kind": "string",
+      "text": "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 230,
+      "col": 17,
+      "kind": "string",
+      "text": "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 237,
+      "col": 17,
+      "kind": "string",
+      "text": "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 238,
+      "col": 17,
+      "kind": "string",
+      "text": "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 241,
+      "col": 17,
+      "kind": "string",
+      "text": "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 242,
+      "col": 17,
+      "kind": "string",
+      "text": "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 296,
+      "col": 18,
+      "kind": "string",
+      "text": "Toggle Sidebar"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 299,
+      "col": 13,
+      "kind": "string",
+      "text": "Toggle Sidebar"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 301,
+      "col": 9,
+      "kind": "string",
+      "text": "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-sidebar-border group-data-[side=left]:-right-4 group-data-[side=right]:left-0 sm:flex"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 302,
+      "col": 9,
+      "kind": "string",
+      "text": "[[data-side=left]_&]:cursor-w-resize [[data-side=right]_&]:cursor-e-resize"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 303,
+      "col": 9,
+      "kind": "string",
+      "text": "[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 304,
+      "col": 9,
+      "kind": "string",
+      "text": "group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:left-full group-data-[collapsible=offcanvas]:hover:bg-sidebar"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 305,
+      "col": 9,
+      "kind": "string",
+      "text": "[[data-side=left][data-collapsible=offcanvas]_&]:-right-2"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 306,
+      "col": 9,
+      "kind": "string",
+      "text": "[[data-side=right][data-collapsible=offcanvas]_&]:-left-2"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 324,
+      "col": 9,
+      "kind": "string",
+      "text": "peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))] md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 405,
+      "col": 9,
+      "kind": "string",
+      "text": "flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 440,
+      "col": 9,
+      "kind": "string",
+      "text": "duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-[margin,opa] ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 441,
+      "col": 9,
+      "kind": "string",
+      "text": "group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 461,
+      "col": 9,
+      "kind": "string",
+      "text": "absolute right-3 top-3.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-sidebar-foreground outline-none ring-sidebar-ring transition-transform hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 463,
+      "col": 9,
+      "kind": "string",
+      "text": "after:absolute after:-inset-2 after:md:hidden"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 464,
+      "col": 9,
+      "kind": "string",
+      "text": "group-data-[collapsible=icon]:hidden"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 513,
+      "col": 3,
+      "kind": "string",
+      "text": "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 519,
+      "col": 11,
+      "kind": "string",
+      "text": "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 524,
+      "col": 13,
+      "kind": "string",
+      "text": "h-12 text-sm group-data-[collapsible=icon]:!p-0"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 607,
+      "col": 9,
+      "kind": "string",
+      "text": "absolute right-1 top-1.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-sidebar-foreground outline-none ring-sidebar-ring transition-transform hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 peer-hover/menu-button:text-sidebar-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 609,
+      "col": 9,
+      "kind": "string",
+      "text": "after:absolute after:-inset-2 after:md:hidden"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 610,
+      "col": 9,
+      "kind": "string",
+      "text": "peer-data-[size=sm]/menu-button:top-1"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 611,
+      "col": 9,
+      "kind": "string",
+      "text": "peer-data-[size=default]/menu-button:top-1.5"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 612,
+      "col": 9,
+      "kind": "string",
+      "text": "peer-data-[size=lg]/menu-button:top-2.5"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 613,
+      "col": 9,
+      "kind": "string",
+      "text": "group-data-[collapsible=icon]:hidden"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 615,
+      "col": 11,
+      "kind": "string",
+      "text": "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 peer-data-[active=true]/menu-button:text-sidebar-accent-foreground md:opacity-0"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 633,
+      "col": 7,
+      "kind": "string",
+      "text": "peer-hover/menu-button:text-sidebar-accent-foreground peer-data-[active=true]/menu-button:text-sidebar-accent-foreground"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 634,
+      "col": 7,
+      "kind": "string",
+      "text": "peer-data-[size=sm]/menu-button:top-1"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 635,
+      "col": 7,
+      "kind": "string",
+      "text": "peer-data-[size=default]/menu-button:top-1.5"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 636,
+      "col": 7,
+      "kind": "string",
+      "text": "peer-data-[size=lg]/menu-button:top-2.5"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 637,
+      "col": 7,
+      "kind": "string",
+      "text": "group-data-[collapsible=icon]:hidden"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 692,
+      "col": 7,
+      "kind": "string",
+      "text": "group-data-[collapsible=icon]:hidden"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 723,
+      "col": 9,
+      "kind": "string",
+      "text": "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 724,
+      "col": 9,
+      "kind": "string",
+      "text": "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground"
+    },
+    {
+      "file": "src/components/ui/sidebar.tsx",
+      "line": 727,
+      "col": 9,
+      "kind": "string",
+      "text": "group-data-[collapsible=icon]:hidden"
+    },
+    {
+      "file": "src/components/ui/sonner.tsx",
+      "line": 18,
+      "col": 24,
+      "kind": "string",
+      "text": "group-[.toast]:text-muted-foreground"
+    },
+    {
+      "file": "src/components/ui/switch.tsx",
+      "line": 7,
+      "col": 48,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/switch.tsx",
+      "line": 12,
+      "col": 7,
+      "kind": "string",
+      "text": "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
+    },
+    {
+      "file": "src/components/ui/switch.tsx",
+      "line": 20,
+      "col": 9,
+      "kind": "string",
+      "text": "pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
+    },
+    {
+      "file": "src/components/ui/table.tsx",
+      "line": 15,
+      "col": 8,
+      "kind": "jsx_text",
+      "text": "))\r\nTable.displayName = \"Table\"\r\n\r\nconst TableHeader = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/table.tsx",
+      "line": 23,
+      "col": 77,
+      "kind": "jsx_text",
+      "text": "))\r\nTableHeader.displayName = \"TableHeader\"\r\n\r\nconst TableBody = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/table.tsx",
+      "line": 35,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nTableBody.displayName = \"TableBody\"\r\n\r\nconst TableFooter = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/table.tsx",
+      "line": 50,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nTableFooter.displayName = \"TableFooter\"\r\n\r\nconst TableRow = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/table.tsx",
+      "line": 65,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nTableRow.displayName = \"TableRow\"\r\n\r\nconst TableHead = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/table.tsx",
+      "line": 80,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nTableHead.displayName = \"TableHead\"\r\n\r\nconst TableCell = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/table.tsx",
+      "line": 92,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nTableCell.displayName = \"TableCell\"\r\n\r\nconst TableCaption = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/table.tsx",
+      "line": 46,
+      "col": 7,
+      "kind": "string",
+      "text": "border-t bg-muted/50 font-medium [&>tr]:last:border-b-0"
+    },
+    {
+      "file": "src/components/ui/table.tsx",
+      "line": 61,
+      "col": 7,
+      "kind": "string",
+      "text": "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+    },
+    {
+      "file": "src/components/ui/table.tsx",
+      "line": 76,
+      "col": 7,
+      "kind": "string",
+      "text": "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0"
+    },
+    {
+      "file": "src/components/ui/tabs.tsx",
+      "line": 9,
+      "col": 45,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/tabs.tsx",
+      "line": 19,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nTabsList.displayName = TabsPrimitive.List.displayName\r\n\r\nconst TabsTrigger = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/tabs.tsx",
+      "line": 24,
+      "col": 48,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/tabs.tsx",
+      "line": 34,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nTabsTrigger.displayName = TabsPrimitive.Trigger.displayName\r\n\r\nconst TabsContent = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/tabs.tsx",
+      "line": 39,
+      "col": 48,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/tabs.tsx",
+      "line": 30,
+      "col": 7,
+      "kind": "string",
+      "text": "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+    },
+    {
+      "file": "src/components/ui/tabs.tsx",
+      "line": 45,
+      "col": 7,
+      "kind": "string",
+      "text": "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    },
+    {
+      "file": "src/components/ui/toast.tsx",
+      "line": 11,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/toast.tsx",
+      "line": 42,
+      "col": 47,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/toast.tsx",
+      "line": 43,
+      "col": 61,
+      "kind": "jsx_text",
+      "text": "&\r\n    VariantProps"
+    },
+    {
+      "file": "src/components/ui/toast.tsx",
+      "line": 57,
+      "col": 49,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/toast.tsx",
+      "line": 67,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nToastAction.displayName = ToastPrimitives.Action.displayName\r\n\r\nconst ToastClose = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/toast.tsx",
+      "line": 72,
+      "col": 48,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/toast.tsx",
+      "line": 85,
+      "col": 26,
+      "kind": "jsx_text",
+      "text": "))\r\nToastClose.displayName = ToastPrimitives.Close.displayName\r\n\r\nconst ToastTitle = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/toast.tsx",
+      "line": 90,
+      "col": 48,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/toast.tsx",
+      "line": 97,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nToastTitle.displayName = ToastPrimitives.Title.displayName\r\n\r\nconst ToastDescription = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/toast.tsx",
+      "line": 102,
+      "col": 54,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/toast.tsx",
+      "line": 109,
+      "col": 4,
+      "kind": "jsx_text",
+      "text": "))\r\nToastDescription.displayName = ToastPrimitives.Description.displayName\r\n\r\ntype ToastProps = React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/toast.tsx",
+      "line": 113,
+      "col": 62,
+      "kind": "jsx_text",
+      "text": "type ToastActionElement = React.ReactElement"
+    },
+    {
+      "file": "src/components/ui/toast.tsx",
+      "line": 26,
+      "col": 3,
+      "kind": "string",
+      "text": "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full"
+    },
+    {
+      "file": "src/components/ui/toaster.tsx",
+      "line": 9,
+      "col": 8,
+      "kind": "string",
+      "text": "@/components/ui/toast"
+    },
+    {
+      "file": "src/components/ui/toggle-group.tsx",
+      "line": 16,
+      "col": 52,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/toggle-group.tsx",
+      "line": 17,
+      "col": 66,
+      "kind": "jsx_text",
+      "text": "&\r\n    VariantProps"
+    },
+    {
+      "file": "src/components/ui/toggle-group.tsx",
+      "line": 28,
+      "col": 30,
+      "kind": "jsx_text",
+      "text": "))\r\n\r\nToggleGroup.displayName = ToggleGroupPrimitive.Root.displayName\r\n\r\nconst ToggleGroupItem = React.forwardRef"
+    },
+    {
+      "file": "src/components/ui/toggle-group.tsx",
+      "line": 34,
+      "col": 52,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/toggle-group.tsx",
+      "line": 35,
+      "col": 66,
+      "kind": "jsx_text",
+      "text": "&\r\n    VariantProps"
+    },
+    {
+      "file": "src/components/ui/toggle.tsx",
+      "line": 30,
+      "col": 47,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/toggle.tsx",
+      "line": 31,
+      "col": 61,
+      "kind": "jsx_text",
+      "text": "&\r\n    VariantProps"
+    },
+    {
+      "file": "src/components/ui/toggle.tsx",
+      "line": 8,
+      "col": 3,
+      "kind": "string",
+      "text": "inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground"
+    },
+    {
+      "file": "src/components/ui/toggle.tsx",
+      "line": 17,
+      "col": 18,
+      "kind": "string",
+      "text": "h-10 px-3"
+    },
+    {
+      "file": "src/components/ui/toggle.tsx",
+      "line": 18,
+      "col": 13,
+      "kind": "string",
+      "text": "h-9 px-2.5"
+    },
+    {
+      "file": "src/components/ui/toggle.tsx",
+      "line": 19,
+      "col": 13,
+      "kind": "string",
+      "text": "h-11 px-5"
+    },
+    {
+      "file": "src/components/ui/tooltip.tsx",
+      "line": 13,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": ",\r\n  React.ComponentPropsWithoutRef"
+    },
+    {
+      "file": "src/components/ui/tooltip.tsx",
+      "line": 20,
+      "col": 7,
+      "kind": "string",
+      "text": "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+    },
+    {
+      "file": "src/components/WhyReviewsvisor.tsx",
+      "line": 37,
+      "col": 66,
+      "kind": "jsx_text",
+      "text": "🎯"
+    },
+    {
+      "file": "src/components/WhyReviewsvisor.tsx",
+      "line": 50,
+      "col": 66,
+      "kind": "jsx_text",
+      "text": "🧠"
+    },
+    {
+      "file": "src/components/WhyReviewsvisor.tsx",
+      "line": 63,
+      "col": 82,
+      "kind": "jsx_text",
+      "text": "📈"
+    },
+    {
+      "file": "src/components/WhyReviewsvisor.tsx",
+      "line": 78,
+      "col": 18,
+      "kind": "jsx_text",
+      "text": "💵"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 20,
+      "col": 11,
+      "kind": "string",
+      "text": "Abonnement Pro"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 23,
+      "col": 18,
+      "kind": "string",
+      "text": "14 jours offerts, puis 14,99 €/mois – engagement 12 mois"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 24,
+      "col": 12,
+      "kind": "string",
+      "text": "💎 Meilleur prix"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 26,
+      "col": 14,
+      "kind": "string",
+      "text": "price_1SZT7tGkt979eNWB0MF2xczP"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 29,
+      "col": 7,
+      "kind": "string",
+      "text": "Accès complet à Reviewsvisor"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 30,
+      "col": 7,
+      "kind": "string",
+      "text": "14 jours offerts"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 31,
+      "col": 7,
+      "kind": "string",
+      "text": "Engagement 12 mois"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 37,
+      "col": 11,
+      "kind": "string",
+      "text": "Abonnement Pro"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 40,
+      "col": 18,
+      "kind": "string",
+      "text": "Sans engagement"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 41,
+      "col": 12,
+      "kind": "string",
+      "text": "⚡ Flexible"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 43,
+      "col": 14,
+      "kind": "string",
+      "text": "price_1SXnCbGkt979eNWBttiTM124"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 46,
+      "col": 7,
+      "kind": "string",
+      "text": "Accès complet à Reviewsvisor"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 47,
+      "col": 7,
+      "kind": "string",
+      "text": "Sans engagement"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 48,
+      "col": 7,
+      "kind": "string",
+      "text": "Résiliable à tout moment"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 56,
+      "col": 9,
+      "kind": "string",
+      "text": "Établissement supplémentaire"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 59,
+      "col": 12,
+      "kind": "string",
+      "text": "price_1ShiPzGkt979eNWBSDapH7aJ"
+    },
+    {
+      "file": "src/config/subscriptionPlans.ts",
+      "line": 60,
+      "col": 15,
+      "kind": "string",
+      "text": "addon_multi_etablissements_499"
+    },
+    {
+      "file": "src/contexts/AuthProvider.tsx",
+      "line": 22,
+      "col": 21,
+      "kind": "string",
+      "text": "Invité"
+    },
+    {
+      "file": "src/contexts/AuthProvider.tsx",
+      "line": 63,
+      "col": 10,
+      "kind": "string",
+      "text": "Invité"
+    },
+    {
+      "file": "src/hooks/use-toast.ts",
+      "line": 6,
+      "col": 8,
+      "kind": "string",
+      "text": "@/components/ui/toast"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 45,
+      "col": 9,
+      "kind": "toast:error",
+      "text": "Erreur: Session non disponible"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 73,
+      "col": 9,
+      "kind": "toast:success",
+      "text": "Activé (mode créateur)"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 7,
+      "col": 32,
+      "kind": "string",
+      "text": "thomas.jacquesgaugain@gmail.com"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 13,
+      "col": 31,
+      "kind": "string",
+      "text": "addon_multi_etablissements_499"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 29,
+      "col": 26,
+      "kind": "string",
+      "text": "activate-creator-subscription"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 37,
+      "col": 22,
+      "kind": "string",
+      "text": "[useCreatorBypass] Client-side creator check failed"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 38,
+      "col": 41,
+      "kind": "string",
+      "text": "Non autorisé"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 44,
+      "col": 23,
+      "kind": "string",
+      "text": "[useCreatorBypass] Session error:"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 45,
+      "col": 21,
+      "kind": "string",
+      "text": "Erreur: Session non disponible"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 46,
+      "col": 41,
+      "kind": "string",
+      "text": "Session non disponible"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 49,
+      "col": 19,
+      "kind": "string",
+      "text": "[useCreatorBypass] Session valid, invoking edge function..."
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 55,
+      "col": 19,
+      "kind": "string",
+      "text": "[useCreatorBypass] Edge function response:"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 58,
+      "col": 23,
+      "kind": "string",
+      "text": "[useCreatorBypass] Edge function error:"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 66,
+      "col": 73,
+      "kind": "string",
+      "text": "Erreur inconnue"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 72,
+      "col": 21,
+      "kind": "string",
+      "text": "[useCreatorBypass] Activation successful"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 73,
+      "col": 23,
+      "kind": "string",
+      "text": "Activé (mode créateur)"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 76,
+      "col": 41,
+      "kind": "string",
+      "text": "Erreur inconnue"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 77,
+      "col": 22,
+      "kind": "string",
+      "text": "[useCreatorBypass] Activation failed:"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 82,
+      "col": 65,
+      "kind": "string",
+      "text": "Erreur inattendue"
+    },
+    {
+      "file": "src/hooks/useCreatorBypass.ts",
+      "line": 83,
+      "col": 21,
+      "kind": "string",
+      "text": "[useCreatorBypass] Unexpected error:"
+    },
+    {
+      "file": "src/hooks/useEstablishmentSearch.ts",
+      "line": 27,
+      "col": 47,
+      "kind": "jsx_text",
+      "text": "([]);\n  const sessionRef = useRef"
+    },
+    {
+      "file": "src/hooks/useEstablishmentSearch.ts",
+      "line": 28,
+      "col": 32,
+      "kind": "jsx_text",
+      "text": "(null);\n  const debounceRef = useRef"
+    },
+    {
+      "file": "src/lib/establishmentBilling.ts",
+      "line": 18,
+      "col": 7,
+      "kind": "string",
+      "text": "update-establishment-quantity"
+    },
+    {
+      "file": "src/lib/establishmentBilling.ts",
+      "line": 26,
+      "col": 45,
+      "kind": "string",
+      "text": "No response from server"
+    },
+    {
+      "file": "src/lib/loadGoogleMaps.ts",
+      "line": 3,
+      "col": 32,
+      "kind": "jsx_text",
+      "text": "| null = null;\r\nlet isLoaded = false;\r\n\r\nexport async function loadGoogleMaps(): Promise"
+    },
+    {
+      "file": "src/lib/loadGooglePlaces.ts",
+      "line": 1,
+      "col": 26,
+      "kind": "jsx_text",
+      "text": "| null = null;\r\n\r\nexport function loadGooglePlaces(): Promise"
+    },
+    {
+      "file": "src/lib/reponses.ts",
+      "line": 47,
+      "col": 69,
+      "kind": "jsx_text",
+      "text": "r.id));\r\n\r\n    // Éviter le sur-comptage : certaines entrées dans `reponses` peuvent référencer des avis qui\r\n    // n'existent plus dans `reviews` (ou ne font pas partie du périmètre courant).\r\n    const validatedIdsInReviews = new Set"
+    },
+    {
+      "file": "src/lib/reponses.ts",
+      "line": 52,
+      "col": 36,
+      "kind": "jsx_text",
+      "text": "reviewIds.has(id))\r\n    );\r\n\r\n    const directRespondedIds = new Set"
+    },
+    {
+      "file": "src/lib/reponses.ts",
+      "line": 92,
+      "col": 21,
+      "kind": "string",
+      "text": "Vous devez être connecté pour valider une réponse"
+    },
+    {
+      "file": "src/lib/reponses.ts",
+      "line": 117,
+      "col": 38,
+      "kind": "string",
+      "text": "Erreur lors de la validation de la réponse"
+    },
+    {
+      "file": "src/lib/stripe.ts",
+      "line": 21,
+      "col": 15,
+      "kind": "string",
+      "text": "price_1SSJ0sGkt979eNWBhN9cZmG2"
+    },
+    {
+      "file": "src/lib/stripe.ts",
+      "line": 22,
+      "col": 11,
+      "kind": "string",
+      "text": "Abonnement Pro"
+    },
+    {
+      "file": "src/lib/stripe.ts",
+      "line": 23,
+      "col": 12,
+      "kind": "string",
+      "text": "14,99€/mois"
+    },
+    {
+      "file": "src/pages/Abonnement.tsx",
+      "line": 8,
+      "col": 37,
+      "kind": "string",
+      "text": "thomas.jacquesgaugain@gmail.com"
+    },
+    {
+      "file": "src/pages/Compte.tsx",
+      "line": 85,
+      "col": 22,
+      "kind": "string",
+      "text": "Could not load current establishment:"
+    },
+    {
+      "file": "src/pages/Compte.tsx",
+      "line": 145,
+      "col": 24,
+      "kind": "string",
+      "text": "Could not reload establishment:"
+    },
+    {
+      "file": "src/pages/Compte.tsx",
+      "line": 362,
+      "col": 21,
+      "kind": "string",
+      "text": "[Compte] Erreur complète lors de la mise à jour du compte:"
+    },
+    {
+      "file": "src/pages/Contact.tsx",
+      "line": 58,
+      "col": 110,
+      "kind": "jsx_text",
+      "text": "contact@reviewsvisor.fr"
+    },
+    {
+      "file": "src/pages/Contact.tsx",
+      "line": 55,
+      "col": 24,
+      "kind": "string",
+      "text": "mailto:contact@reviewsvisor.fr"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 235,
+      "col": 27,
+      "kind": "jsx_text",
+      "text": "(prev"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 516,
+      "col": 21,
+      "kind": "jsx_text",
+      "text": "b.length - a.length)\n      .map(escapeRegExp)\n      .join('|');\n    if (!escaped) return raw;\n\n    // Bornes de mot unicode (lettres/chiffres) pour éviter les match partiels.\n    const re = new RegExp(`(?"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 539,
+      "col": 53,
+      "kind": "jsx_text",
+      "text": "(r?.rating ?? 0)"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 841,
+      "col": 58,
+      "kind": "jsx_text",
+      "text": "(r.rating || 0)"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 893,
+      "col": 26,
+      "kind": "jsx_text",
+      "text": "= 4.0 && avgRating"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 1036,
+      "col": 58,
+      "kind": "jsx_text",
+      "text": "(r.rating || 0)"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 1473,
+      "col": 29,
+      "kind": "jsx_text",
+      "text": "(b.rating || 0) - (a.rating || 0))\n              .slice(0, 5);\n            setTopReviews(bestReviews);\n            \n            // Top 5 pires avis (note"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 1479,
+      "col": 26,
+      "kind": "jsx_text",
+      "text": "r.rating && r.rating"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 1480,
+      "col": 29,
+      "kind": "jsx_text",
+      "text": "(a.rating || 0) - (b.rating || 0))\n              .slice(0, 5);\n            setWorstReviews(badReviews);\n            \n            // Calculer les stats par plateforme\n            const statsByPlatform: Record"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 1622,
+      "col": 52,
+      "kind": "jsx_text",
+      "text": "| null = null;\n    let refreshTimeout: ReturnType"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 1868,
+      "col": 34,
+      "kind": "jsx_text",
+      "text": ") : establishments.length === 0 ? ("
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 1993,
+      "col": 42,
+      "kind": "jsx_text",
+      "text": "r.rating && r.rating"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 2237,
+      "col": 38,
+      "kind": "jsx_text",
+      "text": "0 ? ("
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 2301,
+      "col": 26,
+      "kind": "jsx_text",
+      "text": "))\n                ) : ("
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 2336,
+      "col": 26,
+      "kind": "jsx_text",
+      "text": "))\n                ) : ("
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 2402,
+      "col": 77,
+      "kind": "jsx_text",
+      "text": "78%"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 2449,
+      "col": 38,
+      "kind": "jsx_text",
+      "text": "= 4) positiveCount++;\n                          else if (rating"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 3406,
+      "col": 24,
+      "kind": "jsx_text",
+      "text": "))\n              ) : ("
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 3620,
+      "col": 49,
+      "kind": "jsx_text",
+      "text": "Assistant IA pour répondre à vos avis"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 3631,
+      "col": 49,
+      "kind": "jsx_text",
+      "text": "Assistant IA pour répondre à vos avis"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 3636,
+      "col": 53,
+      "kind": "jsx_text",
+      "text": "L'agent IA analyse automatiquement vos avis et génère des réponses personnalisées adaptées à chaque situation."
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 3644,
+      "col": 69,
+      "kind": "jsx_text",
+      "text": "Réponses automatiques intelligentes"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 3645,
+      "col": 62,
+      "kind": "jsx_text",
+      "text": "Génération de réponses adaptées au ton et au contenu de chaque avis"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 3651,
+      "col": 69,
+      "kind": "jsx_text",
+      "text": "Personnalisation avancée"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 3652,
+      "col": 62,
+      "kind": "jsx_text",
+      "text": "Adaptation du style et du contenu selon le type d'avis (positif, négatif, neutre)"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 3658,
+      "col": 69,
+      "kind": "jsx_text",
+      "text": "Validation avant envoi"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 3659,
+      "col": 62,
+      "kind": "jsx_text",
+      "text": "Vous pouvez modifier et valider chaque réponse avant de la publier"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 3856,
+      "col": 39,
+      "kind": "jsx_text",
+      "text": ") : hasAiResponse ? ("
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4038,
+      "col": 52,
+      "kind": "jsx_text",
+      "text": "Centre de réponse"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4039,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": "Gérez vos réponses aux avis clients"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4053,
+      "col": 57,
+      "kind": "jsx_text",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4069,
+      "col": 57,
+      "kind": "jsx_text",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4098,
+      "col": 57,
+      "kind": "jsx_text",
+      "text": "Validées"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4113,
+      "col": 58,
+      "kind": "jsx_text",
+      "text": "Analyse du contenu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4114,
+      "col": 57,
+      "kind": "jsx_text",
+      "text": "Classification IA des avis"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4130,
+      "col": 60,
+      "kind": "jsx_text",
+      "text": "Filtrer par note"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4131,
+      "col": 59,
+      "kind": "jsx_text",
+      "text": "Avis classés par étoiles"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4147,
+      "col": 60,
+      "kind": "jsx_text",
+      "text": "Priorité"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4148,
+      "col": 59,
+      "kind": "jsx_text",
+      "text": "Avis classés par urgence"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4165,
+      "col": 59,
+      "kind": "jsx_text",
+      "text": "Avis classés par source"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4219,
+      "col": 71,
+      "kind": "jsx_text",
+      "text": "🔴 Avec une plainte"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4280,
+      "col": 39,
+      "kind": "jsx_text",
+      "text": "Voir la réponse"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4293,
+      "col": 74,
+      "kind": "jsx_text",
+      "text": "Répondre"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4303,
+      "col": 89,
+      "kind": "jsx_text",
+      "text": "Réponse publiée :"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4331,
+      "col": 74,
+      "kind": "jsx_text",
+      "text": "💡 Contient une suggestion"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4391,
+      "col": 39,
+      "kind": "jsx_text",
+      "text": "Voir la réponse"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4404,
+      "col": 74,
+      "kind": "jsx_text",
+      "text": "Répondre"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4429,
+      "col": 74,
+      "kind": "jsx_text",
+      "text": "😠 Ton négatif détecté"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4489,
+      "col": 39,
+      "kind": "jsx_text",
+      "text": "Voir la réponse"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4502,
+      "col": 74,
+      "kind": "jsx_text",
+      "text": "Répondre"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4527,
+      "col": 73,
+      "kind": "jsx_text",
+      "text": "👍 Avis positif"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4584,
+      "col": 72,
+      "kind": "jsx_text",
+      "text": "Répondre"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4605,
+      "col": 85,
+      "kind": "jsx_text",
+      "text": "= 1 && r.rating"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4613,
+      "col": 75,
+      "kind": "jsx_text",
+      "text": "⭐ 1-2 étoiles"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4670,
+      "col": 97,
+      "kind": "jsx_text",
+      "text": "Voir la réponse"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4675,
+      "col": 78,
+      "kind": "jsx_text",
+      "text": "Répondre"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4700,
+      "col": 78,
+      "kind": "jsx_text",
+      "text": "⭐ 3 étoiles"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4750,
+      "col": 97,
+      "kind": "jsx_text",
+      "text": "Voir la réponse"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4755,
+      "col": 78,
+      "kind": "jsx_text",
+      "text": "Répondre"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4772,
+      "col": 86,
+      "kind": "jsx_text",
+      "text": "= 4 && r.rating"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4780,
+      "col": 77,
+      "kind": "jsx_text",
+      "text": "⭐ 4-5 étoiles"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4830,
+      "col": 97,
+      "kind": "jsx_text",
+      "text": "Voir la réponse"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4835,
+      "col": 78,
+      "kind": "jsx_text",
+      "text": "Répondre"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4869,
+      "col": 75,
+      "kind": "jsx_text",
+      "text": "🔥 Priorité haute"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4919,
+      "col": 97,
+      "kind": "jsx_text",
+      "text": "Voir la réponse"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4924,
+      "col": 78,
+      "kind": "jsx_text",
+      "text": "Répondre"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4949,
+      "col": 78,
+      "kind": "jsx_text",
+      "text": "⚠️ À surveiller"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4999,
+      "col": 97,
+      "kind": "jsx_text",
+      "text": "Voir la réponse"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5004,
+      "col": 78,
+      "kind": "jsx_text",
+      "text": "Répondre"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5029,
+      "col": 77,
+      "kind": "jsx_text",
+      "text": "✅ Réponses rapides"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5079,
+      "col": 97,
+      "kind": "jsx_text",
+      "text": "Voir la réponse"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5084,
+      "col": 78,
+      "kind": "jsx_text",
+      "text": "Répondre"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5164,
+      "col": 97,
+      "kind": "jsx_text",
+      "text": "Voir la réponse"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5169,
+      "col": 78,
+      "kind": "jsx_text",
+      "text": "Répondre"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5244,
+      "col": 97,
+      "kind": "jsx_text",
+      "text": "Voir la réponse"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5249,
+      "col": 78,
+      "kind": "jsx_text",
+      "text": "Répondre"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5324,
+      "col": 97,
+      "kind": "jsx_text",
+      "text": "Voir la réponse"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5329,
+      "col": 78,
+      "kind": "jsx_text",
+      "text": "Répondre"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5409,
+      "col": 78,
+      "kind": "jsx_text",
+      "text": "Répondre"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5425,
+      "col": 25,
+      "kind": "jsx_text",
+      "text": ") : (\n                        /* Tableau par défaut - toujours visible quand aucune carte de groupement n'est ouverte */"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5479,
+      "col": 45,
+      "kind": "jsx_text",
+      "text": "Voir la réponse"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5492,
+      "col": 80,
+      "kind": "jsx_text",
+      "text": "Répondre"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5502,
+      "col": 95,
+      "kind": "jsx_text",
+      "text": "Réponse publiée :"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5658,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": "Suivez l'avancement de vos actions"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5684,
+      "col": 56,
+      "kind": "jsx_text",
+      "text": "Avis liés"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5686,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": "Avis freinant votre progression vers l'objectif"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5714,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": "Estimez l'impact de vos améliorations"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5738,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": "Suivez l'avancement de vos actions"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5761,
+      "col": 45,
+      "kind": "jsx_text",
+      "text": "Avis liés"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5762,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": "Avis freinant votre progression vers l'objectif"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5767,
+      "col": 57,
+      "kind": "jsx_text",
+      "text": "Aucun avis lié trouvé."
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5802,
+      "col": 51,
+      "kind": "jsx_text",
+      "text": "Estimez l'impact de vos améliorations"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5806,
+      "col": 53,
+      "kind": "jsx_text",
+      "text": "Si vous corrigez ces points, voici l'impact estimé sur votre note :"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 544,
+      "col": 16,
+      "kind": "string",
+      "text": "Temps d'attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 624,
+      "col": 7,
+      "kind": "string",
+      "text": "service / attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 625,
+      "col": 7,
+      "kind": "string",
+      "text": "qualité des plats"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 627,
+      "col": 7,
+      "kind": "string",
+      "text": "qualité / goût"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 628,
+      "col": 7,
+      "kind": "string",
+      "text": "ambiance agréable"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 629,
+      "col": 7,
+      "kind": "string",
+      "text": "rapidité"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 633,
+      "col": 7,
+      "kind": "string",
+      "text": "rapport qualité/prix"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 1330,
+      "col": 21,
+      "kind": "string",
+      "text": "[Dashboard] Erreur chargement établissements:"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 1346,
+      "col": 29,
+      "kind": "string",
+      "text": "establishment:updated"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 1349,
+      "col": 34,
+      "kind": "string",
+      "text": "establishment:updated"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 1906,
+      "col": 70,
+      "kind": "string",
+      "text": "establishment:updated"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 1933,
+      "col": 27,
+      "kind": "string",
+      "text": "Importer vos avis"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 2231,
+      "col": 39,
+      "kind": "string",
+      "text": "année"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 2752,
+      "col": 65,
+      "kind": "string",
+      "text": "\\u00A0"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 2819,
+      "col": 65,
+      "kind": "string",
+      "text": "\\u00A0"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 3041,
+      "col": 65,
+      "kind": "string",
+      "text": "\\u00A0"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 3487,
+      "col": 57,
+      "kind": "string",
+      "text": "Conseils personnalisés basés sur l'analyse de vos avis clients"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4209,
+      "col": 43,
+      "kind": "string",
+      "text": "Avec une plainte"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4264,
+      "col": 69,
+      "kind": "string",
+      "text": "Date d'importation"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4272,
+      "col": 54,
+      "kind": "string",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4272,
+      "col": 66,
+      "kind": "string",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4305,
+      "col": 112,
+      "kind": "string",
+      "text": "Merci pour votre avis, nous sommes ravis que vous ayez apprécié votre expérience !"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4321,
+      "col": 29,
+      "kind": "string",
+      "text": "Contient une suggestion"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4375,
+      "col": 69,
+      "kind": "string",
+      "text": "Date d'importation"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4383,
+      "col": 54,
+      "kind": "string",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4383,
+      "col": 66,
+      "kind": "string",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4419,
+      "col": 29,
+      "kind": "string",
+      "text": "Ton négatif détecté"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4473,
+      "col": 69,
+      "kind": "string",
+      "text": "Date d'importation"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4481,
+      "col": 54,
+      "kind": "string",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4481,
+      "col": 66,
+      "kind": "string",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4517,
+      "col": 29,
+      "kind": "string",
+      "text": "Avis positif"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4571,
+      "col": 69,
+      "kind": "string",
+      "text": "Date d'importation"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4579,
+      "col": 54,
+      "kind": "string",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4579,
+      "col": 66,
+      "kind": "string",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4603,
+      "col": 33,
+      "kind": "string",
+      "text": "1-2 étoiles"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4657,
+      "col": 73,
+      "kind": "string",
+      "text": "Date d'importation"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4665,
+      "col": 58,
+      "kind": "string",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4665,
+      "col": 70,
+      "kind": "string",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4690,
+      "col": 33,
+      "kind": "string",
+      "text": "3 étoiles"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4745,
+      "col": 58,
+      "kind": "string",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4745,
+      "col": 70,
+      "kind": "string",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4770,
+      "col": 33,
+      "kind": "string",
+      "text": "4-5 étoiles"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4825,
+      "col": 58,
+      "kind": "string",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4825,
+      "col": 70,
+      "kind": "string",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4855,
+      "col": 33,
+      "kind": "string",
+      "text": "Priorité haute"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4914,
+      "col": 58,
+      "kind": "string",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4914,
+      "col": 70,
+      "kind": "string",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4939,
+      "col": 33,
+      "kind": "string",
+      "text": "À surveiller"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4994,
+      "col": 58,
+      "kind": "string",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 4994,
+      "col": 70,
+      "kind": "string",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5019,
+      "col": 33,
+      "kind": "string",
+      "text": "Réponses rapides"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5074,
+      "col": 58,
+      "kind": "string",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5074,
+      "col": 70,
+      "kind": "string",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5159,
+      "col": 58,
+      "kind": "string",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5159,
+      "col": 70,
+      "kind": "string",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5239,
+      "col": 58,
+      "kind": "string",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5239,
+      "col": 70,
+      "kind": "string",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5319,
+      "col": 58,
+      "kind": "string",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5319,
+      "col": 70,
+      "kind": "string",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5404,
+      "col": 60,
+      "kind": "string",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5404,
+      "col": 72,
+      "kind": "string",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5471,
+      "col": 60,
+      "kind": "string",
+      "text": "Répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5471,
+      "col": 72,
+      "kind": "string",
+      "text": "En attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5504,
+      "col": 118,
+      "kind": "string",
+      "text": "Merci pour votre avis, nous sommes ravis que vous ayez apprécié votre expérience !"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5516,
+      "col": 69,
+      "kind": "string",
+      "text": "Aucun avis en attente"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5516,
+      "col": 124,
+      "kind": "string",
+      "text": "Aucun avis répondu"
+    },
+    {
+      "file": "src/pages/Dashboard.tsx",
+      "line": 5516,
+      "col": 147,
+      "kind": "string",
+      "text": "Aucun avis disponible"
+    },
+    {
+      "file": "src/pages/Debug.tsx",
+      "line": 12,
+      "col": 48,
+      "kind": "jsx_text",
+      "text": "Diagnostic OAuth Google"
+    },
+    {
+      "file": "src/pages/DebugEnv.tsx",
+      "line": 53,
+      "col": 58,
+      "kind": "jsx_text",
+      "text": "Debug - Variables d'environnement"
+    },
+    {
+      "file": "src/pages/DebugEnv.tsx",
+      "line": 54,
+      "col": 45,
+      "kind": "jsx_text",
+      "text": "Vérification des variables d'environnement pour l'edge function analyze-reviews"
+    },
+    {
+      "file": "src/pages/DebugEnv.tsx",
+      "line": 61,
+      "col": 21,
+      "kind": "jsx_text",
+      "text": "Test de connectivité"
+    },
+    {
+      "file": "src/pages/DebugEnv.tsx",
+      "line": 62,
+      "col": 27,
+      "kind": "jsx_text",
+      "text": "Ping de l'edge function pour vérifier les variables d'environnement"
+    },
+    {
+      "file": "src/pages/DebugEnv.tsx",
+      "line": 70,
+      "col": 65,
+      "kind": "jsx_text",
+      "text": "Test en cours..."
+    },
+    {
+      "file": "src/pages/DebugEnv.tsx",
+      "line": 95,
+      "col": 54,
+      "kind": "jsx_text",
+      "text": "Variables d'environnement"
+    },
+    {
+      "file": "src/pages/DebugEnv.tsx",
+      "line": 109,
+      "col": 63,
+      "kind": "jsx_text",
+      "text": "Variables détectées"
+    },
+    {
+      "file": "src/pages/DebugEnv.tsx",
+      "line": 117,
+      "col": 49,
+      "kind": "jsx_text",
+      "text": "Réponse brute"
+    },
+    {
+      "file": "src/pages/DebugEnv.tsx",
+      "line": 43,
+      "col": 22,
+      "kind": "string",
+      "text": "Configuré"
+    },
+    {
+      "file": "src/pages/DebugEnv.tsx",
+      "line": 74,
+      "col": 15,
+      "kind": "string",
+      "text": "Ping analyze-reviews"
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 83,
+      "col": 42,
+      "kind": "jsx_text",
+      "text": "Aucune donnée de résumé"
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 92,
+      "col": 53,
+      "kind": "jsx_text",
+      "text": "Collectés"
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 114,
+      "col": 60,
+      "kind": "jsx_text",
+      "text": "Problèmes principaux"
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 130,
+      "col": 62,
+      "kind": "jsx_text",
+      "text": "Points forts"
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 159,
+      "col": 58,
+      "kind": "jsx_text",
+      "text": "Debug - Insights d'avis"
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 160,
+      "col": 45,
+      "kind": "jsx_text",
+      "text": "Consulter et analyser les insights stockés pour un établissement"
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 167,
+      "col": 21,
+      "kind": "jsx_text",
+      "text": "Recherche d'insights"
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 168,
+      "col": 27,
+      "kind": "jsx_text",
+      "text": "Entrez un Place ID pour charger les analyses existantes"
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 174,
+      "col": 38,
+      "kind": "jsx_text",
+      "text": "Place ID"
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 191,
+      "col": 67,
+      "kind": "jsx_text",
+      "text": "Chargement..."
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 205,
+      "col": 67,
+      "kind": "jsx_text",
+      "text": "Analyse..."
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 252,
+      "col": 68,
+      "kind": "jsx_text",
+      "text": "Données brutes JSON"
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 268,
+      "col": 61,
+      "kind": "jsx_text",
+      "text": "Aucun insight trouvé pour ce Place ID"
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 179,
+      "col": 15,
+      "kind": "attr:placeholder",
+      "text": "Ex: ChIJN1t_tDeuEmsRUsoyG83frY4"
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 179,
+      "col": 27,
+      "kind": "string",
+      "text": "Ex: ChIJN1t_tDeuEmsRUsoyG83frY4"
+    },
+    {
+      "file": "src/pages/DebugInsights.tsx",
+      "line": 209,
+      "col": 17,
+      "kind": "string",
+      "text": "Analyser & enregistrer"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 55,
+      "col": 58,
+      "kind": "jsx_text",
+      "text": "Debug - Analyses d'avis"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 56,
+      "col": 45,
+      "kind": "jsx_text",
+      "text": "Tester l'analyse d'avis avec l'edge function analyze-reviews"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 63,
+      "col": 21,
+      "kind": "jsx_text",
+      "text": "Paramètres d'analyse"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 64,
+      "col": 27,
+      "kind": "jsx_text",
+      "text": "Entrez les détails de l'établissement à analyser"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 70,
+      "col": 38,
+      "kind": "jsx_text",
+      "text": "Place ID (requis)"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 80,
+      "col": 34,
+      "kind": "jsx_text",
+      "text": "Nom (optionnel)"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 90,
+      "col": 37,
+      "kind": "jsx_text",
+      "text": "Adresse (optionnel)"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 107,
+      "col": 67,
+      "kind": "jsx_text",
+      "text": "Test..."
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 121,
+      "col": 67,
+      "kind": "jsx_text",
+      "text": "Analyse..."
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 135,
+      "col": 59,
+      "kind": "jsx_text",
+      "text": "Résultat de l'analyse"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 153,
+      "col": 61,
+      "kind": "jsx_text",
+      "text": "Avis collectés"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 172,
+      "col": 55,
+      "kind": "jsx_text",
+      "text": "Métadonnées Google"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 180,
+      "col": 65,
+      "kind": "jsx_text",
+      "text": "Mode dry-run - Aucune donnée n'a été enregistrée"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 196,
+      "col": 49,
+      "kind": "jsx_text",
+      "text": "Réponse complète"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 75,
+      "col": 15,
+      "kind": "attr:placeholder",
+      "text": "Ex: ChIJN1t_tDeuEmsRUsoyG83frY4"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 85,
+      "col": 15,
+      "kind": "attr:placeholder",
+      "text": "Ex: Restaurant Le Bistrot"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 95,
+      "col": 15,
+      "kind": "attr:placeholder",
+      "text": "Ex: 123 rue de la République, Paris"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 75,
+      "col": 27,
+      "kind": "string",
+      "text": "Ex: ChIJN1t_tDeuEmsRUsoyG83frY4"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 85,
+      "col": 27,
+      "kind": "string",
+      "text": "Ex: Restaurant Le Bistrot"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 95,
+      "col": 27,
+      "kind": "string",
+      "text": "Ex: 123 rue de la République, Paris"
+    },
+    {
+      "file": "src/pages/DebugReviews.tsx",
+      "line": 125,
+      "col": 17,
+      "kind": "string",
+      "text": "Analyser & enregistrer"
+    },
+    {
+      "file": "src/pages/Etablissement.tsx",
+      "line": 523,
+      "col": 14,
+      "kind": "jsx_text",
+      "text": ") : showImportBar ? ("
+    },
+    {
+      "file": "src/pages/Etablissement.tsx",
+      "line": 272,
+      "col": 25,
+      "kind": "string",
+      "text": "Erreur lors de la vérification des établissements:"
+    },
+    {
+      "file": "src/pages/Etablissement.tsx",
+      "line": 279,
+      "col": 23,
+      "kind": "string",
+      "text": "Erreur lors de la vérification des établissements:"
+    },
+    {
+      "file": "src/pages/Etablissement.tsx",
+      "line": 324,
+      "col": 50,
+      "kind": "string",
+      "text": "btn-analyser-etablissement"
+    },
+    {
+      "file": "src/pages/Etablissement.tsx",
+      "line": 326,
+      "col": 53,
+      "kind": "string",
+      "text": "btn-analyser-etablissement"
+    },
+    {
+      "file": "src/pages/Etablissement.tsx",
+      "line": 504,
+      "col": 19,
+      "kind": "string",
+      "text": "reviews-visual-anchor"
+    },
+    {
+      "file": "src/pages/Etablissement.tsx",
+      "line": 510,
+      "col": 19,
+      "kind": "string",
+      "text": "import-avis-toolbar-anchor"
+    },
+    {
+      "file": "src/pages/Etablissement.tsx",
+      "line": 547,
+      "col": 28,
+      "kind": "string",
+      "text": "section-etablissements-enregistres"
+    },
+    {
+      "file": "src/pages/Fonctionnalites.tsx",
+      "line": 7,
+      "col": 8,
+      "kind": "string",
+      "text": "@/components/ui/accordion"
+    },
+    {
+      "file": "src/pages/ForgotPassword.tsx",
+      "line": 42,
+      "col": 23,
+      "kind": "string",
+      "text": "Erreur lors de la vérification de l'email:"
+    },
+    {
+      "file": "src/pages/ForgotPassword.tsx",
+      "line": 61,
+      "col": 23,
+      "kind": "string",
+      "text": "Erreur lors de l'envoi de l'email:"
+    },
+    {
+      "file": "src/pages/ForgotPassword.tsx",
+      "line": 71,
+      "col": 21,
+      "kind": "string",
+      "text": "Erreur inattendue:"
+    },
+    {
+      "file": "src/pages/GoogleOAuthCallback.tsx",
+      "line": 40,
+      "col": 65,
+      "kind": "string",
+      "text": "google-oauth-callback"
+    },
+    {
+      "file": "src/pages/GoogleOAuthCallback.tsx",
+      "line": 45,
+      "col": 25,
+      "kind": "string",
+      "text": "Edge Function error:"
+    },
+    {
+      "file": "src/pages/GoogleOAuthCallback.tsx",
+      "line": 49,
+      "col": 22,
+      "kind": "string",
+      "text": "OAuth success:"
+    },
+    {
+      "file": "src/pages/GoogleOAuthCallback.tsx",
+      "line": 53,
+      "col": 23,
+      "kind": "string",
+      "text": "Callback processing error:"
+    },
+    {
+      "file": "src/pages/GoogleOAuthCallback.tsx",
+      "line": 73,
+      "col": 41,
+      "kind": "string",
+      "text": "noindex,nofollow"
+    },
+    {
+      "file": "src/pages/MerciInscription.tsx",
+      "line": 20,
+      "col": 13,
+      "kind": "jsx_text",
+      "text": "🎉"
+    },
+    {
+      "file": "src/pages/MerciInscription.tsx",
+      "line": 17,
+      "col": 35,
+      "kind": "string",
+      "text": "scale(1.5, 1)"
+    },
+    {
+      "file": "src/pages/NotFound.tsx",
+      "line": 12,
+      "col": 7,
+      "kind": "string",
+      "text": "404 Error: User attempted to access non-existent route:"
+    },
+    {
+      "file": "src/pages/Onboarding.tsx",
+      "line": 30,
+      "col": 19,
+      "kind": "string",
+      "text": "Redirecting to checkout for plan:"
+    },
+    {
+      "file": "src/pages/Onboarding.tsx",
+      "line": 42,
+      "col": 32,
+      "kind": "string",
+      "text": "stripeCheckoutStarted"
+    },
+    {
+      "file": "src/pages/Onboarding.tsx",
+      "line": 48,
+      "col": 21,
+      "kind": "string",
+      "text": "Checkout error:"
+    },
+    {
+      "file": "src/pages/ResetPassword.tsx",
+      "line": 59,
+      "col": 25,
+      "kind": "string",
+      "text": "Erreur lors de la vérification du token:"
+    },
+    {
+      "file": "src/pages/ResetPassword.tsx",
+      "line": 67,
+      "col": 21,
+      "kind": "string",
+      "text": "Token vérifié avec succès, session établie"
+    },
+    {
+      "file": "src/pages/ResetPassword.tsx",
+      "line": 71,
+      "col": 23,
+      "kind": "string",
+      "text": "Erreur inattendue lors de la vérification:"
+    },
+    {
+      "file": "src/pages/ResetPassword.tsx",
+      "line": 110,
+      "col": 23,
+      "kind": "string",
+      "text": "Erreur lors de la mise à jour du mot de passe:"
+    },
+    {
+      "file": "src/pages/ResetPassword.tsx",
+      "line": 128,
+      "col": 21,
+      "kind": "string",
+      "text": "Erreur inattendue:"
+    },
+    {
+      "file": "src/services/establishments.ts",
+      "line": 330,
+      "col": 21,
+      "kind": "string",
+      "text": "Nom d'établissement manquant"
+    },
+    {
+      "file": "src/services/establishments.ts",
+      "line": 349,
+      "col": 23,
+      "kind": "string",
+      "text": "Erreur lors de la mise à jour de l'établissement"
+    },
+    {
+      "file": "src/services/establishments.ts",
+      "line": 373,
+      "col": 21,
+      "kind": "string",
+      "text": "Erreur lors de la création de l'établissement"
+    },
+    {
+      "file": "src/services/reviewsService.ts",
+      "line": 454,
+      "col": 18,
+      "kind": "jsx_text",
+      "text": "= 1 && r.rating"
+    },
+    {
+      "file": "src/types/analyse.ts",
+      "line": 6,
+      "col": 44,
+      "kind": "string",
+      "text": "Très négatif"
+    },
+    {
+      "file": "src/types/analyse.ts",
+      "line": 6,
+      "col": 61,
+      "kind": "string",
+      "text": "Négatif"
+    },
+    {
+      "file": "src/types/analyse.ts",
+      "line": 6,
+      "col": 96,
+      "kind": "string",
+      "text": "Très positif"
+    },
+    {
+      "file": "src/utils/baselineScore.ts",
+      "line": 193,
+      "col": 13,
+      "kind": "jsx_text",
+      "text": "0) return 'increase';\r\n  if (delta"
+    },
+    {
+      "file": "src/utils/generatePdfReport.ts",
+      "line": 8,
+      "col": 89,
+      "kind": "jsx_text",
+      "text": ";\r\n  topStrengths: Array"
+    },
+    {
+      "file": "src/utils/generatePdfReport.ts",
+      "line": 9,
+      "col": 95,
+      "kind": "jsx_text",
+      "text": ";\r\n  themes?: Array"
+    },
+    {
+      "file": "src/utils/generatePdfReport.ts",
+      "line": 10,
+      "col": 67,
+      "kind": "jsx_text",
+      "text": ";\r\n  recentReviews: Array"
+    },
+    {
+      "file": "src/utils/generatePdfReport.ts",
+      "line": 434,
+      "col": 16,
+      "kind": "jsx_text",
+      "text": "= 1 && rating"
+    },
+    {
+      "file": "src/utils/generatePdfReport.ts",
+      "line": 104,
+      "col": 12,
+      "kind": "string",
+      "text": "Rapport d'analyse des avis clients"
+    },
+    {
+      "file": "src/utils/generatePdfReport.ts",
+      "line": 149,
+      "col": 12,
+      "kind": "string",
+      "text": "Avis analyses"
+    },
+    {
+      "file": "src/utils/generatePdfReport.ts",
+      "line": 816,
+      "col": 13,
+      "kind": "string",
+      "text": "Notre objectif : offrir une experience client irreprochable, chaque jour."
+    },
+    {
+      "file": "src/utils/generatePdfReport.ts",
+      "line": 1042,
+      "col": 13,
+      "kind": "string",
+      "text": "Nous nous engageons a appliquer ces actions au quotidien."
+    },
+    {
+      "file": "src/utils/getDisplayAuthor.ts",
+      "line": 19,
+      "col": 12,
+      "kind": "string",
+      "text": "Nom du client"
+    },
+    {
+      "file": "src/utils/getDisplayAuthor.ts",
+      "line": 20,
+      "col": 12,
+      "kind": "string",
+      "text": "nom du client"
+    },
+    {
+      "file": "src/utils/parsePastedReviews.ts",
+      "line": 99,
+      "col": 41,
+      "kind": "jsx_text",
+      "text": "= 1 && rating"
+    },
+    {
+      "file": "src/utils/parsePastedReviews.ts",
+      "line": 252,
+      "col": 39,
+      "kind": "jsx_text",
+      "text": "= 1 && rating"
+    },
+    {
+      "file": "src/utils/ratingEvolution.ts",
+      "line": 149,
+      "col": 27,
+      "kind": "string",
+      "text": "'S'w"
+    }
+  ]
+}

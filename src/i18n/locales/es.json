@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "Cargando...",
+    "brandName": "Reviewsvisor",
     "save": "Guardar",
     "cancel": "Cancelar",
     "delete": "Eliminar",
@@ -193,13 +194,26 @@
     "lastUpdate": "Última actualización",
     "granularity": "Granularidad",
     "day": "Día",
-    "week": "Semana",
-    "month": "Mes",
-    "year": "Año",
-    "review": "reseña",
-    "reviews": "reseñas",
-    "stars": "estrellas",
-    "star": "estrella",
+    "monthlyTrend": "Tendencia mensual (últimos 12 meses)",
+    "targetDifficulty": {
+      "accessible": "Accesible",
+      "realistic": "Realista",
+      "achievable": "Alcanzable",
+      "ambitious": "Ambicioso"
+    },
+    "targetDateEstimate": {
+      "oneMonth": "En 1 mes",
+      "twoMonths": "En 2 meses",
+      "threeToFourMonths": "En 3–4 meses",
+      "fourMonths": "En 4 meses",
+      "sixMonthsOrMore": "En 6 meses o más"
+    },
+    "ratingDistributionValue": "{{count}} ({{percent}}%)",
+    "stars5": "5 estrellas",
+    "stars4": "4 estrellas",
+    "stars3": "3 estrellas",
+    "stars2": "2 estrellas",
+    "stars1": "1 estrella",
     "noComment": "Sin comentario",
     "anonymous": "Anónimo",
     "reviewsAndStars": "{{count}} reseñas • {{rating}} estrellas",
@@ -485,7 +499,10 @@
     "selectedEstablishment": "Establecimiento seleccionado",
     "searchLocationPlaceholder": "Buscar un lugar...",
     "cannotRetrieveDetails": "No se pudieron recuperar los detalles del establecimiento",
-    "contactAdminForApiKey": "Contacte al administrador para configurar la clave API de Google Maps."
+    "contactAdminForApiKey": "Contacte al administrador para configurar la clave API de Google Maps.",
+    "requestTooLong": "Solicitud demasiado larga",
+    "suggestionsError": "Error de sugerencias",
+    "detailsFetchError": "Error al obtener los detalles"
   },
   "import": {
     "pasteReviews": "Pegar reseñas",
@@ -549,6 +566,7 @@
     "exampleReview": "Ejemplo: \"¡Excelente restaurante, servicio impecable y platos deliciosos! Un poco cansado pero la calidad estaba ahí. ¡Muy muy agradable!\""
   },
   "errors": {
+    "title": "Error",
     "generic": "Ocurrió un error inesperado.",
     "network": "Error de conexión de red",
     "notFound": "Página no encontrada",
@@ -644,5 +662,44 @@
     "tripadvisor": "TripAdvisor",
     "facebook": "Facebook",
     "yelp": "Yelp"
+  },
+  "sentiment": {
+    "positive": "Positivo",
+    "neutral": "Neutro",
+    "negative": "Negativo"
+  },
+  "demoAnalytics": {
+    "headerTitle": "Análisis para",
+    "headerSubtitle": "Esto es lo que dicen sus clientes sobre su restaurante",
+    "totalReviews": "Reseñas totales",
+    "averageRating": "Calificación media",
+    "positiveSentiment": "Sentimiento positivo",
+    "improvementRequired": "Mejora requerida",
+    "areasToImprove": "áreas a mejorar",
+    "sentimentDistribution": "Distribución de sentimientos",
+    "sentimentDistributionDesc": "Reparto de reseñas por sentimiento analizado por la IA",
+    "mainThemes": "Temas principales",
+    "mainThemesDesc": "Los temas más mencionados en sus reseñas",
+    "popularKeywords": "Palabras clave populares",
+    "popularKeywordsDesc": "Los términos más frecuentes en sus reseñas",
+    "thisMonthChange": "+{{value}}% este mes",
+    "ratingDeltaSinceLastMonth": "+{{value}} desde el mes pasado",
+    "mentionsCount": "{{count}} menciones",
+    "score": "Puntuación: {{value}}%",
+    "timesCount": "{{count}} veces",
+    "themes": {
+      "service": "Servicio",
+      "foodQuality": "Calidad de los platos",
+      "ambiance": "Ambiente",
+      "price": "Precio",
+      "waitTime": "Tiempo de espera"
+    },
+    "keywords": {
+      "delicious": "delicioso",
+      "fastService": "servicio rápido",
+      "excellent": "excelente",
+      "expensive": "caro",
+      "wait": "espera"
+    }
   }
 }

@@ -38,7 +38,7 @@ const AiAssistance = ({ className }: AiAssistanceProps) => {
       });
 
       if (error) {
-        console.error("Erreur:", error);
+        console.error("AI assistance error:", error);
         setAnswer(t("aiAssistance.errorOccurred"));
         toast({
           title: t("common.error"),
@@ -50,7 +50,7 @@ const AiAssistance = ({ className }: AiAssistanceProps) => {
 
       if (data?.error) {
         setAnswer(data.error);
-        if (data.error.includes("Trop de requêtes") || data.error.includes(t("aiAssistance.tooManyRequests"))) {
+        if (data.error.includes(t("aiAssistance.tooManyRequests"))) {
           toast({
             title: t("aiAssistance.limitReached"),
             description: data.error,
@@ -62,7 +62,7 @@ const AiAssistance = ({ className }: AiAssistanceProps) => {
 
       setAnswer(data?.answer || t("aiAssistance.noAnswerReceived"));
     } catch (err) {
-      console.error("Erreur inattendue:", err);
+      console.error("Unexpected AI assistance error:", err);
       setAnswer(t("errors.generic"));
       toast({
         title: t("common.error"),

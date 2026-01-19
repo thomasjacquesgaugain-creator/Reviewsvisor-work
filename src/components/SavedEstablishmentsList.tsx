@@ -106,12 +106,22 @@ export default function SavedEstablishmentsList({
         url: etab.google_maps_url || undefined,
         rating: etab.rating || null
       }));
-      setEstablishments(dbList);
       
       // Trouver l'établissement actif
       const activeEtab = etablissements?.find(e => e.is_active);
+      const activePlaceIdFromDb = activeEtab?.place_id ?? null;
+
+      // Trier: établissement actif en premier, puis les autres (ordre created_at desc conservé)
+      const sortedDbList = activePlaceIdFromDb
+        ? [
+            ...dbList.filter(e => e.place_id === activePlaceIdFromDb),
+            ...dbList.filter(e => e.place_id !== activePlaceIdFromDb),
+          ]
+        : dbList;
+
+      setEstablishments(sortedDbList);
       if (activeEtab) {
-        setActivePlaceId(activeEtab.place_id);
+        setActivePlaceId(activePlaceIdFromDb);
         // Mettre à jour localStorage pour synchroniser avec useCurrentEstablishment
         const activeEtabFormatted: Etab = {
           place_id: activeEtab.place_id,
@@ -415,6 +425,12 @@ export default function SavedEstablishmentsList({
       
       // Mettre à jour l'état local pour l'indicateur visuel
       setActivePlaceId(etab.place_id);
+
+      // Réordonner immédiatement la liste pour afficher l'actif en premier
+      setEstablishments(prev => [
+        etab,
+        ...prev.filter(e => e.place_id !== etab.place_id),
+      ]);
       
       // Notifier MonEtablissementCard et autres composants de recharger depuis la DB
       window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));

@@ -371,19 +371,6 @@ export function ReviewsVisualPanel({
                       <p className="text-2xl font-bold">{summary.total}</p>
                     </div>
                   </div>
-                  {summary.total > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      data-testid="btn-delete-all-reviews"
-                      onClick={() => setShowDeleteDialog(true)}
-                      disabled={isDeleting}
-                      title={t("dashboard.deleteAllReviews")}
-                    >
-                      <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
-                    </Button>
-                  )}
                 </CardContent>
               </Card>
             </div>
@@ -546,6 +533,23 @@ export function ReviewsVisualPanel({
                 emptyLabel={activeFilter === 'all' ? t("dashboard.noReviewsYet") : t("dashboard.noReviewsYet")}
                 data-testid="establishment-reviews-table"
               />
+
+              {/* Action destructive: supprimer tous les avis (bas droite) */}
+              <div className="flex justify-end mt-4">
+                {summary.total > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    data-testid="btn-delete-all-reviews"
+                    onClick={() => setShowDeleteDialog(true)}
+                    disabled={isDeleting}
+                    title={t("dashboard.deleteAllReviews")}
+                  >
+                    <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
+                  </Button>
+                )}
+              </div>
             </div>
           </>}
       </CardContent>

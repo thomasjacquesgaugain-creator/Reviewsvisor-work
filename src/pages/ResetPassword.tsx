@@ -127,7 +127,7 @@ const ResetPassword = () => {
     } catch (error: any) {
       console.error("Erreur inattendue:", error);
       toast.error(error?.message || t("common.error"));
-      setError(error?.message || "Une erreur est survenue");
+      setError(error?.message || t("errors.generic"));
     } finally {
       setLoading(false);
     }

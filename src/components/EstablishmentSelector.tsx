@@ -129,16 +129,16 @@ export function EstablishmentSelector({
   return <div className="relative">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" className="flex items-center gap-3 h-auto py-2 px-3 min-w-[200px] max-w-[280px] justify-between bg-primary-foreground hover:bg-primary-foreground hover:text-foreground hover:border-border">
+          <Button variant="outline" className="flex items-center gap-3 h-auto py-3 px-4 min-w-[320px] max-w-[420px] justify-between bg-primary-foreground hover:bg-primary-foreground hover:text-foreground hover:border-border">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Building2 className="w-4 h-4 text-primary" />
               </div>
               <div className="text-left min-w-0">
-                <div className="font-medium text-foreground truncate max-w-[140px]">
+                <div className="font-medium text-foreground text-base truncate max-w-[300px]">
                   {selectedEstablishment?.name || t("establishment.select")}
                 </div>
-                {selectedEstablishment?.formatted_address && <div className="text-xs text-muted-foreground truncate max-w-[140px]">
+                {selectedEstablishment?.formatted_address && <div className="text-sm text-muted-foreground truncate max-w-[300px]">
                     {selectedEstablishment.formatted_address}
                   </div>}
               </div>
@@ -146,7 +146,7 @@ export function EstablishmentSelector({
             <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[280px] max-w-[280px] p-2 overflow-hidden" align="end" sideOffset={4} avoidCollisions={true} collisionPadding={8}>
+        <PopoverContent className="w-[420px] max-w-[420px] p-2 overflow-hidden" align="end" sideOffset={4} avoidCollisions={true} collisionPadding={8}>
           <div className="space-y-1">
             <div className="text-sm font-medium text-muted-foreground px-3 py-2">
               {t("establishment.myEstablishments")}
@@ -165,7 +165,7 @@ export function EstablishmentSelector({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-900 truncate">{est.name}</span>
+                    <span className="font-medium text-gray-900 text-base truncate">{est.name}</span>
                     {est.is_active && (
                       <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded flex-shrink-0">{t("establishment.active")}</span>
                     )}

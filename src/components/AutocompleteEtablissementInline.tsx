@@ -70,7 +70,7 @@ export default function AutocompleteEtablissementInline({
       .catch(e => { 
         clearTimeout(timeout);
         if (!ctrl.signal.aborted && e.name !== 'AbortError') {
-          setErr(e.name === 'AbortError' ? "Requête trop longue" : "Erreur de suggestions");
+          setErr(e.name === 'AbortError' ? t("errors.requestTooLong") : t("errors.suggestionsError"));
           console.error('Autocomplete error:', e);
         }
       })
@@ -127,7 +127,7 @@ export default function AutocompleteEtablissementInline({
     } catch (e) {
       clearTimeout(timeout);
       if (e instanceof Error && e.name !== 'AbortError') {
-        setErr(e.name === 'AbortError' ? "Requête trop longue" : "Erreur de récupération des détails");
+        setErr(e.name === 'AbortError' ? t("errors.requestTooLong") : t("errors.detailsFetchError"));
         console.error('Place details error:', e);
       }
     } finally {
@@ -203,7 +203,7 @@ export default function AutocompleteEtablissementInline({
         </div>
       )}
 
-      {loading && <div className="mt-2 text-xs text-muted-foreground">Chargement…</div>}
+      {loading && <div className="mt-2 text-xs text-muted-foreground">{t("common.loading")}</div>}
       {err && <div className="mt-2 text-xs text-destructive">{err}</div>}
     </div>
   );
