@@ -92,12 +92,33 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
   }, [loadActiveEstablishment]);
 
   // Fonction pour supprimer l'établissement et tous ses avis
+  // ⚠️ PROTECTION DES DONNÉES ⚠️
+  // Cette fonction supprime l'établissement ET tous ses avis
   const handleDeleteEstablishment = async () => {
     if (!etab?.place_id) return;
 
+    // ⚠️ PROTECTION 4: Confirmation explicite avec avertissement sur les avis
+    const confirmed = window.confirm(
+      `⚠️ ATTENTION - ACTION IRRÉVERSIBLE ⚠️\n\n` +
+      `Vous êtes sur le point de supprimer:\n` +
+      `- L'établissement "${etab.name}"\n` +
+      `- TOUS les avis associés à cet établissement\n\n` +
+      `Cette action est irréversible.\n\n` +
+      `Un backup automatique des avis sera créé avant suppression.\n\n` +
+      `Êtes-vous ABSOLUMENT sûr de vouloir continuer ?`
+    );
+
+    if (!confirmed) {
+      console.log('[PROTECTION DONNÉES] ✅ Suppression de l\'établissement annulée par l\'utilisateur');
+      return;
+    }
+
     setIsDeleting(true);
     try {
-      // 1. Supprimer tous les avis associés
+      // ⚠️ PROTECTION 5: Backup automatique via deleteAllReviews (déjà protégé)
+      console.warn('[PROTECTION DONNÉES] ⚠️ Suppression de l\'établissement et de ses avis confirmée');
+      
+      // 1. Supprimer tous les avis associés (avec backup automatique)
       await deleteAllReviews(etab.place_id);
 
       // 2. Supprimer l'établissement de la base de données

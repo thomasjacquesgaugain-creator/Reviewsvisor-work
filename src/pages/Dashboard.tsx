@@ -22,6 +22,7 @@ import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { fr, enUS, it, es, ptBR } from "date-fns/locale";
 import { DashboardTabs } from "@/components/DashboardTabs";
+import { AnalysisTabContent } from "@/components/analysis";
 
 
 const Dashboard = () => {
@@ -892,6 +893,11 @@ const Dashboard = () => {
         }
         
         // Charger les vrais avis récents
+        console.log('[Dashboard] 🔍 DEBUG - Récupération des avis:', {
+          place_id: currentEstab.place_id,
+          user_id: user.id
+        });
+        
         const { data: reviewsData, error: reviewsError } = await supabase
           .from('reviews')
           .select('*')
@@ -899,11 +905,22 @@ const Dashboard = () => {
           .eq('user_id', user.id)
           .order('published_at', { ascending: false });
           
+        console.log('[Dashboard] 🔍 DEBUG - Résultat de la requête avis:', {
+          reviewsCount: reviewsData?.length || 0,
+          hasError: !!reviewsError,
+          error: reviewsError,
+          sampleReview: reviewsData && reviewsData.length > 0 ? reviewsData[0] : null
+        });
+          
         if (reviewsError) {
           console.error('[dashboard] reviews error:', reviewsError);
         } else if (reviewsData) {
-          // Si pas d'avis, réinitialiser tous les états
-          if (reviewsData.length === 0) {
+          // ⚠️ PROTECTION DONNÉES: Vérification avant utilisation
+          if (!reviewsData || reviewsData.length === 0) {
+            console.warn('[PROTECTION DONNÉES] ⚠️ ATTENTION: Aucun avis trouvé pour cet établissement - vérifier la source de données', {
+              place_id: currentEstab.place_id,
+              user_id: user.id
+            });
             setRecentReviews([]);
             setAllReviewsForChart([]);
             setTopReviews([]);
@@ -2008,8 +2025,37 @@ const Dashboard = () => {
         )}
 
         {activeTab === 'analyse' && (
+          <AnalysisTabContent
+            analyse={insight}
+            reviews={(allReviewsForChart || []).map((r: any) => {
+              // DEBUG: Vérifier les données brutes
+              if (!import.meta.env.PROD && allReviewsForChart.length > 0 && allReviewsForChart.indexOf(r) === 0) {
+                console.log('[Dashboard] Premier avis brut:', r);
+              }
+              
+              return {
+                id: r.id?.toString() || '',
+                etablissementId: selectedEtab?.place_id || selectedEstablishment?.place_id || '',
+                source: (r.source || 'google') as const,
+                note: r.rating || 0,
+                texte: r.text || r.comment || '',
+                // Utiliser published_at en priorité, puis inserted_at, puis created_at
+                date: r.published_at || r.inserted_at || r.created_at || r.date || new Date().toISOString(),
+                // Conserver aussi les champs originaux pour le debug
+                published_at: r.published_at,
+                inserted_at: r.inserted_at,
+                created_at: r.created_at
+              };
+            })}
+            establishmentName={selectedEtab?.name || selectedEstablishment?.name}
+            isLoading={isLoadingInsight}
+            useMockData={!hasReviews}
+          />
+        )}
+
+        {false && activeTab === 'analyse' && (
           <>
-        {/* Problèmes et Points forts */}
+        {/* Ancien contenu commenté - Problèmes et Points forts */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           {/* Problèmes prioritaires */}
           <Card>

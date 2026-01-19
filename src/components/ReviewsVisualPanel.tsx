@@ -173,12 +173,45 @@ export function ReviewsVisualPanel({
     }
   };
 
+  // ⚠️ PROTECTION DES DONNÉES ⚠️
   // Function to handle delete all reviews
+  // Cette fonction demande une DOUBLE confirmation avant suppression
   const handleDeleteAllReviews = async () => {
     if (!effectiveId) return;
     
+    // ⚠️ PROTECTION 3: Double confirmation
+    const firstConfirm = window.confirm(
+      `⚠️ ATTENTION - ACTION IRRÉVERSIBLE ⚠️\n\n` +
+      `Vous êtes sur le point de supprimer TOUS les avis pour cet établissement.\n\n` +
+      `Cette action est irréversible et tous les avis seront perdus.\n\n` +
+      `Un backup automatique sera créé, mais il est recommandé de faire un export manuel avant.\n\n` +
+      `Êtes-vous ABSOLUMENT sûr de vouloir continuer ?`
+    );
+    
+    if (!firstConfirm) {
+      console.log('[PROTECTION DONNÉES] ✅ Suppression annulée par l\'utilisateur (première confirmation)');
+      setShowDeleteDialog(false);
+      return;
+    }
+    
+    // Deuxième confirmation
+    const secondConfirm = window.confirm(
+      `🚨 DERNIÈRE CONFIRMATION 🚨\n\n` +
+      `Cette action va supprimer DÉFINITIVEMENT tous les avis.\n\n` +
+      `Il est encore temps d'annuler.\n\n` +
+      `Confirmez-vous une dernière fois la suppression ?`
+    );
+    
+    if (!secondConfirm) {
+      console.log('[PROTECTION DONNÉES] ✅ Suppression annulée par l\'utilisateur (seconde confirmation)');
+      setShowDeleteDialog(false);
+      return;
+    }
+    
     try {
       setIsDeleting(true);
+      console.warn('[PROTECTION DONNÉES] ⚠️ Suppression confirmée - début de la suppression...');
+      
       await deleteAllReviews(effectiveId);
       
       // Toast rouge en bas à droite (même système que import CSV/JSON)

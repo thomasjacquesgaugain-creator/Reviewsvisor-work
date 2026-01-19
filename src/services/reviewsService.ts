@@ -236,9 +236,65 @@ export async function listAllReviews(establishmentId: string) {
   return reviews || [];
 }
 
+/**
+ * ⚠️ PROTECTION DES DONNÉES ⚠️
+ * Cette fonction supprime TOUS les avis d'un établissement.
+ * Elle crée automatiquement un backup avant suppression.
+ * UTILISER UNIQUEMENT après confirmation explicite de l'utilisateur.
+ */
 export async function deleteAllReviews(establishmentId: string): Promise<number> {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('User not authenticated');
+
+  // ⚠️ PROTECTION 1: Backup automatique avant suppression
+  try {
+    const { data: reviewsToBackup } = await supabase
+      .from('reviews')
+      .select('*')
+      .eq('user_id', user.user.id)
+      .eq('place_id', establishmentId);
+
+    if (reviewsToBackup && reviewsToBackup.length > 0) {
+      const backupData = {
+        timestamp: new Date().toISOString(),
+        establishmentId,
+        reviewsCount: reviewsToBackup.length,
+        reviews: reviewsToBackup
+      };
+      
+      // Sauvegarder dans localStorage avec clé unique par établissement
+      const backupKey = `reviews_backup_${establishmentId}_${Date.now()}`;
+      localStorage.setItem(backupKey, JSON.stringify(backupData));
+      
+      console.warn(`[PROTECTION DONNÉES] ⚠️ Backup créé avant suppression: ${backupKey}`, {
+        reviewsCount: reviewsToBackup.length,
+        establishmentId
+      });
+      
+      // Garder aussi un backup récent (max 5 backups)
+      const backupKeys = Object.keys(localStorage)
+        .filter(key => key.startsWith(`reviews_backup_${establishmentId}_`))
+        .sort()
+        .reverse();
+      
+      // Supprimer les backups anciens (garder les 5 plus récents)
+      backupKeys.slice(5).forEach(oldKey => {
+        localStorage.removeItem(oldKey);
+        console.log(`[PROTECTION DONNÉES] Backup ancien supprimé: ${oldKey}`);
+      });
+    }
+  } catch (backupError) {
+    console.error('[PROTECTION DONNÉES] ❌ Erreur lors du backup:', backupError);
+    // Continuer quand même, mais avec un warning
+    console.warn('[PROTECTION DONNÉES] ⚠️ Suppression effectuée sans backup (risque de perte de données)');
+  }
+
+  // ⚠️ PROTECTION 2: Log d'avertissement
+  console.warn('[PROTECTION DONNÉES] ⚠️ Suppression de tous les avis demandée pour:', {
+    establishmentId,
+    userId: user.user.id,
+    timestamp: new Date().toISOString()
+  });
 
   const { error, count } = await supabase
     .from('reviews')
@@ -247,9 +303,11 @@ export async function deleteAllReviews(establishmentId: string): Promise<number>
     .eq('place_id', establishmentId);
 
   if (error) {
-    console.error('Error deleting reviews:', error);
+    console.error('[PROTECTION DONNÉES] ❌ Erreur lors de la suppression:', error);
     throw error;
   }
+
+  console.warn(`[PROTECTION DONNÉES] ⚠️ ${count || 0} avis supprimés pour l'établissement ${establishmentId}`);
 
   return count || 0;
 }
