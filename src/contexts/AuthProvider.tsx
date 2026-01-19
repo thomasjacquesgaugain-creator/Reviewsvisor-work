@@ -224,8 +224,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Force le nettoyage de l'état local
       setSession(null);
       setProfile(null);
-      // Redirection vers la landing page
-      window.location.href = '/';
     }
   };
 

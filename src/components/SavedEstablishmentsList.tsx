@@ -20,6 +20,7 @@ export default function SavedEstablishmentsList({
   const [establishments, setEstablishments] = useState<Etab[]>([]);
   const [loading, setLoading] = useState(true);
   const [settingActive, setSettingActive] = useState<string | null>(null);
+  const [activePlaceId, setActivePlaceId] = useState<string | null>(null);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [creatingCheckout, setCreatingCheckout] = useState(false);
@@ -105,7 +106,58 @@ export default function SavedEstablishmentsList({
         url: etab.google_maps_url || undefined,
         rating: etab.rating || null
       }));
-      setEstablishments(dbList);
+      
+      // Trouver l'établissement actif
+      const activeEtab = etablissements?.find(e => e.is_active);
+      const activePlaceIdFromDb = activeEtab?.place_id ?? null;
+
+      // Trier: établissement actif en premier, puis les autres (ordre created_at desc conservé)
+      const sortedDbList = activePlaceIdFromDb
+        ? [
+            ...dbList.filter(e => e.place_id === activePlaceIdFromDb),
+            ...dbList.filter(e => e.place_id !== activePlaceIdFromDb),
+          ]
+        : dbList;
+
+      setEstablishments(sortedDbList);
+      if (activeEtab) {
+        setActivePlaceId(activePlaceIdFromDb);
+        // Mettre à jour localStorage pour synchroniser avec useCurrentEstablishment
+        const activeEtabFormatted: Etab = {
+          place_id: activeEtab.place_id,
+          name: activeEtab.nom,
+          address: activeEtab.adresse || "",
+          lat: activeEtab.lat || null,
+          lng: activeEtab.lng || null,
+          phone: activeEtab.telephone || undefined,
+          website: activeEtab.website || undefined,
+          url: activeEtab.google_maps_url || undefined,
+          rating: activeEtab.rating || null
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(activeEtabFormatted));
+        window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: activeEtabFormatted }));
+      } else {
+        setActivePlaceId(null);
+        // Sélectionner automatiquement le premier établissement s'il n'y en a qu'un seul
+        if (dbList.length === 1) {
+          const firstEtab = dbList[0];
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(firstEtab));
+          window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: firstEtab }));
+          
+          // Mettre à jour is_active dans la DB
+          supabase.from("établissements")
+            .update({ is_active: true })
+            .eq("user_id", user.id)
+            .eq("place_id", firstEtab.place_id)
+            .then(({ error }) => {
+              if (error) {
+                console.error("Erreur lors de la sélection automatique:", error);
+              } else {
+                setActivePlaceId(firstEtab.place_id);
+              }
+            });
+        }
+      }
     } catch (error) {
       console.error("Erreur lors du chargement de la liste:", error);
       setEstablishments([]);
@@ -371,6 +423,15 @@ export default function SavedEstablishmentsList({
       // Mettre à jour localStorage pour synchroniser avec useCurrentEstablishment
       localStorage.setItem(STORAGE_KEY, JSON.stringify(etab));
       
+      // Mettre à jour l'état local pour l'indicateur visuel
+      setActivePlaceId(etab.place_id);
+
+      // Réordonner immédiatement la liste pour afficher l'actif en premier
+      setEstablishments(prev => [
+        etab,
+        ...prev.filter(e => e.place_id !== etab.place_id),
+      ]);
+      
       // Notifier MonEtablissementCard et autres composants de recharger depuis la DB
       window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));
 
@@ -400,7 +461,7 @@ export default function SavedEstablishmentsList({
         </h3>
         
         <div className="flex flex-wrap gap-3">
-          {establishments.map(etab => <EstablishmentItem key={etab.place_id} etab={etab} onSelect={handleSelectEstablishment} />)}
+          {establishments.map(etab => <EstablishmentItem key={etab.place_id} etab={etab} onSelect={handleSelectEstablishment} isActive={activePlaceId === etab.place_id} />)}
           
           {/* Bouton Ajouter un établissement - with billing gate */}
           <button onClick={handleAddClick} disabled={checkingSubscription} className="cursor-pointer bg-card border border-dashed border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/10 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-2 min-h-[80px] disabled:opacity-50 disabled:cursor-not-allowed" title={t("establishment.add")}>

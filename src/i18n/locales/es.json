@@ -528,6 +528,7 @@
     "orClickToSelectFile": "o haz clic para seleccionar un archivo CSV o JSON",
     "importReviews": "Importar reseñas",
     "noEstablishmentSelected": "Ningún establecimiento seleccionado. Agrega o guarda un establecimiento antes de importar reseñas.",
+    "pleaseAddEstablishmentFirst": "Por favor, agrega un establecimiento primero para importar reseñas.",
     "establishment": "Establecimiento",
     "firstNameRequired": "El nombre es obligatorio",
     "lastNameRequired": "El apellido es obligatorio",

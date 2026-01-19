@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Récupère les statistiques des réponses validées
+ * INCLUT les réponses validées depuis localStorage ET la base de données
  * @param establishmentId - Place ID de l'établissement
  * @param userId - ID de l'utilisateur
  * @returns { validated: number, total: number }
@@ -12,32 +13,59 @@ export async function getReponsesStats(establishmentId?: string, userId?: string
       return { validated: 0, total: 0 };
     }
 
-    // Récupérer le nombre de réponses validées
-    const { count: validatedCount, error: validatedError } = await supabase
+    // Objectif produit : le compteur "réponses validées" doit refléter les avis "répondu".
+    // Un avis est considéré "répondu" s'il a :
+    // - une réponse validée (table reponses, statut=valide)
+    // - OU une réponse déjà publiée côté plateforme (owner_reply_text / responded_at)
+
+    const { data: dbResponses, error: responsesError } = await supabase
       .from('reponses')
-      .select('*', { count: 'exact', head: true })
+      .select('avis_id')
       .eq('statut', 'valide')
       .eq('etablissement_id', establishmentId)
       .eq('user_id', userId);
 
-    if (validatedError) {
-      console.error('Error fetching validated responses:', validatedError);
+    if (responsesError) {
+      console.error('Error fetching validated responses:', responsesError);
     }
 
-    // Récupérer le nombre total d'avis pour cet établissement
-    const { count: totalCount, error: totalError } = await supabase
+    const validatedIds = new Set<number>((dbResponses || []).map(r => parseInt(r.avis_id)));
+
+    // Charger les avis de l'établissement pour :
+    // - total
+    // - ids des avis déjà répondus directement sur la plateforme
+    const { data: reviews, error: reviewsError } = await supabase
       .from('reviews')
-      .select('*', { count: 'exact', head: true })
+      .select('id, owner_reply_text, responded_at')
       .eq('place_id', establishmentId)
       .eq('user_id', userId);
 
-    if (totalError) {
-      console.error('Error fetching total reviews:', totalError);
+    if (reviewsError) {
+      console.error('Error fetching reviews:', reviewsError);
     }
 
+    const reviewIds = new Set<number>((reviews || []).map((r: any) => r.id));
+
+    // Éviter le sur-comptage : certaines entrées dans `reponses` peuvent référencer des avis qui
+    // n'existent plus dans `reviews` (ou ne font pas partie du périmètre courant).
+    const validatedIdsInReviews = new Set<number>(
+      [...validatedIds].filter(id => reviewIds.has(id))
+    );
+
+    const directRespondedIds = new Set<number>();
+    (reviews || []).forEach((r: any) => {
+      const hasOwnerReply = !!(r.owner_reply_text && String(r.owner_reply_text).trim());
+      const hasRespondedAt = !!r.responded_at;
+      if (hasOwnerReply || hasRespondedAt) {
+        directRespondedIds.add(r.id);
+      }
+    });
+
+    const combinedIds = new Set<number>([...validatedIdsInReviews, ...directRespondedIds]);
+
     return {
-      validated: validatedCount || 0,
-      total: totalCount || 0
+      validated: combinedIds.size,
+      total: (reviews || []).length
     };
   } catch (error) {
     console.error('getReponsesStats error:', error);

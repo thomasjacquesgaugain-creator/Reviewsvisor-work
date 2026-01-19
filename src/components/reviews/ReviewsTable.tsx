@@ -125,9 +125,22 @@ export function ReviewsTable({
                 </div>
               </td>
               <td className="border border-border px-3 py-2">
+                {(review.platform?.toLowerCase() === 'google' || !review.platform) ? (
+                  <span style={{ 
+                    backgroundColor: '#3b82f6',
+                    color: '#ffffff',
+                    padding: '2px 10px',
+                    borderRadius: '9999px',
+                    fontSize: '12px',
+                    fontWeight: '500'
+                  }}>
+                    {review.platform || 'Google'}
+                  </span>
+                ) : (
                 <Badge variant={review.platform === 'unknown' ? 'secondary' : 'default'}>
                   {review.platform}
                 </Badge>
+                )}
               </td>
               <td className="border border-border px-3 py-2 text-sm text-muted-foreground">
                 {review.reviewDate || '-'}

@@ -382,7 +382,7 @@ const Compte = () => {
 
       <div className="relative z-10">
         <div className="p-6 md:p-10 flex justify-center">
-          <div className="w-full max-w-4xl">
+      <div className="w-full max-w-4xl">
         {/* Header avec titre */}
         <h1 className="text-3xl font-semibold text-foreground mb-8">
           {t("account.title")}

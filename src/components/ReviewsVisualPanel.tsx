@@ -2,10 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2, ThumbsUp, ThumbsDown, ShieldAlert, List, LineChart, PieChart } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line as RechartsLine, AreaChart, Area } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-import { getReviewsSummary, listAllReviews, listAll, deleteAllReviews } from "@/services/reviewsService";
+import { getReviewsSummary, listAllReviews, listAll, deleteAllReviews, verifyAndRestoreCreateTimes } from "@/services/reviewsService";
 import { STORAGE_KEY } from "@/types/etablissement";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
 import { toast as sonnerToast } from "sonner";
@@ -108,6 +108,9 @@ export function ReviewsVisualPanel({
         setIsLoading(true);
         setIsLoadingReviews(true);
         
+        // RÈGLE CRITIQUE : Vérifier et restaurer createTime au chargement
+        await verifyAndRestoreCreateTimes(effectiveId);
+        
         // Load summary and ALL reviews in parallel
         const [summaryData, allReviews] = await Promise.all([
           getReviewsSummary(effectiveId),
@@ -116,14 +119,62 @@ export function ReviewsVisualPanel({
         
         setSummary(summaryData);
         
+        // VÉRIFICATION CRITIQUE : Vérifier que chaque avis a son createTime
+        const reviewsWithoutCreateTime = allReviews.filter(r => {
+          const hasCreateTime = r.create_time || r.raw?.createTime || r.raw?.originalCreateTime || r.published_at;
+          return !hasCreateTime;
+        });
+        
+        if (reviewsWithoutCreateTime.length > 0) {
+          console.error(`❌ ERREUR CRITIQUE : ${reviewsWithoutCreateTime.length} avis sans createTime!`, reviewsWithoutCreateTime);
+        }
+        
+        // Debug: Log first review to see available date fields
+        if (allReviews.length > 0) {
+          console.log('🔍 Debug - First review data:', {
+            id: allReviews[0].id,
+            published_at: allReviews[0].published_at,
+            create_time: allReviews[0].create_time,
+            inserted_at: allReviews[0].inserted_at,
+            raw: allReviews[0].raw,
+            raw_createTime: allReviews[0].raw?.createTime,
+            formattedDate: formatReviewDate(allReviews[0])
+          });
+          
+          // Log les 3 premiers avis pour voir les dates
+          allReviews.slice(0, 3).forEach((review, idx) => {
+            console.log(`📅 Review ${idx} date fields:`, {
+              published_at: review.published_at,
+              create_time: review.create_time,
+              raw_createTime: review.raw?.createTime,
+              formatted: formatReviewDate(review)
+            });
+          });
+        }
+        
         // Map ALL reviews to table format
-        const mappedRows: ReviewsTableRow[] = allReviews.map(review => ({
+        const mappedRows: ReviewsTableRow[] = allReviews.map((review, index) => {
+          // Utiliser formatReviewDate qui vérifie tous les champs possibles
+          const reviewDate = formatReviewDate(review);
+          
+          // Log pour debug si pas de date trouvée
+          if (!reviewDate && index < 3) {
+            console.warn(`⚠️ No date found for review ${index}:`, {
+              id: review.id,
+              published_at: review.published_at,
+              create_time: review.create_time,
+              raw_createTime: review.raw?.createTime
+            });
+          }
+          
+          return {
           authorName: getDisplayAuthor(review),
           rating: review.rating || 0,
           comment: extractOriginalText(review.text) || "",
           platform: review.source || t("platforms.google"),
-          reviewDate: formatReviewDate(review)
-        }));
+            reviewDate: reviewDate || '-' // Afficher '-' seulement si vraiment aucune date n'est trouvée
+          };
+        });
         
         setReviewsList(mappedRows);
       } catch (error) {
@@ -353,19 +404,6 @@ export function ReviewsVisualPanel({
                       <p className="text-2xl font-bold">{summary.total}</p>
                     </div>
                   </div>
-                  {summary.total > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      data-testid="btn-delete-all-reviews"
-                      onClick={() => setShowDeleteDialog(true)}
-                      disabled={isDeleting}
-                      title={t("dashboard.deleteAllReviews")}
-                    >
-                      <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
-                    </Button>
-                  )}
                 </CardContent>
               </Card>
             </div>
@@ -440,23 +478,6 @@ export function ReviewsVisualPanel({
 
             {/* Stars Distribution */}
             
-
-            {/* Monthly Trend */}
-            {summary.byMonth.length > 0 && <div>
-                <h3 className="text-lg font-medium mb-4">{t("dashboard.monthlyTrend")}</h3>
-                <div className="h-64" data-testid="chart-monthly-trend">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={summary.byMonth}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip labelFormatter={value => `${t("dashboard.month")}: ${value}`} formatter={(value, name) => [value, name === 'count' ? t("dashboard.totalReviews") : t("dashboard.averageRating")]} />
-                      <Area type="monotone" dataKey="count" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.3} />
-                      {summary.byMonth.some(m => m.avg) && <RechartsLine type="monotone" dataKey="avg" stroke="hsl(var(--destructive))" strokeWidth={2} />}
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>}
 
             {/* Reviews List with Filter */}
             <div>
@@ -545,6 +566,23 @@ export function ReviewsVisualPanel({
                 emptyLabel={activeFilter === 'all' ? t("dashboard.noReviewsYet") : t("dashboard.noReviewsYet")}
                 data-testid="establishment-reviews-table"
               />
+
+              {/* Action destructive: supprimer tous les avis (bas droite) */}
+              <div className="flex justify-end mt-4">
+                {summary.total > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    data-testid="btn-delete-all-reviews"
+                    onClick={() => setShowDeleteDialog(true)}
+                    disabled={isDeleting}
+                    title={t("dashboard.deleteAllReviews")}
+                  >
+                    <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
+                  </Button>
+                )}
+              </div>
             </div>
           </>}
       </CardContent>
