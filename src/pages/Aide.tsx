@@ -11,19 +11,41 @@ const Aide = () => {
   
   const faqItems = [{
     question: t("help.faq1Question"),
-    answer: t("help.faq1Answer")
+    answer: (
+      <>
+        Vous pouvez importer vos avis Google de deux façons :
+        {'\n'}- en important un fichier via Google Takeout,
+        {'\n'}- ou via la récupération automatique si votre établissement est connecté.
+        {'\n\n'}Chaque méthode est expliquée étape par étape directement dans la section <span className="text-green-500 font-medium">"Instructions"</span>.
+      </>
+    )
   }, {
     question: t("help.faq2Question"),
     answer: t("help.faq2Answer")
   }, {
     question: t("help.faq3Question"),
-    answer: t("help.faq3Answer")
+    answer: (
+      <>
+        Oui. Reviewsvisor permet d'analyser plusieurs établissements depuis un seul compte.
+        {'\n\n'}Chaque établissement <span className="text-green-500 font-medium">dispose de ses propres analyses, recommandations et historiques d'avis</span>.
+      </>
+    )
   }, {
     question: t("help.faq4Question"),
-    answer: t("help.faq4Answer")
+    answer: (
+      <>
+        Oui. Les analyses peuvent être partagées avec votre équipe afin <span className="text-green-500 font-medium">d'aligner tout le monde sur les priorités à améliorer</span> (service, prix, qualité, organisation).
+        {'\n\n'}Cela permet de transformer les avis clients en <span className="text-green-500 font-medium">actions concrètes</span>.
+      </>
+    )
   }, {
     question: t("help.faq5Question"),
-    answer: t("help.faq5Answer")
+    answer: (
+      <>
+        Oui. Reviewsvisor propose un système de réponses automatiques assistées par IA.
+        {'\n\n'}Vous pouvez générer des <span className="text-green-500 font-medium">réponses adaptées au ton des avis</span> (positifs ou négatifs), tout en <span className="text-green-500 font-medium">gardant le contrôle</span> avant publication.
+      </>
+    )
   }];
   
   return <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
