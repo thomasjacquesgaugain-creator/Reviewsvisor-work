@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
+import { capitalizeName } from "@/utils/capitalizeName";
 
 type Profile = {
   id: string;
@@ -23,7 +24,7 @@ function getDisplayName(user: User | null, profile: Profile | null): string {
   
   // Priority 1: profiles.display_name
   if (profile?.display_name?.trim()) {
-    return profile.display_name.trim();
+    return capitalizeName(profile.display_name.trim());
   }
   
   // Priority 2: profiles.first_name + last_name (from database)
@@ -31,7 +32,7 @@ function getDisplayName(user: User | null, profile: Profile | null): string {
     const firstName = profile.first_name?.trim() || "";
     const lastName = profile.last_name?.trim() || "";
     if (firstName || lastName) {
-      return `${firstName} ${lastName}`.trim();
+      return capitalizeName(`${firstName} ${lastName}`.trim());
     }
   }
   
@@ -41,21 +42,21 @@ function getDisplayName(user: User | null, profile: Profile | null): string {
   const lastName = m.last_name?.trim() || "";
   
   if (firstName || lastName) {
-    return `${firstName} ${lastName}`.trim();
+    return capitalizeName(`${firstName} ${lastName}`.trim());
   }
   
   // Priority 4: user_metadata.name or full_name (OAuth)
-  if (m.name?.trim()) return m.name.trim();
-  if (m.full_name?.trim()) return m.full_name.trim();
+  if (m.name?.trim()) return capitalizeName(m.name.trim());
+  if (m.full_name?.trim()) return capitalizeName(m.full_name.trim());
   
   // Priority 5: given_name + family_name (Google OAuth)
   const givenName = m.given_name?.trim() || "";
   const familyName = m.family_name?.trim() || "";
   if (givenName || familyName) {
-    return `${givenName} ${familyName}`.trim();
+    return capitalizeName(`${givenName} ${familyName}`.trim());
   }
   
-  // Priority 6: email fallback
+  // Priority 6: email fallback (ne pas capitaliser l'email)
   if (user.email) {
     return user.email.split("@")[0];
   }

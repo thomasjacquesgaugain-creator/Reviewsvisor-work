@@ -13,6 +13,8 @@ import { getReponsesStats } from "@/lib/reponses";
 import { SubscriptionCard } from "@/components/SubscriptionCard";
 import { useTranslation } from "react-i18next";
 import { DashboardTabs } from "@/components/DashboardTabs";
+import { capitalizeName } from "@/utils/capitalizeName";
+import { extractOriginalText } from "@/utils/extractOriginalText";
 
 
 const Dashboard = () => {
@@ -203,6 +205,112 @@ const Dashboard = () => {
     };
   }, [currentEstablishment?.place_id, allReviews]);
 
+  // Calcul des métriques pour les 4 cartes
+  const metrics = useMemo(() => {
+    if (allReviews.length === 0) {
+      return {
+        globalPerformance: { label: t("dashboard.good"), color: "emerald", icon: Award },
+        satisfactionIndex: { percentage: 0 },
+        perceivedValue: { label: t("dashboard.high"), color: "amber" },
+        deliveredExperience: { label: t("dashboard.smooth"), color: "violet" }
+      };
+    }
+
+    // 1. Performance globale basée sur la note moyenne
+    let globalPerformanceLabel = t("dashboard.good");
+    let globalPerformanceColor = "emerald";
+    if (avgRating >= 4.5) {
+      globalPerformanceLabel = t("dashboard.excellent") || "Excellent";
+      globalPerformanceColor = "emerald";
+    } else if (avgRating >= 4.0) {
+      globalPerformanceLabel = t("dashboard.good");
+      globalPerformanceColor = "emerald";
+    } else if (avgRating >= 3.0) {
+      globalPerformanceLabel = t("dashboard.average") || "Moyen";
+      globalPerformanceColor = "amber";
+    } else {
+      globalPerformanceLabel = t("dashboard.toImprove") || "À améliorer";
+      globalPerformanceColor = "red";
+    }
+
+    // 2. Indice de satisfaction : pourcentage d'avis positifs (4-5 étoiles)
+    const positiveReviews = allReviews.filter(r => r.rating >= 4);
+    const satisfactionPercentage = allReviews.length > 0 
+      ? Math.round((positiveReviews.length / allReviews.length) * 100)
+      : 0;
+
+    // 3. Valeur ressentie : analyse des sentiments dans les commentaires
+    const positiveKeywords = ['excellent', 'super', 'génial', 'parfait', 'délicieux', 'formidable', 'extraordinaire', 'magnifique', 'incroyable', 'merveilleux', 'très bon', 'top', 'impeccable', 'rapide', 'accueillant', 'sympa', 'je recommande'];
+    const negativeKeywords = ['décevant', 'mauvais', 'lent', 'pas bon', 'froid', 'cher pour ce que', 'horrible', 'médiocre', 'nul', 'catastrophe', 'déçu', 'inadmissible'];
+    
+    let positiveSentimentCount = 0;
+    let negativeSentimentCount = 0;
+    
+    allReviews.forEach(review => {
+      const text = extractOriginalText(review.text || '').toLowerCase();
+      if (text) {
+        const hasPositive = positiveKeywords.some(kw => text.includes(kw));
+        const hasNegative = negativeKeywords.some(kw => text.includes(kw));
+        if (hasPositive) positiveSentimentCount++;
+        if (hasNegative) negativeSentimentCount++;
+      }
+    });
+    
+    let perceivedValueLabel = t("dashboard.high");
+    let perceivedValueColor = "amber";
+    const sentimentRatio = positiveSentimentCount + negativeSentimentCount > 0
+      ? positiveSentimentCount / (positiveSentimentCount + negativeSentimentCount)
+      : 0.5;
+    
+    if (sentimentRatio >= 0.6) {
+      perceivedValueLabel = t("dashboard.high");
+      perceivedValueColor = "emerald";
+    } else if (sentimentRatio >= 0.4) {
+      perceivedValueLabel = t("dashboard.average") || "Moyenne";
+      perceivedValueColor = "amber";
+    } else {
+      perceivedValueLabel = t("dashboard.low") || "Faible";
+      perceivedValueColor = "red";
+    }
+
+    // 4. Expérience délivrée : basée sur les avis récents (10 derniers)
+    const recentReviews = allReviews.slice(0, 10);
+    const recentPositive = recentReviews.filter(r => r.rating >= 4).length;
+    const recentNegative = recentReviews.filter(r => r.rating <= 2).length;
+    const recentPositiveRatio = recentReviews.length > 0 ? recentPositive / recentReviews.length : 0;
+    
+    let deliveredExperienceLabel = t("dashboard.smooth");
+    let deliveredExperienceColor = "violet";
+    
+    if (recentPositiveRatio >= 0.7) {
+      deliveredExperienceLabel = t("dashboard.smooth");
+      deliveredExperienceColor = "violet";
+    } else if (recentPositiveRatio >= 0.4) {
+      deliveredExperienceLabel = t("dashboard.variable") || "Variable";
+      deliveredExperienceColor = "amber";
+    } else {
+      deliveredExperienceLabel = t("dashboard.toReview") || "À revoir";
+      deliveredExperienceColor = "red";
+    }
+
+    return {
+      globalPerformance: { 
+        label: globalPerformanceLabel, 
+        color: globalPerformanceColor, 
+        icon: Award 
+      },
+      satisfactionIndex: { percentage: satisfactionPercentage },
+      perceivedValue: { 
+        label: perceivedValueLabel, 
+        color: perceivedValueColor 
+      },
+      deliveredExperience: { 
+        label: deliveredExperienceLabel, 
+        color: deliveredExperienceColor 
+      }
+    };
+  }, [allReviews, avgRating, t]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -212,7 +320,7 @@ const Dashboard = () => {
   }
 
   const displayName = userProfile 
-    ? `${userProfile.first_name} ${userProfile.last_name}` 
+    ? capitalizeName(`${userProfile.first_name} ${userProfile.last_name}`)
     : t("dashboard.user");
 
   return (
@@ -345,6 +453,7 @@ const Dashboard = () => {
             </Card>
 
           <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto pt-6 pb-0">
+            {/* Performance globale */}
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -354,10 +463,14 @@ const Dashboard = () => {
                 
                 {/* Badge central */}
                 <div className="flex justify-center">
-                  <div className="inline-flex items-center gap-2 bg-emerald-500 rounded-full px-5 py-3 shadow-md">
+                  <div className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
+                    metrics.globalPerformance.color === 'emerald' ? 'bg-emerald-500' :
+                    metrics.globalPerformance.color === 'amber' ? 'bg-amber-500' :
+                    metrics.globalPerformance.color === 'red' ? 'bg-red-500' : 'bg-emerald-500'
+                  }`}>
                     <Award className="w-5 h-5 text-white" />
-                    <span className="text-amber-300 text-lg">★</span>
-                    <span className="text-white font-semibold text-base">{t("dashboard.good")}</span>
+                    {avgRating >= 4.5 && <span className="text-amber-300 text-lg">★</span>}
+                    <span className="text-white font-semibold text-base">{metrics.globalPerformance.label}</span>
                   </div>
                 </div>
                 
@@ -366,6 +479,8 @@ const Dashboard = () => {
                 </p>
               </CardContent>
             </Card>
+
+            {/* Indice de satisfaction */}
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -377,7 +492,9 @@ const Dashboard = () => {
                 <div className="flex justify-center">
                   <div className="inline-flex items-center gap-2 bg-blue-500 rounded-full px-5 py-3 shadow-md">
                     <Star className="w-5 h-5 text-white" />
-                    <span className="text-white font-semibold text-base">78%</span>
+                    <span className="text-white font-semibold text-base">
+                      {allReviews.length > 0 ? `${metrics.satisfactionIndex.percentage}%` : '0%'}
+                    </span>
                   </div>
                 </div>
                 
@@ -387,6 +504,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
+            {/* Valeur ressentie */}
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
                 <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
@@ -396,9 +514,13 @@ const Dashboard = () => {
                 
                 {/* Badge central */}
                 <div className="flex justify-center">
-                  <div className="inline-flex items-center gap-2 bg-amber-500 rounded-full px-5 py-3 shadow-md">
+                  <div className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
+                    metrics.perceivedValue.color === 'emerald' ? 'bg-emerald-500' :
+                    metrics.perceivedValue.color === 'amber' ? 'bg-amber-500' :
+                    metrics.perceivedValue.color === 'red' ? 'bg-red-500' : 'bg-amber-500'
+                  }`}>
                     <TrendingUp className="w-5 h-5 text-white" />
-                    <span className="text-white font-semibold text-base">{t("dashboard.high")}</span>
+                    <span className="text-white font-semibold text-base">{metrics.perceivedValue.label}</span>
                   </div>
                 </div>
                 
@@ -408,6 +530,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
+            {/* Expérience délivrée */}
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
                 <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
@@ -417,9 +540,13 @@ const Dashboard = () => {
                 
                 {/* Badge central */}
                 <div className="flex justify-center">
-                  <div className="inline-flex items-center gap-2 bg-violet-500 rounded-full px-5 py-3 shadow-md">
+                  <div className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
+                    metrics.deliveredExperience.color === 'violet' ? 'bg-violet-500' :
+                    metrics.deliveredExperience.color === 'amber' ? 'bg-amber-500' :
+                    metrics.deliveredExperience.color === 'red' ? 'bg-red-500' : 'bg-violet-500'
+                  }`}>
                     <Clock className="w-5 h-5 text-white" />
-                    <span className="text-white font-semibold text-base">{t("dashboard.smooth")}</span>
+                    <span className="text-white font-semibold text-base">{metrics.deliveredExperience.label}</span>
                   </div>
                 </div>
                 

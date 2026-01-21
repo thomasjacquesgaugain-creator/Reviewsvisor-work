@@ -16,6 +16,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { subscriptionPlans } from "@/config/subscriptionPlans";
 import { SubscriptionManagementModal } from "@/components/SubscriptionManagementModal";
 import { ChangePasswordModal } from "@/components/ChangePasswordModal";
+import { capitalizeName } from "@/utils/capitalizeName";
 
 const Compte = () => {
   const { t } = useTranslation();
@@ -162,12 +163,7 @@ const Compte = () => {
     : null;
   const subscriptionName = activePlan ? activePlan.name : "Gratuit";
 
-  const initials = fullName
-    .split(" ")
-    .filter(Boolean)
-    .map((n) => n[0]?.toUpperCase())
-    .slice(0, 2)
-    .join("");
+  const initials = ((firstName.charAt(0) || "") + (lastName.charAt(0) || "")).toUpperCase();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -396,7 +392,7 @@ const Compte = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">{t("nav.account")}</p>
-              <p className="text-xl font-semibold text-foreground">{fullName || t("dashboard.user")}</p>
+              <p className="text-xl font-semibold text-foreground">{capitalizeName(fullName) || t("dashboard.user")}</p>
               <p className="text-muted-foreground">{etablissement}</p>
             </div>
           </div>

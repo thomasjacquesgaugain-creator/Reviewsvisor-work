@@ -4,6 +4,7 @@ import { UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { capitalizeName } from "@/utils/capitalizeName";
 
 export default function NavBar() {
   const { t } = useTranslation();
@@ -130,7 +131,7 @@ export default function NavBar() {
                     : "text-blue-600 group-hover:text-white"
                 }`} />
               </div>
-              <span className="hidden sm:inline">{displayName}</span>
+              <span className="hidden sm:inline">{capitalizeName(displayName)}</span>
             </Link>
 
             <button onClick={handleLogout} className={logoutStyle}>

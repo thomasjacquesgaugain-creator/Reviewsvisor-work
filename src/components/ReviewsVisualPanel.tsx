@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2, ThumbsUp, ThumbsDown, ShieldAlert, List, LineChart, PieChart } from "lucide-react";
+import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2, ThumbsUp, ThumbsDown, ShieldAlert, List, LineChart, PieChart, ChevronDown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
@@ -90,6 +90,7 @@ export function ReviewsVisualPanel({
   const [activeFilter, setActiveFilter] = useState<ReviewFilter>("all");
   const [showTrendModal, setShowTrendModal] = useState(false);
   const [showRatingDistributionModal, setShowRatingDistributionModal] = useState(false);
+  const [displayCount, setDisplayCount] = useState(10);
   const currentEstablishment = useCurrentEstablishment();
   const { t } = useTranslation();
   
@@ -299,6 +300,11 @@ export function ReviewsVisualPanel({
     return () => window.removeEventListener("reviews:imported", onImported);
   }, [effectiveId]);
 
+  // Réinitialiser displayCount quand le filtre change
+  useEffect(() => {
+    setDisplayCount(10);
+  }, [activeFilter]);
+
   // Fallback: read the last selected establishment name from localStorage
   const fallbackName = (() => {
     try {
@@ -312,7 +318,7 @@ export function ReviewsVisualPanel({
   })();
 
   if (!effectiveId && !displayName) {
-    return <Card className="relative z-20 max-w-4xl mx-auto" data-testid="reviews-visual-panel">
+    return <Card className="relative z-20 max-w-7xl mx-auto" data-testid="reviews-visual-panel">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
@@ -345,7 +351,7 @@ export function ReviewsVisualPanel({
     stars: t("dashboard.stars1"),
     count: summary.byStars[1]
   }] : [];
-  return <Card className="relative z-20 max-w-4xl mx-auto" data-testid="reviews-visual-panel">
+  return <Card className="relative z-20 max-w-7xl mx-auto" data-testid="reviews-visual-panel">
       <CardHeader>
         <div className="flex items-start justify-between mb-2">
           <div>
@@ -549,8 +555,9 @@ export function ReviewsVisualPanel({
                   </Button>
                 </div>
               </div>
-              <ReviewsTable
-                rows={(() => {
+              {(() => {
+                // Calculer les avis filtrés
+                const filteredReviews = (() => {
                   switch (activeFilter) {
                     case 'positive':
                       return reviewsList.filter(r => r.rating >= 4);
@@ -561,11 +568,35 @@ export function ReviewsVisualPanel({
                     default:
                       return reviewsList;
                   }
-                })()}
-                isLoading={isLoadingReviews}
-                emptyLabel={activeFilter === 'all' ? t("dashboard.noReviewsYet") : t("dashboard.noReviewsYet")}
-                data-testid="establishment-reviews-table"
-              />
+                })();
+
+                // Limiter l'affichage
+                const reviewsToDisplay = filteredReviews.slice(0, displayCount);
+
+                return (
+                  <>
+                    <ReviewsTable
+                      rows={reviewsToDisplay}
+                      isLoading={isLoadingReviews}
+                      emptyLabel={activeFilter === 'all' ? t("dashboard.noReviewsYet") : t("dashboard.noReviewsYet")}
+                      data-testid="establishment-reviews-table"
+                    />
+
+                    {/* Bouton "Afficher plus" */}
+                    {filteredReviews.length > displayCount && (
+                      <div className="flex justify-center py-4">
+                        <button 
+                          onClick={() => setDisplayCount(prev => prev + 10)}
+                          className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                          Afficher plus
+                          <ChevronDown className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
 
               {/* Action destructive: supprimer tous les avis (bas droite) */}
               <div className="flex justify-end mt-4">

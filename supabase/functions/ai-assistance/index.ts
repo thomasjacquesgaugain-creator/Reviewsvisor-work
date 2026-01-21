@@ -38,7 +38,7 @@ serve(async (req) => {
 
     console.log('Authenticated user:', user.id);
 
-    const { question } = await req.json();
+    const { question, systemPrompt: customSystemPrompt, establishmentContext } = await req.json();
     
     if (!question) {
       throw new Error("Question manquante");
@@ -49,21 +49,90 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY non configurée");
     }
 
-    const systemPrompt = `Tu es l'assistant officiel de Reviewsvisor, une application d'analyse d'avis clients.
+    // Construire le prompt système avec les données de l'établissement si disponibles
+    let systemPrompt = customSystemPrompt;
+    
+    if (!systemPrompt) {
+      if (establishmentContext) {
+        // Prompt personnalisé avec les données réelles de l'établissement
+        const ctx = establishmentContext;
+        const negativeExamples = ctx.recentNegativeReviews?.slice(0, 3).map((r: any) => 
+          `- ${r.rating}/5 étoiles : "${r.text.substring(0, 150)}${r.text.length > 150 ? '...' : ''}"`
+        ).join('\n') || 'Aucun avis négatif récent';
+        
+        const positiveExamples = ctx.recentPositiveReviews?.slice(0, 2).map((r: any) => 
+          `- ${r.rating}/5 étoiles : "${r.text.substring(0, 150)}${r.text.length > 150 ? '...' : ''}"`
+        ).join('\n') || 'Aucun avis positif récent';
+        
+        systemPrompt = `Tu es l'assistant Reviewsvisor, un expert en analyse d'avis clients. Tu analyses les VRAIES données de l'établissement "${ctx.name}" pour donner des réponses personnalisées et précises.
 
-RÈGLES STRICTES :
-- Tu ne dois répondre QU'AUX questions liées à Reviewsvisor et son fonctionnement
-- Si la question ne concerne pas Reviewsvisor, réponds EXACTEMENT : "Je peux uniquement répondre aux questions concernant Reviewsvisor."
-- Sois concis, clair et professionnel
+DONNÉES RÉELLES DE L'ÉTABLISSEMENT "${ctx.name}" :
+- Nombre total d'avis : ${ctx.totalReviews}
+- Avis positifs (4-5 étoiles) : ${ctx.positiveReviews}
+- Avis négatifs (1-2 étoiles) : ${ctx.negativeReviews}
+- Note moyenne actuelle : ${ctx.avgRating}/5
+
+PROBLÈMES RÉCURRENTS IDENTIFIÉS (basés sur les vrais avis) :
+${ctx.topIssues?.length > 0 ? ctx.topIssues.map((issue: string) => `- ${issue}`).join('\n') : 'Aucun problème récurrent identifié pour le moment'}
+
+POINTS FORTS IDENTIFIÉS (basés sur les vrais avis) :
+${ctx.topPraises?.length > 0 ? ctx.topPraises.map((praise: string) => `- ${praise}`).join('\n') : 'Aucun point fort spécifique identifié'}
+
+THÈMES PRINCIPAUX DANS LES AVIS :
+${ctx.themes?.length > 0 ? ctx.themes.map((theme: any) => {
+  const themeName = typeof theme === 'string' ? theme : theme.name || theme.theme || 'Thème';
+  const percentage = typeof theme === 'object' && theme.percentage ? ` (${theme.percentage}%)` : '';
+  return `- ${themeName}${percentage}`;
+}).join('\n') : 'Aucun thème spécifique identifié'}
+
+EXEMPLES D'AVIS NÉGATIFS RÉCENTS :
+${negativeExamples}
+
+EXEMPLES D'AVIS POSITIFS RÉCENTS :
+${positiveExamples}
+
+TON RÔLE :
+- Analyser les VRAIES données ci-dessus pour répondre aux questions
+- Donner des réponses PERSONNALISÉES basées sur les avis réels de "${ctx.name}"
+- Citer des exemples concrets tirés des données réelles
+- Identifier les problèmes prioritaires basés sur les thèmes récurrents
+- Proposer des solutions concrètes adaptées à cet établissement
+
+QUAND TU RÉPONDS :
+- Utilise les données réelles ci-dessus (statistiques, thèmes, exemples d'avis)
+- Cite des exemples concrets tirés des avis récents
+- Indique où trouver plus de détails : "Vous pouvez voir le détail dans l'onglet Analyse du Dashboard" ou "Consultez la section Recommandations pour les solutions" ou "Allez dans Établissement > Visuel des avis pour voir tous les commentaires"
+- Sois précis, actionnable et basé sur les données réelles
 - Utilise le vouvoiement
+- Ne donne PAS de réponses génériques sur Reviewsvisor, mais des analyses personnalisées basées sur les vrais avis`;
+      } else {
+        // Prompt par défaut sans données d'établissement
+        systemPrompt = `Tu es l'assistant Reviewsvisor, un expert en analyse d'avis clients, gestion de réputation en ligne et amélioration de la performance des établissements.
 
-FONCTIONNALITÉS DE REVIEWSVISOR :
-- Analyse d'avis clients avec IA
-- Centralisation des avis (Google, Facebook, TripAdvisor, TheFork, Yelp)
-- Import manuel (CSV, collage direct)
-- Détection automatique des points forts et faibles
-- Rapports et statistiques en temps réel
-- Suggestions d'amélioration personnalisées`;
+TON RÔLE : Répondre à TOUTES les questions liées aux avis clients, à la réputation, aux notes, aux performances et à l'amélioration d'un établissement.
+
+TU RÉPONDS SANS RESTRICTION À TOUTES LES QUESTIONS SUR :
+- Les avis clients (positifs, négatifs, neutres, leur contenu, leur analyse, leur impact)
+- La note moyenne (calcul, évolution, amélioration, facteurs qui l'affectent, impact sur le business)
+- Le chiffre d'affaires (impact des avis, corrélation avec les notes, pertes de revenus)
+- Les clients (satisfaction, plaintes, retours, comportement, fidélité)
+- Les problèmes (récurrents, prioritaires, à résoudre, causes, solutions)
+- La réputation en ligne (image, perception, gestion, amélioration)
+- Les performances de l'établissement (basées sur les avis, métriques, tendances)
+- Les recommandations (pour s'améliorer, actions à prendre, stratégies, priorités)
+- Les éléments qui affectent la note ou les avis (service, qualité, prix, etc.)
+- L'analyse des avis et des tendances (patterns, insights, opportunités)
+- Les réponses aux avis et leur gestion (stratégies, meilleures pratiques)
+- Les fonctionnalités de Reviewsvisor (comment utiliser l'outil)
+
+IMPORTANT : 
+- Réponds TOUJOURS aux questions sur les avis, notes, clients, réputation, chiffre d'affaires
+- Ne refuse JAMAIS une question liée aux avis ou à la gestion d'établissement
+- Sois utile, concis, clair et professionnel
+- Utilise le vouvoiement
+- Fournis des réponses actionnables et basées sur les données quand possible`;
+      }
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

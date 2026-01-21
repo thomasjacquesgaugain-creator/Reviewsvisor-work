@@ -3,13 +3,16 @@ import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar, Download, ClipboardList, Bot, X, Reply, List, Sparkles, AlertCircle, Frown, ThumbsUp, Flag, Zap, Flame, Globe, Layers, Check } from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar, Download, ClipboardList, Bot, X, Reply, List, Sparkles, AlertCircle, Frown, ThumbsUp, Flag, Zap, Flame, Globe, Layers, Check, MessageCircle, Send } from "lucide-react";
 import { Link } from "react-router-dom";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
@@ -41,6 +44,7 @@ const Dashboard = () => {
   const {
     selectedEstablishment
   } = useEstablishmentStore();
+  const { toast: toastHook } = useToast(); // Pour l'Agent IA (comme Assistance IA)
 
   // ============================================
   // 2. TOUS LES useState (regroupés)
@@ -148,7 +152,16 @@ const Dashboard = () => {
   const [selectedReviewForReply, setSelectedReviewForReply] = useState<any>(null);
   const [expandedReplyId, setExpandedReplyId] = useState<string | null>(null);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState<Record<string, boolean>>({});
+  const [displayCount, setDisplayCount] = useState(10);
   const [aiGeneratedResponses, setAiGeneratedResponses] = useState<Record<string, string>>({});
+  const [agentQuestion, setAgentQuestion] = useState("");
+  const [agentAnswer, setAgentAnswer] = useState("");
+  const [isAgentLoading, setIsAgentLoading] = useState(false);
+
+  // Réinitialiser displayCount quand le filtre change
+  useEffect(() => {
+    setDisplayCount(10);
+  }, [statusFilter]);
 
   const [actionPlanChecks, setActionPlanChecks] = useState<Record<string, boolean>>({});
 
@@ -3682,44 +3695,241 @@ const Dashboard = () => {
         </Card>
 
         {/* Contenu Agent */}
-        {openCard === 'agent' && <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-xl">Agent</CardTitle>
-            <p className="text-sm text-gray-600">Assistant IA pour répondre à vos avis</p>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                <p className="text-sm text-gray-700">
-                  L'agent IA analyse automatiquement vos avis et génère des réponses personnalisées adaptées à chaque situation.
+        {openCard === 'agent' && (
+          <div className="mb-8">
+            {/* Carte unique avec Chat Agent IA + FAQ */}
+            <div className="bg-white border border-border/60 rounded-2xl p-5 md:p-7 shadow-sm">
+              <div className="flex gap-4">
+                {/* Bordure gauche bleue */}
+                <div className="hidden sm:block w-1 bg-gradient-to-b from-blue-500 to-blue-500/30 rounded-full shrink-0" />
+                
+                <div className="flex-1">
+                  {/* Titre Agent IA avec icône */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                      <MessageCircle className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <h2 className="text-xl md:text-2xl font-bold text-foreground">Agent IA</h2>
+                  </div>
+                  
+                  {/* Description */}
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Posez vos questions pour générer des réponses personnalisées à vos avis clients
                   </p>
+
+                  {/* Formulaire de saisie - EXACTEMENT comme Assistance IA */}
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      
+                      if (!agentQuestion.trim()) {
+                        toastHook({
+                          title: t("aiAssistance.emptyQuestion"),
+                          description: t("aiAssistance.pleaseAskQuestion"),
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+
+                      setIsAgentLoading(true);
+                      setAgentAnswer(t("aiAssistance.analysisInProgress"));
+
+                      try {
+                        // Préparer les données de l'établissement pour le contexte
+                        const currentEstab = selectedEtab || selectedEstablishment;
+                        const totalReviews = allReviewsForChart.length;
+                        const positiveReviews = allReviewsForChart.filter((r: any) => (r?.rating ?? 0) >= 4).length;
+                        const negativeReviews = allReviewsForChart.filter((r: any) => (r?.rating ?? 0) <= 2).length;
+                        const avgRating = insight?.avg_rating ?? (totalReviews > 0 
+                          ? allReviewsForChart.reduce((sum: number, r: any) => sum + (r?.rating ?? 0), 0) / totalReviews 
+                          : 0);
+                        
+                        // Extraire les thèmes négatifs et positifs
+                        const topIssues = insight?.top_issues || [];
+                        const topPraises = insight?.top_praises || [];
+                        const themes = insight?.themes || [];
+                        
+                        // Extraire quelques exemples d'avis récents (positifs et négatifs)
+                        const recentNegativeReviews = allReviewsForChart
+                          .filter((r: any) => (r?.rating ?? 0) <= 2)
+                          .slice(0, 5)
+                          .map((r: any) => ({
+                            rating: r?.rating ?? 0,
+                            text: extractOriginalText(r?.text || '') || '',
+                            author: r?.author || 'Anonyme',
+                            date: r?.published_at || r?.create_time || r?.inserted_at || ''
+                          }));
+                        
+                        const recentPositiveReviews = allReviewsForChart
+                          .filter((r: any) => (r?.rating ?? 0) >= 4)
+                          .slice(0, 3)
+                          .map((r: any) => ({
+                            rating: r?.rating ?? 0,
+                            text: extractOriginalText(r?.text || '') || '',
+                            author: r?.author || 'Anonyme',
+                            date: r?.published_at || r?.create_time || r?.inserted_at || ''
+                          }));
+
+                        // Construire le contexte pour l'IA
+                        const establishmentContext = {
+                          name: currentEstab?.name || 'l\'établissement',
+                          totalReviews,
+                          positiveReviews,
+                          negativeReviews,
+                          avgRating: avgRating.toFixed(1),
+                          topIssues: topIssues.slice(0, 10),
+                          topPraises: topPraises.slice(0, 10),
+                          themes: themes.slice(0, 15),
+                          recentNegativeReviews,
+                          recentPositiveReviews
+                        };
+
+                        const { data, error } = await supabase.functions.invoke("ai-assistance", {
+                          body: { 
+                            question: agentQuestion.trim(),
+                            establishmentContext 
+                          },
+                        });
+
+                        if (error) {
+                          console.error("Erreur:", error);
+                          setAgentAnswer(t("aiAssistance.errorOccurred"));
+                          toastHook({
+                            title: t("common.error"),
+                            description: t("aiAssistance.cannotContactAI"),
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+
+                        if (data?.error) {
+                          setAgentAnswer(data.error);
+                          if (data.error.includes("Trop de requêtes") || data.error.includes(t("aiAssistance.tooManyRequests"))) {
+                            toastHook({
+                              title: t("aiAssistance.limitReached"),
+                              description: data.error,
+                              variant: "destructive",
+                            });
+                          }
+                          return;
+                        }
+
+                        setAgentAnswer(data?.answer || t("aiAssistance.noAnswerReceived"));
+                      } catch (err) {
+                        console.error("Erreur inattendue:", err);
+                        setAgentAnswer(t("errors.generic"));
+                        toastHook({
+                          title: t("common.error"),
+                          description: t("errors.generic"),
+                          variant: "destructive",
+                        });
+                      } finally {
+                        setIsAgentLoading(false);
+                      }
+                    }}
+                    className="space-y-4 mb-8"
+                  >
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Posez une question sur vos avis..."
+                        value={agentQuestion}
+                        onChange={(e) => setAgentQuestion(e.target.value)}
+                        disabled={isAgentLoading}
+                        className="flex-1 bg-background"
+                      />
+                      <Button type="submit" disabled={isAgentLoading} className="bg-blue-500 hover:bg-blue-600 text-white shrink-0">
+                        {isAgentLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                        <span className="ml-2">Demander</span>
+                      </Button>
+                    </div>
+
+                    {/* Zone de réponse - identique à Assistance IA */}
+                    {agentAnswer && (
+                      <div className="p-4 bg-background border border-border rounded-md">
+                        <p className="text-foreground whitespace-pre-wrap text-sm leading-relaxed">
+                          {agentAnswer}
+                        </p>
+                      </div>
+                    )}
+                  </form>
+
+                  {/* Séparateur */}
+                  <div className="border-t border-border/60 my-8" />
+
+                  {/* Section Questions fréquentes */}
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                      <Info className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <h2 className="text-xl md:text-2xl font-bold text-foreground">Questions fréquentes</h2>
+                  </div>
+                  
+                  <Accordion type="single" collapsible className="w-full space-y-2">
+                <AccordionItem value="faq-1" className="border border-border/50 rounded-lg px-4 bg-secondary/20 hover:bg-secondary/40 transition-colors">
+                  <AccordionTrigger className="hover:no-underline py-4">
+                    <span className="font-medium text-foreground text-left">
+                      Que dois-je mettre en place pour régler mes problèmes prioritaires ?
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4 text-muted-foreground">
+                    L'agent IA analysera vos avis pour identifier les problèmes prioritaires et vous proposer des actions concrètes à mettre en place.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="faq-2" className="border border-border/50 rounded-lg px-4 bg-secondary/20 hover:bg-secondary/40 transition-colors">
+                  <AccordionTrigger className="hover:no-underline py-4">
+                    <span className="font-medium text-foreground text-left">
+                      Comment puis-je obtenir plus d'avis positifs ?
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4 text-muted-foreground">
+                    L'agent IA vous aidera à identifier les points forts de votre établissement et à développer des stratégies pour encourager vos clients satisfaits à laisser des avis positifs.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="faq-3" className="border border-border/50 rounded-lg px-4 bg-secondary/20 hover:bg-secondary/40 transition-colors">
+                  <AccordionTrigger className="hover:no-underline py-4">
+                    <span className="font-medium text-foreground text-left">
+                      Est-ce que j'augmenterais mon chiffre d'affaires avec une meilleure note ?
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4 text-muted-foreground">
+                    L'agent IA peut analyser l'impact potentiel d'une meilleure note sur votre chiffre d'affaires en se basant sur vos données d'avis et les tendances du marché.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="faq-4" className="border border-border/50 rounded-lg px-4 bg-secondary/20 hover:bg-secondary/40 transition-colors">
+                  <AccordionTrigger className="hover:no-underline py-4">
+                    <span className="font-medium text-foreground text-left">
+                      Comment réduire rapidement les avis négatifs ?
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4 text-muted-foreground">
+                    L'agent IA identifiera les causes principales des avis négatifs et vous proposera un plan d'action priorisé pour les réduire efficacement.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="faq-5" className="border border-border/50 rounded-lg px-4 bg-secondary/20 hover:bg-secondary/40 transition-colors">
+                  <AccordionTrigger className="hover:no-underline py-4">
+                    <span className="font-medium text-foreground text-left">
+                      Où est-ce que je perds le plus de clients aujourd'hui ?
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4 text-muted-foreground">
+                    L'agent IA analysera vos avis pour identifier les points de friction et les raisons principales de perte de clients, vous permettant d'agir rapidement.
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
                 </div>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                  <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Réponses automatiques intelligentes</p>
-                    <p className="text-xs text-gray-600 mt-1">Génération de réponses adaptées au ton et au contenu de chaque avis</p>
-                </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                  <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Personnalisation avancée</p>
-                    <p className="text-xs text-gray-600 mt-1">Adaptation du style et du contenu selon le type d'avis (positif, négatif, neutre)</p>
-                </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                  <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
-              <div>
-                    <p className="text-sm font-medium text-gray-900">Validation avant envoi</p>
-                    <p className="text-xs text-gray-600 mt-1">Vous pouvez modifier et valider chaque réponse avant de la publier</p>
-                </div>
-              </div>
               </div>
             </div>
-          </CardContent>
-        </Card>}
+          </div>
+        )}
           </>
         )}
 
@@ -5498,7 +5708,7 @@ const Dashboard = () => {
                               </thead>
                               <tbody className="bg-white divide-y divide-gray-200">
                                 {filteredReviews.length > 0 ? (
-                                  filteredReviews.slice(0, 10).map((review, index) => {
+                                  filteredReviews.slice(0, displayCount).map((review, index) => {
                                     const hasResponse = validatedReviews.has(review.id);
                                     const isUrgent = (review.rating === 1 || review.rating === 2) && !hasResponse;
                                     return (
@@ -5577,6 +5787,18 @@ const Dashboard = () => {
                               </tbody>
                             </table>
               </div>
+                        {/* Bouton "Afficher plus" */}
+                        {filteredReviews.length > displayCount && (
+                          <div className="flex justify-center py-4">
+                            <button 
+                              onClick={() => setDisplayCount(prev => prev + 10)}
+                              className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                            >
+                              Afficher plus
+                              <ChevronDown className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
                         </div>
                       )}
                     </>
