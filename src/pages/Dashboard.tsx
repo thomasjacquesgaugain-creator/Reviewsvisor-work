@@ -1,4 +1,4 @@
-import { AnalyseDashboard } from "@/components/AnalyseDashboard";
+﻿import { AnalyseDashboard } from "@/components/AnalyseDashboard";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
