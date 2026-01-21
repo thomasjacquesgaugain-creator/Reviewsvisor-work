@@ -3,9 +3,16 @@ import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar, Download, ClipboardList, Bot, X, Reply, List, Sparkles, AlertCircle, Frown, ThumbsUp, Flag, Zap, Flame, Globe, Layers, Check } from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, MessageCircle, Info, Loader2, Copy, Calendar, Download, ClipboardList, Bot, X, Reply, List, Sparkles, AlertCircle, Frown, ThumbsUp, Flag, Zap, Flame, Globe, Layers, Check, Send, HelpCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,7 +30,6 @@ import { format } from "date-fns";
 import { fr, enUS, it, es, ptBR } from "date-fns/locale";
 import { DashboardTabs } from "@/components/DashboardTabs";
 import { AnalysisTabContent } from "@/components/analysis";
-
 
 const Dashboard = () => {
   // ============================================
@@ -69,6 +75,12 @@ const Dashboard = () => {
   const [granularityEvolution, setGranularityEvolution] = useState<Granularity>("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState('indicateurs');
+
+  // Agent chat (UI)
+  type AgentChatMessage = { role: 'user' | 'assistant'; content: string };
+  const [agentMessages, setAgentMessages] = useState<AgentChatMessage[]>([]);
+  const [agentPrompt, setAgentPrompt] = useState('');
+  const [isAgentChatLoading, setIsAgentChatLoading] = useState(false);
 
   // Établissements
   const [selectedEtab, setSelectedEtab] = useState<Etab | null>(null);
@@ -143,6 +155,41 @@ const Dashboard = () => {
       window.removeEventListener('response-validated', handleStorageChange);
     };
   }, []);
+
+  const handleAgentAsk = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const q = agentPrompt.trim();
+    if (!q) return;
+
+    setAgentMessages(prev => [...prev, { role: 'user', content: q }]);
+    setAgentPrompt('');
+    setIsAgentChatLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-assistance", {
+        body: { question: q },
+      });
+
+      if (error) {
+        toast.error(t("common.error"));
+        setAgentMessages(prev => [...prev, { role: 'assistant', content: t("errors.generic") }]);
+        return;
+      }
+
+      if (data?.error) {
+        setAgentMessages(prev => [...prev, { role: 'assistant', content: data.error }]);
+        return;
+      }
+
+      setAgentMessages(prev => [...prev, { role: 'assistant', content: data?.answer || t("errors.generic") }]);
+    } catch {
+      toast.error(t("common.error"));
+      setAgentMessages(prev => [...prev, { role: 'assistant', content: t("errors.generic") }]);
+    } finally {
+      setIsAgentChatLoading(false);
+    }
+  };
+
   const [currentReviewIndex, setCurrentReviewIndex] = useState<number>(0);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'replied'>('pending');
   const [selectedReviewForReply, setSelectedReviewForReply] = useState<any>(null);
@@ -2667,7 +2714,7 @@ const Dashboard = () => {
               return {
                 id: r.id?.toString() || '',
                 etablissementId: selectedEtab?.place_id || selectedEstablishment?.place_id || '',
-                source: (r.source || 'google') as const,
+                source: (r.source || 'google') as any,
                 note: r.rating || 0,
                 texte: r.text || r.comment || '',
                 // Utiliser published_at en priorité, puis inserted_at, puis created_at
@@ -3689,34 +3736,142 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                <p className="text-sm text-gray-700">
-                  L'agent IA analyse automatiquement vos avis et génère des réponses personnalisées adaptées à chaque situation.
-                  </p>
+              <div className="bg-white border border-gray-200 rounded-2xl p-5 md:p-6 shadow-sm border-l-4 border-l-blue-500">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+                    <MessageCircle className="w-4.5 h-4.5 text-blue-500" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">Agent IA</h3>
                 </div>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                  <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Réponses automatiques intelligentes</p>
-                    <p className="text-xs text-gray-600 mt-1">Génération de réponses adaptées au ton et au contenu de chaque avis</p>
-                </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                  <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Personnalisation avancée</p>
-                    <p className="text-xs text-gray-600 mt-1">Adaptation du style et du contenu selon le type d'avis (positif, négatif, neutre)</p>
-                </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                  <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
-              <div>
-                    <p className="text-sm font-medium text-gray-900">Validation avant envoi</p>
-                    <p className="text-xs text-gray-600 mt-1">Vous pouvez modifier et valider chaque réponse avant de la publier</p>
+                <p className="text-sm text-gray-600 mb-4">
+                  Posez vos questions pour générer des réponses personnalisées à vos avis clients
+                </p>
+
+                <div className="space-y-3">
+                  {agentMessages.length > 0 && (
+                    <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg max-h-[280px] overflow-y-auto space-y-2">
+                      {agentMessages.map((m, idx) => (
+                        <div key={idx} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
+                          <div
+                            className={
+                              m.role === 'user'
+                                ? 'bg-blue-100 text-blue-900 border border-blue-200 rounded-lg px-3 py-2 text-sm max-w-[90%]'
+                                : 'bg-white text-gray-900 border border-gray-200 rounded-lg px-3 py-2 text-sm max-w-[90%]'
+                            }
+                          >
+                            <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleAgentAsk} className="flex gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Posez votre question..."
+                      value={agentPrompt}
+                      onChange={(e) => setAgentPrompt(e.target.value)}
+                      disabled={isAgentChatLoading}
+                      className="flex-1 bg-white"
+                    />
+                    <Button
+                      type="submit"
+                      disabled={isAgentChatLoading || !agentPrompt.trim()}
+                      className="shrink-0 bg-blue-500 hover:bg-blue-600 text-white"
+                    >
+                      {isAgentChatLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4 !text-white" stroke="white" />
+                      )}
+                      <span className="ml-2">Demander</span>
+                    </Button>
+                  </form>
                 </div>
               </div>
-              </div>
+
+              {(() => {
+                const issuesList = (topIssues || [])
+                  .slice(0, 3)
+                  .map((x: any) => translateTheme(x?.theme || x?.issue || String(x)))
+                  .filter(Boolean);
+                const issuesText = issuesList.length > 0 ? issuesList.join(', ') : t("dashboard.notIdentified");
+
+                const issueLabel = topIssues?.length
+                  ? translateTheme(topIssues[0]?.theme || topIssues[0]?.issue || String(topIssues[0]))
+                  : t("dashboard.notIdentified");
+
+                return (
+                  <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm">
+                    <h2 className="text-2xl md:text-3xl font-bold mb-6 text-foreground text-center">
+                      Questions fréquentes
+                    </h2>
+
+                    <Accordion type="single" collapsible className="w-full space-y-3">
+                      <AccordionItem value="agent-faq-1" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 hover:bg-secondary/50 transition-colors duration-200 data-[state=open]:bg-secondary/50 data-[state=open]:border-blue-500">
+                        <AccordionTrigger className="hover:no-underline py-5 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded-lg">
+                          <div className="flex items-center gap-3 text-left">
+                            <HelpCircle className="h-5 w-5 text-blue-600 shrink-0" />
+                            <span className="font-medium text-foreground">Que dois-je mettre en place pour régler mes problèmes prioritaires ?</span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-5 pl-8 text-muted-foreground leading-relaxed whitespace-pre-line">
+                          {`D'après l'analyse de vos avis, vos problèmes prioritaires sont liés à ${issueLabel}. Pour y remédier, nous vous recommandons de : 1) Identifier les plaintes récurrentes dans vos avis négatifs, 2) Mettre en place un plan d'action ciblé sur les 2-3 problèmes les plus mentionnés (${issuesText}), 3) Former votre équipe sur ces points spécifiques, 4) Suivre l'évolution de vos avis pour mesurer l'impact.`}
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      <AccordionItem value="agent-faq-2" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 hover:bg-secondary/50 transition-colors duration-200 data-[state=open]:bg-secondary/50 data-[state=open]:border-blue-500">
+                        <AccordionTrigger className="hover:no-underline py-5 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded-lg">
+                          <div className="flex items-center gap-3 text-left">
+                            <HelpCircle className="h-5 w-5 text-blue-600 shrink-0" />
+                            <span className="font-medium text-foreground">Comment puis-je obtenir plus d'avis positifs ?</span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-5 pl-8 text-muted-foreground leading-relaxed whitespace-pre-line">
+                          {"Pour augmenter vos avis positifs : 1) Demandez systématiquement un avis après une expérience réussie, 2) Facilitez le processus avec un lien direct ou QR code, 3) Répondez à tous vos avis (positifs et négatifs) pour montrer votre engagement, 4) Améliorez les points faibles identifiés dans vos avis négatifs, 5) Formez votre équipe à créer des moments mémorables pour vos clients."}
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      <AccordionItem value="agent-faq-3" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 hover:bg-secondary/50 transition-colors duration-200 data-[state=open]:bg-secondary/50 data-[state=open]:border-blue-500">
+                        <AccordionTrigger className="hover:no-underline py-5 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded-lg">
+                          <div className="flex items-center gap-3 text-left">
+                            <HelpCircle className="h-5 w-5 text-blue-600 shrink-0" />
+                            <span className="font-medium text-foreground">Est-ce que j'augmenterais mon chiffre d'affaires avec une meilleure note ?</span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-5 pl-8 text-muted-foreground leading-relaxed whitespace-pre-line">
+                          {"Oui, les études montrent qu'une augmentation d'une étoile sur Google peut générer entre 5% et 9% de revenus supplémentaires. Une meilleure note améliore votre visibilité dans les recherches, augmente la confiance des nouveaux clients et améliore votre taux de conversion. Investir dans votre e-réputation est l'un des meilleurs retours sur investissement pour votre établissement."}
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      <AccordionItem value="agent-faq-4" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 hover:bg-secondary/50 transition-colors duration-200 data-[state=open]:bg-secondary/50 data-[state=open]:border-blue-500">
+                        <AccordionTrigger className="hover:no-underline py-5 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded-lg">
+                          <div className="flex items-center gap-3 text-left">
+                            <HelpCircle className="h-5 w-5 text-blue-600 shrink-0" />
+                            <span className="font-medium text-foreground">Comment réduire rapidement les avis négatifs ?</span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-5 pl-8 text-muted-foreground leading-relaxed whitespace-pre-line">
+                          {"Pour réduire vos avis négatifs rapidement : 1) Répondez à chaque avis négatif dans les 24h avec empathie et une solution concrète, 2) Identifiez les 2-3 problèmes les plus mentionnés et corrigez-les en priorité, 3) Contactez les clients insatisfaits en privé pour résoudre leur problème, 4) Mettez en place un système de détection précoce des insatisfactions avant qu'elles ne deviennent des avis publics."}
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      <AccordionItem value="agent-faq-5" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 hover:bg-secondary/50 transition-colors duration-200 data-[state=open]:bg-secondary/50 data-[state=open]:border-blue-500">
+                        <AccordionTrigger className="hover:no-underline py-5 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded-lg">
+                          <div className="flex items-center gap-3 text-left">
+                            <HelpCircle className="h-5 w-5 text-blue-600 shrink-0" />
+                            <span className="font-medium text-foreground">Où est-ce que je perds le plus de clients aujourd'hui ?</span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-5 pl-8 text-muted-foreground leading-relaxed whitespace-pre-line">
+                          {`D'après l'analyse de vos avis, les principaux points de friction qui font fuir vos clients sont liés à ${issuesText}. Ces irritants représentent vos plus grandes opportunités d'amélioration. En les corrigeant, vous pouvez non seulement retenir plus de clients mais aussi les transformer en ambassadeurs de votre établissement.`}
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </div>
+                );
+              })()}
             </div>
           </CardContent>
         </Card>}
