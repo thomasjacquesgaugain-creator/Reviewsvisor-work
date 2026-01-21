@@ -1,13 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2, ThumbsUp, ThumbsDown, ShieldAlert, List, LineChart, PieChart, ChevronDown } from "lucide-react";
+import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2, ThumbsUp, ThumbsDown, ShieldAlert, List, LineChart, PieChart } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { getReviewsSummary, listAllReviews, listAll, deleteAllReviews, verifyAndRestoreCreateTimes } from "@/services/reviewsService";
 import { STORAGE_KEY } from "@/types/etablissement";
-
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
 import { toast as sonnerToast } from "sonner";
 import { getDisplayAuthor } from "@/utils/getDisplayAuthor";
@@ -88,39 +87,15 @@ export function ReviewsVisualPanel({
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [visibleReviewsCount, setVisibleReviewsCount] = useState(10);
-
   const [activeFilter, setActiveFilter] = useState<ReviewFilter>("all");
   const [showTrendModal, setShowTrendModal] = useState(false);
   const [showRatingDistributionModal, setShowRatingDistributionModal] = useState(false);
   const currentEstablishment = useCurrentEstablishment();
   const { t } = useTranslation();
-
-  const filteredRows = useMemo(() => {
-    switch (activeFilter) {
-      case 'positive':
-        return reviewsList.filter(r => r.rating >= 4);
-      case 'negative':
-        return reviewsList.filter(r => r.rating <= 2);
-      case 'suspect':
-        return reviewsList.filter(r => isSuspectReview(r.comment, r.rating));
-      default:
-        return reviewsList;
-    }
-  }, [activeFilter, reviewsList]);
-
-  const rowsToDisplay = useMemo(() => {
-    return filteredRows.slice(0, Math.max(0, visibleReviewsCount));
-  }, [filteredRows, visibleReviewsCount]);
-
+  
   // Use props first, fallback to current establishment
   const effectiveId = establishmentId || currentEstablishment?.id || currentEstablishment?.place_id;
   const displayName = establishmentName ?? currentEstablishment?.name ?? null;
-
-  useEffect(() => {
-    setVisibleReviewsCount(10);
-  }, [activeFilter, effectiveId]);
-
   useEffect(() => {
     const loadData = async () => {
       if (!effectiveId) {
@@ -575,25 +550,22 @@ export function ReviewsVisualPanel({
                 </div>
               </div>
               <ReviewsTable
-                rows={rowsToDisplay}
+                rows={(() => {
+                  switch (activeFilter) {
+                    case 'positive':
+                      return reviewsList.filter(r => r.rating >= 4);
+                    case 'negative':
+                      return reviewsList.filter(r => r.rating <= 2);
+                    case 'suspect':
+                      return reviewsList.filter(r => isSuspectReview(r.comment, r.rating));
+                    default:
+                      return reviewsList;
+                  }
+                })()}
                 isLoading={isLoadingReviews}
                 emptyLabel={activeFilter === 'all' ? t("dashboard.noReviewsYet") : t("dashboard.noReviewsYet")}
                 data-testid="establishment-reviews-table"
               />
-
-              {filteredRows.length > rowsToDisplay.length && (
-                <div className="flex justify-center mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setVisibleReviewsCount(prev => prev + 10)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border/60 bg-secondary/20 hover:bg-secondary/40 text-blue-600 hover:text-blue-700 transition-colors"
-                    aria-label="Afficher plus d'avis"
-                  >
-                    <span className="font-medium">Afficher plus</span>
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
 
               {/* Action destructive: supprimer tous les avis (bas droite) */}
               <div className="flex justify-end mt-4">
