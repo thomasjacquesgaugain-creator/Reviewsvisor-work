@@ -19,7 +19,16 @@ export default function BillingSuccess() {
 
     // Show success toast
     toast.success(t("billing.paymentSuccess"));
-  }, [t]);
+
+    // Auto-redirect authenticated users to dashboard after 3 seconds
+    if (user) {
+      const timer = setTimeout(() => {
+        setRedirecting(true);
+        navigate("/tableau-de-bord");
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [user, navigate, t]);
 
   const handleContinue = () => {
     navigate("/merci-inscription");
