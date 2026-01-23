@@ -268,7 +268,6 @@ export async function getCurrentEstablishment(): Promise<EstablishmentData | nul
       .from('establishments')
       .select('*')
       .eq('id', profile.current_establishment_id)
-      .eq('user_id', user.id) // Vérifier que l'établissement appartient à l'utilisateur
       .single();
 
     if (!error && establishment) {
