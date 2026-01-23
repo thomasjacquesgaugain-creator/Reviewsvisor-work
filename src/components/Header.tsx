@@ -3,6 +3,7 @@ import { Menu, X, Globe } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthProvider";
+import { APP_NAME } from "@/config/brand";
 
 interface HeaderProps {
   theme?: string;
@@ -37,19 +38,19 @@ function Header({ theme = "light" }: HeaderProps) {
         {user?.email === "thomas.jacquesgaugain@gmail.com" ? (
           <Link
             to="/"
-            className={`text-xl font-bold ${
+            className={`text-xl font-bold normal-case ${
               isDark ? "text-purple-400" : "text-blue-600"
             }`}
           >
-            Reviewsvisor
+            {APP_NAME}
           </Link>
         ) : (
           <div
-            className={`text-xl font-bold ${
+            className={`text-xl font-bold normal-case ${
               isDark ? "text-purple-400" : "text-blue-600"
             }`}
           >
-            Reviewsvisor
+            {APP_NAME}
           </div>
         )}
       </div>

@@ -5,6 +5,8 @@ import { Toaster } from "sonner";
 import Protected from "@/components/Protected";
 import RequireGuest from "@/components/RequireGuest";
 import { AppLayout } from "@/components/AppLayout";
+import { loadCustomization } from "@/utils/theme";
+import { diagnoseSupabaseStorage } from "@/utils/supabaseDiagnostics";
 import SignInForm from "@/components/SignInForm";
 import SignUpForm from "@/components/SignUpForm";
 import Accueil from "./pages/Accueil";
@@ -13,10 +15,6 @@ import TableauDeBord from "./pages/TableauDeBord";
 import Dashboard from "./pages/Dashboard";
 import Etablissement from "./pages/Etablissement";
 import NotFound from "./pages/NotFound";
-import DebugEnv from "./pages/DebugEnv";
-import DebugReviews from "./pages/DebugReviews";
-import DebugInsights from "./pages/DebugInsights";
-import DebugPage from "./pages/Debug";
 import BillingSuccess from "./pages/BillingSuccess";
 import BillingCancel from "./pages/BillingCancel";
 import Onboarding from "./pages/Onboarding";
@@ -33,6 +31,15 @@ import UpdatePassword from "./pages/UpdatePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import Abonnement from "./pages/Abonnement";
 import Compte from "./pages/Compte";
+import { SettingsLayout } from "./components/settings/SettingsLayout";
+import { ProfileSettings } from "./pages/settings/ProfileSettings";
+import { SecuritySettings } from "./pages/settings/SecuritySettings";
+import { EstablishmentsSettings } from "./pages/settings/EstablishmentsSettings";
+import { NotificationsSettings } from "./pages/settings/NotificationsSettings";
+import { LanguageSettings } from "./pages/settings/LanguageSettings";
+import { BillingSettings } from "./pages/settings/BillingSettings";
+import { BillingReports } from "./pages/settings/BillingReports";
+import { CustomizationSettings } from "./pages/settings/CustomizationSettings";
 
 const ScrollToTop = () => {
   const location = useLocation();
@@ -70,6 +77,22 @@ const StripeReturnDetector = () => {
 };
 
 const App = () => {
+  // Initialiser le thème au chargement (backup si main.tsx n'a pas fonctionné)
+  useEffect(() => {
+    loadCustomization();
+  }, []);
+
+  // Diagnostic Supabase Storage (dev uniquement)
+  useEffect(() => {
+    const isDev = import.meta.env.DEV || import.meta.env.MODE === 'development';
+    if (isDev) {
+      // Attendre un peu pour que Supabase soit initialisé
+      setTimeout(() => {
+        diagnoseSupabaseStorage();
+      }, 1000);
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -146,27 +169,76 @@ const App = () => {
                 <Compte />
               </Protected>
             } />
+            <Route path="/settings" element={<Navigate to="/settings/profile" replace />} />
+            <Route path="/settings/profile" element={
+              <Protected>
+                <SettingsLayout>
+                  <ProfileSettings />
+                </SettingsLayout>
+              </Protected>
+            } />
+            <Route path="/settings/security" element={
+              <Protected>
+                <SettingsLayout>
+                  <SecuritySettings />
+                </SettingsLayout>
+              </Protected>
+            } />
+            <Route path="/settings/establishments" element={
+              <Protected>
+                <SettingsLayout>
+                  <EstablishmentsSettings />
+                </SettingsLayout>
+              </Protected>
+            } />
+            <Route path="/settings/notifications" element={
+              <Protected>
+                <SettingsLayout>
+                  <NotificationsSettings />
+                </SettingsLayout>
+              </Protected>
+            } />
+            <Route path="/settings/language" element={
+              <Protected>
+                <SettingsLayout>
+                  <LanguageSettings />
+                </SettingsLayout>
+              </Protected>
+            } />
+            <Route path="/settings/billing" element={
+              <Protected>
+                <SettingsLayout>
+                  <BillingSettings />
+                </SettingsLayout>
+              </Protected>
+            } />
+            <Route path="/settings/billing/reports" element={
+              <Protected>
+                <SettingsLayout>
+                  <BillingReports />
+                </SettingsLayout>
+              </Protected>
+            } />
+            <Route path="/settings/customization" element={
+              <Protected>
+                <SettingsLayout>
+                  <CustomizationSettings />
+                </SettingsLayout>
+              </Protected>
+            } />
+            <Route path="/messages" element={
+              <Protected>
+                <div className="p-8">
+                  <h1 className="text-2xl font-semibold mb-4">Messages</h1>
+                  <p className="text-gray-500">Cette fonctionnalité sera bientôt disponible.</p>
+                </div>
+              </Protected>
+            } />
             <Route path="/etablissement" element={
               <Protected>
                 <Etablissement />
               </Protected>
             } />
-            <Route path="/debug/env" element={
-              <Protected>
-                <DebugEnv />
-              </Protected>
-            } />
-            <Route path="/debug/reviews" element={
-              <Protected>
-                <DebugReviews />
-              </Protected>
-            } />
-            <Route path="/debug/insights" element={
-              <Protected>
-                <DebugInsights />
-              </Protected>
-            } />
-            <Route path="/debug" element={<DebugPage />} />
             <Route path="/billing/success" element={<BillingSuccess />} />
             <Route path="/billing/cancel" element={<BillingCancel />} />
             <Route path="/api/auth/callback/google" element={<GoogleOAuthCallback />} />

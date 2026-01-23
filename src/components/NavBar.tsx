@@ -4,6 +4,8 @@ import { UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { APP_NAME } from "@/config/brand";
+import { AccountMenu } from "@/components/AccountMenu";
 
 export default function NavBar() {
   const { t } = useTranslation();
@@ -37,7 +39,10 @@ export default function NavBar() {
   }, [user, loading]);
 
   const handleLogout = async () => {
-    await signOut();
+    // Redirection immédiate pour éviter le flash "Invité"
+    window.location.href = "/";
+    // Déconnexion en arrière-plan
+    signOut();
   };
 
   const getLinkClass = (path: string) =>
@@ -48,7 +53,7 @@ export default function NavBar() {
     }`;
 
   const logoutStyle =
-    "px-4 py-2 rounded-md font-medium bg-red-600 text-white border border-red-600 transition-all duration-200";
+    "px-4 py-2 rounded-md font-medium !bg-[#dc2626] !text-white !border !border-[#dc2626] hover:!bg-[#b91c1c] active:!bg-[#991b1b] transition-all duration-200";
 
   // Pour le créateur : toujours afficher la NavBar une fois vérifié
   if (isCreator && isCreatorChecked) {
@@ -71,7 +76,7 @@ export default function NavBar() {
   };
 
   return (
-    <nav className="w-full flex items-center justify-between px-8 py-3 bg-white shadow-sm">
+    <nav className="relative z-50 w-full flex items-center justify-between px-8 py-3 bg-white shadow-sm">
       {/* Gauche : Logo + barre */}
       <div className="flex items-center gap-4">
         <div 
@@ -87,7 +92,7 @@ export default function NavBar() {
           } : undefined}
         >
           <span className="text-xl">📊</span>
-          <div className="text-2xl font-bold text-blue-600">Reviewsvisor</div>
+          <div className="text-2xl font-bold text-blue-600 normal-case">{APP_NAME}</div>
         </div>
         {/* Barre de séparation bleue */}
         <div className="h-10 w-px bg-gradient-to-b from-transparent via-blue-500 to-transparent opacity-70"></div>
@@ -110,27 +115,29 @@ export default function NavBar() {
 
       {/* Droite : User + Déconnexion */}
       <div className="flex items-center gap-4">
-        <Link 
-          to="/compte" 
-          className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 ${
-            location.pathname === "/compte"
-              ? "text-blue-600"
-              : "text-gray-700 hover:bg-blue-600 hover:text-white"
-          } group`}
-        >
-          <div className="flex items-center justify-center w-6 h-6 transition-colors">
-            <UserRound className={`w-5 h-5 transition-colors ${
-              location.pathname === "/compte"
-                ? "text-blue-600"
-                : "text-blue-600 group-hover:text-white"
-            }`} />
-          </div>
-          <span className="hidden sm:inline">{displayName}</span>
-        </Link>
-
-        <button onClick={handleLogout} className={logoutStyle}>
-          {t("auth.logout")}
-        </button>
+        {user ? (
+          <>
+            <AccountMenu />
+            <button onClick={handleLogout} className={logoutStyle}>
+              {t("auth.logout")}
+            </button>
+          </>
+        ) : (
+          <>
+            <Link
+              to="/login"
+              className={getLinkClass("/login")}
+            >
+              {t("auth.login")}
+            </Link>
+            <Link
+              to="/login?mode=signup"
+              className={getLinkClass("/login")}
+            >
+              {t("auth.signup")}
+            </Link>
+          </>
+        )}
       </div>
     </nav>
   );
