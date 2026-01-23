@@ -30,6 +30,17 @@ export function PricingSection() {
       return;
     }
 
+    // Récupérer les données utilisateur depuis sessionStorage
+    const pendingUser = sessionStorage.getItem("pendingUser");
+    const userData = pendingUser ? JSON.parse(pendingUser) : null;
+
+    // Vérifier si l'utilisateur a des données ou est connecté
+    if (!userData && !currentUser) {
+      toast.error("Veuillez d'abord créer votre compte");
+      navigate("/inscription");
+      return;
+    }
+
     setLoadingPriceId(priceId);
     try {
       // ======= ADMIN BYPASS - Vérification explicite AVANT Stripe =======
@@ -72,7 +83,10 @@ export function PricingSection() {
 
       // ======= NORMAL STRIPE FLOW =======
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId },
+        body: { 
+          priceId,
+          pendingUser: userData  // Ajouter les données utilisateur
+        },
       });
       
       if (error) throw error;

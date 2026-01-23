@@ -8,15 +8,15 @@ const corsHeaders = {
 };
 
 // Price ID for additional establishments (4.99€/month each)
-const ADDITIONAL_ESTABLISHMENT_PRICE_ID = "price_1ShiPzGkt979eNWBSDapH7aJ";
+const ADDITIONAL_ESTABLISHMENT_PRICE_ID = "price_1SseKdGkt979eNWBOA5fiM2f";
 
 // Admin email for bypass
 const ADMIN_EMAIL = "thomas.jacquesgaugain@gmail.com";
 
 // Map priceId to productKey for admin bypass
 const PRICE_ID_TO_PRODUCT_KEY: Record<string, string> = {
-  "price_1SZT7tGkt979eNWB0MF2xczP": "pro_1499_12m", // Pro engagement
-  "price_1SXnCbGkt979eNWBttiTM124": "pro_2499_monthly", // Pro flexible
+  "price_1SseJlGkt979eNWBoFcKFjFZ": "pro_1499_12m", // Pro engagement
+  "price_1SseK2Gkt979eNWBgrF3GcCU": "pro_2499_monthly", // Pro flexible
 };
 
 const logStep = (step: string, details?: any) => {
@@ -41,11 +41,17 @@ serve(async (req) => {
     // Get email from request body (for non-authenticated users) or from auth
     const body = await req.json().catch(() => ({}));
     const emailFromBody = body.email;
-    const priceIdFromBody = body.priceId;
+    const { priceId: priceIdFromBody, pendingUser } = body;
     
     let userEmail = emailFromBody;
     let customerId: string | undefined;
     let userId: string | undefined;
+    
+    // Si pendingUser existe, utiliser son email
+    if (pendingUser?.email) {
+      userEmail = pendingUser.email;
+      logStep("Using pendingUser email", { email: userEmail });
+    }
     
     // Try to get authenticated user if available
     const authHeader = req.headers.get("Authorization");
@@ -201,7 +207,7 @@ serve(async (req) => {
     }
 
     // Determine if trial should be applied (only for pro-engagement plan)
-    const isEngagementPlan = priceId === "price_1SZT7tGkt979eNWB0MF2xczP";
+    const isEngagementPlan = priceId === "price_1SseJlGkt979eNWBoFcKFjFZ";
     
     // Build line items: main subscription + additional establishments if any
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
@@ -221,7 +227,7 @@ serve(async (req) => {
     }
     
     const cancelUrl = `${origin}/billing/cancel`;
-    const successUrl = `${origin}/success?session_id={CHECKOUT_SESSION_ID}`;
+    const successUrl = `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`;
     
     logStep("Creating checkout session", { 
       cancelUrl, 
@@ -240,7 +246,25 @@ serve(async (req) => {
       billing_address_collection: "auto",
       allow_promotion_codes: false,
       locale: "fr",
-      ...(isEngagementPlan && { subscription_data: { trial_period_days: 14 } }),
+      metadata: pendingUser ? {
+        pending_user_email: pendingUser.email,
+        pending_user_firstName: pendingUser.firstName,
+        pending_user_lastName: pendingUser.lastName,
+        pending_user_company: pendingUser.establishmentName || pendingUser.company,
+        pending_user_address: pendingUser.address,
+        pending_user_password: pendingUser.password,
+      } : undefined,
+      subscription_data: {
+        metadata: pendingUser ? {
+          pending_user_email: pendingUser.email,
+          pending_user_firstName: pendingUser.firstName,
+          pending_user_lastName: pendingUser.lastName,
+          pending_user_company: pendingUser.establishmentName || pendingUser.company,
+          pending_user_address: pendingUser.address,
+          pending_user_password: pendingUser.password,
+        } : undefined,
+        ...(isEngagementPlan && { trial_period_days: 14 }),
+      },
       success_url: successUrl,
       cancel_url: cancelUrl,
     });

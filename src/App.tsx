@@ -33,6 +33,7 @@ import UpdatePassword from "./pages/UpdatePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import Abonnement from "./pages/Abonnement";
 import Compte from "./pages/Compte";
+import Inscription from "./pages/Inscription";
 
 const ScrollToTop = () => {
   const location = useLocation();
@@ -116,6 +117,11 @@ const App = () => {
             <Route path="/fonctionnalites" element={<Fonctionnalites />} />
             <Route path="/aide" element={<Aide />} />
             <Route path="/abonnement" element={<Abonnement />} />
+            <Route path="/inscription" element={
+              <RequireGuest>
+                <Inscription />
+              </RequireGuest>
+            } />
             <Route path="/onboarding" element={
               <RequireGuest>
                 <Onboarding />

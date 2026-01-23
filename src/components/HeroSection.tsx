@@ -148,7 +148,7 @@ export const HeroSection = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
                 <Button 
                   className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-full font-medium"
-                  onClick={() => navigate('/abonnement')}
+                  onClick={() => navigate('/inscription')}
                 >
                   <span>✨</span>
                   {t("hero.startNow")}

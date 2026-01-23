@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2 } from "lucide-react";
@@ -11,32 +11,18 @@ export default function BillingSuccess() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [searchParams] = useSearchParams();
   const [redirecting, setRedirecting] = useState(false);
-  const sessionId = searchParams.get("session_id");
 
   useEffect(() => {
+    // Nettoyer le sessionStorage
+    sessionStorage.removeItem("pendingUser");
+
     // Show success toast
     toast.success(t("billing.paymentSuccess"));
-
-    // Auto-redirect authenticated users to dashboard after 3 seconds
-    if (user) {
-      const timer = setTimeout(() => {
-        setRedirecting(true);
-        navigate("/tableau-de-bord");
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [user, navigate]);
+  }, [t]);
 
   const handleContinue = () => {
-    if (user) {
-      navigate("/tableau-de-bord");
-    } else {
-      // Redirect to signup for new users
-      const email = sessionStorage.getItem("onboarding_email");
-      navigate(`/onboarding/signup${email ? `?email=${encodeURIComponent(email)}` : ""}`);
-    }
+    navigate("/merci-inscription");
   };
 
   return (
@@ -52,13 +38,6 @@ export default function BillingSuccess() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {sessionId && (
-            <div className="bg-muted/50 rounded-lg p-3">
-              <p className="text-xs text-muted-foreground">{t("billing.sessionId")}</p>
-              <p className="text-xs font-mono break-all">{sessionId}</p>
-            </div>
-          )}
-
           <div className="space-y-3 text-left">
             <h3 className="font-semibold text-sm">{t("billing.yourBenefits")}:</h3>
             <ul className="space-y-2 text-sm">
@@ -91,10 +70,8 @@ export default function BillingSuccess() {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 {t("common.redirecting")}
               </>
-            ) : user ? (
-              t("billing.accessDashboard")
             ) : (
-              t("auth.signupAction")
+              "Continuer"
             )}
           </Button>
 

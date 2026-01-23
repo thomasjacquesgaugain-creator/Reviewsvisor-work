@@ -364,7 +364,7 @@ const Dashboard = () => {
             </Card>
 
             {/* Notifications section */}
-            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-4">
+            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-5xl mx-auto mb-4">
               <CardContent className="p-8">
                 <div className="flex items-center gap-2 mb-6">
                   <Bell className="w-5 h-5 text-blue-600" />

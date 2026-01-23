@@ -11,19 +11,19 @@ const Aide = () => {
   
   const faqItems = [{
     question: t("help.faq1Question"),
-    answer: t("help.faq1Answer")
+    answer: <>Vous pouvez importer vos avis Google de deux façons :<br />- en important un fichier via Google Takeout,<br />- ou via la récupération automatique si votre établissement est connecté.<br /><br />Chaque méthode est expliquée étape par étape directement dans la section "<span className="text-green-500 font-medium">Instructions</span>".</>
   }, {
     question: t("help.faq2Question"),
-    answer: t("help.faq2Answer")
+    answer: <>Reviewsvisor utilise une intelligence artificielle avancée pour analyser vos avis clients. L'outil lit chaque commentaire, identifie le ton et l'émotion, extrait les mots-clés importants et détecte automatiquement les points forts et les points faibles. Vous obtenez ensuite une synthèse claire avec des axes d'amélioration prioritaires.</>
   }, {
     question: t("help.faq3Question"),
-    answer: t("help.faq3Answer")
+    answer: <>Oui. Reviewsvisor permet d'analyser plusieurs établissements depuis un seul compte.<br /><br />Chaque établissement <span className="text-green-500 font-medium">dispose de ses propres analyses, recommandations et historiques d'avis</span>.</>
   }, {
     question: t("help.faq4Question"),
-    answer: t("help.faq4Answer")
+    answer: <>Oui. Les analyses peuvent être partagées avec votre équipe afin <span className="text-green-500 font-medium">d'aligner tout le monde sur les priorités à améliorer</span> (service, prix, qualité, organisation).<br /><br />Cela permet de transformer les avis clients en <span className="text-green-500 font-medium">actions concrètes</span>.</>
   }, {
     question: t("help.faq5Question"),
-    answer: t("help.faq5Answer")
+    answer: <>Oui. Reviewsvisor propose un système de réponses automatiques assistées par IA.<br /><br />Vous pouvez générer des <span className="text-green-500 font-medium">réponses adaptées au ton des avis</span> (positifs ou négatifs), tout en <span className="text-green-500 font-medium">gardant le contrôle</span> avant publication.</>
   }];
   
   return <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
@@ -101,7 +101,7 @@ const Aide = () => {
                         <span className="font-medium text-foreground">{item.question}</span>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="pb-4 pl-8 text-muted-foreground whitespace-pre-line">
+                    <AccordionContent className="pb-4 pl-8 text-muted-foreground leading-relaxed">
                       {item.answer}
                     </AccordionContent>
                   </AccordionItem>)}

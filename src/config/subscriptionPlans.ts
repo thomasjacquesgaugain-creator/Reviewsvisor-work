@@ -23,7 +23,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     description: "14 jours offerts, puis 14,99 €/mois – engagement 12 mois",
     badge: "💎 Meilleur prix",
     badgeColor: "purple",
-    priceId: "price_1SZT7tGkt979eNWB0MF2xczP",
+    priceId: "price_1SseJlGkt979eNWBoFcKFjFZ",
     productKey: "pro_1499_12m",
     benefits: [
       "Accès complet à Reviewsvisor",
@@ -40,7 +40,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     description: "Sans engagement",
     badge: "⚡ Flexible",
     badgeColor: "blue",
-    priceId: "price_1SXnCbGkt979eNWBttiTM124",
+    priceId: "price_1SseK2Gkt979eNWBgrF3GcCU",
     productKey: "pro_2499_monthly",
     benefits: [
       "Accès complet à Reviewsvisor",
@@ -56,7 +56,7 @@ export const establishmentAddon = {
   name: "Établissement supplémentaire",
   price: 4.99,
   priceLabel: "+4,99 €",
-  priceId: "price_1ShiPzGkt979eNWBSDapH7aJ",
+  priceId: "price_1SseKdGkt979eNWBOA5fiM2f",
   productKey: "addon_multi_etablissements_499",
 };
 
