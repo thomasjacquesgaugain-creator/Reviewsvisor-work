@@ -83,8 +83,25 @@ interface AnalysisContentProps {
 }
 
 function AnalysisContent({ data, reviews }: AnalysisContentProps) {
-  const { filteredReviews } = useAnalysisFilters();
-  const effectiveReviews = filteredReviews.length ? filteredReviews : reviews;
+  const { filteredReviews, ratingFilter, periodFilter, sourceFilter, availableSources } = useAnalysisFilters();
+  const isSourceFilterActive = sourceFilter !== "ALL" && availableSources.length > 1;
+  const isAnyFilterActive =
+    ratingFilter !== "ALL" || periodFilter.preset !== "all" || isSourceFilterActive;
+
+  const effectiveReviews = filteredReviews;
+
+  if (isAnyFilterActive && effectiveReviews.length === 0) {
+    return (
+      <div className="mb-8 rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
+        <p className="text-sm font-semibold text-slate-900">
+          Aucun avis sur la période sélectionnée
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          Essayez d’élargir la période ou de réinitialiser les filtres.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>

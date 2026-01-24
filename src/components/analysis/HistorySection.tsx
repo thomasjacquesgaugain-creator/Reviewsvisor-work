@@ -2,13 +2,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Label, ComposedChart } from "recharts";
 import { TimeSeriesDataPoint, Review } from "@/types/analysis";
 import { useTranslation } from "react-i18next";
-import { useState, useMemo } from "react";
-import { format, parseISO, startOfWeek, startOfMonth, startOfYear, getWeek, subDays, subMonths, subWeeks, subYears } from "date-fns";
+import { useEffect, useMemo, useState } from "react";
+import {
+  differenceInCalendarDays,
+  endOfDay,
+  endOfWeek,
+  format,
+  getWeek,
+  getISOWeek,
+  getISOWeekYear,
+  parseISO,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+  startOfYear,
+  subDays,
+  subMonths,
+  subWeeks,
+  subYears,
+} from "date-fns";
 import { fr } from "date-fns/locale";
 import { getRatingEvolution, Granularity as RatingGranularity } from "@/utils/ratingEvolution";
 import { TrendingUp, BarChart3, Filter } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { useAnalysisFilters } from "./AnalysisFiltersContext";
+import { parseReviewDate, computeRange } from "@/utils/filterReviews";
 
 interface HistorySectionProps {
   data?: TimeSeriesDataPoint[];
@@ -30,9 +49,11 @@ function mapGranularity(g: Granularity): RatingGranularity {
 
 export function HistorySection({ data, reviews }: HistorySectionProps) {
   const { t, i18n } = useTranslation();
+  const { periodFilter } = useAnalysisFilters();
   // États séparés pour chaque graphique
   const [periodNoteMoyenne, setPeriodNoteMoyenne] = useState<Granularity>('month');
   const [periodVolumeAvis, setPeriodVolumeAvis] = useState<Granularity>('month');
+  const [hasUserChosenVolumeGranularity, setHasUserChosenVolumeGranularity] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   
   // État pour gérer les filtres de courbes
@@ -55,6 +76,48 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
       [filterName]: !prev[filterName]
     }));
   };
+
+  // Granularité auto pour "Évolution Volume Avis" selon la période d'analyse
+  const analysisRange = useMemo(() => {
+    const { start, end } = computeRange(
+      periodFilter.preset as any,
+      (periodFilter as any).startDate ?? null,
+      (periodFilter as any).endDate ?? null
+    );
+
+    if (start && end) return { start, end };
+
+    // fallback: déduire depuis les reviews reçues (déjà filtrées)
+    const dates = (reviews || [])
+      .map((r) =>
+        parseReviewDate(
+          (r as any).date ||
+            (r as any).published_at ||
+            (r as any).inserted_at ||
+            (r as any).created_at
+        )
+      )
+      .filter((d): d is Date => !!d)
+      .sort((a, b) => a.getTime() - b.getTime());
+
+    if (dates.length === 0) return { start: null, end: null };
+    return { start: startOfDay(dates[0]), end: endOfDay(dates[dates.length - 1]) };
+  }, [periodFilter, reviews]);
+
+  const autoVolumeGranularity: Granularity = useMemo(() => {
+    if (!analysisRange.start || !analysisRange.end) return "month";
+    const days = differenceInCalendarDays(analysisRange.end, analysisRange.start) + 1;
+    if (days <= 30) return "day";
+    if (days <= 120) return "week";
+    return "month";
+  }, [analysisRange.end, analysisRange.start]);
+
+  useEffect(() => {
+    // Auto uniquement tant que l'utilisateur n'a pas choisi explicitement une granularité.
+    if (!hasUserChosenVolumeGranularity) {
+      setPeriodVolumeAvis(autoVolumeGranularity);
+    }
+  }, [autoVolumeGranularity, hasUserChosenVolumeGranularity]);
 
   // Calculer depuis les avis bruts en utilisant getRatingEvolution (même logique que "Indicateurs clés")
   const processedData = useMemo(() => {
@@ -256,181 +319,94 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [data, reviews, periodNoteMoyenne, i18n.language]);
 
-  // Calculer les données du volume d'avis (empilé)
-  const volumeData = useMemo(() => {
-    console.log('[HistorySection] Volume Avis - Reviews reçus:', reviews);
-    
-    if (!reviews || reviews.length === 0) {
-      console.log('[HistorySection] Volume Avis - Aucun review disponible');
-      return [];
+  // Données Volume d'avis : buckets adaptés (jour / semaine ISO / mois)
+  const volumeChartData = useMemo(() => {
+    if (!reviews || reviews.length === 0) return [];
+
+    const rangeStart = analysisRange.start ? startOfDay(analysisRange.start) : null;
+    const rangeEnd = analysisRange.end ? endOfDay(analysisRange.end) : null;
+
+    type Bucket = {
+      key: string;
+      sortDate: Date;
+      label: string;
+      tooltipLabel: string;
+      positifs: number;
+      neutres: number;
+      negatifs: number;
+      total: number;
+    };
+
+    const buckets = new Map<string, Bucket>();
+
+    for (const r of reviews) {
+      const note = (r.note ?? (r as any).rating ?? 0) as number;
+      if (!(note >= 1 && note <= 5)) continue;
+
+      const rawDate =
+        (r as any).date ||
+        (r as any).published_at ||
+        (r as any).inserted_at ||
+        (r as any).created_at;
+      const d = parseReviewDate(rawDate);
+      if (!d) continue;
+
+      if (rangeStart && d.getTime() < rangeStart.getTime()) continue;
+      if (rangeEnd && d.getTime() > rangeEnd.getTime()) continue;
+
+      let sortDate: Date;
+      let key: string;
+      let label: string;
+      let tooltipLabel: string;
+
+      if (periodVolumeAvis === "day") {
+        sortDate = startOfDay(d);
+        key = format(sortDate, "yyyy-MM-dd");
+        label = format(sortDate, "d MMM", { locale: fr });
+        tooltipLabel = format(sortDate, "d MMM yyyy", { locale: fr });
+      } else if (periodVolumeAvis === "week") {
+        sortDate = startOfWeek(d, { weekStartsOn: 1 });
+        const isoWeek = getISOWeek(sortDate);
+        const isoYear = getISOWeekYear(sortDate);
+        key = `${isoYear}-W${String(isoWeek).padStart(2, "0")}`;
+        label = `Sem. ${isoWeek}`;
+        const weekEnd = endOfWeek(sortDate, { weekStartsOn: 1 });
+        tooltipLabel = `Sem. ${isoWeek} (${format(sortDate, "dd", { locale: fr })}–${format(weekEnd, "dd MMM", { locale: fr })})`;
+      } else {
+        // month (default)
+        sortDate = startOfMonth(d);
+        key = format(sortDate, "yyyy-MM");
+        label = format(sortDate, "MMM yyyy", { locale: fr });
+        tooltipLabel = format(sortDate, "MMMM yyyy", { locale: fr });
+      }
+
+      const existing = buckets.get(key) || {
+        key,
+        sortDate,
+        label,
+        tooltipLabel,
+        positifs: 0,
+        neutres: 0,
+        negatifs: 0,
+        total: 0,
+      };
+
+      if (note >= 4) existing.positifs += 1;
+      else if (note === 3) existing.neutres += 1;
+      else existing.negatifs += 1;
+
+      existing.total = existing.positifs + existing.neutres + existing.negatifs;
+      buckets.set(key, existing);
     }
 
-    // Convertir les reviews et filtrer les valides
-    const validReviews = reviews
-      .filter(r => {
-        const note = r.note || (r as any).rating || 0;
-        const dateStr = (r as any).published_at || (r as any).inserted_at || (r as any).created_at || r.date || '';
-        return note >= 1 && note <= 5 && dateStr;
-      })
-      .map(r => ({
-        rating: r.note || (r as any).rating || 0,
-        dateStr: (r as any).published_at || (r as any).inserted_at || (r as any).created_at || r.date || ''
-      }));
+    const arr = Array.from(buckets.values())
+      .filter((b) => b.total > 0)
+      .sort((a, b) => a.sortDate.getTime() - b.sortDate.getTime());
 
-    if (validReviews.length === 0) return [];
-
-    // Trouver la date de départ
-    const allDates = validReviews
-      .map(r => {
-        try {
-          return parseISO(r.dateStr);
-        } catch {
-          return null;
-        }
-      })
-      .filter((d): d is Date => d !== null && !isNaN(d.getTime()))
-      .sort((a, b) => a.getTime() - b.getTime());
-    
-    const startDate = allDates.length > 0 ? allDates[0] : subMonths(new Date(), 12);
-    const ratingGranularity = mapGranularity(periodVolumeAvis);
-    
-    // Utiliser getRatingEvolution pour obtenir les périodes
-    const evolutionData = getRatingEvolution(
-      validReviews.map(r => ({ rating: r.rating, published_at: r.dateStr, inserted_at: r.dateStr })),
-      startDate,
-      ratingGranularity,
-      i18n.language || 'fr'
-    );
-
-    // Pour chaque période générée (TOUTES les dates, même sans avis), compter les avis
-    return evolutionData.map(period => {
-      const periodDate = parseISO(period.fullDate);
-      if (isNaN(periodDate.getTime())) {
-        return {
-          date: period.mois,
-          fullDate: period.fullDate,
-          dateLabel: period.mois, // Label avec année déjà inclus
-          positifs: 0,
-          neutres: 0,
-          negatifs: 0,
-          total: 0
-        };
-      }
-
-      // Déterminer les limites de la période
-      let periodStart: Date;
-      let periodEnd: Date;
-
-      switch (periodVolumeAvis) {
-        case 'day':
-          periodStart = new Date(periodDate.getFullYear(), periodDate.getMonth(), periodDate.getDate());
-          periodEnd = new Date(periodDate.getFullYear(), periodDate.getMonth(), periodDate.getDate(), 23, 59, 59);
-          break;
-        case 'week':
-          periodStart = startOfWeek(periodDate, { locale: fr });
-          periodEnd = new Date(periodStart);
-          periodEnd.setDate(periodEnd.getDate() + 6);
-          periodEnd.setHours(23, 59, 59);
-          break;
-        case 'month':
-          periodStart = startOfMonth(periodDate);
-          periodEnd = new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, 0, 23, 59, 59);
-          break;
-        case 'year':
-          periodStart = startOfYear(periodDate);
-          periodEnd = new Date(periodStart.getFullYear() + 1, 0, 0, 23, 59, 59);
-          break;
-        default:
-          periodStart = periodDate;
-          periodEnd = periodDate;
-      }
-
-      // Filtrer les avis dans cette période
-      const reviewsInPeriod = validReviews.filter(r => {
-        try {
-          const reviewDate = parseISO(r.dateStr);
-          return reviewDate >= periodStart && reviewDate <= periodEnd;
-        } catch {
-          return false;
-        }
-      });
-
-      const positifs = reviewsInPeriod.filter(r => r.rating >= 4).length;
-      const neutres = reviewsInPeriod.filter(r => r.rating === 3).length;
-      const negatifs = reviewsInPeriod.filter(r => r.rating <= 2).length;
-
-      // Le label de période pour l'axe X (sans année pour jour/semaine, avec année pour mois)
-      // Pour les tooltips, on peut enrichir avec plus de détails
-      let dateLabel = period.mois; // Label de l'axe X (S14, 12/04, ou avr. 2025)
-      let weekRange = '';
-      
-      if (periodVolumeAvis === 'week') {
-        // Enrichir le tooltip pour les semaines : "S14 (16–22 déc.)" - plage de dates sans année
-        try {
-          const weekStart = startOfWeek(periodDate, { locale: fr });
-          const weekEnd = new Date(weekStart);
-          weekEnd.setDate(weekEnd.getDate() + 6);
-          // Format: "16–22 déc." (sans année pour alléger)
-          weekRange = ` (${format(weekStart, 'dd', { locale: fr })}–${format(weekEnd, 'dd MMM', { locale: fr })})`;
-        } catch {
-          // Si erreur de parsing, garder le label simple
-        }
-      }
-      
-      return {
-        date: period.mois,
-        fullDate: period.fullDate,
-        dateLabel: dateLabel + weekRange, // Label enrichi pour le tooltip
-        positifs,
-        neutres,
-        negatifs,
-        total: positifs + neutres + negatifs
-      };
-    }).sort((a, b) => a.fullDate.localeCompare(b.fullDate));
-    // Note: On inclut TOUTES les dates (même avec total = 0) pour avoir le même axe X que "Évolution Note Moyenne"
-  }, [reviews, periodVolumeAvis, i18n.language]);
-
-  // Formater les données pour le graphique de volume (même logique que noteChartData)
-  const volumeChartData = useMemo(() => {
-    return volumeData.map(item => {
-      // Parser la date pour obtenir un timestamp
-      let dateValue: number;
-      try {
-        const date = parseISO(item.fullDate);
-        dateValue = date.getTime();
-      } catch {
-        dateValue = 0;
-      }
-      
-      return {
-        date: item.date, // Label formaté pour l'affichage
-        dateValue, // Timestamp pour la continuité de l'axe
-        fullDate: item.fullDate, // Date ISO pour référence
-        dateLabel: item.dateLabel, // Label enrichi pour tooltip
-        positifs: item.positifs,
-        neutres: item.neutres,
-        negatifs: item.negatifs,
-        total: item.total
-      };
-    });
-  }, [volumeData]);
-
-  // Calculer le domain X avec padding pour éviter que les barres commencent à x=0
-  const volumeXDomain = useMemo(() => {
-    if (volumeChartData.length === 0) return ['dataMin', 'dataMax'];
-    
-    const dateValues = volumeChartData.map(d => d.dateValue).filter(v => v > 0);
-    if (dateValues.length === 0) return ['dataMin', 'dataMax'];
-    
-    const minDate = Math.min(...dateValues);
-    const maxDate = Math.max(...dateValues);
-    const range = maxDate - minDate;
-    
-    // Ajouter 5% de padding de chaque côté
-    const padding = range * 0.05;
-    
-    return [minDate - padding, maxDate + padding];
-  }, [volumeChartData]);
+    // Limiter à une plage lisible (max 14 barres) : on garde les plus récentes
+    const MAX_BARS = 14;
+    return arr.length > MAX_BARS ? arr.slice(-MAX_BARS) : arr;
+  }, [analysisRange.end, analysisRange.start, periodVolumeAvis, reviews]);
 
   // Formater les données pour le graphique de note
   // Utiliser fullDate (date réelle) comme clé pour garantir la continuité de l'axe X
@@ -482,11 +458,53 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
       }
     }
     
-    // Trouver le volume correspondant via fullDate
-    const matchingVolume = dataPoint 
-      ? volumeChartData.find(d => d.fullDate === dataPoint.fullDate)
-      : undefined;
-    const totalCount = matchingVolume?.total ?? undefined;
+    // Compter le volume correspondant à la granularité de la courbe de note
+    const totalCount = (() => {
+      if (!dataPoint || !reviews || reviews.length === 0) return undefined;
+
+      const anchor = parseReviewDate(dataPoint.fullDate);
+      if (!anchor) return undefined;
+
+      let periodStart: Date;
+      let periodEnd: Date;
+
+      switch (periodNoteMoyenne) {
+        case "day":
+          periodStart = startOfDay(anchor);
+          periodEnd = endOfDay(anchor);
+          break;
+        case "week":
+          periodStart = startOfWeek(anchor, { weekStartsOn: 1 });
+          periodEnd = endOfWeek(periodStart, { weekStartsOn: 1 });
+          break;
+        case "month":
+          periodStart = startOfMonth(anchor);
+          periodEnd = endOfDay(new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, 0));
+          break;
+        case "year":
+          periodStart = startOfYear(anchor);
+          periodEnd = endOfDay(new Date(periodStart.getFullYear(), 11, 31));
+          break;
+        default:
+          periodStart = startOfDay(anchor);
+          periodEnd = endOfDay(anchor);
+      }
+
+      let count = 0;
+      for (const r of reviews) {
+        const raw =
+          (r as any).date ||
+          (r as any).published_at ||
+          (r as any).inserted_at ||
+          (r as any).created_at;
+        const d = parseReviewDate(raw);
+        if (!d) continue;
+        if (d.getTime() >= periodStart.getTime() && d.getTime() <= periodEnd.getTime()) {
+          count += 1;
+        }
+      }
+      return count;
+    })();
 
     const hasNoData = totalCount === 0 || totalCount === undefined;
     const isLowData = totalCount !== undefined && totalCount > 0 && totalCount < 3;
@@ -530,6 +548,14 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
   const xAxisAngle = periodNoteMoyenne === 'day' || periodVolumeAvis === 'day' ? -45 : 0;
   const xAxisTextAnchor = periodNoteMoyenne === 'day' || periodVolumeAvis === 'day' ? 'end' : 'middle';
   const xAxisHeight = periodNoteMoyenne === 'day' || periodVolumeAvis === 'day' ? 80 : 40;
+
+  const volumeBarLayout = useMemo(() => {
+    const n = volumeChartData.length;
+    if (n <= 3) return { barSize: 22, barCategoryGap: "28%", barGap: 8 };
+    if (n <= 6) return { barSize: 20, barCategoryGap: "20%", barGap: 6 };
+    if (n <= 10) return { barSize: 18, barCategoryGap: "14%", barGap: 4 };
+    return { barSize: 16, barCategoryGap: "10%", barGap: 3 };
+  }, [volumeChartData.length]);
 
   return (
     <div className="w-full max-w-full">
@@ -761,12 +787,17 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
               </PopoverContent>
             </Popover>
 
-            <Select value={periodVolumeAvis} onValueChange={(v) => setPeriodVolumeAvis(v as Granularity)}>
+            <Select
+              value={periodVolumeAvis}
+              onValueChange={(v) => {
+                setPeriodVolumeAvis(v as Granularity);
+                setHasUserChosenVolumeGranularity(true);
+              }}
+            >
               <SelectTrigger className="w-32 bg-gray-50 border-gray-200 rounded-lg">
                 <SelectValue placeholder={t("analysis.history.period", "Période")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="year">{t("analysis.history.byYear", "Par année")}</SelectItem>
                 <SelectItem value="month">{t("analysis.history.byMonth", "Par mois")}</SelectItem>
                 <SelectItem value="week">{t("analysis.history.byWeek", "Par semaine")}</SelectItem>
                 <SelectItem value="day">{t("analysis.history.byDay", "Par jour")}</SelectItem>
@@ -775,27 +806,24 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
           </div>
         </div>
         
-        {volumeData.length > 0 ? (
+        {volumeChartData.length > 0 ? (
           <>
             <div style={{ width: '100%', height: chartHeight }}>
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={volumeChartData} margin={volumeChartMargin}>
+                <ComposedChart
+                  data={volumeChartData}
+                  margin={volumeChartMargin}
+                  barCategoryGap={volumeBarLayout.barCategoryGap}
+                  barGap={volumeBarLayout.barGap}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis 
-                    dataKey="dateValue"
-                    type="number"
-                    scale="time"
-                    domain={volumeXDomain}
+                    dataKey="label"
                     tick={{ fill: '#6b7280', fontSize: 12 }} 
                     angle={xAxisAngle}
                     textAnchor={xAxisTextAnchor}
                     height={xAxisHeight}
                     interval="preserveStartEnd"
-                    tickFormatter={(value) => {
-                      // Trouver le label correspondant à cette valeur timestamp
-                      const dataPoint = volumeChartData.find(d => d.dateValue === value);
-                      return dataPoint?.date || '';
-                    }}
                   />
                   <YAxis 
                     orientation="left"
@@ -837,9 +865,11 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
                       const hasNoData = total === 0;
                       const isLowData = total > 0 && total < 3;
 
-                      // label est maintenant un timestamp, trouver le dataPoint correspondant
-                      const dataPoint = volumeChartData.find(d => d.dateValue === label);
-                      const displayLabel = dataPoint?.dateLabel || dataPoint?.date || '';
+                      const displayLabel =
+                        (payload?.[0] as any)?.payload?.tooltipLabel ||
+                        (payload?.[0] as any)?.payload?.label ||
+                        (label as string) ||
+                        '';
                       
                       if (hasNoData) {
                         return (
@@ -900,6 +930,7 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
                     stackId="a" 
                     fill="#22c55e" 
                     name="Positifs"
+                    barSize={volumeBarLayout.barSize}
                     style={{ cursor: 'pointer' }}
                     onMouseEnter={(data, index, e: any) => {
                       if (e?.target) {
@@ -919,6 +950,7 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
                     stackId="a" 
                     fill="#f59e0b" 
                     name="Neutres"
+                    barSize={volumeBarLayout.barSize}
                     style={{ cursor: 'pointer' }}
                     onMouseEnter={(data, index, e: any) => {
                       if (e?.target) {
@@ -938,6 +970,7 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
                     stackId="a" 
                     fill="#ef4444" 
                     name="Négatifs"
+                    barSize={volumeBarLayout.barSize}
                     style={{ cursor: 'pointer' }}
                     onMouseEnter={(data, index, e: any) => {
                       if (e?.target) {

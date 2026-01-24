@@ -34,7 +34,9 @@ export function AnalysisFiltersProvider({
 }: AnalysisFiltersProviderProps) {
   const [ratingFilter, setRatingFilter] = useState<RatingFilter>("ALL");
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>({
-    preset: "ALL_TIME",
+    preset: "all",
+    startDate: null,
+    endDate: null,
   });
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("google");
 

@@ -2,6 +2,8 @@
  * Formate le résumé de diagnostic depuis les données brutes
  * Gère les cas où summary est une string, un objet JSON, ou null/undefined
  */
+import { normalizeSummary } from "@/utils/normalizeSummary";
+
 export function formatDiagnosticSummary(
   summary: any,
   diagnosticInsights?: {
@@ -32,16 +34,11 @@ export function formatDiagnosticSummary(
     if (summary.text && typeof summary.text === 'string') {
       return summary.text.trim();
     }
-    
-    // Cas 3: Essayer de convertir l'objet en string JSON (fallback)
-    try {
-      const jsonString = JSON.stringify(summary);
-      // Si c'est un objet simple, ne pas retourner le JSON brut
-      if (jsonString.length < 500) {
-        return jsonString;
-      }
-    } catch (e) {
-      // Ignorer les erreurs de stringify
+
+    // Cas 3: Résumé structuré (ne jamais retourner du JSON brut)
+    const normalized = normalizeSummary(summary);
+    if (normalized?.text) {
+      return normalized.text;
     }
   }
 
@@ -98,7 +95,15 @@ export function formatRecommendations(
         }
         // Si c'est un objet, essayer d'extraire le texte
         if (typeof rec === 'object') {
-          return (rec as any).text || (rec as any).recommendation || (rec as any).title || JSON.stringify(rec);
+          const r = rec as any;
+          return (
+            r.text ||
+            r.recommendation ||
+            r.title ||
+            r.label ||
+            r.reason ||
+            ""
+          ).toString().trim();
         }
         return String(rec);
       })
