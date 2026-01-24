@@ -7,6 +7,7 @@ import logoHeader from "@/assets/reviewsvisor-logo-header.png";
 import { WhyReviewsvisor } from "@/components/WhyReviewsvisor";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
+import { APP_NAME } from "@/config/brand";
 import { LANGUAGE_FLAGS, LANGUAGE_LABELS, SupportedLanguage, SUPPORTED_LANGUAGES } from "@/i18n/config";
 import {
   DropdownMenu,
@@ -123,12 +124,12 @@ export const HeroSection = () => {
         <div className="flex items-center justify-center pt-2 pb-0">
           <img 
             src={logoHeader} 
-            alt="Reviewsvisor Logo" 
+            alt={`${APP_NAME} Logo`}
             className="h-[90px] w-auto -mr-2 mt-4"
             style={{ filter: 'brightness(0) saturate(100%) invert(38%) sepia(89%) saturate(2475%) hue-rotate(214deg) brightness(101%) contrast(101%)' }}
           />
-          <span className="text-[#2F6BFF] text-[48px] font-bold leading-none">
-            Reviewsvisor
+          <span className="text-[#2F6BFF] text-[48px] font-bold leading-none normal-case">
+            {APP_NAME}
           </span>
         </div>
 

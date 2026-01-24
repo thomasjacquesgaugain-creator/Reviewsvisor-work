@@ -139,19 +139,24 @@ function getPeriodEnd(date: Date, granularity: Granularity): Date {
 }
 
 /**
- * Formate le label de la période
+ * Formate le label de la période pour l'axe X
+ * RÈGLE : Année affichée UNIQUEMENT pour mois, JAMAIS pour jour et semaine
  */
 function formatPeriodLabel(date: Date, granularity: Granularity, locale: Locale = fr): string {
   switch (granularity) {
     case 'jour':
-      return format(date, 'dd MMM', { locale });
+      // Format: "12/04" (JJ/MM) - SANS année
+      return format(date, 'dd/MM', { locale });
     case 'semaine':
-      return format(date, "'S'w", { locale });
+      // Format: "S14" (semaine 14) - SANS année pour simplifier l'axe X
+      const weekNum = format(date, 'w', { locale });
+      return `S${weekNum}`;
     case 'année':
       return format(date, 'yyyy', { locale });
     case 'mois':
     default:
-      return format(date, 'MMM', { locale });
+      // Format: "avr. 2025" - AVEC année (utile et lisible)
+      return format(date, 'MMM yyyy', { locale });
   }
 }
 

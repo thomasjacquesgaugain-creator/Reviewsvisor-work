@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { capitalizeName } from "@/utils/capitalizeName";
+import { APP_NAME } from "@/config/brand";
+import { AccountMenu } from "@/components/AccountMenu";
 
 export default function NavBar() {
   const { t } = useTranslation();
@@ -91,7 +93,7 @@ export default function NavBar() {
           } : undefined}
         >
           <span className="text-xl">📊</span>
-          <div className="text-2xl font-bold text-blue-600">Reviewsvisor</div>
+          <div className="text-2xl font-bold text-blue-600 normal-case">{APP_NAME}</div>
         </div>
         {/* Barre de séparation bleue */}
         <div className="h-10 w-px bg-gradient-to-b from-transparent via-blue-500 to-transparent opacity-70"></div>
@@ -134,6 +136,7 @@ export default function NavBar() {
               <span className="hidden sm:inline">{capitalizeName(displayName)}</span>
             </Link>
 
+            <AccountMenu />
             <button onClick={handleLogout} className={logoutStyle}>
               {t("auth.logout")}
             </button>

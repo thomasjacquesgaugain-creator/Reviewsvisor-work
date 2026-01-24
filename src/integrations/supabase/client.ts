@@ -2,8 +2,20 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://zzjmtipdsccxmmoaetlp.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU";
+// Utiliser les variables d'environnement si disponibles, sinon fallback sur les valeurs hardcodées
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://zzjmtipdsccxmmoaetlp.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU";
+
+// Log de la configuration en dev (masqué pour la sécurité)
+if (import.meta.env.DEV) {
+  const projectRef = SUPABASE_URL.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
+  console.log('[Supabase] Configuration:', {
+    url: SUPABASE_URL.substring(0, 20) + '***',
+    projectRef: projectRef || 'non détecté',
+    hasEnvUrl: !!import.meta.env.VITE_SUPABASE_URL,
+    hasEnvKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
+  });
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -16,3 +28,6 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storageKey: 'session',
   }
 });
+
+// Exposer l'URL pour le diagnostic
+(supabase as any).supabaseUrl = SUPABASE_URL;

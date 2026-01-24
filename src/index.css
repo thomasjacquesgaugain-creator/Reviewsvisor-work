@@ -47,6 +47,10 @@ All colors MUST be HSL.
     --input: 220 13% 91%;
     --ring: 217 76% 48%;
 
+    /* Personnalisation - Variables dynamiques */
+    --rv-accent: 217 76% 48%; /* Valeur par défaut (bleu) */
+    --rv-bg: 220 26% 97%; /* Valeur par défaut (neutre) */
+
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(231 48% 48%), hsl(237 100% 70%));
     --gradient-accent: linear-gradient(135deg, hsl(262 83% 58%), hsl(231 48% 48%));
@@ -73,6 +77,158 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  /* Application des couleurs personnalisées par data attributes */
+  /* Accent colors - override --primary et --ring */
+  html[data-accent="blue"] {
+    --primary: 217 76% 48%;
+    --ring: 217 76% 48%;
+  }
+  html[data-accent="green"] {
+    --primary: 142 76% 36%;
+    --ring: 142 76% 36%;
+  }
+  html[data-accent="purple"] {
+    --primary: 262 83% 58%;
+    --ring: 262 83% 58%;
+  }
+  html[data-accent="pink"] {
+    --primary: 330 81% 60%;
+    --ring: 330 81% 60%;
+  }
+  html[data-accent="orange"] {
+    --primary: 25 95% 53%;
+    --ring: 25 95% 53%;
+  }
+  html[data-accent="red"] {
+    --primary: 0 84% 60%;
+    --ring: 0 84% 60%;
+  }
+  html[data-accent="teal"] {
+    --primary: 173 80% 40%;
+    --ring: 173 80% 40%;
+  }
+  html[data-accent="indigo"] {
+    --primary: 239 84% 67%;
+    --ring: 239 84% 67%;
+  }
+
+  /* Background tints - override --app-bg */
+  html[data-bg="neutral"] {
+    --app-bg: 220 26% 97%;
+  }
+  html[data-bg="warm"] {
+    --app-bg: 30 30% 96%;
+  }
+  html[data-bg="cool"],
+  html[data-bg="paleBlue"] {
+    --app-bg: 210 60% 97%;
+  }
+  html[data-bg="paleGreen"] {
+    --app-bg: 142 30% 97%;
+  }
+  html[data-bg="palePink"] {
+    --app-bg: 330 30% 98%;
+  }
+  html[data-bg="palePurple"] {
+    --app-bg: 262 30% 97%;
+  }
+  html[data-bg="cream"] {
+    --app-bg: 40 30% 98%;
+  }
+  html[data-bg="stone"] {
+    --app-bg: 24 20% 96%;
+  }
+
+  /* Mode sombre */
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
+
+  /* Mode sombre avec couleurs personnalisées */
+  .dark[data-accent="blue"] {
+    --primary: 217 76% 48%;
+    --ring: 217 76% 48%;
+  }
+  .dark[data-accent="green"] {
+    --primary: 142 76% 36%;
+    --ring: 142 76% 36%;
+  }
+  .dark[data-accent="purple"] {
+    --primary: 262 83% 58%;
+    --ring: 262 83% 58%;
+  }
+  .dark[data-accent="pink"] {
+    --primary: 330 81% 60%;
+    --ring: 330 81% 60%;
+  }
+  .dark[data-accent="orange"] {
+    --primary: 25 95% 53%;
+    --ring: 25 95% 53%;
+  }
+  .dark[data-accent="red"] {
+    --primary: 0 84% 60%;
+    --ring: 0 84% 60%;
+  }
+  .dark[data-accent="teal"] {
+    --primary: 173 80% 40%;
+    --ring: 173 80% 40%;
+  }
+  .dark[data-accent="indigo"] {
+    --primary: 239 84% 67%;
+    --ring: 239 84% 67%;
+  }
+
+  /* Background tints en mode sombre */
+  .dark[data-bg="neutral"] {
+    --app-bg: 222.2 84% 4.9%;
+  }
+  .dark[data-bg="warm"] {
+    --app-bg: 222.2 84% 6%;
+  }
+  .dark[data-bg="cool"],
+  .dark[data-bg="paleBlue"] {
+    --app-bg: 222.2 84% 5%;
+  }
+  .dark[data-bg="paleGreen"] {
+    --app-bg: 222.2 84% 5.5%;
+  }
+  .dark[data-bg="palePink"] {
+    --app-bg: 222.2 84% 5.2%;
+  }
+  .dark[data-bg="palePurple"] {
+    --app-bg: 222.2 84% 5.3%;
+  }
+  .dark[data-bg="cream"] {
+    --app-bg: 222.2 84% 6.5%;
+  }
+  .dark[data-bg="stone"] {
+    --app-bg: 222.2 84% 6.2%;
+  }
 }
 
 /* Reviewsvisor Navbar Styles */
@@ -305,7 +461,6 @@ All colors MUST be HSL.
     --brand-blue: 214 74% 54%;
     --brand-green: 157 46% 54%;
   }
-}
 
 @layer base {
   * {
@@ -313,7 +468,8 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: hsl(var(--app-bg, var(--background)));
   }
 }
 

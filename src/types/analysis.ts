@@ -6,8 +6,14 @@ export interface OverviewMetrics {
   positivePercentage: number;
   negativePercentage: number;
   neutralPercentage: number;
+<<<<<<< HEAD
   trend: 'up' | 'down' | 'stable';
   trendValue?: number;
+=======
+  trend: 'up' | 'down' | 'stable' | 'insufficient';
+  trendValue?: number | null; // null si données insuffisantes
+  trendDeltaPoints?: number | null; // Variation en points (ex: +0.5)
+>>>>>>> origin/branche-papa
 }
 
 export interface TimeSeriesDataPoint {
@@ -36,7 +42,11 @@ export interface ThemeAnalysis {
 }
 
 export interface QualitativeData {
+<<<<<<< HEAD
   topKeywords: Array<{ word: string; count: number }>;
+=======
+  topKeywords: Array<{ word: string; count: number; sentiment?: 'positive' | 'neutral' | 'negative' }>;
+>>>>>>> origin/branche-papa
   keyVerbatims: Array<{ text: string; rating: number; sentiment: 'positive' | 'neutral' | 'negative' }>;
 }
 
@@ -61,8 +71,21 @@ export interface CompleteAnalysisData {
 export interface Review {
   id: string;
   etablissementId: string;
+<<<<<<< HEAD
   source: 'google' | 'tripadvisor' | 'yelp' | 'other';
   note: number;
   texte: string;
   date: string;
+=======
+  source: "google" | "trustpilot" | "facebook" | "yelp" | "tripadvisor" | "other";
+  note: number;
+  texte: string;
+  date: string;
+  // Champs optionnels pour les analyses avancées
+  sentimentScore?: number; // -1..1
+  sentimentLabel?: "positive" | "neutral" | "negative";
+  themes?: Array<{ name: string; sentimentScore?: number }>;
+  keywords?: string[];
+  frictionPoints?: Array<{ label: string }>;
+>>>>>>> origin/branche-papa
 }

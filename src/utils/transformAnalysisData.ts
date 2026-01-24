@@ -2,6 +2,16 @@ import { CompleteAnalysisData, Review } from "@/types/analysis";
 import { format, parseISO, subMonths } from "date-fns";
 import { cleanReviewText, STOP_WORDS } from "@/utils/cleanReviewText";
 import { formatDiagnosticSummary, formatRecommendations } from "@/utils/formatDiagnosticSummary";
+<<<<<<< HEAD
+=======
+import { 
+  computeSentimentFromRating, 
+  normalizeRating,
+  extractKeywordsWithSentiment,
+  aggregateKeywords,
+  mapThemeLabel
+} from "@/utils/reviewProcessing";
+>>>>>>> origin/branche-papa
 
 /**
  * Transforme les données brutes (insight + reviews) en structure CompleteAnalysisData
@@ -19,8 +29,18 @@ export function transformAnalysisData(
   const positiveRatio = safeInsight?.positive_ratio || 0;
 
   // Calculer la tendance (comparaison avec il y a 3 mois)
+<<<<<<< HEAD
   let trend: 'up' | 'down' | 'stable' = 'stable';
   let trendValue = 0;
+=======
+  // Minimum d'avis requis par période pour un calcul significatif
+  const MIN_REVIEWS_PER_PERIOD = 5;
+  
+  let trend: 'up' | 'down' | 'stable' | 'insufficient' = 'stable';
+  let trendValue: number | null = null;
+  let trendDeltaPoints: number | null = null;
+  
+>>>>>>> origin/branche-papa
   if (safeReviews.length > 0) {
     const threeMonthsAgo = subMonths(new Date(), 3);
     const recentReviews = safeReviews.filter(r => {
@@ -44,12 +64,51 @@ export function transformAnalysisData(
       }
     });
 
+<<<<<<< HEAD
     if (recentReviews.length > 0 && olderReviews.length > 0) {
       const recentAvg = recentReviews.reduce((sum, r) => sum + r.note, 0) / recentReviews.length;
       const olderAvg = olderReviews.reduce((sum, r) => sum + r.note, 0) / olderReviews.length;
       trendValue = ((recentAvg - olderAvg) / olderAvg) * 100;
       if (trendValue > 2) trend = 'up';
       else if (trendValue < -2) trend = 'down';
+=======
+    // Vérifier le minimum d'avis par période
+    if (recentReviews.length >= MIN_REVIEWS_PER_PERIOD && olderReviews.length >= MIN_REVIEWS_PER_PERIOD) {
+      const recentAvg = recentReviews.reduce((sum, r) => sum + (r.note || 0), 0) / recentReviews.length;
+      const olderAvg = olderReviews.reduce((sum, r) => sum + (r.note || 0), 0) / olderReviews.length;
+      
+      // Vérifier que les moyennes sont valides (non NaN, non null)
+      if (!isNaN(recentAvg) && !isNaN(olderAvg) && isFinite(recentAvg) && isFinite(olderAvg)) {
+        // Vérifier division par zéro
+        if (olderAvg > 0) {
+          // Calculer la variation en points
+          trendDeltaPoints = recentAvg - olderAvg;
+          
+          // Calculer la variation en pourcentage
+          trendValue = ((recentAvg - olderAvg) / olderAvg) * 100;
+          
+          // Déterminer la tendance selon les seuils
+          if (trendValue > 2) trend = 'up';
+          else if (trendValue < -2) trend = 'down';
+          else trend = 'stable';
+        } else {
+          // olderAvg = 0 : données insuffisantes
+          trend = 'insufficient';
+          trendValue = null;
+          trendDeltaPoints = null;
+        }
+      } else {
+        // Moyennes invalides (NaN ou Infinity)
+        trend = 'insufficient';
+        trendValue = null;
+        trendDeltaPoints = null;
+      }
+    } else {
+      // Pas assez d'avis dans une ou les deux périodes
+      trend = 'insufficient';
+      trendValue = null;
+      trendDeltaPoints = null;
+>>>>>>> origin/branche-papa
     }
   }
 
@@ -79,7 +138,12 @@ export function transformAnalysisData(
     negativePercentage,
     neutralPercentage,
     trend,
+<<<<<<< HEAD
     trendValue
+=======
+    trendValue,
+    trendDeltaPoints
+>>>>>>> origin/branche-papa
   };
 
   // Historique - grouper par mois depuis published_at ou date
@@ -125,6 +189,7 @@ export function transformAnalysisData(
   };
 
   // Pareto Issues
+<<<<<<< HEAD
   const paretoIssues = (safeInsight?.top_issues || []).map((issue: any, index: number) => {
     const count = issue.count || 0;
     return {
@@ -141,6 +206,34 @@ export function transformAnalysisData(
       name: strength.theme || strength.strength || `Point fort ${index + 1}`,
       count,
       percentage: totalReviews > 0 ? (count / totalReviews) * 100 : 0
+=======
+  // Calculer le total des mentions d'irritants (dénominateur pour les %)
+  const totalIssuesMentions = (safeInsight?.top_issues || []).reduce((sum: number, issue: any) => sum + (issue.count || 0), 0);
+  
+  const paretoIssues = (safeInsight?.top_issues || []).map((issue: any, index: number) => {
+    const count = issue.count || 0;
+    // Pourcentage basé sur le total des mentions d'irritants (pas sur le total des avis)
+    const percentage = totalIssuesMentions > 0 ? (count / totalIssuesMentions) * 100 : 0;
+    return {
+      name: issue.theme || issue.issue || `Problème ${index + 1}`,
+      count,
+      percentage
+    };
+  });
+
+  // Calculer le total des mentions de satisfactions (dénominateur pour les %)
+  const totalStrengthsMentions = (safeInsight?.top_praises || []).reduce((sum: number, strength: any) => sum + (strength.count || 0), 0);
+  
+  // Pareto Strengths
+  const paretoStrengths = (safeInsight?.top_praises || []).map((strength: any, index: number) => {
+    const count = strength.count || 0;
+    // Pourcentage basé sur le total des mentions de satisfactions (pas sur le total des avis)
+    const percentage = totalStrengthsMentions > 0 ? (count / totalStrengthsMentions) * 100 : 0;
+    return {
+      name: strength.theme || strength.strength || `Point fort ${index + 1}`,
+      count,
+      percentage
+>>>>>>> origin/branche-papa
     };
   });
 
@@ -191,8 +284,15 @@ export function transformAnalysisData(
     }));
   }
 
+<<<<<<< HEAD
   // Analyse qualitative - extraire les mots-clés des reviews nettoyés
   const wordCounts = new Map<string, number>();
+=======
+  // Analyse qualitative - extraire les mots-clés avec sentiment associé
+  // RÈGLE FONDAMENTALE : Un mot peut apparaître plusieurs fois, une fois par sentiment
+  // Chaque couple (mot, sentiment) possède son propre compteur
+  const wordSentimentCounts = new Map<string, Map<'positive' | 'neutral' | 'negative', number>>();
+>>>>>>> origin/branche-papa
   
   safeReviews.forEach(review => {
     const rawText = (review as any).text || review.texte;
@@ -202,6 +302,7 @@ export function transformAnalysisData(
     const cleanedText = cleanReviewText(rawText);
     if (!cleanedText) return;
     
+<<<<<<< HEAD
     // Nettoyer et extraire les mots (garder les accents français)
     const cleaned = cleanedText.toLowerCase()
       .replace(/[^\w\sàâäéèêëïîôùûüÿç]/g, ' ')
@@ -222,6 +323,46 @@ export function transformAnalysisData(
     .sort((a, b) => b[1] - a[1])
     .slice(0, 15) // Prendre plus de mots pour un meilleur nuage
     .map(([word, count]) => ({ word, count }));
+=======
+    // Calculer le sentiment de l'avis
+    const rating = normalizeRating(review.note || (review as any).rating || 0);
+    const reviewSentiment = computeSentimentFromRating(rating);
+    
+    // Extraire les mots-clés avec leur sentiment
+    const keywords = extractKeywordsWithSentiment(cleanedText, reviewSentiment);
+    
+    // Agrégation par couple (mot, sentiment) - chaque couple a son propre compteur
+    keywords.forEach(({ word, sentiment }) => {
+      if (!wordSentimentCounts.has(word)) {
+        wordSentimentCounts.set(word, new Map());
+      }
+      
+      const sentimentMap = wordSentimentCounts.get(word)!;
+      sentimentMap.set(
+        sentiment,
+        (sentimentMap.get(sentiment) || 0) + 1
+      );
+    });
+  });
+
+  // Construire la liste des top keywords : une entrée par couple (mot, sentiment)
+  // Un même mot peut apparaître plusieurs fois (une fois par sentiment)
+  const topKeywords: Array<{ word: string; count: number; sentiment: 'positive' | 'neutral' | 'negative' }> = [];
+  
+  for (const [word, sentimentMap] of wordSentimentCounts.entries()) {
+    // Créer une entrée séparée pour chaque sentiment de ce mot
+    for (const [sentiment, count] of sentimentMap.entries()) {
+      topKeywords.push({
+        word,
+        count, // Nombre d'occurrences de ce mot avec ce sentiment spécifique
+        sentiment
+      });
+    }
+  }
+  
+  // Trier par fréquence décroissante (par sentiment)
+  topKeywords.sort((a, b) => b.count - a.count);
+>>>>>>> origin/branche-papa
 
   // Verbatims clés - prendre les avis les plus représentatifs (texte nettoyé en français)
   const keyVerbatims = safeReviews
@@ -249,11 +390,24 @@ export function transformAnalysisData(
       return (b as any).published_at ? 1 : -1; // Prioriser les plus récents
     })
     .slice(0, 8) // Prendre plus de verbatims
+<<<<<<< HEAD
     .map(r => ({
       text: r.cleanedText.substring(0, 200) + (r.cleanedText.length > 200 ? '...' : ''),
       rating: r.note || 0,
       sentiment: (r.note || 0) >= 4 ? 'positive' as const : (r.note || 0) <= 2 ? 'negative' as const : 'neutral' as const
     }));
+=======
+    .map(r => {
+      const rating = normalizeRating(r.note || (r as any).rating || 0);
+      const sentiment = computeSentimentFromRating(rating);
+      
+      return {
+        text: r.cleanedText.substring(0, 200) + (r.cleanedText.length > 200 ? '...' : ''),
+        rating,
+        sentiment
+      };
+    });
+>>>>>>> origin/branche-papa
 
   const qualitative = {
     topKeywords,

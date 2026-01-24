@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Mail, Shield, Cookie, FileText, HelpCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useTranslation } from "react-i18next";
+import { APP_NAME } from "@/config/brand";
 
 export function Footer() {
   const { t } = useTranslation();
@@ -15,7 +16,7 @@ export function Footer() {
           {/* Colonne 1 - Reviewsvisor */}
           <div>
             <Link to={reviewsvisorLink}>
-              <h3 className="text-white font-bold text-lg mb-4 hover:opacity-80 transition-opacity cursor-pointer" translate="no">Reviewsvisor</h3>
+              <h3 className="text-white font-bold text-lg mb-4 hover:opacity-80 transition-opacity cursor-pointer normal-case" translate="no">{APP_NAME}</h3>
             </Link>
             <ul className="space-y-3">
               <li>
@@ -94,7 +95,7 @@ export function Footer() {
         {/* Séparateur */}
         <div className="border-t border-white/20 pt-8">
           <p className="text-center text-sm text-white">
-            © 2025 <span translate="no">Reviewsvisor</span>. {t("common.allRightsReserved")}.
+            © 2025 <span translate="no" className="normal-case">{APP_NAME}</span>. {t("common.allRightsReserved")}.
           </p>
         </div>
       </div>

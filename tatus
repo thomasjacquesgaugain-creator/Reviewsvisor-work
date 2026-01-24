@@ -1,0 +1,17 @@
+src/App.tsx
+src/components/NavBar.tsx
+src/components/analysis/AnalysisPage.tsx
+src/components/analysis/AnalysisTabContent.tsx
+src/components/analysis/DiagnosticSection.tsx
+src/components/analysis/HistorySection.tsx
+src/components/analysis/OverviewSection.tsx
+src/components/analysis/ParetoSection.tsx
+src/components/analysis/QualitativeSection.tsx
+src/components/analysis/SentimentDistributionSection.tsx
+src/components/analysis/ThemesSection.tsx
+src/components/analysis/index.ts
+src/pages/Dashboard.tsx
+src/types/analysis.ts
+src/utils/cleanReviewText.ts
+src/utils/formatDiagnosticSummary.ts
+src/utils/transformAnalysisData.ts
