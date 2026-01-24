@@ -1,5 +1,11 @@
+import { useEffect, useMemo, useState } from "react";
+import { DateRange } from "react-day-picker";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { useAnalysisFilters } from "./AnalysisFiltersContext";
-import { RotateCcw } from "lucide-react";
+import { Check, RotateCcw } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { computeRange } from "@/utils/filterReviews";
 import {
   Select,
   SelectContent,
@@ -59,25 +65,131 @@ export function ThematicSegmentationBar() {
   } = useAnalysisFilters();
 
   const isLowData = filteredReviews.length > 0 && filteredReviews.length < 3;
+  const [isCustomOpen, setIsCustomOpen] = useState(false);
+  const [draftRange, setDraftRange] = useState<DateRange | undefined>(undefined);
+  const [periodBeforeCustom, setPeriodBeforeCustom] = useState<typeof periodFilter | null>(null);
+
+  // Pending filters (applied only when user clicks "Valider")
+  const [pendingRatingFilter, setPendingRatingFilter] = useState(ratingFilter);
+  const [pendingSourceFilter, setPendingSourceFilter] = useState(sourceFilter);
+  const [pendingPeriodFilter, setPendingPeriodFilter] = useState(periodFilter);
+
+  const isDirty = useMemo(() => {
+    const sameRating = pendingRatingFilter === ratingFilter;
+    const sameSource = pendingSourceFilter === sourceFilter;
+    const samePreset = pendingPeriodFilter.preset === periodFilter.preset;
+    const sameStart =
+      (pendingPeriodFilter.startDate?.getTime?.() ?? null) ===
+      (periodFilter.startDate?.getTime?.() ?? null);
+    const sameEnd =
+      (pendingPeriodFilter.endDate?.getTime?.() ?? null) ===
+      (periodFilter.endDate?.getTime?.() ?? null);
+    return !(sameRating && sameSource && samePreset && sameStart && sameEnd);
+  }, [
+    pendingPeriodFilter.endDate,
+    pendingPeriodFilter.preset,
+    pendingPeriodFilter.startDate,
+    pendingRatingFilter,
+    pendingSourceFilter,
+    periodFilter.endDate,
+    periodFilter.preset,
+    periodFilter.startDate,
+    ratingFilter,
+    sourceFilter,
+  ]);
+
+  const hasCustomApplied =
+    periodFilter.preset === "custom" &&
+    !!periodFilter.startDate &&
+    !!periodFilter.endDate;
+
+  const hasPendingCustom =
+    pendingPeriodFilter.preset === "custom" &&
+    !!pendingPeriodFilter.startDate &&
+    !!pendingPeriodFilter.endDate;
+
+  const customRangeLabel = useMemo(() => {
+    if (!periodFilter.startDate || !periodFilter.endDate) return "Personnalisé…";
+    return `${format(periodFilter.startDate, "dd/MM/yyyy", { locale: fr })} – ${format(periodFilter.endDate, "dd/MM/yyyy", { locale: fr })}`;
+  }, [periodFilter.endDate, periodFilter.startDate]);
+
+  const pendingCustomRangeLabel = useMemo(() => {
+    if (!pendingPeriodFilter.startDate || !pendingPeriodFilter.endDate) return "Personnalisé…";
+    return `${format(pendingPeriodFilter.startDate, "dd/MM/yyyy", { locale: fr })} – ${format(pendingPeriodFilter.endDate, "dd/MM/yyyy", { locale: fr })}`;
+  }, [pendingPeriodFilter.endDate, pendingPeriodFilter.startDate]);
+
+  useEffect(() => {
+    // Sync pending with applied values when there are no unsaved changes
+    if (!isDirty) {
+      setPendingRatingFilter(ratingFilter);
+      setPendingSourceFilter(sourceFilter);
+      setPendingPeriodFilter(periodFilter);
+    }
+  }, [isDirty, periodFilter, ratingFilter, sourceFilter]);
 
   const handlePeriodChange = (value: string) => {
     if (value === "custom") {
-      setPeriodFilter({ preset: "custom" });
-    } else if (value === "ALL_TIME" || value === "30d" || value === "90d" || value === "365d") {
-      setPeriodFilter({ preset: value as any });
+      setPeriodBeforeCustom(pendingPeriodFilter);
+      setPendingPeriodFilter((prev) => ({ ...(prev as any), preset: "custom" } as any));
+      setDraftRange({
+        from: pendingPeriodFilter.startDate ?? undefined,
+        to: pendingPeriodFilter.endDate ?? undefined,
+      });
+      setIsCustomOpen(true);
+      return;
+    }
+
+    setIsCustomOpen(false);
+    setPeriodBeforeCustom(null);
+
+    if (value === "all") {
+      const range = computeRange("all");
+      setPendingPeriodFilter({ preset: "all", startDate: range.start, endDate: range.end } as any);
+      return;
+    }
+
+    if (value === "30d") {
+      const range = computeRange("30d");
+      setPendingPeriodFilter({ preset: "30d", startDate: range.start, endDate: range.end } as any);
+      return;
+    }
+
+    if (value === "90d") {
+      const range = computeRange("90d");
+      setPendingPeriodFilter({ preset: "90d", startDate: range.start, endDate: range.end } as any);
+      return;
+    }
+
+    if (value === "12m") {
+      const range = computeRange("12m");
+      setPendingPeriodFilter({ preset: "12m", startDate: range.start, endDate: range.end } as any);
+      return;
     }
   };
 
   const handleSourceChange = (value: string) => {
     const opt = SOURCE_OPTIONS.find((o) => o.value === value);
     if (!opt || !opt.enabled) return;
-    setSourceFilter(opt.value);
+    setPendingSourceFilter(opt.value);
   };
 
   const handleReset = () => {
+    // Reset pending + applied (comportement existant conservé)
+    setPendingRatingFilter("ALL");
+    setPendingPeriodFilter({ preset: "all", startDate: null, endDate: null } as any);
+    setPendingSourceFilter("google");
     setRatingFilter("ALL");
-    setPeriodFilter({ preset: "ALL_TIME" });
+    setPeriodFilter({ preset: "all", startDate: null, endDate: null });
     setSourceFilter("google");
+    setIsCustomOpen(false);
+    setDraftRange(undefined);
+  };
+
+  const handleValidate = () => {
+    setRatingFilter(pendingRatingFilter as any);
+    setPeriodFilter(pendingPeriodFilter as any);
+    setSourceFilter(pendingSourceFilter as any);
+    setIsCustomOpen(false);
   };
 
   const ratingLabel =
@@ -94,10 +206,10 @@ export function ThematicSegmentationBar() {
       ? "30 jours"
       : periodFilter.preset === "90d"
       ? "90 jours"
-      : periodFilter.preset === "365d"
+      : periodFilter.preset === "12m"
       ? "12 mois"
       : periodFilter.preset === "custom"
-      ? "Période personnalisée"
+      ? customRangeLabel
       : "Toute la période";
 
   const currentSourceOption = SOURCE_OPTIONS.find((opt) => opt.value === sourceFilter);
@@ -111,7 +223,7 @@ export function ThematicSegmentationBar() {
           <p className="mt-1 text-xs text-gray-500">
             Analyse basée sur{" "}
             <span className="font-semibold text-gray-800">
-              {filteredReviews.length || totalReviews}
+              {filteredReviews.length}
             </span>{" "}
             avis
           </p>
@@ -127,7 +239,7 @@ export function ThematicSegmentationBar() {
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 md:flex-1 md:justify-center">
           {/* Filtres de note */}
           <div className="flex items-center gap-1 rounded-full bg-gray-100 px-1 py-1">
             {[
@@ -139,11 +251,11 @@ export function ThematicSegmentationBar() {
               <button
                 key={opt.key}
                 type="button"
-                onClick={() => setRatingFilter(opt.key as any)}
-                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                  ratingFilter === opt.key
-                    ? "bg-gray-900 text-white shadow-sm"
-                    : "bg-transparent text-gray-700 hover:bg-white"
+                onClick={() => setPendingRatingFilter(opt.key as any)}
+                className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors duration-200 ease-in-out ${
+                  pendingRatingFilter === opt.key
+                    ? "bg-blue-600 text-white border-blue-600/30 shadow-sm hover:bg-[#1e4fc9]"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-blue-50 hover:text-slate-900 hover:border-blue-200"
                 }`}
               >
                 {opt.label}
@@ -155,30 +267,30 @@ export function ThematicSegmentationBar() {
           <div className="flex items-center gap-1 text-xs">
             <span className="text-gray-500">Période :</span>
             <select
-              value={periodFilter.preset}
+              value={pendingPeriodFilter.preset}
               onChange={(e) => handlePeriodChange(e.target.value)}
               className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 shadow-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
             >
-              <option value="ALL_TIME">Toute la période</option>
+              <option value="all">Toute la période</option>
               <option value="30d">30 jours</option>
               <option value="90d">90 jours</option>
-              <option value="365d">12 mois</option>
-              <option value="custom">Personnalisé…</option>
+              <option value="12m">12 mois</option>
+              <option value="custom">{hasPendingCustom ? pendingCustomRangeLabel : "Personnalisé…"}</option>
             </select>
           </div>
 
           {/* Filtre source */}
           <div className="flex items-center gap-1 text-xs">
             <span className="text-gray-500">Source :</span>
-            <Select value={sourceFilter} onValueChange={handleSourceChange}>
+            <Select value={pendingSourceFilter} onValueChange={handleSourceChange}>
               <SelectTrigger
-                className={`h-8 w-[140px] rounded-md border px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-offset-0 transition-colors flex items-center gap-2 ${
-                  sourceFilter === "google"
-                    ? "bg-slate-900 text-white border-slate-900"
-                    : "bg-white text-gray-700 border-gray-200"
+                className={`h-8 w-[140px] rounded-md border px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-offset-0 transition-colors duration-200 ease-in-out flex items-center gap-2 ${
+                  pendingSourceFilter === "google"
+                    ? "bg-blue-600 text-white border-blue-600/30 hover:bg-[#1e4fc9]"
+                    : "bg-white text-blue-950 border-slate-200 hover:bg-blue-50 hover:border-blue-200"
                 }`}
               >
-                {sourceFilter === "google" && (
+                {pendingSourceFilter === "google" && (
                   <GoogleLogo className="h-4 w-4 flex-shrink-0" />
                 )}
                 <SelectValue placeholder="Source" />
@@ -198,11 +310,27 @@ export function ThematicSegmentationBar() {
             </Select>
           </div>
 
+          {/* Bouton Valider */}
+          <button
+            type="button"
+            onClick={handleValidate}
+            disabled={!isDirty}
+            className={`inline-flex h-8 items-center gap-1.5 rounded-md border px-3 py-1 text-xs font-semibold shadow-sm transition-colors duration-200 ease-in-out ${
+              isDirty
+                ? "border-blue-600/30 bg-blue-600 text-white hover:bg-[#1e4fc9]"
+                : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 shadow-none"
+            }`}
+            title={!isDirty ? "Aucun changement à appliquer" : "Appliquer les filtres sélectionnés"}
+          >
+            <Check className="h-3.5 w-3.5" />
+            Valider
+          </button>
+
           {/* Bouton Réinitialiser */}
           <button
             type="button"
             onClick={handleReset}
-            className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-600 shadow-sm hover:bg-gray-50"
+            className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-white px-3 py-1 text-xs font-medium text-blue-600 shadow-sm transition-colors duration-200 ease-in-out hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
           >
             <RotateCcw className="h-3 w-3" />
             Réinitialiser
@@ -211,13 +339,78 @@ export function ThematicSegmentationBar() {
       </div>
 
       {/* Résumé compact */}
-      <div className="mt-2 text-[11px] text-gray-500">
-        {ratingLabel} · {periodLabel} · {sourceLabel}
+      <div className="mt-2 text-[11px] font-semibold text-slate-700">
+        Sélection : {ratingLabel} · {periodLabel} · {sourceLabel}
       </div>
+
+      {/* Date range picker (Personnalisé…) */}
+      {isCustomOpen && (
+        <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-800">Période personnalisée</p>
+              <p className="text-[11px] text-slate-500">
+                Choisissez une date de début et une date de fin, puis validez.
+              </p>
+            </div>
+            <div className="mt-2 flex items-center gap-2 md:mt-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCustomOpen(false);
+                  setDraftRange(undefined);
+                  if (periodBeforeCustom) {
+                    setPendingPeriodFilter(periodBeforeCustom as any);
+                    setPeriodBeforeCustom(null);
+                  }
+                }}
+                className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition-colors duration-200 ease-in-out hover:bg-blue-50 hover:text-blue-950 hover:border-blue-200"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                disabled={!draftRange?.from || !draftRange?.to}
+                onClick={() => {
+                  if (!draftRange?.from || !draftRange?.to) return;
+                  const range = computeRange("custom", draftRange.from, draftRange.to);
+                  setPendingPeriodFilter({
+                    preset: "custom",
+                    startDate: range.start,
+                    endDate: range.end,
+                  });
+                  setIsCustomOpen(false);
+                  setPeriodBeforeCustom(null);
+                }}
+                className="inline-flex items-center rounded-md border border-blue-900/30 bg-blue-900 px-3 py-1 text-xs font-medium text-white shadow-sm transition-colors duration-200 ease-in-out hover:bg-blue-950 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Appliquer
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <Calendar
+              mode="range"
+              numberOfMonths={2}
+              selected={draftRange}
+              onSelect={setDraftRange}
+              disabled={{ after: new Date() }}
+              defaultMonth={draftRange?.from ?? new Date()}
+            />
+          </div>
+        </div>
+      )}
 
       {isLowData && (
         <div className="mt-3 inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-medium text-amber-700">
           Données limitées – interprétation prudente
+        </div>
+      )}
+
+      {filteredReviews.length === 0 && periodFilter.preset !== "all" && (
+        <div className="mt-3 inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600">
+          Aucun avis sur la période sélectionnée
         </div>
       )}
     </div>

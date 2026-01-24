@@ -2377,7 +2377,7 @@ const Dashboard = () => {
                   Object.entries(platformStats).map(([source, stats]) => {
                     // Configuration des plateformes
                     const platformConfig: Record<string, { name: string; color: string; initial: string }> = {
-                      google: { name: t("platforms.google"), color: 'bg-red-100 text-red-600', initial: 'G' },
+                      google: { name: t("platforms.google"), color: 'bg-blue-50 text-blue-600', initial: 'G' },
                       yelp: { name: t("platforms.yelp"), color: 'bg-yellow-100 text-yellow-600', initial: 'Y' },
                       tripadvisor: { name: t("platforms.tripadvisor"), color: 'bg-green-100 text-green-600', initial: 'T' },
                       facebook: { name: t("platforms.facebook"), color: 'bg-blue-100 text-blue-600', initial: 'F' },
@@ -4392,7 +4392,7 @@ const Dashboard = () => {
                                     {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                   </td>
                                   <td className="px-4 py-3">
-                                    <Badge className="text-xs bg-blue-500 text-white border-blue-500">
+                                    <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
                                       {review.source || "Google"}
                                     </Badge>
                                   </td>
@@ -4503,7 +4503,7 @@ const Dashboard = () => {
                                     {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                   </td>
                                   <td className="px-4 py-3">
-                                    <Badge className="text-xs bg-blue-500 text-white border-blue-500">
+                                    <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
                                       {review.source || "Google"}
                                     </Badge>
                                   </td>
@@ -4601,7 +4601,7 @@ const Dashboard = () => {
                                     {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                   </td>
                                   <td className="px-4 py-3">
-                                    <Badge className="text-xs bg-blue-500 text-white border-blue-500">
+                                    <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
                                       {review.source || "Google"}
                                     </Badge>
                                   </td>
@@ -4699,7 +4699,7 @@ const Dashboard = () => {
                                     {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                   </td>
                                   <td className="px-4 py-3">
-                                    <Badge className="text-xs bg-blue-500 text-white border-blue-500">
+                                    <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
                                       {review.source || "Google"}
                                     </Badge>
                                   </td>
@@ -4785,7 +4785,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
+                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -4872,7 +4872,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
+                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -4952,7 +4952,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
+                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -5041,7 +5041,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
+                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -5121,7 +5121,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
+                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -5201,7 +5201,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
+                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -5286,7 +5286,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
+                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -5366,7 +5366,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
+                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -5446,7 +5446,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
+                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -5531,7 +5531,7 @@ const Dashboard = () => {
                                           {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                         </td>
                                         <td className="px-4 py-3">
-                                          <Badge className="text-xs bg-blue-500 text-white border-blue-500">
+                                          <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
                                             {review.source || "Google"}
                                           </Badge>
                                         </td>
@@ -5598,7 +5598,7 @@ const Dashboard = () => {
                                           {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                         </td>
                                         <td className="px-4 py-3">
-                                          <Badge className="text-xs bg-blue-500 text-white border-blue-500">
+                                          <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
                                             {review.source || "Google"}
                                           </Badge>
                                         </td>
