@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar, Download, ClipboardList, Bot, X, Reply, List, Sparkles, AlertCircle, Frown, ThumbsUp, Flag, Zap, Flame, Globe, Layers, Check } from "lucide-react";
+import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar, Download, ClipboardList, Bot, X, Reply, Send, List, Sparkles, AlertCircle, Frown, ThumbsUp, Flag, Zap, Flame, Globe, Layers, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -254,92 +254,6 @@ const Dashboard = () => {
     const minTarget = Math.min(5, Math.max(1, currentAvgRatingForTarget));
     setTargetRating(prev => (prev < minTarget ? minTarget : prev));
   }, [currentAvgRatingForTarget]);  
-
-  const [actionPlanChecks, setActionPlanChecks] = useState<Record<string, boolean>>({});
-
-  const [targetRating, setTargetRating] = useState<number>(4.5);
-
-  const currentAvgRatingForTarget = useMemo(() => {
-    const hasAnyReviews = allReviewsForChart.length > 0;
-    return hasAnyReviews ? (insight?.avg_rating ?? 0) : 0;
-  }, [allReviewsForChart.length, insight?.avg_rating]);
-
-  const targetRatingDisplay = useMemo(() => targetRating.toFixed(1), [targetRating]);
-
-  const targetDifficulty = useMemo(() => {
-    const current = Number(currentAvgRatingForTarget.toFixed(1));
-    const target = Number(targetRating.toFixed(1));
-    const delta = Math.max(0, target - current);
-
-    // Progression exponentielle (non affichée) : utilisée pour refléter que chaque 0.1 devient plus "difficile"
-    // quand on se rapproche de 5.0.
-    const difficultyScore = Math.expm1(delta * 2);
-    void difficultyScore;
-
-    if (delta < 0.3) {
-      return {
-        label: 'Accessible',
-        badgeClassName: 'text-green-700 bg-green-50 border-green-200',
-        cardClassName: 'bg-green-50 border-green-200',
-        labelClassName: 'text-green-800'
-      };
-    }
-    if (delta < 0.5) {
-      return {
-        label: 'Réaliste',
-        badgeClassName: 'text-blue-700 bg-blue-50 border-blue-200',
-        cardClassName: 'bg-blue-50 border-blue-200',
-        labelClassName: 'text-blue-800'
-      };
-    }
-    if (delta < 0.8) {
-      return {
-        label: 'Atteignable',
-        badgeClassName: 'text-orange-700 bg-orange-50 border-orange-200',
-        cardClassName: 'bg-orange-50 border-orange-200',
-        labelClassName: 'text-orange-800'
-      };
-    }
-    return {
-      label: 'Ambitieux',
-      badgeClassName: 'text-red-700 bg-red-50 border-red-200',
-      cardClassName: 'bg-red-50 border-red-200',
-      labelClassName: 'text-red-800'
-    };
-  }, [currentAvgRatingForTarget, targetRating]);
-
-  const targetDateText = useMemo(() => {
-    const current = Number(currentAvgRatingForTarget.toFixed(1));
-    const target = Number(targetRating.toFixed(1));
-    const delta = Math.max(0, target - current);
-
-    const now = Date.now();
-    const ninetyDaysMs = 90 * 24 * 60 * 60 * 1000;
-    const last90DaysCount = allReviewsForChart.reduce((acc, r: any) => {
-      const ds = r?.published_at || r?.create_time || r?.raw?.createTime || r?.inserted_at;
-      const ts = ds ? new Date(ds).getTime() : 0;
-      if (ts > 0 && now - ts <= ninetyDaysMs) return acc + 1;
-      return acc;
-    }, 0);
-    const reviewsPerMonth = last90DaysCount / 3;
-
-    if (delta < 0.3) return "D'ici 1 mois";
-    if (delta < 0.5) return "D'ici 2 mois";
-
-    if (delta < 0.8) {
-      // Si peu d'avis/mois, viser plutôt le haut de la fourchette
-      if (reviewsPerMonth > 0 && reviewsPerMonth < 5) return "D'ici 4 mois";
-      return "D'ici 3-4 mois";
-    }
-
-    // Ambitieux
-    return "D'ici 6 mois ou plus";
-  }, [currentAvgRatingForTarget, targetRating, allReviewsForChart]);
-
-  useEffect(() => {
-    const minTarget = Math.min(5, Math.max(1, currentAvgRatingForTarget));
-    setTargetRating(prev => (prev < minTarget ? minTarget : prev));
-  }, [currentAvgRatingForTarget]);
 
   // Checklist opérationnelle
   const [checklistActions, setChecklistActions] = useState<ChecklistAction[]>([]);

@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthProvider";
@@ -7,8 +8,6 @@ import RequireGuest from "@/components/RequireGuest";
 import { AppLayout } from "@/components/AppLayout";
 import { loadCustomization } from "@/utils/theme";
 import { diagnoseSupabaseStorage } from "@/utils/supabaseDiagnostics";
-import SignInForm from "@/components/SignInForm";
-import SignUpForm from "@/components/SignUpForm";
 import Accueil from "./pages/Accueil";
 import Login from "./pages/Login";
 import TableauDeBord from "./pages/TableauDeBord";
@@ -31,6 +30,7 @@ import UpdatePassword from "./pages/UpdatePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import Abonnement from "./pages/Abonnement";
 import Compte from "./pages/Compte";
+import Inscription from "./pages/Inscription";
 import { SettingsLayout } from "./components/settings/SettingsLayout";
 import { ProfileSettings } from "./pages/settings/ProfileSettings";
 import { SecuritySettings } from "./pages/settings/SecuritySettings";
