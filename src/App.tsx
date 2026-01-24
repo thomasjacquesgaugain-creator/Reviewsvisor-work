@@ -31,9 +31,6 @@ import UpdatePassword from "./pages/UpdatePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import Abonnement from "./pages/Abonnement";
 import Compte from "./pages/Compte";
-<<<<<<< HEAD
-import Inscription from "./pages/Inscription";
-=======
 import { SettingsLayout } from "./components/settings/SettingsLayout";
 import { ProfileSettings } from "./pages/settings/ProfileSettings";
 import { SecuritySettings } from "./pages/settings/SecuritySettings";
@@ -43,7 +40,6 @@ import { LanguageSettings } from "./pages/settings/LanguageSettings";
 import { BillingSettings } from "./pages/settings/BillingSettings";
 import { BillingReports } from "./pages/settings/BillingReports";
 import { CustomizationSettings } from "./pages/settings/CustomizationSettings";
->>>>>>> origin/branche-papa
 
 const ScrollToTop = () => {
   const location = useLocation();
