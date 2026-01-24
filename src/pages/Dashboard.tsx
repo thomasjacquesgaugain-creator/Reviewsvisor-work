@@ -7,11 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-<<<<<<< HEAD
-import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar, Download, ClipboardList, Bot, X, Reply, List, Sparkles, AlertCircle, Frown, ThumbsUp, Flag, Zap, Flame, Globe, Layers, Check, MessageCircle, Send } from "lucide-react";
-=======
 import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar, Download, ClipboardList, Bot, X, Reply, List, Sparkles, AlertCircle, Frown, ThumbsUp, Flag, Zap, Flame, Globe, Layers, Check } from "lucide-react";
->>>>>>> origin/branche-papa
 import { Link } from "react-router-dom";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,11 +25,7 @@ import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { fr, enUS, it, es, ptBR } from "date-fns/locale";
 import { DashboardTabs } from "@/components/DashboardTabs";
-<<<<<<< HEAD
-import { AnalysisTabContent } from "@/components/analysis";
-=======
 import { AnalysisTabContent } from "@/components/analysis/AnalysisTabContent";
->>>>>>> origin/branche-papa
 
 
 const Dashboard = () => {
@@ -2780,11 +2772,7 @@ const Dashboard = () => {
               return {
                 id: r.id?.toString() || '',
                 etablissementId: selectedEtab?.place_id || selectedEstablishment?.place_id || '',
-<<<<<<< HEAD
-                source: (r.source || 'google') as const,
-=======
                 source: (r.source || 'google') as "google" | "trustpilot" | "facebook" | "yelp" | "tripadvisor" | "other",
->>>>>>> origin/branche-papa
                 note: r.rating || 0,
                 texte: r.text || r.comment || '',
                 // Utiliser published_at en priorité, puis inserted_at, puis created_at
@@ -3407,271 +3395,6 @@ const Dashboard = () => {
                 </Button>
               </CardHeader>
 
-<<<<<<< HEAD
-        {openCard === 'checklist' && <Card className="mb-8">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xl">{t("dashboard.operationalChecklist")}</CardTitle>
-                <p className="text-sm text-gray-600">{t("dashboard.concreteActions")}</p>
-                      </div>
-              <div className="flex items-center gap-2">
-                <Badge className="bg-green-600 text-white border-green-600">
-                  {checklistActions.filter(a => a.completed).length}/{checklistActions.length || 5}
-                </Badge>
-                {completedActionsCount > 0 && (
-                  <Badge className="bg-green-100 text-green-800 border-green-300">
-                    {completedActionsCount} {completedActionsCount === 1 ? 'action complétée' : 'actions complétées'}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-                <div className="space-y-2">
-              {checklistActions.length > 0 ? (
-                checklistActions.map((action) => (
-                  <div
-                    key={action.id}
-                    className={`flex items-start gap-3 p-3 rounded-lg border border-gray-200 border-l-4 transition-all duration-300 ${
-                      removingActionId === action.id 
-                        ? 'opacity-0 transform scale-95 -translate-x-4' 
-                        : 'opacity-100 transform scale-100 translate-x-0'
-                    } ${(() => {
-                      const text = (action.text || '').toLowerCase();
-                      if (text.includes('teste le temps d\'attente réel aux heures de pointe')) return 'border-l-red-500 bg-red-100 hover:bg-red-200';
-                      if (text.includes('briefe l\'équipe sur la rapidité de service')) return 'border-l-red-500 bg-red-100 hover:bg-red-200';
-                      if (text.includes('observe le service ce soir pour identifier les points de blocage')) return 'border-l-red-500 bg-red-100 hover:bg-red-200';
-                      if (text.includes('réponds à 10 avis clients')) return 'border-l-blue-500 bg-blue-100 hover:bg-blue-200';
-                      if (text.includes('informe ton équipe du problème prioritaire')) return 'border-l-blue-500 bg-blue-100 hover:bg-blue-200';
-                      return 'border-l-blue-500 bg-blue-100 hover:bg-blue-200';
-                    })()}`}
-                  >
-                    <span className={`text-sm flex-1 ${action.completed ? 'line-through text-gray-400' : 'text-gray-900'}`}>
-                      {action.text}
-                    </span>
-                    <button
-                      onClick={() => handleChecklistActionComplete(action.id)}
-                      className="mt-0.5 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
-                      aria-label={`Marquer "${action.text}" comme complétée`}
-                    >
-                      <div
-                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                          action.completed
-                            ? 'border-green-600 bg-green-50'
-                            : 'border-gray-400 bg-white hover:border-gray-600'
-                        }`}
-                      >
-                        {action.completed ? (
-                          <Check className="w-4 h-4 text-green-600" />
-                        ) : null}
-                      </div>
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <p className="text-sm">{t("dashboard.noChecklistActionsAvailable") || "Aucune action disponible"}</p>
-                  <p className="text-xs mt-1">{t("dashboard.analyzeEstablishmentToGetActions") || "Analysez votre établissement pour obtenir des actions personnalisées"}</p>
-                  </div>
-                )}
-            </div>
-          </CardContent>
-        </Card>}
-
-
-
-        {/* LIGNE 2 : 2 sections côte à côte */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          {/* Conseiller */}
-          <Card className="relative h-full flex flex-col cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1" onClick={() => setOpenCard(openCard === 'conseiller' ? null : 'conseiller')}>
-            <CardContent className="p-6 text-center">
-              <div className="flex flex-col items-center mb-2">
-                <Lightbulb className="w-5 h-5 text-yellow-500 mb-2" />
-                <span className="text-lg font-semibold">{t("dashboard.advisor")}</span>
-              </div>
-              <p className="text-sm text-gray-600">{t("dashboard.personalizedAdviceForEstablishment")}</p>
-              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'conseiller' ? null : 'conseiller'); }} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-yellow-50">
-                {openCard === 'conseiller' ? <ChevronUp className="w-3 h-3 text-yellow-500" /> : <ChevronDown className="w-3 h-3 text-yellow-500" />}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Plan d'actions */}
-          <Card className="relative h-full flex flex-col cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1" onClick={() => setOpenCard(openCard === 'planActions' ? null : 'planActions')}>
-            <CardContent className="p-6 text-center">
-              <div className="flex flex-col items-center mb-2">
-                <ClipboardList className="w-5 h-5 text-indigo-500 mb-2" />
-                <span className="text-lg font-semibold">{t("dashboard.actionPlan")}</span>
-              </div>
-              <p className="text-sm text-gray-600">{t("dashboard.followImprovementActions")}</p>
-              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'planActions' ? null : 'planActions'); }} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-indigo-50">
-                {openCard === 'planActions' ? <ChevronUp className="w-3 h-3 text-indigo-500" /> : <ChevronDown className="w-3 h-3 text-indigo-500" />}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Contenu Conseiller */}
-        {openCard === 'conseiller' && <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-xl">{t("dashboard.advisor")}</CardTitle>
-            <p className="text-sm text-gray-600">{t("dashboard.personalizedAdviceForEstablishment")}</p>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Conseils générés dynamiquement par le consultant */}
-              {(() => {
-                const consultantAdvice = generateConsultantAdvice(insight, allReviewsForChart, validatedReviews);
-                
-                if (consultantAdvice.length === 0) {
-                  return (
-                    <div className="text-center py-8 text-gray-500">
-                      <p className="text-sm">{t("dashboard.noAdviceAvailable") || "Aucun conseil disponible"}</p>
-                      <p className="text-xs mt-1">{t("dashboard.analyzeEstablishmentToGetAdvice") || "Analysez votre établissement pour obtenir des conseils personnalisés"}</p>
-                </div>
-                  );
-                }
-
-                return (
-                  <div className="space-y-3">
-                    {consultantAdvice.map((advice, index) => (
-                      <div key={index} className="flex items-start gap-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <Lightbulb className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm text-gray-900 flex-1 leading-relaxed">{advice}</p>
-                </div>
-                    ))}
-                </div>
-                );
-              })()}
-
-              {/* Message d'information */}
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-xs text-gray-600">
-                  {t("dashboard.advisorDescription") || "Conseils personnalisés basés sur l'analyse de vos avis clients"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>}
-
-        {/* Contenu Plan d'actions */}
-        {openCard === 'planActions' && <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-xl">{t("dashboard.actionPlan")}</CardTitle>
-            <p className="text-sm text-gray-600">{t("dashboard.followImprovementActions")}</p>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Liste des actions générées dynamiquement */}
-              {(() => {
-                const actionPlan = generateActionPlan(insight, allReviewsForChart);
-                
-                if (actionPlan.length === 0) {
-                  return (
-                    <div className="text-center py-8 text-gray-500">
-                      <p className="text-sm">{t("dashboard.noActionsAvailable") || "Aucune action disponible"}</p>
-                      <p className="text-xs mt-1">{t("dashboard.analyzeEstablishmentToGetActions") || "Analysez votre établissement pour obtenir des actions personnalisées"}</p>
-                </div>
-                  );
-                }
-
-                return (
-                  <div className="space-y-3">
-                    {actionPlan.map((action, index) => {
-                      // Déterminer le style du badge de priorité
-                      const priorityBadgeClass = action.priority === 'high' 
-                        ? 'bg-red-100 text-red-800 border-red-300' 
-                        : action.priority === 'medium'
-                        ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
-                        : 'bg-blue-100 text-blue-800 border-blue-300';
-                      
-                      // Déterminer le style du badge de statut
-                      const statusBadgeClass = action.status === 'completed'
-                        ? 'bg-green-100 text-green-800 border-green-300'
-                        : action.status === 'inProgress'
-                        ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
-                        : action.priority === 'high'
-                        ? 'bg-red-500 text-white border-red-500'
-                        : action.priority === 'low'
-                        ? 'bg-blue-500 text-white border-blue-500'
-                        : 'border-gray-300 text-gray-700';
-                      
-                      const statusLabel = action.status === 'completed'
-                        ? t("dashboard.completed")
-                        : action.status === 'inProgress'
-                        ? t("dashboard.inProgress")
-                        : t("dashboard.toDo");
-
-                      const priorityLabel = action.priority === 'high'
-                        ? t("dashboard.highPriority")
-                        : action.priority === 'medium'
-                        ? t("dashboard.mediumPriority")
-                        : t("dashboard.lowPriority");
-
-                      return (
-                        <div key={index} className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-900 mb-1">{action.title}</p>
-                              <div className="flex items-center gap-2 mt-2">
-                                <Badge variant="outline" className={`text-xs ${priorityBadgeClass}`}>
-                                  {priorityLabel}
-                                </Badge>
-                                <span className="text-xs text-gray-500">
-                                  {translateTheme(action.issue)}
-                  </span>
-                </div>
-                    </div>
-                            <div className="flex flex-col items-end gap-2">
-                              <Badge 
-                                variant={action.status === 'completed' ? 'default' : 'outline'} 
-                                className={`text-xs ${statusBadgeClass}`}
-                              >
-                                {statusLabel}
-                              </Badge>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const key = `${action.title}__${action.issue}`;
-                                  setActionPlanChecks(prev => ({ ...prev, [key]: !prev[key] }));
-                                }}
-                                className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
-                                aria-label={`Cocher l'action "${action.title}"`}
-                              >
-                                <div
-                                  className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${(() => {
-                                    const key = `${action.title}__${action.issue}`;
-                                    const checked = !!actionPlanChecks[key];
-                                    return checked
-                                      ? 'border-green-600 bg-green-50'
-                                      : 'border-gray-400 bg-white hover:border-gray-600';
-                                  })()}`}
-                                >
-                                  {(() => {
-                                    const key = `${action.title}__${action.issue}`;
-                                    return actionPlanChecks[key] ? <Check className="w-4 h-4 text-green-600" /> : null;
-                                  })()}
-                                </div>
-                              </button>
-                            </div>
-                    </div>
-                  </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-
-              {/* Message d'information */}
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-xs text-gray-600">
-                  {t("dashboard.actionPlanDescription")}
-                    </p>
-                  </div>
-                </div>
-=======
               {isSynthesisOpen && (
                 <CardContent className="animate-in fade-in-0 slide-in-from-top-2 duration-200">
                   <div className="space-y-8">
@@ -4111,7 +3834,6 @@ const Dashboard = () => {
                   </p>
                 </div>
               </div>
->>>>>>> origin/branche-papa
             </CardContent>
           )}
         </Card>
@@ -4125,11 +3847,7 @@ const Dashboard = () => {
             <div className="flex flex-col items-center mb-2">
               <Bot className="w-5 h-5 text-purple-500 mb-2" />
               <span className="text-lg font-semibold">Agent</span>
-<<<<<<< HEAD
-                </div>
-=======
             </div>
->>>>>>> origin/branche-papa
             <p className="text-sm text-gray-600">Assistant IA pour répondre à vos avis</p>
             <Button
               variant="ghost"
@@ -4146,32 +3864,6 @@ const Dashboard = () => {
                 <ChevronDown className="w-3 h-3 text-purple-500" />
               )}
             </Button>
-<<<<<<< HEAD
-          </CardContent>
-        </Card>
-
-        {/* Contenu Agent */}
-        {openCard === 'agent' && (
-          <div className="mb-8">
-            {/* Carte unique avec Chat Agent IA + FAQ */}
-            <div className="bg-white border border-border/60 rounded-2xl p-5 md:p-7 shadow-sm">
-              <div className="flex gap-4">
-                {/* Bordure gauche bleue */}
-                <div className="hidden sm:block w-1 bg-gradient-to-b from-blue-500 to-blue-500/30 rounded-full shrink-0" />
-                
-                <div className="flex-1">
-                  {/* Titre Agent IA avec icône */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                      <MessageCircle className="w-5 h-5 text-blue-500" />
-                    </div>
-                    <h2 className="text-xl md:text-2xl font-bold text-foreground">Agent IA</h2>
-                  </div>
-                  
-                  {/* Description */}
-                  <p className="text-sm text-muted-foreground mb-6">
-                    Posez vos questions pour générer des réponses personnalisées à vos avis clients
-=======
           </CardHeader>
 
           {isAgentOpen && (
@@ -4180,7 +3872,6 @@ const Dashboard = () => {
                 <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
                   <p className="text-sm text-gray-700">
                     L'agent IA analyse automatiquement vos avis et génère des réponses personnalisées adaptées à chaque situation.
->>>>>>> origin/branche-papa
                   </p>
 
                   {/* Formulaire de saisie - EXACTEMENT comme Assistance IA */}
@@ -4392,12 +4083,6 @@ const Dashboard = () => {
                 </AccordionItem>
               </Accordion>
                 </div>
-<<<<<<< HEAD
-              </div>
-            </div>
-          </div>
-        )}
-=======
                 <div className="space-y-3">
                   <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
                     <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
@@ -4425,7 +4110,6 @@ const Dashboard = () => {
             </CardContent>
           )}
         </Card>
->>>>>>> origin/branche-papa
           </>
         )}
 
@@ -5016,11 +4700,7 @@ const Dashboard = () => {
                                     {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                   </td>
                                   <td className="px-4 py-3">
-<<<<<<< HEAD
-                                    <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-=======
                                     <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
->>>>>>> origin/branche-papa
                                       {review.source || "Google"}
                                     </Badge>
                                   </td>
@@ -5131,11 +4811,7 @@ const Dashboard = () => {
                                     {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                   </td>
                                   <td className="px-4 py-3">
-<<<<<<< HEAD
-                                    <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-=======
                                     <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
->>>>>>> origin/branche-papa
                                       {review.source || "Google"}
                                     </Badge>
                                   </td>
@@ -5233,11 +4909,7 @@ const Dashboard = () => {
                                     {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                   </td>
                                   <td className="px-4 py-3">
-<<<<<<< HEAD
-                                    <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-=======
                                     <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
->>>>>>> origin/branche-papa
                                       {review.source || "Google"}
                                     </Badge>
                                   </td>
@@ -5335,11 +5007,7 @@ const Dashboard = () => {
                                     {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                   </td>
                                   <td className="px-4 py-3">
-<<<<<<< HEAD
-                                    <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-=======
                                     <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
->>>>>>> origin/branche-papa
                                       {review.source || "Google"}
                                     </Badge>
                                   </td>
@@ -5425,11 +5093,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-<<<<<<< HEAD
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-=======
                                         <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
->>>>>>> origin/branche-papa
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -5516,11 +5180,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-<<<<<<< HEAD
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-=======
                                         <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
->>>>>>> origin/branche-papa
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -5600,11 +5260,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-<<<<<<< HEAD
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-=======
                                         <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
->>>>>>> origin/branche-papa
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -5693,11 +5349,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-<<<<<<< HEAD
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-=======
                                         <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
->>>>>>> origin/branche-papa
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -5777,11 +5429,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-<<<<<<< HEAD
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-=======
                                         <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
->>>>>>> origin/branche-papa
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -5861,11 +5509,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-<<<<<<< HEAD
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-=======
                                         <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
->>>>>>> origin/branche-papa
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -5950,11 +5594,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-<<<<<<< HEAD
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-=======
                                         <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
->>>>>>> origin/branche-papa
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -6034,11 +5674,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-<<<<<<< HEAD
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-=======
                                         <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
->>>>>>> origin/branche-papa
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -6118,11 +5754,7 @@ const Dashboard = () => {
                                         {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                       </td>
                                       <td className="px-4 py-3">
-<<<<<<< HEAD
-                                        <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-=======
                                         <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
->>>>>>> origin/branche-papa
                                           {review.source || "Google"}
                                         </Badge>
                                       </td>
@@ -6207,11 +5839,7 @@ const Dashboard = () => {
                                           {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                         </td>
                                         <td className="px-4 py-3">
-<<<<<<< HEAD
-                                          <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-=======
                                           <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
->>>>>>> origin/branche-papa
                                             {review.source || "Google"}
                                           </Badge>
                                         </td>
@@ -6278,11 +5906,7 @@ const Dashboard = () => {
                                           {extractOriginalText(review.text) || review.text || t("dashboard.noComment")}
                                         </td>
                                         <td className="px-4 py-3">
-<<<<<<< HEAD
-                                          <Badge className="text-xs bg-blue-500 text-white border-blue-500">
-=======
                                           <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
->>>>>>> origin/branche-papa
                                             {review.source || "Google"}
                                           </Badge>
                                         </td>
@@ -6343,21 +5967,6 @@ const Dashboard = () => {
                               </tbody>
                             </table>
               </div>
-<<<<<<< HEAD
-                        {/* Bouton "Afficher plus" */}
-                        {filteredReviews.length > displayCount && (
-                          <div className="flex justify-center py-4">
-                            <button 
-                              onClick={() => setDisplayCount(prev => prev + 10)}
-                              className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                            >
-                              Afficher plus
-                              <ChevronDown className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-=======
->>>>>>> origin/branche-papa
                         </div>
                       )}
                     </>
