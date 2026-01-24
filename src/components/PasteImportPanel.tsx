@@ -27,7 +27,7 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
   const [showPreview, setShowPreview] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   
-  const currentEstablishment = useCurrentEstablishment();
+  const { establishment: currentEstablishment } = useCurrentEstablishment();
   const { toast } = useToast();
 
   const handlePreview = () => {

@@ -135,18 +135,22 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps = {}) {
         }
 
         // 4. Envoyer l'email de bienvenue (non bloquant)
+        console.log("Tentative d'envoi d'email de bienvenue à:", formData.email.trim());
         supabase.functions.invoke('send-welcome-email', {
           body: {
             email: formData.email.trim(),
             firstName: formData.firstName.trim(),
             lastName: formData.lastName.trim(),
           },
-        }).then(({ error: emailError }) => {
+        }).then(({ data, error: emailError }) => {
+          console.log("Réponse Resend:", data);
           if (emailError) {
             console.error('Erreur lors de l\'envoi de l\'email de bienvenue:', emailError);
           } else {
             console.log('Email de bienvenue envoyé avec succès');
           }
+        }).catch((err) => {
+          console.error('Erreur lors de l\'appel à send-welcome-email:', err);
         });
 
         // Clean up local storage

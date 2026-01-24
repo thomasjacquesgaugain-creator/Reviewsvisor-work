@@ -244,6 +244,7 @@ const Compte = () => {
             adresse: addr || null,
           })
           .eq("id", selectedEstablishment.id)
+          .eq("user_id", currentUser.id)
           .select("id, place_id, nom, adresse")
           .single();
 

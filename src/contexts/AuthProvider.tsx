@@ -217,8 +217,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.removeItem(key);
       });
 
+      // 4️⃣ Nettoyer les données d'établissement pour éviter qu'un autre utilisateur les voie
+      localStorage.removeItem('mon-etablissement');
+      localStorage.removeItem('mes-etablissements');
+
       // ⚠️ NE PAS faire localStorage.clear()
-      // Les avis, établissements et autres données restent intacts
+      // Les autres données (avis, etc.) restent intacts
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     } finally {

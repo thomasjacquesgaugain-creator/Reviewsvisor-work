@@ -30,7 +30,7 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
   const [successMessage, setSuccessMessage] = useState<string | undefined>();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const currentEstablishment = useCurrentEstablishment();
+  const { establishment: currentEstablishment } = useCurrentEstablishment();
   
   // Utiliser l'établissement actuel si placeId n'est pas fourni en prop
   const activeEstablishment = placeId || currentEstablishment?.place_id;

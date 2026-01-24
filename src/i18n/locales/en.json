@@ -929,8 +929,8 @@
     "domainNotAuthorized": "Check that your domain is authorized in Google Cloud Console (https://reviewsvisor.fr/*)"
   },
   "step": {
-    "subscription": "1. Subscription",
-    "createAccount": "2. Create account"
+    "subscription": "Subscription",
+    "createAccount": "Create account"
   },
   "signup": {
     "title": "Create account",

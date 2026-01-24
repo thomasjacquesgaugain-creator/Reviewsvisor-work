@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { User, UserCircle, Building2, MapPin, Mail, Lock, LockKeyhole } from "lucide-react";
+import { User, UserCircle, Building2, MapPin, Mail, Lock, LockKeyhole, CreditCard } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -102,13 +102,37 @@ export default function Inscription() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-purple-100 px-4 py-12">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">{t("auth.signup") || "Inscription"}</CardTitle>
-          <CardDescription>
-            Étape 1/3 : Vos informations
-          </CardDescription>
-        </CardHeader>
+      <div className="w-full max-w-md">
+        {/* Indicateur d'étapes - au-dessus de la card */}
+        <div className="flex items-center justify-center gap-6 mb-6">
+          {/* Step 1: Créer un compte (actif) - GAUCHE */}
+          <div className="flex items-center gap-3 flex-nowrap">
+            <div className="bg-[#2F4FF7] text-white rounded-full flex items-center justify-center border border-[#2F4FF7] h-8 w-8 md:h-10 md:w-10 flex-shrink-0">
+              <User className="text-white h-4 w-4 md:h-5 md:w-5" />
+            </div>
+            <span className="text-sm md:text-base whitespace-nowrap text-[#2F4FF7] font-semibold">
+              Créer un compte
+            </span>
+          </div>
+
+          {/* Separator line */}
+          <div className="h-px w-10 md:w-14 bg-border flex-shrink-0" />
+
+          {/* Step 2: Abonnement (inactif) - DROITE */}
+          <div className="flex items-center gap-3 flex-nowrap">
+            <div className="bg-transparent text-foreground rounded-full flex items-center justify-center border border-[#E3E8F2] h-8 w-8 md:h-10 md:w-10 flex-shrink-0">
+              <CreditCard className="text-[#96A0B5] h-4 w-4 md:h-5 md:w-5" />
+            </div>
+            <span className="text-sm md:text-base whitespace-nowrap text-[#96A0B5]">
+              Abonnement
+            </span>
+          </div>
+        </div>
+
+        <Card className="w-full shadow-xl">
+          <CardHeader className="space-y-1 text-center">
+            <CardTitle className="text-2xl font-bold">{t("auth.signup") || "Inscription"}</CardTitle>
+          </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
@@ -268,6 +292,7 @@ export default function Inscription() {
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

@@ -35,7 +35,7 @@ export default function EtablissementPage() {
   } | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [placesError, setPlacesError] = useState<string | null>(null);
-  const currentEstablishment = useCurrentEstablishment();
+  const { establishment: currentEstablishment } = useCurrentEstablishment();
   const { t } = useTranslation();
 
   // Synchroniser visualEstablishment avec currentEstablishment quand il change

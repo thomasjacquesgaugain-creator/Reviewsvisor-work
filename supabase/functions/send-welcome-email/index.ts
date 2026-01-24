@@ -22,13 +22,15 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { email, firstName, lastName }: WelcomeEmailRequest = await req.json();
 
-    console.log(`Sending welcome email to: ${email}`);
+    console.log("Tentative d'envoi d'email à:", email);
+    console.log("Données utilisateur:", { email, firstName, lastName });
 
     const appUrl = "https://reviewsvisor.com";
     const dashboardUrl = `${appUrl}/tableau-de-bord`;
 
+    console.log("Appel API Resend pour envoyer l'email de bienvenue");
     const emailResponse = await resend.emails.send({
-      from: "L'équipe Reviewsvisor <no-reply@reviewsvisor.com>",
+      from: "Reviewsvisor <contact@reviewsvisor.com>",
       to: [email],
       subject: "Bienvenue sur Reviewsvisor – Confirmation de votre compte",
       html: `
@@ -83,7 +85,8 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Welcome email sent successfully:", emailResponse);
+    console.log("Réponse Resend:", emailResponse);
+    console.log("Email de bienvenue envoyé avec succès à:", email);
 
     return new Response(
       JSON.stringify({ success: true, message: "Email envoyé avec succès" }),

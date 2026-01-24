@@ -1256,8 +1256,8 @@
     "domainNotAuthorized": "Vérifiez que votre domaine est autorisé dans Google Cloud Console (https://reviewsvisor.fr/*)"
   },
   "step": {
-    "subscription": "1. Abonnement",
-    "createAccount": "2. Créer un compte"
+    "subscription": "Abonnement",
+    "createAccount": "Créer un compte"
   },
   "signup": {
     "title": "Créer un compte",

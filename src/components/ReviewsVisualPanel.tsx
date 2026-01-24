@@ -91,7 +91,7 @@ export function ReviewsVisualPanel({
   const [showTrendModal, setShowTrendModal] = useState(false);
   const [showRatingDistributionModal, setShowRatingDistributionModal] = useState(false);
   const [displayCount, setDisplayCount] = useState(10);
-  const currentEstablishment = useCurrentEstablishment();
+  const { establishment: currentEstablishment } = useCurrentEstablishment();
   const { t } = useTranslation();
   
   // Use props first, fallback to current establishment
@@ -577,10 +577,10 @@ export function ReviewsVisualPanel({
                   <>
                     <ReviewsTable
                       rows={reviewsToDisplay}
-                      isLoading={isLoadingReviews}
-                      emptyLabel={activeFilter === 'all' ? t("dashboard.noReviewsYet") : t("dashboard.noReviewsYet")}
-                      data-testid="establishment-reviews-table"
-                    />
+                isLoading={isLoadingReviews}
+                emptyLabel={activeFilter === 'all' ? t("dashboard.noReviewsYet") : t("dashboard.noReviewsYet")}
+                data-testid="establishment-reviews-table"
+              />
 
                     {/* Bouton "Afficher plus" */}
                     {filteredReviews.length > displayCount && (

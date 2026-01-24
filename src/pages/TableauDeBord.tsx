@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, CheckCircle, ArrowDownRight, Minus, Award } from "lucide-react";
+import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, CheckCircle, ArrowDownRight, Minus, Award, Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -28,7 +28,7 @@ const Dashboard = () => {
   const [allReviews, setAllReviews] = useState<any[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const currentEstablishment = useCurrentEstablishment();
+  const { establishment: currentEstablishment, loading: establishmentLoading } = useCurrentEstablishment();
   const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
   
@@ -311,7 +311,10 @@ const Dashboard = () => {
     };
   }, [allReviews, avgRating, t]);
 
-  if (loading) {
+  // État de chargement combiné : données utilisateur + établissement
+  const isLoading = loading || establishmentLoading;
+
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">{t("common.loading")}</div>
@@ -339,29 +342,40 @@ const Dashboard = () => {
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-6">
             <CardContent className="p-8 text-center space-y-6">
               <h2 className="text-2xl font-bold text-gray-900">{t("dashboard.welcomeWithName", { name: displayName })}</h2>
-              {currentEstablishment?.name && (
-                <div className="flex items-center justify-center gap-2 text-blue-600 font-semibold">
-                  <Building className="w-5 h-5" />
-                  <span>{currentEstablishment.name}</span>
-                </div>
-              )}
+              {!isLoading && currentEstablishment?.name ? (
+                <>
+                  <div className="flex items-center justify-center gap-2 text-blue-600 font-semibold">
+                    <Building className="w-5 h-5" />
+                    <span>{currentEstablishment.name}</span>
+                  </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                <Link to="/etablissement">
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
-                    <Building className="w-5 h-5 mr-2" />
-                    {t("nav.establishment")}
-                  </Button>
-                </Link>
-                <Link to="/dashboard">
-                  <Button variant="outline" className="border-gray-300 text-gray-700 px-8 py-3 rounded-full font-medium">
-                    <BarChart3 className="w-5 h-5 mr-2" />
-                    {t("dashboard.viewDashboard")}
-                  </Button>
-                </Link>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                    <Link to="/etablissement">
+                      <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
+                        <Building className="w-5 h-5 mr-2" />
+                        {t("nav.establishment")}
+                      </Button>
+                    </Link>
+                    <Link to="/dashboard">
+                      <Button variant="outline" className="border-gray-300 text-gray-700 px-8 py-3 rounded-full font-medium">
+                        <BarChart3 className="w-5 h-5 mr-2" />
+                        {t("dashboard.viewDashboard")}
+                      </Button>
+                    </Link>
+                  </div>
+                </>
+              ) : !isLoading && !currentEstablishment ? (
+                <div className="flex flex-col items-center gap-4 pt-4">
+                  <Link to="/etablissement">
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
+                      <Plus className="w-5 h-5 mr-2" />
+                      Ajouter un établissement
+                    </Button>
+                  </Link>
                 </div>
-              </CardContent>
-            </Card>
+              ) : null}
+            </CardContent>
+          </Card>
 
             {/* Notifications section */}
             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-5xl mx-auto mb-4">

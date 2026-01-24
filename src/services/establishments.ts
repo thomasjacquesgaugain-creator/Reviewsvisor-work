@@ -235,9 +235,17 @@ export async function saveEstablishmentFromPlaceId(placeId: string): Promise<Est
 }
 
 export async function getUserEstablishments(): Promise<EstablishmentData[]> {
+  // Get current user
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  
+  if (userError || !user) {
+    throw new Error('Utilisateur non connecté');
+  }
+
   const { data, error } = await supabase
     .from('establishments')
     .select('*')
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -268,6 +276,7 @@ export async function getCurrentEstablishment(): Promise<EstablishmentData | nul
       .from('establishments')
       .select('*')
       .eq('id', profile.current_establishment_id)
+      .eq('user_id', user.id)
       .single();
 
     if (!error && establishment) {
@@ -341,6 +350,7 @@ export async function upsertUserEstablishmentFromProfile(input: {
         formatted_address: input.formatted_address,
       })
       .eq('id', existing.id)
+      .eq('user_id', user.id)
       .select('*')
       .single();
 
