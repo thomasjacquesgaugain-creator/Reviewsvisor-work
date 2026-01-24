@@ -253,7 +253,7 @@ const Dashboard = () => {
   useEffect(() => {
     const minTarget = Math.min(5, Math.max(1, currentAvgRatingForTarget));
     setTargetRating(prev => (prev < minTarget ? minTarget : prev));
-  }, [currentAvgRatingForTarget]);
+  }, [currentAvgRatingForTarget]);  
 
   const [actionPlanChecks, setActionPlanChecks] = useState<Record<string, boolean>>({});
 
