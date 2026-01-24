@@ -5,6 +5,7 @@ import { DiagnosticSummary, OverviewMetrics, ParetoItem } from "@/types/analysis
 import { useTranslation } from "react-i18next";
 import { CheckCircle, AlertTriangle, Lightbulb, Star, TrendingUp, Target } from "lucide-react";
 import { useState, useMemo } from "react";
+import { normalizeSummary } from "@/utils/normalizeSummary";
 
 interface DiagnosticSectionProps {
   data: DiagnosticSummary;
@@ -41,6 +42,15 @@ export function DiagnosticSection({
 
   const topStrengths = data.topStrengths || [];
   const topWeaknesses = data.topWeaknesses || [];
+  const normalizedSummary = useMemo(() => normalizeSummary(data.summary), [data.summary]);
+  const summaryText =
+    normalizedSummary?.text ||
+    data.summary ||
+    t("analysis.diagnostic.noSummary", "Aucun résumé disponible");
+  const recommendations =
+    (data as any).recommendations?.length > 0
+      ? (data as any).recommendations
+      : normalizedSummary?.recommendations || [];
 
   // Badge de confiance
   const getConfidenceLevel = (total: number) => {
@@ -173,9 +183,19 @@ export function DiagnosticSection({
               <Lightbulb className="w-5 h-5" />
               {t("analysis.diagnostic.summary", "Résumé")}
             </h3>
-            <p className="text-gray-700 leading-relaxed">
-              {data.summary || t("analysis.diagnostic.noSummary", "Aucun résumé disponible")}
-            </p>
+            <p className="text-gray-700 leading-relaxed">{summaryText}</p>
+
+            <div className="mt-4">
+              {recommendations.length > 0 ? (
+                <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700">
+                  {recommendations.slice(0, 8).map((rec: string, idx: number) => (
+                    <li key={idx}>{rec}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-gray-500">Aucune recommandation disponible</p>
+              )}
+            </div>
           </div>
 
           {/* Phrase de décision automatique */}

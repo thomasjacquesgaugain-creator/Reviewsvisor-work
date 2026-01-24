@@ -467,30 +467,30 @@ export function QualitativeSection({ data, reviews }: QualitativeSectionProps) {
                 <div className="flex gap-2">
                 <button
                   onClick={() => setSortMode('frequency')}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                  className={`px-3 py-1 text-sm rounded-md border transition-colors duration-200 ease-in-out ${
                     sortMode === 'frequency'
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-blue-900 text-white border-blue-900/30 shadow-sm'
+                      : 'bg-white text-blue-950 border-slate-200 hover:bg-blue-50 hover:text-blue-950 hover:border-blue-200'
                   }`}
                 >
                   Fréquence
                 </button>
                 <button
                   onClick={() => setSortMode('sentiment')}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                  className={`px-3 py-1 text-sm rounded-md border transition-colors duration-200 ease-in-out ${
                     sortMode === 'sentiment'
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-blue-900 text-white border-blue-900/30 shadow-sm'
+                      : 'bg-white text-blue-950 border-slate-200 hover:bg-blue-50 hover:text-blue-950 hover:border-blue-200'
                   }`}
                 >
                   Sentiment
                 </button>
                 <button
                   onClick={() => setSortMode('theme')}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                  className={`px-3 py-1 text-sm rounded-md border transition-colors duration-200 ease-in-out ${
                     sortMode === 'theme'
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-blue-900 text-white border-blue-900/30 shadow-sm'
+                      : 'bg-white text-blue-950 border-slate-200 hover:bg-blue-50 hover:text-blue-950 hover:border-blue-200'
                   }`}
                 >
                   Thème
