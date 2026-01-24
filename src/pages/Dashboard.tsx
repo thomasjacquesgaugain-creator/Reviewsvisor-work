@@ -22,7 +22,7 @@ import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { fr, enUS, it, es, ptBR } from "date-fns/locale";
 import { DashboardTabs } from "@/components/DashboardTabs";
-import { AnalysisTabContent } from "@/components/analysis";
+import { AnalysisTabContent } from "@/components/analysis/AnalysisTabContent";
 
 
 const Dashboard = () => {
@@ -56,6 +56,12 @@ const Dashboard = () => {
   // États UI généraux
   const [showAvis, setShowAvis] = useState(false);
   const [openCard, setOpenCard] = useState<string | null>(null);
+  // États d'ouverture indépendants (onglet "Recommandations")
+  const [isSynthesisOpen, setIsSynthesisOpen] = useState(false);
+  const [isPlanActionsOpen, setIsPlanActionsOpen] = useState(false);
+  const [isChecklistOpen, setIsChecklistOpen] = useState(false);
+  const [isAdvisorOpen, setIsAdvisorOpen] = useState(false);
+  const [isAgentOpen, setIsAgentOpen] = useState(false);
   const [selectedContentCategory, setSelectedContentCategory] = useState<string | null>(null);
   const [selectedNoteCategory, setSelectedNoteCategory] = useState<string | null>(null);
   const [selectedPriorityCategory, setSelectedPriorityCategory] = useState<string | null>(null);
@@ -2667,7 +2673,7 @@ const Dashboard = () => {
               return {
                 id: r.id?.toString() || '',
                 etablissementId: selectedEtab?.place_id || selectedEstablishment?.place_id || '',
-                source: (r.source || 'google') as const,
+                source: (r.source || 'google') as "google" | "trustpilot" | "facebook" | "yelp" | "tripadvisor" | "other",
                 note: r.rating || 0,
                 texte: r.text || r.comment || '',
                 // Utiliser published_at en priorité, puis inserted_at, puis created_at
@@ -3245,481 +3251,557 @@ const Dashboard = () => {
 
         {activeTab === 'recommandations' && (
           <>
-        {/* LIGNE 1 : 2 sections pour Recommandations */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          {/* Recommandations */}
-          <Card className="relative h-full flex flex-col cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1" onClick={() => setOpenCard(openCard === 'recommandations' ? null : 'recommandations')}>
-            <CardContent className="p-6 text-center">
-              <div className="flex flex-col items-center mb-2">
-                <Lightbulb className="w-5 h-5 text-blue-500 mb-2" />
-                <span className="text-lg font-semibold">{t("dashboard.actionableRecommendations")}</span>
-              </div>
-              <p className="text-sm text-gray-600">{t("dashboard.concreteActions")}</p>
-              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'recommandations' ? null : 'recommandations'); }} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-blue-50">
-                {openCard === 'recommandations' ? <ChevronUp className="w-3 h-3 text-blue-500" /> : <ChevronDown className="w-3 h-3 text-blue-500" />}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Checklist opérationnelle */}
-          <Card className="relative h-full flex flex-col cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1" onClick={() => setOpenCard(openCard === 'checklist' ? null : 'checklist')}>
-            <CardContent className="p-6 text-center">
-              <div className="flex flex-col items-center mb-2">
-                <ClipboardList className="w-5 h-5 text-emerald-600 mb-2" />
-                <span className="text-lg font-semibold">{t("dashboard.operationalChecklist")}</span>
-              </div>
-              <p className="text-sm text-gray-600">{t("dashboard.concreteActions")}</p>
-              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'checklist' ? null : 'checklist'); }} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-emerald-50">
-                {openCard === 'checklist' ? <ChevronUp className="w-3 h-3 text-emerald-600" /> : <ChevronDown className="w-3 h-3 text-emerald-600" />}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Contenu des sections - Affichés en dessous de la grille */}
-        {openCard === 'recommandations' && <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-xl">{t("dashboard.actionableRecommendations")}</CardTitle>
-            <p className="text-sm text-gray-600">{t("dashboard.concreteActions")}</p>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-8">
-              {/* Section 1 - Checklist opérationnelle */}
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-4">{t("dashboard.operationalChecklist")}</h4>
-                <div className="space-y-3">
-                  {/* Action prioritaire */}
-                  <div className="p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge className="bg-red-500 text-white text-xs">{t("dashboard.priorityAction")}</Badge>
-                    </div>
-                    <p className="text-sm text-gray-700">
-                      {topIssues.length > 0 
-                        ? t("dashboard.fixMainFrictionPoint", { issue: translateTheme(topIssues[0]?.theme || topIssues[0]?.issue || t("dashboard.notIdentified")) })
-                        : t("dashboard.analyzeReviewsToIdentifyFrictionPoints")}
-                    </p>
-                  </div>
-                  
-                  {/* Court terme */}
-                  <div className="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge className="bg-yellow-500 text-white text-xs">{t("dashboard.shortTerm")}</Badge>
-                    </div>
-                    <ul className="space-y-2">
-                      <li className="text-sm text-gray-700 flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                        {t("dashboard.trainTeamOnIdentifiedImprovements")}
-                      </li>
-                      <li className="text-sm text-gray-700 flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                        {topStrengths.length > 0 
-                          ? t("dashboard.enhanceStrengths", { strength: translateTheme(topStrengths[0]?.theme || topStrengths[0]?.strength || t("dashboard.notIdentified")) })
-                          : t("dashboard.identifyAndEnhanceExistingStrengths")}
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  {/* Gestion des avis */}
-                  <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge className="bg-blue-500 text-white text-xs">{t("dashboard.reviewManagement")}</Badge>
-                    </div>
-                    <ul className="space-y-2">
-                      <li className="text-sm text-gray-700 flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                        {t("dashboard.respondSystematically")}
-                      </li>
-                      <li className="text-sm text-gray-700 flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                        {t("dashboard.setUpRegularTracking")}
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              {/* Séparateur visuel */}
-              <div className="border-t border-gray-200"></div>
-
-              {/* Section 2 - Priorisation des actions */}
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-4">{t("dashboard.actionPrioritization")}</h4>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">{t("dashboard.action")}</th>
-                        <th className="text-center py-3 px-4 font-semibold text-gray-700">{t("dashboard.impact")}</th>
-                        <th className="text-center py-3 px-4 font-semibold text-gray-700">{t("dashboard.effort")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b border-gray-100">
-                        <td className="py-3 px-4 text-gray-700">{t("dashboard.fixMainFrictionPointIdentified")}</td>
-                        <td className="py-3 px-4 text-center">
-                          <Badge className="bg-red-100 text-red-700 border-red-200">{t("dashboard.high")}</Badge>
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">{t("dashboard.medium")}</Badge>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-gray-100">
-                        <td className="py-3 px-4 text-gray-700">{t("dashboard.trainTeamOnIdentifiedImprovements")}</td>
-                        <td className="py-3 px-4 text-center">
-                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">{t("dashboard.medium")}</Badge>
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <Badge className="bg-green-100 text-green-700 border-green-200">{t("dashboard.low")}</Badge>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-gray-100">
-                        <td className="py-3 px-4 text-gray-700">{t("dashboard.respondSystematically")}</td>
-                        <td className="py-3 px-4 text-center">
-                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">{t("dashboard.medium")}</Badge>
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <Badge className="bg-green-100 text-green-700 border-green-200">{t("dashboard.low")}</Badge>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-gray-100">
-                        <td className="py-3 px-4 text-gray-700">{t("dashboard.enhanceStrengthsGeneric")}</td>
-                        <td className="py-3 px-4 text-center">
-                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">{t("dashboard.medium")}</Badge>
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <Badge className="bg-green-100 text-green-700 border-green-200">{t("dashboard.low")}</Badge>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                <p className="text-sm text-gray-500 mt-4 italic">
-                  {t("dashboard.recommendedStartHighImpactLowEffort")}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>}
-
-        {openCard === 'checklist' && <Card className="mb-8">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xl">{t("dashboard.operationalChecklist")}</CardTitle>
-                <p className="text-sm text-gray-600">{t("dashboard.concreteActions")}</p>
-                      </div>
-              <div className="flex items-center gap-2">
-                <Badge className="bg-green-600 text-white border-green-600">
-                  {checklistActions.filter(a => a.completed).length}/{checklistActions.length || 5}
-                </Badge>
-                {completedActionsCount > 0 && (
-                  <Badge className="bg-green-100 text-green-800 border-green-300">
-                    {completedActionsCount} {completedActionsCount === 1 ? 'action complétée' : 'actions complétées'}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-                <div className="space-y-2">
-              {checklistActions.length > 0 ? (
-                checklistActions.map((action) => (
-                  <div
-                    key={action.id}
-                    className={`flex items-start gap-3 p-3 rounded-lg border border-gray-200 border-l-4 transition-all duration-300 ${
-                      removingActionId === action.id 
-                        ? 'opacity-0 transform scale-95 -translate-x-4' 
-                        : 'opacity-100 transform scale-100 translate-x-0'
-                    } ${(() => {
-                      const text = (action.text || '').toLowerCase();
-                      if (text.includes('teste le temps d\'attente réel aux heures de pointe')) return 'border-l-red-500 bg-red-100 hover:bg-red-200';
-                      if (text.includes('briefe l\'équipe sur la rapidité de service')) return 'border-l-red-500 bg-red-100 hover:bg-red-200';
-                      if (text.includes('observe le service ce soir pour identifier les points de blocage')) return 'border-l-red-500 bg-red-100 hover:bg-red-200';
-                      if (text.includes('réponds à 10 avis clients')) return 'border-l-blue-500 bg-blue-100 hover:bg-blue-200';
-                      if (text.includes('informe ton équipe du problème prioritaire')) return 'border-l-blue-500 bg-blue-100 hover:bg-blue-200';
-                      return 'border-l-blue-500 bg-blue-100 hover:bg-blue-200';
-                    })()}`}
-                  >
-                    <span className={`text-sm flex-1 ${action.completed ? 'line-through text-gray-400' : 'text-gray-900'}`}>
-                      {action.text}
-                    </span>
-                    <button
-                      onClick={() => handleChecklistActionComplete(action.id)}
-                      className="mt-0.5 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
-                      aria-label={`Marquer "${action.text}" comme complétée`}
-                    >
-                      <div
-                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                          action.completed
-                            ? 'border-green-600 bg-green-50'
-                            : 'border-gray-400 bg-white hover:border-gray-600'
-                        }`}
-                      >
-                        {action.completed ? (
-                          <Check className="w-4 h-4 text-green-600" />
-                        ) : null}
-                      </div>
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <p className="text-sm">{t("dashboard.noChecklistActionsAvailable") || "Aucune action disponible"}</p>
-                  <p className="text-xs mt-1">{t("dashboard.analyzeEstablishmentToGetActions") || "Analysez votre établissement pour obtenir des actions personnalisées"}</p>
-                  </div>
-                )}
-            </div>
-          </CardContent>
-        </Card>}
-
-
-
-        {/* LIGNE 2 : 2 sections côte à côte */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          {/* Conseiller */}
-          <Card className="relative h-full flex flex-col cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1" onClick={() => setOpenCard(openCard === 'conseiller' ? null : 'conseiller')}>
-            <CardContent className="p-6 text-center">
-              <div className="flex flex-col items-center mb-2">
-                <Lightbulb className="w-5 h-5 text-yellow-500 mb-2" />
-                <span className="text-lg font-semibold">{t("dashboard.advisor")}</span>
-              </div>
-              <p className="text-sm text-gray-600">{t("dashboard.personalizedAdviceForEstablishment")}</p>
-              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'conseiller' ? null : 'conseiller'); }} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-yellow-50">
-                {openCard === 'conseiller' ? <ChevronUp className="w-3 h-3 text-yellow-500" /> : <ChevronDown className="w-3 h-3 text-yellow-500" />}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Plan d'actions */}
-          <Card className="relative h-full flex flex-col cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1" onClick={() => setOpenCard(openCard === 'planActions' ? null : 'planActions')}>
-            <CardContent className="p-6 text-center">
-              <div className="flex flex-col items-center mb-2">
-                <ClipboardList className="w-5 h-5 text-indigo-500 mb-2" />
-                <span className="text-lg font-semibold">{t("dashboard.actionPlan")}</span>
-              </div>
-              <p className="text-sm text-gray-600">{t("dashboard.followImprovementActions")}</p>
-              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'planActions' ? null : 'planActions'); }} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-indigo-50">
-                {openCard === 'planActions' ? <ChevronUp className="w-3 h-3 text-indigo-500" /> : <ChevronDown className="w-3 h-3 text-indigo-500" />}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Contenu Conseiller */}
-        {openCard === 'conseiller' && <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-xl">{t("dashboard.advisor")}</CardTitle>
-            <p className="text-sm text-gray-600">{t("dashboard.personalizedAdviceForEstablishment")}</p>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Conseils générés dynamiquement par le consultant */}
-              {(() => {
-                const consultantAdvice = generateConsultantAdvice(insight, allReviewsForChart, validatedReviews);
-                
-                if (consultantAdvice.length === 0) {
-                  return (
-                    <div className="text-center py-8 text-gray-500">
-                      <p className="text-sm">{t("dashboard.noAdviceAvailable") || "Aucun conseil disponible"}</p>
-                      <p className="text-xs mt-1">{t("dashboard.analyzeEstablishmentToGetAdvice") || "Analysez votre établissement pour obtenir des conseils personnalisés"}</p>
-                </div>
-                  );
-                }
-
-                return (
-                  <div className="space-y-3">
-                    {consultantAdvice.map((advice, index) => (
-                      <div key={index} className="flex items-start gap-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <Lightbulb className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm text-gray-900 flex-1 leading-relaxed">{advice}</p>
-                </div>
-                    ))}
-                </div>
-                );
-              })()}
-
-              {/* Message d'information */}
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-xs text-gray-600">
-                  {t("dashboard.advisorDescription") || "Conseils personnalisés basés sur l'analyse de vos avis clients"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>}
-
-        {/* Contenu Plan d'actions */}
-        {openCard === 'planActions' && <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-xl">{t("dashboard.actionPlan")}</CardTitle>
-            <p className="text-sm text-gray-600">{t("dashboard.followImprovementActions")}</p>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Liste des actions générées dynamiquement */}
-              {(() => {
-                const actionPlan = generateActionPlan(insight, allReviewsForChart);
-                
-                if (actionPlan.length === 0) {
-                  return (
-                    <div className="text-center py-8 text-gray-500">
-                      <p className="text-sm">{t("dashboard.noActionsAvailable") || "Aucune action disponible"}</p>
-                      <p className="text-xs mt-1">{t("dashboard.analyzeEstablishmentToGetActions") || "Analysez votre établissement pour obtenir des actions personnalisées"}</p>
-                </div>
-                  );
-                }
-
-                return (
-                  <div className="space-y-3">
-                    {actionPlan.map((action, index) => {
-                      // Déterminer le style du badge de priorité
-                      const priorityBadgeClass = action.priority === 'high' 
-                        ? 'bg-red-100 text-red-800 border-red-300' 
-                        : action.priority === 'medium'
-                        ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
-                        : 'bg-blue-100 text-blue-800 border-blue-300';
-                      
-                      // Déterminer le style du badge de statut
-                      const statusBadgeClass = action.status === 'completed'
-                        ? 'bg-green-100 text-green-800 border-green-300'
-                        : action.status === 'inProgress'
-                        ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
-                        : action.priority === 'high'
-                        ? 'bg-red-500 text-white border-red-500'
-                        : action.priority === 'low'
-                        ? 'bg-blue-500 text-white border-blue-500'
-                        : 'border-gray-300 text-gray-700';
-                      
-                      const statusLabel = action.status === 'completed'
-                        ? t("dashboard.completed")
-                        : action.status === 'inProgress'
-                        ? t("dashboard.inProgress")
-                        : t("dashboard.toDo");
-
-                      const priorityLabel = action.priority === 'high'
-                        ? t("dashboard.highPriority")
-                        : action.priority === 'medium'
-                        ? t("dashboard.mediumPriority")
-                        : t("dashboard.lowPriority");
-
-                      return (
-                        <div key={index} className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-900 mb-1">{action.title}</p>
-                              <div className="flex items-center gap-2 mt-2">
-                                <Badge variant="outline" className={`text-xs ${priorityBadgeClass}`}>
-                                  {priorityLabel}
-                                </Badge>
-                                <span className="text-xs text-gray-500">
-                                  {translateTheme(action.issue)}
+        {/* SECTION 1 : Synthèse & priorités (carte maître) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
+          <div className="col-span-1 md:col-span-2">
+            <Card
+              className={[
+                "relative cursor-pointer transition-all duration-200 hover:-translate-y-1",
+                // État fermé: conserver le style actuel
+                !isSynthesisOpen && "hover:shadow-lg",
+                // État ouvert: mise en évidence subtile (référence)
+                isSynthesisOpen && "border-primary/20 bg-primary/5 shadow-sm ring-1 ring-primary/10"
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => setIsSynthesisOpen((prev) => !prev)}
+            >
+              <CardHeader className="relative text-center">
+                <div className="flex flex-col items-center mb-2">
+                  <Lightbulb className="w-5 h-5 text-blue-500 mb-2" />
+                  <span className="text-lg font-semibold">
+                    {t("dashboard.synthesisPriorities", "Synthèse & priorités")}
                   </span>
                 </div>
-                    </div>
-                            <div className="flex flex-col items-end gap-2">
-                              <Badge 
-                                variant={action.status === 'completed' ? 'default' : 'outline'} 
-                                className={`text-xs ${statusBadgeClass}`}
-                              >
-                                {statusLabel}
-                              </Badge>
+                <p className="text-sm text-gray-600">
+                  {t(
+                    "dashboard.synthesisPrioritiesSubtitle",
+                    "Lecture stratégique des avis clients et points de focus prioritaires"
+                  )}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsSynthesisOpen((prev) => !prev);
+                  }}
+                  className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-blue-50"
+                >
+                  {isSynthesisOpen ? (
+                    <ChevronUp className="w-3 h-3 text-blue-500" />
+                  ) : (
+                    <ChevronDown className="w-3 h-3 text-blue-500" />
+                  )}
+                </Button>
+              </CardHeader>
 
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const key = `${action.title}__${action.issue}`;
-                                  setActionPlanChecks(prev => ({ ...prev, [key]: !prev[key] }));
-                                }}
-                                className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
-                                aria-label={`Cocher l'action "${action.title}"`}
-                              >
-                                <div
-                                  className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${(() => {
-                                    const key = `${action.title}__${action.issue}`;
-                                    const checked = !!actionPlanChecks[key];
-                                    return checked
-                                      ? 'border-green-600 bg-green-50'
-                                      : 'border-gray-400 bg-white hover:border-gray-600';
-                                  })()}`}
-                                >
-                                  {(() => {
-                                    const key = `${action.title}__${action.issue}`;
-                                    return actionPlanChecks[key] ? <Check className="w-4 h-4 text-green-600" /> : null;
-                                  })()}
-                                </div>
-                              </button>
+              {isSynthesisOpen && (
+                <CardContent className="animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                  <div className="space-y-8">
+                      {/* Section 1 - Axes d'amélioration identifiés */}
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-4">
+                          {t("dashboard.improvementAxesIdentified", "Axes d’amélioration identifiés")}
+                        </h4>
+                        <div className="space-y-3">
+                          {/* Action prioritaire */}
+                          <div className="p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge className="bg-red-500 text-white text-xs">{t("dashboard.priorityAction")}</Badge>
                             </div>
+                            <p className="text-sm text-gray-700">
+                              {topIssues.length > 0
+                                ? t("dashboard.fixMainFrictionPoint", { issue: translateTheme(topIssues[0]?.theme || topIssues[0]?.issue || t("dashboard.notIdentified")) })
+                                : t("dashboard.analyzeReviewsToIdentifyFrictionPoints")}
+                            </p>
+                          </div>
+                          
+                          {/* Court terme */}
+                          <div className="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge className="bg-yellow-500 text-white text-xs">{t("dashboard.shortTerm")}</Badge>
+                            </div>
+                            <ul className="space-y-2">
+                              <li className="text-sm text-gray-700 flex items-start gap-2">
+                                <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                                {t("dashboard.trainTeamOnIdentifiedImprovements")}
+                              </li>
+                              <li className="text-sm text-gray-700 flex items-start gap-2">
+                                <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                                {topStrengths.length > 0
+                                  ? t("dashboard.enhanceStrengths", { strength: translateTheme(topStrengths[0]?.theme || topStrengths[0]?.strength || t("dashboard.notIdentified")) })
+                                  : t("dashboard.identifyAndEnhanceExistingStrengths")}
+                              </li>
+                            </ul>
+                          </div>
+                          
+                          {/* Gestion des avis */}
+                          <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge className="bg-blue-500 text-white text-xs">{t("dashboard.reviewManagement")}</Badge>
+                            </div>
+                            <ul className="space-y-2">
+                              <li className="text-sm text-gray-700 flex items-start gap-2">
+                                <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                {t("dashboard.respondSystematically")}
+                              </li>
+                              <li className="text-sm text-gray-700 flex items-start gap-2">
+                                <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                {t("dashboard.setUpRegularTracking")}
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Séparateur visuel */}
+                      <div className="border-t border-gray-200"></div>
+
+                      {/* Section 2 - Priorisation des actions */}
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-4">{t("dashboard.actionPrioritization")}</h4>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b border-gray-200">
+                                <th className="text-left py-3 px-4 font-semibold text-gray-700">{t("dashboard.action")}</th>
+                                <th className="text-center py-3 px-4 font-semibold text-gray-700">{t("dashboard.impact")}</th>
+                                <th className="text-center py-3 px-4 font-semibold text-gray-700">{t("dashboard.effort")}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr className="border-b border-gray-100">
+                                <td className="py-3 px-4 text-gray-700">{t("dashboard.fixMainFrictionPointIdentified")}</td>
+                                <td className="py-3 px-4 text-center">
+                                  <Badge className="bg-red-100 text-red-700 border-red-200">{t("dashboard.high")}</Badge>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">{t("dashboard.medium")}</Badge>
+                                </td>
+                              </tr>
+                              <tr className="border-b border-gray-100">
+                                <td className="py-3 px-4 text-gray-700">{t("dashboard.trainTeamOnIdentifiedImprovements")}</td>
+                                <td className="py-3 px-4 text-center">
+                                  <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">{t("dashboard.medium")}</Badge>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <Badge className="bg-green-100 text-green-700 border-green-200">{t("dashboard.low")}</Badge>
+                                </td>
+                              </tr>
+                              <tr className="border-b border-gray-100">
+                                <td className="py-3 px-4 text-gray-700">{t("dashboard.respondSystematically")}</td>
+                                <td className="py-3 px-4 text-center">
+                                  <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">{t("dashboard.medium")}</Badge>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <Badge className="bg-green-100 text-green-700 border-green-200">{t("dashboard.low")}</Badge>
+                                </td>
+                              </tr>
+                              <tr className="border-b border-gray-100">
+                                <td className="py-3 px-4 text-gray-700">{t("dashboard.enhanceStrengthsGeneric")}</td>
+                                <td className="py-3 px-4 text-center">
+                                  <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">{t("dashboard.medium")}</Badge>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <Badge className="bg-green-100 text-green-700 border-green-200">{t("dashboard.low")}</Badge>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <p className="text-sm text-gray-500 mt-4 italic">
+                          {t("dashboard.recommendedStartHighImpactLowEffort")}
+                        </p>
+                      </div>
+                    </div>
+                </CardContent>
+              )}
+            </Card>
+          </div>
+        </div>
+
+        {/* SECTION 2 : Plan d'actions (gauche) et Checklist opérationnelle (droite) */}
+        {(() => {
+          const isFocusMode = isPlanActionsOpen || isChecklistOpen;
+          const focusSpanClass = isFocusMode ? "md:col-span-2" : "md:col-span-1";
+          const isChecklistFirst = isChecklistOpen && !isPlanActionsOpen;
+
+          const planCard = (
+            <Card
+              className={`relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 ${focusSpanClass}`}
+              onClick={() => setIsPlanActionsOpen((prev) => !prev)}
+            >
+              <CardHeader className="relative text-center">
+                <div className="flex flex-col items-center mb-2">
+                  <ClipboardList className="w-5 h-5 text-indigo-500 mb-2" />
+                  <span className="text-lg font-semibold">{t("dashboard.actionPlan")}</span>
+                </div>
+                <p className="text-sm text-gray-600">{t("dashboard.followImprovementActions")}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsPlanActionsOpen((prev) => !prev);
+                  }}
+                  className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-indigo-50"
+                >
+                  {isPlanActionsOpen ? (
+                    <ChevronUp className="w-3 h-3 text-indigo-500" />
+                  ) : (
+                    <ChevronDown className="w-3 h-3 text-indigo-500" />
+                  )}
+                </Button>
+              </CardHeader>
+
+              {isPlanActionsOpen && (
+                <CardContent className="animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                  <div className="space-y-4">
+                    {/* Liste des actions générées dynamiquement */}
+                    {(() => {
+                      const actionPlan = generateActionPlan(insight, allReviewsForChart);
+                      
+                      if (actionPlan.length === 0) {
+                        return (
+                          <div className="text-center py-8 text-gray-500">
+                            <p className="text-sm">{t("dashboard.noActionsAvailable") || "Aucune action disponible"}</p>
+                            <p className="text-xs mt-1">{t("dashboard.analyzeEstablishmentToGetActions") || "Analysez votre établissement pour obtenir des actions personnalisées"}</p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="space-y-3">
+                          {actionPlan.map((action, index) => {
+                            const priorityBadgeClass = action.priority === 'high' 
+                              ? 'bg-red-100 text-red-800 border-red-300' 
+                              : action.priority === 'medium'
+                              ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                              : 'bg-blue-100 text-blue-800 border-blue-300';
+                            
+                            const statusBadgeClass = action.status === 'completed'
+                              ? 'bg-green-100 text-green-800 border-green-300'
+                              : action.status === 'inProgress'
+                              ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                              : action.priority === 'high'
+                              ? 'bg-red-500 text-white border-red-500'
+                              : action.priority === 'low'
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : 'border-gray-300 text-gray-700';
+                            
+                            const statusLabel = action.status === 'completed'
+                              ? t("dashboard.completed")
+                              : action.status === 'inProgress'
+                              ? t("dashboard.inProgress")
+                              : t("dashboard.toDo");
+
+                            const priorityLabel = action.priority === 'high'
+                              ? t("dashboard.highPriority")
+                              : action.priority === 'medium'
+                              ? t("dashboard.mediumPriority")
+                              : t("dashboard.lowPriority");
+
+                            return (
+                              <div key={index} className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex-1">
+                                    <p className="text-sm font-medium text-gray-900 mb-1">{action.title}</p>
+                                    <div className="flex items-center gap-2 mt-2">
+                                      <Badge variant="outline" className={`text-xs ${priorityBadgeClass}`}>
+                                        {priorityLabel}
+                                      </Badge>
+                                      <span className="text-xs text-gray-500">
+                                        {translateTheme(action.issue)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-col items-end gap-2">
+                                    <Badge 
+                                      variant={action.status === 'completed' ? 'default' : 'outline'} 
+                                      className={`text-xs ${statusBadgeClass}`}
+                                    >
+                                      {statusLabel}
+                                    </Badge>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const key = `${action.title}__${action.issue}`;
+                                        setActionPlanChecks(prev => ({ ...prev, [key]: !prev[key] }));
+                                      }}
+                                      className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                                      aria-label={`Cocher l'action "${action.title}"`}
+                                    >
+                                      <div
+                                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${(() => {
+                                          const key = `${action.title}__${action.issue}`;
+                                          const checked = !!actionPlanChecks[key];
+                                          return checked
+                                            ? 'border-green-600 bg-green-50'
+                                            : 'border-gray-400 bg-white hover:border-gray-600';
+                                        })()}`}
+                                      >
+                                        {(() => {
+                                          const key = `${action.title}__${action.issue}`;
+                                          return actionPlanChecks[key] ? <Check className="w-4 h-4 text-green-600" /> : null;
+                                        })()}
+                                      </div>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Message d'information */}
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-xs text-gray-600">{t("dashboard.actionPlanDescription")}</p>
                     </div>
                   </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
+                </CardContent>
+              )}
+            </Card>
+          );
 
-              {/* Message d'information */}
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-xs text-gray-600">
-                  {t("dashboard.actionPlanDescription")}
-                    </p>
-                  </div>
+          const checklistCard = (
+            <Card
+              className={`relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 ${focusSpanClass}`}
+              onClick={() => setIsChecklistOpen((prev) => !prev)}
+            >
+              <CardHeader className="relative text-center">
+                <div className="flex flex-col items-center mb-2">
+                  <ClipboardList className="w-5 h-5 text-emerald-600 mb-2" />
+                  <span className="text-lg font-semibold">{t("dashboard.operationalChecklist")}</span>
                 </div>
+                <p className="text-sm text-gray-600">{t("dashboard.concreteActions")}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsChecklistOpen((prev) => !prev);
+                  }}
+                  className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-emerald-50"
+                >
+                  {isChecklistOpen ? (
+                    <ChevronUp className="w-3 h-3 text-emerald-600" />
+                  ) : (
+                    <ChevronDown className="w-3 h-3 text-emerald-600" />
+                  )}
+                </Button>
+              </CardHeader>
+
+              {isChecklistOpen && (
+                <CardContent className="animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-600 text-white border-green-600">
+                        {checklistActions.filter(a => a.completed).length}/{checklistActions.length || 5}
+                      </Badge>
+                      {completedActionsCount > 0 && (
+                        <Badge className="bg-green-100 text-green-800 border-green-300">
+                          {completedActionsCount} {completedActionsCount === 1 ? 'action complétée' : 'actions complétées'}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    {checklistActions.length > 0 ? (
+                      checklistActions.map((action) => (
+                        <div
+                          key={action.id}
+                          className={`flex items-start gap-3 p-3 rounded-lg border border-gray-200 border-l-4 transition-all duration-300 ${
+                            removingActionId === action.id 
+                              ? 'opacity-0 transform scale-95 -translate-x-4' 
+                              : 'opacity-100 transform scale-100 translate-x-0'
+                          } ${(() => {
+                            const text = (action.text || '').toLowerCase();
+                            if (text.includes('teste le temps d\'attente réel aux heures de pointe')) return 'border-l-red-500 bg-red-100 hover:bg-red-200';
+                            if (text.includes('briefe l\'équipe sur la rapidité de service')) return 'border-l-red-500 bg-red-100 hover:bg-red-200';
+                            if (text.includes('observe le service ce soir pour identifier les points de blocage')) return 'border-l-red-500 bg-red-100 hover:bg-red-200';
+                            if (text.includes('réponds à 10 avis clients')) return 'border-l-blue-500 bg-blue-100 hover:bg-blue-200';
+                            if (text.includes('informe ton équipe du problème prioritaire')) return 'border-l-blue-500 bg-blue-100 hover:bg-blue-200';
+                            return 'border-l-blue-500 bg-blue-100 hover:bg-blue-200';
+                          })()}`}
+                        >
+                          <span className={`text-sm flex-1 ${action.completed ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                            {action.text}
+                          </span>
+                          <button
+                            onClick={() => handleChecklistActionComplete(action.id)}
+                            className="mt-0.5 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                            aria-label={`Marquer "${action.text}" comme complétée`}
+                          >
+                            <div
+                              className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                                action.completed
+                                  ? 'border-green-600 bg-green-50'
+                                  : 'border-gray-400 bg-white hover:border-gray-600'
+                              }`}
+                            >
+                              {action.completed ? (
+                                <Check className="w-4 h-4 text-green-600" />
+                              ) : null}
+                            </div>
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <p className="text-sm">{t("dashboard.noChecklistActionsAvailable") || "Aucune action disponible"}</p>
+                        <p className="text-xs mt-1">{t("dashboard.analyzeEstablishmentToGetActions") || "Analysez votre établissement pour obtenir des actions personnalisées"}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          );
+
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              {isChecklistFirst ? checklistCard : planCard}
+              {isChecklistFirst ? planCard : checklistCard}
+            </div>
+          );
+        })()}
+        
+
+        {/* SECTION 3 : Conseiller (pleine largeur, style éditorial/insight) */}
+        <Card
+          className="relative cursor-pointer transition-all duration-200 hover:shadow-md bg-amber-50/30 border-amber-100 mt-6 mb-6"
+          onClick={() => setIsAdvisorOpen((prev) => !prev)}
+        >
+          <CardHeader className="relative text-center">
+            <div className="flex flex-col items-center mb-2">
+              <Lightbulb className="w-5 h-5 text-amber-600 mb-2" />
+              <span className="text-lg font-semibold text-gray-800">{t("dashboard.advisor")}</span>
+            </div>
+            <p className="text-sm text-gray-600">{t("dashboard.personalizedAdviceForEstablishment")}</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsAdvisorOpen((prev) => !prev);
+              }}
+              className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-amber-100/50"
+            >
+              {isAdvisorOpen ? (
+                <ChevronUp className="w-3 h-3 text-amber-600" />
+              ) : (
+                <ChevronDown className="w-3 h-3 text-amber-600" />
+              )}
+            </Button>
+          </CardHeader>
+
+          {isAdvisorOpen && (
+            <CardContent className="animate-in fade-in-0 slide-in-from-top-2 duration-200">
+              <div className="space-y-5">
+                {/* Conseils générés dynamiquement par le consultant */}
+                {(() => {
+                  const consultantAdvice = generateConsultantAdvice(insight, allReviewsForChart, validatedReviews);
+                  
+                  if (consultantAdvice.length === 0) {
+                    return (
+                      <div className="text-center py-8 text-gray-500">
+                        <p className="text-sm">{t("dashboard.noAdviceAvailable") || "Aucun conseil disponible"}</p>
+                        <p className="text-xs mt-1">{t("dashboard.analyzeEstablishmentToGetAdvice") || "Analysez votre établissement pour obtenir des conseils personnalisés"}</p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-4">
+                      {consultantAdvice.map((advice, index) => (
+                        <div key={index} className="flex items-start gap-4 p-5 bg-white/60 rounded-lg border border-amber-200/50 shadow-sm">
+                          <Lightbulb className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                          <p className="text-sm text-gray-800 flex-1 leading-relaxed">{advice}</p>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {/* Message d'information - Style éditorial */}
+                <div className="mt-6 pt-4 border-t border-amber-200/50">
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    {t("dashboard.advisorDescription") || "Conseils personnalisés basés sur l'analyse de vos avis clients"}
+                  </p>
+                </div>
+              </div>
             </CardContent>
-        </Card>}
+          )}
+        </Card>
 
         {/* Agent */}
-        <Card className="relative h-full flex flex-col cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 mb-8" onClick={() => setOpenCard(openCard === 'agent' ? null : 'agent')}>
-          <CardContent className="p-6 text-center">
+        <Card
+          className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 mb-8"
+          onClick={() => setIsAgentOpen((prev) => !prev)}
+        >
+          <CardHeader className="relative text-center">
             <div className="flex flex-col items-center mb-2">
               <Bot className="w-5 h-5 text-purple-500 mb-2" />
               <span className="text-lg font-semibold">Agent</span>
-                </div>
+            </div>
             <p className="text-sm text-gray-600">Assistant IA pour répondre à vos avis</p>
-            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'agent' ? null : 'agent'); }} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-purple-50">
-              {openCard === 'agent' ? <ChevronUp className="w-3 h-3 text-purple-500" /> : <ChevronDown className="w-3 h-3 text-purple-500" />}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsAgentOpen((prev) => !prev);
+              }}
+              className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-purple-50"
+            >
+              {isAgentOpen ? (
+                <ChevronUp className="w-3 h-3 text-purple-500" />
+              ) : (
+                <ChevronDown className="w-3 h-3 text-purple-500" />
+              )}
             </Button>
-          </CardContent>
-        </Card>
-
-        {/* Contenu Agent */}
-        {openCard === 'agent' && <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-xl">Agent</CardTitle>
-            <p className="text-sm text-gray-600">Assistant IA pour répondre à vos avis</p>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                <p className="text-sm text-gray-700">
-                  L'agent IA analyse automatiquement vos avis et génère des réponses personnalisées adaptées à chaque situation.
+
+          {isAgentOpen && (
+            <CardContent className="animate-in fade-in-0 slide-in-from-top-2 duration-200">
+              <div className="space-y-4">
+                <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <p className="text-sm text-gray-700">
+                    L'agent IA analyse automatiquement vos avis et génère des réponses personnalisées adaptées à chaque situation.
                   </p>
                 </div>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                  <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Réponses automatiques intelligentes</p>
-                    <p className="text-xs text-gray-600 mt-1">Génération de réponses adaptées au ton et au contenu de chaque avis</p>
-                </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                  <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Personnalisation avancée</p>
-                    <p className="text-xs text-gray-600 mt-1">Adaptation du style et du contenu selon le type d'avis (positif, négatif, neutre)</p>
-                </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                  <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
-              <div>
-                    <p className="text-sm font-medium text-gray-900">Validation avant envoi</p>
-                    <p className="text-xs text-gray-600 mt-1">Vous pouvez modifier et valider chaque réponse avant de la publier</p>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Réponses automatiques intelligentes</p>
+                      <p className="text-xs text-gray-600 mt-1">Génération de réponses adaptées au ton et au contenu de chaque avis</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Personnalisation avancée</p>
+                      <p className="text-xs text-gray-600 mt-1">Adaptation du style et du contenu selon le type d'avis (positif, négatif, neutre)</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <Bot className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Validation avant envoi</p>
+                      <p className="text-xs text-gray-600 mt-1">Vous pouvez modifier et valider chaque réponse avant de la publier</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>}
+            </CardContent>
+          )}
+        </Card>
           </>
         )}
 
