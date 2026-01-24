@@ -107,6 +107,24 @@ serve(async (req) => {
         userId = newUser.user.id;
         logStep("User created successfully", { userId });
 
+        // Envoyer l'email de bienvenue (non bloquant)
+        logStep("Sending welcome email", { email: pendingUserEmail });
+        supabaseAdmin.functions.invoke('send-welcome-email', {
+          body: {
+            email: pendingUserEmail,
+            firstName: pendingUserFirstName || '',
+            lastName: pendingUserLastName || '',
+          },
+        }).then(({ data, error: emailError }) => {
+          if (emailError) {
+            logStep("Error sending welcome email", { error: emailError.message });
+          } else {
+            logStep("Welcome email sent successfully", { data });
+          }
+        }).catch((err) => {
+          logStep("Error calling send-welcome-email", { error: err.message });
+        });
+
         // Le profil est créé automatiquement par le trigger handle_new_user
         // On met juste à jour les entitlements
 
