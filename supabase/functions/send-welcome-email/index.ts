@@ -30,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Appel API Resend pour envoyer l'email de bienvenue");
     const emailResponse = await resend.emails.send({
-      from: "Reviewsvisor <contact@reviewsvisor.com>",
+      from: "Reviewsvisor <contact@reviewsvisor.fr>",
       to: [email],
       subject: "Bienvenue sur Reviewsvisor – Confirmation de votre compte",
       html: `

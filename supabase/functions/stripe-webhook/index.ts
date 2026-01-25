@@ -109,15 +109,24 @@ serve(async (req) => {
 
         // Envoyer l'email de bienvenue (non bloquant)
         logStep("Sending welcome email", { email: pendingUserEmail });
-        supabaseAdmin.functions.invoke('send-welcome-email', {
-          body: {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        
+        fetch(`${supabaseUrl}/functions/v1/send-welcome-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
             email: pendingUserEmail,
             firstName: pendingUserFirstName || '',
             lastName: pendingUserLastName || '',
-          },
-        }).then(({ data, error: emailError }) => {
-          if (emailError) {
-            logStep("Error sending welcome email", { error: emailError.message });
+          }),
+        }).then(async (response) => {
+          const data = await response.json();
+          if (!response.ok) {
+            logStep("Error sending welcome email", { error: data.error || response.statusText });
           } else {
             logStep("Welcome email sent successfully", { data });
           }

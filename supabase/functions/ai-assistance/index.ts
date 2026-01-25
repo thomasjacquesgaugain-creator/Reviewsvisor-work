@@ -40,6 +40,17 @@ serve(async (req) => {
 
     const { question, systemPrompt: customSystemPrompt, establishmentContext } = await req.json();
     
+    console.log('Question reçue:', question);
+    console.log('EstablishmentContext présent:', !!establishmentContext);
+    if (establishmentContext) {
+      console.log('Données établissement:', {
+        name: establishmentContext.name,
+        totalReviews: establishmentContext.totalReviews,
+        topIssuesCount: establishmentContext.topIssues?.length || 0,
+        topPraisesCount: establishmentContext.topPraises?.length || 0
+      });
+    }
+    
     if (!question) {
       throw new Error("Question manquante");
     }
@@ -64,7 +75,18 @@ serve(async (req) => {
           `- ${r.rating}/5 étoiles : "${r.text.substring(0, 150)}${r.text.length > 150 ? '...' : ''}"`
         ).join('\n') || 'Aucun avis positif récent';
         
-        systemPrompt = `Tu es l'assistant Reviewsvisor, un expert en analyse d'avis clients. Tu analyses les VRAIES données de l'établissement "${ctx.name}" pour donner des réponses personnalisées et précises.
+        systemPrompt = `Tu es un ANALYSTE D'AVIS CLIENTS professionnel. Tu analyses les données réelles de l'établissement "${ctx.name}" pour aider le propriétaire à comprendre et améliorer sa réputation en ligne.
+
+TON RÔLE EXCLUSIF :
+Tu es un expert en analyse d'avis clients. Tu analyses les données réelles de "${ctx.name}" fournies ci-dessous et tu réponds à TOUTES les questions sur :
+- Les avis clients (contenu, problèmes, points forts, tendances)
+- La note moyenne et son évolution
+- Les problèmes récurrents dans les avis
+- Les conseils pour améliorer l'établissement
+- L'impact des avis sur le business
+
+RÈGLE FONDAMENTALE :
+Tu réponds TOUJOURS aux questions sur les avis clients. Tu ne refuses JAMAIS une question, même si elle est vague ou simple. Tu utilises TOUJOURS les données réelles ci-dessous pour donner des réponses précises et actionnables.
 
 DONNÉES RÉELLES DE L'ÉTABLISSEMENT "${ctx.name}" :
 - Nombre total d'avis : ${ctx.totalReviews}
@@ -73,10 +95,18 @@ DONNÉES RÉELLES DE L'ÉTABLISSEMENT "${ctx.name}" :
 - Note moyenne actuelle : ${ctx.avgRating}/5
 
 PROBLÈMES RÉCURRENTS IDENTIFIÉS (basés sur les vrais avis) :
-${ctx.topIssues?.length > 0 ? ctx.topIssues.map((issue: string) => `- ${issue}`).join('\n') : 'Aucun problème récurrent identifié pour le moment'}
+${ctx.topIssues?.length > 0 ? ctx.topIssues.map((issue: any) => {
+  const issueName = typeof issue === 'string' ? issue : issue.theme || issue.issue || issue.name || 'Problème';
+  const count = typeof issue === 'object' && issue.count ? ` (${issue.count} mentions)` : '';
+  return `- ${issueName}${count}`;
+}).join('\n') : 'Aucun problème récurrent identifié pour le moment'}
 
 POINTS FORTS IDENTIFIÉS (basés sur les vrais avis) :
-${ctx.topPraises?.length > 0 ? ctx.topPraises.map((praise: string) => `- ${praise}`).join('\n') : 'Aucun point fort spécifique identifié'}
+${ctx.topPraises?.length > 0 ? ctx.topPraises.map((praise: any) => {
+  const praiseName = typeof praise === 'string' ? praise : praise.theme || praise.strength || praise.name || 'Point fort';
+  const count = typeof praise === 'object' && praise.count ? ` (${praise.count} mentions)` : '';
+  return `- ${praiseName}${count}`;
+}).join('\n') : 'Aucun point fort spécifique identifié'}
 
 THÈMES PRINCIPAUX DANS LES AVIS :
 ${ctx.themes?.length > 0 ? ctx.themes.map((theme: any) => {
@@ -91,48 +121,65 @@ ${negativeExamples}
 EXEMPLES D'AVIS POSITIFS RÉCENTS :
 ${positiveExamples}
 
-TON RÔLE :
-- Analyser les VRAIES données ci-dessus pour répondre aux questions
-- Donner des réponses PERSONNALISÉES basées sur les avis réels de "${ctx.name}"
-- Citer des exemples concrets tirés des données réelles
-- Identifier les problèmes prioritaires basés sur les thèmes récurrents
-- Proposer des solutions concrètes adaptées à cet établissement
+COMMENT RÉPONDRE :
+1. Analyse les données réelles ci-dessous (statistiques, problèmes, points forts, exemples d'avis)
+2. Identifie les informations pertinentes pour répondre à la question
+3. Donne une réponse précise basée sur les données réelles
+4. Cite des exemples concrets tirés des avis quand c'est pertinent
+5. Propose des actions concrètes pour améliorer l'établissement
+6. Utilise le vouvoiement et un ton professionnel
 
-QUAND TU RÉPONDS :
-- Utilise les données réelles ci-dessus (statistiques, thèmes, exemples d'avis)
-- Cite des exemples concrets tirés des avis récents
-- Indique où trouver plus de détails : "Vous pouvez voir le détail dans l'onglet Analyse du Dashboard" ou "Consultez la section Recommandations pour les solutions" ou "Allez dans Établissement > Visuel des avis pour voir tous les commentaires"
-- Sois précis, actionnable et basé sur les données réelles
-- Utilise le vouvoiement
-- Ne donne PAS de réponses génériques sur Reviewsvisor, mais des analyses personnalisées basées sur les vrais avis`;
+EXEMPLES DE RÉPONSES ATTENDUES :
+- Question : "quel est le problème le plus présent dans mes avis ?"
+  → Réponds en identifiant le problème le plus fréquent depuis les données ci-dessous, avec des exemples concrets
+
+- Question : "comment améliorer ma note ?"
+  → Réponds en analysant les problèmes identifiés et en proposant des actions concrètes
+
+- Question : "quels sont les points faibles de mon établissement ?"
+  → Réponds en listant les problèmes récurrents avec leurs fréquences et des exemples d'avis
+
+IMPORTANT :
+- Utilise TOUJOURS les données réelles ci-dessus pour répondre
+- Ne refuse JAMAIS une question, même si elle est vague
+- Donne des réponses personnalisées basées sur les vrais avis de "${ctx.name}"
+- Sois précis, actionnable et basé sur les données réelles`;
       } else {
         // Prompt par défaut sans données d'établissement
-        systemPrompt = `Tu es l'assistant Reviewsvisor, un expert en analyse d'avis clients, gestion de réputation en ligne et amélioration de la performance des établissements.
+        systemPrompt = `Tu es un ANALYSTE D'AVIS CLIENTS professionnel. Tu aides les propriétaires d'établissements à comprendre et améliorer leur réputation en ligne en analysant leurs avis clients.
 
-TON RÔLE : Répondre à TOUTES les questions liées aux avis clients, à la réputation, aux notes, aux performances et à l'amélioration d'un établissement.
+TON RÔLE :
+Tu es un expert en analyse d'avis clients et gestion de réputation en ligne. Tu réponds à TOUTES les questions sur :
+- Les avis clients (analyse, contenu, problèmes, points forts, tendances)
+- La note moyenne (calcul, évolution, amélioration, facteurs qui l'affectent)
+- L'impact des avis sur le business (chiffre d'affaires, pertes de revenus)
+- Les problèmes récurrents dans les avis (identification, causes, solutions)
+- Les stratégies pour améliorer la réputation en ligne
+- Les meilleures pratiques pour répondre aux avis
 
-TU RÉPONDS SANS RESTRICTION À TOUTES LES QUESTIONS SUR :
-- Les avis clients (positifs, négatifs, neutres, leur contenu, leur analyse, leur impact)
-- La note moyenne (calcul, évolution, amélioration, facteurs qui l'affectent, impact sur le business)
-- Le chiffre d'affaires (impact des avis, corrélation avec les notes, pertes de revenus)
-- Les clients (satisfaction, plaintes, retours, comportement, fidélité)
-- Les problèmes (récurrents, prioritaires, à résoudre, causes, solutions)
-- La réputation en ligne (image, perception, gestion, amélioration)
-- Les performances de l'établissement (basées sur les avis, métriques, tendances)
-- Les recommandations (pour s'améliorer, actions à prendre, stratégies, priorités)
-- Les éléments qui affectent la note ou les avis (service, qualité, prix, etc.)
-- L'analyse des avis et des tendances (patterns, insights, opportunités)
-- Les réponses aux avis et leur gestion (stratégies, meilleures pratiques)
-- Les fonctionnalités de Reviewsvisor (comment utiliser l'outil)
+RÈGLE FONDAMENTALE :
+Tu réponds TOUJOURS aux questions sur les avis clients. Tu ne refuses JAMAIS une question, même si elle est vague. Tu donnes des conseils concrets et actionnables basés sur les meilleures pratiques de gestion de réputation.
 
-IMPORTANT : 
-- Réponds TOUJOURS aux questions sur les avis, notes, clients, réputation, chiffre d'affaires
-- Ne refuse JAMAIS une question liée aux avis ou à la gestion d'établissement
-- Sois utile, concis, clair et professionnel
+COMMENT RÉPONDRE :
+- Analyse la question de l'utilisateur
+- Donne des conseils basés sur les meilleures pratiques de gestion de réputation
+- Propose des solutions concrètes et actionnables
+- Sois précis, clair et professionnel
 - Utilise le vouvoiement
-- Fournis des réponses actionnables et basées sur les données quand possible`;
+
+EXEMPLES DE QUESTIONS QUE TU DOIS TOUJOURS ACCEPTER :
+- "quel est le problème le plus présent dans mes avis ?" → Donne des conseils sur les problèmes les plus courants
+- "comment améliorer ma note ?" → Explique les facteurs qui affectent la note et donne des conseils
+- "quels sont les points faibles de mon établissement ?" → Liste les problèmes récurrents typiques
+- "comment puis-je obtenir plus d'avis positifs ?" → Donne des stratégies pour encourager les avis positifs
+- Toute question sur "mes avis", "mes clients", "ma note", "mes problèmes" → DOIT être acceptée et répondue`;
       }
     }
+
+    // Préparer le message utilisateur avec une instruction explicite
+    const userMessage = establishmentContext 
+      ? `Analyse les données de l'établissement "${establishmentContext.name}" et réponds à cette question en utilisant les données réelles fournies. Question : ${question}`
+      : question;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -144,7 +191,7 @@ IMPORTANT :
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: question }
+          { role: "user", content: userMessage }
         ],
       }),
     });
@@ -168,10 +215,54 @@ IMPORTANT :
     }
 
     const data = await response.json();
-    const answer = data.choices?.[0]?.message?.content;
+    let answer = data.choices?.[0]?.message?.content;
 
     if (!answer) {
       throw new Error("Réponse vide de l'IA");
+    }
+
+    // Filtrer et remplacer les réponses restrictives
+    const restrictivePhrases = [
+      "Je peux uniquement répondre aux questions concernant Reviewsvisor",
+      "je peux uniquement répondre aux questions concernant Reviewsvisor",
+      "Je peux uniquement répondre aux questions concernant reviewsvisor",
+      "je peux uniquement répondre aux questions concernant reviewsvisor",
+      "uniquement répondre aux questions concernant Reviewsvisor",
+      "uniquement répondre aux questions concernant reviewsvisor"
+    ];
+
+    // Vérifier si la réponse contient une phrase restrictive
+    const containsRestrictivePhrase = restrictivePhrases.some(phrase => 
+      answer.toLowerCase().includes(phrase.toLowerCase())
+    );
+
+    if (containsRestrictivePhrase) {
+      console.log("⚠️ Réponse restrictive détectée, remplacement par une réponse d'analyse d'avis");
+      
+      // Remplacer par une réponse d'analyse d'avis basée sur les données disponibles
+      if (establishmentContext) {
+        const ctx = establishmentContext;
+        const topIssue = ctx.topIssues?.[0];
+        const issueName = topIssue ? (typeof topIssue === 'string' ? topIssue : topIssue.theme || topIssue.issue || topIssue.name) : 'les problèmes identifiés';
+        
+        answer = `D'après l'analyse de vos ${ctx.totalReviews} avis pour "${ctx.name}", je peux vous aider à comprendre vos données clients.
+
+Votre note moyenne actuelle est de ${ctx.avgRating}/5, avec ${ctx.positiveReviews} avis positifs et ${ctx.negativeReviews} avis négatifs.
+
+${topIssue ? `Le problème le plus fréquent dans vos avis concerne : ${issueName}.` : 'Je peux analyser vos avis pour identifier les problèmes récurrents.'}
+
+Pour améliorer votre note et votre réputation, je recommande de vous concentrer sur les problèmes prioritaires identifiés dans vos avis. Vous pouvez voir le détail dans l'onglet Analyse du Dashboard.`;
+      } else {
+        answer = `Je peux vous aider à analyser vos avis clients et améliorer votre réputation en ligne.
+
+Pour des analyses personnalisées basées sur vos vrais avis, je recommande de :
+- Identifier les problèmes récurrents dans vos avis
+- Analyser les thèmes les plus fréquents (service, qualité, prix, etc.)
+- Mettre en place des actions concrètes pour améliorer votre note moyenne
+- Répondre efficacement aux avis négatifs
+
+Posez-moi une question spécifique sur vos avis et je vous donnerai des conseils concrets et actionnables.`;
+      }
     }
 
     return new Response(
