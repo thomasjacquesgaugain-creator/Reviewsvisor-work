@@ -4082,25 +4082,52 @@ const Dashboard = () => {
                       setIsGeneratingResponse(prev => ({ ...prev, [reviewId]: true }));
                       
                       try {
-                        const { data: { session } } = await supabase.auth.getSession();
+                        // Récupérer la session avec rafraîchissement si nécessaire
+                        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                        
+                        if (sessionError) {
+                          console.error('[generateAiResponse] Erreur session:', sessionError);
+                          toast.error(t("auth.sessionExpired"), {
+                            description: t("auth.pleaseReconnect"),
+                          });
+                          return;
+                        }
+                        
                         if (!session?.access_token) {
+                          console.error('[generateAiResponse] Pas de token dans la session');
                           toast.error(t("auth.sessionExpired"), {
                             description: t("auth.pleaseReconnect"),
                           });
                           return;
                         }
 
+                        // Préparer les headers avec Authorization et apikey
+                        const headers: Record<string, string> = {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${session.access_token}`,
+                        };
+                        
+                        // Ajouter apikey si disponible (pour compatibilité avec certaines Edge Functions)
+                        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+                        if (anonKey) {
+                          headers['apikey'] = anonKey;
+                        }
+
+                        console.log('[generateAiResponse] Appel à generate-review-response avec token:', {
+                          hasToken: !!session.access_token,
+                          tokenLength: session.access_token.length,
+                          url: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-review-response`
+                        });
+
                         const response = await fetch(
                           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-review-response`,
                           {
                             method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                              'Authorization': `Bearer ${session.access_token}`,
-                            },
+                            headers,
                             body: JSON.stringify({
                               review: {
-                                text: extractOriginalText(review.text) || review.text,
+                                // Toujours envoyer une chaîne, même si vide (pour permettre les avis sans commentaire)
+                                text: extractOriginalText(review.text) || review.text || '',
                                 rating: review.rating,
                                 author: review.author || review.author_name,
                                 published_at: review.published_at,
