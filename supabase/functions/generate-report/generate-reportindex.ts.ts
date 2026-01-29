@@ -268,31 +268,8 @@ serve(async (req) => {
       });
     }
     
-    // Si pas de données, utiliser des valeurs mock
-    if (formattedIssues.length === 0) {
-      formattedIssues = [
-        { label: "Service / attente", percentage: 25 },
-        { label: "Qualité des plats", percentage: 18 },
-        { label: "Prix", percentage: 12 }
-      ];
-    }
-    
-    if (formattedPraises.length === 0) {
-      formattedPraises = [
-        { label: "Qualité / goût", percentage: 40 },
-        { label: "Ambiance agréable", percentage: 30 }
-      ];
-    }
-    
-    if (formattedThemes.length === 0) {
-      formattedThemes = [
-        { theme: "Rapidité", percentage: 72 },
-        { theme: "Cuisine", percentage: 65 },
-        { theme: "Service", percentage: 58 },
-        { theme: "Ambiance", percentage: 85 },
-        { theme: "Rapport qualité/prix", percentage: 48 }
-      ];
-    }
+    // Ne plus utiliser de valeurs mock - afficher un message si pas de données
+    // Les données doivent venir de l'analyse réelle des avis
 
     // Génération de l'analyse IA des statistiques globales
     console.log('[generate-report] Génération de l\'analyse IA');
@@ -306,8 +283,11 @@ serve(async (req) => {
       } else {
         const topIssuesText = formattedIssues.map((i, idx) => `${idx + 1}. ${i.label} (${i.percentage}%)`).join(', ');
         const topPraisesText = formattedPraises.map((p, idx) => `${idx + 1}. ${p.label} (${p.percentage}%)`).join(', ');
+        const themesText = formattedThemes.length > 0 
+          ? formattedThemes.slice(0, 5).map((t, idx) => `${idx + 1}. ${t.theme}`).join(', ')
+          : 'Non spécifiées';
         
-        const prompt = `Tu es un expert en analyse de satisfaction client pour les restaurants et établissements. 
+        const prompt = `Tu es un expert en analyse de satisfaction client. 
 Rédige un paragraphe analytique et professionnel (150-200 mots) résumant la performance de l'établissement "${establishment.name}" basé sur ces données :
 
 - Note moyenne : ${avgRating.toFixed(1)}/5
@@ -316,6 +296,9 @@ Rédige un paragraphe analytique et professionnel (150-200 mots) résumant la pe
 - Taux d'avis négatifs (≤2★) : ${negativeRatio}%
 - Top 3 problèmes identifiés : ${topIssuesText || 'Aucun problème majeur identifié'}
 - Top 3 points forts : ${topPraisesText || 'Points forts à identifier'}
+- Thématiques principales : ${themesText}
+
+IMPORTANT: Adapte ton analyse au type d'établissement détecté via les thématiques (salon de coiffure, restaurant, salle de sport, magasin, serrurier, etc.).
 
 Ton analyse doit :
 1. Commencer par un constat général sur la satisfaction client
@@ -323,6 +306,7 @@ Ton analyse doit :
 3. Identifier les axes d'amélioration prioritaires
 4. Être factuelle, claire et constructive
 5. Ne pas utiliser de formatage markdown, juste du texte simple
+6. Utiliser un vocabulaire adapté au type d'établissement identifié
 
 Rédige uniquement le paragraphe d'analyse, sans titre ni introduction.`;
 

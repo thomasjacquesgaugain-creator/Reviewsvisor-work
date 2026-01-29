@@ -381,6 +381,11 @@
     "ratingDistributionFor": "Distribution des notes pour {{name}}",
     "ratingDistribution5Stars": "Distribution des notes sur 5 étoiles",
     "noDataAvailable": "Aucune donnée disponible.",
+    "noAdviceAvailable": "Aucun conseil disponible",
+    "analyzeEstablishmentToGetAdvice": "Analysez votre établissement pour obtenir des conseils personnalisés.",
+    "importAndAnalyzeToSeeResults": "Importez des avis et lancez une analyse pour voir les résultats",
+    "analysisBasedOnImportedReviews": "Analyse basée sur les avis importés",
+    "lastAnalysis": "Dernière analyse : {{date}}",
     "responseGenerated": "Réponse générée",
     "canModifyBeforeValidate": "Vous pouvez la modifier avant de valider",
     "defaultPositiveResponse": "Merci {{name}} pour votre retour positif ! Nous sommes ravis que vous ayez apprécié votre expérience chez nous. Au plaisir de vous revoir bientôt !",
@@ -860,6 +865,9 @@
     "analysisComplete": "Analyse terminée",
     "analysisCompleteDescription": "L'analyse de l'établissement a été réalisée avec succès.",
     "analysisFailed": "Échec de l'analyse de l'établissement.",
+    "reloadAnalysis": "Relancer l'analyse",
+    "deletingOldAnalysis": "Suppression des anciennes données d'analyse...",
+    "analysisReloadedSuccess": "Analyse relancée avec succès ! Les nouvelles thématiques ont été générées.",
     "call": "Appeler",
     "openInGoogleMaps": "Ouvrir dans Google Maps",
     "reviewsCount": "{{count}} avis",
@@ -1274,6 +1282,23 @@
       "address": "Adresse",
       "password": "Mot de passe",
       "confirmPassword": "Confirmer le mot de passe"
+    }
+  },
+  "analysis": {
+    "overview": {
+      "title": "Vue d'ensemble",
+      "averageRating": "Note moyenne",
+      "totalReviews": "Total avis",
+      "reviews": "avis",
+      "trend": "Tendance",
+      "insufficient": "Données insuffisantes",
+      "increasing": "En hausse",
+      "decreasing": "En baisse",
+      "stable": "Stable",
+      "partialData": "Données partielles",
+      "positiveReviews": "Avis positifs",
+      "neutralReviews": "Avis neutres",
+      "negativeReviews": "Avis négatifs"
     }
   }
 }

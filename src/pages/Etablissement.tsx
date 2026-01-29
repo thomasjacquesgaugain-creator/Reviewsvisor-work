@@ -141,25 +141,36 @@ export default function EtablissementPage() {
     }
   }
 
-  // Fonction pour récupérer les détails d'un lieu via Places Details (New)
+  // Récupération des détails via Places API (Legacy)
   async function fetchPlaceDetails(placeId: string): Promise<any> {
     await loadGooglePlaces();
     const g = (window as any).google;
     const service = new g.maps.places.PlacesService(document.createElement('div'));
+    const fields = [
+      'place_id',
+      'name',
+      'formatted_address',
+      'formatted_phone_number',
+      'international_phone_number',
+      'website',
+      'rating',
+      'url',
+      'geometry',
+    ];
     return new Promise((resolve, reject) => {
-      service.getDetails({
-        placeId,
-        fields: ['place_id', 'name', 'formatted_address', 'formatted_phone_number', 'website', 'rating', 'url', 'geometry']
-      }, (result: any, status: string) => {
-        const err = mapPlacesStatus(status);
-        if (err) {
-          reject(new Error(err));
-        } else if (result) {
-          resolve(result);
-        } else {
-          reject(new Error(t("googlePlaces.noResults")));
+      service.getDetails(
+        { placeId, fields },
+        (result: any, status: string) => {
+          const err = mapPlacesStatus(status);
+          if (err) {
+            reject(new Error(err));
+          } else if (result) {
+            resolve(result);
+          } else {
+            reject(new Error(t("googlePlaces.noResults")));
+          }
         }
-      });
+      );
     });
   }
 
@@ -185,7 +196,7 @@ export default function EtablissementPage() {
     }, 100);
   };
 
-  // Fonction pour sérialiser un lieu Google Places
+  // Sérialisation lieu Google Places → Etab
   function serializePlace(place: any): Etab {
     return {
       place_id: place.place_id || "",
@@ -194,9 +205,9 @@ export default function EtablissementPage() {
       lat: place.geometry?.location?.lat() ?? null,
       lng: place.geometry?.location?.lng() ?? null,
       website: place.website || "",
-      phone: place.formatted_phone_number || "",
+      phone: place.formatted_phone_number || place.international_phone_number || "",
       url: place.url || "",
-      rating: place.rating ?? null
+      rating: place.rating ?? null,
     };
   }
 

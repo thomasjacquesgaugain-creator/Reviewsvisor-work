@@ -159,12 +159,21 @@ export function extractKeywordsWithSentiment(
 ): Array<{ word: string; sentiment: CanonicalSentiment }> {
   if (!text) return [];
   
-  // Stop words à exclure
+  // Stop words à exclure (français + anglais)
   const STOP_WORDS = new Set([
+    // Français
     'très', 'bonne', 'bon', 'bien', 'plus', 'moins', 'assez', 'tout', 'tous', 'toute', 'toutes',
     'un', 'une', 'des', 'de', 'du', 'le', 'la', 'les', 'est', 'sont', 'était', 'être', 'avoir',
     'pour', 'avec', 'sans', 'dans', 'sur', 'par', 'que', 'qui', 'quoi', 'comme', 'mais', 'ou',
-    'et', 'donc', 'car', 'ce', 'cette', 'ces', 'son', 'sa', 'ses', 'leur', 'leurs', 'nos', 'notre'
+    'et', 'donc', 'car', 'ce', 'cette', 'ces', 'son', 'sa', 'ses', 'leur', 'leurs', 'nos', 'notre',
+    // Anglais
+    'the', 'this', 'that', 'with', 'have', 'from', 'they', 'been', 'were', 'very', 'much', 'more', 
+    'also', 'would', 'could', 'should', 'will', 'just', 'about', 'into', 'your', 'some', 'them', 
+    'than', 'then', 'when', 'what', 'which', 'their', 'there', 'here', 'where', 'how', 'who', 'why', 
+    'all', 'each', 'she', 'her', 'him', 'his', 'its', 'our', 'out', 'you', 'had', 'has', 'was', 
+    'are', 'but', 'not', 'can', 'did', 'get', 'got', 'let', 'may', 'now', 'own', 'say', 'too', 
+    'way', 'yes', 'yet', 'one', 'two', 'new', 'any', 'few', 'off', 'old', 'see', 'use', 'man', 
+    'day', 'come', 'made', 'find', 'give', 'hair', 'translated', 'google'
   ]);
   
   // Nettoyer et extraire les mots

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BarChart3, TrendingUp, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, Star, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar, Download, ClipboardList, Bot, X, Reply, Send, List, Sparkles, AlertCircle, Frown, ThumbsUp, Flag, Zap, Flame, Globe, Layers, Check } from "lucide-react";
 import { Link } from "react-router-dom";
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +26,14 @@ import { format } from "date-fns";
 import { fr, enUS, it, es, ptBR } from "date-fns/locale";
 import { DashboardTabs } from "@/components/DashboardTabs";
 import { AnalysisTabContent } from "@/components/analysis/AnalysisTabContent";
+import { ThemesDisplay } from "@/components/ThemesDisplay";
+import { BusinessTypeOverrideModal } from "@/components/BusinessTypeOverrideModal";
+import { BusinessType } from "@/config/industry";
+import { transformAnalysisData } from "@/utils/transformAnalysisData";
+import type { CompleteAnalysisData, Review } from "@/types/analysis";
+import { getKpiCache, setKpiCache } from "@/services/dashboardKpiCache";
+import { getDashboardSnapshot, setDashboardSnapshot } from "@/services/dashboardSnapshot";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 const Dashboard = () => {
@@ -42,7 +50,9 @@ const Dashboard = () => {
     signOut
   } = useAuth();
   const {
-    selectedEstablishment
+    selectedEstablishment,
+    setActivePlace,
+    activePlaceId,
   } = useEstablishmentStore();
   const { toast: toastHook } = useToast(); // Pour l'Agent IA (comme Assistance IA)
 
@@ -79,6 +89,7 @@ const Dashboard = () => {
   const [granularityEvolution, setGranularityEvolution] = useState<Granularity>("mois");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState('indicateurs');
+  const [showBusinessTypeOverrideModal, setShowBusinessTypeOverrideModal] = useState(false);
 
   // Établissements
   const [selectedEtab, setSelectedEtab] = useState<Etab | null>(null);
@@ -88,13 +99,25 @@ const Dashboard = () => {
   const [establishmentDbId, setEstablishmentDbId] = useState<string | null>(null);
   const [establishmentCreatedAt, setEstablishmentCreatedAt] = useState<string | null>(null);
 
-  // Review insights data
-  const [insight, setInsight] = useState<any>(null);
-  const [isLoadingInsight, setIsLoadingInsight] = useState(false);
+  // Review insights data — initialisation depuis snapshot pour affichage instantané (pas de flash 0/vide)
+  const getInitialSnapshot = () => {
+    const pid = useEstablishmentStore.getState().selectedEstablishment?.place_id ?? null;
+    return pid ? getDashboardSnapshot(pid) : null;
+  };
+  const [insight, setInsight] = useState<any>(() => getInitialSnapshot()?.insight ?? null);
+  const [isLoadingInsight, setIsLoadingInsight] = useState(true); // true jusqu'à fin du premier fetch
+  const [hasAnalysis, setHasAnalysis] = useState(() => {
+    const snap = getInitialSnapshot();
+    return !!(snap?.insight?.last_analyzed_at ?? snap?.insight);
+  });
+  const [isHydrated, setIsHydrated] = useState(() => {
+    const snap = getInitialSnapshot();
+    return !!(snap?.insight || (snap?.reviews && snap.reviews.length > 0));
+  });
   const [recentReviews, setRecentReviews] = useState<any[]>([]);
   const [topReviews, setTopReviews] = useState<any[]>([]);
   const [worstReviews, setWorstReviews] = useState<any[]>([]);
-  const [allReviewsForChart, setAllReviewsForChart] = useState<any[]>([]);
+  const [allReviewsForChart, setAllReviewsForChart] = useState<any[]>(() => getInitialSnapshot()?.reviews ?? []);
   const [platformStats, setPlatformStats] = useState<Record<string, { count: number; avgRating: number }>>({});
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -1115,92 +1138,38 @@ const Dashboard = () => {
       }
     }
 
-    // Action 5 : Actions spécifiques basées sur les problèmes identifiés dans les avis
+    // Action 5 : Actions génériques basées sur les vrais problèmes identifiés dans les avis
+    // Logique dynamique qui s'adapte à n'importe quel type d'établissement
     if (topIssues.length > 0) {
       const mainIssue = topIssues[0];
-      const issueTheme = (mainIssue.theme || mainIssue).toLowerCase();
+      const issueTheme = (mainIssue.theme || mainIssue).toString();
       const issueCount = mainIssue.count || 0;
       
-      if (issueTheme.includes('service') || issueTheme.includes('attente') || issueTheme.includes('lent')) {
-        if (issueCount >= 5) {
-          actions.push({
-            id: 'action-brief-speed',
-            text: 'Briefe l\'équipe sur la rapidité de service',
-            completed: false
-          });
-          actions.push({
-            id: 'action-observe-service',
-            text: 'Observe le service ce soir pour identifier les points de blocage',
-            completed: false
-          });
-        } else {
-          actions.push({
-            id: 'action-point-wait',
-            text: 'Fais un point avec l\'équipe sur le problème d\'attente',
-            completed: false
-          });
-        }
-        actions.push({
-          id: 'action-test-wait-time',
-          text: 'Teste le temps d\'attente réel aux heures de pointe',
-          completed: false
-        });
-      } else if (issueTheme.includes('qualité') || issueTheme.includes('plat') || issueTheme.includes('cuisson') || issueTheme.includes('froid') || issueTheme.includes('chaud')) {
-        if (issueCount >= 5) {
-          actions.push({
-            id: 'action-check-quality',
-            text: 'Vérifie en cuisine si le problème de qualité est résolu',
-            completed: false
-          });
-          actions.push({
-            id: 'action-observe-cuisine',
-            text: 'Observe la préparation des plats en cuisine ce soir',
-            completed: false
-          });
-        } else {
-          actions.push({
-            id: 'action-check-quality-single',
-            text: 'Vérifie en cuisine si le problème de qualité signalé est résolu',
-            completed: false
-          });
-        }
-      } else if (issueTheme.includes('prix') || issueTheme.includes('cher') || issueTheme.includes('coûteux')) {
-        actions.push({
-          id: 'action-note-price-reactions',
-          text: 'Note les réactions clients sur les prix pendant le service',
-          completed: false
-        });
-      } else if (issueTheme.includes('accueil') || issueTheme.includes('sourire') || issueTheme.includes('froid') || issueTheme.includes('sympathie')) {
+      // Vérifier que le thème est pertinent (pas vide, pas générique de restaurant si ce n'est pas un restaurant)
+      const isValidIssue = issueTheme && issueTheme.trim().length > 0 && issueCount > 0;
+      
+      if (isValidIssue) {
+        // Action générique : discuter avec l'équipe du problème identifié
         if (issueCount >= 3) {
           actions.push({
-            id: 'action-discuss-welcome',
-            text: 'Discute avec l\'équipe de l\'importance du sourire et de l\'accueil chaleureux',
-            completed: false
-          });
-        } else {
-          actions.push({
-            id: 'action-point-welcome',
-            text: 'Fais un point avec l\'équipe sur l\'accueil',
+            id: `action-discuss-issue-${issueTheme.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+            text: `Discute avec l'équipe du problème mentionné : ${issueTheme}`,
             completed: false
           });
         }
-      } else if (issueTheme.includes('bruit') || issueTheme.includes('bruyant') || issueTheme.includes('ambiance') || issueTheme.includes('musique')) {
+        
+        // Action générique : observer le problème aujourd'hui
         actions.push({
-          id: 'action-identify-noise',
-          text: 'Identifie les sources de nuisance sonore ce soir',
+          id: `action-observe-issue-${issueTheme.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+          text: `Observe aujourd'hui si le problème "${issueTheme}" se manifeste`,
           completed: false
         });
-      } else if (issueTheme.includes('propreté') || issueTheme.includes('sale') || issueTheme.includes('nettoyage')) {
-        if (issueCount >= 3) {
+        
+        // Si plusieurs problèmes, ajouter une action pour analyser les patterns
+        if (topIssues.length >= 2 && issueCount >= 5) {
           actions.push({
-            id: 'action-check-cleanliness',
-            text: 'Vérifie la propreté des tables et sanitaires ce soir',
-            completed: false
-          });
-        } else {
-          actions.push({
-            id: 'action-observe-cleaning',
-            text: 'Observe le nettoyage des tables entre les services',
+            id: `action-analyze-issue-${issueTheme.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+            text: `Analyse pourquoi le problème "${issueTheme}" revient souvent dans les avis`,
             completed: false
           });
         }
@@ -1339,10 +1308,11 @@ const Dashboard = () => {
 
       setEstablishments(mapped);
 
-      // Détermine l'établissement affiché: actif si défini, sinon plus récent
+      // Établissement affiché : store global (activePlaceId) > actif en DB > premier
       if (mapped.length > 0) {
-        const active = mapped.find((e) => e.is_active) ?? mapped[0];
-        setSelectedEtab(active);
+        const placeId = useEstablishmentStore.getState().activePlaceId ?? useEstablishmentStore.getState().selectedEstablishment?.place_id ?? null;
+        const active = placeId ? mapped.find((e) => e.place_id === placeId) : null;
+        setSelectedEtab(active ?? mapped.find((e) => e.is_active) ?? mapped[0]);
       } else {
         setSelectedEtab(null);
       }
@@ -1438,53 +1408,101 @@ const Dashboard = () => {
     cumulative: 82.3
   }];
 
-  // Fetch review insights data
+  // Cache mémoire (stale-while-revalidate) : réutiliser immédiatement si déjà chargé pour cet établissement
+  const kpiMemoryCacheRef = useRef<Record<string, { insight: any; reviews: any[] }>>({});
+
+  // Hydrater depuis cache au changement d'établissement : mémoire d'abord, puis snapshot (stale-while-revalidate)
+  const placeIdForCache = selectedEtab?.place_id ?? selectedEstablishment?.place_id ?? null;
+  useLayoutEffect(() => {
+    if (!placeIdForCache) return;
+    const fromMemory = kpiMemoryCacheRef.current[placeIdForCache];
+    if (fromMemory?.insight || (fromMemory?.reviews && fromMemory.reviews.length > 0)) {
+      setInsight(fromMemory.insight ?? null);
+      setAllReviewsForChart(fromMemory.reviews ?? []);
+      setHasAnalysis(!!fromMemory.insight?.last_analyzed_at);
+      setIsHydrated(true);
+      return;
+    }
+    const snap = getDashboardSnapshot(placeIdForCache);
+    if (snap?.insight || (snap?.reviews && snap.reviews.length > 0)) {
+      setInsight(snap.insight ?? null);
+      setAllReviewsForChart(snap.reviews ?? []);
+      setHasAnalysis(!!snap.insight);
+      kpiMemoryCacheRef.current[placeIdForCache] = {
+        insight: snap.insight ?? null,
+        reviews: snap.reviews ?? [],
+      };
+      setIsHydrated(true);
+    }
+  }, [placeIdForCache]);
+
+  // Fetch review insights data - Chargement automatique au mount
+  // Utilise le place_id de l'établissement sélectionné (selectedEtab) en priorité, sinon l'actif en DB
   useEffect(() => {
     const fetchInsights = async () => {
-      if (!user?.id) return;
-      
-      // Récupérer l'établissement actif depuis la table établissements (is_active = true)
-      const { data: activeEstablishment, error: estabError } = await supabase
-        .from('établissements')
-        .select('place_id, nom')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .maybeSingle();
-      
-      if (estabError) {
-        console.error('[Dashboard] Erreur récupération établissement actif:', estabError);
+      if (!user?.id) {
+        setIsLoadingInsight(false);
         return;
       }
-      
-      if (!activeEstablishment?.place_id) {
-        console.warn('[Dashboard] Aucun établissement actif trouvé');
+
+      // 1) Déterminer le place_id courant : état UI (sélection) puis fallback DB (is_active)
+      let placeId: string | null = selectedEtab?.place_id ?? selectedEstablishment?.place_id ?? null;
+      let currentEstabName = selectedEtab?.name ?? selectedEstablishment?.name ?? null;
+
+      if (!placeId) {
+        const { data: activeRow } = await supabase
+          .from('établissements')
+          .select('place_id, nom')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .maybeSingle();
+        if (activeRow?.place_id) {
+          placeId = activeRow.place_id;
+          currentEstabName = activeRow.nom;
+        }
+      }
+
+      if (!placeId) {
         setPendingReviews([]);
         setAllReviewsForChart([]);
+        setInsight(null);
+        setHasAnalysis(false);
+        setIsLoadingInsight(false);
+        setIsHydrated(false);
         return;
       }
-      
-      // Utiliser l'établissement actif
-      const currentEstab = {
-        place_id: activeEstablishment.place_id,
-        name: activeEstablishment.nom
-      };
-      
+
       setIsLoadingInsight(true);
+
       try {
-        const {
-          data: insightData,
-          error
-        } = await supabase.from('review_insights').select('total_count, avg_rating, top_issues, top_praises, positive_ratio, last_analyzed_at, summary, themes').eq('place_id', currentEstab.place_id).eq('user_id', user.id).order('last_analyzed_at', {
-          ascending: false
-        }).limit(1).maybeSingle();
-        if (error) {
-          console.error('[dashboard] review_insights error:', error);
-        } else {
-          if (!import.meta.env.PROD) {
-            console.log('[dashboard] Insights loaded:', insightData);
+        const { loadLatestAnalysis } = await import('@/services/analysisLoader');
+        const result = await loadLatestAnalysis(placeId, user.id);
+
+        const hadAnalysisForThisPlace = result.success && result.hasAnalysis && !!result.data;
+        if (result.success) {
+          if (result.hasAnalysis && result.data) {
+            setInsight(result.data);
+            setHasAnalysis(true);
+            if (!import.meta.env.PROD) {
+              console.log('[Dashboard] ✅ Analyse chargée automatiquement:', result.data);
+            }
+          } else {
+            setInsight(null);
+            setHasAnalysis(false);
+            if (!import.meta.env.PROD) {
+              console.log('[Dashboard] ℹ️ Aucune analyse pour place_id:', placeId);
+            }
           }
-          setInsight(insightData);
+        } else {
+          console.error('[Dashboard] Erreur chargement analyse:', result.error);
+          setInsight(null);
+          setHasAnalysis(false);
         }
+
+        const currentEstab = {
+          place_id: placeId,
+          name: currentEstabName ?? ''
+        };
         
         // Charger les vrais avis récents
         console.log('[Dashboard] 🔍 DEBUG - Récupération des avis:', {
@@ -1521,8 +1539,11 @@ const Dashboard = () => {
             setWorstReviews([]);
             setPlatformStats({});
             setPendingReviews([]);
-            // Reset insight si plus d'avis
-            setInsight(null);
+            // Ne pas réinitialiser l'insight si une analyse existe déjà pour cet établissement
+            if (!hadAnalysisForThisPlace) {
+              setInsight(null);
+              setHasAnalysis(false);
+            }
           } else {
             setRecentReviews(reviewsData.slice(0, 3));
             setAllReviewsForChart(reviewsData);
@@ -1624,6 +1645,13 @@ const Dashboard = () => {
           }
         }
 
+        // Cache mémoire + snapshot localStorage (stale-while-revalidate, TTL 6h)
+        const insightPayload = result.success && result.hasAnalysis && result.data ? result.data : null;
+        const reviewsPayload = reviewsData ?? [];
+        kpiMemoryCacheRef.current[placeId] = { insight: insightPayload, reviews: reviewsPayload };
+        setKpiCache(placeId, { insight: insightPayload, reviews: reviewsPayload });
+        setDashboardSnapshot(placeId, { insight: insightPayload, reviews: reviewsPayload });
+
         // Récupérer la date de création et l'id de l'établissement depuis établissements
         const { data: establishmentData, error: estError } = await supabase
           .from('établissements')
@@ -1675,6 +1703,7 @@ const Dashboard = () => {
         console.error('[dashboard] fetch insights error:', error);
       } finally {
         setIsLoadingInsight(false);
+        setIsHydrated(true); // Données chargées (ou erreur) → on peut afficher KPI ou "—"
       }
     };
     fetchInsights();
@@ -1784,15 +1813,67 @@ const Dashboard = () => {
   } = formatDateTime(currentDateTime);
 
   // Map insight data to variables used by UI components
-  // Utiliser 0 ou des valeurs par défaut quand il n'y a pas d'avis
+  // Ne pas afficher 0 par défaut si une analyse existe (même sans avis récents)
   const hasReviews = allReviewsForChart.length > 0;
-  const totalAnalyzed = insight?.total_count ?? 0;
-  const avgRating = hasReviews ? (insight?.avg_rating ?? 0) : 0;
-  const totalReviews = hasReviews ? (insight?.total_count ?? 0) : 0;
-  const positivePct = hasReviews && insight?.positive_ratio != null ? Math.round(insight.positive_ratio * 100) : 0;
-  const negativePct = hasReviews ? (100 - positivePct) : 0;
-  const topIssues = hasReviews ? (insight?.top_issues ?? []) : [];
-  const topStrengths = hasReviews ? (insight?.top_praises ?? []) : [];
+  const hasAnalysisData = hasAnalysis && insight !== null;
+  const totalAnalyzed = hasAnalysisData ? (insight?.total_count ?? 0) : (hasReviews ? allReviewsForChart.length : 0);
+  const avgRating = hasAnalysisData ? (insight?.avg_rating ?? 0) : (hasReviews ? allReviewsForChart.reduce((sum, r) => sum + (r.rating || 0), 0) / allReviewsForChart.length : 0);
+  const totalReviews = hasAnalysisData ? (insight?.total_count ?? 0) : (hasReviews ? allReviewsForChart.length : 0);
+  const positivePct = hasAnalysisData && insight?.positive_ratio != null ? Math.round(insight.positive_ratio * 100) : (hasReviews ? Math.round((allReviewsForChart.filter(r => (r.rating || 0) >= 4).length / allReviewsForChart.length) * 100) : 0);
+  const negativePct = hasAnalysisData ? (100 - positivePct) : (hasReviews ? Math.round((allReviewsForChart.filter(r => (r.rating || 0) <= 2).length / allReviewsForChart.length) * 100) : 0);
+  const topIssues = hasAnalysisData ? (insight?.top_issues ?? []) : [];
+  const topStrengths = hasAnalysisData ? (insight?.top_praises ?? []) : [];
+
+  // Valeurs affichées : null tant que pas hydraté ou pas de données (jamais de 0 par défaut)
+  const hasKpiData = hasAnalysisData || hasReviews;
+  const showKpiNumbers = isHydrated && hasKpiData;
+  const displayTotalAnalyzed: number | null = showKpiNumbers ? totalAnalyzed : null;
+  const displayAvgRating: number | null = showKpiNumbers ? avgRating : null;
+  const displayTotalReviews: number | null = showKpiNumbers ? totalReviews : null;
+  const displayPositivePct: number | null = showKpiNumbers ? positivePct : null;
+  const displayNegativePct: number | null = showKpiNumbers ? negativePct : null;
+
+  // Source de vérité unique pour l'onglet Analyse : même analyse que les KPI (insight + reviews)
+  const reviewsForAnalysis: Review[] = useMemo(() => (allReviewsForChart || []).map((r: any) => ({
+    id: r.id?.toString() || '',
+    etablissementId: selectedEtab?.place_id || selectedEstablishment?.place_id || '',
+    source: (r.source || 'google') as Review['source'],
+    note: r.rating || 0,
+    texte: r.text || r.comment || '',
+    date: r.published_at || r.inserted_at || r.created_at || r.date || new Date().toISOString(),
+    published_at: r.published_at,
+    inserted_at: r.inserted_at,
+    created_at: r.created_at
+  })), [allReviewsForChart, selectedEtab?.place_id, selectedEstablishment?.place_id]);
+
+  const analysisDataForTab: CompleteAnalysisData | null = useMemo(() => {
+    try {
+      if (insight) {
+        return transformAnalysisData(insight, reviewsForAnalysis);
+      }
+      // Fallback: si KPI a des avis mais pas d'insight (ex. erreur 400 colonne manquante), afficher quand même les graphes à partir des avis
+      if (reviewsForAnalysis.length > 0) {
+        const n = reviewsForAnalysis.length;
+        const avg = reviewsForAnalysis.reduce((s, r) => s + (r.note || 0), 0) / n;
+        const positiveCount = reviewsForAnalysis.filter(r => (r.note || 0) >= 4).length;
+        const minimalInsight = {
+          total_count: n,
+          avg_rating: avg,
+          positive_ratio: positiveCount / n,
+          top_issues: [],
+          top_praises: [],
+          themes: [],
+          last_analyzed_at: null,
+          summary: null
+        };
+        return transformAnalysisData(minimalInsight, reviewsForAnalysis);
+      }
+      return null;
+    } catch (e) {
+      console.error('[Dashboard] transformAnalysisData error:', e);
+      return null;
+    }
+  }, [insight, reviewsForAnalysis]);
 
   // Map top issues to Pareto data format
   const paretoData = topIssues.length > 0 ? topIssues.slice(0, 3).map((issue: any, index: number) => {
@@ -1897,7 +1978,11 @@ const Dashboard = () => {
             </div>
               <div className="flex items-center gap-2 text-gray-600 mt-1">
             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-            <span>{t("dashboard.analysisOfReviews", { count: totalAnalyzed })}</span>
+            <span>
+              {displayTotalAnalyzed == null
+                ? "—"
+                : t("dashboard.analysisOfReviews", { count: displayTotalAnalyzed })}
+            </span>
           </div>
         </div>
 
@@ -1939,30 +2024,19 @@ const Dashboard = () => {
                                 selectedEtab?.place_id === etab.place_id ? 'bg-blue-50' : ''
                               }`}
                               onClick={async () => {
-                                // Persist en DB : marquer comme actif
-                                if (user?.id) {
-                                  try {
-                                    // D'abord désactiver tous les établissements
-                                    await supabase
-                                      .from("établissements")
-                                      .update({ is_active: false })
-                                      .eq("user_id", user.id);
-                                    
-                                    // Puis activer celui sélectionné
-                                    await supabase
-                                      .from("établissements")
-                                      .update({ is_active: true })
-                                      .eq("user_id", user.id)
-                                      .eq("place_id", etab.place_id);
-                                  } catch (err) {
-                                    console.error(t("errors.updateEstablishmentActiveError"), err);
-                                  }
-                                }
-                                
+                                const payload = {
+                                  place_id: etab.place_id,
+                                  name: etab.name,
+                                  formatted_address: etab.address,
+                                  lat: etab.lat ?? undefined,
+                                  lng: etab.lng ?? undefined,
+                                  website: etab.website,
+                                  phone: etab.phone,
+                                  rating: etab.rating ?? undefined,
+                                };
+                                await setActivePlace(etab.place_id, payload);
                                 setSelectedEtab(etab);
                                 setShowEstablishmentsDropdown(false);
-                                
-                                // Déclencher les événements pour mettre à jour d'autres composants
                                 window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));
                                 window.dispatchEvent(new CustomEvent("establishment:updated"));
                               }}
@@ -2032,7 +2106,10 @@ const Dashboard = () => {
                           
                           if (insightData) {
                             setInsight(insightData);
+                            setHasAnalysis(true);
                             console.log(t("dashboard.insightsReloaded"), insightData);
+                          } else {
+                            setHasAnalysis(false);
                           }
                           
                           // Recharger aussi les avis
@@ -2211,10 +2288,16 @@ const Dashboard = () => {
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Star className="w-5 h-5 text-yellow-500" />
-                <span className="text-2xl font-bold">{avgRating.toFixed(1)}</span>
+                {displayAvgRating == null ? (
+                  <Skeleton className="h-8 w-14 inline-block animate-shimmer" />
+                ) : (
+                  <span className="text-2xl font-bold animate-in fade-in duration-300">{displayAvgRating.toFixed(1)}</span>
+                )}
               </div>
               <p className="text-sm text-gray-600">{t("dashboard.averageRating")}</p>
-              <p className="text-xs text-gray-500">{t("dashboard.basedOnReviews", { count: totalReviews })}</p>
+              <p className="text-xs text-gray-500">
+                {displayTotalReviews == null ? "—" : t("dashboard.basedOnReviews", { count: displayTotalReviews })}
+              </p>
               <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'courbeNote' ? null : 'courbeNote'); }} className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-yellow-50">
                 {openCard === 'courbeNote' ? <ChevronUp className="w-3 h-3 text-yellow-600" /> : <ChevronDown className="w-3 h-3 text-yellow-600" />}
               </Button>
@@ -2224,8 +2307,14 @@ const Dashboard = () => {
           <Card className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1" onClick={() => setOpenCard(openCard === 'plateformes' ? null : 'plateformes')}>
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center gap-1 mb-2">
-                <span className="text-2xl font-bold text-blue-600">{totalReviews}</span>
-                <TrendingUp className="w-4 h-4 text-green-500 ml-1" />
+                {displayTotalReviews == null ? (
+                  <Skeleton className="h-8 w-14 inline-block animate-shimmer" />
+                ) : (
+                  <>
+                    <span className="text-2xl font-bold text-blue-600 animate-in fade-in duration-300">{displayTotalReviews}</span>
+                    <TrendingUp className="w-4 h-4 text-green-500 ml-1" />
+                  </>
+                )}
               </div>
               <p className="text-sm text-gray-600">{t("dashboard.totalReviews")}</p>
               <p className="text-xs text-gray-500">{t("dashboard.allPlatforms")}</p>
@@ -2238,7 +2327,11 @@ const Dashboard = () => {
           <Card className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1" onClick={() => setOpenCard(openCard === 'avisPositifs' ? null : 'avisPositifs')}>
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center gap-1 mb-2">
-                <span className="text-2xl font-bold text-green-600">{positivePct}%</span>
+                {displayPositivePct == null ? (
+                  <Skeleton className="h-8 w-12 inline-block animate-shimmer" />
+                ) : (
+                  <span className="text-2xl font-bold text-green-600 animate-in fade-in duration-300">{displayPositivePct}%</span>
+                )}
               </div>
               <p className="text-sm text-gray-600">{t("dashboard.positiveReviews")}</p>
               <p className="text-xs text-gray-500">{t("dashboard.rating4StarsOrMore")}</p>
@@ -2256,7 +2349,11 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <div className="text-sm text-gray-500">{t("dashboard.negativeReviews")}</div>
-                  <div className="text-2xl font-bold">{negativePct}%</div>
+                  {displayNegativePct == null ? (
+                    <Skeleton className="h-8 w-12 mt-1 animate-shimmer" />
+                  ) : (
+                    <div className="text-2xl font-bold animate-in fade-in duration-300">{displayNegativePct}%</div>
+                  )}
                   <div className="text-xs text-gray-400">{t("dashboard.negativeReviews")}</div>
                 </div>
               </div>
@@ -2475,7 +2572,11 @@ const Dashboard = () => {
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <BarChart3 className="w-5 h-5 text-[#5048e5]" />
-                <p className="text-2xl font-bold text-[#5048e5]">{totalReviews}</p>
+                {displayTotalReviews == null ? (
+                  <Skeleton className="h-8 w-14 inline-block animate-shimmer" />
+                ) : (
+                  <p className="text-2xl font-bold text-[#5048e5] animate-in fade-in duration-300">{displayTotalReviews}</p>
+                )}
               </div>
               <p className="text-sm text-gray-600">{t("dashboard.reviewsDecryption")}</p>
               <p className="text-xs text-gray-500">{t("dashboard.completeDetailsRatingsThemes")}</p>
@@ -2491,7 +2592,18 @@ const Dashboard = () => {
           <Card className="mt-4 mb-8" id="thematiques-content">
             <CardContent className="pt-6">
               <div className="space-y-4">
-                {insight?.themes && insight.themes.length > 0 ? (
+                {/* Utiliser le nouveau format v2 si disponible, sinon fallback v1 */}
+                {insight?.analysis_version === 'v2-auto-universal' ? (
+                  <ThemesDisplay
+                    themesUniversal={insight?.themes_universal || []}
+                    themesIndustry={insight?.themes_industry || []}
+                    businessType={insight?.business_type as BusinessType | null}
+                    businessTypeConfidence={insight?.business_type_confidence || null}
+                    businessTypeCandidates={insight?.business_type_candidates || []}
+                    totalReviews={insight?.total_count || 1}
+                    onOverrideClick={() => setShowBusinessTypeOverrideModal(true)}
+                  />
+                ) : insight?.themes && insight.themes.length > 0 ? (
                   (() => {
                     const totalReviews = insight?.total_count || 1;
                     
@@ -2611,85 +2723,122 @@ const Dashboard = () => {
                 {/* Répartition des avis par note */}
                 <div>
                   <h4 className="font-semibold text-lg mb-4">Répartition des avis par note</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-4">
-                      <span className="w-20 text-sm text-gray-600 font-medium">5 étoiles</span>
-                      <div className="flex-1 bg-gray-100 rounded-full h-3">
-                        <div className="bg-green-500 h-3 rounded-full" style={{width: '30%'}}></div>
-                      </div>
-                      <span className="text-sm text-gray-600 w-20 text-right">3 (30.0%)</span>
+                  {hasReviews && insight?.summary?.by_rating ? (
+                    <div className="space-y-3">
+                      {[5, 4, 3, 2, 1].map((star) => {
+                        const count = insight.summary.by_rating[star] || 0;
+                        const total = insight.total_count || 1;
+                        const percentage = Math.round((count / total) * 100);
+                        const color = star >= 4 ? 'bg-green-500' : star === 3 ? 'bg-yellow-500' : 'bg-red-500';
+                        return (
+                          <div key={star} className="flex items-center gap-4">
+                            <span className="w-20 text-sm text-gray-600 font-medium">{star} étoile{star > 1 ? 's' : ''}</span>
+                            <div className="flex-1 bg-gray-100 rounded-full h-3">
+                              <div className={`${color} h-3 rounded-full`} style={{width: `${percentage}%`}}></div>
+                            </div>
+                            <span className="text-sm text-gray-600 w-20 text-right">{count} ({percentage}%)</span>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="w-20 text-sm text-gray-600 font-medium">4 étoiles</span>
-                      <div className="flex-1 bg-gray-100 rounded-full h-3">
-                        <div className="bg-green-500 h-3 rounded-full" style={{width: '40%'}}></div>
-                      </div>
-                      <span className="text-sm text-gray-600 w-20 text-right">4 (40.0%)</span>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>Importez vos avis pour voir la répartition</p>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="w-20 text-sm text-gray-600 font-medium">3 étoiles</span>
-                      <div className="flex-1 bg-gray-100 rounded-full h-3">
-                        <div className="bg-yellow-500 h-3 rounded-full" style={{width: '20%'}}></div>
-                      </div>
-                      <span className="text-sm text-gray-600 w-20 text-right">2 (20.0%)</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="w-20 text-sm text-gray-600 font-medium">2 étoiles</span>
-                      <div className="flex-1 bg-gray-100 rounded-full h-3">
-                        <div className="bg-red-500 h-3 rounded-full" style={{width: '10%'}}></div>
-                      </div>
-                      <span className="text-sm text-gray-600 w-20 text-right">1 (10.0%)</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="w-20 text-sm text-gray-600 font-medium">1 étoile</span>
-                      <div className="flex-1 bg-gray-100 rounded-full h-3">
-                        <div className="bg-gray-300 h-3 rounded-full" style={{width: '0%'}}></div>
-                      </div>
-                      <span className="text-sm text-gray-600 w-20 text-right">0 (0.0%)</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
                 
                 {/* Thématiques récurrentes */}
                 <div>
                   <h4 className="font-semibold text-lg mb-4">Thématiques récurrentes</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between bg-[#f0f3ff] rounded-lg px-4 py-3">
-                      <span className="font-medium">Rapidité</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-gray-500">8 mentions</span>
-                        <span className="px-3 py-1 rounded-full border border-[#5048e5] text-[#5048e5] text-sm font-medium">80.0%</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between bg-[#f0f3ff] rounded-lg px-4 py-3">
-                      <span className="font-medium">Cuisine</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-gray-500">7 mentions</span>
-                        <span className="px-3 py-1 rounded-full border border-[#5048e5] text-[#5048e5] text-sm font-medium">70.0%</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between bg-[#f0f3ff] rounded-lg px-4 py-3">
-                      <span className="font-medium">Service / attente</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-gray-500">6 mentions</span>
-                        <span className="px-3 py-1 rounded-full border border-[#5048e5] text-[#5048e5] text-sm font-medium">60.0%</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between bg-[#f0f3ff] rounded-lg px-4 py-3">
-                      <span className="font-medium">Ambiance agréable</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-gray-500">5 mentions</span>
-                        <span className="px-3 py-1 rounded-full border border-[#5048e5] text-[#5048e5] text-sm font-medium">50.0%</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between bg-[#f0f3ff] rounded-lg px-4 py-3">
-                      <span className="font-medium">Prix</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-gray-500">1 mention</span>
-                        <span className="px-3 py-1 rounded-full border border-[#5048e5] text-[#5048e5] text-sm font-medium">10.0%</span>
-                      </div>
-                    </div>
-                  </div>
+                  {(() => {
+                    // Mapper les données v2 (themes_universal et themes_industry) vers le format attendu
+                    const isV2 = insight?.analysis_version === 'v2-auto-universal';
+                    const hasAnalysis = !!insight && !!insight.last_analyzed_at;
+                    
+                    // Extraire et mapper themes_universal (format v2)
+                    let themesUniversal: Array<{ theme: string; count?: number; importance?: number }> = [];
+                    if (isV2 && insight?.themes_universal) {
+                      try {
+                        // Gérer le cas où c'est déjà un tableau ou une chaîne JSON
+                        const universalData = typeof insight.themes_universal === 'string' 
+                          ? JSON.parse(insight.themes_universal) 
+                          : insight.themes_universal;
+                        
+                        if (Array.isArray(universalData) && universalData.length > 0) {
+                          themesUniversal = universalData.map((t: any) => ({
+                            theme: t.theme || t.name || String(t) || 'Thématique',
+                            count: typeof t.count === 'number' ? t.count : (t.importance ? Math.round(t.importance / 10) : 0),
+                            importance: typeof t.importance === 'number' ? t.importance : (t.count ? t.count * 10 : 0)
+                          })).filter((t: any) => t.theme && t.theme !== 'Thématique');
+                        }
+                      } catch (e) {
+                        console.warn('[Dashboard] Erreur parsing themes_universal:', e);
+                      }
+                    }
+                    
+                    // Extraire et mapper themes_industry (format v2)
+                    let themesIndustry: Array<{ theme: string; count?: number; importance?: number }> = [];
+                    if (isV2 && insight?.themes_industry) {
+                      try {
+                        // Gérer le cas où c'est déjà un tableau ou une chaîne JSON
+                        const industryData = typeof insight.themes_industry === 'string' 
+                          ? JSON.parse(insight.themes_industry) 
+                          : insight.themes_industry;
+                        
+                        if (Array.isArray(industryData) && industryData.length > 0) {
+                          themesIndustry = industryData.map((t: any) => ({
+                            theme: t.theme || t.name || String(t) || 'Thématique',
+                            count: typeof t.count === 'number' ? t.count : (t.importance ? Math.round(t.importance / 10) : 0),
+                            importance: typeof t.importance === 'number' ? t.importance : (t.count ? t.count * 10 : 0)
+                          })).filter((t: any) => t.theme && t.theme !== 'Thématique');
+                        }
+                      } catch (e) {
+                        console.warn('[Dashboard] Erreur parsing themes_industry:', e);
+                      }
+                    }
+                    
+                    // Fallback v1 : utiliser themes si themes_universal est vide
+                    if (!isV2 && insight?.themes && Array.isArray(insight.themes) && themesUniversal.length === 0) {
+                      themesUniversal = insight.themes.map((t: any) => ({
+                        theme: t.theme || t.name || t,
+                        count: t.count || 0,
+                        importance: t.count ? t.count * 10 : 0
+                      }));
+                    }
+                    
+                    // Si aucune analyse n'existe, afficher le message d'invitation
+                    if (!hasAnalysis && themesUniversal.length === 0 && themesIndustry.length === 0) {
+                      return (
+                        <div className="text-center py-8 text-gray-500">
+                          <p>Importez vos avis pour voir les thématiques</p>
+                        </div>
+                      );
+                    }
+                    
+                    // Si une analyse existe mais pas de thèmes, afficher un message différent
+                    if (hasAnalysis && themesUniversal.length === 0 && themesIndustry.length === 0) {
+                      return (
+                        <div className="text-center py-8 text-gray-500">
+                          <p>Aucune thématique identifiée pour le moment</p>
+                          <p className="text-xs mt-2">Les thématiques apparaîtront après l'analyse de vos avis</p>
+                        </div>
+                      );
+                    }
+                    
+                    // Afficher les thèmes avec ThemesDisplay
+                    return (
+                      <ThemesDisplay
+                        themesUniversal={themesUniversal}
+                        themesIndustry={themesIndustry}
+                        businessType={insight?.business_type as BusinessType | null}
+                        businessTypeConfidence={insight?.business_type_confidence || null}
+                        businessTypeCandidates={insight?.business_type_candidates || []}
+                        totalReviews={insight?.total_count || 1}
+                        onOverrideClick={() => setShowBusinessTypeOverrideModal(true)}
+                      />
+                    );
+                  })()}
                 </div>
               </div>
             </CardContent>
@@ -2701,30 +2850,13 @@ const Dashboard = () => {
 
         {activeTab === 'analyse' && (
           <AnalysisTabContent
+            analysisData={analysisDataForTab}
             analyse={insight}
-            reviews={(allReviewsForChart || []).map((r: any) => {
-              // DEBUG: Vérifier les données brutes
-              if (!import.meta.env.PROD && allReviewsForChart.length > 0 && allReviewsForChart.indexOf(r) === 0) {
-                console.log('[Dashboard] Premier avis brut:', r);
-              }
-              
-              return {
-                id: r.id?.toString() || '',
-                etablissementId: selectedEtab?.place_id || selectedEstablishment?.place_id || '',
-                source: (r.source || 'google') as "google" | "trustpilot" | "facebook" | "yelp" | "tripadvisor" | "other",
-                note: r.rating || 0,
-                texte: r.text || r.comment || '',
-                // Utiliser published_at en priorité, puis inserted_at, puis created_at
-                date: r.published_at || r.inserted_at || r.created_at || r.date || new Date().toISOString(),
-                // Conserver aussi les champs originaux pour le debug
-                published_at: r.published_at,
-                inserted_at: r.inserted_at,
-                created_at: r.created_at
-              };
-            })}
+            reviews={reviewsForAnalysis}
             establishmentName={selectedEtab?.name || selectedEstablishment?.name}
-            isLoading={isLoadingInsight}
-            useMockData={!hasReviews}
+            isLoading={isLoadingInsight && !analysisDataForTab && !insight}
+            isFallbackAnalysis={!!analysisDataForTab && !insight && reviewsForAnalysis.length > 0}
+            lastAnalyzedAt={insight?.last_analyzed_at ?? null}
           />
         )}
 
@@ -3674,7 +3806,7 @@ const Dashboard = () => {
               </div>
 
               <div className="space-y-2">
-                {checklistActions.length > 0 ? (
+                {hasReviews && checklistActions.length > 0 ? (
                   checklistActions.map((action) => (
                     <div
                       key={action.id}
@@ -3716,8 +3848,10 @@ const Dashboard = () => {
                   ))
                 ) : (
                   <div className="text-center py-8 text-gray-500">
-                    <p className="text-sm">{t("dashboard.noChecklistActionsAvailable") || "Aucune action disponible"}</p>
-                    <p className="text-xs mt-1">{t("dashboard.analyzeEstablishmentToGetActions") || "Analysez votre établissement pour obtenir des actions personnalisées"}</p>
+                    <p className="text-sm">{hasReviews ? (t("dashboard.noChecklistActionsAvailable") || "Aucune action disponible") : "Importez vos avis pour générer des actions personnalisées"}</p>
+                    {hasReviews && (
+                      <p className="text-xs mt-1">{t("dashboard.analyzeEstablishmentToGetActions") || "Analysez votre établissement pour obtenir des actions personnalisées"}</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -6040,19 +6174,21 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-semibold text-gray-800">{t("dashboard.currentProgress")}</h4>
                   <span className="text-sm font-medium text-gray-600">
-                    {avgRating.toFixed(1)}/5
+                    {displayAvgRating == null ? "—" : `${displayAvgRating.toFixed(1)}/5`}
                   </span>
                 </div>
                 <div className="space-y-3">
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm text-gray-600">{t("dashboard.currentRating")}</span>
-                      <span className="text-sm font-medium text-gray-900">{avgRating.toFixed(1)}/5</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {displayAvgRating == null ? "—" : `${displayAvgRating.toFixed(1)}/5`}
+                      </span>
                     </div>
                     <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
                   <div 
                         className="h-full bg-green-500 rounded-full transition-all"
-                        style={{ width: `${(avgRating / 5) * 100}%` }}
+                        style={{ width: `${displayAvgRating != null ? (displayAvgRating / 5) * 100 : 0}%` }}
                   />
                 </div>
                 </div>
@@ -6071,13 +6207,16 @@ const Dashboard = () => {
                   <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                     <p className="text-sm text-gray-700">
                       <span className="font-medium">{t("dashboard.progressPercentage")}: </span>
-                      {targetRating > 0 ? Math.min(100, (avgRating / targetRating) * 100).toFixed(1) : '0.0'}%
+                      {displayAvgRating != null && targetRating > 0
+                        ? Math.min(100, (displayAvgRating / targetRating) * 100).toFixed(1)
+                        : "—"}%
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      {avgRating < targetRating 
-                        ? t("dashboard.remainingToReach", { remaining: (targetRating - avgRating).toFixed(1) })
-                        : t("dashboard.objectiveReached")
-                      }
+                      {displayAvgRating != null && displayAvgRating < targetRating
+                        ? t("dashboard.remainingToReach", { remaining: (targetRating - displayAvgRating).toFixed(1) })
+                        : displayAvgRating != null
+                          ? t("dashboard.objectiveReached")
+                          : "—"}
                     </p>
                     </div>
                 </div>
@@ -6288,6 +6427,20 @@ const Dashboard = () => {
         )}
         </div>
       </div>
+
+      {/* Modal override businessType */}
+      {selectedEtab?.place_id && (
+        <BusinessTypeOverrideModal
+          open={showBusinessTypeOverrideModal}
+          onOpenChange={setShowBusinessTypeOverrideModal}
+          placeId={selectedEtab.place_id}
+          currentType={insight?.business_type as BusinessType | null}
+          onSuccess={() => {
+            // Recharger les données après override
+            window.location.reload();
+          }}
+        />
+      )}
     </div>;
 };
 export default Dashboard;

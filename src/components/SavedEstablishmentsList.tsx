@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Etab, EVT_LIST_UPDATED, EVT_SAVED, STORAGE_KEY } from "../types/etablissement";
+import { Etab, EVT_LIST_UPDATED, EVT_SAVED } from "../types/etablissement";
 import EstablishmentItem from "./EstablishmentItem";
 import { Building2, Plus, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ import { subscriptionPlans, establishmentAddon } from "@/config/subscriptionPlan
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
+import { useEstablishmentStore } from "@/store/establishmentStore";
 interface SavedEstablishmentsListProps {
   onAddClick?: () => void;
 }
@@ -20,7 +21,8 @@ export default function SavedEstablishmentsList({
   const [establishments, setEstablishments] = useState<Etab[]>([]);
   const [loading, setLoading] = useState(true);
   const [settingActive, setSettingActive] = useState<string | null>(null);
-  const [activePlaceId, setActivePlaceId] = useState<string | null>(null);
+  const activePlaceId = useEstablishmentStore((s) => s.activePlaceId ?? s.selectedEstablishment?.place_id ?? null);
+  const setActivePlace = useEstablishmentStore((s) => s.setActivePlace);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [creatingCheckout, setCreatingCheckout] = useState(false);
@@ -121,8 +123,6 @@ export default function SavedEstablishmentsList({
 
       setEstablishments(sortedDbList);
       if (activeEtab) {
-        setActivePlaceId(activePlaceIdFromDb);
-        // Mettre à jour localStorage pour synchroniser avec useCurrentEstablishment
         const activeEtabFormatted: Etab = {
           place_id: activeEtab.place_id,
           name: activeEtab.nom,
@@ -134,29 +134,21 @@ export default function SavedEstablishmentsList({
           url: activeEtab.google_maps_url || undefined,
           rating: activeEtab.rating || null
         };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(activeEtabFormatted));
         window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: activeEtabFormatted }));
-      } else {
-        setActivePlaceId(null);
-        // Sélectionner automatiquement le premier établissement s'il n'y en a qu'un seul
-        if (dbList.length === 1) {
-          const firstEtab = dbList[0];
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(firstEtab));
+      } else if (dbList.length === 1) {
+        const firstEtab = dbList[0];
+        setActivePlace(firstEtab.place_id, {
+          place_id: firstEtab.place_id,
+          name: firstEtab.name,
+          formatted_address: firstEtab.address,
+          lat: firstEtab.lat ?? undefined,
+          lng: firstEtab.lng ?? undefined,
+          website: firstEtab.website,
+          phone: firstEtab.phone,
+          rating: firstEtab.rating ?? undefined,
+        }).then(() => {
           window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: firstEtab }));
-          
-          // Mettre à jour is_active dans la DB
-          supabase.from("établissements")
-            .update({ is_active: true })
-            .eq("user_id", user.id)
-            .eq("place_id", firstEtab.place_id)
-            .then(({ error }) => {
-              if (error) {
-                console.error("Erreur lors de la sélection automatique:", error);
-              } else {
-                setActivePlaceId(firstEtab.place_id);
-              }
-            });
-        }
+        });
       }
     } catch (error) {
       console.error("Erreur lors du chargement de la liste:", error);
@@ -393,56 +385,31 @@ export default function SavedEstablishmentsList({
     }
   };
 
-  // Définir un établissement comme actif dans la DB (source de vérité)
   const handleSelectEstablishment = async (etab: Etab) => {
     setSettingActive(etab.place_id);
     try {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
-      if (!user) {
-        sonnerToast.error(t("auth.mustBeLoggedIn"));
-        return;
-      }
-
-      // Mettre à jour is_active=true dans la DB
-      // Le trigger va automatiquement désactiver les autres
-      const {
-        error
-      } = await supabase.from("établissements").update({
-        is_active: true
-      }).eq("user_id", user.id).eq("place_id", etab.place_id);
-      if (error) {
-        console.error("Erreur définition établissement actif:", error);
-        sonnerToast.error(t("establishment.cannotSelect"));
-        return;
-      }
-
-      // Mettre à jour localStorage pour synchroniser avec useCurrentEstablishment
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(etab));
-      
-      // Mettre à jour l'état local pour l'indicateur visuel
-      setActivePlaceId(etab.place_id);
-
-      // Réordonner immédiatement la liste pour afficher l'actif en premier
+      const payload = {
+        place_id: etab.place_id,
+        name: etab.name,
+        formatted_address: etab.address,
+        lat: etab.lat ?? undefined,
+        lng: etab.lng ?? undefined,
+        website: etab.website,
+        phone: etab.phone,
+        rating: etab.rating ?? undefined,
+      };
+      await setActivePlace(etab.place_id, payload);
       setEstablishments(prev => [
         etab,
         ...prev.filter(e => e.place_id !== etab.place_id),
       ]);
-      
-      // Notifier MonEtablissementCard et autres composants de recharger depuis la DB
       window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));
-
-      // Scroll smooth vers le haut
       document.querySelector('[data-testid="card-mon-etablissement"]')?.scrollIntoView({
         behavior: 'smooth',
         block: 'start'
       });
       sonnerToast.success(t("establishment.setAsActive", { name: etab.name }));
     } catch (err) {
-      console.error("Erreur:", err);
       sonnerToast.error(t("common.error"));
     } finally {
       setSettingActive(null);

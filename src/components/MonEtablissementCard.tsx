@@ -39,7 +39,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
         console.error("Erreur chargement établissement actif:", error);
         setEtab(null);
       } else if (data) {
-        // Mapper les données DB vers le type Etab
+        const row = data as Record<string, unknown>;
         setEtab({
           place_id: data.place_id,
           name: data.nom,
@@ -119,6 +119,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
     }
   };
 
+
   if (isLoading) {
     return (
       <div className="p-6 flex items-center justify-center">
@@ -153,102 +154,92 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
 
   return (
     <div className="pt-6 px-6 pb-2">
-      {/* Grid des informations */}
-      <div className="space-y-0">
-        {/* Ligne 1 (desktop): Nom | Note Google | Site web */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-5 gap-x-10">
-          {/* Nom */}
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground font-medium">{t("establishment.nameLabel")}</p>
-            <p className="text-base font-medium text-foreground">{etab.name}</p>
-          </div>
-
-          {/* Note Google */}
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground font-medium">{t("establishment.googleRating")}</p>
-            {etab.rating ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 font-medium text-sm">
-                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                {etab.rating}
-              </span>
-            ) : (
-              <p className="text-base text-muted-foreground">—</p>
-            )}
-          </div>
-
-          {/* Site web */}
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-              <Globe className="w-3.5 h-3.5" />
-              {t("establishment.website")}
-            </p>
-            {etab.website ? (
-              <a
-                href={etab.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
-              >
-                {t("establishment.websiteOpen")}
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            ) : (
-              <p className="text-base text-muted-foreground">—</p>
-            )}
-          </div>
+      {/* Grille 3 colonnes : L1 Nom | Note | Site web ; L2 Adresse | (vide) | Google Maps ; L3 Téléphone */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-10 gap-y-6">
+        {/* Ligne 1 - Col 1 : Nom */}
+        <div className="flex flex-col gap-1 md:col-start-1 md:row-start-1">
+          <p className="text-sm text-muted-foreground font-medium">{t("establishment.nameLabel")}</p>
+          <p className="text-base font-medium text-foreground">{etab.name}</p>
         </div>
 
-        {/* Ligne 2 (desktop): Adresse | Google Maps */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-3 gap-x-10">
-          {/* Adresse */}
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5" />
-              {t("establishment.address")}
-            </p>
-            <p className="text-base font-medium text-foreground">{etab.address}</p>
-          </div>
-
-          <div className="hidden md:block" />
-
-          {/* Google Maps */}
-          <div className="space-y-1 md:col-start-3 md:pt-10">
-            <p className="text-sm text-muted-foreground font-medium">{t("establishment.googleMaps")}</p>
-            {etab.place_id ? (
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(etab.name)}&query_place_id=${encodeURIComponent(etab.place_id)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
-              >
-                {t("establishment.viewListing")}
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            ) : etab.address ? (
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(etab.address)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
-              >
-                {t("establishment.viewListing")}
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            ) : (
-              <p className="text-base text-muted-foreground">—</p>
-            )}
-          </div>
+        {/* Ligne 1 - Col 2 : Note Google */}
+        <div className="flex flex-col gap-1 md:col-start-2 md:row-start-1">
+          <p className="text-sm text-muted-foreground font-medium">{t("establishment.googleRating")}</p>
+          {etab.rating ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 font-medium text-sm w-fit">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              {etab.rating}
+            </span>
+          ) : (
+            <p className="text-base text-muted-foreground">—</p>
+          )}
         </div>
 
-        {/* Ligne 3 (desktop): Téléphone */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-3 gap-x-10">
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-              <Phone className="w-3.5 h-3.5" />
-              {t("establishment.phone")}
-            </p>
-            <p className="text-base font-medium text-foreground">{etab.phone || "—"}</p>
-          </div>
+        {/* Ligne 1 - Col 3 : Site web */}
+        <div className="flex flex-col gap-1 md:col-start-3 md:row-start-1">
+          <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+            <Globe className="w-3.5 h-3.5" />
+            {t("establishment.website")}
+          </p>
+          {etab.website ? (
+            <a
+              href={etab.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
+            >
+              {t("establishment.websiteOpen")}
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          ) : (
+            <p className="text-base text-muted-foreground">—</p>
+          )}
+        </div>
+
+        {/* Ligne 2 - Col 1 : Adresse */}
+        <div className="flex flex-col gap-1 md:col-start-1 md:row-start-2">
+          <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5" />
+            {t("establishment.address")}
+          </p>
+          <p className="text-base font-medium text-foreground">{etab.address}</p>
+        </div>
+
+        {/* Ligne 2 - Col 3 : Google Maps (sous Site web ; col 2 vide) */}
+        <div className="flex flex-col gap-1 md:col-start-3 md:row-start-2">
+          <p className="text-sm text-muted-foreground font-medium">{t("establishment.googleMaps")}</p>
+          {etab.place_id ? (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(etab.name)}&query_place_id=${encodeURIComponent(etab.place_id)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
+            >
+              {t("establishment.viewListing")}
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          ) : etab.address ? (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(etab.address)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-base font-medium text-primary hover:underline inline-flex items-center gap-1"
+            >
+              {t("establishment.viewListing")}
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          ) : (
+            <p className="text-base text-muted-foreground">—</p>
+          )}
+        </div>
+
+        {/* Ligne 3 - Col 1 : Téléphone (col 2, 3, 4 vides) */}
+        <div className="flex flex-col gap-1 md:col-start-1 md:row-start-3">
+          <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+            <Phone className="w-3.5 h-3.5" />
+            {t("establishment.phone")}
+          </p>
+          <p className="text-base font-medium text-foreground">{etab.phone || "—"}</p>
         </div>
       </div>
 
@@ -276,10 +267,10 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
         </div>
 
         {/* Visuel à droite */}
-        <div className="flex md:w-1/3 md:justify-end">
+        <div className="flex flex-col md:flex-row md:w-1/3 md:justify-end gap-2">
           <button
             type="button"
-            className="inline-flex px-4 py-3 h-auto w-44 flex-col items-center justify-center gap-1 rounded-lg border border-blue-600 bg-blue-600 text-white shadow-sm"
+            className="inline-flex px-4 py-3 h-auto w-full md:w-44 flex-col items-center justify-center gap-1 rounded-lg border border-blue-600 bg-blue-600 text-white shadow-sm"
             title={t("establishment.visualReviews")}
             data-testid="btn-analyser-etablissement"
             data-place-id={etab.place_id}

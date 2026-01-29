@@ -17,9 +17,10 @@ interface AnalysisPageProps {
   data: CompleteAnalysisData;
   establishmentName?: string;
   reviews?: Review[]; // Avis bruts pour le graphique d'historique
+  dynamicThemes?: Array<{ theme: string; count?: number; importance?: number }>; // Thèmes dynamiques depuis insight
 }
 
-export function AnalysisPage({ data, establishmentName, reviews }: AnalysisPageProps) {
+export function AnalysisPage({ data, establishmentName, reviews, dynamicThemes = [] }: AnalysisPageProps) {
   console.log('[AnalysisPage] Reviews reçus:', reviews);
   console.log('[AnalysisPage] Rendu avec données:', { 
     hasData: !!data, 
@@ -60,7 +61,7 @@ export function AnalysisPage({ data, establishmentName, reviews }: AnalysisPageP
           {/* Contexte global d'analyse */}
           <ThematicSegmentationBar />
 
-          <AnalysisContent data={data} reviews={reviews} />
+          <AnalysisContent data={data} reviews={reviews} dynamicThemes={dynamicThemes} />
         </AnalysisFiltersProvider>
       </div>
     );
@@ -80,9 +81,10 @@ export function AnalysisPage({ data, establishmentName, reviews }: AnalysisPageP
 interface AnalysisContentProps {
   data: CompleteAnalysisData;
   reviews?: Review[];
+  dynamicThemes?: Array<{ theme: string; count?: number; importance?: number }>;
 }
 
-function AnalysisContent({ data, reviews }: AnalysisContentProps) {
+function AnalysisContent({ data, reviews, dynamicThemes = [] }: AnalysisContentProps) {
   const { filteredReviews, ratingFilter, periodFilter, sourceFilter, availableSources } = useAnalysisFilters();
   const isSourceFilterActive = sourceFilter !== "ALL" && availableSources.length > 1;
   const isAnyFilterActive =
@@ -141,7 +143,7 @@ function AnalysisContent({ data, reviews }: AnalysisContentProps) {
       )}
 
       {/* Section 4b: Analyse qualitative */}
-      {data.qualitative && <QualitativeSection data={data.qualitative} reviews={effectiveReviews} />}
+      {data.qualitative && <QualitativeSection data={data.qualitative} reviews={effectiveReviews} dynamicThemes={dynamicThemes} />}
 
       {/* Titre de section 5 */}
       <h2 className="text-2xl font-bold text-gray-800 mt-12 mb-6 flex items-center gap-2">

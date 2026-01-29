@@ -166,14 +166,13 @@ export default function SaveEstablishmentButton({
     setSaving(true);
 
     try {
-      // Sauvegarder dans la table établissements avec TOUTES les infos (source de vérité)
+      // Sauvegarder dans la table établissements (source de vérité)
       const { error: etabError } = await supabase.from("établissements").upsert({
         user_id: user.id,
         place_id: selected.place_id,
         nom: selected.name,
         adresse: selected.address,
         telephone: selected.phone || null,
-        type: "Restaurant",
         website: selected.website || null,
         rating: selected.rating || null,
         google_maps_url: selected.url || null,

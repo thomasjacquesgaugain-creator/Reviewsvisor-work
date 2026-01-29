@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Minus, Star, ArrowRight } from "lucide-react";
 import { OverviewMetrics, Review } from "@/types/analysis";
 import { useTranslation } from "react-i18next";
@@ -40,6 +41,14 @@ export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSe
     if (data.trend === 'up') return <TrendingUp className="w-4 h-4 text-green-500 flex-shrink-0" aria-hidden="true" />;
     if (data.trend === 'down') return <TrendingDown className="w-4 h-4 text-red-500 flex-shrink-0" aria-hidden="true" />;
     if (data.trend === 'insufficient') return <Minus className="w-4 h-4 text-gray-400 flex-shrink-0" aria-hidden="true" />;
+    if (data.trend === 'partial') {
+      // Pour partial, déterminer l'icône selon la direction si disponible
+      if (data.trendValue !== null && data.trendValue !== undefined) {
+        if (data.trendValue > 0) return <TrendingUp className="w-4 h-4 text-green-500 flex-shrink-0" aria-hidden="true" />;
+        if (data.trendValue < 0) return <TrendingDown className="w-4 h-4 text-red-500 flex-shrink-0" aria-hidden="true" />;
+      }
+      return <ArrowRight className="w-4 h-4 text-amber-500 flex-shrink-0" aria-hidden="true" />;
+    }
     return <ArrowRight className="w-4 h-4 text-gray-500 flex-shrink-0" aria-hidden="true" />;
   };
 
@@ -47,7 +56,25 @@ export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSe
     if (data.trend === 'up') return 'text-green-600';
     if (data.trend === 'down') return 'text-red-600';
     if (data.trend === 'insufficient') return 'text-gray-400';
+    if (data.trend === 'partial') {
+      // Pour partial, déterminer la couleur selon la direction si disponible
+      if (data.trendValue !== null && data.trendValue !== undefined) {
+        if (data.trendValue > 0) return 'text-green-600';
+        if (data.trendValue < 0) return 'text-red-600';
+      }
+      return 'text-amber-600';
+    }
     return 'text-gray-600';
+  };
+  
+  const getTrendLabel = () => {
+    if (data.trend === 'partial' && data.trendValue !== null && data.trendValue !== undefined) {
+      // Déterminer la direction même avec données partielles
+      if (data.trendValue > 2) return t("analysis.overview.increasing", "En hausse");
+      if (data.trendValue < -2) return t("analysis.overview.decreasing", "En baisse");
+      return t("analysis.overview.stable", "Stable");
+    }
+    return null;
   };
 
   // Formater la valeur de tendance en pourcentage (format FR avec virgule, entre parenthèses)
@@ -153,7 +180,9 @@ export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSe
               <InfoTooltip
                 content={
                   data.trend === 'insufficient' 
-                    ? "Données insuffisantes pour calculer la tendance. Au moins 5 avis sont nécessaires dans chaque période de 3 mois."
+                    ? "Données insuffisantes pour calculer la tendance. Au moins 5 avis avec date sont nécessaires."
+                    : data.trend === 'partial'
+                    ? "Données partielles : tendance calculée sur une période courte en comparant le début et la fin de la série d'avis."
                     : (
                       <div className="space-y-2 text-xs font-normal text-gray-600 leading-5">
                         <p className="font-medium mb-2">
@@ -240,11 +269,33 @@ export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSe
                         )}
                       </>
                     )}
+                    {data.trend === 'partial' && (
+                      <>
+                        {getTrendLabel() || t("analysis.overview.stable", "Stable")}
+                        {data.trendValue !== null && data.trendValue !== undefined && (
+                          <>
+                            {data.trendDeltaPoints !== null && data.trendDeltaPoints !== undefined && (
+                              <span className="ml-1 text-base">
+                                {formatDeltaPoints(data.trendDeltaPoints)} pt
+                              </span>
+                            )}
+                            <span className="ml-1 text-base">
+                              {formatTrendValue(Math.abs(data.trendValue), data.trendValue >= 0)}
+                            </span>
+                          </>
+                        )}
+                      </>
+                    )}
                   </span>
+                  {data.trend === 'partial' && (
+                    <Badge variant="outline" className="ml-2 text-xs bg-amber-50 text-amber-700 border-amber-300">
+                      {t("analysis.overview.partialData", "Données partielles")}
+                    </Badge>
+                  )}
                 </div>
                 {data.trendValue !== null && data.trendValue !== undefined && (
                   <p className="text-xs text-gray-500 mt-1">
-                    vs 3 mois précédents
+                    {data.trend === 'partial' ? 'Comparaison début vs fin de période' : 'vs 3 mois précédents'}
                   </p>
                 )}
               </>

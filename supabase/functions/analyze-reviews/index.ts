@@ -42,7 +42,7 @@ function env(key: string, fallback = "") {
 const SUPABASE_URL = env("SUPABASE_URL");
 const SERVICE_ROLE = env("SUPABASE_SERVICE_ROLE_KEY");
 const GOOGLE_KEY   = env("GOOGLE_PLACES_API_KEY");
-const OPENAI_KEY   = env("CLÉ_API_OPENAI", "");
+const OPENAI_KEY   = env("OPENAI_API_KEY", "");
 
 const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false },
@@ -103,6 +103,8 @@ async function fetchAllGoogleReviews(placeId: string) {
   return out;
 }
 
+
+
 // Simple agrégateur (note moyenne, %)
 function computeStats(rows: ReviewRow[]) {
   const ratings = rows.map(r => r.rating ?? 0).filter(n => n > 0);
@@ -120,139 +122,113 @@ function computeStats(rows: ReviewRow[]) {
   return { total, by_rating, positive_pct, negative_pct, overall: avg };
 }
 
-// Heuristic theming if AI is unavailable or returns empty
-function computeHeuristicThemes(rows: ReviewRow[]) {
-  const themes: Record<string, number> = {
-    'Service': 0,
-    'Cuisine': 0,
-    'Ambiance': 0,
-    'Propreté': 0,
-    'Rapport qualité/prix': 0,
-    'Rapidité': 0,
-    'Emplacement': 0,
-  };
-  const dict: Record<string, string[]> = {
-    'Service': ['service','serveur','serveuse','accueil','personnel'],
-    'Cuisine': ['cuisine','plat','plats','nourriture','repas','goût','qualité','cuisson','menu'],
-    'Ambiance': ['ambiance','atmosphère','musique','bruit','calme','décor'],
-    'Propreté': ['propreté','sale','propre','hygiène','toilettes'],
-    'Rapport qualité/prix': ['prix','cher','coût','bon marché','rapport','addition','facture'],
-    'Rapidité': ['rapide','attente','lent','vite','délai'],
-    'Emplacement': ['emplacement','localisation','situation','parking'],
-  };
-  for (const r of rows) {
-    const t = (r.text ?? '').toLowerCase();
-    if (!t) continue;
-    for (const [label, keys] of Object.entries(dict)) {
-      if (keys.some(k => t.includes(k))) themes[label]++;
+// Fonction de fallback dynamique : extrait les thématiques depuis le texte des avis
+function extractDynamicThemesFromText(rows: ReviewRow[]) {
+  // Mots à ignorer (stop words français)
+  const stopWords = new Set([
+    'le', 'la', 'les', 'un', 'une', 'des', 'de', 'du', 'et', 'ou', 'mais', 'donc', 'car', 'ni', 'que',
+    'ce', 'cette', 'ces', 'se', 'ne', 'pas', 'plus', 'très', 'trop', 'aussi', 'bien', 'même', 'tout',
+    'tous', 'toute', 'toutes', 'avec', 'sans', 'pour', 'par', 'sur', 'dans', 'vers', 'chez', 'sous',
+    'est', 'sont', 'était', 'étaient', 'être', 'avoir', 'fait', 'faire', 'faites', 'fait', 'faire',
+    'a', 'ont', 'avait', 'avaient', 'mon', 'ma', 'mes', 'ton', 'ta', 'tes', 'son', 'sa', 'ses',
+    'notre', 'nos', 'votre', 'vos', 'leur', 'leurs', 'je', 'tu', 'il', 'elle', 'nous', 'vous', 'ils', 'elles',
+    'qui', 'quoi', 'où', 'quand', 'comment', 'pourquoi', 'si', 'comme', 'alors', 'après', 'avant'
+  ]);
+
+  // Extraire tous les mots significatifs des avis
+  const wordCounts: Record<string, number> = {};
+  const bigramCounts: Record<string, number> = {};
+  
+  for (const row of rows) {
+    const text = (row.text ?? '').toLowerCase()
+      .replace(/[^\w\sàâäéèêëïîôùûüÿç]/g, ' ') // Garder seulement lettres et espaces
+      .split(/\s+/)
+      .filter(w => w.length > 3 && !stopWords.has(w)); // Mots de plus de 3 caractères
+    
+    // Compter les mots individuels
+    for (const word of text) {
+      wordCounts[word] = (wordCounts[word] || 0) + 1;
+    }
+    
+    // Compter les bigrammes (paires de mots consécutifs)
+    for (let i = 0; i < text.length - 1; i++) {
+      const bigram = `${text[i]} ${text[i + 1]}`;
+      bigramCounts[bigram] = (bigramCounts[bigram] || 0) + 1;
     }
   }
-  return Object.entries(themes)
-    .map(([theme, count]) => ({ theme, count }))
-    .filter(x => x.count > 0)
-    .sort((a,b) => b.count - a.count)
-    .slice(0, 6);
-}
 
-// Heuristic extraction for issues and strengths
-function computeHeuristicIssuesStrengths(rows: ReviewRow[]) {
-  const negatives: Record<string, string[]> = {
-    'Service / attente': ['attente','lent','lente','retard','ralenti','trop long','patienter'],
-    'Ambiance / bruit': ['bruit','bruyant','fort','musique forte','tapage'],
-    'Propreté': ['sale','propreté','sales','malpropre','hygiène'],
-    'Qualité des plats': ['froid','pas bon','mauvais','sec','cru','trop cuit','fade'],
-    'Prix': ['cher','trop cher','prix élevés','coûteux']
-  };
-  const positives: Record<string, string[]> = {
-    'Accueil / sympathie': ['accueil','sympa','gentil','chaleureux','aimable','souriant'],
-    'Qualité / goût': ['délicieux','excellent','très bon','goût','savoureux','parfait'],
-    'Rapidité du service': ['rapide','vite','efficace'],
-    'Ambiance agréable': ['ambiance','agréable','cosy','chaleureuse','calme'],
-    'Bon rapport qualité/prix': ['bon rapport','prix correct','pas cher','raisonnable']
-  };
-  const countMatches = (text: string, dict: Record<string,string[]>) => {
-    const counts: Record<string, number> = {};
-    const t = text.toLowerCase();
-    for (const [label, keys] of Object.entries(dict)) {
-      if (keys.some(k => t.includes(k))) counts[label] = (counts[label] ?? 0) + 1;
+  // Regrouper les mots similaires et créer des thématiques
+  const themes: Array<{ theme: string; count: number }> = [];
+  const processed = new Set<string>();
+  
+  // Chercher les bigrammes fréquents d'abord (ex: "coupe cheveux", "service client")
+  const sortedBigrams = Object.entries(bigramCounts)
+    .filter(([_, count]) => count >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
+  
+  for (const [bigram, count] of sortedBigrams) {
+    const words = bigram.split(' ');
+    if (!words.some(w => processed.has(w))) {
+      // Capitaliser la première lettre de chaque mot
+      const theme = bigram.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      themes.push({ theme, count });
+      words.forEach(w => processed.add(w));
     }
-    return counts;
-  };
-  const negAgg: Record<string, number> = {};
-  const posAgg: Record<string, number> = {};
-  for (const r of rows) {
-    const t = (r.text ?? '').toLowerCase();
-    if (!t) continue;
-    const n = countMatches(t, negatives);
-    const p = countMatches(t, positives);
-    for (const [k,v] of Object.entries(n)) negAgg[k] = (negAgg[k]??0)+v;
-    for (const [k,v] of Object.entries(p)) posAgg[k] = (posAgg[k]??0)+v;
   }
-  const issues = Object.entries(negAgg).map(([theme,count])=>({theme, count})).sort((a,b)=>b.count-a.count).slice(0,3);
-  const strengths = Object.entries(posAgg).map(([theme,count])=>({theme, count})).sort((a,b)=>b.count-a.count).slice(0,3);
-  return { issues, strengths };
+  
+  // Ajouter les mots individuels fréquents qui n'ont pas été traités
+  const sortedWords = Object.entries(wordCounts)
+    .filter(([word, count]) => count >= 3 && !processed.has(word))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 7 - themes.length);
+  
+  for (const [word, count] of sortedWords) {
+    const theme = word.charAt(0).toUpperCase() + word.slice(1);
+    themes.push({ theme, count });
+  }
+  
+  return themes.slice(0, 7);
 }
 
-function buildHeuristicRecommendations(issues: {theme:string;count:number}[]) {
-  const recs: string[] = [];
-  for (const it of issues.slice(0,3)) {
-    if (it.theme.toLowerCase().includes('attente')) recs.push("Réduisez l'attente en salle (staffing/prise de commande).");
-    else if (it.theme.toLowerCase().includes('propret')) recs.push("Renforcez les contrôles de propreté et l'entretien régulier.");
-    else if (it.theme.toLowerCase().includes('qualit')) recs.push("Standardisez les recettes et vérifiez les cuissons avant service.");
-    else if (it.theme.toLowerCase().includes('bruit') || it.theme.toLowerCase().includes('ambiance')) recs.push("Ajustez volume et acoustique pour limiter le bruit.");
-    else if (it.theme.toLowerCase().includes('prix')) recs.push("Clarifiez les prix et proposez des menus à bon rapport qualité/prix.");
-  }
-  if (!recs.length) recs.push("Collectez plus d'avis pour des recommandations plus précises.");
-  return recs.slice(0,3);
-}
-
-// Résumé IA (facultatif si pas de clé)
+// Résumé IA avec extraction dynamique depuis le contenu réel des avis
 async function summarizeWithOpenAI(placeName: string, samples: string[], totalReviews: number) {
   if (!OPENAI_KEY) {
-    return { top_issues: [], top_strengths: [], recommendations: [] };
+    return { top_issues: [], top_strengths: [], themes: [], recommendations: [], detected_type: null };
   }
-
-  // Analyse globale de tous les avis
-  const allText = samples.join("\n");
   
   const prompt = [
-    { role: "system", content: "Tu es un analyste qui synthétise des avis clients en français. Réponds exclusivement en JSON." },
+    { role: "system", content: `Tu es un analyste expert qui synthétise des avis clients en français. 
+Tu dois extraire les thématiques UNIQUEMENT depuis le contenu réel des avis, sans utiliser de catégories prédéfinies.
+Adapte-toi au type d'établissement détecté dans les avis.
+Réponds exclusivement en JSON valide.` },
     { role: "user", content:
 `Établissement: ${placeName}
 Total d'avis analysés: ${totalReviews}
 
-Avis:
+Avis clients:
 ${samples.slice(0, 100).map((t,i)=>`${i+1}. ${t}`).join("\n")}
 
-Analyse ces avis et retourne strictement ce JSON:
-{
-  "top_issues": [
-    {"theme": "Nom du problème", "count": nombre_estimé_occurrences},
-    {"theme": "Autre problème", "count": nombre_estimé_occurrences},
-    {"theme": "Troisième problème", "count": nombre_estimé_occurrences}
-  ],
-  "top_strengths": [
-    {"theme": "Point fort", "count": nombre_estimé_occurrences},
-    {"theme": "Autre point fort", "count": nombre_estimé_occurrences},
-    {"theme": "Troisième point fort", "count": nombre_estimé_occurrences}
-  ],
-  "themes": [
-    {"theme": "Service", "count": 45},
-    {"theme": "Cuisine", "count": 67},
-    {"theme": "Ambiance", "count": 30},
-    {"theme": "Rapport qualité/prix", "count": 25},
-    {"theme": "Propreté", "count": 20}
-  ],
-  "recommendations": ["action 1", "action 2", "action 3"]
-}
+INSTRUCTIONS IMPORTANTES:
+1. Analyse ces avis et identifie le TYPE d'établissement (restaurant, salon de coiffure, salle de sport, magasin, etc.)
+2. Extrais les 5-7 thématiques les plus mentionnées DIRECTEMENT depuis le contenu des avis
+3. N'utilise PAS de catégories génériques prédéfinies - utilise uniquement les thèmes réellement évoqués par les clients
+4. Adapte les thématiques au type d'établissement détecté
 
-INSTRUCTIONS POUR LES THÉMATIQUES:
-- Identifie les 5-7 thématiques les PLUS mentionnées dans les avis
-- Utilise des noms simples et clairs: "Service", "Cuisine", "Ambiance", "Propreté", "Rapport qualité/prix", "Cadre", "Emplacement", "Parking", etc.
-- Pour chaque thématique, compte combien d'avis (sur ${totalReviews}) en parlent
-- Un avis peut mentionner plusieurs thématiques
-- Le count doit être un nombre entier réaliste entre 5 et ${totalReviews}
-- Exemple: si 45 avis sur ${totalReviews} parlent du service, retourne {"theme": "Service", "count": 45}`
+Exemples de thématiques selon le type:
+- Salon de coiffure: Coupe, Coloration, Brushing, Coiffeur/Coiffeuse, Accueil, Salon, Conseils...
+- Restaurant: Cuisine, Service, Ambiance, Plats, Desserts, Portions...
+- Salle de sport: Équipements, Coachs, Cours, Vestiaires, Horaires, Abonnement...
+- Magasin: Produits, Conseils, Choix, Disponibilité, Vendeurs...
+
+Retourne ce JSON:
+{
+  "detected_type": "type d'établissement détecté",
+  "top_issues": [{"theme": "...", "count": X}, ...],
+  "top_strengths": [{"theme": "...", "count": X}, ...],
+  "themes": [{"theme": "Thématique extraite des avis", "count": X}, ...],
+  "recommendations": ["...", "...", "..."]
+}`
     }
   ];
 
@@ -271,14 +247,21 @@ INSTRUCTIONS POUR LES THÉMATIQUES:
   const txt = data.choices?.[0]?.message?.content ?? "{}";
   try {
     const j = JSON.parse(txt);
+    const themes = (j.themes ?? []).slice(0, 7);
+    console.log(`[summarizeWithOpenAI] ✅ Thématiques extraites dynamiquement:`, themes.map((t: any) => t.theme || t));
+    console.log(`[summarizeWithOpenAI] Type détecté: ${j.detected_type || 'non spécifié'}`);
+    
     return {
       top_issues: (j.top_issues ?? []).slice(0, 3),
       top_strengths: (j.top_strengths ?? []).slice(0, 3),
-      themes: (j.themes ?? []).slice(0, 6),
-      recommendations: (j.recommendations ?? []).slice(0, 3)
+      themes: themes,
+      recommendations: (j.recommendations ?? []).slice(0, 3),
+      detected_type: j.detected_type || null
     };
-  } catch {
-    return { top_issues: [], top_strengths: [], themes: [], recommendations: [] };
+  } catch (err) {
+    console.error('[summarizeWithOpenAI] ❌ Erreur parsing réponse IA:', err);
+    console.error('[summarizeWithOpenAI] Réponse brute:', txt.substring(0, 500));
+    return { top_issues: [], top_strengths: [], themes: [], recommendations: [], detected_type: null };
   }
 }
 
@@ -303,6 +286,35 @@ Deno.serve(async (req) => {
 
     const { place_id, name, dryRun = false } = await req.json().catch(()=>({}));
     if (!place_id) return json({ ok:false, error:"missing_place_id" }, 400);
+
+    // Récupération du nom d'établissement depuis la BDD si disponible
+    let establishmentName = name || 'Établissement';
+    try {
+      const { data: establishment } = await supabaseAdmin
+        .from('establishments')
+        .select('name')
+        .eq('place_id', place_id)
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (establishment?.name) {
+        establishmentName = establishment.name;
+      } else {
+        // Si pas dans establishments, essayer établissements
+        const { data: etab } = await supabaseAdmin
+          .from('établissements')
+          .select('nom')
+          .eq('place_id', place_id)
+          .eq('user_id', userId)
+          .maybeSingle();
+        
+        if (etab?.nom) {
+          establishmentName = etab.nom;
+        }
+      }
+    } catch (err) {
+      console.warn('[analyze-reviews] Erreur récupération établissement, utilisation du nom fourni:', err);
+    }
 
     // 1) Récupération des avis Google (avec fallback BDD en cas d'échec)
     let rows: ReviewRow[] = [];
@@ -384,17 +396,33 @@ Deno.serve(async (req) => {
       if (error) throw new Error(`upsert_failed:${error.message}`);
     }
 
-    // 4) Stats + IA
+    // 4) Stats + IA avec extraction dynamique
     const stats = computeStats(rows);
     const sampleTexts = rows.map(r => r.text ?? "").filter(Boolean).slice(0, 120);
-    const summary = await summarizeWithOpenAI(name ?? "Cet établissement", sampleTexts, rows.length);
+    console.log(`[analyze-reviews] Appel IA pour ${establishmentName}, ${rows.length} avis, ${sampleTexts.length} textes`);
+    const summary = await summarizeWithOpenAI(establishmentName, sampleTexts, rows.length);
+    console.log(`[analyze-reviews] Résultat IA - themes: ${summary?.themes?.length || 0}, issues: ${summary?.top_issues?.length || 0}, type détecté: ${summary?.detected_type || 'non spécifié'}`);
+    
+    // Utiliser les résultats de l'IA ou le fallback dynamique
     const themesComputed = (summary?.themes && summary.themes.length)
       ? summary.themes
-      : computeHeuristicThemes(rows);
-    const heur = computeHeuristicIssuesStrengths(rows);
-    const issuesComputed = (summary?.top_issues && summary.top_issues.length) ? summary.top_issues : heur.issues;
-    const strengthsComputed = (summary?.top_strengths && summary.top_strengths.length) ? summary.top_strengths : heur.strengths;
-    const recsComputed = (summary?.recommendations && summary.recommendations.length) ? summary.recommendations : buildHeuristicRecommendations(issuesComputed);
+      : (() => {
+          console.warn(`[analyze-reviews] ⚠️ IA n'a pas généré de thématiques, utilisation du fallback dynamique`);
+          return extractDynamicThemesFromText(rows);
+        })();
+    
+    console.log(`[analyze-reviews] Thématiques finales (${themesComputed.length}):`, themesComputed.map((t: any) => t.theme || t));
+    
+    // Utiliser les résultats de l'IA pour issues, strengths et recommendations
+    const issuesComputed = summary?.top_issues && summary.top_issues.length > 0 
+      ? summary.top_issues 
+      : [];
+    const strengthsComputed = summary?.top_strengths && summary.top_strengths.length > 0
+      ? summary.top_strengths
+      : [];
+    const recsComputed = summary?.recommendations && summary.recommendations.length > 0
+      ? summary.recommendations
+      : ["Collectez plus d'avis pour des recommandations plus précises."];
 
     if (!dryRun) {
       const payload = {

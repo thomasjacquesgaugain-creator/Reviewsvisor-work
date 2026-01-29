@@ -19,15 +19,16 @@ export function AnalyseDashboard() {
       
       setLoading(true);
       try {
+        // Colonnes de base uniquement (pas business_type etc.) pour éviter 400 si migration non appliquée
         const { data, error } = await supabase
           .from('review_insights')
-          .select('*')
+          .select('place_id, last_analyzed_at, summary, themes, top_issues, top_praises, total_count, avg_rating, positive_ratio')
           .eq('place_id', etablissementId)
           .order('last_analyzed_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           console.error('Error loading analysis:', error);
           return;
         }

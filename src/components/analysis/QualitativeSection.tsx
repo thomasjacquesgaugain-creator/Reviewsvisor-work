@@ -9,6 +9,7 @@ import { mapTextToTheme, mapThemeLabel, CanonicalTheme, computeSentimentFromRati
 interface QualitativeSectionProps {
   data: QualitativeData;
   reviews?: Review[];
+  dynamicThemes?: Array<{ theme: string; count?: number; importance?: number }>; // Thèmes dynamiques depuis insight?.themes
 }
 
 // Classification des mots par thématique
@@ -84,38 +85,39 @@ const SENTIMENT_THEMES = {
   }
 } as const;
 
-// Configuration pour le mode Thème avec couleurs Reviewsvisor pastels
-const THEME_GROUPS = {
+// Configuration par défaut pour le mode Thème (fallback si pas de thèmes dynamiques)
+// Ces catégories ne sont utilisées QUE si aucun thème dynamique n'est fourni
+const DEFAULT_THEME_GROUPS = {
   service: {
     label: 'Service',
     icon: Users,
-    bgColor: '#F1F5F9', // Gris/Bleu neutre pastel
+    bgColor: '#F1F5F9',
     textColor: '#475569',
-    badgeColor: '#64748B', // Gris plus foncé
+    badgeColor: '#64748B',
     keywords: ['serveur', 'attente', 'longue', 'accueil', 'services', 'service', 'staff', 'équipe', 'personnel', 'lent']
   },
   cuisine: {
     label: 'Cuisine / Produits',
     icon: ShoppingBag,
-    bgColor: '#DBEAFE', // Bleu Reviewsvisor pastel
+    bgColor: '#DBEAFE',
     textColor: '#1E40AF',
-    badgeColor: '#3B82F6', // Bleu Reviewsvisor plus foncé
+    badgeColor: '#3B82F6',
     keywords: ['cocktail', 'cuisine', 'tapas', 'plat', 'plats', 'menu', 'vin', 'boisson', 'dessert', 'fromage', 'charcuterie', 'burger', 'pizza', 'salade', 'pasta', 'repas', 'assiette']
   },
   ambiance: {
     label: 'Ambiance',
     icon: TrendingUp,
-    bgColor: '#ECFDF5', // Vert Reviewsvisor pastel
+    bgColor: '#ECFDF5',
     textColor: '#065F46',
-    badgeColor: '#10B981', // Vert Reviewsvisor plus foncé
+    badgeColor: '#10B981',
     keywords: ['ambiance', 'bonne', 'super', 'nickel', 'excellent', 'parfait', 'génial', 'top', 'décor', 'musique', 'terrasse', 'salle']
   },
   prix: {
     label: 'Prix',
     icon: TrendingDown,
-    bgColor: '#FEE2E2', // Rouge pastel pour contrainte prix
-    textColor: '#DC2626', // Rouge explicite (red-600)
-    badgeColor: '#EF4444', // Rouge plus foncé
+    bgColor: '#FEE2E2',
+    textColor: '#DC2626',
+    badgeColor: '#EF4444',
     keywords: ['prix', 'tarif', 'cher', 'chère', 'coût', 'rapport qualité/prix', 'qualité/prix', 'value', 'expensive', 'price', 'pricing', 'prix élevés', 'trop cher', 'coûteux', 'coûteuse', 'bon marché', 'pas cher', 'raisonnable', 'addition', 'facture']
   }
 } as const;
@@ -182,10 +184,82 @@ function classifyWord(word: string, sentiment?: 'positive' | 'neutral' | 'negati
   return { category: 'experience', sentiment: 'neutral' };
 }
 
-export function QualitativeSection({ data, reviews }: QualitativeSectionProps) {
+export function QualitativeSection({ data, reviews, dynamicThemes = [] }: QualitativeSectionProps) {
   const { t } = useTranslation();
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<'frequency' | 'sentiment' | 'theme'>('frequency');
+
+  // Construire les groupes de thèmes dynamiques depuis insight?.themes
+  const THEME_GROUPS = useMemo(() => {
+    // Si on a des thèmes dynamiques, les utiliser
+    if (dynamicThemes && dynamicThemes.length > 0) {
+      const dynamicGroups: Record<string, {
+        label: string;
+        icon: typeof Users;
+        bgColor: string;
+        textColor: string;
+        badgeColor: string;
+        keywords: string[];
+      }> = {};
+
+      // Couleurs disponibles pour les thèmes
+      const themeColors = [
+        { bg: '#DBEAFE', text: '#1E40AF', badge: '#3B82F6' }, // Bleu
+        { bg: '#ECFDF5', text: '#065F46', badge: '#10B981' }, // Vert
+        { bg: '#F1F5F9', text: '#475569', badge: '#64748B' }, // Gris
+        { bg: '#FEF3C7', text: '#D97706', badge: '#F59E0B' }, // Orange
+        { bg: '#E9D5FF', text: '#7C3AED', badge: '#8B5CF6' }, // Violet
+        { bg: '#FEE2E2', text: '#DC2626', badge: '#EF4444' }, // Rouge
+      ];
+
+      dynamicThemes.forEach((theme, index) => {
+        const themeName = (theme.theme || '').toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const colorIndex = index % themeColors.length;
+        const colors = themeColors[colorIndex];
+
+        // Extraire des keywords depuis le nom du thème et les avis
+        const themeKeywords: string[] = [];
+        const themeNameLower = theme.theme?.toLowerCase() || '';
+        
+        // Ajouter le nom du thème comme keyword
+        themeKeywords.push(themeNameLower);
+        
+        // Extraire des mots-clés depuis les avis qui mentionnent ce thème
+        if (reviews && reviews.length > 0) {
+          reviews.forEach(review => {
+            const text = ((review as any).text || review.texte || '').toLowerCase();
+            if (text.includes(themeNameLower)) {
+              // Extraire quelques mots autour du thème
+              const words = text.split(/\s+/);
+              const themeIndex = words.findIndex(w => w.includes(themeNameLower));
+              if (themeIndex >= 0) {
+                const contextWords = words.slice(Math.max(0, themeIndex - 2), themeIndex + 3);
+                contextWords.forEach(w => {
+                  if (w.length > 3 && !themeKeywords.includes(w)) {
+                    themeKeywords.push(w);
+                  }
+                });
+              }
+            }
+          });
+        }
+
+        dynamicGroups[themeName] = {
+          label: theme.theme || 'Thème',
+          icon: Users, // Icône par défaut
+          bgColor: colors.bg,
+          textColor: colors.text,
+          badgeColor: colors.badge,
+          keywords: themeKeywords.slice(0, 10) // Limiter à 10 keywords
+        };
+      });
+
+      return dynamicGroups;
+    }
+
+    // Fallback sur les catégories par défaut si pas de thèmes dynamiques
+    return DEFAULT_THEME_GROUPS;
+  }, [dynamicThemes, reviews]);
 
   // Calculer le sentiment global de chaque thème basé sur les avis réels
   const getThemeGlobalSentiment = useMemo(() => {
@@ -194,7 +268,7 @@ export function QualitativeSection({ data, reviews }: QualitativeSectionProps) {
     }
 
     // Créer un cache des sentiments par thème
-    const themeSentimentCounts = new Map<keyof typeof THEME_GROUPS, { positive: number; negative: number; neutral: number }>();
+    const themeSentimentCounts = new Map<string, { positive: number; negative: number; neutral: number }>();
 
     reviews.forEach(review => {
       const text = (review as any).text || review.texte || '';
@@ -204,20 +278,17 @@ export function QualitativeSection({ data, reviews }: QualitativeSectionProps) {
       const sentiment = computeSentimentFromRating(rating);
       const textLower = text.toLowerCase();
 
-      // Vérifier chaque thème
+      // Vérifier chaque thème dynamique
       Object.entries(THEME_GROUPS).forEach(([themeKey, themeConfig]) => {
-        // Vérifier si le texte mentionne ce thème (via keywords ou mapping canonique)
+        // Vérifier si le texte mentionne ce thème (via keywords)
         const mentionsTheme = themeConfig.keywords.some(kw => textLower.includes(kw.toLowerCase())) ||
-          (themeKey === 'service' && mapTextToTheme(text) === 'SERVICE') ||
-          (themeKey === 'cuisine' && mapTextToTheme(text) === 'CUISINE') ||
-          (themeKey === 'ambiance' && mapTextToTheme(text) === 'AMBIANCE') ||
-          (themeKey === 'prix' && mapTextToTheme(text) === 'PRIX');
+          textLower.includes(themeConfig.label.toLowerCase());
 
         if (mentionsTheme) {
-          if (!themeSentimentCounts.has(themeKey as keyof typeof THEME_GROUPS)) {
-            themeSentimentCounts.set(themeKey as keyof typeof THEME_GROUPS, { positive: 0, negative: 0, neutral: 0 });
+          if (!themeSentimentCounts.has(themeKey)) {
+            themeSentimentCounts.set(themeKey, { positive: 0, negative: 0, neutral: 0 });
           }
-          const counts = themeSentimentCounts.get(themeKey as keyof typeof THEME_GROUPS)!;
+          const counts = themeSentimentCounts.get(themeKey)!;
           if (sentiment === 'positive') counts.positive++;
           else if (sentiment === 'negative') counts.negative++;
           else counts.neutral++;
@@ -225,21 +296,18 @@ export function QualitativeSection({ data, reviews }: QualitativeSectionProps) {
       });
     });
 
-    return (themeKey: keyof typeof THEME_GROUPS): 'positive' | 'negative' | 'neutral' => {
+    return (themeKey: string): 'positive' | 'negative' | 'neutral' => {
       const counts = themeSentimentCounts.get(themeKey) || { positive: 0, negative: 0, neutral: 0 };
       const total = counts.positive + counts.negative + counts.neutral;
       
       if (total === 0) return 'neutral';
       
       // Déterminer le sentiment dominant
-      // Si positiveCount > negativeCount * 1.2 → positif
-      // Si negativeCount > positiveCount * 1.2 → négatif
-      // Sinon → neutre
       if (counts.positive > counts.negative * 1.2) return 'positive';
       if (counts.negative > counts.positive * 1.2) return 'negative';
       return 'neutral';
     };
-  }, [reviews]);
+  }, [reviews, THEME_GROUPS]);
 
   if (!data) {
     return (
@@ -384,49 +452,52 @@ export function QualitativeSection({ data, reviews }: QualitativeSectionProps) {
     return grouped;
   }, [classifiedWords]);
 
-  // Organiser par thème (mode Thème)
+  // Organiser par thème (mode Thème) - Utilise les thèmes dynamiques
   const wordsByTheme = useMemo(() => {
-    const grouped: Record<keyof typeof THEME_GROUPS, ClassifiedWord[]> = {
-      service: [],
-      cuisine: [],
-      ambiance: [],
-      prix: []
-    };
+    // Créer un objet vide avec les clés des thèmes dynamiques
+    const grouped: Record<string, ClassifiedWord[]> = {};
+    Object.keys(THEME_GROUPS).forEach(key => {
+      grouped[key] = [];
+    });
     
     classifiedWords.forEach(word => {
-      // Utiliser le mapping canonique pour déterminer le thème
-      const canonicalTheme = mapTextToTheme(word.word);
+      const wordLower = word.word.toLowerCase();
+      let assigned = false;
       
-      if (canonicalTheme === 'SERVICE') {
-        grouped.service.push(word);
-      } else if (canonicalTheme === 'CUISINE') {
-        grouped.cuisine.push(word);
-      } else if (canonicalTheme === 'AMBIANCE') {
-        grouped.ambiance.push(word);
-      } else if (canonicalTheme === 'PRIX') {
-        grouped.prix.push(word);
-      } else {
-        // Fallback: utiliser les keywords si le mapping canonique ne trouve rien
-        const wordLower = word.word.toLowerCase();
-        let assigned = false;
-        for (const [themeKey, themeConfig] of Object.entries(THEME_GROUPS)) {
-          if (!assigned && themeConfig.keywords.some(kw => wordLower.includes(kw))) {
-            grouped[themeKey as keyof typeof THEME_GROUPS].push(word);
-            assigned = true;
-            break;
+      // Essayer d'assigner le mot à un thème dynamique via keywords
+      for (const [themeKey, themeConfig] of Object.entries(THEME_GROUPS)) {
+        if (!assigned && themeConfig.keywords.some(kw => wordLower.includes(kw.toLowerCase()))) {
+          if (!grouped[themeKey]) {
+            grouped[themeKey] = [];
           }
+          grouped[themeKey].push(word);
+          assigned = true;
+          break;
         }
-        // Si toujours non assigné, ne pas l'ajouter (éviter le fallback automatique en service)
+      }
+      
+      // Si pas assigné et qu'on utilise les thèmes par défaut, fallback sur mapping canonique
+      if (!assigned && dynamicThemes.length === 0) {
+        const canonicalTheme = mapTextToTheme(word.word);
+        if (canonicalTheme === 'SERVICE' && grouped.service) {
+          grouped.service.push(word);
+        } else if (canonicalTheme === 'CUISINE' && grouped.cuisine) {
+          grouped.cuisine.push(word);
+        } else if (canonicalTheme === 'AMBIANCE' && grouped.ambiance) {
+          grouped.ambiance.push(word);
+        } else if (canonicalTheme === 'PRIX' && grouped.prix) {
+          grouped.prix.push(word);
+        }
       }
     });
     
     // Trier par fréquence
     Object.keys(grouped).forEach(key => {
-      grouped[key as keyof typeof THEME_GROUPS].sort((a, b) => b.count - a.count);
+      grouped[key].sort((a, b) => b.count - a.count);
     });
     
     return grouped;
-  }, [classifiedWords]);
+  }, [classifiedWords, THEME_GROUPS, dynamicThemes]);
 
   // Trouver les verbatims contenant un mot
   const getVerbatimsForWord = (word: string) => {
@@ -498,7 +569,7 @@ export function QualitativeSection({ data, reviews }: QualitativeSectionProps) {
                 </div>
               </div>
               <p className="text-xs text-gray-500">
-                Fréquence = mots les plus cités · Sentiment = tonalité globale · Thème = regroupement par Service, Cuisine, Ambiance, Prix.
+                Fréquence = mots les plus cités · Sentiment = tonalité globale · Thème = regroupement par thèmes extraits dynamiquement depuis les avis.
               </p>
             </div>
 
@@ -666,7 +737,7 @@ export function QualitativeSection({ data, reviews }: QualitativeSectionProps) {
               {sortMode === 'theme' && (
                 <div className="grid gap-y-6 md:grid-cols-2 md:gap-x-12 lg:gap-x-16 transition-opacity duration-200">
                   {Object.entries(THEME_GROUPS).map(([themeKey, theme]) => {
-                    const words = [...wordsByTheme[themeKey as keyof typeof THEME_GROUPS]];
+                    const words = [...(wordsByTheme[themeKey] || [])];
                     const Icon = theme.icon;
 
                     if (!words.length) {
@@ -688,7 +759,7 @@ export function QualitativeSection({ data, reviews }: QualitativeSectionProps) {
                     const maxCount = Math.max(...words.map((w) => w.count));
 
                     // Calculer le sentiment global du thème
-                    const themeSentiment = getThemeGlobalSentiment(themeKey as keyof typeof THEME_GROUPS);
+                    const themeSentiment = getThemeGlobalSentiment(themeKey);
                     
                     // Déterminer l'icône et les couleurs selon le sentiment global du thème
                     let IconComponent = Icon;

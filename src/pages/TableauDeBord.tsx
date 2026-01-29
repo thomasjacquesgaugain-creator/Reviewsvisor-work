@@ -209,10 +209,10 @@ const Dashboard = () => {
   const metrics = useMemo(() => {
     if (allReviews.length === 0) {
       return {
-        globalPerformance: { label: t("dashboard.good"), color: "emerald", icon: Award },
+        globalPerformance: { label: t("noData") || "—", color: "gray", icon: Award },
         satisfactionIndex: { percentage: 0 },
-        perceivedValue: { label: t("dashboard.high"), color: "amber" },
-        deliveredExperience: { label: t("dashboard.smooth"), color: "violet" }
+        perceivedValue: { label: t("noData") || "—", color: "gray" },
+        deliveredExperience: { label: t("noData") || "—", color: "gray" }
       };
     }
 
@@ -478,6 +478,7 @@ const Dashboard = () => {
                 {/* Badge central */}
                 <div className="flex justify-center">
                   <div className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
+                    metrics.globalPerformance.color === 'gray' ? 'bg-gray-400' :
                     metrics.globalPerformance.color === 'emerald' ? 'bg-emerald-500' :
                     metrics.globalPerformance.color === 'amber' ? 'bg-amber-500' :
                     metrics.globalPerformance.color === 'red' ? 'bg-red-500' : 'bg-emerald-500'
@@ -529,6 +530,7 @@ const Dashboard = () => {
                 {/* Badge central */}
                 <div className="flex justify-center">
                   <div className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
+                    metrics.perceivedValue.color === 'gray' ? 'bg-gray-400' :
                     metrics.perceivedValue.color === 'emerald' ? 'bg-emerald-500' :
                     metrics.perceivedValue.color === 'amber' ? 'bg-amber-500' :
                     metrics.perceivedValue.color === 'red' ? 'bg-red-500' : 'bg-amber-500'
@@ -555,6 +557,7 @@ const Dashboard = () => {
                 {/* Badge central */}
                 <div className="flex justify-center">
                   <div className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
+                    metrics.deliveredExperience.color === 'gray' ? 'bg-gray-400' :
                     metrics.deliveredExperience.color === 'violet' ? 'bg-violet-500' :
                     metrics.deliveredExperience.color === 'amber' ? 'bg-amber-500' :
                     metrics.deliveredExperience.color === 'red' ? 'bg-red-500' : 'bg-violet-500'

@@ -6,8 +6,9 @@ export interface OverviewMetrics {
   positivePercentage: number;
   negativePercentage: number;
   neutralPercentage: number;
-  trend: 'up' | 'down' | 'stable' | 'insufficient';
+  trend: 'up' | 'down' | 'stable' | 'insufficient' | 'partial';
   trendValue?: number | null; // null si données insuffisantes
+  isPartialData?: boolean; // true si données partielles (période courte)
   trendDeltaPoints?: number | null; // Variation en points (ex: +0.5)
 }
 

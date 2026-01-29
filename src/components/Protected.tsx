@@ -1,9 +1,11 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
+import { useHydrateActiveEstablishment } from "@/hooks/useHydrateActiveEstablishment";
 
 export default function Protected({ children }: { children: JSX.Element }) {
   const { user, loading } = useAuth();
-  
+  useHydrateActiveEstablishment(user?.id);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">

@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EVT_SAVED, EVT_ESTABLISHMENT_UPDATED } from "@/types/etablissement";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useEstablishmentStore } from "@/store/establishmentStore";
 export interface EstablishmentOption {
   id: string;
   place_id: string;
@@ -79,23 +80,15 @@ export function EstablishmentSelector({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEstablishment?.id]);
+  const setActivePlace = useEstablishmentStore((s) => s.setActivePlace);
+
   const handleSelect = async (est: EstablishmentOption) => {
     try {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
-
-      // Persist: définir comme "actif" en DB (source de vérité)
-      if (user) {
-        const {
-          error
-        } = await supabase.from("établissements").update({
-          is_active: true
-        }).eq("user_id", user.id).eq("id", est.id);
-        if (error) throw error;
-      }
+      await setActivePlace(est.place_id, {
+        place_id: est.place_id,
+        name: est.name,
+        formatted_address: est.formatted_address ?? undefined,
+      });
       const detail = {
         place_id: est.place_id,
         name: est.name,

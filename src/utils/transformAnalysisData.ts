@@ -28,70 +28,120 @@ export function transformAnalysisData(
   // Calculer la tendance (comparaison avec il y a 3 mois)
   // Minimum d'avis requis par période pour un calcul significatif
   const MIN_REVIEWS_PER_PERIOD = 5;
+  const MIN_REVIEWS_FOR_SIMPLE_TREND = 5; // Minimum pour afficher une tendance simple
   
-  let trend: 'up' | 'down' | 'stable' | 'insufficient' = 'stable';
+  let trend: 'up' | 'down' | 'stable' | 'insufficient' | 'partial' = 'stable';
   let trendValue: number | null = null;
   let trendDeltaPoints: number | null = null;
+  let isPartialData = false;
   
   if (safeReviews.length > 0) {
-    const threeMonthsAgo = subMonths(new Date(), 3);
-    const recentReviews = safeReviews.filter(r => {
+    // Filtrer les avis avec dates valides
+    const reviewsWithDates = safeReviews.filter(r => {
       try {
         const dateStr = (r as any).published_at || r.date;
         if (!dateStr) return false;
         const reviewDate = parseISO(dateStr);
-        return !isNaN(reviewDate.getTime()) && reviewDate >= threeMonthsAgo;
-      } catch {
-        return false;
-      }
-    });
-    const olderReviews = safeReviews.filter(r => {
-      try {
-        const dateStr = (r as any).published_at || r.date;
-        if (!dateStr) return false;
-        const reviewDate = parseISO(dateStr);
-        return !isNaN(reviewDate.getTime()) && reviewDate < threeMonthsAgo;
+        return !isNaN(reviewDate.getTime());
       } catch {
         return false;
       }
     });
 
-    // Vérifier le minimum d'avis par période
-    if (recentReviews.length >= MIN_REVIEWS_PER_PERIOD && olderReviews.length >= MIN_REVIEWS_PER_PERIOD) {
-      const recentAvg = recentReviews.reduce((sum, r) => sum + (r.note || 0), 0) / recentReviews.length;
-      const olderAvg = olderReviews.reduce((sum, r) => sum + (r.note || 0), 0) / olderReviews.length;
-      
-      // Vérifier que les moyennes sont valides (non NaN, non null)
-      if (!isNaN(recentAvg) && !isNaN(olderAvg) && isFinite(recentAvg) && isFinite(olderAvg)) {
-        // Vérifier division par zéro
-        if (olderAvg > 0) {
-          // Calculer la variation en points
+    // Si moins de 5 avis avec dates, données vraiment insuffisantes
+    if (reviewsWithDates.length < MIN_REVIEWS_FOR_SIMPLE_TREND) {
+      trend = 'insufficient';
+      trendValue = null;
+      trendDeltaPoints = null;
+    } else {
+      // Trier par date
+      const sortedReviews = reviewsWithDates
+        .map(r => ({
+          ...r,
+          date: parseISO((r as any).published_at || r.date || '')
+        }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+      const threeMonthsAgo = subMonths(new Date(), 3);
+      const recentReviews = sortedReviews.filter(r => r.date >= threeMonthsAgo);
+      const olderReviews = sortedReviews.filter(r => r.date < threeMonthsAgo);
+
+      // Méthode 1 : Comparaison 3 mois vs 3 mois précédents (méthode standard)
+      if (recentReviews.length >= MIN_REVIEWS_PER_PERIOD && olderReviews.length >= MIN_REVIEWS_PER_PERIOD) {
+        const recentAvg = recentReviews.reduce((sum, r) => sum + (r.note || 0), 0) / recentReviews.length;
+        const olderAvg = olderReviews.reduce((sum, r) => sum + (r.note || 0), 0) / olderReviews.length;
+        
+        if (!isNaN(recentAvg) && !isNaN(olderAvg) && isFinite(recentAvg) && isFinite(olderAvg) && olderAvg > 0) {
           trendDeltaPoints = recentAvg - olderAvg;
-          
-          // Calculer la variation en pourcentage
           trendValue = ((recentAvg - olderAvg) / olderAvg) * 100;
           
-          // Déterminer la tendance selon les seuils
           if (trendValue > 2) trend = 'up';
           else if (trendValue < -2) trend = 'down';
           else trend = 'stable';
         } else {
-          // olderAvg = 0 : données insuffisantes
+          // Fallback sur méthode simple si moyennes invalides mais on a assez d'avis
+          if (sortedReviews.length >= MIN_REVIEWS_FOR_SIMPLE_TREND) {
+            const firstPartSize = Math.max(1, Math.floor(sortedReviews.length * 0.3));
+            const lastPartSize = Math.max(1, Math.floor(sortedReviews.length * 0.3));
+            const firstPart = sortedReviews.slice(0, firstPartSize);
+            const lastPart = sortedReviews.slice(-lastPartSize);
+            
+            if (firstPart.length >= 2 && lastPart.length >= 2) {
+              const firstAvg = firstPart.reduce((sum, r) => sum + (r.note || 0), 0) / firstPart.length;
+              const lastAvg = lastPart.reduce((sum, r) => sum + (r.note || 0), 0) / lastPart.length;
+              
+              if (!isNaN(firstAvg) && !isNaN(lastAvg) && isFinite(firstAvg) && isFinite(lastAvg) && firstAvg > 0) {
+                trendDeltaPoints = lastAvg - firstAvg;
+                trendValue = ((lastAvg - firstAvg) / firstAvg) * 100;
+                isPartialData = true;
+                trend = 'partial';
+              } else {
+                trend = 'insufficient';
+                trendValue = null;
+                trendDeltaPoints = null;
+              }
+            } else {
+              trend = 'insufficient';
+              trendValue = null;
+              trendDeltaPoints = null;
+            }
+          } else {
+            trend = 'insufficient';
+            trendValue = null;
+            trendDeltaPoints = null;
+          }
+        }
+      } else {
+        // Méthode 2 : Tendance simple (début vs fin) si période courte
+        // Prendre les premiers 30% et derniers 30% des avis
+        const firstPartSize = Math.max(1, Math.floor(sortedReviews.length * 0.3));
+        const lastPartSize = Math.max(1, Math.floor(sortedReviews.length * 0.3));
+        
+        const firstPart = sortedReviews.slice(0, firstPartSize);
+        const lastPart = sortedReviews.slice(-lastPartSize);
+        
+        if (firstPart.length >= 2 && lastPart.length >= 2) {
+          const firstAvg = firstPart.reduce((sum, r) => sum + (r.note || 0), 0) / firstPart.length;
+          const lastAvg = lastPart.reduce((sum, r) => sum + (r.note || 0), 0) / lastPart.length;
+          
+          if (!isNaN(firstAvg) && !isNaN(lastAvg) && isFinite(firstAvg) && isFinite(lastAvg) && firstAvg > 0) {
+            trendDeltaPoints = lastAvg - firstAvg;
+            trendValue = ((lastAvg - firstAvg) / firstAvg) * 100;
+            isPartialData = true;
+            // Garder 'partial' comme statut, la direction sera déterminée par trendValue dans l'UI
+            trend = 'partial';
+          } else {
+            trend = 'insufficient';
+            trendValue = null;
+            trendDeltaPoints = null;
+          }
+        } else {
+          // Pas assez de données même pour tendance simple
           trend = 'insufficient';
           trendValue = null;
           trendDeltaPoints = null;
         }
-      } else {
-        // Moyennes invalides (NaN ou Infinity)
-        trend = 'insufficient';
-        trendValue = null;
-        trendDeltaPoints = null;
       }
-    } else {
-      // Pas assez d'avis dans une ou les deux périodes
-      trend = 'insufficient';
-      trendValue = null;
-      trendDeltaPoints = null;
     }
   }
 
@@ -122,7 +172,8 @@ export function transformAnalysisData(
     neutralPercentage,
     trend,
     trendValue,
-    trendDeltaPoints
+    trendDeltaPoints,
+    isPartialData
   };
 
   // Historique - grouper par mois depuis published_at ou date

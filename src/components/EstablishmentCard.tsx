@@ -113,25 +113,6 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
     );
   }
 
-  const formatTypes = (types: any) => {
-    if (!types || !Array.isArray(types) || types.length === 0) return null;
-    
-    const typeTranslations: Record<string, string> = {
-      'restaurant': t("establishment.typeRestaurant"),
-      'food': t("establishment.typeRestaurant"),
-      'establishment': t("establishment.typeEstablishment"),
-      'point_of_interest': t("establishment.typePointOfInterest"),
-      'store': t("establishment.typeStore"),
-      'cafe': t("establishment.typeCafe"),
-      'bar': t("establishment.typeBar"),
-      'lodging': t("establishment.typeLodging"),
-      'tourist_attraction': t("establishment.typeTouristAttraction")
-    };
-
-    const primaryType = types[0];
-    return typeTranslations[primaryType] || primaryType;
-  };
-
   const displayPhone = placeDetails?.phone || establishment.phone;
   const displayMapsUrl = placeDetails?.mapsUrl;
 
@@ -208,9 +189,6 @@ export default function EstablishmentCard({ establishment, isLoading }: Establis
         <CardContent className="space-y-4">
           <div>
             <h3 className="font-semibold text-lg">{establishment.name}</h3>
-            {formatTypes(establishment.types) && (
-              <p className="text-sm text-muted-foreground">{formatTypes(establishment.types)}</p>
-            )}
           </div>
 
           {establishment.formatted_address && (
