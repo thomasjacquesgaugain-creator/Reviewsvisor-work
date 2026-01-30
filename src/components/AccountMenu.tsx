@@ -1,20 +1,14 @@
-import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
-import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-import { getUserEstablishments } from "@/services/establishments";
-import { EstablishmentData } from "@/services/establishments";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  LayoutDashboard,
   Building2,
   MessageSquare,
   CreditCard,
@@ -22,38 +16,14 @@ import {
   HelpCircle,
   LogOut,
   ChevronDown,
-  Check,
   User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "react-i18next";
 
 export function AccountMenu() {
   const { user, displayName, signOut } = useAuth();
-  const currentEstablishment = useCurrentEstablishment();
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
-  const [establishments, setEstablishments] = useState<EstablishmentData[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      loadEstablishments();
-    }
-  }, [user]);
-
-  const loadEstablishments = async () => {
-    try {
-      setLoading(true);
-      const data = await getUserEstablishments();
-      setEstablishments(data);
-    } catch (error) {
-      console.error("Error loading establishments:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleLogout = async () => {
     await signOut();
@@ -100,69 +70,10 @@ export function AccountMenu() {
               )}
             </div>
           </div>
-
-          {/* Établissement actif */}
-          {currentEstablishment && (
-            <div className="mt-3 pt-3 border-t">
-              <p className="text-xs font-medium text-gray-500 mb-2">Établissement actif</p>
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-gray-400" />
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {currentEstablishment.name}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Sélecteur d'établissement (si plusieurs) */}
-          {establishments.length > 1 && (
-            <div className="mt-3 pt-3 border-t">
-              <p className="text-xs font-medium text-gray-500 mb-2">Changer d'établissement</p>
-              <div className="space-y-1 max-h-32 overflow-y-auto">
-                {establishments.map((est) => {
-                  const isCurrent = currentEstablishment?.id === est.id || currentEstablishment?.place_id === est.place_id;
-                  return (
-                    <button
-                      key={est.id || est.place_id}
-                      onClick={() => {
-                        // TODO: Implémenter le changement d'établissement
-                        // updateCurrentEstablishment(est.id);
-                        navigate("/settings/establishments");
-                      }}
-                      className={cn(
-                        "w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm",
-                        "hover:bg-gray-50 transition-colors",
-                        isCurrent && "bg-blue-50"
-                      )}
-                    >
-                      {isCurrent && <Check className="h-4 w-4 text-blue-600" />}
-                      <span className={cn(
-                        "flex-1 truncate",
-                        isCurrent ? "text-blue-600 font-medium" : "text-gray-700"
-                      )}>
-                        {est.name}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Menu items */}
         <DropdownMenuGroup className="p-1">
-          <DropdownMenuItem
-            onClick={() => navigate("/dashboard")}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer",
-              isActive("/dashboard") && "bg-blue-50 text-blue-600"
-            )}
-          >
-            <LayoutDashboard className="h-4 w-4" />
-            <span className="text-sm">Dashboard</span>
-          </DropdownMenuItem>
-
           <DropdownMenuItem
             onClick={() => navigate("/settings/establishments")}
             className={cn(

@@ -234,16 +234,19 @@ export async function saveEstablishmentFromPlaceId(placeId: string): Promise<Est
   });
 }
 
+/**
+ * Charge les établissements enregistrés de l'utilisateur depuis la table établissements (source de vérité).
+ * Même source que /etablissement (SavedEstablishmentsList) et le sélecteur du Dashboard.
+ */
 export async function getUserEstablishments(): Promise<EstablishmentData[]> {
-  // Get current user
   const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
+
   if (userError || !user) {
     throw new Error('Utilisateur non connecté');
   }
 
   const { data, error } = await supabase
-    .from('establishments')
+    .from('établissements')
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
@@ -253,7 +256,36 @@ export async function getUserEstablishments(): Promise<EstablishmentData[]> {
     throw new Error('Erreur lors de la récupération des établissements');
   }
 
-  return (data || []) as EstablishmentData[];
+  const rows = (data || []) as Array<{
+    id: string;
+    place_id: string;
+    nom: string;
+    adresse: string | null;
+    lat: number | null;
+    lng: number | null;
+    telephone: string | null;
+    website: string | null;
+    rating: number | null;
+    user_ratings_total: number | null;
+    created_at: string;
+    updated_at: string;
+    is_active?: boolean | null;
+  }>;
+
+  return rows.map((row) => ({
+    id: row.id,
+    place_id: row.place_id,
+    name: row.nom,
+    formatted_address: row.adresse ?? undefined,
+    lat: row.lat ?? undefined,
+    lng: row.lng ?? undefined,
+    phone: row.telephone ?? undefined,
+    website: row.website ?? undefined,
+    rating: row.rating ?? undefined,
+    user_ratings_total: row.user_ratings_total ?? undefined,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  }));
 }
 
 export async function getCurrentEstablishment(): Promise<EstablishmentData | null> {

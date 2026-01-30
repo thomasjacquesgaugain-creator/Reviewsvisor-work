@@ -4,6 +4,7 @@ import EstablishmentItem from "./EstablishmentItem";
 import { Building2, Plus, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
+import { toastActiveEstablishment } from "@/lib/toastActiveEstablishment";
 import { checkSubscription } from "@/lib/stripe";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useCreatorBypass, PRODUCT_KEYS } from "@/hooks/useCreatorBypass";
@@ -408,7 +409,7 @@ export default function SavedEstablishmentsList({
         behavior: 'smooth',
         block: 'start'
       });
-      sonnerToast.success(t("establishment.setAsActive", { name: etab.name }));
+      toastActiveEstablishment(etab.name);
     } catch (err) {
       sonnerToast.error(t("common.error"));
     } finally {

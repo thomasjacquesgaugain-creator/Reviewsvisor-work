@@ -557,7 +557,7 @@ export default function EtablissementPage() {
           ) : null}
 
           {/* Liste des établissements enregistrés */}
-          <div data-testid="section-etablissements-enregistres">
+          <div data-testid="section-etablissements-enregistres" className="mt-6">
             <SavedEstablishmentsList onAddClick={openSearch} />
           </div>
           </div>

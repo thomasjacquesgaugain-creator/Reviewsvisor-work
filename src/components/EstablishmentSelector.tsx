@@ -7,6 +7,7 @@ import { EVT_SAVED, EVT_ESTABLISHMENT_UPDATED } from "@/types/etablissement";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useEstablishmentStore } from "@/store/establishmentStore";
+import { toastActiveEstablishment } from "@/lib/toastActiveEstablishment";
 export interface EstablishmentOption {
   id: string;
   place_id: string;
@@ -89,6 +90,7 @@ export function EstablishmentSelector({
         name: est.name,
         formatted_address: est.formatted_address ?? undefined,
       });
+      toastActiveEstablishment(est.name);
       const detail = {
         place_id: est.place_id,
         name: est.name,

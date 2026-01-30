@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useEstablishmentStore } from "@/store/establishmentStore";
+import { toastActiveEstablishment } from "@/lib/toastActiveEstablishment";
 import { Etab, STORAGE_KEY, EVT_SAVED, STORAGE_KEY_LIST } from "@/types/etablissement";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, BarChart, Area, PieChart, Pie, Cell, Legend } from 'recharts';
 import { getRatingEvolution, formatRegistrationDate, Granularity } from "@/utils/ratingEvolution";
@@ -1957,16 +1958,18 @@ const Dashboard = () => {
   }
 
 
-  return <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
-      {/* Background with organic shapes - fixed to viewport */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-violet-200 rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-200 to-yellow-200 rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-full blur-3xl opacity-30"></div>
-      </div>
+  return (
+    <div className="min-h-screen flex flex-col">
+      <main className="flex-1 relative overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
+        {/* Background with organic shapes - absolute so they scroll with content and don't overlap footer */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-violet-200 rounded-full blur-3xl opacity-30"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-200 to-yellow-200 rounded-full blur-3xl opacity-30"></div>
+          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-full blur-3xl opacity-30"></div>
+        </div>
 
-      {/* Main content */}
-      <div className="relative z-10">
+        {/* Main content */}
+        <div className="relative z-10">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8 bg-white shadow-sm rounded-lg p-4">
@@ -2035,6 +2038,7 @@ const Dashboard = () => {
                                   rating: etab.rating ?? undefined,
                                 };
                                 await setActivePlace(etab.place_id, payload);
+                                toastActiveEstablishment(etab.name);
                                 setSelectedEtab(etab);
                                 setShowEstablishmentsDropdown(false);
                                 window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: etab }));
@@ -2260,21 +2264,6 @@ const Dashboard = () => {
             )}
           </div>
         </div>
-
-        {/* Établissement sélectionné */}
-        {selectedEstablishment && <Card className="mb-4">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <div className="font-medium text-gray-900">{selectedEstablishment.name}</div>
-                  <div className="text-sm text-gray-500">{selectedEstablishment.formatted_address}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>}
 
         {/* Navigation par onglets */}
         <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
@@ -6441,6 +6430,8 @@ const Dashboard = () => {
           }}
         />
       )}
-    </div>;
+    </main>
+    </div>
+  );
 };
 export default Dashboard;
