@@ -3,6 +3,11 @@ import { Building2, Check } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Etab } from "@/types/etablissement";
 import { getPlaceDetails, PlaceDetailsResponse } from "@/services/placeDetails";
+import {
+  ESTABLISHMENT_CARD_HOVER,
+  ESTABLISHMENT_CARD_HOVER_ACTIVE,
+  ESTABLISHMENT_CARD_HOVER_NEUTRAL,
+} from "@/lib/establishmentCardStyles";
 
 interface EstablishmentItemProps {
   etab: Etab;
@@ -29,10 +34,10 @@ export default function EstablishmentItem({ etab, onSelect, isActive = false }: 
     <TooltipProvider>
       <div
         onClick={() => onSelect(etab)}
-        className={`cursor-pointer bg-card border-2 rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md transition-all relative ${
-          isActive 
-            ? 'border-blue-500 bg-blue-50/50' 
-            : 'border-border hover:bg-accent/5'
+        className={`cursor-pointer bg-card border-2 rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm relative ${ESTABLISHMENT_CARD_HOVER} ${
+          isActive
+            ? `border-blue-500 bg-blue-50/50 ${ESTABLISHMENT_CARD_HOVER_ACTIVE}`
+            : `border-border ${ESTABLISHMENT_CARD_HOVER_NEUTRAL}`
         }`}
       >
         {isActive && (

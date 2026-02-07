@@ -14,7 +14,7 @@ const Onboarding = () => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   
-  // Pré-sélection via URL param ?plan=pro-14 ou ?plan=pro-24
+  // Pré-sélection via URL param ?plan=pro-annual ou ?plan=pro-24
   const urlPlanSlug = searchParams.get("plan");
   const initialPlan = urlPlanSlug ? getPlanBySlug(urlPlanSlug) : getDefaultPlan();
   

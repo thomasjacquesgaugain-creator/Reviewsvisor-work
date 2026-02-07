@@ -80,27 +80,30 @@ export function SecuritySettings() {
     <div className="p-8">
       <h1 className="text-2xl font-semibold text-gray-900 mb-8">Connexion & sécurité</h1>
 
-      {/* Mot de passe */}
-      <div>
-        <div className="flex items-center gap-3 mb-6">
-          <Shield className="h-5 w-5 text-gray-400" />
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-medium text-gray-900">Mot de passe</h2>
-            <Lock className="h-5 w-5 text-gray-400 shrink-0" />
-          </div>
-        </div>
-        
-        <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
+      <div className="flex justify-center">
+        <div className="w-full max-w-md">
+          {/* Mot de passe */}
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <Shield className="h-5 w-5 text-gray-400" />
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-medium text-gray-900">Mot de passe</h2>
+                <Lock className="h-5 w-5 text-gray-400 shrink-0" />
+              </div>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="current-password">Mot de passe actuel</Label>
             <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" aria-hidden />
               <Input
                 id="current-password"
                 type={showCurrentPassword ? "text" : "password"}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Votre mot de passe actuel"
-                className="pr-10"
+                className="pl-10 pr-10"
               />
               <button
                 type="button"
@@ -116,13 +119,14 @@ export function SecuritySettings() {
           <div className="space-y-2">
             <Label htmlFor="new-password">Nouveau mot de passe</Label>
             <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" aria-hidden />
               <Input
                 id="new-password"
                 type={showNewPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Au moins 6 caractères"
-                className="pr-10"
+                className="pl-10 pr-10"
               />
               <button
                 type="button"
@@ -138,13 +142,14 @@ export function SecuritySettings() {
           <div className="space-y-2">
             <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
             <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" aria-hidden />
               <Input
                 id="confirm-password"
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirmer le nouveau mot de passe"
-                className="pr-10"
+                className="pl-10 pr-10"
               />
               <button
                 type="button"
@@ -160,7 +165,9 @@ export function SecuritySettings() {
           <Button type="submit" disabled={changingPassword || !isFormValid}>
             {changingPassword ? "Mise à jour..." : "Mettre à jour le mot de passe"}
           </Button>
-        </form>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   );

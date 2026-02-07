@@ -50,9 +50,10 @@ serve(async (req) => {
     logStep("Found Stripe customer", { customerId });
 
     const origin = req.headers.get("origin") || Deno.env.get("APP_URL") || "http://localhost:8080";
+    const returnUrl = `${origin}/settings/billing`;
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${origin}/`,
+      return_url: returnUrl,
     });
     logStep("Customer portal session created", { sessionId: portalSession.id, url: portalSession.url });
 

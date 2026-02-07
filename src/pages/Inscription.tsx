@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { User, UserCircle, Building2, MapPin, Mail, Lock, LockKeyhole, CreditCard } from "lucide-react";
+import { User, UserCircle, Mail, Lock, Eye, EyeOff, CreditCard } from "lucide-react";
+import BackArrow from "@/components/BackArrow";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,14 +16,14 @@ type InscriptionFormData = {
   email: string;
   firstName: string;
   lastName: string;
-  establishmentName: string;
-  address: string;
   password: string;
   confirmPassword: string;
 };
 
 export default function Inscription() {
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -32,8 +33,6 @@ export default function Inscription() {
     email: z.string().min(1, { message: t("errors.required") }).email({ message: t("errors.invalidEmail") }),
     firstName: z.string().min(1, { message: t("errors.required") }),
     lastName: z.string().min(1, { message: t("errors.required") }),
-    establishmentName: z.string().min(1, { message: t("errors.required") }),
-    address: z.string().min(1, { message: t("errors.required") }),
     password: z.string()
       .min(1, { message: t("errors.required") })
       .min(8, { message: t("auth.passwordMinLength") })
@@ -57,8 +56,6 @@ export default function Inscription() {
       email: "",
       firstName: "",
       lastName: "",
-      establishmentName: "",
-      address: "",
       password: "",
       confirmPassword: "",
     },
@@ -73,8 +70,6 @@ export default function Inscription() {
         email: formData.email.trim(),
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
-        establishmentName: formData.establishmentName.trim(),
-        address: formData.address.trim(),
         password: formData.password,
       };
 
@@ -101,7 +96,8 @@ export default function Inscription() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-purple-100 px-4 py-12">
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-purple-100 px-4 py-12">
+      <BackArrow />
       <div className="w-full max-w-md">
         {/* Indicateur d'étapes - au-dessus de la card */}
         <div className="flex items-center justify-center gap-6 mb-6">
@@ -197,85 +193,67 @@ export default function Inscription() {
                 <p id="lastName-error" className="text-sm text-destructive">{errors.lastName.message}</p>
               )}
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="establishmentName">{t("auth.companyLabel") || "Nom de l'établissement"}</Label>
-              <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="establishmentName"
-                  placeholder={t("auth.companyNamePlaceholder") || "Nom de votre établissement"}
-                  autoComplete="organization"
-                  {...register("establishmentName")}
-                  aria-invalid={!!errors.establishmentName}
-                  aria-describedby={errors.establishmentName ? "establishmentName-error" : undefined}
-                  required
-                  maxLength={100}
-                  className="pl-10"
-                />
-              </div>
-              {errors.establishmentName && (
-                <p id="establishmentName-error" className="text-sm text-destructive">{errors.establishmentName.message}</p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="address">{t("auth.addressLabel")}</Label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="address"
-                  placeholder={t("auth.addressPlaceholder")}
-                  autoComplete="street-address"
-                  {...register("address")}
-                  aria-invalid={!!errors.address}
-                  aria-describedby={errors.address ? "address-error" : undefined}
-                  required
-                  maxLength={200}
-                  className="pl-10"
-                />
-              </div>
-              {errors.address && (
-                <p id="address-error" className="text-sm text-destructive">{errors.address.message}</p>
-              )}
-            </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="password">{t("auth.passwordLabel")}</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" aria-hidden />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder={t("auth.passwordPlaceholder")}
                   autoComplete="new-password"
                   {...register("password")}
                   aria-invalid={!!errors.password}
                   aria-describedby={errors.password ? "password-error" : undefined}
                   required
-                  className="pl-10"
+                  className="pl-10 pr-10"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded z-10"
+                  aria-label={showPassword ? t("auth.hidePassword", "Masquer le mot de passe") : t("auth.showPassword", "Afficher le mot de passe")}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <Eye className="h-4 w-4" aria-hidden />
+                  )}
+                </button>
               </div>
               {errors.password && (
                 <p id="password-error" className="text-sm text-destructive">{errors.password.message}</p>
               )}
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">{t("auth.confirmPasswordLabel")}</Label>
               <div className="relative">
-                <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" aria-hidden />
                 <Input
                   id="confirmPassword"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   placeholder={t("auth.confirmPasswordPlaceholder")}
                   autoComplete="new-password"
                   {...register("confirmPassword")}
                   aria-invalid={!!errors.confirmPassword}
                   aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
                   required
-                  className="pl-10"
+                  className="pl-10 pr-10"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded z-10"
+                  aria-label={showConfirmPassword ? t("auth.hidePassword", "Masquer le mot de passe") : t("auth.showPassword", "Afficher le mot de passe")}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <Eye className="h-4 w-4" aria-hidden />
+                  )}
+                </button>
               </div>
               {errors.confirmPassword && (
                 <p id="confirmPassword-error" className="text-sm text-destructive">{errors.confirmPassword.message}</p>

@@ -11,6 +11,10 @@ export type Etab = {
   mapsUrl?: string;
   rating?: number | null;
   is_active?: boolean;
+  /** Catégorie mappée depuis Google Places types (Restaurant, Bar, Café, etc.) */
+  type_etablissement?: string | null;
+  /** Id de la ligne en BDD (pour mise à jour type_etablissement, etc.) */
+  id?: string;
 };
 
 export const STORAGE_KEY = "mon-etablissement";

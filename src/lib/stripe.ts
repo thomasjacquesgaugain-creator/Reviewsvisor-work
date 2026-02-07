@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export const STRIPE_PUBLIC_KEY = "pk_live_51S0PSRGkt979eNWBtbxPd6e8SJM9ZYEIhvlwJ4uibz46iiCUc8zL8ZLsgPzKBx0WMLyg9u6ZWMZhWtJOKEIBnLa300kGR8bI0w";
+export const STRIPE_PUBLIC_KEY =
+  (import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string)?.trim() || "";
 
 export type SubscriptionStatus = {
   subscribed: boolean;
@@ -15,10 +16,13 @@ export type SubscriptionStatus = {
   creator_bypass?: boolean;
 };
 
+// Aligné avec src/config/subscriptionPlans.ts (plan par défaut = Pro annuel engagement)
 export const STRIPE_PRODUCTS = {
   pro: {
     product_id: "prod_TP61gPRU9UTdMY",
-    price_id: "price_1SSJ0sGkt979eNWBhN9cZmG2",
+    price_id:
+      (import.meta.env.VITE_STRIPE_PRICE_ID_ANNUAL as string)?.trim() ||
+      "price_1SZT7tGkt979eNWB0MF2xczP",
     name: "Abonnement Pro",
     price: "14,99€/mois",
   },
@@ -71,6 +75,26 @@ export async function createCustomerPortalSession(): Promise<string | null> {
     return data?.url || null;
   } catch (err) {
     console.error("Error creating portal session:", err);
+    throw err;
+  }
+}
+
+/** Met à jour la quantité d'établissements supplémentaires facturés dans Stripe (après suppression d'un établissement). */
+export async function updateSubscriptionQuantity(newQuantity: number): Promise<{ success: boolean }> {
+  try {
+    const { data, error } = await supabase.functions.invoke<{ success: boolean }>(
+      "update-subscription-quantity",
+      { body: { new_quantity: newQuantity } }
+    );
+
+    if (error) {
+      console.error("Error updating subscription quantity:", error);
+      throw new Error(error.message);
+    }
+
+    return { success: data?.success ?? false };
+  } catch (err) {
+    console.error("Error updating subscription quantity:", err);
     throw err;
   }
 }

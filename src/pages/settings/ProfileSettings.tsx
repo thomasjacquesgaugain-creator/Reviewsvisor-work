@@ -1,11 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
+import { getOrCreateProfile, logSupabaseError } from "@/services/profileService";
 import { EditableField } from "@/components/settings/EditableField";
 import { ProfilePhotoUploader } from "@/components/settings/ProfilePhotoUploader";
 import { toast } from "sonner";
 import { validatePhoneNumber, formatPhoneNumber } from "@/utils/phoneValidation";
 import { formatAddress } from "@/utils/addressFormatting";
+
+function trimStr(v: unknown): string {
+  return (v ?? "").toString().trim();
+}
 
 export function ProfileSettings() {
   const { user, displayName, refreshProfile } = useAuth();
@@ -16,43 +21,58 @@ export function ProfileSettings() {
   const [postalAddress, setPostalAddress] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const loadProfile = useCallback(async () => {
+    if (!user) return;
+
+    setLoading(true);
+    setLoadError(null);
+
+    const profile = await getOrCreateProfile(supabase, user);
+
+    if (!profile) {
+      setLoadError("Impossible de charger le profil");
+      toast.error("Erreur lors du chargement du profil");
+      const meta = user.user_metadata ?? {};
+      const metaFirst = trimStr(meta.first_name ?? meta.given_name);
+      const metaLast = trimStr(meta.last_name ?? meta.family_name);
+      const metaDisplay =
+        trimStr(meta.display_name ?? meta.name ?? meta.full_name) ||
+        (metaFirst || metaLast ? `${metaFirst} ${metaLast}`.trim() : "");
+      setFirstName(metaFirst);
+      setLastName(metaLast);
+      setDisplayNameState(metaDisplay || (user.email?.split("@")[0] ?? ""));
+      setPhone("");
+      setPostalAddress("");
+      setAvatarUrl(null);
+      setLoading(false);
+      return;
+    }
+
+    const meta = user.user_metadata ?? {};
+    const metaFirst = trimStr(meta.first_name ?? meta.given_name);
+    const metaLast = trimStr(meta.last_name ?? meta.family_name);
+    const metaDisplay =
+      trimStr(meta.display_name ?? meta.name ?? meta.full_name) ||
+      (metaFirst || metaLast ? `${metaFirst} ${metaLast}`.trim() : "");
+
+    setFirstName(trimStr(profile.first_name) || metaFirst);
+    setLastName(trimStr(profile.last_name) || metaLast);
+    setDisplayNameState(
+      trimStr(profile.display_name) || metaDisplay || (metaFirst || metaLast ? `${metaFirst} ${metaLast}`.trim() : "")
+    );
+    setPhone(trimStr(profile.phone));
+    setPostalAddress(trimStr(profile.postal_address));
+    setAvatarUrl(profile.avatar_url ?? null);
+    setLoading(false);
+  }, [user]);
 
   useEffect(() => {
     if (user) {
       loadProfile();
     }
-  }, [user]);
-
-  const loadProfile = async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("first_name, last_name, display_name, phone, postal_address, avatar_url")
-        .eq("user_id", user.id)
-        .single();
-
-      if (error && error.code !== "PGRST116") {
-        throw error;
-      }
-
-      if (data) {
-        setFirstName(data.first_name || "");
-        setLastName(data.last_name || "");
-        setDisplayNameState(data.display_name || "");
-        setPhone(data.phone || "");
-        setPostalAddress(data.postal_address || "");
-        setAvatarUrl(data.avatar_url || null);
-      }
-    } catch (error) {
-      console.error("Error loading profile:", error);
-      toast.error("Erreur lors du chargement du profil");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, loadProfile]);
 
   const handleSaveFirstName = async (value: string) => {
     if (!user) return;
@@ -72,10 +92,10 @@ export function ProfileSettings() {
       setFirstName(value);
       await refreshProfile();
       toast.success("Prénom mis à jour");
-    } catch (error) {
-      console.error("Error saving first name:", error);
+    } catch (err) {
+      logSupabaseError("ProfileSettings (save first name)", err);
       toast.error("Erreur lors de la mise à jour");
-      throw error;
+      throw err;
     }
   };
 
@@ -97,10 +117,10 @@ export function ProfileSettings() {
       setLastName(value);
       await refreshProfile();
       toast.success("Nom mis à jour");
-    } catch (error) {
-      console.error("Error saving last name:", error);
+    } catch (err) {
+      logSupabaseError("ProfileSettings (save last name)", err);
       toast.error("Erreur lors de la mise à jour");
-      throw error;
+      throw err;
     }
   };
 
@@ -122,10 +142,10 @@ export function ProfileSettings() {
       setDisplayNameState(value);
       await refreshProfile();
       toast.success("Nom d'affichage mis à jour");
-    } catch (error) {
-      console.error("Error saving display name:", error);
+    } catch (err) {
+      logSupabaseError("ProfileSettings (save display name)", err);
       toast.error("Erreur lors de la mise à jour");
-      throw error;
+      throw err;
     }
   };
 
@@ -153,14 +173,14 @@ export function ProfileSettings() {
       
       setPhone(value.trim());
       toast.success("Numéro de téléphone mis à jour");
-    } catch (error: any) {
-      console.error("Error saving phone:", error);
-      if (error.message && error.message.includes("Format")) {
-        // Erreur de validation déjà gérée
-        throw error;
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      if (e?.message?.includes("Format")) {
+        throw err;
       }
+      logSupabaseError("ProfileSettings (save phone)", err);
       toast.error("Erreur lors de la mise à jour du numéro");
-      throw error;
+      throw err;
     }
   };
 
@@ -181,10 +201,10 @@ export function ProfileSettings() {
       
       setPostalAddress(value.trim());
       toast.success("Adresse postale mise à jour");
-    } catch (error) {
-      console.error("Error saving postal address:", error);
+    } catch (err) {
+      logSupabaseError("ProfileSettings (save postal address)", err);
       toast.error("Erreur lors de la mise à jour de l'adresse");
-      throw error;
+      throw err;
     }
   };
 
@@ -207,7 +227,13 @@ export function ProfileSettings() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-8">Informations personnelles</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-2">Informations personnelles</h1>
+      {loadError && (
+        <p className="text-sm text-amber-600 mb-6" role="alert">
+          {loadError}
+        </p>
+      )}
+      {!loadError && <div className="mb-8" />}
 
       {/* Photo de profil */}
       <div className="mb-8 pb-8 border-b border-gray-200">

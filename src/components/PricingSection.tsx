@@ -23,6 +23,13 @@ export function PricingSection() {
   const { t } = useTranslation();
 
   const handleCheckout = async (priceId: string, productKey: string) => {
+    if (!priceId || priceId.includes("REPLACE")) {
+      toast.error(
+        t("subscription.priceIdNotConfigured") ??
+          "Configurez les price IDs Stripe pour cet environnement (voir .env.local en mode test)."
+      );
+      return;
+    }
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (currentUser?.email === "thomas.jacquesgaugain@gmail.com") {
       toast.success(t("subscription.activatedCreatorMode"));
@@ -82,23 +89,52 @@ export function PricingSection() {
       }
 
       // ======= NORMAL STRIPE FLOW =======
+      console.log("[checkout:request]", { priceId, productKey, hasPendingUser: !!userData });
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { 
+        body: {
           priceId,
-          pendingUser: userData  // Ajouter les données utilisateur
+          pendingUser: userData,
         },
       });
-      
-      if (error) throw error;
-      if (data?.url) {
-        sessionStorage.setItem("stripeCheckoutStarted", "true");
-        window.location.href = data.url;
-      } else {
-        throw new Error(t("subscription.paymentUrlNotReceived"));
+
+      const payload = data as { ok?: boolean; url?: string; code?: string; message?: string; error?: string } | null;
+      console.log("[checkout:response]", {
+        hasError: !!error,
+        errorMessage: error instanceof Error ? error.message : error ? String(error) : null,
+        hasData: !!data,
+        ok: payload?.ok,
+        hasUrl: !!payload?.url,
+        code: payload?.code,
+        message: payload?.message,
+      });
+
+      if (error) {
+        let msg = error instanceof Error ? error.message : String(error);
+        const errWithContext = error as { context?: { json?: () => Promise<{ message?: string; error?: string }> } };
+        if (errWithContext?.context?.json) {
+          try {
+            const body = await errWithContext.context.json();
+            msg = body?.message ?? body?.error ?? msg;
+          } catch (_) {
+            /* ignore */
+          }
+        }
+        throw new Error(msg);
       }
-    } catch (error) {
-      console.error("Checkout error:", error);
-      toast.error(t("subscription.paymentRedirectError"));
+      if (payload?.ok === false || (payload?.error && !payload?.url)) {
+        const msg = payload.message ?? payload.error ?? t("subscription.paymentRedirectError");
+        throw new Error(msg);
+      }
+      if (payload?.url) {
+        sessionStorage.setItem("stripeCheckoutStarted", "true");
+        window.location.href = payload.url;
+        return;
+      }
+      throw new Error(t("subscription.paymentUrlNotReceived"));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("[checkout:error]", { message, err });
+      toast.error(message || t("subscription.paymentRedirectError"));
     } finally {
       setLoadingPriceId(null);
     }
@@ -141,6 +177,9 @@ export function PricingSection() {
                   <div className="mt-6">
                     <span className={cn("text-6xl font-bold", colorClasses.price)}>{plan.priceLabel}</span>
                     <span className="text-lg text-muted-foreground ml-2">{t("common.perMonth")}</span>
+                    {plan.billingHint && (
+                      <p className="text-xs text-muted-foreground mt-1">{plan.billingHint}</p>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-col flex-1 pb-10 px-8">

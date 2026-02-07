@@ -179,6 +179,7 @@ export default function SaveEstablishmentButton({
         lat: selected.lat || null,
         lng: selected.lng || null,
         is_active: true,
+        type_etablissement: selected.type_etablissement || null,
       }, {
         onConflict: 'user_id,place_id',
         ignoreDuplicates: false

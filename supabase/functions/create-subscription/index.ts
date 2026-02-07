@@ -7,18 +7,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Price IDs
+// Price IDs — alignés avec src/config/subscriptionPlans.ts (LIVE)
 const ADDITIONAL_ESTABLISHMENT_PRICE_ID = "price_1ShiPzGkt979eNWBSDapH7aJ";
-const DEFAULT_PLAN_PRICE_ID = "price_1SSJ0sGkt979eNWBhN9cZmG2"; // Pro plan
+const DEFAULT_PLAN_PRICE_ID = "price_1SXnCbGkt979eNWBttiTM124"; // Pro mensuel 24,99€
 
 // Admin email for bypass
 const ADMIN_EMAIL = "thomas.jacquesgaugain@gmail.com";
 
 // Map priceId to productKey for admin bypass
 const PRICE_ID_TO_PRODUCT_KEY: Record<string, string> = {
-  "price_1SZT7tGkt979eNWB0MF2xczP": "pro_1499_12m", // Pro engagement
-  "price_1SXnCbGkt979eNWBttiTM124": "pro_2499_monthly", // Pro flexible
-  "price_1SSJ0sGkt979eNWBhN9cZmG2": "pro_1499_12m", // Default Pro plan
+  "price_1SZT7tGkt979eNWB0MF2xczP": "pro_1499_12m", // Pro annuel 179,88€
+  "price_1SXnCbGkt979eNWBttiTM124": "pro_2499_monthly", // Pro mensuel 24,99€
 };
 
 const logStep = (step: string, details?: any) => {
@@ -208,7 +207,7 @@ serve(async (req) => {
       logStep("Adding additional establishments to checkout", { quantity: additionalEstablishments });
     }
 
-    // Check if this is an engagement plan (14-day trial)
+    // Check if this is the annual engagement plan (14-day trial)
     const isEngagementPlan = mainPriceId === "price_1SZT7tGkt979eNWB0MF2xczP";
 
     const cancelUrl = `${origin}/billing/cancel`;

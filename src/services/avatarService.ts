@@ -9,6 +9,10 @@ const isDev = import.meta.env.DEV || import.meta.env.MODE === 'development';
 
 const AVATAR_BUCKET = "avatars";
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 Mo
+
+/** Message utilisateur quand le bucket avatars n'existe pas (toast non bloquant). */
+export const AVATAR_BUCKET_MISSING_MESSAGE =
+  "Le stockage des avatars n'est pas configuré (bucket 'avatars' manquant).";
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export interface UploadAvatarResult {
@@ -107,19 +111,8 @@ export async function uploadAvatar(
     // Message d'erreur selon l'environnement (détaillé en dev, simple en prod)
     let errorMessage: string;
     
-    if (error.message?.includes("Bucket not found") || error.message?.includes("bucket") || error.statusCode === 404) {
-      if (isDev) {
-        errorMessage = `❌ Bucket "avatars" introuvable.
-
-Actions requises :
-1. Allez dans Supabase Dashboard > Storage
-2. Créez un bucket nommé exactement "avatars" (public = true)
-3. OU exécutez la migration : supabase/migrations/20250115000001_create_avatars_bucket.sql
-
-Puis exécutez aussi : supabase/migrations/20250115000002_avatars_bucket_policies.sql`;
-      } else {
-        errorMessage = "Impossible d'envoyer la photo. Veuillez réessayer plus tard.";
-      }
+    if (error.message?.includes("Bucket not found") || error.message?.toLowerCase().includes("bucket") || error.statusCode === 404) {
+      errorMessage = AVATAR_BUCKET_MISSING_MESSAGE;
     } else if (error.statusCode === 401 || error.statusCode === 403) {
       if (isDev) {
         errorMessage = `❌ Erreur d'autorisation (${error.statusCode}).

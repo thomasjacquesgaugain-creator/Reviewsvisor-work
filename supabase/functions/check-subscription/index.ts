@@ -74,7 +74,7 @@ serve(async (req) => {
           periodEnd: entitlement.pro_current_period_end
         });
         
-        // Map plan key to price_id for frontend compatibility
+        // Map plan key to price_id for frontend compatibility (aligné avec subscriptionPlans.ts LIVE)
         let priceId = null;
         if (entitlement.pro_plan_key === 'pro_1499_12m') {
           priceId = 'price_1SZT7tGkt979eNWB0MF2xczP';

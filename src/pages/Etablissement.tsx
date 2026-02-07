@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { getCurrentEstablishment } from "@/services/establishments";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
+import { mapGoogleTypeToCategory } from "@/utils/establishmentTypeMapping";
 export default function EtablissementPage() {
   const {
     displayName,
@@ -156,6 +157,7 @@ export default function EtablissementPage() {
       'rating',
       'url',
       'geometry',
+      'types',
     ];
     return new Promise((resolve, reject) => {
       service.getDetails(
@@ -198,6 +200,8 @@ export default function EtablissementPage() {
 
   // Sérialisation lieu Google Places → Etab
   function serializePlace(place: any): Etab {
+    const types = place.types ?? [];
+    const typeEtablissement = mapGoogleTypeToCategory(Array.isArray(types) ? types : []);
     return {
       place_id: place.place_id || "",
       name: place.name || "",
@@ -208,6 +212,7 @@ export default function EtablissementPage() {
       phone: place.formatted_phone_number || place.international_phone_number || "",
       url: place.url || "",
       rating: place.rating ?? null,
+      type_etablissement: typeEtablissement || null,
     };
   }
 

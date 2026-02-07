@@ -42,27 +42,10 @@ export const HeroSection = () => {
       </div>
 
       <div className="relative z-10">
-        {/* Trust indicators bar */}
-        <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full mx-4 mt-6 shadow-sm relative">
-          <div className="container mx-auto px-6 py-4">
-            <div className="flex flex-wrap items-center justify-center gap-8 text-sm">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-gray-700">{t("hero.trust1")}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-gray-700">{t("hero.trust2")}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-gray-700">{t("hero.trust3")}</span>
-              </div>
-            </div>
-          </div>
-          
+        {/* Header : uniquement le menu hamburger à droite */}
+        <div className="flex items-center justify-end mx-4 mt-6 pr-2">
           {/* Hamburger menu - using Radix Portal for true overlay */}
-          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+          <div>
             <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <button
@@ -164,19 +147,21 @@ export const HeroSection = () => {
                 </Button>
               </div>
 
-              {/* Trust indicators bottom */}
-              <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 pt-4">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>{t("hero.trust1")}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>{t("hero.trust2")}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>{t("hero.trust3")}</span>
+              {/* Trust indicators bottom - une seule ligne, bordure grise arrondie comme le header */}
+              <div className="border border-gray-200 rounded-full px-6 py-4 mt-4">
+                <div className="flex flex-nowrap items-center justify-center gap-6 sm:gap-8 text-sm text-gray-500">
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span className="whitespace-nowrap">{t("hero.trust1")}</span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span className="whitespace-nowrap">{t("hero.trust2")}</span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span className="whitespace-nowrap">{t("hero.trust3")}</span>
+                  </div>
                 </div>
               </div>
             </CardContent>

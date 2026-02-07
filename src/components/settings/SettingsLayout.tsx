@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, Building2, Shield, Bell, Globe, CreditCard, FileText, Palette } from "lucide-react";
+import { Menu, X, User, Building2, Shield, Bell, Globe, CreditCard, FileText, Palette, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
@@ -29,6 +29,12 @@ const settingsNavItems: SettingsNavItem[] = [
     label: "Établissements & accès",
     path: "/settings/establishments",
     icon: <Building2 className="h-4 w-4" />,
+  },
+  {
+    id: "establishment-info",
+    label: "Infos d'établissement",
+    path: "/settings/establishment-info",
+    icon: <Info className="h-4 w-4" />,
   },
   {
     id: "security",
@@ -137,7 +143,7 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
         <div className="flex gap-8">
           {/* Sidebar (desktop) */}
           <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="sticky top-8">
+            <div className="sticky top-8 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Paramètres</h2>
               <NavContent />
             </div>

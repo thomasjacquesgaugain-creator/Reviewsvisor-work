@@ -27,6 +27,7 @@ export default function SavedEstablishmentsList({
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [creatingCheckout, setCreatingCheckout] = useState(false);
+  const [modalEstablishmentCount, setModalEstablishmentCount] = useState<number | null>(null);
   const {
     subscription,
     refresh: refreshSubscription
@@ -48,30 +49,91 @@ export default function SavedEstablishmentsList({
   }, [subscription.subscribed, subscription.price_id]);
 
   // Calcul dynamique du prix basé sur le nombre d'établissements
+  // Base = prix mensuel du plan (pro-engagement : 14,99 €/mois, pro-flexible : 24,99 €/mois)
   const pricingInfo = useMemo(() => {
     const currentCount = establishments.length;
     const newCount = currentCount + 1; // +1 for the one they want to add
     const additionalCount = Math.max(0, newCount - 1); // First one is included in base plan
 
-    const basePlanPrice = activePlan.price;
+    const basePlanMonthly =
+      activePlan.id === "pro-engagement"
+        ? activePlan.price / 12
+        : activePlan.price;
     const addonUnitPrice = establishmentAddon.price;
     const addonTotal = additionalCount * addonUnitPrice;
-    const totalMonthly = basePlanPrice + addonTotal;
+    const totalMonthly = basePlanMonthly + addonTotal;
     return {
       currentCount,
       newCount,
       additionalCount,
-      basePlanPrice,
+      basePlanMonthly,
       addonUnitPrice,
       addonTotal,
       totalMonthly,
       formattedTotal: totalMonthly.toFixed(2).replace('.', ',') + ' €',
       formattedAddonTotal: addonTotal > 0 ? `+${addonTotal.toFixed(2).replace('.', ',')} €` : null
     };
-  }, [establishments.length, activePlan.price]);
+  }, [establishments.length, activePlan.id, activePlan.price]);
 
-  // Fonction pour charger les établissements UNIQUEMENT depuis la DB
-  const loadEstablishmentsFromDb = useCallback(async () => {
+  // Modal "Abonnement requis" : nombre d'établissements UNIQUEMENT depuis la table établissements (jamais subscriptions/Stripe)
+  // currentEstablishmentsCount = établissements actuels ; extraAfterAdd = supplémentaires après ajout (= currentCount car 1 inclus)
+  console.log("=== DEBUG MODAL ===");
+  console.log("Establishments from DB:", establishments);
+  console.log("establishments.length:", establishments.length);
+  console.log("modalEstablishmentCount:", modalEstablishmentCount);
+  const currentEstablishmentsCount =
+    modalEstablishmentCount !== null ? modalEstablishmentCount : establishments.length;
+  const extraAfterAdd = Math.max(0, currentEstablishmentsCount);
+  console.log("currentEstablishmentsCount:", currentEstablishmentsCount);
+  console.log("extraAfterAdd:", extraAfterAdd);
+  const modalPricingInfo = useMemo(() => {
+    const basePlanMonthly =
+      activePlan.id === "pro-engagement" ? activePlan.price / 12 : activePlan.price;
+    const addonUnitPrice = establishmentAddon.price;
+    const addonTotal = extraAfterAdd * addonUnitPrice;
+    const totalMonthly = basePlanMonthly + addonTotal;
+    const newCount = currentEstablishmentsCount + 1;
+    return {
+      currentCount: currentEstablishmentsCount,
+      newCount,
+      additionalCount: extraAfterAdd,
+      basePlanMonthly,
+      addonUnitPrice,
+      addonTotal,
+      totalMonthly,
+      formattedTotal: totalMonthly.toFixed(2).replace(".", ",") + " €",
+      formattedAddonTotal: addonTotal > 0 ? `+${addonTotal.toFixed(2).replace(".", ",")} €` : null,
+    };
+  }, [currentEstablishmentsCount, extraAfterAdd, activePlan.id, activePlan.price]);
+  console.log("modalPricingInfo:", modalPricingInfo);
+
+  // Comptage depuis la table établissements uniquement (jamais depuis subscriptions/Stripe)
+  const setModalCountFromEstablishmentsTable = useCallback(async () => {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) return;
+    const { data: rows, error } = await supabase
+      .from("établissements")
+      .select("id")
+      .eq("user_id", user.id);
+    if (error) {
+      console.error("[SavedEstablishmentsList] Erreur comptage établissements:", error);
+      return;
+    }
+    const count = (rows || []).length;
+    setModalEstablishmentCount(count);
+  }, []);
+
+  // À l'ouverture de la modal : refetch depuis établissements pour garder le comptage à jour
+  useEffect(() => {
+    if (!showSubscriptionModal) {
+      setModalEstablishmentCount(null);
+      return;
+    }
+    setModalCountFromEstablishmentsTable();
+  }, [showSubscriptionModal, setModalCountFromEstablishmentsTable]);
+
+  // Fonction pour charger les établissements UNIQUEMENT depuis la DB (table établissements). Retourne la longueur.
+  const loadEstablishmentsFromDb = useCallback(async (): Promise<number> => {
     try {
       const {
         data: {
@@ -81,10 +143,10 @@ export default function SavedEstablishmentsList({
       } = await supabase.auth.getUser();
       if (authError || !user) {
         setEstablishments([]);
-        return;
+        return 0;
       }
 
-      // Charger depuis la table "établissements" (source de vérité unique)
+      // Charger depuis la table "établissements" (source de vérité unique) — filtre par user_id uniquement (pas de filtre deleted/is_active)
       const {
         data: etablissements,
         error
@@ -94,7 +156,14 @@ export default function SavedEstablishmentsList({
       if (error) {
         console.error("Erreur chargement établissements:", error);
         setEstablishments([]);
-        return;
+        return 0;
+      }
+      console.log("Establishments from DB (raw query, user_id=" + user.id + "):", etablissements);
+      console.log("Establishments from DB (count):", (etablissements || []).length);
+      if (etablissements?.length) {
+        etablissements.forEach((e: { id?: string; place_id?: string; nom?: string }, i: number) => {
+          console.log(`  [${i}] id=${e.id}, place_id=${e.place_id}, nom=${e.nom}`);
+        });
       }
 
       // Convertir vers le format Etab avec toutes les infos de la DB
@@ -122,6 +191,7 @@ export default function SavedEstablishmentsList({
           ]
         : dbList;
 
+      console.log("Establishments from DB (mapped, setEstablishments):", sortedDbList);
       setEstablishments(sortedDbList);
       if (activeEtab) {
         const activeEtabFormatted: Etab = {
@@ -151,9 +221,11 @@ export default function SavedEstablishmentsList({
           window.dispatchEvent(new CustomEvent(EVT_SAVED, { detail: firstEtab }));
         });
       }
+      return sortedDbList.length;
     } catch (error) {
       console.error("Erreur lors du chargement de la liste:", error);
       setEstablishments([]);
+      return 0;
     }
   }, []);
 
@@ -210,6 +282,8 @@ export default function SavedEstablishmentsList({
         if (!import.meta.env.PROD) {
           console.log("[SavedEstablishmentsList] User NOT subscribed, showing subscription modal");
         }
+        const count = await loadEstablishmentsFromDb();
+        setModalEstablishmentCount(count);
         setShowSubscriptionModal(true);
         return;
       }
@@ -222,7 +296,8 @@ export default function SavedEstablishmentsList({
             included: INCLUDED_ESTABLISHMENTS
           });
         }
-        // Show addon modal instead of navigating
+        const count = await loadEstablishmentsFromDb();
+        setModalEstablishmentCount(count);
         setShowSubscriptionModal(true);
         return;
       }
@@ -256,7 +331,7 @@ export default function SavedEstablishmentsList({
         sonnerToast.error(t("auth.mustBeLoggedIn"));
         return;
       }
-      const newAddonQty = pricingInfo.additionalCount;
+      const newAddonQty = modalPricingInfo.additionalCount;
 
       // ======= CREATOR BYPASS =======
       if (isCreator()) {
@@ -483,17 +558,17 @@ export default function SavedEstablishmentsList({
                   <div>
                     <h4 className="text-base font-bold text-foreground">
                       {t("subscription.additionalEstablishment")}
-                      {pricingInfo.additionalCount > 0 && <span className="ml-2 text-xs font-normal text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
-                          ×{pricingInfo.additionalCount}
+                      {modalPricingInfo.additionalCount > 0 && <span className="ml-2 text-xs font-normal text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
+                          ×{modalPricingInfo.additionalCount}
                         </span>}
                     </h4>
                     <p className="text-xs text-muted-foreground">
-                      {pricingInfo.additionalCount === 0 ? t("subscription.firstEstablishmentIncluded") : t("subscription.additionalEstablishmentPrice", { count: pricingInfo.additionalCount, price: "4,99" })}
+                      {modalPricingInfo.additionalCount === 0 ? t("subscription.firstEstablishmentIncluded") : t("subscription.additionalEstablishmentPrice", { count: modalPricingInfo.additionalCount, price: "4,99" })}
                     </p>
                   </div>
                   <div className="text-right whitespace-nowrap">
                     <span className="text-xl font-bold text-purple-600">
-                      {pricingInfo.formattedAddonTotal || "+0 €"}
+                      {modalPricingInfo.formattedAddonTotal || "+0 €"}
                       <span className="text-xs font-normal text-muted-foreground">/mois</span>
                     </span>
                   </div>
@@ -529,13 +604,13 @@ export default function SavedEstablishmentsList({
                 <div>
                   <span className="text-base font-bold text-foreground">{t("subscription.monthlyTotal")}</span>
                   <p className="text-xs text-muted-foreground">
-                    {pricingInfo.newCount === 1 
+                    {modalPricingInfo.newCount === 1 
                       ? t("subscription.establishmentAfterAdd") 
-                      : t("subscription.establishmentsAfterAdd", { count: pricingInfo.newCount })}
+                      : t("subscription.establishmentsAfterAdd", { count: modalPricingInfo.newCount })}
                   </p>
                 </div>
                 <span className="text-xl font-bold text-blue-600">
-                  {pricingInfo.formattedTotal}
+                  {modalPricingInfo.formattedTotal}
                   <span className="text-sm font-normal text-muted-foreground">/mois</span>
                 </span>
               </div>

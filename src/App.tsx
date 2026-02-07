@@ -35,6 +35,7 @@ import { SettingsLayout } from "./components/settings/SettingsLayout";
 import { ProfileSettings } from "./pages/settings/ProfileSettings";
 import { SecuritySettings } from "./pages/settings/SecuritySettings";
 import { EstablishmentsSettings } from "./pages/settings/EstablishmentsSettings";
+import { EstablishmentInfoSettings } from "./pages/settings/EstablishmentInfoSettings";
 import { NotificationsSettings } from "./pages/settings/NotificationsSettings";
 import { LanguageSettings } from "./pages/settings/LanguageSettings";
 import { BillingSettings } from "./pages/settings/BillingSettings";
@@ -193,6 +194,13 @@ const App = () => {
               <Protected>
                 <SettingsLayout>
                   <EstablishmentsSettings />
+                </SettingsLayout>
+              </Protected>
+            } />
+            <Route path="/settings/establishment-info" element={
+              <Protected>
+                <SettingsLayout>
+                  <EstablishmentInfoSettings />
                 </SettingsLayout>
               </Protected>
             } />

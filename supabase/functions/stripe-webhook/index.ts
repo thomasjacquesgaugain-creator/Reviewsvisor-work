@@ -15,9 +15,9 @@ const supabaseAdmin = createClient(
 );
 
 const PRICE_TO_PLAN: Record<string, string> = {
-  "price_1SseJlGkt979eNWBoFcKFjFZ": "pro_1499_12m",
-  "price_1SseK2Gkt979eNWBgrF3GcCU": "pro_2499_monthly",
-  "price_1SseKdGkt979eNWBOA5fiM2f": "addon_etablissement",
+  "price_1SZT7tGkt979eNWB0MF2xczP": "pro_1499_12m",
+  "price_1SXnCbGkt979eNWBttiTM124": "pro_2499_monthly",
+  "price_1ShiPzGkt979eNWBSDapH7aJ": "addon_etablissement",
 };
 
 const logStep = (step: string, details?: any) => {
@@ -65,6 +65,7 @@ serve(async (req) => {
       const pendingUserCompany = metadata.pending_user_company;
       const pendingUserAddress = metadata.pending_user_address;
       const pendingUserPassword = metadata.pending_user_password;
+      const pendingUserEstablishmentType = metadata.pending_user_establishment_type || null;
 
       logStep("Metadata received", { metadata });
       logStep("Pending user data", { 
@@ -106,6 +107,19 @@ serve(async (req) => {
 
         userId = newUser.user.id;
         logStep("User created successfully", { userId });
+
+        // Mettre à jour le profil avec le type d'établissement si fourni (colonne establishment_type)
+        if (pendingUserEstablishmentType) {
+          const { error: profileUpdateError } = await supabaseAdmin
+            .from("profiles")
+            .update({ establishment_type: pendingUserEstablishmentType })
+            .eq("user_id", userId);
+          if (profileUpdateError) {
+            logStep("Error updating profile establishment_type", { error: profileUpdateError.message });
+          } else {
+            logStep("Profile establishment_type updated", { establishment_type: pendingUserEstablishmentType });
+          }
+        }
 
         // Envoyer l'email de bienvenue (non bloquant)
         logStep("Sending welcome email", { email: pendingUserEmail });

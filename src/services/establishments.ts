@@ -14,6 +14,7 @@ export interface EstablishmentData {
   website?: string;
   rating?: number;
   user_ratings_total?: number;
+  type_etablissement?: string | null;
   types?: any;
   source?: string;
   raw?: any;
@@ -267,6 +268,7 @@ export async function getUserEstablishments(): Promise<EstablishmentData[]> {
     website: string | null;
     rating: number | null;
     user_ratings_total: number | null;
+    type_etablissement: string | null;
     created_at: string;
     updated_at: string;
     is_active?: boolean | null;
@@ -283,9 +285,74 @@ export async function getUserEstablishments(): Promise<EstablishmentData[]> {
     website: row.website ?? undefined,
     rating: row.rating ?? undefined,
     user_ratings_total: row.user_ratings_total ?? undefined,
+    type_etablissement: row.type_etablissement ?? undefined,
     created_at: row.created_at,
     updated_at: row.updated_at,
   }));
+}
+
+export type UpdateEstablishmentPayload = {
+  name?: string;
+  formatted_address?: string;
+  phone?: string;
+  website?: string;
+  type_etablissement?: string | null;
+};
+
+/**
+ * Met à jour un établissement (nom, adresse, téléphone, site web, type_etablissement) dans la table établissements.
+ * L'établissement doit appartenir à l'utilisateur connecté.
+ */
+export async function updateEstablishment(
+  establishmentId: string,
+  payload: UpdateEstablishmentPayload
+): Promise<void> {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    throw new Error('Utilisateur non connecté');
+  }
+
+  const update: Record<string, unknown> = {};
+  if (payload.name !== undefined) update.nom = payload.name.trim() || null;
+  if (payload.formatted_address !== undefined) update.adresse = payload.formatted_address.trim() || null;
+  if (payload.phone !== undefined) update.telephone = payload.phone.trim() || null;
+  if (payload.website !== undefined) update.website = payload.website.trim() || null;
+  if (payload.type_etablissement !== undefined) update.type_etablissement = payload.type_etablissement?.trim() || null;
+
+  if (Object.keys(update).length === 0) return;
+
+  console.log('[updateEstablishment] Données envoyées à Supabase:', {
+    table: 'établissements',
+    establishmentId,
+    user_id: user.id,
+    update,
+  });
+
+  const { data, error } = await supabase
+    .from('établissements')
+    .update(update)
+    .eq('id', establishmentId)
+    .eq('user_id', user.id)
+    .select('id')
+    .maybeSingle();
+
+  if (error) {
+    const fullError = {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+    };
+    console.error('[updateEstablishment] Erreur Supabase complète:', fullError);
+    console.error('Supabase error:', error.message, error.details, error.hint);
+    throw new Error(
+      error.hint || error.message || 'Erreur lors de la mise à jour de l\'établissement'
+    );
+  }
+
+  if (data === null && !error) {
+    console.warn('[updateEstablishment] Aucune ligne mise à jour (id ou user_id ne correspondent peut-être pas, ou RLS bloque)');
+  }
 }
 
 export async function getCurrentEstablishment(): Promise<EstablishmentData | null> {

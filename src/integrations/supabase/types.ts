@@ -143,6 +143,7 @@ export type Database = {
           raw_place_json: Json | null
           telephone: string | null
           type: string | null
+          type_etablissement: string | null
           updated_at: string
           user_id: string
           user_ratings_total: number | null
@@ -163,6 +164,7 @@ export type Database = {
           raw_place_json?: Json | null
           telephone?: string | null
           type?: string | null
+          type_etablissement?: string | null
           updated_at?: string
           user_id: string
           user_ratings_total?: number | null
@@ -183,6 +185,7 @@ export type Database = {
           raw_place_json?: Json | null
           telephone?: string | null
           type?: string | null
+          type_etablissement?: string | null
           updated_at?: string
           user_id?: string
           user_ratings_total?: number | null
@@ -327,6 +330,7 @@ export type Database = {
           created_at: string
           current_establishment_id: string | null
           display_name: string | null
+          establishment_type: string | null
           first_name: string | null
           full_name: string | null
           id: string
@@ -341,6 +345,7 @@ export type Database = {
           created_at?: string
           current_establishment_id?: string | null
           display_name?: string | null
+          establishment_type?: string | null
           first_name?: string | null
           full_name?: string | null
           id?: string
@@ -355,6 +360,7 @@ export type Database = {
           created_at?: string
           current_establishment_id?: string | null
           display_name?: string | null
+          establishment_type?: string | null
           first_name?: string | null
           full_name?: string | null
           id?: string

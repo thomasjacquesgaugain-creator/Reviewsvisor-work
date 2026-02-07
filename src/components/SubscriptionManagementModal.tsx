@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr, enUS, it, es, ptBR } from "date-fns/locale";
-import { Etab, STORAGE_KEY, EVT_SAVED } from "@/types/etablissement";
+import { Etab, STORAGE_KEY, EVT_SAVED, EVT_LIST_UPDATED } from "@/types/etablissement";
 import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
@@ -230,6 +230,7 @@ export function SubscriptionManagementModal({
           }
         }
         
+        window.dispatchEvent(new CustomEvent(EVT_LIST_UPDATED));
         toast.success(t("establishment.deleted"));
         await refresh();
       }

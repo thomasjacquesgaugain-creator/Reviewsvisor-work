@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { Etab, EVT_SAVED, EVT_LIST_UPDATED, EVT_ESTABLISHMENT_UPDATED, STORAGE_KEY } from "../types/etablissement";
 import { BarChart3, Download, ExternalLink, Star, Phone, Globe, MapPin, Building2, Loader2, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { runAnalyze } from "@/lib/runAnalyze";
+import { importGoogleReviews } from "@/lib/importGoogleReviews";
 import { toast as sonnerToast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
@@ -14,6 +14,7 @@ interface MonEtablissementCardProps {
 export default function MonEtablissementCard({ onAddClick }: MonEtablissementCardProps) {
   const [etab, setEtab] = useState<Etab | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isImportingReviews, setIsImportingReviews] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useTranslation();
 
@@ -41,6 +42,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
       } else if (data) {
         const row = data as Record<string, unknown>;
         setEtab({
+          id: data.id,
           place_id: data.place_id,
           name: data.nom,
           address: data.adresse || "",
@@ -50,6 +52,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
           rating: data.rating || undefined,
           lat: data.lat || null,
           lng: data.lng || null,
+          type_etablissement: (row.type_etablissement as string) || undefined,
         });
       } else {
         setEtab(null);
@@ -89,6 +92,36 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
     return () => subscription.unsubscribe();
   }, [loadActiveEstablishment]);
 
+  const handleImportReviews = async () => {
+    if (!etab?.place_id) return;
+    setIsImportingReviews(true);
+    try {
+      const result = await importGoogleReviews(etab.place_id, 2000, {
+        name: etab.name ?? undefined,
+        address: etab.address || undefined,
+      });
+      if (result.success) {
+        if (result.total === 0) {
+          sonnerToast.info(t("establishment.importNoReviews", "Aucun avis trouvé pour ce lieu"));
+        } else {
+          sonnerToast.success(
+            t("establishment.importReviewsSuccess", "{{inserted}} avis importés, {{skipped}} déjà présents", {
+              inserted: result.inserted,
+              skipped: result.skipped,
+            })
+          );
+        }
+      } else {
+        sonnerToast.error(result.error || t("errors.generic", "Erreur lors de l'import"));
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      sonnerToast.error(message || t("errors.generic", "Erreur lors de l'import"));
+    } finally {
+      setIsImportingReviews(false);
+    }
+  };
+
   // Fonction pour analyser l'établissement
   const handleAnalyze = async () => {
     if (!etab?.place_id) return;
@@ -124,7 +157,6 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
     return (
       <div className="p-6 flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">{t("common.loading")}</span>
       </div>
     );
   }
@@ -233,7 +265,7 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
           )}
         </div>
 
-        {/* Ligne 3 - Col 1 : Téléphone (col 2, 3, 4 vides) */}
+        {/* Ligne 3 - Col 1 : Téléphone */}
         <div className="flex flex-col gap-1 md:col-start-1 md:row-start-3">
           <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
             <Phone className="w-3.5 h-3.5" />
@@ -257,12 +289,20 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
         <div className="flex md:flex-1 md:justify-center">
           <button
             type="button"
-            className="inline-flex px-4 py-3 h-auto w-44 flex-col items-center justify-center gap-1 rounded-lg border border-blue-600 bg-blue-600 text-white shadow-sm"
+            onClick={handleImportReviews}
+            disabled={isImportingReviews}
+            className="inline-flex px-4 py-3 h-auto w-44 flex-col items-center justify-center gap-1 rounded-lg border border-blue-600 bg-blue-600 text-white shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
             title={t("establishment.importReviews")}
             data-testid="btn-import-avis"
           >
-            <Download className="w-4 h-4" />
-            <span className="text-[10px] font-medium">Importer vos avis</span>
+            {isImportingReviews ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            <span className="text-[10px] font-medium">
+              {isImportingReviews ? t("common.loading", "Chargement...") : "Importer vos avis"}
+            </span>
           </button>
         </div>
 

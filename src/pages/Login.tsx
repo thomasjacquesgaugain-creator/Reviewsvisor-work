@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Eye, EyeOff, AlertTriangle, User, UserCircle } from "lucide-react";
+import { AlertTriangle, User, UserCircle, Lock } from "lucide-react";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,7 +12,6 @@ import { useTranslation } from "react-i18next";
 
 const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -226,26 +226,15 @@ const Login = () => {
                     {t("auth.password")}
                   </label>
                   <div className="relative">
-                    <Input
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" aria-hidden />
+                    <PasswordField
                       id="password"
-                      type={showPassword ? "text" : "password"}
                       placeholder={t("auth.passwordPlaceholder")}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 px-4 pr-12 bg-gray-50 border-gray-200 rounded-xl"
+                      className="h-12 pl-10 pr-10 bg-gray-50 border-gray-200 rounded-xl"
                       required
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
-                    </button>
                   </div>
                 </div>
 
@@ -254,15 +243,17 @@ const Login = () => {
                     <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
                       {t("auth.confirmPassword")}
                     </label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder={t("auth.confirmPasswordPlaceholder")}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
-                      required
-                    />
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" aria-hidden />
+                      <PasswordField
+                        id="confirmPassword"
+                        placeholder={t("auth.confirmPasswordPlaceholder")}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="h-12 pl-12 pr-12 bg-gray-50 border-gray-200 rounded-xl"
+                        required
+                      />
+                    </div>
                   </div>
                 )}
 
