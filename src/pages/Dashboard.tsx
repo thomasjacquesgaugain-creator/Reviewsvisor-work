@@ -34,6 +34,7 @@ import { transformAnalysisData } from "@/utils/transformAnalysisData";
 import type { CompleteAnalysisData, Review } from "@/types/analysis";
 import { getKpiCache, setKpiCache } from "@/services/dashboardKpiCache";
 import { getDashboardSnapshot, setDashboardSnapshot } from "@/services/dashboardSnapshot";
+import { listAll } from "@/services/reviewsService";
 import { Skeleton } from "@/components/ui/skeleton";
 
 
@@ -1505,29 +1506,22 @@ const Dashboard = () => {
           name: currentEstabName ?? ''
         };
         
-        // Charger les vrais avis récents
-        console.log('[Dashboard] 🔍 DEBUG - Récupération des avis:', {
+        // Charger TOUS les avis (paginated via listAll, pas de limite 1000 Supabase)
+        console.log('[Dashboard] 🔍 Récupération des avis (listAll):', {
           place_id: currentEstab.place_id,
           user_id: user.id
         });
-        
-        const { data: reviewsData, error: reviewsError } = await supabase
-          .from('reviews')
-          .select('*')
-          .eq('place_id', currentEstab.place_id)
-          .eq('user_id', user.id)
-          .order('published_at', { ascending: false });
-          
-        console.log('[Dashboard] 🔍 DEBUG - Résultat de la requête avis:', {
+        let reviewsData: any[] = [];
+        try {
+          reviewsData = await listAll(currentEstab.place_id);
+        } catch (err) {
+          console.error('[dashboard] listAll reviews error:', err);
+        }
+        console.log('[Dashboard] 🔍 Résultat listAll avis:', {
           reviewsCount: reviewsData?.length || 0,
-          hasError: !!reviewsError,
-          error: reviewsError,
           sampleReview: reviewsData && reviewsData.length > 0 ? reviewsData[0] : null
         });
-          
-        if (reviewsError) {
-          console.error('[dashboard] reviews error:', reviewsError);
-        } else if (reviewsData) {
+        if (reviewsData && reviewsData.length >= 0) {
           // ⚠️ PROTECTION DONNÉES: Vérification avant utilisation
           if (!reviewsData || reviewsData.length === 0) {
             console.warn('[PROTECTION DONNÉES] ⚠️ ATTENTION: Aucun avis trouvé pour cet établissement - vérifier la source de données', {
@@ -1817,9 +1811,10 @@ const Dashboard = () => {
   // Ne pas afficher 0 par défaut si une analyse existe (même sans avis récents)
   const hasReviews = allReviewsForChart.length > 0;
   const hasAnalysisData = hasAnalysis && insight !== null;
-  const totalAnalyzed = hasAnalysisData ? (insight?.total_count ?? 0) : (hasReviews ? allReviewsForChart.length : 0);
+  // Toujours privilégier le nombre réel d'avis chargés (listAll) pour Total avis / Basée sur X avis
+  const totalReviews = hasReviews ? allReviewsForChart.length : (insight?.total_count ?? 0);
+  const totalAnalyzed = totalReviews;
   const avgRating = hasAnalysisData ? (insight?.avg_rating ?? 0) : (hasReviews ? allReviewsForChart.reduce((sum, r) => sum + (r.rating || 0), 0) / allReviewsForChart.length : 0);
-  const totalReviews = hasAnalysisData ? (insight?.total_count ?? 0) : (hasReviews ? allReviewsForChart.length : 0);
   const positivePct = hasAnalysisData && insight?.positive_ratio != null ? Math.round(insight.positive_ratio * 100) : (hasReviews ? Math.round((allReviewsForChart.filter(r => (r.rating || 0) >= 4).length / allReviewsForChart.length) * 100) : 0);
   const negativePct = hasAnalysisData ? (100 - positivePct) : (hasReviews ? Math.round((allReviewsForChart.filter(r => (r.rating || 0) <= 2).length / allReviewsForChart.length) * 100) : 0);
   const topIssues = hasAnalysisData ? (insight?.top_issues ?? []) : [];
@@ -2116,32 +2111,25 @@ const Dashboard = () => {
                             setHasAnalysis(false);
                           }
                           
-                          // Recharger aussi les avis
-                          const { data: reviewsData } = await supabase
-                            .from('reviews')
-                            .select('*')
-                            .eq('place_id', selectedEtab.place_id)
-                            .eq('user_id', user?.id)
-                            .order('published_at', { ascending: false });
-                            
-                          if (reviewsData) {
-                            setRecentReviews(reviewsData.slice(0, 3));
-                            const bestReviews = reviewsData
-                              .filter(r => r.rating && r.rating >= 4)
-                              .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-                              .slice(0, 5);
-                            setTopReviews(bestReviews);
-                            const badReviews = reviewsData
-                              .filter(r => r.rating && r.rating <= 2)
-                              .sort((a, b) => (a.rating || 0) - (b.rating || 0))
-                              .slice(0, 5);
-                            setWorstReviews(badReviews);
-                          }
-                          
-                          // Recalculer les stats par plateforme
-                          if (reviewsData) {
+                          // Recharger aussi tous les avis (listAll = compte réel)
+                          try {
+                            const reviewsData = await listAll(selectedEtab.place_id);
+                            setAllReviewsForChart(reviewsData);
+                            if (reviewsData.length > 0) {
+                              setRecentReviews(reviewsData.slice(0, 3));
+                              const bestReviews = reviewsData
+                                .filter(r => r.rating && r.rating >= 4)
+                                .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+                                .slice(0, 5);
+                              setTopReviews(bestReviews);
+                              const badReviews = reviewsData
+                                .filter(r => r.rating && r.rating <= 2)
+                                .sort((a, b) => (a.rating || 0) - (b.rating || 0))
+                                .slice(0, 5);
+                              setWorstReviews(badReviews);
+                            }
                             const statsByPlatform: Record<string, { count: number; totalRating: number; avgRating: number }> = {};
-                            reviewsData.forEach(review => {
+                            reviewsData.forEach((review: any) => {
                               const source = review.source || 'unknown';
                               if (!statsByPlatform[source]) {
                                 statsByPlatform[source] = { count: 0, totalRating: 0, avgRating: 0 };
@@ -2156,7 +2144,7 @@ const Dashboard = () => {
                               stat.avgRating = stat.count > 0 ? stat.totalRating / stat.count : 0;
                             });
                             setPlatformStats(statsByPlatform);
-                          }
+                          } catch (_) {}
                         } else {
                           console.error(t("dashboard.analysisError"), result.error);
                         }
@@ -2589,17 +2577,17 @@ const Dashboard = () => {
                     businessType={insight?.business_type as BusinessType | null}
                     businessTypeConfidence={insight?.business_type_confidence || null}
                     businessTypeCandidates={insight?.business_type_candidates || []}
-                    totalReviews={insight?.total_count || 1}
+                    totalReviews={totalReviews || 1}
                     onOverrideClick={() => setShowBusinessTypeOverrideModal(true)}
                   />
                 ) : insight?.themes && insight.themes.length > 0 ? (
                   (() => {
-                    const totalReviews = insight?.total_count || 1;
+                    const totalForThemes = totalReviews || 1;
                     
                     // Calculer les pourcentages bruts
                     const themesWithPercentages = insight.themes.map((theme: any) => {
                       const themeCount = theme.count || 0;
-                      const rawPercentage = (themeCount / totalReviews) * 100;
+                      const rawPercentage = (themeCount / totalForThemes) * 100;
                       
                       // Calculer positifs et négatifs pour cette thématique
                       let positiveCount = 0;
@@ -2716,7 +2704,7 @@ const Dashboard = () => {
                     <div className="space-y-3">
                       {[5, 4, 3, 2, 1].map((star) => {
                         const count = insight.summary.by_rating[star] || 0;
-                        const total = insight.total_count || 1;
+                        const total = totalReviews || 1;
                         const percentage = Math.round((count / total) * 100);
                         const color = star >= 4 ? 'bg-green-500' : star === 3 ? 'bg-yellow-500' : 'bg-red-500';
                         return (
@@ -2823,7 +2811,7 @@ const Dashboard = () => {
                         businessType={insight?.business_type as BusinessType | null}
                         businessTypeConfidence={insight?.business_type_confidence || null}
                         businessTypeCandidates={insight?.business_type_candidates || []}
-                        totalReviews={insight?.total_count || 1}
+                        totalReviews={totalReviews || 1}
                         onOverrideClick={() => setShowBusinessTypeOverrideModal(true)}
                       />
                     );

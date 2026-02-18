@@ -76,29 +76,57 @@ export async function handleImportReviews(body, authHeader, env = {}) {
     return { status: 400, data: { error: "name and address are required" } };
   }
 
+  const sourceParam = (body.source && ["google", "tripadvisor", "trustpilot"].includes(String(body.source).toLowerCase()))
+    ? String(body.source).toLowerCase()
+    : "google";
+  const forceFullImport = !!body.forceFullImport;
   const query = `${name}, ${address}, France`;
-  console.log("[api/reviews/import] place_id:", placeId, "limit:", limit, "query:", query);
+
+  // Import incrémental : récupérer la date du dernier import pour cet établissement
+  let cutoffTimestamp = null;
+  if (sourceParam === "google" && !forceFullImport) {
+    const { data: etabRow } = await supabase
+      .from("établissements")
+      .select("last_reviews_import")
+      .eq("place_id", placeId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (etabRow?.last_reviews_import) {
+      const lastImportDate = new Date(etabRow.last_reviews_import);
+      cutoffTimestamp = Math.floor(lastImportDate.getTime() / 1000);
+      console.log("[api/reviews/import] Import incrémental depuis le", lastImportDate.toISOString(), "| cutoff (s):", cutoffTimestamp);
+    }
+  }
+  console.log("[api/reviews/import] place_id:", placeId, "limit:", limit, "source:", sourceParam, "forceFullImport:", forceFullImport, "query:", query);
 
   let rows = [];
   try {
     const client = new Outscraper(apiKey);
-    const response = await client.googleMapsReviews(
-      [query],
-      limit,
-      null,
-      1,
-      "newest",
-      null,
-      null,
-      null,
-      null,
-      false,
-      "google",
-      "fr",
-      null,
-      "",
-      false
-    );
+    let response;
+
+    if (sourceParam === "tripadvisor") {
+      response = await client.tripadvisorReviews([query], limit, false);
+    } else if (sourceParam === "trustpilot") {
+      response = await client.trustpilotReviews([query], limit, "default", "", null, "", false);
+    } else {
+      response = await client.googleMapsReviews(
+        [query],
+        limit,
+        null,
+        1,
+        "newest",
+        null,
+        null,
+        cutoffTimestamp,
+        null,
+        false,
+        "google",
+        "fr",
+        null,
+        "",
+        false
+      );
+    }
     console.log("[api/reviews/import] Réponse brute Outscraper (avant normalisation):", response);
 
     if (response?.error || response?.errorMessage) {
@@ -126,6 +154,9 @@ export async function handleImportReviews(body, authHeader, env = {}) {
   }
 
   if (rows.length) {
+    if (cutoffTimestamp) {
+      console.log("[api/reviews/import] Import incrémental depuis le dernier import,", rows.length, "nouveaux avis trouvés.");
+    }
     console.log("[api/reviews/import] Nombre d'avis reçus:", rows.length, "| Premier avis brut (debug):", JSON.stringify(rows[0])?.slice(0, 400));
   }
   if (!rows.length) {
@@ -138,32 +169,31 @@ export async function handleImportReviews(body, authHeader, env = {}) {
 
   const { data: existingReviews } = await supabase
     .from("reviews")
-    .select("author_name, published_at")
+    .select("author_name, published_at, source")
     .eq("place_id", placeId)
-    .eq("user_id", user.id)
-    .in("source", ["outscraper", "google"]);
+    .eq("user_id", user.id);
 
   const existingSet = new Set(
-    (existingReviews ?? []).map((r) => `${(r.author_name ?? "").trim()}|${(r.published_at ?? "").slice(0, 19)}`)
+    (existingReviews ?? []).map((r) => `${r.source ?? "google"}|${(r.author_name ?? "").trim()}|${(r.published_at ?? "").slice(0, 19)}`)
   );
 
   let inserted = 0;
   let skipped = 0;
-  const source = "outscraper";
+  const source = sourceParam;
 
   for (const r of rows) {
-    const authorName = (r.author_title ?? r.author_name ?? r.autor_name ?? r.name ?? "").trim();
-    const ratingRaw = r.review_rating ?? r.rating;
+    const authorName = (r.author_title ?? r.author_name ?? r.autor_name ?? r.reviewer_name ?? r.name ?? "").trim();
+    const ratingRaw = r.review_rating ?? r.rating ?? r.stars;
     const rating = typeof ratingRaw === "number" ? Math.min(5, Math.max(1, ratingRaw)) : (parseInt(String(ratingRaw ?? 0), 10) || null);
-    const text = (r.review_text ?? r.review ?? r.text ?? "").trim();
-    const dateRaw = r.review_datetime_utc ?? r.date ?? "";
+    const text = (r.review_text ?? r.review ?? r.text ?? r.content ?? "").trim();
+    const dateRaw = r.review_datetime_utc ?? r.review_date ?? r.date ?? r.published_at ?? "";
     const publishedAt = dateRaw ? new Date(dateRaw).toISOString().slice(0, 19) : "";
-    const dedupKey = `${authorName}|${publishedAt}`;
+    const dedupKey = `${source}|${authorName}|${publishedAt}`;
     if (existingSet.has(dedupKey)) {
       skipped++;
       continue;
     }
-    const sourceReviewId = `outscraper_${placeId}_${authorName}_${publishedAt}`.replace(/\s/g, "_");
+    const sourceReviewId = `${source}_${placeId}_${authorName}_${publishedAt}`.replace(/\s/g, "_");
     const reviewData = {
       user_id: user.id,
       place_id: placeId,
@@ -189,6 +219,16 @@ export async function handleImportReviews(body, authHeader, env = {}) {
     }
     inserted++;
     existingSet.add(dedupKey);
+  }
+
+  // Mettre à jour last_reviews_import après un import réussi
+  const { error: updateError } = await supabase
+    .from("établissements")
+    .update({ last_reviews_import: new Date().toISOString() })
+    .eq("place_id", placeId)
+    .eq("user_id", user.id);
+  if (updateError) {
+    console.warn("[api/reviews/import] Mise à jour last_reviews_import ignorée:", updateError.message);
   }
 
   return {

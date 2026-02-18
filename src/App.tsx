@@ -30,6 +30,10 @@ import UpdatePassword from "./pages/UpdatePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import Abonnement from "./pages/Abonnement";
 import Compte from "./pages/Compte";
+import Cgu from "./pages/Cgu";
+import MentionsLegales from "./pages/MentionsLegales";
+import PolitiqueConfidentialite from "./pages/PolitiqueConfidentialite";
+import PolitiqueCookies from "./pages/PolitiqueCookies";
 import Inscription from "./pages/Inscription";
 import { SettingsLayout } from "./components/settings/SettingsLayout";
 import { ProfileSettings } from "./pages/settings/ProfileSettings";
@@ -140,6 +144,10 @@ const App = () => {
             <Route path="/fonctionnalites" element={<Fonctionnalites />} />
             <Route path="/aide" element={<Aide />} />
             <Route path="/abonnement" element={<Abonnement />} />
+            <Route path="/cgu" element={<Cgu />} />
+            <Route path="/mentions-legales" element={<MentionsLegales />} />
+            <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
+            <Route path="/politique-cookies" element={<PolitiqueCookies />} />
             <Route path="/inscription" element={
               <RequireGuest>
                 <Inscription />

@@ -570,6 +570,7 @@
   "platforms": {
     "google": "Google",
     "tripadvisor": "TripAdvisor",
+    "trustpilot": "Trustpilot",
     "facebook": "Facebook",
     "yelp": "Yelp"
   },
@@ -837,7 +838,13 @@
     "selected": "✅ Sélectionné :",
     "poweredByGoogle": "Powered by Google",
     "importReviews": "Importer vos avis",
+    "importAllReviews": "Importer tous les avis",
+    "importFromPlatform": "Importer depuis {{platform}}",
     "importReviewsSuccess": "{{inserted}} avis importés, {{skipped}} déjà présents",
+    "importAllReviewsSuccess": "Import terminé : {{inserted}} avis importés au total, {{skipped}} déjà présents",
+    "lastReviewsImport": "Dernière mise à jour : {{date}}",
+    "noPreviousImport": "Aucun import précédent",
+    "forceFullImport": "Forcer l'import complet",
     "importNoReviews": "Aucun avis trouvé pour ce lieu",
     "visualReviews": "Visuel des avis",
     "placeId": "place_id",
@@ -1263,6 +1270,7 @@
   "platforms": {
     "google": "Google",
     "tripadvisor": "TripAdvisor",
+    "trustpilot": "Trustpilot",
     "facebook": "Facebook",
     "yelp": "Yelp"
   },

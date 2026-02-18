@@ -9,17 +9,20 @@ export interface ImportGoogleReviewsResult {
   error?: string;
 }
 
+export type ImportReviewSource = "google" | "tripadvisor" | "trustpilot";
+
 /**
  * Appelle la route API locale /api/reviews/import (pas de CORS) ou, en secours,
- * l'Edge Function import-google-reviews. Les doublons (même auteur + même date) sont ignorés.
+ * l'Edge Function import-google-reviews. Les doublons (même auteur + même date + même source) sont ignorés.
  * Envoie nom + adresse pour que l'API construise la query Outscraper "[nom], [adresse], France".
  */
 export async function importGoogleReviews(
   placeId: string,
   limit: number = 2000,
-  options?: { name?: string; address?: string }
+  options?: { name?: string; address?: string; source?: ImportReviewSource; forceFullImport?: boolean }
 ): Promise<ImportGoogleReviewsResult> {
-  console.log("[importGoogleReviews] place_id:", placeId, "limit:", limit, "name:", options?.name, "address:", options?.address);
+  const source = options?.source ?? "google";
+  console.log("[importGoogleReviews] place_id:", placeId, "limit:", limit, "source:", source, "name:", options?.name, "address:", options?.address);
 
   const { data: session } = await supabase.auth.getSession();
   if (!session.session?.access_token) {
@@ -27,7 +30,14 @@ export async function importGoogleReviews(
   }
 
   const token = session.session.access_token;
-  const payload = { placeId, limit, name: options?.name ?? undefined, address: options?.address ?? undefined };
+  const payload = {
+    placeId,
+    limit,
+    name: options?.name ?? undefined,
+    address: options?.address ?? undefined,
+    source,
+    forceFullImport: options?.forceFullImport ?? false,
+  };
 
   // 1) Essayer la route API locale (même origin = pas de CORS)
   try {

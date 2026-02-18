@@ -19,14 +19,19 @@ interface OutscraperReviewRow {
   author_title?: string;
   author_name?: string;
   autor_name?: string;
+  reviewer_name?: string;
   name?: string;
   rating?: number | string;
   review_rating?: number | string;
+  stars?: number | string;
   review_text?: string;
   review?: string;
   text?: string;
+  content?: string;
   review_datetime_utc?: string;
+  review_date?: string;
   date?: string;
+  published_at?: string;
   [key: string]: unknown;
 }
 
@@ -64,7 +69,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    let body: { placeId?: string; limit?: number; name?: string; address?: string };
+    let body: { placeId?: string; limit?: number; name?: string; address?: string; source?: string; forceFullImport?: boolean };
     try {
       body = await request.json();
     } catch {
@@ -83,27 +88,53 @@ export async function POST(request: Request) {
       return Response.json({ error: "name and address are required" }, { status: 400 });
     }
 
+    const sourceParam = (body.source && ["google", "tripadvisor", "trustpilot"].includes(String(body.source).toLowerCase()))
+      ? String(body.source).toLowerCase()
+      : "google";
+    const forceFullImport = !!body.forceFullImport;
     const query = `${name}, ${address}, France`;
-    console.log("[api/reviews/import route] place_id:", placeId, "query:", query);
+
+    let cutoffTimestamp: number | null = null;
+    if (sourceParam === "google" && !forceFullImport) {
+      const { data: etabRow } = await supabase
+        .from("établissements")
+        .select("last_reviews_import")
+        .eq("place_id", placeId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (etabRow?.last_reviews_import) {
+        const lastImportDate = new Date(etabRow.last_reviews_import as string);
+        cutoffTimestamp = Math.floor(lastImportDate.getTime() / 1000);
+        console.log("[api/reviews/import route] Import incrémental depuis le", lastImportDate.toISOString(), "| cutoff (s):", cutoffTimestamp);
+      }
+    }
+    console.log("[api/reviews/import route] place_id:", placeId, "source:", sourceParam, "forceFullImport:", forceFullImport, "query:", query);
 
     const client = new Outscraper(OUTSCRAPER_API_KEY!);
-    const response = await client.googleMapsReviews(
-      [query],
-      limit,
-      null,
-      1,
-      "newest",
-      null,
-      null,
-      null,
-      null,
-      false,
-      "google",
-      "fr",
-      null,
-      "",
-      false
-    );
+    let response: unknown;
+    if (sourceParam === "tripadvisor") {
+      response = await client.tripadvisorReviews([query], limit, false);
+    } else if (sourceParam === "trustpilot") {
+      response = await client.trustpilotReviews([query], limit, "default", "", null, "", false);
+    } else {
+      response = await client.googleMapsReviews(
+        [query],
+        limit,
+        null,
+        1,
+        "newest",
+        null,
+        null,
+        cutoffTimestamp,
+        null,
+        false,
+        "google",
+        "fr",
+        null,
+        "",
+        false
+      );
+    }
     console.log("[api/reviews/import route] Réponse brute Outscraper:", response);
 
     if (response?.error || response?.errorMessage) {
@@ -126,6 +157,9 @@ export async function POST(request: Request) {
       }
     }
 
+    if (rows.length && cutoffTimestamp) {
+      console.log("[api/reviews/import route] Import incrémental depuis le dernier import,", rows.length, "nouveaux avis trouvés.");
+    }
     if (!rows.length) {
       return Response.json({
         success: true,
@@ -138,40 +172,39 @@ export async function POST(request: Request) {
 
     const { data: existingReviews } = await supabase
       .from("reviews")
-      .select("author_name, published_at")
+      .select("author_name, published_at, source")
       .eq("place_id", placeId)
-      .eq("user_id", user.id)
-      .in("source", ["outscraper", "google"]);
+      .eq("user_id", user.id);
 
     const existingSet = new Set(
       (existingReviews ?? []).map(
-        (r) => `${(r.author_name ?? "").trim()}|${(r.published_at ?? "").slice(0, 19)}`
+        (r) => `${(r as { source?: string }).source ?? "google"}|${(r.author_name ?? "").trim()}|${(r.published_at ?? "").slice(0, 19)}`
       )
     );
 
     let inserted = 0;
     let skipped = 0;
-    const source = "outscraper";
+    const source = sourceParam;
 
     if (rows.length) {
       console.log("[api/reviews/import route] Nombre d'avis:", rows.length, "| Premier avis (debug):", JSON.stringify(rows[0])?.slice(0, 400));
     }
     for (const r of rows) {
-      const authorName = (r.author_title ?? r.author_name ?? r.autor_name ?? r.name ?? "").trim();
-      const ratingRaw = r.review_rating ?? r.rating;
+      const authorName = (r.author_title ?? r.author_name ?? r.autor_name ?? r.reviewer_name ?? r.name ?? "").trim();
+      const ratingRaw = r.review_rating ?? r.rating ?? r.stars;
       const rating =
         typeof ratingRaw === "number"
           ? Math.min(5, Math.max(1, ratingRaw))
           : (parseInt(String(ratingRaw ?? 0), 10) || null);
-      const text = (r.review_text ?? r.review ?? r.text ?? "").trim();
-      const dateRaw = r.review_datetime_utc ?? r.date ?? "";
+      const text = (r.review_text ?? r.review ?? r.text ?? r.content ?? "").trim();
+      const dateRaw = r.review_datetime_utc ?? r.review_date ?? r.date ?? r.published_at ?? "";
       const publishedAt = dateRaw ? new Date(dateRaw).toISOString().slice(0, 19) : "";
-      const dedupKey = `${authorName}|${publishedAt}`;
+      const dedupKey = `${source}|${authorName}|${publishedAt}`;
       if (existingSet.has(dedupKey)) {
         skipped++;
         continue;
       }
-      const sourceReviewId = `outscraper_${placeId}_${authorName}_${publishedAt}`.replace(/\s/g, "_");
+      const sourceReviewId = `${source}_${placeId}_${authorName}_${publishedAt}`.replace(/\s/g, "_");
       const reviewData = {
         user_id: user.id,
         place_id: placeId,
@@ -199,6 +232,15 @@ export async function POST(request: Request) {
       }
       inserted++;
       existingSet.add(dedupKey);
+    }
+
+    const { error: updateError } = await supabase
+      .from("établissements")
+      .update({ last_reviews_import: new Date().toISOString() })
+      .eq("place_id", placeId)
+      .eq("user_id", user.id);
+    if (updateError) {
+      console.warn("[api/reviews/import route] Mise à jour last_reviews_import ignorée:", updateError.message);
     }
 
     return Response.json({

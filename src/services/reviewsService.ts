@@ -477,23 +477,37 @@ export async function deleteAllReviews(establishmentId: string): Promise<number>
   return count || 0;
 }
 
+const SUMMARY_PAGE_SIZE = 1000;
+
 export async function getReviewsSummary(establishmentId: string) {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('User not authenticated');
 
-  // Get all reviews for the establishment
-  const { data: reviews, error } = await supabase
-    .from('reviews')
-    .select('rating, published_at')
-    .eq('user_id', user.user.id)
-    .eq('place_id', establishmentId);
+  // Récupérer TOUS les avis par pagination (Supabase limite à 1000 par requête)
+  const reviews: { rating: number | null; published_at: string | null }[] = [];
+  let offset = 0;
+  let hasMore = true;
 
-  if (error) {
-    console.error('Error fetching reviews:', error);
-    throw error;
+  while (hasMore) {
+    const { data: page, error } = await supabase
+      .from('reviews')
+      .select('rating, published_at')
+      .eq('user_id', user.user.id)
+      .eq('place_id', establishmentId)
+      .order('id', { ascending: true })
+      .range(offset, offset + SUMMARY_PAGE_SIZE - 1);
+
+    if (error) {
+      console.error('Error fetching reviews for summary:', error);
+      throw error;
+    }
+    if (!page?.length) break;
+    reviews.push(...page);
+    hasMore = page.length === SUMMARY_PAGE_SIZE;
+    offset += SUMMARY_PAGE_SIZE;
   }
 
-  if (!reviews || reviews.length === 0) {
+  if (reviews.length === 0) {
     return {
       total: 0,
       avgRating: 0,
@@ -502,7 +516,7 @@ export async function getReviewsSummary(establishmentId: string) {
     };
   }
 
-  // Calculate metrics
+  // Calculate metrics (nombre réel d'avis en base)
   const total = reviews.length;
   const avgRating = reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / total;
 

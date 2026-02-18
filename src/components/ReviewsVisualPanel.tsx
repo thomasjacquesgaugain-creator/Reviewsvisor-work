@@ -93,6 +93,16 @@ export function ReviewsVisualPanel({
   const [displayCount, setDisplayCount] = useState(10);
   const { establishment: currentEstablishment } = useCurrentEstablishment();
   const { t } = useTranslation();
+
+  const bySource = useMemo(() => {
+    const c: Record<string, number> = {};
+    reviewsList.forEach((r) => {
+      let s = (r.platform || "google").toString().toLowerCase();
+      if (s === "outscraper") s = "google";
+      c[s] = (c[s] || 0) + 1;
+    });
+    return c;
+  }, [reviewsList]);
   
   // Use props first, fallback to current establishment
   const effectiveId = establishmentId || currentEstablishment?.id || currentEstablishment?.place_id;
@@ -412,6 +422,26 @@ export function ReviewsVisualPanel({
                   </div>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Répartition par plateforme (nombre d'avis par source) */}
+            <div className="mb-4">
+              <p className="text-sm font-medium text-muted-foreground mb-2">{t("dashboard.platformDistribution")}</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { key: "google", label: t("platforms.google"), color: "#3b82f6" },
+                  { key: "tripadvisor", label: t("platforms.tripadvisor"), color: "#00af87" },
+                  { key: "trustpilot", label: t("platforms.trustpilot"), color: "#00b67a" },
+                ].map(({ key, label, color }) => (
+                  <span
+                    key={key}
+                    className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-white"
+                    style={{ backgroundColor: color }}
+                  >
+                    {label}: {bySource[key] ?? 0}
+                  </span>
+                ))}
+              </div>
             </div>
 
             {/* Cards de filtrage */}

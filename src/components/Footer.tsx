@@ -72,18 +72,18 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/conditions" className="text-white hover:underline hover:opacity-80 transition-all">
+                <Link to="/cgu" className="text-white hover:underline hover:opacity-80 transition-all">
                   {t("footer.termsOfUse")}
                 </Link>
               </li>
               <li>
-                <Link to="/confidentialite" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
+                <Link to="/politique-confidentialite" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
                   <Shield className="h-4 w-4" />
                   {t("footer.privacyPolicy")}
                 </Link>
               </li>
               <li>
-                <Link to="/cookies" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
+                <Link to="/politique-cookies" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
                   <Cookie className="h-4 w-4" />
                   {t("footer.cookies")}
                 </Link>

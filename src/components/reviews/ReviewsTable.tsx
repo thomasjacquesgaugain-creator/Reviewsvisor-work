@@ -125,22 +125,30 @@ export function ReviewsTable({
                 </div>
               </td>
               <td className="border border-border px-3 py-2">
-                {(review.platform?.toLowerCase() === 'google' || !review.platform) ? (
-                  <span style={{ 
-                    backgroundColor: '#3b82f6',
-                    color: '#ffffff',
-                    padding: '2px 10px',
-                    borderRadius: '9999px',
-                    fontSize: '12px',
-                    fontWeight: '500'
-                  }}>
-                    {review.platform || 'Google'}
-                  </span>
-                ) : (
-                <Badge variant={review.platform === 'unknown' ? 'secondary' : 'default'}>
-                  {review.platform}
-                </Badge>
-                )}
+                {(() => {
+                  const p = (review.platform || "google").toString().toLowerCase();
+                  const labels: Record<string, { bg: string; label: string }> = {
+                    google: { bg: "#3b82f6", label: "Google" },
+                    outscraper: { bg: "#3b82f6", label: "Google" },
+                    tripadvisor: { bg: "#00af87", label: "TripAdvisor" },
+                    trustpilot: { bg: "#00b67a", label: "Trustpilot" },
+                  };
+                  const config = labels[p] || { bg: "hsl(var(--muted))", label: review.platform || "—" };
+                  return (
+                    <span
+                      style={{
+                        backgroundColor: config.bg,
+                        color: "#ffffff",
+                        padding: "2px 10px",
+                        borderRadius: "9999px",
+                        fontSize: "12px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {config.label}
+                    </span>
+                  );
+                })()}
               </td>
               <td className="border border-border px-3 py-2 text-sm text-muted-foreground">
                 {review.reviewDate || '-'}

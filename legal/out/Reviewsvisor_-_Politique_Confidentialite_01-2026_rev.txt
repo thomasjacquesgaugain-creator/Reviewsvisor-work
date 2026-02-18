@@ -1,0 +1,350 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Reviewsvisor
+
+Politique de Confidentialité
+
+
+
+
+
+	
+
+
+
+	
+
+
+
+
+
+
+
+
+
+Contents
+
+	Page
+
+Introduction	3
+
+1	Responsable du traitement	3
+
+2	Données personnelles collectées	3
+
+2.1	Données d’identification	3
+
+2.2	Données professionnelles	3
+
+2.3	Données issues de Google Business Profile	3
+
+2.4	Données techniques et de connexion	4
+
+3	Finalités et bases légales des traitements	4
+
+4	Destinataires des données	4
+
+4.1 	Sous-traitants	4
+
+4.2 	Partenaires	5
+
+4.3 	Autorités	5
+
+5	Transferts hors Union européenne	5
+
+6	Caractère obligatoire des données	5
+
+7	Durées de conservation	5
+
+8	Sécurité des données	6
+
+9	Droits des personnes concernées	6
+
+10	Décisions automatisées	6
+
+11	Cookies	6
+
+12	Modification de la politique	7
+
+13	Réclamation	7
+
+14	Contact	7
+
+
+
+Introduction
+
+La présente Politique de Confidentialité décrit de manière transparente la manière dont Reviewsvisor collecte, utilise, conserve et protège les données personnelles de ses utilisateurs, conformément au Règlement (UE) 2016/679 du Parlement européen et du Conseil du 27 avril 2016 (RGPD) et aux législations nationales applicables.
+
+Elle s’applique à l’ensemble des personnes physiques en relation avec Reviewsvisor, notamment à travers son site web à l’adresse www.reviewsvisor.fr.
+
+
+
+Responsable du traitement
+
+Le responsable du traitement des données personnelles est :
+
+ReviewsvisorSAS immatriculée sous le N°     RCS Paris, dont le siège social est situé     Email : contact@reviewsvisor.frSite web : www.reviewsvisor.fr
+
+Pour toute question relative à la protection des données personnelles, vous pouvez contacter directement Reviewsvisor à l’adresse ci-dessus.
+
+
+
+Données personnelles collectées
+
+Reviewsvisor collecte uniquement les données strictement nécessaires à la fourniture du Service.
+
+Données d’identification
+
+Nom et prénom
+
+Adresse email professionnelle
+
+Numéro de téléphone (optionnel)
+
+Photo de profil (en cas de connexion via un compte Google)
+
+Données professionnelles
+
+Nom de l’entreprise ou de l’établissement
+
+Adresse professionnelle
+
+Secteur d’activité
+
+Informations de facturation
+
+Données issues de Google Business Profile
+
+Avis clients (contenu, note, date, auteur tel que fourni par Google)
+
+Réponses aux avis
+
+Statistiques et indicateurs liés aux avis
+
+Informations publiques de la fiche Google Business Profile
+
+Données techniques et de connexion
+
+Adresse IP
+
+Type de navigateur, système d’exploitation et appareil
+
+Journaux de connexion et d’activité
+
+Cookies et identifiants de session
+
+
+
+Finalités et bases légales des traitements
+
+Les données personnelles sont traitées pour les finalités suivantes :
+
+Finalité
+
+Base légale
+
+Création et gestion du compte utilisateur
+
+Exécution du contrat
+
+Fourniture des fonctionnalités du Service
+
+Exécution du contrat
+
+Gestion des abonnements et paiements
+
+Exécution du contrat
+
+Notifications liées au fonctionnement du Service
+
+Intérêt légitime
+
+Amélioration continue du Service et statistiques
+
+Intérêt légitime
+
+Sécurité, prévention de la fraude et abus
+
+Intérêt légitime
+
+Communications marketing
+
+Consentement
+
+Respect des obligations légales
+
+Obligation légale
+
+L’intérêt légitime poursuivi par Reviewsvisor consiste à assurer le bon fonctionnement du Service, sa sécurité, son amélioration continue et la prévention des usages frauduleux.
+
+
+
+Destinataires des données
+
+Les données personnelles peuvent être communiquées aux destinataires suivants :
+
+4.1 	Sous-traitants
+
+Hébergement : Versel INc., USA, infrastructures situées au sein de l’Union européenne
+
+Paiement : Stripe (traitement sécurisé des paiements)
+
+Emailing et notifications
+
+Outils d’analyse et de mesure d’audience
+
+Ces prestataires agissent en qualité de sous-traitants au sens du RGPD et sont contractuellement tenus de respecter la confidentialité et la sécurité des données.
+
+4.2 	Partenaires
+
+Google, dans le cadre strict de l’utilisation de l’API Google Business Profile
+
+4.3 	Autorités
+
+Les données peuvent être communiquées aux autorités compétentes lorsque la loi l’exige.
+
+Reviewsvisor ne vend ni ne loue jamais les données personnelles à des tiers.
+
+
+
+Transferts hors Union européenne
+
+Les données sont principalement hébergées et traitées au sein de l’Union européenne.
+
+Lorsque certains sous-traitants impliquent un transfert de données hors de l’Union européenne, nous nous assurons que le niveau de protection des Données à Caractère Personnel dans le pays concerné est jugé adéquat au regard du droit applicable (ce qui est le cas pour les Etats-Unis, concernant les entreprises relevant du « Cadre de Protection des Données » (CPD) ). Pour les éventuels pays jugés non adéquats, Reviewsvisor met en place des garanties appropriées conformément au RGPD, notamment par l’utilisation de clauses contractuelles types adoptées par la Commission européenne ou par toute autre base légale valide.Vous pouvez obtenir des informations complémentaires sur ces garanties en contactant Reviewsvisor.
+
+
+
+Caractère obligatoire des données
+
+Certaines données personnelles sont nécessaires à la création du compte, à l’accès au Service et à la fourniture de ses fonctionnalités. À défaut de fournir ces données, Reviewsvisor pourra être dans l’impossibilité de fournir tout ou partie du Service.
+
+Les autres données sont facultatives et signalées comme telles lors de leur collecte.
+
+
+
+Durées de conservation
+
+
+
+Type de données
+
+Durée de conservation
+
+Données du compte
+
+Durée de l’abonnement + 3 ans
+
+Données de facturation
+
+10 ans (obligation légale)
+
+Avis et analyses
+
+Durée de l’abonnement + 30 jours
+
+Journaux de connexion
+
+1 an
+
+Cookies
+
+13 mois maximum
+
+
+
+
+
+
+
+Sécurité des données
+
+Reviewsvisor met en œuvre des mesures techniques et organisationnelles appropriées afin de garantir un niveau de sécurité adapté aux risques, notamment :
+
+Chiffrement des données en transit (TLS/HTTPS)
+
+Chiffrement des données sensibles au repos
+
+Contrôles d’accès stricts et authentification sécurisée
+
+Sauvegardes régulières
+
+Surveillance et détection des incidents de sécurité
+
+
+
+Droits des personnes concernées
+
+Conformément au RGPD, vous disposez des droits suivants :
+
+Droit d’accès
+
+Droit de rectification
+
+Droit à l’effacement
+
+Droit à la limitation du traitement
+
+Droit à la portabilité
+
+Droit d’opposition
+
+Droit de retirer votre consentement à tout moment
+
+Vous pouvez exercer ces droits en contactant : contact@reviewsvisor.fr
+
+
+
+Décisions automatisées
+
+Reviewsvisor ne met pas en œuvre de décisions produisant des effets juridiques à l’égard des Utilisateurs fondées exclusivement sur un traitement automatisé au sens de l’article 22 du RGPD.
+
+
+
+Cookies
+
+L’utilisation de cookies est détaillée dans la Politique de Cookies accessible sur le site. Vous pouvez gérer vos préférences à tout moment via le bandeau de consentement.
+
+
+
+Modification de la politique
+
+Reviewsvisor se réserve le droit de modifier la présente Politique de Confidentialité à tout moment. Toute modification substantielle fera l’objet d’une information préalable.
+
+Réclamation
+
+Vous pouvez introduire une réclamation auprès de l’autorité de contrôle compétente. En France :
+
+CNIL – Commission Nationale de l’Informatique et des Libertéswww.cnil.fr
+
+Les utilisateurs établis dans un autre État membre de l’Union européenne peuvent également saisir l’autorité locale compétente.
+
+
+
+Contact
+
+Pour toute question relative à la protection des données personnelles :
+
+Email : contact@reviewsvisor.frSite web : www.reviewsvisor.fr
+
+
+
+© 2026 Reviewsvisor – Tous droits réservés
+
+
+
+
+
