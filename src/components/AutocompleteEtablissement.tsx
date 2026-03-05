@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef } from "react";
-import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
-import { useTranslation } from "react-i18next";
+import React, { useEffect, useState, useRef } from 'react';
+import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 
 type Suggestion = {
   place_id: string;
@@ -34,12 +34,12 @@ type PlaceDetails = {
 
 function useDebounce<T>(value: T, delay = 250) {
   const [debouncedValue, setDebouncedValue] = useState(value);
-  
+
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedValue(value), delay);
     return () => clearTimeout(timer);
   }, [value, delay]);
-  
+
   return debouncedValue;
 }
 
@@ -47,15 +47,25 @@ interface AutocompleteEtablissementProps {
   onPicked?: (place: PlaceDetails) => void;
 }
 
-export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtablissementProps) {
-  const [query, setQuery] = useState("");
+export default function AutocompleteEtablissement({
+  onPicked,
+}: AutocompleteEtablissementProps) {
+  const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<PlaceDetails | null>(null);
-  const [sessionToken] = useState(() => Math.random().toString(36).substring(2));
-  
+  const [sessionToken] = useState(() =>
+    Math.random().toString(36).substring(2),
+  );
+  const supabaseUrl =
+    import.meta.env.VITE_SUPABASE_URL || 'http://127.0.0.1:54321';
+  const supabaseAnonKey =
+    import.meta.env.VITE_SUPABASE_ANON_KEY ||
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    '';
+
   const debouncedQuery = useDebounce(query, 300);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -69,33 +79,37 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
 
     const ctrl = new AbortController();
     const timeout = setTimeout(() => ctrl.abort(), 10000);
-    
+
     const fetchSuggestions = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
-        const url = `https://zzjmtipdsccxmmoaetlp.supabase.co/functions/v1/autocomplete-establishments?input=${encodeURIComponent(debouncedQuery)}&sessionToken=${encodeURIComponent(sessionToken)}`;
-        
+        const url = `${supabaseUrl}/functions/v1/autocomplete-establishments?input=${encodeURIComponent(debouncedQuery)}&sessionToken=${encodeURIComponent(sessionToken)}`;
+
         const res = await fetch(url, {
           method: 'GET',
           signal: ctrl.signal,
           headers: {
-            'accept': 'application/json',
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU'
-          }
+            accept: 'application/json',
+            apikey: supabaseAnonKey,
+          },
         });
-        
+
         clearTimeout(timeout);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        
+
         const data = await res.json();
         setSuggestions(data.suggestions || []);
       } catch (err) {
         clearTimeout(timeout);
         if (err instanceof Error && err.name !== 'AbortError') {
           console.error('Erreur autocomplétion:', err);
-          setError(err.name === 'AbortError' ? t("errors.requestTooLong") : t("errors.searchErrorOccurredGeneric"));
+          setError(
+            err.name === 'AbortError'
+              ? t('errors.requestTooLong')
+              : t('errors.searchErrorOccurredGeneric'),
+          );
           setSuggestions([]);
         }
       } finally {
@@ -104,7 +118,7 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
     };
 
     fetchSuggestions();
-    
+
     return () => {
       ctrl.abort();
       clearTimeout(timeout);
@@ -114,7 +128,10 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
   // Fermer la liste si clic à l'extérieur
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setSuggestions([]);
         setHighlightedIndex(-1);
       }
@@ -128,41 +145,45 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
   const getPlaceDetails = async (placeId: string) => {
     const ctrl = new AbortController();
     const timeout = setTimeout(() => ctrl.abort(), 10000);
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
-      const url = `https://zzjmtipdsccxmmoaetlp.supabase.co/functions/v1/get-place-details?placeId=${encodeURIComponent(placeId)}&sessionToken=${encodeURIComponent(sessionToken)}`;
-      
+      const url = `${supabaseUrl}/functions/v1/get-place-details?placeId=${encodeURIComponent(placeId)}&sessionToken=${encodeURIComponent(sessionToken)}`;
+
       const response = await fetch(url, {
         method: 'GET',
         signal: ctrl.signal,
         headers: {
-          'accept': 'application/json',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU'
-        }
+          accept: 'application/json',
+          apikey: supabaseAnonKey,
+        },
       });
 
       clearTimeout(timeout);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
 
       const data = await response.json();
-      
+
       if (data.result) {
         setSelectedPlace(data.result);
         onPicked?.(data.result);
       } else {
-        setError(t("errors.noDetailsFound"));
+        setError(t('errors.noDetailsFound'));
       }
     } catch (err) {
       clearTimeout(timeout);
       if (err instanceof Error && err.name !== 'AbortError') {
         console.error('Erreur détails:', err);
-        setError(err.name === 'AbortError' ? t("errors.requestTooLong") : t("errors.cannotRetrieveDetails"));
+        setError(
+          err.name === 'AbortError'
+            ? t('errors.requestTooLong')
+            : t('errors.cannotRetrieveDetails'),
+        );
       }
     } finally {
       setLoading(false);
@@ -182,13 +203,13 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setHighlightedIndex(prev => 
-          prev < suggestions.length - 1 ? prev + 1 : prev
+        setHighlightedIndex((prev) =>
+          prev < suggestions.length - 1 ? prev + 1 : prev,
         );
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setHighlightedIndex(prev => prev > 0 ? prev - 1 : 0);
+        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
         break;
       case 'Enter':
         e.preventDefault();
@@ -206,19 +227,20 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
   return (
     <div ref={containerRef} className="w-full space-y-2">
       <label className="text-sm font-medium text-gray-700">
-        {t("establishment.establishment")} <span className="text-red-500">*</span>
+        {t('establishment.establishment')}{' '}
+        <span className="text-red-500">*</span>
       </label>
-      
+
       <div className="relative">
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={t("establishment.establishmentNamePlaceholder")}
+          placeholder={t('establishment.establishmentNamePlaceholder')}
           className="w-full"
           autoComplete="off"
         />
-        
+
         {loading && (
           <div className="absolute right-3 top-3">
             <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
@@ -252,25 +274,27 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
         )}
       </div>
 
-      {error && (
-        <div className="text-sm text-red-600">{error}</div>
-      )}
+      {error && <div className="text-sm text-red-600">{error}</div>}
 
       {/* Affichage des détails de l'établissement sélectionné */}
       {selectedPlace && (
         <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-          <div className="text-lg font-semibold text-gray-900">{selectedPlace.name}</div>
-          <div className="text-sm text-gray-600 mt-1">{selectedPlace.formatted_address}</div>
-          
+          <div className="text-lg font-semibold text-gray-900">
+            {selectedPlace.name}
+          </div>
+          <div className="text-sm text-gray-600 mt-1">
+            {selectedPlace.formatted_address}
+          </div>
+
           <div className="mt-3 flex flex-wrap gap-4 text-sm">
             {selectedPlace.website && (
-              <a 
-                href={selectedPlace.website} 
-                target="_blank" 
+              <a
+                href={selectedPlace.website}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:underline"
               >
-                {t("establishment.websiteLabel")}
+                {t('establishment.websiteLabel')}
               </a>
             )}
             {selectedPlace.international_phone_number && (
@@ -279,10 +303,14 @@ export default function AutocompleteEtablissement({ onPicked }: AutocompleteEtab
               </span>
             )}
           </div>
-          
+
           {typeof selectedPlace.rating === 'number' && (
             <div className="mt-2 text-sm text-gray-600">
-              ⭐ {selectedPlace.rating}/5 ({t("establishment.reviewsCount", { count: selectedPlace.user_ratings_total })})
+              ⭐ {selectedPlace.rating}/5 (
+              {t('establishment.reviewsCount', {
+                count: selectedPlace.user_ratings_total,
+              })}
+              )
             </div>
           )}
         </div>

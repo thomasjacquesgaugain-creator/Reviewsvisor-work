@@ -1,8 +1,8 @@
 /**
  * Handler pour POST /api/reviews/import (utilisé par le middleware Vite en dev).
- * Utilise les mêmes variables que le reste de l'app (chargées via loadEnv dans vite.config) :
- * - VITE_SUPABASE_URL (comme src/integrations/supabase/client.ts)
- * - VITE_SUPABASE_ANON_KEY ou VITE_SUPABASE_PUBLISHABLE_KEY (comme client)
+ * Utilise les variables backend (chargées via loadEnv dans vite.config) :
+ * - SUPABASE_URL
+ * - SUPABASE_ANON_KEY
  * - OUTSCRAPER_API_KEY
  *
  * Body requis : placeId, name, address. La query Outscraper est construite en "[name], [address], France"
@@ -13,17 +13,13 @@ import { createClient } from "@supabase/supabase-js";
 import Outscraper from "outscraper";
 
 export async function handleImportReviews(body, authHeader, env = {}) {
-  const supabaseUrl = env.VITE_SUPABASE_URL || env.SUPABASE_URL;
-  const supabaseAnonKey =
-    env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY;
+  const supabaseUrl = env.SUPABASE_URL;
+  const supabaseAnonKey = env.SUPABASE_ANON_KEY;
   const apiKey = env.OUTSCRAPER_API_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error("[api/reviews/import] Supabase non configuré. Variables reçues:", {
-      hasViteSupabaseUrl: !!env.VITE_SUPABASE_URL,
       hasSupabaseUrl: !!env.SUPABASE_URL,
-      hasViteSupabaseAnonKey: !!env.VITE_SUPABASE_ANON_KEY,
-      hasViteSupabasePublishableKey: !!env.VITE_SUPABASE_PUBLISHABLE_KEY,
       hasSupabaseAnonKey: !!env.SUPABASE_ANON_KEY,
       urlLength: supabaseUrl ? String(supabaseUrl).length : 0,
       keyLength: supabaseAnonKey ? String(supabaseAnonKey).length : 0,
@@ -32,7 +28,7 @@ export async function handleImportReviews(body, authHeader, env = {}) {
       status: 500,
       data: {
         error: "Supabase not configured",
-        hint: "Vérifiez que .env contient VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY (ou VITE_SUPABASE_PUBLISHABLE_KEY).",
+        hint: "Vérifiez que .env contient SUPABASE_URL et SUPABASE_ANON_KEY.",
       },
     };
   }
@@ -86,7 +82,7 @@ export async function handleImportReviews(body, authHeader, env = {}) {
   let cutoffTimestamp = null;
   if (sourceParam === "google" && !forceFullImport) {
     const { data: etabRow } = await supabase
-      .from("établissements")
+      .from("establishments")
       .select("last_reviews_import")
       .eq("place_id", placeId)
       .eq("user_id", user.id)
@@ -223,7 +219,7 @@ export async function handleImportReviews(body, authHeader, env = {}) {
 
   // Mettre à jour last_reviews_import après un import réussi
   const { error: updateError } = await supabase
-    .from("établissements")
+    .from("establishments")
     .update({ last_reviews_import: new Date().toISOString() })
     .eq("place_id", placeId)
     .eq("user_id", user.id);

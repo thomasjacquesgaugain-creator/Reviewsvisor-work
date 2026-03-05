@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Search, Loader2 } from "lucide-react";
-import { supabase } from "../integrations/supabase/client";
-import { useTranslation } from "react-i18next";
+import React, { useEffect, useRef, useState } from 'react';
+import { Search, Loader2 } from 'lucide-react';
+import { supabase } from '../integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 
 type Suggestion = {
   description: string;
@@ -13,15 +13,20 @@ type PlaceDetails = any;
 
 function useDebounce<T>(v: T, d = 250) {
   const [val, setVal] = useState(v);
-  useEffect(() => { const t = setTimeout(() => setVal(v), d); return () => clearTimeout(t); }, [v, d]);
+  useEffect(() => {
+    const t = setTimeout(() => setVal(v), d);
+    return () => clearTimeout(t);
+  }, [v, d]);
   return val;
 }
 
 export default function AutocompleteEtablissementInline({
   onPicked,
-}: { onPicked?: (details: PlaceDetails) => void }) {
+}: {
+  onPicked?: (details: PlaceDetails) => void;
+}) {
   const { t } = useTranslation();
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState('');
   const [list, setList] = useState<Suggestion[]>([]);
   const [hi, setHi] = useState(-1);
   const [loading, setLoading] = useState(false);
@@ -29,17 +34,25 @@ export default function AutocompleteEtablissementInline({
 
   const debounced = useDebounce(q, 250);
   const abortRef = useRef<AbortController | null>(null);
-  const tokenRef = useRef<string>(Math.random().toString(36).slice(2) + Date.now().toString(36));
+  const tokenRef = useRef<string>(
+    Math.random().toString(36).slice(2) + Date.now().toString(36),
+  );
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const supabaseUrl =
+    import.meta.env.VITE_SUPABASE_URL || 'http://127.0.0.1:54321';
+  const supabaseAnonKey =
+    import.meta.env.VITE_SUPABASE_ANON_KEY ||
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    '';
 
   // Suggestions en temps réel
   useEffect(() => {
-    if (!debounced.trim() || debounced.length < 2) { 
-      setList([]); 
-      setErr(null); 
-      return; 
+    if (!debounced.trim() || debounced.length < 2) {
+      setList([]);
+      setErr(null);
+      return;
     }
-    
+
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
@@ -47,30 +60,34 @@ export default function AutocompleteEtablissementInline({
     setLoading(true);
     setErr(null);
 
-    const url = `https://zzjmtipdsccxmmoaetlp.supabase.co/functions/v1/autocomplete-establishments?input=${encodeURIComponent(debounced)}&sessionToken=${encodeURIComponent(tokenRef.current)}`;
+    const url = `${supabaseUrl}/functions/v1/autocomplete-establishments?input=${encodeURIComponent(debounced)}&sessionToken=${encodeURIComponent(tokenRef.current)}`;
 
     fetch(url, {
       method: 'GET',
       signal: ctrl.signal,
       headers: {
-        'accept': 'application/json',
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU'
-      }
+        accept: 'application/json',
+        apikey: supabaseAnonKey,
+      },
     })
-      .then(async res => {
+      .then(async (res) => {
         clearTimeout(timeout);
         if (ctrl.signal.aborted) return;
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
-      .then(data => {
+      .then((data) => {
         if (ctrl.signal.aborted) return;
         setList(data?.suggestions ?? []);
       })
-      .catch(e => { 
+      .catch((e) => {
         clearTimeout(timeout);
         if (!ctrl.signal.aborted && e.name !== 'AbortError') {
-          setErr(e.name === 'AbortError' ? "Requête trop longue" : "Erreur de suggestions");
+          setErr(
+            e.name === 'AbortError'
+              ? 'Requête trop longue'
+              : 'Erreur de suggestions',
+          );
           console.error('Autocomplete error:', e);
         }
       })
@@ -86,48 +103,54 @@ export default function AutocompleteEtablissementInline({
 
   // Fermer si clic extérieur
   useEffect(() => {
-    const onClick = (e: MouseEvent) => { 
-      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setList([]); 
+    const onClick = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node))
+        setList([]);
     };
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
   async function getDetails(placeId: string) {
     setLoading(true);
     setErr(null);
     const usedToken = tokenRef.current;
-    tokenRef.current = Math.random().toString(36).slice(2) + Date.now().toString(36);
-    
+    tokenRef.current =
+      Math.random().toString(36).slice(2) + Date.now().toString(36);
+
     const ctrl = new AbortController();
     const timeout = setTimeout(() => ctrl.abort(), 10000);
-    
+
     try {
       // Call saveSelectedPlace first
       const { saveSelectedPlace } = await import('@/services/establishments');
       await saveSelectedPlace(placeId);
 
       // Then get place details
-      const url = `https://zzjmtipdsccxmmoaetlp.supabase.co/functions/v1/get-place-details?placeId=${encodeURIComponent(placeId)}&sessionToken=${encodeURIComponent(usedToken)}`;
-      
+      const url = `${supabaseUrl}/functions/v1/get-place-details?placeId=${encodeURIComponent(placeId)}&sessionToken=${encodeURIComponent(usedToken)}`;
+
       const res = await fetch(url, {
         method: 'GET',
         signal: ctrl.signal,
         headers: {
-          'accept': 'application/json',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU'
-        }
+          accept: 'application/json',
+          apikey: supabaseAnonKey,
+        },
       });
-      
+
       clearTimeout(timeout);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      
+
       const data = await res.json();
       onPicked?.(data?.result);
     } catch (e) {
       clearTimeout(timeout);
       if (e instanceof Error && e.name !== 'AbortError') {
-        setErr(e.name === 'AbortError' ? "Requête trop longue" : "Erreur de récupération des détails");
+        setErr(
+          e.name === 'AbortError'
+            ? 'Requête trop longue'
+            : 'Erreur de récupération des détails',
+        );
         console.error('Place details error:', e);
       }
     } finally {
@@ -144,10 +167,19 @@ export default function AutocompleteEtablissementInline({
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (!list.length) return;
-    if (e.key === "ArrowDown") { e.preventDefault(); setHi(h => Math.min(h + 1, list.length - 1)); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); setHi(h => Math.max(h - 1, 0)); }
-    else if (e.key === "Enter" && hi >= 0) { e.preventDefault(); onSelect(list[hi]); }
-    else if (e.key === "Escape") { setList([]); setHi(-1); }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHi((h) => Math.min(h + 1, list.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHi((h) => Math.max(h - 1, 0));
+    } else if (e.key === 'Enter' && hi >= 0) {
+      e.preventDefault();
+      onSelect(list[hi]);
+    } else if (e.key === 'Escape') {
+      setList([]);
+      setHi(-1);
+    }
   }
 
   return (
@@ -167,7 +199,7 @@ export default function AutocompleteEtablissementInline({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder={t("establishment.establishmentNamePlaceholder")}
+          placeholder={t('establishment.establishmentNamePlaceholder')}
           className="w-full rounded-2xl border border-border bg-background px-11 py-3 text-foreground placeholder:text-muted-foreground shadow-sm outline-none focus:ring-2 focus:ring-primary focus:border-primary"
           autoComplete="off"
         />
@@ -182,11 +214,15 @@ export default function AutocompleteEtablissementInline({
               type="button"
               onClick={() => onSelect(s)}
               onMouseEnter={() => setHi(i)}
-              className={`flex w-full items-start gap-3 px-3 py-2 text-left hover:bg-accent ${i === hi ? "bg-accent" : ""}`}
+              className={`flex w-full items-start gap-3 px-3 py-2 text-left hover:bg-accent ${i === hi ? 'bg-accent' : ''}`}
             >
               {/* Petite icône à gauche pour aligner "sous l'icône" */}
               <div className="mt-0.5">
-                <svg className="h-4 w-4 text-muted-foreground" viewBox="0 0 20 20" fill="currentColor">
+                <svg
+                  className="h-4 w-4 text-muted-foreground"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
                   <path d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387-1.414 1.415-4.387-4.388zM14 8a6 6 0 11-12 0 6 6 0 0112 0z" />
                 </svg>
               </div>
@@ -195,7 +231,7 @@ export default function AutocompleteEtablissementInline({
                   {s.structured?.main_text || s.description}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {s.structured?.secondary_text || ""}
+                  {s.structured?.secondary_text || ''}
                 </div>
               </div>
             </button>
@@ -203,7 +239,9 @@ export default function AutocompleteEtablissementInline({
         </div>
       )}
 
-      {loading && <div className="mt-2 text-xs text-muted-foreground">Chargement…</div>}
+      {loading && (
+        <div className="mt-2 text-xs text-muted-foreground">Chargement…</div>
+      )}
       {err && <div className="mt-2 text-xs text-destructive">{err}</div>}
     </div>
   );

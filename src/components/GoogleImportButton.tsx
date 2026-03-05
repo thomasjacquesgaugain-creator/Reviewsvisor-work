@@ -1,16 +1,16 @@
-import { useState, useEffect, useRef } from "react";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { toast as sonnerToast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
-import { Loader2, RefreshCw } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { useState, useEffect, useRef } from 'react';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { toast as sonnerToast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
+import { Loader2, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 
 interface GoogleImportButtonProps {
   onSuccess?: () => void;
@@ -30,7 +30,7 @@ interface Location {
 type ToastPayload = {
   title: string;
   description?: string;
-  variant?: "destructive" | "default";
+  variant?: 'destructive' | 'default';
   action?: {
     label: string;
     onClick: () => void;
@@ -40,20 +40,24 @@ type ToastPayload = {
 const toast = ({ title, description, variant, action }: ToastPayload) => {
   const common = { description, action } as const;
 
-  if (variant === "destructive") return sonnerToast.error(title, common);
-  if (title.trim().startsWith("✅")) return sonnerToast.success(title, common);
-  if (title.trim().startsWith("⚠️")) return sonnerToast.warning(title, common);
+  if (variant === 'destructive') return sonnerToast.error(title, common);
+  if (title.trim().startsWith('✅')) return sonnerToast.success(title, common);
+  if (title.trim().startsWith('⚠️')) return sonnerToast.warning(title, common);
 
   return sonnerToast(title, common);
 };
 
-const SUPABASE_FUNCTIONS_BASE_URL = "https://zzjmtipdsccxmmoaetlp.supabase.co/functions/v1";
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL || 'http://127.0.0.1:54321';
+const SUPABASE_FUNCTIONS_BASE_URL = `${SUPABASE_URL}/functions/v1`;
 const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6am10aXBkc2NjeG1tb2FldGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MjY1NjksImV4cCI6MjA3MzIwMjU2OX0.9y4TO3Hbp2rgD33ygLNRtDZiBbMEJ6Iz2SW6to6wJkU";
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  '';
 
 async function callEdgeFunction<T = any>(
   name: string,
-  body?: unknown
+  body?: unknown,
 ): Promise<{
   url: string;
   status: number;
@@ -68,7 +72,7 @@ async function callEdgeFunction<T = any>(
   } = await supabase.auth.getSession();
 
   const headers: Record<string, string> = {
-    "content-type": "application/json",
+    'content-type': 'application/json',
     apikey: SUPABASE_ANON_KEY,
   };
 
@@ -77,20 +81,20 @@ async function callEdgeFunction<T = any>(
   }
 
   const safeHeadersForLog = {
-    "content-type": headers["content-type"],
-    apikey: "(anon)",
-    authorization: headers.authorization ? "Bearer ***" : undefined,
+    'content-type': headers['content-type'],
+    apikey: '(anon)',
+    authorization: headers.authorization ? 'Bearer ***' : undefined,
   };
 
-  console.log("[google-sync] request", {
+  console.log('[google-sync] request', {
     url,
-    method: "POST",
+    method: 'POST',
     headers: safeHeadersForLog,
     body: body ?? null,
   });
 
   const res = await fetch(url, {
-    method: "POST",
+    method: 'POST',
     headers,
     body: JSON.stringify(body ?? {}),
   });
@@ -103,7 +107,7 @@ async function callEdgeFunction<T = any>(
     // Keep rawText for debugging
   }
 
-  console.log("[google-sync] response", {
+  console.log('[google-sync] response', {
     url,
     status: res.status,
     ok: res.ok,
@@ -120,14 +124,19 @@ async function callEdgeFunction<T = any>(
   };
 }
 
-export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPanel, onClose }: GoogleImportButtonProps) {
+export default function GoogleImportButton({
+  onSuccess,
+  placeId,
+  onOpenVisualPanel,
+  onClose,
+}: GoogleImportButtonProps) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [showLocationSelector, setShowLocationSelector] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [accountId, setAccountId] = useState<string>("");
+  const [accountId, setAccountId] = useState<string>('');
   const [hasExistingConnection, setHasExistingConnection] = useState(false);
-  
+
   // Ref to track if an operation is in progress (prevents double-clicks)
   const operationInProgress = useRef(false);
 
@@ -135,7 +144,9 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) return;
 
         const { data: connection } = await supabase
@@ -153,7 +164,11 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
           if (params.get('google') === 'connected') {
             params.delete('google');
             const next = params.toString();
-            window.history.replaceState({}, '', `${window.location.pathname}${next ? `?${next}` : ''}`);
+            window.history.replaceState(
+              {},
+              '',
+              `${window.location.pathname}${next ? `?${next}` : ''}`,
+            );
             await fetchAccountsAndLocations();
           }
         }
@@ -173,7 +188,7 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
   };
 
   const handleImportClick = async () => {
-    console.log("[google-sync] click", {
+    console.log('[google-sync] click', {
       placeId,
       hasExistingConnection,
       at: new Date().toISOString(),
@@ -181,21 +196,21 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
 
     // Guard against double-clicks
     if (loading || operationInProgress.current) {
-      console.log("[google-sync] ignored: already in progress");
+      console.log('[google-sync] ignored: already in progress');
       return;
     }
 
     // Toast obligatoire avant tout appel API (preuve visible)
     toast({
-      title: t("googleImport.syncStarted"),
-      description: t("googleImport.fetchingGoogleReviews"),
+      title: t('googleImport.syncStarted'),
+      description: t('googleImport.fetchingGoogleReviews'),
     });
 
     if (hasExistingConnection) {
-      console.log("[google-sync] connection exists → fetch accounts");
+      console.log('[google-sync] connection exists → fetch accounts');
       await fetchAccountsAndLocations();
     } else {
-      console.log("[google-sync] no connection → initiate OAuth");
+      console.log('[google-sync] no connection → initiate OAuth');
       await initiateGoogleOAuth();
     }
   };
@@ -204,22 +219,21 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
     if (operationInProgress.current) return;
     operationInProgress.current = true;
     setLoading(true);
-    
+
     try {
       console.log('🔐 Initiating Google OAuth...');
-      
+
       // Fetch client ID from edge function
-      const { data: configData, error: configError } = await supabase.functions.invoke(
-        'google-client-config'
-      );
+      const { data: configData, error: configError } =
+        await supabase.functions.invoke('google-client-config');
 
       if (configError || !configData?.clientId) {
         toast({
-          title: t("googleImport.incompleteOAuthConfig"),
-          description: t("googleImport.addGoogleClientIdAndSecret"),
-          variant: "destructive",
+          title: t('googleImport.incompleteOAuthConfig'),
+          description: t('googleImport.addGoogleClientIdAndSecret'),
+          variant: 'destructive',
         });
-        throw new Error(t("googleImport.incompleteOAuthConfig"));
+        throw new Error(t('googleImport.incompleteOAuthConfig'));
       }
 
       const clientId = configData.clientId;
@@ -245,7 +259,7 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
       const popup = window.open(
         authUrl.toString(),
         'googleOAuth',
-        'width=600,height=700,left=200,top=100'
+        'width=600,height=700,left=200,top=100',
       );
 
       if (!popup) {
@@ -267,17 +281,17 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
           popup?.close();
           setHasExistingConnection(true);
           toast({
-            title: t("googleImport.connectionSuccess"),
-            description: t("googleImport.fetchingLocations"),
+            title: t('googleImport.connectionSuccess'),
+            description: t('googleImport.fetchingLocations'),
           });
           await fetchAccountsAndLocations();
         } else if (event.data.type === 'oauth-error') {
           window.removeEventListener('message', handleMessage);
           popup?.close();
           toast({
-            title: t("errors.oauthError"),
-            description: event.data.error || t("errors.connectionFailed"),
-            variant: "destructive",
+            title: t('errors.oauthError'),
+            description: event.data.error || t('errors.connectionFailed'),
+            variant: 'destructive',
           });
         }
       };
@@ -292,13 +306,12 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
           // Don't show error - user might have just closed the popup
         }
       }, 1000);
-
     } catch (error: any) {
       console.error('❌ Error initiating OAuth:', error);
       toast({
-        title: t("common.error"),
-        description: error.message || t("errors.cannotStartAuthentication"),
-        variant: "destructive",
+        title: t('common.error'),
+        description: error.message || t('errors.cannotStartAuthentication'),
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -308,20 +321,24 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
 
   const fetchAccountsAndLocations = async () => {
     if (operationInProgress.current) {
-      console.log("[google-sync] fetchAccountsAndLocations ignored: already in progress");
+      console.log(
+        '[google-sync] fetchAccountsAndLocations ignored: already in progress',
+      );
       return;
     }
 
     operationInProgress.current = true;
     setLoading(true);
-    console.log("[google-sync] fetchAccountsAndLocations:start", { placeId });
+    console.log('[google-sync] fetchAccountsAndLocations:start', { placeId });
 
     try {
       // 1) Accounts
-      const accountsRes = await callEdgeFunction<any>("google-business-accounts");
+      const accountsRes = await callEdgeFunction<any>(
+        'google-business-accounts',
+      );
       const accountsPayload = accountsRes.data;
 
-      console.log("[google-sync] accounts details", {
+      console.log('[google-sync] accounts details', {
         status: accountsRes.status,
         ok: accountsRes.ok,
         error: accountsPayload?.error,
@@ -333,11 +350,11 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
         if (accountsRes.status === 401 || accountsRes.status === 403) {
           setHasExistingConnection(false);
           toast({
-            title: `${t("common.error")}: ${msg}`,
-            description: t("googleImport.sessionExpiredOrAccessDenied"),
-            variant: "destructive",
+            title: `${t('common.error')}: ${msg}`,
+            description: t('googleImport.sessionExpiredOrAccessDenied'),
+            variant: 'destructive',
             action: {
-              label: t("googleImport.reconnectGoogle"),
+              label: t('googleImport.reconnectGoogle'),
               onClick: () => initiateGoogleOAuth(),
             },
           });
@@ -345,9 +362,9 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
         }
 
         toast({
-          title: `${t("common.error")}: ${msg}`,
-          description: t("googleImport.cannotRetrieveGoogleBusinessAccounts"),
-          variant: "destructive",
+          title: `${t('common.error')}: ${msg}`,
+          description: t('googleImport.cannotRetrieveGoogleBusinessAccounts'),
+          variant: 'destructive',
         });
         return;
       }
@@ -357,34 +374,34 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
 
         // API non activée
         if (
-          errorMessage.includes("API_NOT_ENABLED") ||
-          errorMessage.includes("API has not been used") ||
-          errorMessage.includes("SERVICE_DISABLED") ||
-          errorMessage.includes("Enable it by visiting")
+          errorMessage.includes('API_NOT_ENABLED') ||
+          errorMessage.includes('API has not been used') ||
+          errorMessage.includes('SERVICE_DISABLED') ||
+          errorMessage.includes('Enable it by visiting')
         ) {
           toast({
-            title: `${t("common.error")}: ${t("googleImport.googleBusinessApiNotEnabled")}`,
-            description: t("googleImport.enableMyBusinessApiInGoogleCloud"),
-            variant: "destructive",
+            title: `${t('common.error')}: ${t('googleImport.googleBusinessApiNotEnabled')}`,
+            description: t('googleImport.enableMyBusinessApiInGoogleCloud'),
+            variant: 'destructive',
           });
           return;
         }
 
         // Reconnect requis
         if (
-          errorMessage.includes("connection not found") ||
-          errorMessage.includes("RECONNECT") ||
-          errorMessage.includes("expired") ||
-          errorMessage.includes("revoked") ||
-          errorMessage.includes("Access denied")
+          errorMessage.includes('connection not found') ||
+          errorMessage.includes('RECONNECT') ||
+          errorMessage.includes('expired') ||
+          errorMessage.includes('revoked') ||
+          errorMessage.includes('Access denied')
         ) {
           setHasExistingConnection(false);
           toast({
-            title: `${t("common.error")}: ${errorMessage}`,
-            description: t("googleImport.reconnectGoogleBusiness"),
-            variant: "destructive",
+            title: `${t('common.error')}: ${errorMessage}`,
+            description: t('googleImport.reconnectGoogleBusiness'),
+            variant: 'destructive',
             action: {
-              label: t("googleImport.reconnectGoogle"),
+              label: t('googleImport.reconnectGoogle'),
               onClick: () => initiateGoogleOAuth(),
             },
           });
@@ -392,9 +409,9 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
         }
 
         toast({
-          title: `${t("common.error")}: ${errorMessage}`,
-          description: t("googleImport.errorGoogleBusinessAccounts"),
-          variant: "destructive",
+          title: `${t('common.error')}: ${errorMessage}`,
+          description: t('googleImport.errorGoogleBusinessAccounts'),
+          variant: 'destructive',
         });
         return;
       }
@@ -402,9 +419,9 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
       const accounts = accountsPayload?.accounts || [];
       if (accounts.length === 0) {
         toast({
-          title: `${t("common.error")}: ${t("googleImport.noGoogleBusinessAccount")}`,
-          description: t("googleImport.noGoogleBusinessAccountFound"),
-          variant: "destructive",
+          title: `${t('common.error')}: ${t('googleImport.noGoogleBusinessAccount')}`,
+          description: t('googleImport.noGoogleBusinessAccountFound'),
+          variant: 'destructive',
         });
         return;
       }
@@ -413,13 +430,16 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
       setAccountId(account.name);
 
       // 2) Locations
-      const locationsRes = await callEdgeFunction<any>("google-business-locations", {
-        accountId: account.name,
-      });
+      const locationsRes = await callEdgeFunction<any>(
+        'google-business-locations',
+        {
+          accountId: account.name,
+        },
+      );
 
       const locationsPayload = locationsRes.data;
 
-      console.log("[google-sync] locations details", {
+      console.log('[google-sync] locations details', {
         status: locationsRes.status,
         ok: locationsRes.ok,
         accountId: account.name,
@@ -429,18 +449,18 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
       if (!locationsRes.ok) {
         const msg = locationsPayload?.error || `HTTP ${locationsRes.status}`;
         toast({
-          title: `${t("common.error")}: ${msg}`,
-          description: t("googleImport.cannotRetrieveGoogleBusinessLocations"),
-          variant: "destructive",
+          title: `${t('common.error')}: ${msg}`,
+          description: t('googleImport.cannotRetrieveGoogleBusinessLocations'),
+          variant: 'destructive',
         });
         return;
       }
 
       if (locationsPayload?.error) {
         toast({
-          title: `${t("common.error")}: ${locationsPayload.error}`,
-          description: t("googleImport.errorGoogleBusinessLocations"),
-          variant: "destructive",
+          title: `${t('common.error')}: ${locationsPayload.error}`,
+          description: t('googleImport.errorGoogleBusinessLocations'),
+          variant: 'destructive',
         });
         return;
       }
@@ -448,9 +468,9 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
       const locs = locationsPayload?.locations || [];
       if (locs.length === 0) {
         toast({
-          title: `${t("common.error")}: ${t("googleImport.noLocationFound")}`,
-          description: t("googleImport.noLocationFoundForAccount"),
-          variant: "destructive",
+          title: `${t('common.error')}: ${t('googleImport.noLocationFound')}`,
+          description: t('googleImport.noLocationFoundForAccount'),
+          variant: 'destructive',
         });
         return;
       }
@@ -462,35 +482,35 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
         setLocations(locs);
         setShowLocationSelector(true);
         toast({
-          title: t("googleImport.selectEstablishment"),
-          description: t("googleImport.multipleLocationsDetected"),
+          title: t('googleImport.selectEstablishment'),
+          description: t('googleImport.multipleLocationsDetected'),
         });
       }
     } catch (error: any) {
-      console.error("[google-sync] fetchAccountsAndLocations:error", error);
+      console.error('[google-sync] fetchAccountsAndLocations:error', error);
       toast({
-        title: `${t("common.error")}: ${error?.message || t("errors.unknownError")}`,
-        description: t("googleImport.syncFailure"),
-        variant: "destructive",
+        title: `${t('common.error')}: ${error?.message || t('errors.unknownError')}`,
+        description: t('googleImport.syncFailure'),
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
       operationInProgress.current = false;
-      console.log("[google-sync] fetchAccountsAndLocations:done");
+      console.log('[google-sync] fetchAccountsAndLocations:done');
     }
   };
 
   const importReviews = async (accId: string, locationId: string) => {
     setLoading(true);
 
-    console.log("[google-sync] importReviews:start", {
+    console.log('[google-sync] importReviews:start', {
       accountId: accId,
       locationId,
       place_id: placeId,
     });
 
     try {
-      const importRes = await callEdgeFunction<any>("google-business-reviews", {
+      const importRes = await callEdgeFunction<any>('google-business-reviews', {
         accountId: accId,
         locationId,
         placeId,
@@ -498,7 +518,7 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
 
       const payload = importRes.data;
 
-      console.log("[google-sync] import response details", {
+      console.log('[google-sync] import response details', {
         status: importRes.status,
         ok: importRes.ok,
         error: payload?.error,
@@ -516,11 +536,11 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
         if (importRes.status === 401 || importRes.status === 403) {
           setHasExistingConnection(false);
           toast({
-            title: `${t("common.error")}: ${msg}`,
-            description: t("googleImport.googleSessionExpired"),
-            variant: "destructive",
+            title: `${t('common.error')}: ${msg}`,
+            description: t('googleImport.googleSessionExpired'),
+            variant: 'destructive',
             action: {
-              label: t("googleImport.reconnectGoogle"),
+              label: t('googleImport.reconnectGoogle'),
               onClick: () => initiateGoogleOAuth(),
             },
           });
@@ -528,35 +548,37 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
         }
 
         toast({
-          title: `${t("common.error")}: ${msg}`,
-          description: t("googleImport.syncRouteError"),
-          variant: "destructive",
+          title: `${t('common.error')}: ${msg}`,
+          description: t('googleImport.syncRouteError'),
+          variant: 'destructive',
         });
         return;
       }
 
       if (payload?.error) {
         toast({
-          title: `${t("common.error")}: ${payload.error}`,
-          description: t("googleImport.errorImportingGoogleReviews"),
-          variant: "destructive",
+          title: `${t('common.error')}: ${payload.error}`,
+          description: t('googleImport.errorImportingGoogleReviews'),
+          variant: 'destructive',
         });
         return;
       }
 
       const inserted = Number(payload?.inserted ?? payload?.insertedCount ?? 0);
       const updated = Number(payload?.updated ?? payload?.updatedCount ?? 0);
-      const total = Number(payload?.total ?? payload?.importedCount ?? inserted + updated);
+      const total = Number(
+        payload?.total ?? payload?.importedCount ?? inserted + updated,
+      );
 
       if (!total || total === 0) {
         toast({
-          title: `⚠️ ${t("googleImport.noReviewsFound")}`,
-          description: `accountId=${accId} • locationId=${locationId} • place_id=${placeId || "(manquant)"}`,
+          title: `⚠️ ${t('googleImport.noReviewsFound')}`,
+          description: `accountId=${accId} • locationId=${locationId} • place_id=${placeId || '(manquant)'}`,
         });
       } else {
         toast({
-          title: `✅ ${t("googleImport.reviewsImportedUpdated", { total })}`,
-          description: `${t("googleImport.newReviews", { inserted })} • ${t("googleImport.updatedReviews", { updated })} • place_id=${placeId || "(manquant)"}`,
+          title: `✅ ${t('googleImport.reviewsImportedUpdated', { total })}`,
+          description: `${t('googleImport.newReviews', { inserted })} • ${t('googleImport.updatedReviews', { updated })} • place_id=${placeId || '(manquant)'}`,
         });
       }
 
@@ -566,32 +588,32 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
       if (onOpenVisualPanel) {
         onOpenVisualPanel();
         setTimeout(() => {
-          document.getElementById("reviews-visual-anchor")?.scrollIntoView({ 
-            behavior: "smooth", 
-            block: "start" 
+          document.getElementById('reviews-visual-anchor')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
           });
         }, 100);
       }
 
       // Refresh UI
-      window.dispatchEvent(new CustomEvent("reviews:imported"));
+      window.dispatchEvent(new CustomEvent('reviews:imported'));
       onSuccess?.();
-      
+
       // Fermer la modale après succès
       if (onClose) {
         onClose();
       }
     } catch (error: any) {
-      console.error("[google-sync] importReviews:error", error);
+      console.error('[google-sync] importReviews:error', error);
       toast({
-        title: `${t("common.error")}: ${error?.message || t("errors.unknownError")}`,
-        description: t("googleImport.googleReviewsSyncFailure"),
-        variant: "destructive",
+        title: `${t('common.error')}: ${error?.message || t('errors.unknownError')}`,
+        description: t('googleImport.googleReviewsSyncFailure'),
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
       operationInProgress.current = false;
-      console.log("[google-sync] importReviews:done");
+      console.log('[google-sync] importReviews:done');
     }
   };
 
@@ -605,40 +627,43 @@ export default function GoogleImportButton({ onSuccess, placeId, onOpenVisualPan
         type="button"
         disabled={loading}
         onPointerDown={() => {
-          console.log("SYNC POINTERDOWN", new Date().toISOString());
+          console.log('SYNC POINTERDOWN', new Date().toISOString());
         }}
         onClick={handleImportClick}
         className={cn(
-          buttonVariants({ variant: "accent", size: "default" }),
-          "w-full pointer-events-auto cursor-pointer relative z-50"
+          buttonVariants({ variant: 'accent', size: 'default' }),
+          'w-full pointer-events-auto cursor-pointer relative z-50',
         )}
       >
         {loading ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            {t("googleImport.importingInProgress")}
+            {t('googleImport.importingInProgress')}
           </>
         ) : hasExistingConnection ? (
           <>
             <RefreshCw className="w-4 h-4 mr-2" />
-            {t("googleImport.syncMyGoogleReviews")}
+            {t('googleImport.syncMyGoogleReviews')}
           </>
         ) : (
-          t("googleImport.importMyGoogleReviews")
+          t('googleImport.importMyGoogleReviews')
         )}
       </button>
 
-      <Dialog open={showLocationSelector} onOpenChange={(open) => {
-        setShowLocationSelector(open);
-        // If dialog is closed without selecting, reset loading state
-        if (!open && loading) {
-          setLoading(false);
-          operationInProgress.current = false;
-        }
-      }}>
+      <Dialog
+        open={showLocationSelector}
+        onOpenChange={(open) => {
+          setShowLocationSelector(open);
+          // If dialog is closed without selecting, reset loading state
+          if (!open && loading) {
+            setLoading(false);
+            operationInProgress.current = false;
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("googleImport.selectLocation")}</DialogTitle>
+            <DialogTitle>{t('googleImport.selectLocation')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 mt-4">
             {locations.map((location) => (
