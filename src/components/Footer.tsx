@@ -54,7 +54,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/inscription" className="text-white hover:underline hover:opacity-80 transition-all">
+                <Link to="/onboarding/signup" className="text-white hover:underline hover:opacity-80 transition-all">
                   {t("auth.signup")}
                 </Link>
               </li>

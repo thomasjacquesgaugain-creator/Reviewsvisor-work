@@ -22,8 +22,10 @@ if (import.meta.env.DEV) {
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    persistSession: true,
-    autoRefreshToken: true,
+    storage: typeof window !== 'undefined' ? window.sessionStorage : undefined,
+    persistSession: false,
+    autoRefreshToken: false,
+    storageKey: 'session',
   }
 });
 

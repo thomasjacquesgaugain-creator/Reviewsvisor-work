@@ -300,7 +300,7 @@ const Login = () => {
                     </button>
                   ) : (
                     <a 
-                      href="/inscription"
+                      href="/abonnement"
                       className="text-blue-600 font-medium hover:underline"
                     >
                       {t("auth.signup")}
