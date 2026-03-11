@@ -79,10 +79,7 @@ function parseJsonFormat(rawText: string): ParsedReview[] {
       // Extract date (YYYY-MM-DD)
       let reviewDate = '';
       if (review.createTime) {
-        const dateMatch = review.createTime.match(/^(\d{4}-\d{2}-\d{2})/);
-        if (dateMatch) {
-          reviewDate = dateMatch[1];
-        }
+        reviewDate = review.createTime;
       }
       
       // Generate fingerprint
