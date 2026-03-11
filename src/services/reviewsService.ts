@@ -80,19 +80,16 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
         skippedTotal++;
         continue;
       }
-
-      // Create hash for deduplication
-      let reviewHash: string;
       
-      if (review.import_method === "paste" && review.raw_fingerprint) {
-        // Use fingerprint for paste imports to avoid over-deduplication
-        reviewHash = simpleHash(`${review.establishment_id}|${review.raw_fingerprint}`);
-      } else {
-        // Fallback to strict deduplication for other imports
-        const normalizedText = (review.comment || "").toLowerCase().trim();
-        const hashInput = `${review.establishment_id}|${review.author_first_name || ""}|${review.author_last_name || ""}|${review.review_date || ""}|${review.rating}|${normalizedText}`;
-        reviewHash = simpleHash(hashInput);
-      }
+      const normalizedText = (review.comment || "")
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, " ");
+
+      const hashInput =
+      `${review.establishment_id}|${review.author_first_name}|${review.author_last_name}|${review.review_date}|${review.rating}|${normalizedText}`;
+  
+      const reviewHash = simpleHash(hashInput);
       
       // Check if review already exists (by source_review_id which stores our hash)
       const { data: existingReview } = await supabase
