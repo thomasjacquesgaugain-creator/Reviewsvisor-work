@@ -165,7 +165,17 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
       reader.readAsText(file);
     });
   };
+const mapStarRating = (rating: string) => {
+    const ratingMap: Record<string, number> = {
+      ONE: 1,
+      TWO: 2,
+      THREE: 3,
+      FOUR: 4,
+      FIVE: 5,
+    };
 
+    return ratingMap[rating?.toUpperCase()] || parseFloat(rating) || 0;
+  };
   const parseCSV = async (file: File): Promise<any[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -201,11 +211,15 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
             const review: any = {};
             
             headers.forEach((header, index) => {
-              if (header.includes('rating') || header.includes('note')) {
-                review.rating = parseFloat(values[index]) || 0;
-              } else if (header.includes('text') || header.includes('comment') || header.includes('avis')) {
-                review.text = values[index] || "";
-              } else if (header.includes('date')) {
+              if (header.includes('starrating') || header.includes('note')) {
+                review.rating = mapStarRating(values[index]);
+              } else if (
+                header.includes('text') ||
+                header.includes('comment') ||
+                header.includes('avis')
+              ) {
+                review.text = values[index] || '';
+              } else if (header.includes('createtime')) {
                 review.published_at = values[index] || null;
               }
             });
@@ -295,7 +309,7 @@ export default function ImportCsvPanel({ onFileAnalyzed, placeId, onOpenVisualPa
           author_last_name: nameParts.slice(1).join(" ") || "",
           rating: review.rating,
           comment: review.text,
-          review_date: review.published_at, // published_at contient déjà createTime mappé
+          review_date: review.createTime|| review.published_at, // published_at contient déjà createTime mappé
           createTime: review.createTime || review.published_at, // CONSERVER createTime original
           import_method: isJSON ? "json_upload" : "csv_upload",
         };

@@ -39,10 +39,8 @@ export default function NavBar() {
   }, [user, loading]);
 
   const handleLogout = async () => {
-    // Redirection immédiate pour éviter le flash "Invité"
-    window.location.href = "/";
-    // Déconnexion en arrière-plan
-    signOut();
+    await signOut();
+    navigate("/");
   };
 
   const getLinkClass = (path: string) =>
@@ -76,6 +74,8 @@ export default function NavBar() {
   };
 
   return (
+    <div>
+    {user?.email && (
     <nav className="relative z-50 w-full flex items-center justify-between px-8 py-3 bg-white shadow-sm">
       {/* Gauche : Logo + barre */}
       <div className="flex items-center gap-4">
@@ -131,7 +131,7 @@ export default function NavBar() {
               {t("auth.login")}
             </Link>
             <Link
-              to="/login?mode=signup"
+              to="/inscription"
               className={getLinkClass("/login")}
             >
               {t("auth.signup")}
@@ -140,6 +140,8 @@ export default function NavBar() {
         )}
       </div>
     </nav>
+    )}
+    </div>
   );
 }
 
