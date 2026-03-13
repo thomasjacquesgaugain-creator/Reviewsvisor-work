@@ -23,12 +23,17 @@ export interface EstablishmentData {
 }
 
 // Save venue from Google Place Details (new approach)
-export async function saveVenueFromPlaceDetails(details: any): Promise<EstablishmentData> {
+export async function saveVenueFromPlaceDetails(
+  details: any,
+): Promise<EstablishmentData> {
   // Get current user
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
   if (userError || !user) {
-    throw new Error('Utilisateur non connecté');
+    throw new Error("Utilisateur non connecté");
   }
 
   const lat = details.geometry?.location?.lat();
@@ -44,23 +49,23 @@ export async function saveVenueFromPlaceDetails(details: any): Promise<Establish
     website: details.website,
     google_rating: details.rating,
     opening_hours: details.opening_hours,
-    location: lat && lng ? `POINT(${lng} ${lat})` : null
+    location: lat && lng ? `POINT(${lng} ${lat})` : null,
   };
 
-  console.log('Saving venue data:', venueData);
+  console.log("Saving venue data:", venueData);
 
   // Upsert venue (avoid duplicates by place_id) - using type assertion for venues table
   const { data, error } = await (supabase as any)
-    .from('venues')
+    .from("venues")
     .upsert(venueData, {
-      onConflict: 'place_id'
+      onConflict: "place_id",
     })
     .select()
     .single();
 
   if (error) {
-    console.error('Error saving venue:', error);
-    throw new Error('Erreur lors de la sauvegarde du venue : ' + error.message);
+    console.error("Error saving venue:", error);
+    throw new Error("Erreur lors de la sauvegarde du venue : " + error.message);
   }
 
   // Convert venue data to EstablishmentData format for compatibility
@@ -77,21 +82,26 @@ export async function saveVenueFromPlaceDetails(details: any): Promise<Establish
     rating: data.google_rating,
     user_ratings_total: null,
     types: null,
-    source: 'google',
+    source: "google",
     raw: details,
     created_at: data.created_at,
-    updated_at: data.created_at
+    updated_at: data.created_at,
   };
 
   return establishmentData;
 }
 
-export async function saveEstablishmentFromPlaceDetails(details: any): Promise<EstablishmentData> {
+export async function saveEstablishmentFromPlaceDetails(
+  details: any,
+): Promise<EstablishmentData> {
   // Get current user
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
   if (userError || !user) {
-    throw new Error('Utilisateur non connecté');
+    throw new Error("Utilisateur non connecté");
   }
 
   // Map Google Places data to our establishment structure
@@ -107,22 +117,22 @@ export async function saveEstablishmentFromPlaceDetails(details: any): Promise<E
     rating: details.rating,
     user_ratings_total: details.user_ratings_total,
     types: details.types,
-    source: 'google',
-    raw: details
+    source: "google",
+    raw: details,
   };
 
   // Upsert establishment (avoid duplicates by user_id + place_id)
   const { data, error } = await supabase
-    .from('establishments')
+    .from("establishments")
     .upsert(establishmentData, {
-      onConflict: 'user_id,place_id'
+      onConflict: "user_id,place_id",
     })
     .select()
     .single();
 
   if (error) {
-    console.error('Error saving establishment:', error);
-    throw new Error('Erreur lors de la sauvegarde de l\'établissement');
+    console.error("Error saving establishment:", error);
+    throw new Error("Erreur lors de la sauvegarde de l'établissement");
   }
 
   // Update current establishment in profile
@@ -130,17 +140,19 @@ export async function saveEstablishmentFromPlaceDetails(details: any): Promise<E
     try {
       await updateCurrentEstablishment(data.id!);
     } catch (error) {
-      console.warn('Could not update current establishment in profile:', error);
+      console.warn("Could not update current establishment in profile:", error);
     }
-    
+
     // Sync billing with Stripe (background, don't block)
-    syncEstablishmentBilling().then(result => {
-      if (result.success) {
-        console.log('Billing synced:', result);
-      } else {
-        console.warn('Billing sync failed:', result.error);
-      }
-    }).catch(err => console.warn('Billing sync error:', err));
+    syncEstablishmentBilling()
+      .then((result) => {
+        if (result.success) {
+          console.log("Billing synced:", result);
+        } else {
+          console.warn("Billing sync failed:", result.error);
+        }
+      })
+      .catch((err) => console.warn("Billing sync error:", err));
   }
 
   return data as EstablishmentData;
@@ -149,42 +161,52 @@ export async function saveEstablishmentFromPlaceDetails(details: any): Promise<E
 // Simple function to save selected place by place_id
 export async function saveSelectedPlace(placeId: string): Promise<void> {
   try {
-    console.log('Saving selected place:', placeId);
+    console.log("Saving selected place:", placeId);
     const savedVenue = await saveVenueFromPlaceId(placeId);
-    console.log('Place saved successfully:', savedVenue);
-    alert('Établissement enregistré ✅');
+    console.log("Place saved successfully:", savedVenue);
+    alert("Établissement enregistré ✅");
   } catch (error) {
-    console.error('Error saving place:', error);
-    alert('Erreur lors de l\'enregistrement : ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
+    console.error("Error saving place:", error);
+    alert(
+      "Erreur lors de l'enregistrement : " +
+        (error instanceof Error ? error.message : "Erreur inconnue"),
+    );
   }
 }
 
 // Save venue from Google Place ID (new approach)
-export async function saveVenueFromPlaceId(placeId: string): Promise<EstablishmentData> {
+export async function saveVenueFromPlaceId(
+  placeId: string,
+): Promise<EstablishmentData> {
   // Ensure Google Maps is loaded
   await loadGoogleMaps();
-  
-  const service = new (window as any).google.maps.places.PlacesService(document.createElement('div'));
-  
+
+  const service = new (window as any).google.maps.places.PlacesService(
+    document.createElement("div"),
+  );
+
   return new Promise((resolve, reject) => {
     const request = {
       placeId,
       fields: [
-        'place_id',
-        'name',
-        'formatted_address',
-        'geometry.location',
-        'international_phone_number',
-        'website',
-        'rating',
-        'user_ratings_total',
-        'opening_hours',
-        'types'
-      ]
+        "place_id",
+        "name",
+        "formatted_address",
+        "geometry.location",
+        "international_phone_number",
+        "website",
+        "rating",
+        "user_ratings_total",
+        "opening_hours",
+        "types",
+      ],
     };
 
     service.getDetails(request, async (place: any, status: any) => {
-      if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && place) {
+      if (
+        status === (window as any).google.maps.places.PlacesServiceStatus.OK &&
+        place
+      ) {
         try {
           const savedVenue = await saveVenueFromPlaceDetails(place);
           resolve(savedVenue);
@@ -192,44 +214,52 @@ export async function saveVenueFromPlaceId(placeId: string): Promise<Establishme
           reject(error);
         }
       } else {
-        reject(new Error('Erreur lors de la récupération des détails du lieu'));
+        reject(new Error("Erreur lors de la récupération des détails du lieu"));
       }
     });
   });
 }
 
-export async function saveEstablishmentFromPlaceId(placeId: string): Promise<EstablishmentData> {
+export async function saveEstablishmentFromPlaceId(
+  placeId: string,
+): Promise<EstablishmentData> {
   // Ensure Google Maps is loaded
   await loadGoogleMaps();
-  
-  const service = new (window as any).google.maps.places.PlacesService(document.createElement('div'));
-  
+
+  const service = new (window as any).google.maps.places.PlacesService(
+    document.createElement("div"),
+  );
+
   return new Promise((resolve, reject) => {
     const request = {
       placeId,
       fields: [
-        'place_id',
-        'name',
-        'formatted_address',
-        'geometry.location',
-        'international_phone_number',
-        'website',
-        'rating',
-        'user_ratings_total',
-        'types'
-      ]
+        "place_id",
+        "name",
+        "formatted_address",
+        "geometry.location",
+        "international_phone_number",
+        "website",
+        "rating",
+        "user_ratings_total",
+        "types",
+      ],
     };
 
     service.getDetails(request, async (place: any, status: any) => {
-      if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && place) {
+      if (
+        status === (window as any).google.maps.places.PlacesServiceStatus.OK &&
+        place
+      ) {
         try {
-          const savedEstablishment = await saveEstablishmentFromPlaceDetails(place);
+          const savedEstablishment =
+            await saveEstablishmentFromPlaceDetails(place);
           resolve(savedEstablishment);
         } catch (error) {
           reject(error);
         }
       } else {
-        reject(new Error('Erreur lors de la récupération des détails du lieu'));
+        reject(new Error("Erreur lors de la récupération des détails du lieu"));
       }
     });
   });
@@ -240,48 +270,51 @@ export async function saveEstablishmentFromPlaceId(placeId: string): Promise<Est
  * Même source que /etablissement (SavedEstablishmentsList) et le sélecteur du Dashboard.
  */
 export async function getUserEstablishments(): Promise<EstablishmentData[]> {
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    throw new Error('Utilisateur non connecté');
+    throw new Error("Utilisateur non connecté");
   }
 
   const { data, error } = await supabase
-    .from('établissements')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
+    .from("establishments")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
 
   if (error) {
-    console.error('Error fetching establishments:', error);
-    throw new Error('Erreur lors de la récupération des établissements');
+    console.error("Error fetching establishments:", error);
+    throw new Error("Erreur lors de la récupération des établissements");
   }
 
   const rows = (data || []) as Array<{
     id: string;
     place_id: string;
-    nom: string;
-    adresse: string | null;
+    name: string;
+    formatted_address: string | null;
     lat: number | null;
     lng: number | null;
-    telephone: string | null;
+    phone: string | null;
     website: string | null;
     rating: number | null;
     user_ratings_total: number | null;
-    type_etablissement: string | null;
+    // type_etablissement: string | null;
     created_at: string;
     updated_at: string;
-    is_active?: boolean | null;
+    // is_active?: boolean | null;
   }>;
 
   return rows.map((row) => ({
     id: row.id,
     place_id: row.place_id,
-    name: row.nom,
-    formatted_address: row.adresse ?? undefined,
+    name: row.name,
+    formatted_address: row.formatted_address ?? undefined,
     lat: row.lat ?? undefined,
     lng: row.lng ?? undefined,
-    phone: row.telephone ?? undefined,
+    phone: row.phone ?? undefined,
     website: row.website ?? undefined,
     rating: row.rating ?? undefined,
     user_ratings_total: row.user_ratings_total ?? undefined,
@@ -305,35 +338,42 @@ export type UpdateEstablishmentPayload = {
  */
 export async function updateEstablishment(
   establishmentId: string,
-  payload: UpdateEstablishmentPayload
+  payload: UpdateEstablishmentPayload,
 ): Promise<void> {
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
   if (userError || !user) {
-    throw new Error('Utilisateur non connecté');
+    throw new Error("Utilisateur non connecté");
   }
 
   const update: Record<string, unknown> = {};
   if (payload.name !== undefined) update.nom = payload.name.trim() || null;
-  if (payload.formatted_address !== undefined) update.adresse = payload.formatted_address.trim() || null;
-  if (payload.phone !== undefined) update.telephone = payload.phone.trim() || null;
-  if (payload.website !== undefined) update.website = payload.website.trim() || null;
-  if (payload.type_etablissement !== undefined) update.type_etablissement = payload.type_etablissement?.trim() || null;
+  if (payload.formatted_address !== undefined)
+    update.adresse = payload.formatted_address.trim() || null;
+  if (payload.phone !== undefined)
+    update.telephone = payload.phone.trim() || null;
+  if (payload.website !== undefined)
+    update.website = payload.website.trim() || null;
+  if (payload.type_etablissement !== undefined)
+    update.type_etablissement = payload.type_etablissement?.trim() || null;
 
   if (Object.keys(update).length === 0) return;
 
-  console.log('[updateEstablishment] Données envoyées à Supabase:', {
-    table: 'établissements',
+  console.log("[updateEstablishment] Données envoyées à Supabase:", {
+    table: "establishments",
     establishmentId,
     user_id: user.id,
     update,
   });
 
   const { data, error } = await supabase
-    .from('établissements')
+    .from("establishments")
     .update(update)
-    .eq('id', establishmentId)
-    .eq('user_id', user.id)
-    .select('id')
+    .eq("id", establishmentId)
+    .eq("user_id", user.id)
+    .select("id")
     .maybeSingle();
 
   if (error) {
@@ -343,39 +383,46 @@ export async function updateEstablishment(
       hint: error.hint,
       code: error.code,
     };
-    console.error('[updateEstablishment] Erreur Supabase complète:', fullError);
-    console.error('Supabase error:', error.message, error.details, error.hint);
+    console.error("[updateEstablishment] Erreur Supabase complète:", fullError);
+    console.error("Supabase error:", error.message, error.details, error.hint);
     throw new Error(
-      error.hint || error.message || 'Erreur lors de la mise à jour de l\'établissement'
+      error.hint ||
+        error.message ||
+        "Erreur lors de la mise à jour de l'établissement",
     );
   }
 
   if (data === null && !error) {
-    console.warn('[updateEstablishment] Aucune ligne mise à jour (id ou user_id ne correspondent peut-être pas, ou RLS bloque)');
+    console.warn(
+      "[updateEstablishment] Aucune ligne mise à jour (id ou user_id ne correspondent peut-être pas, ou RLS bloque)",
+    );
   }
 }
 
 export async function getCurrentEstablishment(): Promise<EstablishmentData | null> {
   // Get current user
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
   if (userError || !user) {
-    throw new Error('Utilisateur non connecté');
+    throw new Error("Utilisateur non connecté");
   }
 
   // Try to get current establishment from profile
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('current_establishment_id')
-    .eq('user_id', user.id)
+    .from("profiles")
+    .select("current_establishment_id")
+    .eq("user_id", user.id)
     .single();
 
   if (profile?.current_establishment_id) {
     const { data: establishment, error } = await supabase
-      .from('establishments')
-      .select('*')
-      .eq('id', profile.current_establishment_id)
-      .eq('user_id', user.id)
+      .from("establishments")
+      .select("*")
+      .eq("id", profile.current_establishment_id)
+      .eq("user_id", user.id)
       .single();
 
     if (!error && establishment) {
@@ -385,41 +432,49 @@ export async function getCurrentEstablishment(): Promise<EstablishmentData | nul
 
   // Fallback: get the most recent establishment
   const { data: establishments, error } = await supabase
-    .from('establishments')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('updated_at', { ascending: false })
+    .from("establishments")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("updated_at", { ascending: false })
     .limit(1);
 
   if (error) {
-    console.error('Error fetching current establishment:', error);
+    console.error("Error fetching current establishment:", error);
     return null;
   }
 
-  return establishments && establishments.length > 0 ? establishments[0] as EstablishmentData : null;
+  return establishments && establishments.length > 0
+    ? (establishments[0] as EstablishmentData)
+    : null;
 }
 
-export async function updateCurrentEstablishment(establishmentId: string): Promise<void> {
+export async function updateCurrentEstablishment(
+  establishmentId: string,
+): Promise<void> {
   // Get current user
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
   if (userError || !user) {
-    throw new Error('Utilisateur non connecté');
+    throw new Error("Utilisateur non connecté");
   }
 
   // Upsert profile with current establishment
-  const { error } = await supabase
-    .from('profiles')
-    .upsert({
+  const { error } = await supabase.from("profiles").upsert(
+    {
       user_id: user.id,
-      current_establishment_id: establishmentId
-    }, {
-      onConflict: 'user_id'
-    });
+      current_establishment_id: establishmentId,
+    },
+    {
+      onConflict: "user_id",
+    },
+  );
 
   if (error) {
-    console.error('Error updating current establishment:', error);
-    throw new Error('Erreur lors de la mise à jour de l\'établissement courant');
+    console.error("Error updating current establishment:", error);
+    throw new Error("Erreur lors de la mise à jour de l'établissement courant");
   }
 }
 
@@ -427,10 +482,13 @@ export async function upsertUserEstablishmentFromProfile(input: {
   name: string;
   formatted_address: string | null;
 }): Promise<EstablishmentData> {
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    throw new Error('Utilisateur non connecté');
+    throw new Error("Utilisateur non connecté");
   }
 
   const name = input.name.trim();
@@ -443,18 +501,18 @@ export async function upsertUserEstablishmentFromProfile(input: {
 
   if (existing?.id) {
     const { data, error } = await supabase
-      .from('establishments')
+      .from("establishments")
       .update({
         name,
         formatted_address: input.formatted_address,
       })
-      .eq('id', existing.id)
-      .eq('user_id', user.id)
-      .select('*')
+      .eq("id", existing.id)
+      .eq("user_id", user.id)
+      .select("*")
       .single();
 
     if (error) {
-      console.error('Error updating establishment:', error);
+      console.error("Error updating establishment:", error);
       throw new Error("Erreur lors de la mise à jour de l'établissement");
     }
 
@@ -466,19 +524,19 @@ export async function upsertUserEstablishmentFromProfile(input: {
   const placeId = `manual_${user.id}`;
 
   const { data, error } = await supabase
-    .from('establishments')
+    .from("establishments")
     .insert({
       user_id: user.id,
       place_id: placeId,
       name,
       formatted_address: input.formatted_address,
-      source: 'manual',
+      source: "manual",
     })
-    .select('*')
+    .select("*")
     .single();
 
   if (error) {
-    console.error('Error creating establishment:', error);
+    console.error("Error creating establishment:", error);
     throw new Error("Erreur lors de la création de l'établissement");
   }
 

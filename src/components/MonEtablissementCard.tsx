@@ -1,8 +1,29 @@
 import { useEffect, useState, useCallback } from "react";
-import { Etab, EVT_SAVED, EVT_LIST_UPDATED, EVT_ESTABLISHMENT_UPDATED, STORAGE_KEY } from "../types/etablissement";
-import { BarChart3, Download, ExternalLink, Star, Phone, Globe, MapPin, Building2, Loader2, Plus } from "lucide-react";
+import { getCurrentEstablishment } from "@/services/establishments";
+import {
+  Etab,
+  EVT_SAVED,
+  EVT_LIST_UPDATED,
+  EVT_ESTABLISHMENT_UPDATED,
+  STORAGE_KEY,
+} from "../types/etablissement";
+import {
+  BarChart3,
+  Download,
+  ExternalLink,
+  Star,
+  Phone,
+  Globe,
+  MapPin,
+  Building2,
+  Loader2,
+  Plus,
+} from "lucide-react";
 import { runAnalyze } from "@/lib/runAnalyze";
-import { importGoogleReviews, type ImportReviewSource } from "@/lib/importGoogleReviews";
+import {
+  importGoogleReviews,
+  type ImportReviewSource,
+} from "@/lib/importGoogleReviews";
 import { toast as sonnerToast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
@@ -11,11 +32,14 @@ interface MonEtablissementCardProps {
   onAddClick?: () => void;
 }
 
-export default function MonEtablissementCard({ onAddClick }: MonEtablissementCardProps) {
+export default function MonEtablissementCard({
+  onAddClick,
+}: MonEtablissementCardProps) {
   const [etab, setEtab] = useState<Etab | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isImportingReviews, setIsImportingReviews] = useState(false);
-  const [importSource, setImportSource] = useState<ImportReviewSource>("google");
+  const [importSource, setImportSource] =
+    useState<ImportReviewSource>("google");
   const [forceFullImport, setForceFullImport] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useTranslation();
@@ -23,7 +47,9 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
   // Charger l'établissement actif depuis la DB (source de vérité)
   const loadActiveEstablishment = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         setEtab(null);
         setIsLoading(false);
@@ -31,29 +57,37 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
       }
 
       // Récupérer l'établissement actif depuis la DB
-      const { data, error } = await supabase
-        .from("établissements")
-        .select("*")
+
+      //Fetching the current establishment from profiles
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("current_establishment_id")
         .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
+        .single();
+
+      const { data: establishment, error } = await supabase
+        .from("establishments")
+        .select("*")
+        .eq("id", profile.current_establishment_id)
+        .eq("user_id", user.id)
+        .single();
 
       if (error) {
         console.error("Erreur chargement établissement actif:", error);
         setEtab(null);
-      } else if (data) {
-        const row = data as Record<string, unknown>;
+      } else if (profile) {
+        const row = establishment as Record<string, unknown>;
         setEtab({
-          id: data.id,
-          place_id: data.place_id,
-          name: data.nom,
-          address: data.adresse || "",
-          phone: data.telephone || undefined,
-          website: data.website || undefined,
-          url: data.google_maps_url || undefined,
-          rating: data.rating || undefined,
-          lat: data.lat || null,
-          lng: data.lng || null,
+          id: establishment.id,
+          place_id: establishment.place_id,
+          name: establishment.nom,
+          address: establishment.formatted_address || "",
+          phone: establishment.phone || undefined,
+          website: establishment.website || undefined,
+          //url: data.google_maps_url || undefined,
+          rating: establishment.rating || undefined,
+          lat: establishment.lat || null,
+          lng: establishment.lng || null,
           type_etablissement: (row.type_etablissement as string) || undefined,
           last_reviews_import: (row.last_reviews_import as string) ?? null,
         });
@@ -85,10 +119,12 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
 
   // 3) Écouter les changements d'auth (login/logout)
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") {
         loadActiveEstablishment();
-      } else if (event === 'SIGNED_OUT') {
+      } else if (event === "SIGNED_OUT") {
         setEtab(null);
       }
     });
@@ -106,25 +142,41 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
     const src = source ?? importSource;
     setIsImportingReviews(true);
     try {
-      const result = await importGoogleReviews(etab.place_id, 2000, { ...opts, source: src });
+      const result = await importGoogleReviews(etab.place_id, 2000, {
+        ...opts,
+        source: src,
+      });
       if (result.success) {
         loadActiveEstablishment();
         if (result.total === 0) {
-          sonnerToast.info(t("establishment.importNoReviews", "Aucun avis trouvé pour ce lieu"));
+          sonnerToast.info(
+            t(
+              "establishment.importNoReviews",
+              "Aucun avis trouvé pour ce lieu",
+            ),
+          );
         } else {
           sonnerToast.success(
-            t("establishment.importReviewsSuccess", "{{inserted}} avis importés, {{skipped}} déjà présents", {
-              inserted: result.inserted,
-              skipped: result.skipped,
-            })
+            t(
+              "establishment.importReviewsSuccess",
+              "{{inserted}} avis importés, {{skipped}} déjà présents",
+              {
+                inserted: result.inserted,
+                skipped: result.skipped,
+              },
+            ),
           );
         }
       } else {
-        sonnerToast.error(result.error || t("errors.generic", "Erreur lors de l'import"));
+        sonnerToast.error(
+          result.error || t("errors.generic", "Erreur lors de l'import"),
+        );
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      sonnerToast.error(message || t("errors.generic", "Erreur lors de l'import"));
+      sonnerToast.error(
+        message || t("errors.generic", "Erreur lors de l'import"),
+      );
     } finally {
       setIsImportingReviews(false);
     }
@@ -134,32 +186,48 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
     if (!etab?.place_id) return;
     setIsImportingReviews(true);
     try {
-      const sources: ImportReviewSource[] = ["google", "tripadvisor", "trustpilot"];
+      const sources: ImportReviewSource[] = [
+        "google",
+        "tripadvisor",
+        "trustpilot",
+      ];
       const results = await Promise.all(
-        sources.map((src) => importGoogleReviews(etab.place_id!, 2000, { ...opts, source: src }))
+        sources.map((src) =>
+          importGoogleReviews(etab.place_id!, 2000, { ...opts, source: src }),
+        ),
       );
       const inserted = results.reduce((a, r) => a + (r.inserted ?? 0), 0);
       const skipped = results.reduce((a, r) => a + (r.skipped ?? 0), 0);
       const failed = results.filter((r) => !r.success);
       if (failed.length > 0) {
         sonnerToast.warning(
-          t("establishment.importAllReviewsSuccess", "Import terminé : {{inserted}} avis importés au total, {{skipped}} déjà présents", {
-            inserted,
-            skipped,
-          }) + ` (${failed.length} plateforme(s) en erreur)`
+          t(
+            "establishment.importAllReviewsSuccess",
+            "Import terminé : {{inserted}} avis importés au total, {{skipped}} déjà présents",
+            {
+              inserted,
+              skipped,
+            },
+          ) + ` (${failed.length} plateforme(s) en erreur)`,
         );
       } else {
         sonnerToast.success(
-          t("establishment.importAllReviewsSuccess", "Import terminé : {{inserted}} avis importés au total, {{skipped}} déjà présents", {
-            inserted,
-            skipped,
-          })
+          t(
+            "establishment.importAllReviewsSuccess",
+            "Import terminé : {{inserted}} avis importés au total, {{skipped}} déjà présents",
+            {
+              inserted,
+              skipped,
+            },
+          ),
         );
       }
       loadActiveEstablishment();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      sonnerToast.error(message || t("errors.generic", "Erreur lors de l'import"));
+      sonnerToast.error(
+        message || t("errors.generic", "Erreur lors de l'import"),
+      );
     } finally {
       setIsImportingReviews(false);
     }
@@ -174,13 +242,18 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
       const result = await runAnalyze({
         place_id: etab.place_id,
         name: etab.name,
-        address: etab.address
+        address: etab.address,
       });
 
       if (result.ok) {
-        sonnerToast.success(t("establishment.reviewsAnalyzedSuccessCount", { count: result.counts?.collected || 0 }), {
-          duration: 5000,
-        });
+        sonnerToast.success(
+          t("establishment.reviewsAnalyzedSuccessCount", {
+            count: result.counts?.collected || 0,
+          }),
+          {
+            duration: 5000,
+          },
+        );
       } else {
         sonnerToast.error(t("establishment.analysisErrorOccurred"), {
           duration: 5000,
@@ -194,7 +267,6 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
       setIsAnalyzing(false);
     }
   };
-
 
   if (isLoading) {
     return (
@@ -221,7 +293,9 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
             <Plus className="w-5 h-5 text-primary" />
           </div>
-          <span className="text-xs text-muted-foreground font-medium">{t("establishment.add")}</span>
+          <span className="text-xs text-muted-foreground font-medium">
+            {t("establishment.add")}
+          </span>
         </button>
       </div>
     );
@@ -233,13 +307,17 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
       <div className="grid grid-cols-1 md:grid-cols-3 gap-x-10 gap-y-6">
         {/* Ligne 1 - Col 1 : Nom */}
         <div className="flex flex-col gap-1 md:col-start-1 md:row-start-1">
-          <p className="text-sm text-muted-foreground font-medium">{t("establishment.nameLabel")}</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            {t("establishment.nameLabel")}
+          </p>
           <p className="text-base font-medium text-foreground">{etab.name}</p>
         </div>
 
         {/* Ligne 1 - Col 2 : Note Google */}
         <div className="flex flex-col gap-1 md:col-start-2 md:row-start-1">
-          <p className="text-sm text-muted-foreground font-medium">{t("establishment.googleRating")}</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            {t("establishment.googleRating")}
+          </p>
           {etab.rating ? (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 font-medium text-sm w-fit">
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
@@ -277,12 +355,16 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
             <MapPin className="w-3.5 h-3.5" />
             {t("establishment.address")}
           </p>
-          <p className="text-base font-medium text-foreground">{etab.address}</p>
+          <p className="text-base font-medium text-foreground">
+            {etab.address}
+          </p>
         </div>
 
         {/* Ligne 2 - Col 3 : Google Maps (sous Site web ; col 2 vide) */}
         <div className="flex flex-col gap-1 md:col-start-3 md:row-start-2">
-          <p className="text-sm text-muted-foreground font-medium">{t("establishment.googleMaps")}</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            {t("establishment.googleMaps")}
+          </p>
           {etab.place_id ? (
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(etab.name)}&query_place_id=${encodeURIComponent(etab.place_id)}`}
@@ -314,7 +396,9 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
             <Phone className="w-3.5 h-3.5" />
             {t("establishment.phone")}
           </p>
-          <p className="text-base font-medium text-foreground">{etab.phone || "—"}</p>
+          <p className="text-base font-medium text-foreground">
+            {etab.phone || "—"}
+          </p>
         </div>
       </div>
 
@@ -332,22 +416,34 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
         <div className="flex flex-col md:flex-1 md:justify-center gap-2 items-center">
           <p className="text-xs text-muted-foreground">
             {etab.last_reviews_import
-              ? t("establishment.lastReviewsImport", "Dernière mise à jour : {{date}}", {
-                  date: new Date(etab.last_reviews_import).toLocaleString(undefined, {
-                    dateStyle: "short",
-                    timeStyle: "short",
-                  }),
-                })
+              ? t(
+                  "establishment.lastReviewsImport",
+                  "Dernière mise à jour : {{date}}",
+                  {
+                    date: new Date(etab.last_reviews_import).toLocaleString(
+                      undefined,
+                      {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      },
+                    ),
+                  },
+                )
               : t("establishment.noPreviousImport", "Aucun import précédent")}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <label htmlFor="import-source" className="text-xs text-muted-foreground font-medium sr-only">
+            <label
+              htmlFor="import-source"
+              className="text-xs text-muted-foreground font-medium sr-only"
+            >
               Plateforme
             </label>
             <select
               id="import-source"
               value={importSource}
-              onChange={(e) => setImportSource(e.target.value as ImportReviewSource)}
+              onChange={(e) =>
+                setImportSource(e.target.value as ImportReviewSource)
+              }
               className="rounded-md border border-input bg-background px-3 py-2 text-sm"
               data-testid="select-import-source"
             >
@@ -360,7 +456,9 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
               onClick={() => handleImportReviews()}
               disabled={isImportingReviews}
               className="inline-flex px-4 py-2 h-auto items-center justify-center gap-1 rounded-lg border border-blue-600 bg-blue-600 text-white shadow-sm disabled:opacity-70 disabled:cursor-not-allowed text-xs font-medium"
-              title={t("establishment.importFromPlatform", { platform: t(`platforms.${importSource}`) })}
+              title={t("establishment.importFromPlatform", {
+                platform: t(`platforms.${importSource}`),
+              })}
               data-testid="btn-import-avis"
             >
               {isImportingReviews ? (
@@ -368,7 +466,9 @@ export default function MonEtablissementCard({ onAddClick }: MonEtablissementCar
               ) : (
                 <Download className="w-4 h-4" />
               )}
-              {t("establishment.importFromPlatform", { platform: t(`platforms.${importSource}`) })}
+              {t("establishment.importFromPlatform", {
+                platform: t(`platforms.${importSource}`),
+              })}
             </button>
           </div>
           <button
