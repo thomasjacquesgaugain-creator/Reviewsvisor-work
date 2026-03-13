@@ -40,7 +40,17 @@ function simpleHash(text: string): string {
   }
   return Math.abs(hash).toString(16);
 }
+function normalizeReviewText(comment: string): string {
+  return (comment || "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+}
 
+function generateContentHash(rating: number, comment: string): string {
+  const normalized = normalizeReviewText(comment);
+  return simpleHash(`${rating}|${normalized}`);
+}
 export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCreateResult> {
   let inserted = 0;
   let skippedTotal = 0;
@@ -80,34 +90,66 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
         skippedTotal++;
         continue;
       }
-      
-      const normalizedText = (review.comment || "")
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, " ");
 
-      const hashInput =
-      `${review.establishment_id}|${review.author_first_name}|${review.author_last_name}|${review.review_date}|${review.rating}|${normalizedText}`;
-  
-      const reviewHash = simpleHash(hashInput);
+      // EN: Create hashes to uniquely identify the review and its content.
+      // FR: Créer des hashes pour identifier de manière unique l'avis et son contenu.
+
+      const identityInput = `${review.author_first_name}|${review.author_last_name}|${review.review_date}|${review.establishment_id}`;
+      const identityHash = simpleHash(identityInput);
+      const contentHash  = generateContentHash(review.rating, review.comment);
       
-      // Check if review already exists (by source_review_id which stores our hash)
+      // EN: Check if the review already exists using the identity hash
+      // stored in source_review_id for the current user.
+      // FR: Vérifier si l'avis existe déjà en utilisant le hash d'identité
+      // stocké dans source_review_id pour l'utilisateur actuel.
+
       const { data: existingReview } = await supabase
         .from('reviews')
-        .select('id')
+        .select('id, rating, text')
         .eq('user_id', user.user.id)
-        .eq('source_review_id', reviewHash)
+        .eq('source_review_id', identityHash)
         .single();
-      
+
       if (existingReview) {
-        reasons.duplicate++;
-        if (sampleSkipped.length < 5) {
-          sampleSkipped.push({
-            reason: 'duplicate',
-            snippet: `${review.author_first_name || 'Anonyme'}: ${(review.comment || '').substring(0, 50)}...`
-          });
+        // EN: Compare hashes of existing review content and incoming content
+        // to detect exact duplicates.
+        // FR: Comparer les hashes du contenu existant et du nouveau contenu
+        // afin de détecter les doublons exacts.
+         const existingContentHash = generateContentHash(
+          existingReview.rating,
+          existingReview.text || ""
+        );
+         if (existingContentHash === contentHash) {
+          reasons.duplicate++;
+          if (sampleSkipped.length < 5) {
+            sampleSkipped.push({
+              reason: 'duplicate',
+              snippet: `${review.author_first_name || 'Anonyme'}: ${(review.comment || '').substring(0, 50)}...`
+            });
+          }
+          skippedTotal++;
+          continue;
         }
-        skippedTotal++;
+        // EN: If the review exists but the rating or comment changed,
+        // update the existing review in the database.
+        // FR: Si l'avis existe mais que la note ou le commentaire a changé,
+        // mettre à jour l'avis existant dans la base de données.
+        const { error: updateError } = await supabase
+          .from('reviews')
+          .update({
+            rating: review.rating,
+            text: review.comment || ""
+          })
+          .eq('id', existingReview.id);
+
+        if (updateError) {
+          console.error('Error updating review:', updateError);
+          skippedTotal++;
+        } else {
+          console.log("Review updated:", existingReview.id);
+          inserted++;
+        }
+
         continue;
       }
       
@@ -187,7 +229,7 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
           text: review.comment || "",
           published_at: publishedAt,
           create_time: createTimeValue, // Stocker create_time avec la valeur originale si disponible
-          source_review_id: reviewHash,
+          source_review_id: identityHash,
           raw: {
             import_method: review.import_method,
             import_source_url: review.import_source_url,
@@ -215,7 +257,7 @@ export async function bulkCreateReviews(reviews: ReviewCreate[]): Promise<BulkCr
           const backupData = existingBackup ? JSON.parse(existingBackup) : {};
           
           // Ajouter ce review avec son createTime original
-          backupData[reviewHash] = {
+          backupData[identityHash] = {
             createTime: review.createTime || createTimeValue,
             originalCreateTime: review.createTime || createTimeValue,
             review_date: review.review_date,
