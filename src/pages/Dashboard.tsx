@@ -2286,7 +2286,7 @@ const Dashboard = () => {
           .select("id, created_at")
           .eq("place_id", currentEstab.place_id)
           .eq("user_id", user.id)
-          // .eq("is_active", true)
+          // .eq('is_active', true)
           .maybeSingle();
 
         if (!import.meta.env.PROD) {
@@ -6171,11 +6171,7 @@ const Dashboard = () => {
                           <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
                             <p className="font-medium text-foreground text-left">
                               {t("help.faq7Question")}
-                            </p>
                           </div>
-
-                          <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
-                            <p className="font-medium text-foreground text-left">
                               {t("help.faq8Question")}
                             </p>
                           </div>

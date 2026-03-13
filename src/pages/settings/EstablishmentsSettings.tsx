@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthProvider";
-import { getUserEstablishments, EstablishmentData } from "@/services/establishments";
+import {
+  getUserEstablishments,
+  EstablishmentData,
+} from "@/services/establishments";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { toastActiveEstablishment } from "@/lib/toastActiveEstablishment";
 import {
@@ -34,7 +37,8 @@ export function EstablishmentsSettings() {
   const [establishments, setEstablishments] = useState<EstablishmentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [settingActiveId, setSettingActiveId] = useState<string | null>(null);
-  const [establishmentToDelete, setEstablishmentToDelete] = useState<EstablishmentData | null>(null);
+  const [establishmentToDelete, setEstablishmentToDelete] =
+    useState<EstablishmentData | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { t } = useTranslation();
 
@@ -60,7 +64,7 @@ export function EstablishmentsSettings() {
 
   const sortedEstablishments = useMemo(
     () => sortEstablishmentsWithActiveFirst(establishments, activePlaceId),
-    [establishments, activePlaceId]
+    [establishments, activePlaceId],
   );
 
   const handleSetActive = async (establishment: EstablishmentData) => {
@@ -95,7 +99,7 @@ export function EstablishmentsSettings() {
     setDeletingId(est.id ?? est.place_id);
     try {
       let query = supabase
-        .from("établissements")
+        .from("establishments")
         .delete()
         .eq("user_id", user.id);
       if (est.id) {
@@ -107,7 +111,7 @@ export function EstablishmentsSettings() {
       if (error) throw error;
       setEstablishmentToDelete(null);
       const remaining = establishments.filter(
-        (e) => (e.id ?? e.place_id) !== (est.id ?? est.place_id)
+        (e) => (e.id ?? e.place_id) !== (est.id ?? est.place_id),
       );
       setEstablishments(remaining);
       if (remaining.length > 0 && activePlaceId === est.place_id) {
@@ -131,15 +135,22 @@ export function EstablishmentsSettings() {
       try {
         await updateSubscriptionQuantity(newExtraQuantity);
       } catch (stripeErr) {
-        console.error("Erreur mise à jour Stripe après suppression:", stripeErr);
-        toast.error("Abonnement mis à jour en base, mais la facturation Stripe n'a pas pu être synchronisée.");
+        console.error(
+          "Erreur mise à jour Stripe après suppression:",
+          stripeErr,
+        );
+        toast.error(
+          "Abonnement mis à jour en base, mais la facturation Stripe n'a pas pu être synchronisée.",
+        );
       }
 
       toast.success(t("settings.establishmentAndAccess.establishmentClosed"));
     } catch (error: unknown) {
       console.error("Error deleting establishment:", error);
       toast.error(
-        error instanceof Error ? error.message : "Erreur lors de la suppression"
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la suppression",
       );
     } finally {
       setDeletingId(null);
@@ -190,14 +201,26 @@ export function EstablishmentsSettings() {
                   isActive
                     ? "border-blue-200 bg-blue-50"
                     : "border-gray-200 bg-white",
-                  isActive ? ESTABLISHMENT_CARD_HOVER_ACTIVE : ESTABLISHMENT_CARD_HOVER_NEUTRAL
+                  isActive
+                    ? ESTABLISHMENT_CARD_HOVER_ACTIVE
+                    : ESTABLISHMENT_CARD_HOVER_NEUTRAL,
                 )}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <Building2 className={cn("h-5 w-5 shrink-0", isActive ? "text-blue-600" : "text-gray-400")} />
-                      <h3 className={cn("text-lg font-medium", isActive ? "text-blue-900" : "text-gray-900")}>
+                      <Building2
+                        className={cn(
+                          "h-5 w-5 shrink-0",
+                          isActive ? "text-blue-600" : "text-gray-400",
+                        )}
+                      />
+                      <h3
+                        className={cn(
+                          "text-lg font-medium",
+                          isActive ? "text-blue-900" : "text-gray-900",
+                        )}
+                      >
                         {est.name}
                       </h3>
                       {isActive && (
@@ -208,7 +231,9 @@ export function EstablishmentsSettings() {
                       )}
                     </div>
                     {est.formatted_address && (
-                      <p className="text-sm text-gray-500 ml-7">{est.formatted_address}</p>
+                      <p className="text-sm text-gray-500 ml-7">
+                        {est.formatted_address}
+                      </p>
                     )}
                     {est.rating != null && (
                       <p className="flex items-center gap-1 text-sm text-gray-500 ml-7 mt-1">
@@ -261,7 +286,10 @@ export function EstablishmentsSettings() {
         </div>
       )}
 
-      <Dialog open={!!establishmentToDelete} onOpenChange={(open) => !open && setEstablishmentToDelete(null)}>
+      <Dialog
+        open={!!establishmentToDelete}
+        onOpenChange={(open) => !open && setEstablishmentToDelete(null)}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t("settings.establishmentAndAccess.deleteEstablishment")}</DialogTitle>
