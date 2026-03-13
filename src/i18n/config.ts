@@ -4,35 +4,41 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 import fr from './locales/fr.json';
 import en from './locales/en.json';
-import it from './locales/it.json';
-import es from './locales/es.json';
-import pt from './locales/pt.json';
+// import it from './locales/it.json';
+// import es from './locales/es.json';
+// import pt from './locales/pt.json';
 
-export const SUPPORTED_LANGUAGES = ['fr', 'en', 'it', 'es', 'pt'] as const;
+export const SUPPORTED_LANGUAGES = [
+  'fr', 
+  'en', 
+  // 'it', 
+  // 'es', 
+  // 'pt'
+] as const;
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
 
 export const LANGUAGE_LABELS: Record<SupportedLanguage, string> = {
   fr: 'Français',
   en: 'English',
-  it: 'Italiano',
-  es: 'Español',
-  pt: 'Português',
+  // it: 'Italiano',
+  // es: 'Español',
+  // pt: 'Português',
 };
 
 export const LANGUAGE_FLAGS: Record<SupportedLanguage, string> = {
   fr: '🇫🇷',
   en: '🇬🇧',
-  it: '🇮🇹',
-  es: '🇪🇸',
-  pt: '🇵🇹',
+  // it: '🇮🇹',
+  // es: '🇪🇸',
+  // pt: '🇵🇹',
 };
 
 const resources = {
   fr: { translation: fr },
   en: { translation: en },
-  it: { translation: it },
-  es: { translation: es },
-  pt: { translation: pt },
+  // it: { translation: it },
+  // es: { translation: es },
+  // pt: { translation: pt },
 };
 
 i18n
@@ -41,6 +47,8 @@ i18n
   .init({
     resources,
     fallbackLng: 'fr',
+    supportedLngs: [...SUPPORTED_LANGUAGES],
+    nonExplicitSupportedLngs: true,
     defaultNS: 'translation',
     interpolation: {
       escapeValue: false,
@@ -49,6 +57,7 @@ i18n
       order: ['localStorage', 'navigator'],
       lookupLocalStorage: 'rv_lang',
       caches: ['localStorage'],
+      convertDetectedLanguage: (lng: string) => lng.split('-')[0].toLowerCase(), // Convert "en-GB" to "en"
     },
   });
 

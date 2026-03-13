@@ -37,6 +37,13 @@ import { getDashboardSnapshot, setDashboardSnapshot } from "@/services/dashboard
 import { listAll } from "@/services/reviewsService";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const GRANULARITY_LABEL_KEYS: Record<Granularity, string> = {
+  jour: "dashboard.day",
+  semaine: "dashboard.week",
+  mois: "dashboard.month",
+  année: "dashboard.year",
+};
+
 
 const Dashboard = () => {
   // ============================================
@@ -89,6 +96,7 @@ const Dashboard = () => {
   const [showParetoChart, setShowParetoChart] = useState(false);
   const [showParetoPoints, setShowParetoPoints] = useState(false);
   const [granularityEvolution, setGranularityEvolution] = useState<Granularity>("mois");
+  const granularityEvolutionLabel = t(GRANULARITY_LABEL_KEYS[granularityEvolution] ?? "dashboard.month");
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState('indicateurs');
   const [showBusinessTypeOverrideModal, setShowBusinessTypeOverrideModal] = useState(false);
@@ -586,25 +594,25 @@ const Dashboard = () => {
     const buckets = [
       {
         key: 'wait',
-        label: "Temps d'attente",
+        label: t("dashboard.waitTime"),
         maxImpact: 0.3,
         keywords: ['attente', 'attendre', 'lent', 'lente', 'lenteur', 'retard', 'queue'],
       },
       {
         key: 'service',
-        label: 'Accueil/Service',
+        label: t("dashboard.serviceReception"),
         maxImpact: 0.2,
         keywords: ['service', 'serveur', 'serveuse', 'accueil', 'accueillant', 'impoli', 'désagréable', 'desagreable'],
       },
       {
         key: 'quality',
-        label: 'Qualité cuisine',
+        label: t("dashboard.foodQuality"),
         maxImpact: 0.2,
         keywords: ['froid', 'froide', 'tiède', 'tiede', 'cuisson', 'fade', 'qualité', 'qualite', 'cuisine'],
       },
       {
         key: 'price',
-        label: 'Prix',
+        label: t("dashboard.price"),
         maxImpact: 0.1,
         keywords: ['prix', 'cher', 'chère', 'chere', 'coûteux', 'couteux'],
       },
@@ -1972,7 +1980,7 @@ const Dashboard = () => {
             <div>
             <div className="flex items-center gap-2">
               <BarChart3 className="w-6 h-6 text-blue-600" />
-                <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("dashboard.title")}</h1>
             </div>
               <div className="flex items-center gap-2 text-gray-600 mt-1">
             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
@@ -2353,7 +2361,7 @@ const Dashboard = () => {
                     <Star className="w-5 h-5 text-yellow-500" />
                     {t("dashboard.averageRatingEvolution")}
                   </CardTitle>
-                  <p className="text-sm text-gray-600">{t("dashboard.ratingProgressionDescription", { granularity: granularityEvolution })}</p>
+                  <p className="text-sm text-gray-600">{t("dashboard.ratingProgressionDescription", { granularity: granularityEvolutionLabel })}</p>
                 </div>
                 <Select value={granularityEvolution} onValueChange={(value) => setGranularityEvolution(value as Granularity)}>
                   <SelectTrigger className="w-32">
@@ -2699,7 +2707,7 @@ const Dashboard = () => {
               <div className="mt-6 space-y-8">
                 {/* Répartition des avis par note */}
                 <div>
-                  <h4 className="font-semibold text-lg mb-4">Répartition des avis par note</h4>
+                  <h4 className="font-semibold text-lg mb-4">{t("dashboard.distributionReviewsByRating")}</h4>
                   {hasReviews && insight?.summary?.by_rating ? (
                     <div className="space-y-3">
                       {[5, 4, 3, 2, 1].map((star) => {
@@ -2720,14 +2728,14 @@ const Dashboard = () => {
                     </div>
                   ) : (
                     <div className="text-center py-8 text-gray-500">
-                      <p>Importez vos avis pour voir la répartition</p>
+                      <p>{t("dashboard.uploadReviewToSeeBreakdown")}</p>
                     </div>
                   )}
                 </div>
                 
                 {/* Thématiques récurrentes */}
                 <div>
-                  <h4 className="font-semibold text-lg mb-4">Thématiques récurrentes</h4>
+                  <h4 className="font-semibold text-lg mb-4">{t("dashboard.recurringThemes")}</h4>
                   {(() => {
                     // Mapper les données v2 (themes_universal et themes_industry) vers le format attendu
                     const isV2 = insight?.analysis_version === 'v2-auto-universal';
@@ -2788,7 +2796,7 @@ const Dashboard = () => {
                     if (!hasAnalysis && themesUniversal.length === 0 && themesIndustry.length === 0) {
                       return (
                         <div className="text-center py-8 text-gray-500">
-                          <p>Importez vos avis pour voir les thématiques</p>
+                          <p>{t("dashboard.importReviewsToSeeTheThemes")}</p>
                         </div>
                       );
                     }
@@ -3825,7 +3833,7 @@ const Dashboard = () => {
                   ))
                 ) : (
                   <div className="text-center py-8 text-gray-500">
-                    <p className="text-sm">{hasReviews ? (t("dashboard.noChecklistActionsAvailable") || "Aucune action disponible") : "Importez vos avis pour générer des actions personnalisées"}</p>
+                    <p className="text-sm">{hasReviews ? (t("dashboard.noChecklistActionsAvailable") || "Aucune action disponible") : t("dashboard.importGeneratePersonalizedActions")}</p>
                     {hasReviews && (
                       <p className="text-xs mt-1">{t("dashboard.analyzeEstablishmentToGetActions") || "Analysez votre établissement pour obtenir des actions personnalisées"}</p>
                     )}
@@ -3922,9 +3930,9 @@ const Dashboard = () => {
           <CardHeader className="relative text-center">
             <div className="flex flex-col items-center mb-2">
               <Bot className="w-5 h-5 text-purple-500 mb-2" />
-              <span className="text-lg font-semibold">Agent</span>
+              <span className="text-lg font-semibold">{t("dashboard.agent")}</span>
             </div>
-            <p className="text-sm text-gray-600">Assistant IA pour répondre à vos avis</p>
+            <p className="text-sm text-gray-600">{t("dashboard.aiRespondReview")}</p>
             <Button
               variant="ghost"
               size="sm"
@@ -3949,9 +3957,9 @@ const Dashboard = () => {
             <CardHeader className="relative text-left">
               <div className="flex items-center gap-2 mb-2">
                 <Bot className="w-5 h-5 text-purple-500" />
-                <span className="text-lg font-semibold">Agent</span>
+                <span className="text-lg font-semibold">{t("dashboard.agent")}</span>
               </div>
-              <p className="text-sm text-gray-600">Assistant IA pour répondre à vos avis</p>
+              <p className="text-sm text-gray-600">{t("dashboard.aiRespondReview")}</p>
             </CardHeader>
             <CardContent>
             <div className="space-y-4">
@@ -4074,7 +4082,7 @@ const Dashboard = () => {
                       >
                         <Input
                           type="text"
-                          placeholder="Posez une question sur vos avis..."
+                          placeholder={t("dashboard.askQuestion")}
                           value={agentQuestion}
                           onChange={(e) => setAgentQuestion(e.target.value)}
                           disabled={isAgentLoading}
@@ -4086,7 +4094,7 @@ const Dashboard = () => {
                           ) : (
                             <Send className="h-4 w-4" />
                           )}
-                          <span className="ml-2">Demander</span>
+                          <span className="ml-2">{t("aiAssistance.ask")}</span>
                         </Button>
                       </form>
                     </div>
@@ -4116,37 +4124,37 @@ const Dashboard = () => {
                     <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
                       <Info className="w-5 h-5 text-blue-500" />
                     </div>
-                    <h2 className="text-xl md:text-2xl font-bold text-foreground">Questions fréquentes</h2>
+                    <h2 className="text-xl md:text-2xl font-bold text-foreground">{t("help.frequentQuestions")}</h2>
                   </div>
                   
                   <div className="w-full space-y-2">
                 <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
                   <p className="font-medium text-foreground text-left">
-                    Que dois-je mettre en place pour régler mes problèmes prioritaires ?
+                    {t("help.faq6Question")}
                   </p>
                 </div>
 
                 <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
                   <p className="font-medium text-foreground text-left">
-                    Comment puis-je obtenir plus d'avis positifs ?
+                    {t("help.faq7Question")}
                   </p>
                 </div>
 
                 <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
                   <p className="font-medium text-foreground text-left">
-                    Est-ce que j'augmenterais mon chiffre d'affaires avec une meilleure note ?
+                   {t("help.faq8Question")}
                   </p>
                 </div>
 
                 <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
                   <p className="font-medium text-foreground text-left">
-                    Comment réduire rapidement les avis négatifs ?
+                    {t("help.faq9Question")}
                   </p>
                 </div>
 
                 <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
                   <p className="font-medium text-foreground text-left">
-                    Où est-ce que je perds le plus de clients aujourd'hui ?
+                    {t("help.faq10Question")}
                   </p>
                 </div>
               </div>
@@ -4569,8 +4577,8 @@ const Dashboard = () => {
           <div className="flex items-center gap-3 mb-6">
             <MessageSquare className="w-6 h-6 text-blue-600" />
             <div className="flex-1">
-              <h2 className="text-xl font-semibold">Centre de réponse</h2>
-              <p className="text-sm text-gray-600">Gérez vos réponses aux avis clients</p>
+              <h2 className="text-xl font-semibold">{t("dashboard.responseCenter")}</h2>
+              <p className="text-sm text-gray-600">{t("dashboard.manageCustomerReviewResponses")}</p>
             </div>
           </div>
 
@@ -4584,7 +4592,7 @@ const Dashboard = () => {
                 <CardContent className="flex items-center px-4 py-3">
                   <Clock className="w-8 h-8 text-orange-500 mr-3" />
                   <div>
-                    <p className="text-sm text-gray-600">En attente</p>
+                    <p className="text-sm text-gray-600">{t("dashboard.pending")}</p>
                     <p className="text-2xl font-bold">
                       {(() => {
                         // Calculer le nombre réel d'avis en attente selon le filtre actif
@@ -4614,7 +4622,7 @@ const Dashboard = () => {
                     <CheckCircle className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Répondu</p>
+                    <p className="text-sm text-gray-600">{t("dashboard.replied")}</p>
                     <p className="text-2xl font-bold">
                       {allReviewsForChart.filter(review => {
                         const hasValidatedResponse = validatedReviews.has(review.id);
@@ -4640,10 +4648,10 @@ const Dashboard = () => {
                         const _ = refreshCounter;
 
                         const total = reponsesStats.total || allReviewsForChart.length;
-                        return `${reponsesStats.validated}/${total} réponses`;
+                        return `${reponsesStats.validated}/${total} ${t("dashboard.responses")}`;
                       })()}
                     </p>
-                    <p className="text-sm text-gray-500">Validées</p>
+                    <p className="text-sm text-gray-500">{t("dashboard.validated")}</p>
                 </div>
                 </CardContent>
               </Card>
@@ -4658,8 +4666,8 @@ const Dashboard = () => {
                 <div className="flex items-center gap-3">
                   <Sparkles className="w-6 h-6 text-purple-600" />
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold">Analyse du contenu</h3>
-                    <p className="text-sm text-gray-600">Classification IA des avis</p>
+                    <h3 className="text-lg font-semibold">{t("dashboard.contentAnalysis")}</h3>
+                    <p className="text-sm text-gray-600">{t("dashboard.aiReviewClassification")}</p>
               </div>
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'contenu' ? null : 'contenu'); }} className="h-6 w-6 p-0 hover:bg-purple-50">
                     {openCard === 'contenu' ? <ChevronUp className="w-4 h-4 text-purple-600" /> : <ChevronDown className="w-4 h-4 text-purple-600" />}
@@ -4675,8 +4683,8 @@ const Dashboard = () => {
                   <div className="flex items-center gap-3">
                     <Star className="w-6 h-6 text-yellow-600" />
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold">Filtrer par note</h3>
-                      <p className="text-sm text-gray-600">Avis classés par étoiles</p>
+                      <h3 className="text-lg font-semibold">{t("dashboard.filterByRating")}</h3>
+                      <p className="text-sm text-gray-600">{t("dashboard.reviewsSortedByStars")}</p>
                 </div>
                     <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'note' ? null : 'note'); }} className="h-6 w-6 p-0 hover:bg-yellow-50">
                       {openCard === 'note' ? <ChevronUp className="w-4 h-4 text-yellow-600" /> : <ChevronDown className="w-4 h-4 text-yellow-600" />}
@@ -4692,8 +4700,8 @@ const Dashboard = () => {
                   <div className="flex items-center gap-3">
                     <Flag className="w-6 h-6 text-red-600" />
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold">Priorité</h3>
-                      <p className="text-sm text-gray-600">Avis classés par urgence</p>
+                      <h3 className="text-lg font-semibold">{t("dashboard.priority")}</h3>
+                      <p className="text-sm text-gray-600">{t("dashboard.reviewsSortedByUrgency")}</p>
                 </div>
                     <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'priorite' ? null : 'priorite'); }} className="h-6 w-6 p-0 hover:bg-red-50">
                       {openCard === 'priorite' ? <ChevronUp className="w-4 h-4 text-red-600" /> : <ChevronDown className="w-4 h-4 text-red-600" />}
@@ -4709,8 +4717,8 @@ const Dashboard = () => {
                   <div className="flex items-center gap-3">
                     <Globe className="w-6 h-6 text-blue-600" />
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold">Plateforme</h3>
-                      <p className="text-sm text-gray-600">Avis classés par source</p>
+                      <h3 className="text-lg font-semibold">{t("dashboard.platform")}</h3>
+                      <p className="text-sm text-gray-600">{t("dashboard.reviewsSortedBySource")}</p>
                     </div>
                     <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setOpenCard(openCard === 'plateforme' ? null : 'plateforme'); }} className="h-6 w-6 p-0 hover:bg-blue-50">
                       {openCard === 'plateforme' ? <ChevronUp className="w-4 h-4 text-blue-600" /> : <ChevronDown className="w-4 h-4 text-blue-600" />}
@@ -4773,7 +4781,7 @@ const Dashboard = () => {
                         <table className="w-full">
                           <thead className="bg-red-50">
                             <tr>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">Auteur</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">{t('dashboard.dashResponseTableHeading.author')}</th>
                               <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">Note</th>
                               <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">Commentaire</th>
                               <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">Source</th>
@@ -5423,7 +5431,7 @@ const Dashboard = () => {
                             <table className="w-full">
                               <thead className="bg-red-50">
                                 <tr>
-                                  <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">Auteur</th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">{t('dashboard.dashResponseTableHeading.author')}</th>
                                   <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">Note</th>
                                   <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">Commentaire</th>
                                   <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">Source</th>
@@ -5978,13 +5986,13 @@ const Dashboard = () => {
                             <table className="w-full">
                               <thead className="bg-gray-50">
                                 <tr>
-                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Auteur</th>
-                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Note</th>
-                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Commentaire</th>
-                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
-                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
-                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t("dashboard.dashResponseTableHeading.author")}</th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t("dashboard.dashResponseTableHeading.rating")}</th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t("dashboard.dashResponseTableHeading.comment")}</th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t("dashboard.dashResponseTableHeading.source")}</th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t("dashboard.dashResponseTableHeading.date")}</th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t("dashboard.dashResponseTableHeading.status")}</th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t("dashboard.dashResponseTableHeading.action")}</th>
                                 </tr>
                               </thead>
                               <tbody className="bg-white divide-y divide-gray-200">
@@ -6061,7 +6069,7 @@ const Dashboard = () => {
                                 ) : (
                                   <tr>
                                     <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
-                                      {statusFilter === 'pending' ? "Aucun avis en attente" : statusFilter === 'replied' ? "Aucun avis répondu" : "Aucun avis disponible"}
+                                      {statusFilter === 'pending' ? t('dashboard.noPendingReviews') : statusFilter === 'replied' ? t('dashboard.noRepliedReviews') : t('noReviewsAvailable')}
                                     </td>
                                   </tr>
                                 )}
@@ -6219,9 +6227,9 @@ const Dashboard = () => {
             <CardContent className="p-6 text-center">
               <div className="flex flex-col items-center mb-2">
                 <TrendingUp className="w-5 h-5 text-green-600 mb-2" />
-                <span className="text-lg font-semibold">Progression</span>
+                <span className="text-lg font-semibold">{t("dashboard.progress")}</span>
               </div>
-              <p className="text-sm text-gray-600">Suivez l'avancement de vos actions</p>
+              <p className="text-sm text-gray-600">{t("dashboard.trackYourActionsProgress")}</p>
               <Button
                 variant="ghost"
                 size="sm"
@@ -6247,9 +6255,9 @@ const Dashboard = () => {
             <CardContent className="p-6 text-center">
               <div className="flex flex-col items-center mb-2">
                 <MessageSquare className="w-5 h-5 text-indigo-600 mb-2" />
-                <span className="text-lg font-semibold">Avis liés</span>
+                <span className="text-lg font-semibold">{t("dashboard.relatedReviews")}</span>
               </div>
-              <p className="text-sm text-gray-600">Avis freinant votre progression vers l'objectif</p>
+              <p className="text-sm text-gray-600">{t("dashboard.reviewsSlowingYourProgress")}</p>
               <Button
                 variant="ghost"
                 size="sm"
@@ -6275,9 +6283,9 @@ const Dashboard = () => {
             <CardContent className="p-6 text-center">
               <div className="flex flex-col items-center mb-2">
                 <BarChart3 className="w-5 h-5 text-emerald-600 mb-2" />
-                <span className="text-lg font-semibold">Impact</span>
+                <span className="text-lg font-semibold">{t("dashboard.impact")}</span>
               </div>
-              <p className="text-sm text-gray-600">Estimez l'impact de vos améliorations</p>
+              <p className="text-sm text-gray-600">{t("dashboard.estimateImpactOfImprovements")}</p>
               <Button
                 variant="ghost"
                 size="sm"
@@ -6300,8 +6308,8 @@ const Dashboard = () => {
         {openCard === 'progression' && (
           <Card className="mb-8">
             <CardHeader className="pb-1">
-              <CardTitle className="text-xl">Progression</CardTitle>
-              <p className="text-sm text-gray-600">Suivez l'avancement de vos actions</p>
+              <CardTitle className="text-xl">{t("dashboard.progress")}</CardTitle>
+              <p className="text-sm text-gray-600">{t("dashboard.trackYourActionsProgress")}</p>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="mt-0 space-y-0">
@@ -6324,13 +6332,13 @@ const Dashboard = () => {
         {openCard === 'avisLies' && (
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle className="text-xl">Avis liés</CardTitle>
-              <p className="text-sm text-gray-600">Avis freinant votre progression vers l'objectif</p>
+              <CardTitle className="text-xl">{t("dashboard.relatedReviews")}</CardTitle>
+              <p className="text-sm text-gray-600">{t("dashboard.reviewsSlowingYourProgress")}</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {linkedReviews.length === 0 ? (
-                  <div className="text-sm text-gray-500">Aucun avis lié trouvé.</div>
+                  <div className="text-sm text-gray-500">{t("dashboard.noRelatedReviewsFound")}</div>
                 ) : (
                   linkedReviews.map((r: any, idx: number) => {
                     const authorName = r?.author || r?.author_name || t("dashboard.anonymous");
@@ -6364,13 +6372,13 @@ const Dashboard = () => {
         {openCard === 'impact' && (
           <Card className="mb-8">
             <CardHeader className="pb-1">
-              <CardTitle className="text-xl">Impact</CardTitle>
-              <p className="text-sm text-gray-600">Estimez l'impact de vos améliorations</p>
+              <CardTitle className="text-xl">{t("dashboard.impact")}</CardTitle>
+              <p className="text-sm text-gray-600">{t("dashboard.estimateImpactOfImprovements")}</p>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="mt-1 space-y-3">
                 <p className="text-sm text-gray-700">
-                  Si vous corrigez ces points, voici l'impact estimé sur votre note :
+                  {t("dashboard.estimatedImpactOnRating")}
                 </p>
                 {impactStats.lines.map((l) => (
                   <div key={l.key} className="p-3 rounded-lg border border-gray-200 bg-white/70">
@@ -6384,16 +6392,16 @@ const Dashboard = () => {
                         style={{ width: `${Math.min(100, Math.max(0, l.pct))}%` }}
                       />
                     </div>
-                    <div className="mt-1 text-xs text-gray-500">{l.count} mentions dans les avis négatifs</div>
+                    <div className="mt-1 text-xs text-gray-500">{l.count} {t("dashboard.mentionsInNegativeReviews")}</div>
                   </div>
                 ))}
 
                 <div className="mt-2 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
                   <div className="text-sm font-semibold text-gray-900">
-                    Note projetée : {impactStats.projectedLow.toFixed(1)} - {impactStats.projectedHigh.toFixed(1)}
+                    {t("dashboard.projectedRating")} : {impactStats.projectedLow.toFixed(1)} - {impactStats.projectedHigh.toFixed(1)}
                   </div>
                   <div className="text-xs text-gray-600 mt-1">
-                    Basée sur la note actuelle ({impactStats.current.toFixed(1)}/5) et la fréquence des mentions dans les avis négatifs.
+                    {t("dashboard.basedOnCurrentRating")} ({impactStats.current.toFixed(1)}/5) {t("dashboard.frequencyInNegativeReviews")}
                   </div>
                 </div>
               </div>

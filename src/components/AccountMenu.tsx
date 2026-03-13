@@ -19,11 +19,13 @@ import {
   User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 export function AccountMenu() {
   const { user, displayName, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     await signOut();
@@ -82,7 +84,7 @@ export function AccountMenu() {
             )}
           >
             <Building2 className="h-4 w-4" />
-            <span className="text-sm">Établissements</span>
+            <span className="text-sm">{t("headerAccountMenu.establishment")}</span>
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -93,7 +95,7 @@ export function AccountMenu() {
             )}
           >
             <MessageSquare className="h-4 w-4" />
-            <span className="text-sm">Messages</span>
+            <span className="text-sm">{t("headerAccountMenu.messages")}</span>
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -104,7 +106,7 @@ export function AccountMenu() {
             )}
           >
             <CreditCard className="h-4 w-4" />
-            <span className="text-sm">Facturation / Abonnement</span>
+            <span className="text-sm">{t("headerAccountMenu.billingAndSubscription")}</span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
@@ -117,7 +119,7 @@ export function AccountMenu() {
             )}
           >
             <Settings className="h-4 w-4" />
-            <span className="text-sm">Paramètres du compte</span>
+            <span className="text-sm">{t("headerAccountMenu.accountSettings")}</span>
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -125,7 +127,7 @@ export function AccountMenu() {
             className="flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer"
           >
             <HelpCircle className="h-4 w-4" />
-            <span className="text-sm">Aide</span>
+            <span className="text-sm">{t("headerAccountMenu.help")}</span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
@@ -135,7 +137,7 @@ export function AccountMenu() {
             className="flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer text-red-600 hover:bg-red-50 hover:text-red-700"
           >
             <LogOut className="h-4 w-4" />
-            <span className="text-sm">Déconnexion</span>
+            <span className="text-sm">{t("headerAccountMenu.logout")}</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

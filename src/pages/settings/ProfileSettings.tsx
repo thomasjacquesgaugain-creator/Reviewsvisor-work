@@ -7,6 +7,7 @@ import { ProfilePhotoUploader } from "@/components/settings/ProfilePhotoUploader
 import { toast } from "sonner";
 import { validatePhoneNumber, formatPhoneNumber } from "@/utils/phoneValidation";
 import { formatAddress } from "@/utils/addressFormatting";
+import { useTranslation } from "react-i18next";
 
 function trimStr(v: unknown): string {
   return (v ?? "").toString().trim();
@@ -22,6 +23,7 @@ export function ProfileSettings() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
@@ -91,7 +93,7 @@ export function ProfileSettings() {
       
       setFirstName(value);
       await refreshProfile();
-      toast.success("Prénom mis à jour");
+      toast.success(t("settings.personalInformation.validation.firstNameUpdated"));
     } catch (err) {
       logSupabaseError("ProfileSettings (save first name)", err);
       toast.error("Erreur lors de la mise à jour");
@@ -116,7 +118,7 @@ export function ProfileSettings() {
       
       setLastName(value);
       await refreshProfile();
-      toast.success("Nom mis à jour");
+      toast.success(t("settings.personalInformation.validation.lastNameUpdated"));
     } catch (err) {
       logSupabaseError("ProfileSettings (save last name)", err);
       toast.error("Erreur lors de la mise à jour");
@@ -172,7 +174,7 @@ export function ProfileSettings() {
       if (error) throw error;
       
       setPhone(value.trim());
-      toast.success("Numéro de téléphone mis à jour");
+      toast.success(t("settings.personalInformation.validation.phoneNumberUpdated"));
     } catch (err: unknown) {
       const e = err as { message?: string };
       if (e?.message?.includes("Format")) {
@@ -200,7 +202,7 @@ export function ProfileSettings() {
       if (error) throw error;
       
       setPostalAddress(value.trim());
-      toast.success("Adresse postale mise à jour");
+      toast.success(t("settings.personalInformation.validation.addressUpdated"));
     } catch (err) {
       logSupabaseError("ProfileSettings (save postal address)", err);
       toast.error("Erreur lors de la mise à jour de l'adresse");
@@ -227,7 +229,7 @@ export function ProfileSettings() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-2">Informations personnelles</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-2">{t("settings.personalInformation.title")}</h1>
       {loadError && (
         <p className="text-sm text-amber-600 mb-6" role="alert">
           {loadError}
@@ -237,7 +239,7 @@ export function ProfileSettings() {
 
       {/* Photo de profil */}
       <div className="mb-8 pb-8 border-b border-gray-200">
-        <label className="block text-sm font-medium text-gray-700 mb-4">Photo de profil</label>
+        <label className="block text-sm font-medium text-gray-700 mb-4">{t("settings.personalInformation.profilePicture")}</label>
         {user && (
           <ProfilePhotoUploader
             userId={user.id}
@@ -251,44 +253,44 @@ export function ProfileSettings() {
       {/* Champs éditables */}
       <div className="space-y-0">
         <EditableField
-          label="Prénom"
+          label={t("settings.personalInformation.firstName")}
           value={firstName}
           onSave={handleSaveFirstName}
-          placeholder="Votre prénom"
+          placeholder={t("settings.personalInformation.placeholder.firstName")}
         />
         <EditableField
-          label="Nom"
+          label={t("settings.personalInformation.lastName")}
           value={lastName}
           onSave={handleSaveLastName}
-          placeholder="Votre nom"
+          placeholder={t("settings.personalInformation.placeholder.lastName")}
         />
         <EditableField
-          label="Nom d'affichage"
+          label={t("settings.personalInformation.displayName")}
           value={displayNameState}
           onSave={handleSaveDisplayName}
-          placeholder="Nom affiché publiquement"
+          placeholder={t("settings.personalInformation.placeholder.displayName")}
         />
         <EditableField
-          label="Numéro de téléphone"
+          label={t("settings.personalInformation.phoneNumber")}
           value={phone ? formatPhoneNumber(phone) : ""}
           onSave={handleSavePhone}
           placeholder="+33123456789"
           type="tel"
-          emptyLabel="Information non fournie"
+          emptyLabel={t("settings.personalInformation.placeholder.informationNotProvided")}
         />
         <EditableField
-          label="Adresse postale"
+          label={t("settings.personalInformation.mailingAddress")}
           value={postalAddress ? formatAddress(postalAddress) : ""}
           onSave={handleSavePostalAddress}
           placeholder="1 Cr de la Bôve, 56100 Lorient"
           type="textarea"
-          emptyLabel="Information non fournie"
+          emptyLabel={t("settings.personalInformation.placeholder.informationNotProvided")}
         />
         <div className="flex items-start justify-between py-4 border-b border-gray-100">
           <div className="flex-1 min-w-0">
-            <label className="block text-sm font-medium text-gray-500 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-500 mb-1">{t("settings.personalInformation.email")}</label>
             <div className="text-sm text-gray-900">{user?.email}</div>
-            <p className="text-xs text-gray-500 mt-1">L'email ne peut pas être modifié</p>
+            <p className="text-xs text-gray-500 mt-1">{t("settings.personalInformation.placeholder.emailNotChanged")}</p>
           </div>
         </div>
       </div>

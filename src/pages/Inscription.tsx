@@ -265,7 +265,7 @@ export default function Inscription() {
               disabled={loading}
               className="w-full"
             >
-              {loading ? t("auth.signingUp") || "Enregistrement..." : "Continuer vers l'abonnement"}
+              {loading ? t("auth.signingUp") || "Enregistrement..." : t("auth.continueToSubscription")}
             </Button>
           </form>
         </CardContent>

@@ -17,68 +17,68 @@ interface SettingsLayoutProps {
   children: ReactNode;
 }
 
-const settingsNavItems: SettingsNavItem[] = [
-  {
-    id: "profile",
-    label: "Informations personnelles",
-    path: "/settings/profile",
-    icon: <User className="h-4 w-4" />,
-  },
-  {
-    id: "establishments",
-    label: "Établissements & accès",
-    path: "/settings/establishments",
-    icon: <Building2 className="h-4 w-4" />,
-  },
-  {
-    id: "establishment-info",
-    label: "Infos d'établissement",
-    path: "/settings/establishment-info",
-    icon: <Info className="h-4 w-4" />,
-  },
-  {
-    id: "security",
-    label: "Connexion & sécurité",
-    path: "/settings/security",
-    icon: <Shield className="h-4 w-4" />,
-  },
-  {
-    id: "notifications",
-    label: "Notifications",
-    path: "/settings/notifications",
-    icon: <Bell className="h-4 w-4" />,
-  },
-  {
-    id: "language",
-    label: "Langue, Région & Devises",
-    path: "/settings/language",
-    icon: <Globe className="h-4 w-4" />,
-  },
-  {
-    id: "billing",
-    label: "Facturation / Abonnement",
-    path: "/settings/billing",
-    icon: <CreditCard className="h-4 w-4" />,
-  },
-  {
-    id: "billing-reports",
-    label: "Mes rapports mensuels",
-    path: "/settings/billing/reports",
-    icon: <FileText className="h-4 w-4" />,
-  },
-  {
-    id: "customization",
-    label: "Personnalisation",
-    path: "/settings/customization",
-    icon: <Palette className="h-4 w-4" />,
-  },
-];
-
 export function SettingsLayout({ children }: SettingsLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const settingsNavItems: SettingsNavItem[] = [
+  {
+    id: "profile",
+    label: t("settings.personalInformation.title"),
+    path: "/settings/profile",
+    icon: <User className="h-4 w-4" />,
+  },
+  {
+    id: "establishments",
+    label: t("settings.establishmentAndAccess.title"),
+    path: "/settings/establishments",
+    icon: <Building2 className="h-4 w-4" />,
+  },
+  {
+    id: "establishment-info",
+    label: t("settings.establishmentInformation.title"),
+    path: "/settings/establishment-info",
+    icon: <Info className="h-4 w-4" />,
+  },
+  {
+    id: "security",
+    label: t("settings.connectionAndSecurity.title"),
+    path: "/settings/security",
+    icon: <Shield className="h-4 w-4" />,
+  },
+  {
+    id: "notifications",
+    label: t("settings.notifications.title"),
+    path: "/settings/notifications",
+    icon: <Bell className="h-4 w-4" />,
+  },
+  {
+    id: "language",
+    label: t("settings.LanguageRegionAndCurrency.title"),
+    path: "/settings/language",
+    icon: <Globe className="h-4 w-4" />,
+  },
+  {
+    id: "billing",
+    label: t("settings.BillingAndSubscription.title"),
+    path: "/settings/billing",
+    icon: <CreditCard className="h-4 w-4" />,
+  },
+  {
+    id: "billing-reports",
+    label: t("settings.myMonthlyReports.title"),
+    path: "/settings/billing/reports",
+    icon: <FileText className="h-4 w-4" />,
+  },
+  {
+    id: "customization",
+    label: t("settings.personalization.title"),
+    path: "/settings/customization",
+    icon: <Palette className="h-4 w-4" />,
+  },
+];
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -121,7 +121,7 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
             <SheetContent side="left" className="w-80 p-0">
               <div className="p-6 border-b">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">Paramètres</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">{t("settings.title")}</h2>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -144,7 +144,7 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
           {/* Sidebar (desktop) */}
           <aside className="hidden lg:block w-64 flex-shrink-0">
             <div className="sticky top-8 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Paramètres</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">{t("settings.title")}</h2>
               <NavContent />
             </div>
           </aside>

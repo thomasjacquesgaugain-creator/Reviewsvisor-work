@@ -11,6 +11,7 @@ import {
   validateAvatarFile,
 } from "@/services/avatarService";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next"
 
 interface ProfilePhotoUploaderProps {
   userId: string;
@@ -30,6 +31,7 @@ export function ProfilePhotoUploader({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
 
   // Synchroniser avec les changements externes
   useEffect(() => {
@@ -221,7 +223,7 @@ export function ProfilePhotoUploader({
             disabled={isUploading}
           >
             <Camera className="h-4 w-4" />
-            <span>{avatarUrl ? "Changer la photo" : "Ajouter une photo"}</span>
+            <span>{avatarUrl ? t("settings.personalInformation.changePhoto") : t("settings.personalInformation.addPhoto")}</span>
           </Button>
           {avatarUrl && (
             <Button
@@ -247,7 +249,7 @@ export function ProfilePhotoUploader({
           <p className="text-xs text-red-600">{error}</p>
         )}
         <p className="text-xs text-gray-500">
-          JPG, PNG ou WebP. Taille maximale : 2 Mo
+          {t("settings.personalInformation.placeholder.profilePicture")}
         </p>
       </div>
     </div>

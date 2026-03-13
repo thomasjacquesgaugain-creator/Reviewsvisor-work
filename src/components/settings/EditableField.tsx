@@ -2,6 +2,7 @@ import { useState, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Pencil, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface EditableFieldProps {
   label: string;
@@ -31,6 +32,7 @@ export function EditableField({
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(typeof value === "string" ? value : "");
   const [saving, setSaving] = useState(false);
+  const { t } = useTranslation();
 
   const handleSave = async () => {
     if (!onSave) return;
@@ -83,7 +85,7 @@ export function EditableField({
             className="gap-2"
           >
             <Check className="h-4 w-4" />
-            <span>Enregistrer</span>
+            <span>{t("common.save")}</span>
           </Button>
           <Button
             size="sm"
@@ -93,7 +95,7 @@ export function EditableField({
             className="gap-2"
           >
             <X className="h-4 w-4" />
-            <span>Annuler</span>
+            <span>{t("common.cancel")}</span>
           </Button>
         </div>
       </div>

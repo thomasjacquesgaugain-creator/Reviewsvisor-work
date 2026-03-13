@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Eye, EyeOff, Lock, Shield } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function SecuritySettings() {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ export function SecuritySettings() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const { t } = useTranslation();
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +48,7 @@ export function SecuritySettings() {
       });
 
       if (reauthError) {
-        toast.error("Mot de passe actuel incorrect");
+        toast.error(t("settings.connectionAndSecurity.validation.currentPasswordIncorrect"));
         return;
       }
 
@@ -57,7 +59,7 @@ export function SecuritySettings() {
 
       if (error) throw error;
 
-      toast.success("Mot de passe mis à jour");
+      toast.success(t("settings.connectionAndSecurity.validation.passwordUpdated"));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -78,7 +80,7 @@ export function SecuritySettings() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-8">Connexion & sécurité</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-8">{t("settings.connectionAndSecurity.title")}</h1>
 
       <div className="flex justify-center">
         <div className="w-full max-w-md">
@@ -87,14 +89,14 @@ export function SecuritySettings() {
             <div className="flex items-center gap-3 mb-6">
               <Shield className="h-5 w-5 text-gray-400" />
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-medium text-gray-900">Mot de passe</h2>
+                <h2 className="text-lg font-medium text-gray-900">{t("settings.connectionAndSecurity.password")}</h2>
                 <Lock className="h-5 w-5 text-gray-400 shrink-0" />
               </div>
             </div>
 
             <form onSubmit={handleChangePassword} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="current-password">Mot de passe actuel</Label>
+            <Label htmlFor="current-password">{t("settings.connectionAndSecurity.currentPassword")}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" aria-hidden />
               <Input
@@ -102,7 +104,7 @@ export function SecuritySettings() {
                 type={showCurrentPassword ? "text" : "password"}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Votre mot de passe actuel"
+                placeholder={t("settings.connectionAndSecurity.placeholder.yourNewPassword")}
                 className="pl-10 pr-10"
               />
               <button
@@ -117,7 +119,7 @@ export function SecuritySettings() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="new-password">Nouveau mot de passe</Label>
+            <Label htmlFor="new-password">{t("settings.connectionAndSecurity.newPassword")}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" aria-hidden />
               <Input
@@ -125,7 +127,7 @@ export function SecuritySettings() {
                 type={showNewPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Au moins 6 caractères"
+                placeholder={t("settings.connectionAndSecurity.placeholder.characters")}
                 className="pl-10 pr-10"
               />
               <button
@@ -140,7 +142,7 @@ export function SecuritySettings() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
+            <Label htmlFor="confirm-password">{t("settings.connectionAndSecurity.confirmNewPassword")}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" aria-hidden />
               <Input
@@ -148,7 +150,7 @@ export function SecuritySettings() {
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirmer le nouveau mot de passe"
+                placeholder={t("settings.connectionAndSecurity.placeholder.confirmNewPassword")}
                 className="pl-10 pr-10"
               />
               <button
@@ -163,7 +165,7 @@ export function SecuritySettings() {
           </div>
 
           <Button type="submit" disabled={changingPassword || !isFormValid}>
-            {changingPassword ? "Mise à jour..." : "Mettre à jour le mot de passe"}
+            {changingPassword ? t("settings.connectionAndSecurity.updating") : t("settings.connectionAndSecurity.updatePassword")}
           </Button>
             </form>
           </div>
