@@ -67,9 +67,6 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
       case "auto":
         return (
           <div className="space-y-4">
-            <CollapsibleInstructionsHeader>
-              {/* Contenu vide pour le moment */}
-            </CollapsibleInstructionsHeader>
             
             <div className="py-6">
               <p className="text-sm text-gray-600 mb-4">

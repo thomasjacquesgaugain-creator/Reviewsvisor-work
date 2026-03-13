@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Upload, File, X } from "lucide-react";
+import { Upload, File, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -486,7 +486,7 @@ const mapStarRating = (rating: string) => {
         >
           {isUploading ? (
             <>
-              <Upload className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="w-4 h-4 animate-spin" />
               {t("import.importing")}
             </>
           ) : (
