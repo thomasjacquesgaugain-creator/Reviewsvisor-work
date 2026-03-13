@@ -69,10 +69,16 @@
     "confirmPasswordPlaceholder": "Confirm your password",
     "firstName": "First name",
     "firstNamePlaceholder": "Your first name",
+    "firstNameLabel": "First name",
     "lastName": "Last name",
     "lastNamePlaceholder": "Your last name",
+    "lastNameLabel": "Last name",
     "companyNamePlaceholder": "Your company name",
+    "companyLabel": "Company",
     "addressPlaceholder": "Complete restaurant address",
+    "addressLabel": "Establishment address",
+    "passwordLabel": "Password",
+    "confirmPasswordLabel": "Confirm password",
     "forgotPassword": "Forgot password?",
     "resetPassword": "Reset password",
     "noAccount": "Don't have an account?",
@@ -139,7 +145,8 @@
     "pleaseReconnect": "Please reconnect",
     "emailSendError": "An error occurred while sending the email",
     "alreadyHaveAccount": "Already have an account?",
-    "redirectingToLogin": "Redirecting to login page..."
+    "redirectingToLogin": "Redirecting to login page...",
+    "continueToSubscription": "Continue to subscription"
   },
   "nav": {
     "home": "Home",
@@ -247,6 +254,11 @@
     "registeredSince": "Registered since",
     "lastUpdate": "Last update",
     "granularity": "Granularity",
+    "noDataForRatingEvolution": "No data available to display the evolution of the rating",
+    "distributionReviewsByRating": "Distribution of reviews by rating",
+    "importReviewsToSeeTheThemes": "Import your reviews to see the themes",
+    "recurringThemes": "Recurring themes",
+    "uploadReviewToSeeBreakdown": "Upload your reviews to see the breakdown",
     "day": "Day",
     "week": "Week",
     "month": "Month",
@@ -327,6 +339,8 @@
     "noActionsAvailable": "No actions available",
     "analyzeEstablishmentToGetActions": "Analyze your establishment to get improvement actions",
     "agent": "Agent",
+    "aiRespondReview": "AI assistant to respond to your reviews",
+    "askQuestion": "Ask a question about your reviews...",
     "aiAssistantForReviews": "Your AI assistant to manage your reviews",
     "agentWelcomeMessage": "Hello! I'm your AI assistant. I can help you analyze your reviews, generate responses, and provide insights to improve your establishment.",
     "agentCapabilities": "Capabilities",
@@ -377,6 +391,8 @@
     "enhanceStrengthsGeneric": "Highlight identified strengths",
     "fixMainFrictionPoint": "Fix the main friction point: {{issue}}",
     "fixMainFrictionPointIdentified": "Fix the identified main friction point",
+    "reviewsDecryption": "Decryption of reviews",
+    "completeDetailsRatingsThemes": "Complete details of ratings and themes",
     "trainTeamOnIdentifiedImprovements": "Train the team on identified improvement points",
     "identifyAndEnhanceExistingStrengths": "Identify and enhance existing strengths",
     "analyzeReviewsToIdentifyFrictionPoints": "Analyze reviews to identify priority friction points",
@@ -447,7 +463,227 @@
     "analysisHistory": "Analysis history",
     "previousAnalysesDescription": "Previous and completed analyses. Results",
     "noNegativeReviewsFound": "No negative reviews found",
-    "noPositiveReviewsFound": "No positive reviews found"
+    "noPositiveReviewsFound": "No positive reviews found",
+    "keyIndicators": "Key indicators",
+    "response": "Response",
+    "analyse": "Analyse",
+    "noAnalysisAvailable": "No analysis available for this establishment. Click \"Analyze\" in the location map to get started.",
+    "importAndAnalyzeToSeeResults": "Report reviews and run an analysis to see the results",
+    "synthesisPriorities": "Summary & priorities",
+    "synthesisPrioritiesSubtitle": "Strategic reading of customer reviews and priority focus points",
+    "improvementAxesIdentified": "Identified areas for improvement",
+    "low": "Low",
+    "medium": "Medium",
+    "importGeneratePersonalizedActions": "Import your reviews to generate personalized actions",
+    "noAdviceAvailable": "No advice available",
+    "analyzeEstablishmentToGetAdvice": "Analyze your establishment to get personalized advice.",
+    "recommendedStartHighImpactLowEffort": "Suggestion for consideration: prioritize items with high impact and low effort based on your priorities.",
+    "automatedSystemForReviews": "Automated customer review system",
+    "noPendingReviews": "No reviews awaiting validation at the moment.",
+    "responseCenter": "Response Center",
+    "manageCustomerReviewResponses": "Manage your responses to customer reviews",
+    "pending": "Pending",
+    "replied": "Replied",
+    "contentAnalysis": "Content Analysis",
+    "aiReviewClassification": "AI Classification of Reviews",
+    "filterByRating": "Filter by Rating",
+    "reviewsSortedByStars": "Reviews Sorted by Stars",
+    "noPendingReview": "No Pending Reviews",
+    "priority": "Priority",
+    "reviewsSortedByUrgency": "Reviews Sorted by Urgency",
+    "platform": "Platform",
+    "reviewsSortedBySource": "Reviews Sorted by Source",
+    "noRepliedReviews": "No replied reviews",
+    "noReviewsAvailable": "No reviews available",
+    "dashResponseTableHeading": {
+      "author": "Author",
+      "rating": "Rating",
+      "comment": "Comment",
+      "source": "Source",
+      "date": "Date",
+      "status": "Status",
+      "action": "Action"
+    },
+    "progress": "Progress",
+    "trackYourActionsProgress": "Track the progress of your actions",
+    "relatedReviews": "Related Reviews",
+    "reviewsSlowingYourProgress": "Reviews slowing your progress toward your goal",
+    "estimateImpactOfImprovements": "Estimate the impact of your improvements",
+    "estimatedImpactOnRating": "If you fix these issues, here is the estimated impact on your rating:",
+    "noRelatedReviewsFound": "No related reviews found.",
+    "waitTime": "Waiting Time",
+    "serviceReception": "Service / Reception",
+    "foodQuality": "Food Quality",
+    "price": "Price",
+    "mentionsInNegativeReviews": "Mentions in negative reviews",
+    "projectedRating": "Projected rating",
+    "basedOnCurrentRating": "Based on the current rating",
+    "frequencyInNegativeReviews": "and frequency of mentions in negative reviews.",
+    "noReviewsForEstablishment": "No reviews recorded for this establishment. Import reviews to see statistics."
+  },
+  "headerAccountMenu": {
+    "establishment": "Establishment",
+    "messages": "Messages",
+    "billingAndSubscription": "Billing / Subscription",
+    "accountSettings": "Account settings",
+    "help": "Help",
+    "logout": "Log out"
+  },
+  "settings": {
+    "title": "Settings",
+    "personalInformation": {
+      "title": "Personal information",
+      "profilePicture": "Profile picture",
+      "addPhoto": "Add a photo",
+      "changePhoto": "Change photo",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "displayName": "Display name",
+      "phoneNumber": "Phone number",
+      "mailingAddress": "Mailing address",
+      "email": "Email",
+      "placeholder": {
+        "profilePicture": "JPG, PNG, or WebP. Maximum size: 2 MB",
+        "firstName": "Your first name",
+        "lastName": "Your last name",
+        "displayName": "Name displayed to user",
+        "informationNotProvided": "Information not provided",
+        "emailNotChanged": "Email address cannot be changed"
+      },
+      "validation": {
+        "firstNameUpdated": "First name updated",
+        "lastNameUpdated": "Last name updated",
+        "phoneNumberUpdated": "Phone number updated",
+        "addressUpdated": "Mailing address updated"
+      }
+    },
+    "establishmentAndAccess": {
+      "title": "Establishment & Access",
+      "addEstablishment": "Add an establishment",
+      "manage": "Manage",
+      "loadingEstablishments": "Loading establishments...",
+      "deleteEstablishment": "Delete this establishment",
+      "deleteConfirmation": "Are you sure you want to delete this establishment?",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "noEstablishment": "No establishments yet",
+      "addFirstEstablishment": "Add your first establishment.",
+      "defineActive": "Set as active",
+      "establishmentClosed": "Establishment closed"
+    },
+    "establishmentInformation": {
+      "title": "Establishment information"
+    },
+    "connectionAndSecurity": {
+      "title": "Connection and security",
+      "password": "Password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmNewPassword": "Confirm new password",
+      "updatePassword": "Update password",
+      "updating": "Updating...",
+      "placeholder": {
+        "yourNewPassword": "Your current password",
+        "characters": "At least 6 characters",
+        "confirmNewPassword": "Confirm new password"
+      },
+      "validation": {
+        "currentPasswordIncorrect": "Current password incorrect",
+        "passwordUpdated": "Password updated"
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "notificationsParEmail": "Notifications par email",
+      "newReviews": "New Reviews",
+      "newReviewsDescription": "Receive an email for each new review",
+      "weeklyReport": "Weekly report",
+      "weeklyReportDescription": "Receive a weekly summary of your performance",
+      "importantUpdates": "Important updates",
+      "importantUpdatesDescription": "Receive notifications about important changes",
+      "inAppNotifications": "In-app notifications",
+      "enableInAppNotifications": "Enable in-app notifications",
+      "inAppNotificationsDescription": "Receive notifications in the application",
+      "validation": {
+        "preferencesUpdated": "Preferences updated"
+      }
+    },
+    "LanguageRegionAndCurrency": {
+      "title": "Language, Region and Currency",
+      "languagePreferences": "Language preferences",
+      "interfaceLanguage": "Interface language",
+      "interfaceLanguageDescription": "This language will be used for the Reviewsvisor interface",
+      "region": "Region",
+      "regionDescription": "This region will be used for date, number, and address formats",
+      "currency": "Currency",
+      "currencyDescription": "This currency will be used to display amounts and prices.",
+      "validation": {
+        "languageUpdated": "Language updated",
+        "regionUpdated": "Region updated",
+        "currencyUpdated": "Currency updated"
+      }
+    },
+    "BillingAndSubscription": {
+      "title": "Billing and Subscription",
+      "loadingPlan": "Loading plan...",
+      "currentPlan": "Current plan",
+      "currentPackage": "Current package",
+      "freePlan": "Free plan (Free)",
+      "includedEstablishments": "Included establishments",
+      "additionalEstablishments": "Additional establishments",
+      "totalAllowed": "Total allowed ",
+      "noAdditionalEstablishments": "No additional establishments",
+      "billingManagement": "Billing management",
+      "viewAvailablePlans": "View available plans",
+      "invoiceHistory": "Invoice history"
+    },
+    "myMonthlyReports": {
+      "title": "My monthly reports",
+      "back": "Back",
+      "monthlyReportDescription": "Download your monthly billing and activity reports",
+      "download": "Download"
+    },
+    "personalization": {
+      "title": "Personalisation",
+      "personalizationDescription": "Customize the appearance of your interface",
+      "reset": "Reset",
+      "appearance": "Appearance",
+      "appearanceDescription": "Choose the interface theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System",
+      "mainColour": "Main colour",
+      "mainColourDescription": "Choose the accent color for buttons, links, and active elements",
+      "colors": {
+        "blue": "Blue",
+        "green": "Green",
+        "purple": "Purple",
+        "pink": "Pink",
+        "orange": "Orange",
+        "red": "Red",
+        "teal": "Teal",
+        "indigo": "Indigo"
+      },
+      "background": "Background",
+      "backgroundDescription": "Choose the background color of the interface",
+      "backgroundColor": {
+        "neutral": "Neutral",
+        "warm": "Warm",
+        "cool": "Cool",
+        "paleBlue": "Pale blue",
+        "paleGreen": "Pale green",
+        "palePink": "Pale pink",
+        "palePurple": "Pale purple",
+        "cream": "Cream",
+        "stone": "Stone"
+      },
+      "validation": {
+        "settingsReset": "Settings reset",
+        "updatedAppearance": "Updated appearance",
+        "colorUpdated": "Main color updated",
+        "backgroundUpdated": "Background updated"
+      }
+    }
   },
   "platforms": {
     "google": "Google",
@@ -608,6 +844,7 @@
     "subscribeNow": "Subscribe now",
     "securePaymentStripe": "Secure payment by Stripe",
     "easyCancellation": "Easy online cancellation",
+    "saveEstablishment": "Register the establishment",
     "plans": {
       "pro-engagement": {
         "name": "Pro Subscription",
@@ -677,6 +914,7 @@
     "loadError": "Unable to load establishments",
     "autoSelected": "\"{{name}}\" has been automatically selected",
     "deleteError": "Unable to delete establishment",
+    "setAsActive": "\"{{name}}\" set as an active establishment",
     "yourEstablishment": "your establishment",
     "chooseAnotherEstablishment": "Choose another establishment",
     "myEstablishments": "My Establishments",
@@ -741,30 +979,6 @@
     "newReviews": "{{inserted}} new",
     "updatedReviews": "{{updated}} updated",
     "noReviewsFound": "0 reviews found (check Google account + establishment)"
-  },
-  "auth": {
-    "login": "Log in",
-    "logout": "Log out",
-    "signup": "Create account",
-    "signupAction": "Sign up",
-    "email": "Email",
-    "emailPlaceholder": "your@email.com",
-    "password": "Password",
-    "passwordPlaceholder": "Your password",
-    "confirmPassword": "Confirm password",
-    "confirmPasswordPlaceholder": "Confirm your password",
-    "firstName": "First name",
-    "firstNamePlaceholder": "Your first name",
-    "firstNameLabel": "First name",
-    "lastName": "Last name",
-    "lastNamePlaceholder": "Your last name",
-    "lastNameLabel": "Last name",
-    "companyNamePlaceholder": "Your company name",
-    "companyLabel": "Company",
-    "addressPlaceholder": "Complete restaurant address",
-    "addressLabel": "Establishment address",
-    "passwordLabel": "Password",
-    "confirmPasswordLabel": "Confirm password"
   },
   "errors": {
     "title": "Error",
@@ -893,6 +1107,9 @@
     "manualEntry": "Manual entry",
     "exampleReview": "Example: \"Excellent restaurant, impeccable service and delicious dishes! A bit tired tart but the quality was there. Very very nice!\""
   },
+  "aiAssistance": {
+    "ask": "Ask"
+  },
   "about": {
     "ourVision": "Our Vision",
     "about": "About",
@@ -998,7 +1215,12 @@
     "faq4Question": "How accurate is the analysis?",
     "faq4Answer": "Reviewsvisor uses artificial intelligence models trained on millions of real customer reviews. The average accuracy rate exceeds 90%, with continuous improvement through machine learning from new reviews analyzed.",
     "faq5Question": "What payment methods are accepted?",
-    "faq5Answer": "We accept all major credit cards (Visa, Mastercard, American Express) through our secure Stripe payment system. Payment is processed securely and your subscription is activated immediately after payment confirmation."
+    "faq5Answer": "We accept all major credit cards (Visa, Mastercard, American Express) through our secure Stripe payment system. Payment is processed securely and your subscription is activated immediately after payment confirmation.",
+    "faq6Question": "What should I implement to address my priority issues?",
+    "faq7Question": "How can I get more positive reviews?",
+    "faq8Question": "Would I increase my revenue with a better rating?",
+    "faq9Question": "How can I quickly reduce negative reviews?",
+    "faq10Question": "Where am I losing the most customers today?"
   },
   "features": {
     "badge": "AI • Insights • Action",

@@ -136,7 +136,7 @@ export function CurrentPlanCard({ summary, activePlan, className }: CurrentPlanC
 
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <span className="text-lg font-medium text-gray-900">
-          {summary.planName === "Free" ? "Plan gratuit (Free)" : summary.planName}
+          {summary.planName === "Free" ? t("settings.BillingAndSubscription.freePlan") : summary.planName}
         </span>
         <Badge variant="outline" className={cn("font-medium", STATUS_VARIANTS[summary.status])}>
           {STATUS_LABELS[summary.status]}

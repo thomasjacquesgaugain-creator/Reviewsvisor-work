@@ -17,11 +17,13 @@ import {
   ACCENT_COLORS_LIST,
   BACKGROUND_TINTS_LIST,
 } from "@/utils/theme";
+import { useTranslation } from "react-i18next";
 
 export function CustomizationSettings() {
   const [theme, setThemeState] = useState<ThemeMode>(() => getStoredTheme());
   const [accent, setAccentState] = useState<AccentColor>(() => getStoredAccent());
   const [bg, setBgState] = useState<BackgroundTint>(() => getStoredBackground());
+  const { t } = useTranslation();
 
   // Appliquer les changements immédiatement
   useEffect(() => {
@@ -39,19 +41,19 @@ export function CustomizationSettings() {
   const handleThemeChange = (newTheme: ThemeMode) => {
     setThemeState(newTheme);
     setTheme(newTheme);
-    toast.success("Apparence mise à jour");
+    toast.success(t("settings.personalization.validation.updatedAppearance"));
   };
 
   const handleAccentChange = (newAccent: AccentColor) => {
     setAccentState(newAccent);
     setAccent(newAccent);
-    toast.success("Couleur principale mise à jour");
+    toast.success(t("settings.personalization.validation.colorUpdated"));
   };
 
   const handleBackgroundChange = (newBg: BackgroundTint) => {
     setBgState(newBg);
     setBackground(newBg);
-    toast.success("Fond mis à jour");
+    toast.success(t("settings.personalization.validation.backgroundUpdated"));
   };
 
   const handleReset = () => {
@@ -64,16 +66,16 @@ export function CustomizationSettings() {
     setBgState("neutral");
     
     // Afficher un toast de confirmation
-    toast.success("Paramètres réinitialisés");
+    toast.success(t("settings.personalization.validation.settingsReset"));
   };
 
   return (
     <div className="p-8">
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Personnalisation</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">{t("settings.personalization.title")}</h1>
           <p className="text-sm text-gray-500 mt-2">
-            Personnalisez l'apparence de votre interface
+            {t("settings.personalization.personalizationDescription")}
           </p>
         </div>
         <Button
@@ -85,7 +87,7 @@ export function CustomizationSettings() {
           title="Revenir à l'apparence par défaut"
         >
           <RotateCcw className="h-4 w-4" />
-          <span>Réinitialiser</span>
+          <span>{t("settings.personalization.reset")}</span>
         </Button>
       </div>
 
@@ -93,9 +95,9 @@ export function CustomizationSettings() {
         {/* Card Apparence */}
         <div className="border border-gray-200 rounded-lg p-6 bg-white">
           <div className="mb-4">
-            <h2 className="text-lg font-medium text-gray-900">Apparence</h2>
+            <h2 className="text-lg font-medium text-gray-900">{t("settings.personalization.appearance")}</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Choisissez le thème de l'interface
+              {t("settings.personalization.appearanceDescription")}
             </p>
           </div>
 
@@ -111,7 +113,7 @@ export function CustomizationSettings() {
                 )}
             >
               <Sun className="h-4 w-4" />
-              <span className="text-sm">Clair</span>
+              <span className="text-sm">{t("settings.personalization.light")}</span>
             </button>
             <button
               onClick={() => handleThemeChange("dark")}
@@ -124,7 +126,7 @@ export function CustomizationSettings() {
                 )}
             >
               <Moon className="h-4 w-4" />
-              <span className="text-sm">Sombre</span>
+              <span className="text-sm">{t("settings.personalization.dark")}</span>
             </button>
             <button
               onClick={() => handleThemeChange("system")}
@@ -137,7 +139,7 @@ export function CustomizationSettings() {
                 )}
             >
               <Monitor className="h-4 w-4" />
-              <span className="text-sm">Système</span>
+              <span className="text-sm">{t("settings.personalization.system")}</span>
             </button>
           </div>
         </div>
@@ -145,9 +147,9 @@ export function CustomizationSettings() {
         {/* Card Couleur principale */}
         <div className="border border-gray-200 rounded-lg p-6 bg-white">
           <div className="mb-4">
-            <h2 className="text-lg font-medium text-gray-900">Couleur principale</h2>
+            <h2 className="text-lg font-medium text-gray-900">{t("settings.personalization.mainColour")}</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Choisissez la couleur d'accent pour les boutons, liens et éléments actifs
+              {t("settings.personalization.mainColourDescription")}
             </p>
           </div>
 
@@ -163,13 +165,15 @@ export function CustomizationSettings() {
                     ? "border-primary bg-primary/10"
                     : "border-gray-200"
                 )}
-                aria-label={`Couleur ${color.label}`}
+                aria-label={t(`settings.personalization.colors.${color.value}`)}
               >
                 <div
                   className="w-10 h-10 rounded-full border-2 border-white shadow-sm"
                   style={{ backgroundColor: color.color }}
                 />
-                <span className="text-xs font-medium text-gray-700">{color.label}</span>
+                <span className="text-xs font-medium text-gray-700">
+                  {t(`settings.personalization.colors.${color.value}`)}
+                </span>
                 {accent === color.value && (
                   <div className="absolute top-1 right-1">
                     <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
@@ -185,9 +189,9 @@ export function CustomizationSettings() {
         {/* Card Fond */}
         <div className="border border-gray-200 rounded-lg p-6 bg-white">
           <div className="mb-4">
-            <h2 className="text-lg font-medium text-gray-900">Fond</h2>
+            <h2 className="text-lg font-medium text-gray-900">{t("settings.personalization.background")}</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Choisissez la teinte de fond de l'interface
+              {t("settings.personalization.backgroundDescription")}
             </p>
           </div>
 
@@ -203,14 +207,16 @@ export function CustomizationSettings() {
                     ? "border-primary bg-primary/5"
                     : "border-gray-200"
                 )}
-                aria-label={`Fond ${tint.label}`}
+                aria-label={t(`settings.personalization.backgroundColor.${tint.value}`)}
               >
                 {/* Swatch de couleur */}
                 <div
                   className="w-12 h-12 rounded-lg border-2 border-white shadow-sm"
                   style={{ backgroundColor: tint.preview }}
                 />
-                <span className="text-xs font-medium text-gray-700">{tint.label}</span>
+                <span className="text-xs font-medium text-gray-700">
+                  {t(`settings.personalization.backgroundColor.${tint.value}`)}
+                </span>
                 {bg === tint.value && (
                   <div className="absolute top-1 right-1">
                     <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">

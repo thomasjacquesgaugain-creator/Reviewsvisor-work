@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreditCard, Loader2, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export function BillingSettings() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export function BillingSettings() {
 
   const [extraEstablishmentsCount, setExtraEstablishmentsCount] = useState<number | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     let cancelled = false;
@@ -64,19 +66,19 @@ export function BillingSettings() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-8">Facturation / Abonnement</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-8">{t("settings.BillingAndSubscription.title")}</h1>
 
       {/* Plan actuel - carte style /abonnement si plan Pro, sinon bloc simple */}
       <div className="mb-8 pb-8 border-b border-gray-200">
         <div className="flex items-center gap-3 mb-6">
           <CreditCard className="h-5 w-5 text-gray-400" />
-          <h2 className="text-lg font-medium text-gray-900">Plan actuel</h2>
+          <h2 className="text-lg font-medium text-gray-900">{t("settings.BillingAndSubscription.currentPlan")}</h2>
         </div>
 
         {loading ? (
           <div className="flex items-center gap-3 text-muted-foreground py-6">
             <Loader2 className="h-5 w-5 animate-spin" />
-            <span>Chargement du plan...</span>
+            <span>{t("settings.BillingAndSubscription.loadingPlan")}</span>
           </div>
         ) : (
           <>
@@ -119,7 +121,7 @@ export function BillingSettings() {
               </div>
             )}
             {extraEstablishmentsCount === 0 && (
-              <p className="mt-6 text-sm text-muted-foreground">Aucun établissement supplémentaire</p>
+              <p className="mt-6 text-sm text-muted-foreground">{t("settings.BillingAndSubscription.noAdditionalEstablishments")}</p>
             )}
 
             {/* Total mensuel : récap abonnement + établissements supplémentaires */}
@@ -159,11 +161,11 @@ export function BillingSettings() {
 
       {/* Gestion de la facturation */}
       <div>
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Gestion de la facturation</h2>
+        <h2 className="text-lg font-medium text-gray-900 mb-4">{t("settings.BillingAndSubscription.billingManagement")}</h2>
         <div className="flex flex-wrap gap-3">
           {isFree ? (
             <Button onClick={() => navigate("/abonnement")}>
-              Voir les plans disponibles
+              {t("settings.BillingAndSubscription.viewAvailablePlans")}
             </Button>
           ) : (
             <Button
@@ -200,7 +202,7 @@ export function BillingSettings() {
             onClick={() => navigate("/settings/billing/reports")}
             className="ml-0 sm:ml-0"
           >
-            Historique des factures
+            {t("settings.BillingAndSubscription.invoiceHistory")}
           </Button>
         </div>
       </div>

@@ -130,6 +130,13 @@ import {
 import { listAll } from "@/services/reviewsService";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const GRANULARITY_LABEL_KEYS: Record<Granularity, string> = {
+  jour: "dashboard.day",
+  semaine: "dashboard.week",
+  mois: "dashboard.month",
+  année: "dashboard.year",
+};
+
 const Dashboard = () => {
   // ============================================
   // 1. TOUS LES HOOKS (useContext, useTranslation, etc.)
@@ -182,6 +189,9 @@ const Dashboard = () => {
   const [showParetoPoints, setShowParetoPoints] = useState(false);
   const [granularityEvolution, setGranularityEvolution] =
     useState<Granularity>("mois");
+  const granularityEvolutionLabel = t(
+    GRANULARITY_LABEL_KEYS[granularityEvolution] ?? "dashboard.month",
+  );
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState("indicateurs");
   const [showBusinessTypeOverrideModal, setShowBusinessTypeOverrideModal] =
@@ -895,7 +905,7 @@ const Dashboard = () => {
     const buckets = [
       {
         key: "wait",
-        label: "Temps d'attente",
+        label: t("dashboard.waitTime"),
         maxImpact: 0.3,
         keywords: [
           "attente",
@@ -909,7 +919,7 @@ const Dashboard = () => {
       },
       {
         key: "service",
-        label: "Accueil/Service",
+        label: t("dashboard.serviceReception"),
         maxImpact: 0.2,
         keywords: [
           "service",
@@ -924,7 +934,7 @@ const Dashboard = () => {
       },
       {
         key: "quality",
-        label: "Qualité cuisine",
+        label: t("dashboard.foodQuality"),
         maxImpact: 0.2,
         keywords: [
           "froid",
@@ -940,7 +950,7 @@ const Dashboard = () => {
       },
       {
         key: "price",
-        label: "Prix",
+        label: t("dashboard.price"),
         maxImpact: 0.1,
         keywords: ["prix", "cher", "chère", "chere", "coûteux", "couteux"],
       },
@@ -1877,7 +1887,6 @@ const Dashboard = () => {
           : null;
         //  setSelectedEtab(active ?? mapped.find((e) => e.is_active) ?? mapped[0]);
         setSelectedEtab(active);
-        console.log(selectedEtab);
       } else {
         setSelectedEtab(null);
       }
@@ -2691,7 +2700,7 @@ const Dashboard = () => {
                   <div className="flex items-center gap-2">
                     <BarChart3 className="w-6 h-6 text-blue-600" />
                     <h1 className="text-2xl font-bold text-gray-900">
-                      Dashboard
+                      {t("dashboard.title")}
                     </h1>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600 mt-1">
@@ -3296,7 +3305,7 @@ const Dashboard = () => {
                           </CardTitle>
                           <p className="text-sm text-gray-600">
                             {t("dashboard.ratingProgressionDescription", {
-                              granularity: granularityEvolution,
+                              granularity: granularityEvolutionLabel,
                             })}
                           </p>
                         </div>
@@ -3942,7 +3951,7 @@ const Dashboard = () => {
                         {/* Répartition des avis par note */}
                         <div>
                           <h4 className="font-semibold text-lg mb-4">
-                            Répartition des avis par note
+                            {t("dashboard.distributionReviewsByRating")}
                           </h4>
                           {hasReviews && insight?.summary?.by_rating ? (
                             <div className="space-y-3">
@@ -3982,7 +3991,7 @@ const Dashboard = () => {
                             </div>
                           ) : (
                             <div className="text-center py-8 text-gray-500">
-                              <p>Importez vos avis pour voir la répartition</p>
+                              <p>{t("dashboard.uploadReviewToSeeBreakdown")}</p>
                             </div>
                           )}
                         </div>
@@ -3990,7 +3999,7 @@ const Dashboard = () => {
                         {/* Thématiques récurrentes */}
                         <div>
                           <h4 className="font-semibold text-lg mb-4">
-                            Thématiques récurrentes
+                            {t("dashboard.recurringThemes")}
                           </h4>
                           {(() => {
                             // Mapper les données v2 (themes_universal et themes_industry) vers le format attendu
@@ -4126,7 +4135,7 @@ const Dashboard = () => {
                               return (
                                 <div className="text-center py-8 text-gray-500">
                                   <p>
-                                    Importez vos avis pour voir les thématiques
+                                    {t("dashboard.importReviewsToSeeTheThemes")}
                                   </p>
                                 </div>
                               );
@@ -5751,7 +5760,9 @@ const Dashboard = () => {
                               {hasReviews
                                 ? t("dashboard.noChecklistActionsAvailable") ||
                                   "Aucune action disponible"
-                                : "Importez vos avis pour générer des actions personnalisées"}
+                                : t(
+                                    "dashboard.importGeneratePersonalizedActions",
+                                  )}
                             </p>
                             {hasReviews && (
                               <p className="text-xs mt-1">
@@ -5883,10 +5894,12 @@ const Dashboard = () => {
                   <CardHeader className="relative text-center">
                     <div className="flex flex-col items-center mb-2">
                       <Bot className="w-5 h-5 text-purple-500 mb-2" />
-                      <span className="text-lg font-semibold">Agent</span>
+                      <span className="text-lg font-semibold">
+                        {t("dashboard.agent")}
+                      </span>
                     </div>
                     <p className="text-sm text-gray-600">
-                      Assistant IA pour répondre à vos avis
+                      {t("dashboard.aiRespondReview")}
                     </p>
                     <Button
                       variant="ghost"
@@ -5912,10 +5925,12 @@ const Dashboard = () => {
                     <CardHeader className="relative text-left">
                       <div className="flex items-center gap-2 mb-2">
                         <Bot className="w-5 h-5 text-purple-500" />
-                        <span className="text-lg font-semibold">Agent</span>
+                        <span className="text-lg font-semibold">
+                          {t("dashboard.agent")}
+                        </span>
                       </div>
                       <p className="text-sm text-gray-600">
-                        Assistant IA pour répondre à vos avis
+                        {t("dashboard.aiRespondReview")}
                       </p>
                     </CardHeader>
                     <CardContent>
@@ -6088,7 +6103,7 @@ const Dashboard = () => {
                             >
                               <Input
                                 type="text"
-                                placeholder="Posez une question sur vos avis..."
+                                placeholder={t("dashboard.askQuestion")}
                                 value={agentQuestion}
                                 onChange={(e) =>
                                   setAgentQuestion(e.target.value)
@@ -6106,7 +6121,9 @@ const Dashboard = () => {
                                 ) : (
                                   <Send className="h-4 w-4" />
                                 )}
-                                <span className="ml-2">Demander</span>
+                                <span className="ml-2">
+                                  {t("aiAssistance.ask")}
+                                </span>
                               </Button>
                             </form>
                           </div>
@@ -6140,41 +6157,38 @@ const Dashboard = () => {
                             <Info className="w-5 h-5 text-blue-500" />
                           </div>
                           <h2 className="text-xl md:text-2xl font-bold text-foreground">
-                            Questions fréquentes
+                            {t("help.frequentQuestions")}
                           </h2>
                         </div>
 
                         <div className="w-full space-y-2">
                           <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
                             <p className="font-medium text-foreground text-left">
-                              Que dois-je mettre en place pour régler mes
-                              problèmes prioritaires ?
+                              {t("help.faq6Question")}
                             </p>
                           </div>
 
                           <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
                             <p className="font-medium text-foreground text-left">
-                              Comment puis-je obtenir plus d'avis positifs ?
+                              {t("help.faq7Question")}
                             </p>
                           </div>
 
                           <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
                             <p className="font-medium text-foreground text-left">
-                              Est-ce que j'augmenterais mon chiffre d'affaires
-                              avec une meilleure note ?
+                              {t("help.faq8Question")}
                             </p>
                           </div>
 
                           <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
                             <p className="font-medium text-foreground text-left">
-                              Comment réduire rapidement les avis négatifs ?
+                              {t("help.faq9Question")}
                             </p>
                           </div>
 
                           <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
                             <p className="font-medium text-foreground text-left">
-                              Où est-ce que je perds le plus de clients
-                              aujourd'hui ?
+                              {t("help.faq10Question")}
                             </p>
                           </div>
                         </div>
@@ -6814,10 +6828,10 @@ const Dashboard = () => {
                     <MessageSquare className="w-6 h-6 text-blue-600" />
                     <div className="flex-1">
                       <h2 className="text-xl font-semibold">
-                        Centre de réponse
+                        {t("dashboard.responseCenter")}
                       </h2>
                       <p className="text-sm text-gray-600">
-                        Gérez vos réponses aux avis clients
+                        {t("dashboard.manageCustomerReviewResponses")}
                       </p>
                     </div>
                   </div>
@@ -6836,7 +6850,9 @@ const Dashboard = () => {
                       <CardContent className="flex items-center px-4 py-3">
                         <Clock className="w-8 h-8 text-orange-500 mr-3" />
                         <div>
-                          <p className="text-sm text-gray-600">En attente</p>
+                          <p className="text-sm text-gray-600">
+                            {t("dashboard.pending")}
+                          </p>
                           <p className="text-2xl font-bold">
                             {(() => {
                               // Calculer le nombre réel d'avis en attente selon le filtre actif
@@ -6881,7 +6897,9 @@ const Dashboard = () => {
                           <CheckCircle className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600">Répondu</p>
+                          <p className="text-sm text-gray-600">
+                            {t("dashboard.replied")}
+                          </p>
                           <p className="text-2xl font-bold">
                             {
                               allReviewsForChart.filter((review) => {
@@ -6919,10 +6937,12 @@ const Dashboard = () => {
                               const total =
                                 reponsesStats.total ||
                                 allReviewsForChart.length;
-                              return `${reponsesStats.validated}/${total} réponses`;
+                              return `${reponsesStats.validated}/${total} ${t("dashboard.responses")}`;
                             })()}
                           </p>
-                          <p className="text-sm text-gray-500">Validées</p>
+                          <p className="text-sm text-gray-500">
+                            {t("dashboard.validated")}
+                          </p>
                         </div>
                       </CardContent>
                     </Card>
@@ -6943,10 +6963,10 @@ const Dashboard = () => {
                           <Sparkles className="w-6 h-6 text-purple-600" />
                           <div className="flex-1">
                             <h3 className="text-lg font-semibold">
-                              Analyse du contenu
+                              {t("dashboard.contentAnalysis")}
                             </h3>
                             <p className="text-sm text-gray-600">
-                              Classification IA des avis
+                              {t("dashboard.aiReviewClassification")}
                             </p>
                           </div>
                           <Button
@@ -6983,10 +7003,10 @@ const Dashboard = () => {
                           <Star className="w-6 h-6 text-yellow-600" />
                           <div className="flex-1">
                             <h3 className="text-lg font-semibold">
-                              Filtrer par note
+                              {t("dashboard.filterByRating")}
                             </h3>
                             <p className="text-sm text-gray-600">
-                              Avis classés par étoiles
+                              {t("dashboard.reviewsSortedByStars")}
                             </p>
                           </div>
                           <Button
@@ -7020,9 +7040,11 @@ const Dashboard = () => {
                         <div className="flex items-center gap-3">
                           <Flag className="w-6 h-6 text-red-600" />
                           <div className="flex-1">
-                            <h3 className="text-lg font-semibold">Priorité</h3>
+                            <h3 className="text-lg font-semibold">
+                              {t("dashboard.priority")}
+                            </h3>
                             <p className="text-sm text-gray-600">
-                              Avis classés par urgence
+                              {t("dashboard.reviewsSortedByUrgency")}
                             </p>
                           </div>
                           <Button
@@ -7061,10 +7083,10 @@ const Dashboard = () => {
                           <Globe className="w-6 h-6 text-blue-600" />
                           <div className="flex-1">
                             <h3 className="text-lg font-semibold">
-                              Plateforme
+                              {t("dashboard.platform")}
                             </h3>
                             <p className="text-sm text-gray-600">
-                              Avis classés par source
+                              {t("dashboard.reviewsSortedBySource")}
                             </p>
                           </div>
                           <Button
@@ -7165,7 +7187,9 @@ const Dashboard = () => {
                                             <thead className="bg-red-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Auteur
+                                                  {t(
+                                                    "dashboard.dashResponseTableHeading.author",
+                                                  )}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
                                                   Note
@@ -8409,7 +8433,9 @@ const Dashboard = () => {
                                             <thead className="bg-red-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Auteur
+                                                  {t(
+                                                    "dashboard.dashResponseTableHeading.author",
+                                                  )}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
                                                   Note
@@ -9484,25 +9510,39 @@ const Dashboard = () => {
                                   <thead className="bg-gray-50">
                                     <tr>
                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Auteur
+                                        {t(
+                                          "dashboard.dashResponseTableHeading.author",
+                                        )}
                                       </th>
                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Note
+                                        {t(
+                                          "dashboard.dashResponseTableHeading.rating",
+                                        )}
                                       </th>
                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Commentaire
+                                        {t(
+                                          "dashboard.dashResponseTableHeading.comment",
+                                        )}
                                       </th>
                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Source
+                                        {t(
+                                          "dashboard.dashResponseTableHeading.source",
+                                        )}
                                       </th>
                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Date
+                                        {t(
+                                          "dashboard.dashResponseTableHeading.date",
+                                        )}
                                       </th>
                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Statut
+                                        {t(
+                                          "dashboard.dashResponseTableHeading.status",
+                                        )}
                                       </th>
                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        Action
+                                        {t(
+                                          "dashboard.dashResponseTableHeading.action",
+                                        )}
                                       </th>
                                     </tr>
                                   </thead>
@@ -9645,10 +9685,10 @@ const Dashboard = () => {
                                           className="px-4 py-8 text-center text-gray-500"
                                         >
                                           {statusFilter === "pending"
-                                            ? "Aucun avis en attente"
+                                            ? t("dashboard.noPendingReviews")
                                             : statusFilter === "replied"
-                                              ? "Aucun avis répondu"
-                                              : "Aucun avis disponible"}
+                                              ? t("dashboard.noRepliedReviews")
+                                              : t("noReviewsAvailable")}
                                         </td>
                                       </tr>
                                     )}
@@ -9878,11 +9918,11 @@ const Dashboard = () => {
                       <div className="flex flex-col items-center mb-2">
                         <TrendingUp className="w-5 h-5 text-green-600 mb-2" />
                         <span className="text-lg font-semibold">
-                          Progression
+                          {t("dashboard.progress")}
                         </span>
                       </div>
                       <p className="text-sm text-gray-600">
-                        Suivez l'avancement de vos actions
+                        {t("dashboard.trackYourActionsProgress")}
                       </p>
                       <Button
                         variant="ghost"
@@ -9913,10 +9953,12 @@ const Dashboard = () => {
                     <CardContent className="p-6 text-center">
                       <div className="flex flex-col items-center mb-2">
                         <MessageSquare className="w-5 h-5 text-indigo-600 mb-2" />
-                        <span className="text-lg font-semibold">Avis liés</span>
+                        <span className="text-lg font-semibold">
+                          {t("dashboard.relatedReviews")}
+                        </span>
                       </div>
                       <p className="text-sm text-gray-600">
-                        Avis freinant votre progression vers l'objectif
+                        {t("dashboard.reviewsSlowingYourProgress")}
                       </p>
                       <Button
                         variant="ghost"
@@ -9947,10 +9989,12 @@ const Dashboard = () => {
                     <CardContent className="p-6 text-center">
                       <div className="flex flex-col items-center mb-2">
                         <BarChart3 className="w-5 h-5 text-emerald-600 mb-2" />
-                        <span className="text-lg font-semibold">Impact</span>
+                        <span className="text-lg font-semibold">
+                          {t("dashboard.impact")}
+                        </span>
                       </div>
                       <p className="text-sm text-gray-600">
-                        Estimez l'impact de vos améliorations
+                        {t("dashboard.estimateImpactOfImprovements")}
                       </p>
                       <Button
                         variant="ghost"
@@ -9974,9 +10018,11 @@ const Dashboard = () => {
                 {openCard === "progression" && (
                   <Card className="mb-8">
                     <CardHeader className="pb-1">
-                      <CardTitle className="text-xl">Progression</CardTitle>
+                      <CardTitle className="text-xl">
+                        {t("dashboard.progress")}
+                      </CardTitle>
                       <p className="text-sm text-gray-600">
-                        Suivez l'avancement de vos actions
+                        {t("dashboard.trackYourActionsProgress")}
                       </p>
                     </CardHeader>
                     <CardContent className="pt-0">
@@ -10002,16 +10048,18 @@ const Dashboard = () => {
                 {openCard === "avisLies" && (
                   <Card className="mb-8">
                     <CardHeader>
-                      <CardTitle className="text-xl">Avis liés</CardTitle>
+                      <CardTitle className="text-xl">
+                        {t("dashboard.relatedReviews")}
+                      </CardTitle>
                       <p className="text-sm text-gray-600">
-                        Avis freinant votre progression vers l'objectif
+                        {t("dashboard.reviewsSlowingYourProgress")}
                       </p>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
                         {linkedReviews.length === 0 ? (
                           <div className="text-sm text-gray-500">
-                            Aucun avis lié trouvé.
+                            {t("dashboard.noRelatedReviewsFound")}
                           </div>
                         ) : (
                           linkedReviews.map((r: any, idx: number) => {
@@ -10055,16 +10103,17 @@ const Dashboard = () => {
                 {openCard === "impact" && (
                   <Card className="mb-8">
                     <CardHeader className="pb-1">
-                      <CardTitle className="text-xl">Impact</CardTitle>
+                      <CardTitle className="text-xl">
+                        {t("dashboard.impact")}
+                      </CardTitle>
                       <p className="text-sm text-gray-600">
-                        Estimez l'impact de vos améliorations
+                        {t("dashboard.estimateImpactOfImprovements")}
                       </p>
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="mt-1 space-y-3">
                         <p className="text-sm text-gray-700">
-                          Si vous corrigez ces points, voici l'impact estimé sur
-                          votre note :
+                          {t("dashboard.estimatedImpactOnRating")}
                         </p>
                         {impactStats.lines.map((l) => (
                           <div
@@ -10088,21 +10137,22 @@ const Dashboard = () => {
                               />
                             </div>
                             <div className="mt-1 text-xs text-gray-500">
-                              {l.count} mentions dans les avis négatifs
+                              {l.count}{" "}
+                              {t("dashboard.mentionsInNegativeReviews")}
                             </div>
                           </div>
                         ))}
 
                         <div className="mt-2 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
                           <div className="text-sm font-semibold text-gray-900">
-                            Note projetée :{" "}
+                            {t("dashboard.projectedRating")} :{" "}
                             {impactStats.projectedLow.toFixed(1)} -{" "}
                             {impactStats.projectedHigh.toFixed(1)}
                           </div>
                           <div className="text-xs text-gray-600 mt-1">
-                            Basée sur la note actuelle (
-                            {impactStats.current.toFixed(1)}/5) et la fréquence
-                            des mentions dans les avis négatifs.
+                            {t("dashboard.basedOnCurrentRating")} (
+                            {impactStats.current.toFixed(1)}/5){" "}
+                            {t("dashboard.frequencyInNegativeReviews")}
                           </div>
                         </div>
                       </div>

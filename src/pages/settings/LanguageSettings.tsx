@@ -14,7 +14,7 @@ const STORAGE_KEY_REGION = "rv_region";
 const STORAGE_KEY_CURRENCY = "rv_currency";
 
 export function LanguageSettings() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [language, setLanguage] = useState(() => {
     // Récupérer la valeur depuis localStorage ou i18n
     const stored = localStorage.getItem(STORAGE_KEY_LANGUAGE);
@@ -59,7 +59,7 @@ export function LanguageSettings() {
       // TODO: Sauvegarder dans Supabase profiles.localeLanguage
       // await supabase.from("profiles").upsert({ user_id: user.id, locale_language: newLocale });
       
-      toast.success("Langue mise à jour");
+      toast.success(t("settings.LanguageRegionAndCurrency.validation.languageUpdated"));
     } catch (error) {
       console.error("Error changing language:", error);
       toast.error("Erreur lors du changement de langue");
@@ -74,7 +74,7 @@ export function LanguageSettings() {
       // TODO: Sauvegarder dans Supabase profiles.regionCountry
       // await supabase.from("profiles").upsert({ user_id: user.id, region_country: newRegion });
       
-      toast.success("Région mise à jour");
+      toast.success(t("settings.LanguageRegionAndCurrency.validation.regionUpdated"));
     } catch (error) {
       console.error("Error changing region:", error);
       toast.error("Erreur lors du changement de région");
@@ -89,7 +89,7 @@ export function LanguageSettings() {
       // TODO: Sauvegarder dans Supabase profiles.currency
       // await supabase.from("profiles").upsert({ user_id: user.id, currency: newCurrency });
       
-      toast.success("Devise mise à jour");
+      toast.success(t("settings.LanguageRegionAndCurrency.validation.currencyUpdated"));
     } catch (error) {
       console.error("Error changing currency:", error);
       toast.error("Erreur lors du changement de devise");
@@ -98,18 +98,18 @@ export function LanguageSettings() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-8">Langue, Région & Devises</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-8">{t("settings.LanguageRegionAndCurrency.title")}</h1>
 
       <div className="space-y-6">
         <div className="flex items-center gap-3 mb-6">
           <Globe className="h-5 w-5 text-gray-400" />
-          <h2 className="text-lg font-medium text-gray-900">Préférences linguistiques</h2>
+          <h2 className="text-lg font-medium text-gray-900">{t("settings.LanguageRegionAndCurrency.languagePreferences")}</h2>
         </div>
 
         <div className="space-y-6 max-w-md">
           {/* Langue */}
           <div className="space-y-2">
-            <Label htmlFor="language">Langue de l'interface</Label>
+            <Label htmlFor="language">{t("settings.LanguageRegionAndCurrency.interfaceLanguage")}</Label>
             <Select value={language} onValueChange={handleLanguageChange}>
               <SelectTrigger id="language" className="w-full">
                 <SelectValue />
@@ -123,13 +123,13 @@ export function LanguageSettings() {
               </SelectContent>
             </Select>
             <p className="text-sm text-gray-500">
-              Cette langue sera utilisée pour l'interface de Reviewsvisor
+              {t("settings.LanguageRegionAndCurrency.interfaceLanguageDescription")}
             </p>
           </div>
 
           {/* Région */}
           <div className="space-y-2">
-            <Label htmlFor="region">Région</Label>
+            <Label htmlFor="region">{t("settings.LanguageRegionAndCurrency.region")}</Label>
             <Select value={region} onValueChange={handleRegionChange}>
               <SelectTrigger id="region" className="w-full">
                 <SelectValue />
@@ -143,13 +143,13 @@ export function LanguageSettings() {
               </SelectContent>
             </Select>
             <p className="text-sm text-gray-500">
-              Cette région sera utilisée pour les formats de dates, nombres et adresses
+              {t("settings.LanguageRegionAndCurrency.regionDescription")}
             </p>
           </div>
 
           {/* Devise */}
           <div className="space-y-2">
-            <Label htmlFor="currency">Devise</Label>
+            <Label htmlFor="currency">{t("settings.LanguageRegionAndCurrency.currency")}</Label>
             <Select value={currency} onValueChange={handleCurrencyChange}>
               <SelectTrigger id="currency" className="w-full">
                 <SelectValue />
@@ -163,7 +163,7 @@ export function LanguageSettings() {
               </SelectContent>
             </Select>
             <p className="text-sm text-gray-500">
-              Cette devise sera utilisée pour l'affichage des montants et tarifs
+              {t("settings.LanguageRegionAndCurrency.currencyDescription")}
             </p>
           </div>
         </div>

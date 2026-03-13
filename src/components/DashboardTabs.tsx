@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 
 interface DashboardTabsProps {
   activeTab: string;
@@ -5,12 +6,13 @@ interface DashboardTabsProps {
 }
 
 export const DashboardTabs = ({ activeTab, onTabChange }: DashboardTabsProps) => {
+  const { t } = useTranslation();
   const tabs = [
-    { id: 'indicateurs', label: 'Indicateurs clés', icon: '📊' },
-    { id: 'analyse', label: 'Analyse', icon: '🔍' },
-    { id: 'recommandations', label: 'Recommandations', icon: '⚡' },
-    { id: 'reponses', label: 'Réponses', icon: '💬' },
-    { id: 'objectif', label: 'Objectif', icon: '🎯' },
+    { id: 'indicateurs', label: t("dashboard.keyIndicators"), icon: '📊' },
+    { id: 'analyse', label: t("dashboard.analyse"), icon: '🔍' },
+    { id: 'recommandations', label: t("dashboard.recommendations"), icon: '⚡' },
+    { id: 'reponses', label: t("dashboard.response"), icon: '💬' },
+    { id: 'objectif', label: t("dashboard.objective"), icon: '🎯' },
   ];
 
   return (

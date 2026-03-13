@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { updateSubscriptionQuantity } from "@/lib/stripe";
 import { EVT_LIST_UPDATED } from "@/types/etablissement";
+import { useTranslation } from "react-i18next";
 
 export function EstablishmentsSettings() {
   const { user } = useAuth();
@@ -39,6 +40,7 @@ export function EstablishmentsSettings() {
   const [establishmentToDelete, setEstablishmentToDelete] =
     useState<EstablishmentData | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const loadEstablishments = useCallback(async () => {
     if (!user) return;
@@ -142,7 +144,7 @@ export function EstablishmentsSettings() {
         );
       }
 
-      toast.success("Établissement supprimé");
+      toast.success(t("settings.establishmentAndAccess.establishmentClosed"));
     } catch (error: unknown) {
       console.error("Error deleting establishment:", error);
       toast.error(
@@ -160,7 +162,7 @@ export function EstablishmentsSettings() {
       <div className="p-8">
         <div className="flex items-center gap-3 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
-          <span>Chargement des établissements...</span>
+          <span>{t("settings.establishmentAndAccess.loadingEstablishments")}</span>
         </div>
       </div>
     );
@@ -169,22 +171,20 @@ export function EstablishmentsSettings() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">
-          Établissements & accès
-        </h1>
+        <h1 className="text-2xl font-semibold text-gray-900">{t("settings.establishmentAndAccess.title")}</h1>
         <Button onClick={() => navigate("/etablissement")} className="gap-2">
           <Plus className="h-4 w-4" />
-          <span>Ajouter un établissement</span>
+          <span>{t("settings.establishmentAndAccess.addEstablishment")}</span>
         </Button>
       </div>
 
       {sortedEstablishments.length === 0 ? (
         <div className="text-center py-12">
           <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 mb-4">Aucun établissement</p>
+          <p className="text-gray-500 mb-4">{t("settings.establishmentAndAccess.noEstablishment")}</p>
           <Button onClick={() => navigate("/etablissement")} className="gap-2">
             <Plus className="h-4 w-4" />
-            <span>Ajouter votre premier établissement</span>
+            <span>{t("settings.establishmentAndAccess.addFirstEstablishment")}</span>
           </Button>
         </div>
       ) : (
@@ -257,7 +257,7 @@ export function EstablishmentsSettings() {
                           ) : (
                             <Check className="h-4 w-4" />
                           )}
-                          <span>Définir comme actif</span>
+                          <span>{t("settings.establishmentAndAccess.defineActive")}</span>
                         </Button>
                       )}
                       <Button
@@ -266,7 +266,7 @@ export function EstablishmentsSettings() {
                         onClick={() => navigate("/etablissement")}
                         className="gap-2 bg-violet-600 text-white hover:bg-violet-700 focus-visible:ring-violet-500"
                       >
-                        Gérer
+                        {t("settings.establishmentAndAccess.manage")}
                       </Button>
                     </div>
                     <Button
@@ -292,9 +292,9 @@ export function EstablishmentsSettings() {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Supprimer l&apos;établissement</DialogTitle>
+            <DialogTitle>{t("settings.establishmentAndAccess.deleteEstablishment")}</DialogTitle>
             <DialogDescription>
-              Êtes-vous sûr de vouloir supprimer cet établissement ?
+              {t("settings.establishmentAndAccess.deleteConfirmation")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
@@ -303,7 +303,7 @@ export function EstablishmentsSettings() {
               onClick={() => setEstablishmentToDelete(null)}
               disabled={!!deletingId}
             >
-              Annuler
+              {t("settings.establishmentAndAccess.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -311,11 +311,7 @@ export function EstablishmentsSettings() {
               disabled={!!deletingId}
               className="bg-red-600 hover:bg-red-700"
             >
-              {deletingId ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Supprimer"
-              )}
+              {deletingId ? <Loader2 className="h-4 w-4 animate-spin" /> : t("settings.establishmentAndAccess.delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

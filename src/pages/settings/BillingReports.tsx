@@ -1,20 +1,28 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, Calendar, ArrowLeft } from "lucide-react";
-import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
-import { fr } from "date-fns/locale";
+import { format, subMonths, startOfMonth, endOfMonth, Locale } from "date-fns";
+import { fr, enUS } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 
 export function BillingReports() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+
+  const localeMap: Record<string, Locale> = {
+    fr: fr,
+    en: enUS,
+  };
+  const locale = localeMap[i18n.language] || enUS;
 
   // Générer la liste des 12 derniers mois
   const months = Array.from({ length: 12 }, (_, i) => {
     const date = subMonths(new Date(), i);
     return {
-      month: format(date, "MMMM yyyy", { locale: fr }),
+      month: format(date, "MMMM yyyy", { locale }),
       monthKey: format(date, "yyyy-MM"),
-      startDate: format(startOfMonth(date), "dd/MM/yyyy", { locale: fr }),
-      endDate: format(endOfMonth(date), "dd/MM/yyyy", { locale: fr }),
+      startDate: format(startOfMonth(date), "dd/MM/yyyy", { locale }),
+      endDate: format(endOfMonth(date), "dd/MM/yyyy", { locale }),
     };
   });
 
@@ -28,11 +36,11 @@ export function BillingReports() {
           className="mb-4 gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Retour</span>
+          <span>{t("settings.myMonthlyReports.back")}</span>
         </Button>
-        <h1 className="text-2xl font-semibold text-gray-900">Mes rapports mensuels</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">{t("settings.myMonthlyReports.title")}</h1>
         <p className="text-sm text-gray-500 mt-2">
-          Téléchargez vos rapports mensuels de facturation et d'activité
+          {t("settings.myMonthlyReports.monthlyReportDescription")}
         </p>
       </div>
 
@@ -63,7 +71,7 @@ export function BillingReports() {
               }}
             >
               <Download className="h-4 w-4" />
-              <span>Télécharger</span>
+              <span>{t("settings.myMonthlyReports.download")}</span>
             </Button>
           </div>
         ))}
