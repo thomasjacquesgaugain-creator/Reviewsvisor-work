@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { SentimentDistribution, Review } from "@/types/analysis";
-import { useTranslation } from "react-i18next";
+import { useTranslation,Trans } from "react-i18next";
 import { useState } from "react";
 import { useAnalysisFilters } from "./AnalysisFiltersContext";
 
@@ -35,6 +35,7 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
   const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const { ratingFilter, setRatingFilter } = useAnalysisFilters();
+  
 
   // Calculer depuis les reviews bruts si disponibles (plus fiable)
   let positiveCount = 0;
@@ -141,23 +142,27 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
             {/* Phrase de synthèse + avertissement faible volume */}
             <div className="mb-4 space-y-1">
               <p className="text-sm text-gray-700">
-                <span className="font-semibold text-gray-900">
-                  {positiveOnTen} avis sur 10
-                </span>{" "}
-                sont positifs{nonPositive > 0 && (
-                  <>
-                    , mais{" "}
-                    <span className="font-semibold text-gray-900">
-                      {nonPositive}{" "}
-                      {nonPositive > 1 ? "avis" : "avis"}
-                    </span>{" "}
-                    méritent une attention particulière.
-                  </>
+                {nonPositive > 0 ? (
+                  <Trans
+                    i18nKey="analysis.sentiment.withAttention"
+                    values={{ positive: positiveOnTen, nonPositive }}
+                    components={{
+                      bold: <span className="font-semibold text-gray-900" />,
+                    }}
+                  />
+                ) : (
+                  <Trans
+                    i18nKey="analysis.sentiment.positiveOnly"
+                    values={{ count: positiveOnTen }}
+                    components={{
+                      bold: <span className="font-semibold text-gray-900" />,
+                    }}
+                  />
                 )}
               </p>
               {isLowVolume && (
                 <p className="text-xs text-amber-600">
-                  Analyse basée sur un nombre limité d’avis.
+                  {t("analysis.sentiment.limitedReviews", "Analyse basée sur un nombre limité d’avis.")}
                 </p>
               )}
             </div>
@@ -234,7 +239,7 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
                               style={{ color: data.color }}
                               className="text-lg font-bold"
                             >
-                              {data.value} avis ({percent}%)
+                              {data.value} {t("analysis.sentiment.reviews", "avis")} ({percent}%)
                             </p>
                           </div>
                         );
@@ -265,7 +270,7 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
                     {positiveCount}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {((positiveCount / total) * 100).toFixed(1)}% du total
+                    {((positiveCount / total) * 100).toFixed(1)}% {t("analysis.sentiment.ofTotal", "du total")}
                   </p>
                 </div>
                 <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
@@ -291,7 +296,7 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
                     {neutralCount}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {((neutralCount / total) * 100).toFixed(1)}% du total
+                    {((neutralCount / total) * 100).toFixed(1)}% {t("analysis.sentiment.ofTotal", "du total")}
                   </p>
                 </div>
                 <div className="w-10 h-10 bg-orange-400 rounded-full flex items-center justify-center">
@@ -317,7 +322,7 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
                     {negativeCount}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {((negativeCount / total) * 100).toFixed(1)}% du total
+                    {((negativeCount / total) * 100).toFixed(1)}% {t("analysis.sentiment.ofTotal", "du total")}
                   </p>
                 </div>
                 <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
@@ -336,7 +341,7 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
         {total > 0 && (
           <div className="mt-6 pt-4 border-t border-gray-100 text-center">
             <p className="text-gray-500">
-              Total : <span className="font-bold text-gray-800">{total} avis</span>
+              {t("analysis.sentiment.total", "Total:")} <span className="font-bold text-gray-800">{total} {t("analysis.sentiment.reviews", "avis")}</span>
             </p>
           </div>
         )}

@@ -10,6 +10,7 @@ import {
   subMonths,
 } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 
 export type RatingFilter = "ALL" | "POS" | "NEU" | "NEG";
 
@@ -225,21 +226,23 @@ export function filterReviews(
  * Formate un filtre de période en texte lisible pour l'affichage
  */
 export function formatPeriodLabel(periodFilter: PeriodFilter): string {
-  switch (periodFilter.preset) {
+  const { t } = useTranslation();
+  
+ switch (periodFilter.preset) {
     case "30d":
-      return "sur les 30 derniers jours";
+      return t("analysis.overview.period.last30Days");
     case "90d":
-      return "sur les 90 derniers jours";
+      return t("analysis.overview.period.last90Days");
     case "12m":
-      return "sur les 12 derniers mois";
+      return t("analysis.overview.period.last12Months");
     case "custom":
       if (periodFilter.startDate && periodFilter.endDate) {
         return `${format(periodFilter.startDate, "dd/MM/yyyy", { locale: fr })} – ${format(periodFilter.endDate, "dd/MM/yyyy", { locale: fr })}`;
       }
-      return "période personnalisée";
+      return t("analysis.overview.period.custom");
     case "all":
     default:
-      return "toute la période";
+      return t("analysis.overview.period.allTime");
   }
 }
 

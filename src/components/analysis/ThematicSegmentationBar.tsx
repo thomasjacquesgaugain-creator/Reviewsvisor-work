@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import { useAnalysisFilters } from "./AnalysisFiltersContext";
 import { Check, RotateCcw } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
@@ -51,6 +52,7 @@ const SOURCE_OPTIONS = [
 ] as const;
 
 export function ThematicSegmentationBar() {
+  const { t } = useTranslation();
   const {
     ratingFilter,
     setRatingFilter,
@@ -109,14 +111,14 @@ export function ThematicSegmentationBar() {
     !!pendingPeriodFilter.endDate;
 
   const customRangeLabel = useMemo(() => {
-    if (!periodFilter.startDate || !periodFilter.endDate) return "Personnalisé…";
-    return `${format(periodFilter.startDate, "dd/MM/yyyy", { locale: fr })} – ${format(periodFilter.endDate, "dd/MM/yyyy", { locale: fr })}`;
-  }, [periodFilter.endDate, periodFilter.startDate]);
+    if (!periodFilter.startDate || !periodFilter.endDate) return t("dashboard.customFilter");
+    return `${format(periodFilter.startDate, "dd/MM/yyyy", { locale: fr })}  – ${format(periodFilter.endDate, "dd/MM/yyyy", { locale: fr })}`;
+  }, [periodFilter.endDate, periodFilter.startDate, t]);
 
   const pendingCustomRangeLabel = useMemo(() => {
-    if (!pendingPeriodFilter.startDate || !pendingPeriodFilter.endDate) return "Personnalisé…";
-    return `${format(pendingPeriodFilter.startDate, "dd/MM/yyyy", { locale: fr })} – ${format(pendingPeriodFilter.endDate, "dd/MM/yyyy", { locale: fr })}`;
-  }, [pendingPeriodFilter.endDate, pendingPeriodFilter.startDate]);
+    if (!pendingPeriodFilter.startDate || !pendingPeriodFilter.endDate) return t("dashboard.customFilter");
+    return `${format(pendingPeriodFilter.startDate, "dd/MM/yyyy", { locale: fr })}  – ${format(pendingPeriodFilter.endDate, "dd/MM/yyyy", { locale: fr })}`;
+  }, [pendingPeriodFilter.endDate, pendingPeriodFilter.startDate, t]);
 
   useEffect(() => {
     // Sync pending with applied values when there are no unsaved changes
@@ -192,44 +194,44 @@ export function ThematicSegmentationBar() {
     setIsCustomOpen(false);
   };
 
-  const ratingLabel =
+ const ratingLabel =
     ratingFilter === "POS"
       ? "4–5⭐"
       : ratingFilter === "NEU"
       ? "3⭐"
       : ratingFilter === "NEG"
       ? "1–2⭐"
-      : "Tous";
+      : t("dashboard.allFilter");
 
   const periodLabel =
     periodFilter.preset === "30d"
-      ? "30 jours"
+      ? t("dashboard.days30")
       : periodFilter.preset === "90d"
-      ? "90 jours"
+      ? t("dashboard.days90")
       : periodFilter.preset === "12m"
-      ? "12 mois"
+      ? t("dashboard.months12")
       : periodFilter.preset === "custom"
       ? customRangeLabel
-      : "Toute la période";
+      : t("dashboard.allTime");
 
   const currentSourceOption = SOURCE_OPTIONS.find((opt) => opt.value === sourceFilter);
-  const sourceLabel = currentSourceOption ? currentSourceOption.label : "Source";
+  const sourceLabel = currentSourceOption ? currentSourceOption.label : t("dashboard.sourceFilter");
 
   return (
     <div className="mb-6 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm md:sticky md:top-0 md:z-20">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-gray-800">Contexte d’analyse</h3>
+          <h3 className="text-sm font-semibold text-gray-800">{t("dashboard.analysisContext")}</h3>
           <p className="mt-1 text-xs text-gray-500">
-            Analyse basée sur{" "}
+            {t("dashboard.analysisBasedOn")}{" "}
             <span className="font-semibold text-gray-800">
               {filteredReviews.length}
             </span>{" "}
-            avis
+            {t("dashboard.reviews")}
           </p>
           {minReviewDate && (
             <p className="mt-0.5 text-[11px] text-gray-400">
-              Depuis le{" "}
+              {t("dashboard.sinceDate")}{" "}
               {minReviewDate.toLocaleDateString("fr-FR", {
                 day: "2-digit",
                 month: "2-digit",
@@ -243,8 +245,8 @@ export function ThematicSegmentationBar() {
           {/* Filtres de note */}
           <div className="flex items-center gap-1 rounded-full bg-gray-100 px-1 py-1">
             {[
-              { key: "ALL", label: "Tous" },
-              { key: "POS", label: "4–5⭐" },
+              { key: "ALL", label: t("dashboard.allFilter") },
+             { key: "POS", label: "4–5⭐" },
               { key: "NEU", label: "3⭐" },
               { key: "NEG", label: "1–2⭐" },
             ].map((opt) => (
@@ -265,23 +267,23 @@ export function ThematicSegmentationBar() {
 
           {/* Filtre période */}
           <div className="flex items-center gap-1 text-xs">
-            <span className="text-gray-500">Période :</span>
+            <span className="text-gray-500">{t("dashboard.periodFilter")} :</span>
             <select
               value={pendingPeriodFilter.preset}
               onChange={(e) => handlePeriodChange(e.target.value)}
               className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 shadow-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
             >
-              <option value="all">Toute la période</option>
-              <option value="30d">30 jours</option>
-              <option value="90d">90 jours</option>
-              <option value="12m">12 mois</option>
-              <option value="custom">{hasPendingCustom ? pendingCustomRangeLabel : "Personnalisé…"}</option>
+              <option value="all">{t("dashboard.allTime")}</option>
+              <option value="30d">{t("dashboard.days30")}</option>
+              <option value="90d">{t("dashboard.days90")}</option>
+              <option value="12m">{t("dashboard.months12")}</option>
+              <option value="custom">{hasPendingCustom ? pendingCustomRangeLabel : t("dashboard.customFilter")}</option>
             </select>
           </div>
 
           {/* Filtre source */}
           <div className="flex items-center gap-1 text-xs">
-            <span className="text-gray-500">Source :</span>
+            <span className="text-gray-500">{t("dashboard.sourceFilter")} :</span>
             <Select value={pendingSourceFilter} onValueChange={handleSourceChange}>
               <SelectTrigger
                 className={`h-8 w-[140px] rounded-md border px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-offset-0 transition-colors duration-200 ease-in-out flex items-center gap-2 ${
@@ -293,7 +295,7 @@ export function ThematicSegmentationBar() {
                 {pendingSourceFilter === "google" && (
                   <GoogleLogo className="h-4 w-4 flex-shrink-0" />
                 )}
-                <SelectValue placeholder="Source" />
+                <SelectValue placeholder={t("dashboard.sourceFilter")} />
               </SelectTrigger>
               <SelectContent className="bg-white text-slate-900 border border-slate-200 shadow-md">
                 {SOURCE_OPTIONS.map((opt) => (
@@ -320,10 +322,10 @@ export function ThematicSegmentationBar() {
                 ? "border-blue-600/30 bg-blue-600 text-white hover:bg-[#1e4fc9]"
                 : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 shadow-none"
             }`}
-            title={!isDirty ? "Aucun changement à appliquer" : "Appliquer les filtres sélectionnés"}
+            title={!isDirty ? t("dashboard.noChangesToApply") : t("dashboard.applySelectedFilters")}
           >
             <Check className="h-3.5 w-3.5" />
-            Valider
+            {t("dashboard.validate")}
           </button>
 
           {/* Bouton Réinitialiser */}
@@ -333,24 +335,24 @@ export function ThematicSegmentationBar() {
             className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-white px-3 py-1 text-xs font-medium text-blue-600 shadow-sm transition-colors duration-200 ease-in-out hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
           >
             <RotateCcw className="h-3 w-3" />
-            Réinitialiser
+            {t("dashboard.reset")}
           </button>
         </div>
       </div>
 
-      {/* Résumé compact */}
+      {/* RÃ©sumÃ© compact */}
       <div className="mt-2 text-[11px] font-semibold text-slate-700">
-        Sélection : {ratingLabel} · {periodLabel} · {sourceLabel}
+        {t("dashboard.selection")} : {ratingLabel} · {periodLabel} · {sourceLabel}
       </div>
 
-      {/* Date range picker (Personnalisé…) */}
+      {/* Date range picker (PersonnalisÃ©â€¦) */}
       {isCustomOpen && (
         <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
           <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-800">Période personnalisée</p>
+              <p className="text-xs font-semibold text-slate-800">{t("dashboard.customPeriodTitle")}</p>
               <p className="text-[11px] text-slate-500">
-                Choisissez une date de début et une date de fin, puis validez.
+                {t("dashboard.customPeriodDescription")}
               </p>
             </div>
             <div className="mt-2 flex items-center gap-2 md:mt-0">
@@ -366,7 +368,7 @@ export function ThematicSegmentationBar() {
                 }}
                 className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition-colors duration-200 ease-in-out hover:bg-blue-50 hover:text-blue-950 hover:border-blue-200"
               >
-                Annuler
+                {t("common.cancel")}
               </button>
               <button
                 type="button"
@@ -384,7 +386,7 @@ export function ThematicSegmentationBar() {
                 }}
                 className="inline-flex items-center rounded-md border border-blue-900/30 bg-blue-900 px-3 py-1 text-xs font-medium text-white shadow-sm transition-colors duration-200 ease-in-out hover:bg-blue-950 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Appliquer
+                {t("dashboard.apply")}
               </button>
             </div>
           </div>
@@ -404,13 +406,13 @@ export function ThematicSegmentationBar() {
 
       {isLowData && (
         <div className="mt-3 inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-medium text-amber-700">
-          Données limitées – interprétation prudente
+          {t("dashboard.limitedDataCaution")}
         </div>
       )}
 
       {filteredReviews.length === 0 && periodFilter.preset !== "all" && (
         <div className="mt-3 inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600">
-          Aucun avis sur la période sélectionnée
+          {t("dashboard.noReviewsForSelectedPeriod")}
         </div>
       )}
     </div>

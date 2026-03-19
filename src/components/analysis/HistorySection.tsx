@@ -21,7 +21,7 @@ import {
   subWeeks,
   subYears,
 } from "date-fns";
-import { fr } from "date-fns/locale";
+import { fr, enUS, it, es, ptBR } from "date-fns/locale";
 import { getRatingEvolution, Granularity as RatingGranularity } from "@/utils/ratingEvolution";
 import { TrendingUp, BarChart3, Filter } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -47,7 +47,7 @@ function mapGranularity(g: Granularity): RatingGranularity {
   }
 }
 
-export function HistorySection({ data, reviews }: HistorySectionProps) {
+export function HistorySection({ data, reviews }: HistorySectionProps) {  
   const { t, i18n } = useTranslation();
   const { periodFilter } = useAnalysisFilters();
   // États séparés pour chaque graphique
@@ -55,6 +55,17 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
   const [periodVolumeAvis, setPeriodVolumeAvis] = useState<Granularity>('month');
   const [hasUserChosenVolumeGranularity, setHasUserChosenVolumeGranularity] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
+
+   const dateLocale =
+        i18n.language === "fr"
+          ? fr
+          : i18n.language === "it"
+            ? it
+            : i18n.language === "es"
+              ? es
+              : i18n.language === "pt"
+                ? ptBR
+                : enUS;
   
   // État pour gérer les filtres de courbes
   const [curveFilters, setCurveFilters] = useState<{
@@ -240,12 +251,12 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
           case 'day':
             key = format(date, 'yyyy-MM-dd');
             // Format: "12/04" (JJ/MM) - SANS année
-            label = format(date, 'dd/MM', { locale: fr });
+            label = format(date, 'dd/MM', { locale: dateLocale });
             break;
           case 'week':
-            const weekStart = startOfWeek(date, { locale: fr });
+            const weekStart = startOfWeek(date, { locale: dateLocale });
             key = format(weekStart, 'yyyy-MM-dd');
-            const weekNum = getWeek(date, { locale: fr });
+            const weekNum = getWeek(date, { locale: dateLocale });
             // Format: "S14" - SANS année pour simplifier l'axe X
             label = `S${weekNum}`;
             break;
@@ -253,7 +264,7 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
             const monthStart = startOfMonth(date);
             key = format(monthStart, 'yyyy-MM');
             // Format: "avr. 2025" - AVEC année (utile et lisible)
-            label = format(date, 'MMM yyyy', { locale: fr });
+            label = format(date, 'MMM yyyy', { locale: dateLocale });
             break;
           case 'year':
             const yearStart = startOfYear(date);
@@ -289,16 +300,16 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
           switch (periodNoteMoyenne) {
             case 'day':
               // Format: "12/04" (JJ/MM) - SANS année
-              label = format(date, 'dd/MM', { locale: fr });
+              label = format(date, 'dd/MM', { locale: dateLocale });
               break;
             case 'week':
               // Format: "S14" - SANS année pour simplifier l'axe X
-              const weekNum = getWeek(date, { locale: fr });
+              const weekNum = getWeek(date, { locale: dateLocale });
               label = `S${weekNum}`;
               break;
             case 'month':
               // Format: "janv. 2025" - AVEC année
-              label = format(date, 'MMM yyyy', { locale: fr });
+              label = format(date, 'MMM yyyy', { locale: dateLocale });
               break;
             case 'year':
               label = format(date, 'yyyy');
@@ -362,8 +373,8 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
       if (periodVolumeAvis === "day") {
         sortDate = startOfDay(d);
         key = format(sortDate, "yyyy-MM-dd");
-        label = format(sortDate, "d MMM", { locale: fr });
-        tooltipLabel = format(sortDate, "d MMM yyyy", { locale: fr });
+        label = format(sortDate, "d MMM", { locale: dateLocale });
+        tooltipLabel = format(sortDate, "d MMM yyyy", { locale: dateLocale });
       } else if (periodVolumeAvis === "week") {
         sortDate = startOfWeek(d, { weekStartsOn: 1 });
         const isoWeek = getISOWeek(sortDate);
@@ -371,13 +382,13 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
         key = `${isoYear}-W${String(isoWeek).padStart(2, "0")}`;
         label = `Sem. ${isoWeek}`;
         const weekEnd = endOfWeek(sortDate, { weekStartsOn: 1 });
-        tooltipLabel = `Sem. ${isoWeek} (${format(sortDate, "dd", { locale: fr })}–${format(weekEnd, "dd MMM", { locale: fr })})`;
+        tooltipLabel = `Sem. ${isoWeek} (${format(sortDate, "dd", { locale: dateLocale })}–${format(weekEnd, "dd MMM", { locale: dateLocale })})`;
       } else {
         // month (default)
         sortDate = startOfMonth(d);
         key = format(sortDate, "yyyy-MM");
-        label = format(sortDate, "MMM yyyy", { locale: fr });
-        tooltipLabel = format(sortDate, "MMMM yyyy", { locale: fr });
+        label = format(sortDate, "MMM yyyy", { locale: dateLocale });
+        tooltipLabel = format(sortDate, "MMMM yyyy", { locale: dateLocale });
       }
 
       const existing = buckets.get(key) || {
@@ -447,11 +458,11 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
       try {
         const periodDate = parseISO(dataPoint.fullDate);
         if (!isNaN(periodDate.getTime())) {
-          const weekStart = startOfWeek(periodDate, { locale: fr });
+          const weekStart = startOfWeek(periodDate, { locale: dateLocale });
           const weekEnd = new Date(weekStart);
           weekEnd.setDate(weekEnd.getDate() + 6);
           // Format: "S14 (16–22 déc.)" - plage de dates sans année
-          periodLabel = `${periodLabel} (${format(weekStart, 'dd', { locale: fr })}–${format(weekEnd, 'dd MMM', { locale: fr })})`;
+          periodLabel = `${periodLabel} (${format(weekStart, 'dd', { locale: dateLocale })}–${format(weekEnd, 'dd MMM', { locale: dateLocale })})`;
         }
       } catch {
         // Si erreur, garder le label simple
@@ -513,21 +524,21 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
       <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
         <p className="font-semibold text-gray-900 mb-1">{periodLabel}</p>
         {hasNoData ? (
-          <p className="text-xs text-gray-500">Aucun avis sur cette période</p>
+          <p className="text-xs text-gray-500">{t("analysis.history.noReviewsOnPeriod")}</p>
         ) : (
           <>
             <p className="text-sm text-gray-700">
-              Note moyenne :{" "}
+              {t("analysis.history.averageRatingLabel")}{" "}
               <span className="font-semibold text-gray-900">
                 {typeof value === "number" ? value.toFixed(2) : "-"} / 5
               </span>
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              Basée sur {totalCount} avis
+              {t("analysis.history.total", { count: totalCount })}
             </p>
             {isLowData && (
               <p className="mt-1 text-[11px] text-amber-600">
-                Tendance basée sur peu d'avis
+                {t("analysis.history.lowDataWarning")}
               </p>
             )}
           </>
@@ -567,8 +578,8 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
               <TrendingUp className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">Évolution Note Moyenne</h3>
-              <p className="text-sm text-gray-500">Tendance de la satisfaction client</p>
+              <h3 className="text-lg font-semibold text-gray-800">{t("analysis.history.averageRatingTitle")}</h3>
+              <p className="text-sm text-gray-500">{t("analysis.history.averageRatingSubtitle")}</p>
             </div>
           </div>
           <Select value={periodNoteMoyenne} onValueChange={(v) => setPeriodNoteMoyenne(v as Granularity)}>
@@ -642,7 +653,7 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
               </ResponsiveContainer>
             </div>
             <div className="pl-[50px] flex justify-center" style={{ marginTop: '4px' }}>
-              <p className="text-gray-500 text-sm text-center">Historique - Dates</p>
+              <p className="text-gray-500 text-sm text-center">{t("analysis.history.xAxisLabel")}</p>
             </div>
           </>
         ) : (
@@ -660,8 +671,8 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
               <BarChart3 className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">Évolution Volume Avis</h3>
-              <p className="text-sm text-gray-500">Répartition des avis par période</p>
+              <h3 className="text-lg font-semibold text-gray-800">{t("analysis.history.volumeTitle")}</h3>
+              <p className="text-sm text-gray-500">{t("analysis.history.volumeSubtitle")}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -673,12 +684,12 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
                   className="w-32 bg-gray-50 border-gray-200 rounded-lg hover:bg-gray-100"
                 >
                   <Filter className="w-4 h-4 mr-2" />
-                  Filtres
+                  {t("analysis.history.filters")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-64 p-4" align="end">
                 <div className="space-y-3">
-                  <p className="text-sm font-semibold text-gray-900 mb-2">Courbes de tendance</p>
+                  <p className="text-sm font-semibold text-gray-900 mb-2">{t("analysis.history.trendCurves")}</p>
                   
                   {/* Toggle Volume total */}
                   <button
@@ -691,7 +702,7 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
                   >
                     <div className="flex items-center gap-2.5">
                       <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                      <span className="text-sm font-medium text-gray-700">Volume total</span>
+                      <span className="text-sm font-medium text-gray-700">{t("analysis.history.totalVolume")}</span>
                     </div>
                     <div className={`w-5 h-5 rounded-full border-2 transition-all ${
                       curveFilters.total 
@@ -717,7 +728,7 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
                   >
                     <div className="flex items-center gap-2.5">
                       <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                      <span className="text-sm font-medium text-gray-700">Avis positifs</span>
+                      <span className="text-sm font-medium text-gray-700">{t("analysis.history.positiveReviews")}</span>
                     </div>
                     <div className={`w-5 h-5 rounded-full border-2 transition-all ${
                       curveFilters.positifs 
@@ -743,7 +754,7 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
                   >
                     <div className="flex items-center gap-2.5">
                       <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                      <span className="text-sm font-medium text-gray-700">Avis neutres</span>
+                      <span className="text-sm font-medium text-gray-700">{t("analysis.history.neutralReviews")}</span>
                     </div>
                     <div className={`w-5 h-5 rounded-full border-2 transition-all ${
                       curveFilters.neutres 
@@ -769,7 +780,7 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
                   >
                     <div className="flex items-center gap-2.5">
                       <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                      <span className="text-sm font-medium text-gray-700">Avis négatifs</span>
+                      <span className="text-sm font-medium text-gray-700">{t("analysis.history.negativeReviews")}</span>
                     </div>
                     <div className={`w-5 h-5 rounded-full border-2 transition-all ${
                       curveFilters.negatifs 
@@ -833,7 +844,7 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
                     axisLine={false}
                   >
                     <Label 
-                      value="Quantité" 
+                      value={t("analysis.history.quantity")} 
                       angle={-90} 
                       position="insideLeft" 
                       offset={-5}
@@ -875,7 +886,7 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
                         return (
                           <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
                             <p className="font-semibold text-gray-900 mb-1">{displayLabel}</p>
-                            <p className="text-xs text-gray-500">Aucun avis sur cette période</p>
+                            <p className="text-xs text-gray-500">{t("analysis.history.noReviewsOnPeriod")}</p>
                           </div>
                         );
                       }
@@ -892,18 +903,18 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
                       return (
                         <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
                           <p className="font-semibold text-gray-900 mb-1">{displayLabel}</p>
-                          <p className="text-gray-600 mb-1">Total: {total} avis</p>
+                          <p className="text-gray-600 mb-1">{t("analysis.history.basedOnReviews", { count: total })}</p>
                           {isLowData && (
                             <p className="text-[11px] text-amber-600 mb-1">
-                              Tendance basée sur peu d’avis
+                              {t("analysis.history.lowDataWarning")}
                             </p>
                           )}
                           <hr className="my-2 border-gray-200" />
                           
                           {sortedBars.map((entry: any) => {
-                            const displayName = entry.dataKey === 'negatifs' ? 'Avis négatifs' :
-                                              entry.dataKey === 'neutres' ? 'Avis neutres' :
-                                              entry.dataKey === 'positifs' ? 'Avis positifs' : entry.name;
+                            const displayName = entry.dataKey === 'negatifs' ? t("analysis.history.negativeReviews") :
+                                              entry.dataKey === 'neutres' ? t("analysis.history.neutralReviews") :
+                                              entry.dataKey === 'positifs' ? t("analysis.history.positiveReviews") : entry.name;
                             
                             return (
                               <div key={`bar-${entry.dataKey}`} className="flex items-center gap-2 py-1">
@@ -1039,22 +1050,22 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
               </ResponsiveContainer>
             </div>
             <div className="pl-[50px] flex justify-center" style={{ marginTop: '4px' }}>
-              <p className="text-gray-500 text-sm text-center">Historique - Dates</p>
+              <p className="text-gray-500 text-sm text-center">{t("analysis.history.xAxisLabel")}</p>
             </div>
             
             {/* Légende des barres */}
             <div className="flex justify-center gap-6 mt-3">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="text-sm text-gray-600">Positifs</span>
+                <span className="text-sm text-gray-600">{t("analysis.history.positifs")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-orange-400"></div>
-                <span className="text-sm text-gray-600">Neutres</span>
+                <span className="text-sm text-gray-600">{t("analysis.history.neutres")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <span className="text-sm text-gray-600">Négatifs</span>
+                <span className="text-sm text-gray-600">{t("analysis.history.negatifs")}</span>
               </div>
             </div>
 
@@ -1064,25 +1075,25 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
                 {curveFilters.total && (
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                    <span className="text-sm text-gray-600">Volume total</span>
+                    <span className="text-sm text-gray-600">{t("analysis.history.totalVolume")}</span>
                   </div>
                 )}
                 {curveFilters.positifs && (
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span className="text-sm text-gray-600">Avis positifs</span>
+                    <span className="text-sm text-gray-600">{t("analysis.history.positiveReviews")}</span>
                   </div>
                 )}
                 {curveFilters.neutres && (
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                    <span className="text-sm text-gray-600">Avis neutres</span>
+                    <span className="text-sm text-gray-600">{t("analysis.history.neutralReviews")}</span>
                   </div>
                 )}
                 {curveFilters.negatifs && (
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <span className="text-sm text-gray-600">Avis négatifs</span>
+                    <span className="text-sm text-gray-600">{t("analysis.history.negativeReviews")}</span>
                   </div>
                 )}
               </div>

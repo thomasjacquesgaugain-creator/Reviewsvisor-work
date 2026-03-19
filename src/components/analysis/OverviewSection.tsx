@@ -14,7 +14,7 @@ interface OverviewSectionProps {
   onSentimentFilter?: (sentiment: 'positive' | 'neutral' | 'negative') => void;
 }
 
-export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSectionProps) {
+export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSectionProps) {  
   const { t } = useTranslation();
   const { periodFilter } = useAnalysisFilters();
   const [hoveredSentiment, setHoveredSentiment] = useState<string | null>(null);
@@ -127,9 +127,9 @@ export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSe
     <div className="space-y-4">
       <div>
         <h2 className="text-2xl font-bold text-gray-800 mb-1 flex items-center gap-2">
-          1. {t("analysis.overview.title", "Vue d'ensemble")} – KPI principaux
+          1. {t("analysis.overview.title", "Vue d'ensemble")} – {t("analysis.overview.kpiTitle", "Key KPIs")}
           <InfoTooltip 
-            content="KPI (indicateur clé) : mesure utilisée pour suivre rapidement la performance globale. Bénéfice : vous identifiez en un coup d'œil les tendances principales de votre établissement."
+            content={t("analysis.overview.kpiTooltip", "KPI (indicateur clé) : mesure utilisée pour suivre rapidement la performance globale. Bénéfice : vous identifiez en un coup d'œil les tendances principales de votre établissement.")}
           />
         </h2>
         <p className="text-sm text-gray-500 italic">
@@ -174,36 +174,36 @@ export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSe
         <Card>
           <CardHeader className="pb-3 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("analysis.overview.trend", "Tendance")} {data.trend !== 'insufficient' && '(note moyenne)'}
+              {t("analysis.overview.trend", "Tendance")} {data.trend !== 'insufficient' && t("analysis.overview.trendAverage")}
             </CardTitle>
             <div className="absolute top-3 right-3">
               <InfoTooltip
                 content={
                   data.trend === 'insufficient' 
-                    ? "Données insuffisantes pour calculer la tendance. Au moins 5 avis avec date sont nécessaires."
+                    ? t("analysis.overview.trendTooltip.insufficient")
                     : data.trend === 'partial'
-                    ? "Données partielles : tendance calculée sur une période courte en comparant le début et la fin de la série d'avis."
+                    ? t("analysis.overview.trendTooltip.partial")
                     : (
                       <div className="space-y-2 text-xs font-normal text-gray-600 leading-5">
                         <p className="font-medium mb-2">
-                          Variation (%) de la note moyenne sur les 3 derniers mois comparée aux 3 mois précédents.
+                          {t("analysis.overview.trendTooltip.description")}
                         </p>
                         <div className="flex items-center gap-2">
                           <TrendingUp className="w-3.5 h-3.5 text-green-500 flex-shrink-0" aria-hidden="true" />
-                          <span>En hausse — Progression observée sur la période analysée.</span>
+                          <span>{t("analysis.overview.trendTooltip.up")}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <ArrowRight className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" aria-hidden="true" />
-                          <span>Stable — Aucune variation significative détectée.</span>
+                          <span>{t("analysis.overview.trendTooltip.stable")}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <TrendingDown className="w-3.5 h-3.5 text-red-500 flex-shrink-0" aria-hidden="true" />
-                          <span>En baisse — Diminution observée sur la période analysée.</span>
+                          <span>{t("analysis.overview.trendTooltip.down")}</span>
                         </div>
                       </div>
                     )
                 }
-                ariaLabel="Explication des tendances"
+                ariaLabel={t("analysis.overview.trendTooltipAria")}
               />
             </div>
           </CardHeader>
@@ -295,7 +295,7 @@ export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSe
                 </div>
                 {data.trendValue !== null && data.trendValue !== undefined && (
                   <p className="text-xs text-gray-500 mt-1">
-                    {data.trend === 'partial' ? 'Comparaison début vs fin de période' : 'vs 3 mois précédents'}
+                    {data.trend === 'partial' ? t("analysis.overview.trendComparison.partial") : t("analysis.overview.trendComparison.previous3Months")}
                   </p>
                 )}
               </>
@@ -327,7 +327,7 @@ export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSe
                   style={{ width: `${positivePercentage}%` }}
                 />
               </div>
-              <p className="text-gray-400 text-xs">(4-5 étoiles)</p>
+              <p className="text-gray-400 text-xs">({t("analysis.overview.stars.4to5", "4-5 étoiles")})</p>
             </div>
 
             {/* Avis neutres */}
@@ -350,7 +350,7 @@ export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSe
                   style={{ width: `${neutralPercentage}%`, backgroundColor: '#f59e0b' }}
                 />
               </div>
-              <p className="text-gray-400 text-xs">(3 étoiles)</p>
+              <p className="text-gray-400 text-xs">({t("analysis.overview.stars.3", "3 étoiles")})</p>
             </div>
 
             {/* Avis négatifs */}
@@ -372,7 +372,7 @@ export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSe
                   style={{ width: `${negativePercentage}%` }}
                 />
               </div>
-              <p className="text-gray-400 text-xs">(1-2 étoiles)</p>
+              <p className="text-gray-400 text-xs">({t("analysis.overview.stars.1to2", "1-2 étoiles")})</p>
             </div>
           </div>
         </CardContent>
