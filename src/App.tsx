@@ -68,6 +68,12 @@ const StripeReturnDetector = () => {
   const location = useLocation();
 
   useEffect(() => {
+    // Removed key in case of billing sucess to avoid redirection on billing/cancel page after successful payment
+    // Laisser la page de succès tranquille et purger le flag
+    if (location.pathname === "/billing/success") {
+      sessionStorage.removeItem("stripeCheckoutStarted");
+      return;
+    }
     // Ne vérifier que si on n'est pas déjà sur la page d'annulation
     if (location.pathname !== "/billing/cancel") {
       console.log("Checking stripe return");

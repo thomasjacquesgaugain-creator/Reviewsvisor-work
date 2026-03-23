@@ -14,10 +14,11 @@ const supabaseAdmin = createClient(
   { auth: { persistSession: false } }
 );
 
+// change live ids with test ids for testing in dev
 const PRICE_TO_PLAN: Record<string, string> = {
-  "price_1SZT7tGkt979eNWB0MF2xczP": "pro_1499_12m",
-  "price_1SXnCbGkt979eNWBttiTM124": "pro_2499_monthly",
-  "price_1ShiPzGkt979eNWBSDapH7aJ": "addon_etablissement",
+  "price_1SseJlGkt979eNWBoFcKFjFZ": "pro_1499_12m",
+  "price_1SseK2Gkt979eNWBgrF3GcCU": "pro_2499_monthly",
+  "price_1SseKdGkt979eNWBOA5fiM2f": "addon_etablissement",
 };
 
 const logStep = (step: string, details?: any) => {
@@ -108,6 +109,22 @@ serve(async (req) => {
         userId = newUser.user.id;
         logStep("User created successfully", { userId });
 
+       // Create profile explicitly (since trigger may not exist)
+        const { error: profileInsertError } = await supabaseAdmin
+          .from("profiles")
+          .insert({
+            id: userId,
+            user_id: userId,
+            first_name: pendingUserFirstName || "",
+            last_name: pendingUserLastName || "",
+            company: pendingUserCompany || "",
+            role: "worker",
+          });
+
+        if (profileInsertError) {
+          logStep("Error creating profile", { error: profileInsertError.message });
+        }
+
         // Mettre à jour le profil avec le type d'établissement si fourni (colonne establishment_type)
         if (pendingUserEstablishmentType) {
           const { error: profileUpdateError } = await supabaseAdmin
@@ -168,7 +185,7 @@ serve(async (req) => {
       }
 
       // Créer/mettre à jour les entitlements
-      const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      const periodEnd = new Date(subscription.items.data[0]?.current_period_end * 1000).toISOString();
 
       const { error: entitlementError } = await supabaseAdmin
         .from("user_entitlements")
@@ -178,8 +195,9 @@ serve(async (req) => {
           pro_plan_key: planKey,
           pro_status: "active",
           pro_current_period_end: periodEnd,
-          stripe_customer_id: session.customer as string,
-          stripe_subscription_id: subscriptionId,
+          // remove fields due to schema mismatch, will be handled in separate flow
+          // stripe_customer_id: session.customer as string,
+          // stripe_subscription_id: subscriptionId,
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
 
@@ -197,7 +215,7 @@ serve(async (req) => {
           stripe_subscription_id: subscriptionId,
           stripe_price_id: priceId,
           status: subscription.status,
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+          current_period_start: new Date(subscription.items.data[0]?.current_period_start * 1000).toISOString(),
           current_period_end: periodEnd,
           created_at: new Date(subscription.created * 1000).toISOString(),
           updated_at: new Date().toISOString(),
@@ -233,8 +251,8 @@ serve(async (req) => {
         .from("subscriptions")
         .update({
           status: subscription.status,
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          current_period_start: new Date(subscription.items.data[0]?.current_period_start * 1000).toISOString(),
+          current_period_end: new Date(subscription.items.data[0]?.current_period_end * 1000).toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq("stripe_subscription_id", subscription.id);

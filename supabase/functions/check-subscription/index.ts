@@ -76,10 +76,11 @@ serve(async (req) => {
         
         // Map plan key to price_id for frontend compatibility (aligné avec subscriptionPlans.ts LIVE)
         let priceId = null;
+        // change live ids with test ids for testing in dev
         if (entitlement.pro_plan_key === 'pro_1499_12m') {
-          priceId = 'price_1SZT7tGkt979eNWB0MF2xczP';
+          priceId = 'price_1SseJlGkt979eNWBoFcKFjFZ';
         } else if (entitlement.pro_plan_key === 'pro_2499_monthly') {
-          priceId = 'price_1SXnCbGkt979eNWBttiTM124';
+          priceId = 'price_1SseK2Gkt979eNWBgrF3GcCU';
         }
 
         return new Response(JSON.stringify({
@@ -124,7 +125,7 @@ serve(async (req) => {
       status: "active",
       limit: 1,
     });
-    const hasActiveSub = subscriptions.data.length > 0;
+        const hasActiveSub = subscriptions.data.length > 0;
     let productId = null;
     let priceId = null;
     let subscriptionEnd = null;
@@ -132,7 +133,7 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      subscriptionEnd = new Date(subscription?.items.data[0]?.current_period_end  * 1000).toISOString();
       logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
       
       // Find main product (not the additional establishment price)

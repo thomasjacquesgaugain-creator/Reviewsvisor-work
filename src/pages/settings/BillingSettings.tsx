@@ -30,8 +30,9 @@ export function BillingSettings() {
         if (!cancelled) setExtraEstablishmentsCount(0);
         return;
       }
+      // change establishment from établissements
       const { count, error } = await supabase
-        .from("établissements")
+        .from("establishments")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id);
       if (cancelled) return;

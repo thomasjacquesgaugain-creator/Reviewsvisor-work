@@ -7,9 +7,9 @@ export const stripeMode: StripeEnv =
 
 /** Valeurs par défaut (Live) si les variables d'env ne sont pas définies. */
 const DEFAULT_PRICE_IDS = {
-  proEngagement: "price_1SZT7tGkt979eNWB0MF2xczP", // Pro annuel 14,99€
-  proFlexible: "price_1SXnCbGkt979eNWBttiTM124",   // Pro mensuel 24,99€
-  addon: "price_1ShiPzGkt979eNWBSDapH7aJ",         // Établissement supplémentaire 4,99€
+  proEngagement: "price_1SseJlGkt979eNWBoFcKFjFZ", // Pro annuel 14,99€
+  proFlexible: "price_1SseK2Gkt979eNWBgrF3GcCU",   // Pro mensuel 24,99€
+  addon: "price_1SseKdGkt979eNWBOA5fiM2f",         // Établissement supplémentaire 4,99€
 } as const;
 
 /** Price IDs : variables d'env (VITE_STRIPE_PRICE_ID_*) avec fallback sur les valeurs Live. */
