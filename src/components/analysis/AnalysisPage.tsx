@@ -153,9 +153,9 @@ function AnalysisContent({ data, reviews, dynamicThemes = [] }: AnalysisContentP
 
       {/* Titre de section 5 */}
       <h2 className="text-2xl font-bold text-gray-800 mt-12 mb-6 flex items-center gap-2">
-        5. Diagramme de Pareto des avis négatifs et positifs
+        5. {t("analysis.pareto.title")}
         <InfoTooltip 
-          content="Analyse de Pareto : méthode montrant quels problèmes génèrent la majorité des insatisfactions. Bénéfice : vous concentrez vos efforts sur les causes qui auront le plus d'impact."
+          content={t("analysis.pareto.tooltipInfo")}
         />
       </h2>
 

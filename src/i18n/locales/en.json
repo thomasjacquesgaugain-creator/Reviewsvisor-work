@@ -1440,6 +1440,54 @@
         "positive": "Positive Feedback",
         "friction": "Friction Points"
       }
+    },
+    "pareto": {
+      "title": "Pareto Chart of Negative and Positive Reviews",
+      "tooltipInfo": "Pareto Analysis: A method that reveals which problems generate the majority of dissatisfaction. Benefit: You focus your efforts on the causes that will have the greatest impact.",
+      "issues": "Top Issues - Negative Reviews",
+      "strengths": "Top Strengths - Positive Reviews",
+      "noIssues": "No issues identified",
+      "noStrengths": "No strengths identified",
+      "noData": "No data available to generate an analysis.",
+      "detailedPareto": "Detailed Pareto Chart",
+      "issuesModalTitle": "Pareto Chart - Negatives",
+      "strengthsModalTitle": "Pareto Chart - Positives",
+      "mentionsCount": "Number of mentions",
+      "cumulativePercent": "Cumulative %",
+      "mentions": "Mentions",
+      "issuesShare": "Share of issues",
+      "strengthsShare": "Share of strengths",
+      "xAxisLabel": "Number of mentions (frequency)",
+      "analysis": "Analysis",
+      "threshold": "80% Threshold",
+      "frequencyNote": "<bold>Note:</bold> \"Mentions\" represent the <bold>frequency</bold> with which a theme appears in reviews, not the perceived severity of the problem.",
+      "strengthsFrequencyNote": "<bold>Note:</bold> \"Mentions\" represent the <bold>frequency</bold> with which a strength appears in positive reviews.",
+      "issuesParetoInfo": "<bold>Pareto Principle:</bold> Issues before the 80% threshold represent the bulk of the impact. Focus your efforts on these priorities.",
+      "strengthsParetoInfo": "<bold>Pareto Principle:</bold> Strengths before the 80% threshold represent the majority of your satisfaction drivers. Highlight them to reinforce your image.",
+      "issuesParetoPrinciple": "According to the Pareto principle, <bold>{{percentage}}% of negative reviews</bold> come from <bold>{{count}} main cause(s)</bold>:",
+      "issuesItem": "{{rank}}. <bold>{{name}}</bold> accounts for <bold>{{percentage}}%</bold> of issues with {{count}} mention(s)",
+      "issuesRecommendation": "By focusing on improving <bold>{{name}}</bold>, you could significantly reduce negative feedback.",
+      "strengthsIntro": "Your <bold>strengths</bold> according to your customers:",
+      "strengthsItem": "{{rank}}. <bold>{{name}}</bold> accounts for <bold>{{percentage}}%</bold> of strengths with {{count}} positive mention(s)",
+      "strengthsRecommendation": "These elements are your <bold>loyalty drivers</bold>. Highlight them in your communication!",
+      "analyzeCause": "Analyze causes of \"{{name}}\"",
+      "exploreStrength": "Explore \"{{name}}\" in detail",
+      "rootCause": {
+        "title": "Root Cause Analysis: {{problem}}",
+        "summary": "Summary",
+        "categoriesHeading": "Identified causes by category",
+        "noCauses": "No specific cause could be identified from the available data.",
+        "fieldAnalysisRecommended": "An on-site analysis would be recommended.",
+        "methodNote": {
+          "title": "Methodological note:",
+          "body": "This analysis is based solely on themes, keywords, and verbatims extracted from customer reviews. Probability levels are indicative and should be validated through on-site observation."
+        },
+        "probability": {
+          "probable": "Probable",
+          "possible": "Possible",
+          "occasional": "Occasional"
+        }
+      }
     }
   }
 }
