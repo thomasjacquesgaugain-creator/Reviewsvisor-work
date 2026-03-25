@@ -12,7 +12,7 @@ export type Etab = {
   rating?: number | null;
   is_active?: boolean;
   /** Catégorie mappée depuis Google Places types (Restaurant, Bar, Café, etc.) */
-  type_etablissement?: string | null;
+  types?: string | null;
   /** Id de la ligne en BDD (pour mise à jour type_etablissement, etc.) */
   id?: string;
   /** Date du dernier import d'avis réussi (ISO string) pour affichage "Dernière mise à jour" */

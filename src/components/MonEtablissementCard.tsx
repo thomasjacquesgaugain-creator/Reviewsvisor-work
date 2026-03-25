@@ -88,7 +88,7 @@ export default function MonEtablissementCard({
           rating: establishment.rating || undefined,
           lat: establishment.lat || null,
           lng: establishment.lng || null,
-          type_etablissement: (row.type_etablissement as string) || undefined,
+          types: (row.types as string) || undefined,
           last_reviews_import: (row.last_reviews_import as string) ?? null,
         });
       } else {

@@ -572,7 +572,33 @@
       "establishmentClosed": "Establishment closed"
     },
     "establishmentInformation": {
-      "title": "Establishment information"
+      "title": "Establishment information",
+      "establishmentName": "Establishment Name",
+      "address": "Address",
+      "googleRating": "Google Rating",
+      "placeID": "Place ID",
+      "phoneNumber": "Phone Number",
+      "website": "Website",
+      "establishmentType": "Type of Establishment",
+      "updatedEstablishmentType": "Updated establishment type",
+      "establishmentTypesOptions": {
+        "restaurant": "Restaurant",
+        "bar": "Bar",
+        "cafe": "Cafe",
+        "hotel": "Hotel",
+        "bakery": "Bakery",
+        "salon": "Hair salon",
+        "spa": "Spa / Wellness center",
+        "retail": "Retail",
+        "other": "Other"
+      },
+      "placeholder": {
+        "establishmentName": "Name of your establishment",
+        "address": "1 Cr de la Bôve, 56100 Lorient",
+        "phoneNumber": "Phone number of your establishment",
+        "website": "URL of your establishment's website",
+        "establishmentType": "Select establishment type"
+      }
     },
     "connectionAndSecurity": {
       "title": "Connection and security",

@@ -237,7 +237,7 @@ export default function EtablissementPage() {
         place.formatted_phone_number || place.international_phone_number || "",
       url: place.url || "",
       rating: place.rating ?? null,
-      type_etablissement: typeEtablissement || null,
+      types: typeEtablissement || null,
     };
   }
 

@@ -14,7 +14,7 @@ export interface EstablishmentData {
   website?: string;
   rating?: number;
   user_ratings_total?: number;
-  type_etablissement?: string | null;
+  // type_etablissement?: string | null;
   types?: any;
   source?: string;
   raw?: any;
@@ -301,7 +301,7 @@ export async function getUserEstablishments(): Promise<EstablishmentData[]> {
     website: string | null;
     rating: number | null;
     user_ratings_total: number | null;
-    // type_etablissement: string | null;
+    types: string | null;
     created_at: string;
     updated_at: string;
     // is_active?: boolean | null;
@@ -318,7 +318,7 @@ export async function getUserEstablishments(): Promise<EstablishmentData[]> {
     website: row.website ?? undefined,
     rating: row.rating ?? undefined,
     user_ratings_total: row.user_ratings_total ?? undefined,
-    type_etablissement: row.type_etablissement ?? undefined,
+    types: row.types ?? undefined,
     created_at: row.created_at,
     updated_at: row.updated_at,
   }));
@@ -329,7 +329,7 @@ export type UpdateEstablishmentPayload = {
   formatted_address?: string;
   phone?: string;
   website?: string;
-  type_etablissement?: string | null;
+  types?: string | null;
 };
 
 /**
@@ -351,13 +351,13 @@ export async function updateEstablishment(
   const update: Record<string, unknown> = {};
   if (payload.name !== undefined) update.nom = payload.name.trim() || null;
   if (payload.formatted_address !== undefined)
-    update.adresse = payload.formatted_address.trim() || null;
+    update.formatted_address = payload.formatted_address.trim() || null;
   if (payload.phone !== undefined)
-    update.telephone = payload.phone.trim() || null;
+    update.phone = payload.phone.trim() || null;
   if (payload.website !== undefined)
     update.website = payload.website.trim() || null;
-  if (payload.type_etablissement !== undefined)
-    update.type_etablissement = payload.type_etablissement?.trim() || null;
+  if (payload.types !== undefined)
+    update.types = payload.types?.trim() || null;
 
   if (Object.keys(update).length === 0) return;
 

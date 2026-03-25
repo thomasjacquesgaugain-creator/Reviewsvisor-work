@@ -27,6 +27,9 @@ export function EstablishmentInfoSettings() {
   const [loading, setLoading] = useState(true);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const [editingTypeEtablissement, setEditingTypeEtablissement] = useState(false);
+  const [typeEtablissementEditValue, setTypeEtablissementEditValue] = useState<string>("");
+  const [savingTypeEtablissement, setSavingTypeEtablissement] = useState(false);
 
   const loadEstablishments = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -113,9 +116,9 @@ export function EstablishmentInfoSettings() {
   const handleSaveTypeEtablissement = useCallback(
     async (value: string) => {
       if (!displayedEstablishment?.id) return;
-      await updateEstablishment(displayedEstablishment.id, { type_etablissement: value.trim() || null });
+      await updateEstablishment(displayedEstablishment.id, { types: value.trim() || null });
       await loadEstablishments(false);
-      toast.success("Type d'établissement mis à jour");
+      toast.success(t("settings.establishmentInformation.updatedEstablishmentType"));
     },
     [displayedEstablishment?.id, loadEstablishments]
   );
@@ -135,7 +138,7 @@ export function EstablishmentInfoSettings() {
     <div className="p-8">
       {/* Titre et sélecteur sur la même ligne (comme profil : titre à gauche, rien à droite ; ici sélecteur à droite) */}
       <div className="flex items-center justify-between gap-4 mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Infos d&apos;établissement</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">{t("settings.establishmentInformation.title")}</h1>
         {establishments.length > 0 && (
           <Card className="min-w-[350px] w-[420px] max-w-full border-blue-200 flex-shrink-0">
             <CardContent className="p-4">
@@ -216,13 +219,13 @@ export function EstablishmentInfoSettings() {
       {displayedEstablishment ? (
         <div className="space-y-0">
           <EditableField
-            label="Nom de l'établissement"
+            label={t("settings.establishmentInformation.establishmentName")}
             value={displayedEstablishment.name}
             onSave={handleSaveName}
-            placeholder="Nom de l'établissement"
+            placeholder={t("settings.establishmentInformation.placeholder.establishmentName")}
           />
           <EditableField
-            label="Adresse"
+            label={t("settings.establishmentInformation.address")}
             value={displayedEstablishment.formatted_address ?? ""}
             onSave={handleSaveAddress}
             placeholder="1 Cr de la Bôve, 56100 Lorient"
@@ -231,7 +234,7 @@ export function EstablishmentInfoSettings() {
           />
           <div className="flex items-start justify-between py-4 border-b border-gray-100">
             <div className="flex-1 min-w-0">
-              <label className="block text-sm font-medium text-gray-500 mb-1">Note Google</label>
+              <label className="block text-sm font-medium text-gray-500 mb-1">{t("settings.establishmentInformation.googleRating")}</label>
               <div className="text-sm text-gray-900">
                 {displayedEstablishment.rating != null
                   ? `${Number(displayedEstablishment.rating).toFixed(1)} (Google)`
@@ -241,20 +244,20 @@ export function EstablishmentInfoSettings() {
           </div>
           <div className="flex items-start justify-between py-4 border-b border-gray-100">
             <div className="flex-1 min-w-0">
-              <label className="block text-sm font-medium text-gray-500 mb-1">Place ID</label>
+              <label className="block text-sm font-medium text-gray-500 mb-1">{t("settings.establishmentInformation.placeID")}</label>
               <div className="text-sm text-gray-900 font-mono break-all">{displayedEstablishment.place_id}</div>
             </div>
           </div>
           <EditableField
-            label="Numéro de téléphone"
+            label={t("settings.establishmentInformation.phoneNumber")}
             value={displayedEstablishment.phone ? formatPhoneNumber(displayedEstablishment.phone) : ""}
             onSave={handleSavePhone}
-            placeholder="+33123456789"
+            placeholder={t("settings.establishmentInformation.placeholder.phoneNumber")}
             type="tel"
             emptyLabel="Information non fournie"
           />
           <EditableField
-            label="Site web"
+            label={t("settings.establishmentInformation.website")}
             value={displayedEstablishment.website ?? ""}
             onSave={handleSaveWebsite}
             placeholder="https://example.com"
@@ -263,13 +266,13 @@ export function EstablishmentInfoSettings() {
           {/* Type d'établissement : éditable via Select */}
           {editingTypeEtablissement ? (
             <div className="space-y-2 py-4 border-b border-gray-100">
-              <label className="block text-sm font-medium text-gray-700">Type d&apos;établissement</label>
+              <label className="block text-sm font-medium text-gray-700">{t("settings.establishmentInformation.establishmentType")}</label>
               <Select
                 value={typeEtablissementEditValue || ""}
                 onValueChange={setTypeEtablissementEditValue}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Sélectionnez le type" />
+                  <SelectValue placeholder={t("settings.establishmentInformation.placeholder.establishmentType")} />
                 </SelectTrigger>
                 <SelectContent>
                   {ESTABLISHMENT_TYPE_OPTIONS.map((opt) => (
@@ -295,36 +298,36 @@ export function EstablishmentInfoSettings() {
                   className="gap-2"
                 >
                   <Check className="h-4 w-4" />
-                  Enregistrer
+                  {t("common.save")}
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    setTypeEtablissementEditValue(displayedEstablishment.type_etablissement ?? "");
+                    setTypeEtablissementEditValue(displayedEstablishment.types ?? "");
                     setEditingTypeEtablissement(false);
                   }}
                   disabled={savingTypeEtablissement}
                   className="gap-2"
                 >
                   <X className="h-4 w-4" />
-                  Annuler
+                  {t("common.cancel")}
                 </Button>
               </div>
             </div>
           ) : (
             <div className="flex items-start justify-between py-4 border-b border-gray-100">
               <div className="flex-1 min-w-0">
-                <label className="block text-sm font-medium text-gray-500 mb-1">Type d&apos;établissement</label>
+                <label className="block text-sm font-medium text-gray-500 mb-1">{t("settings.establishmentInformation.establishmentType")}</label>
                 <div className="text-sm text-gray-900">
-                  {displayedEstablishment.type_etablissement || "Information non fournie"}
+                  {displayedEstablishment.types || "Information non fournie"}
                 </div>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setTypeEtablissementEditValue(displayedEstablishment.type_etablissement ?? "");
+                  setTypeEtablissementEditValue(displayedEstablishment.types ?? "");
                   setEditingTypeEtablissement(true);
                 }}
                 className="ml-4 flex-shrink-0"
