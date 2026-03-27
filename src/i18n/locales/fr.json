@@ -634,6 +634,7 @@
       "phoneNumber": "Numéro de téléphone",
       "mailingAddress": "Adresse postale",
       "email": "Email",
+      "pictureUpdated": "Photo de profil mise à jour",
       "placeholder": {
         "profilePicture": "JPG, PNG ou WebP. Taille maximale : 2 Mo",
         "firstName": "Votre Prénom",

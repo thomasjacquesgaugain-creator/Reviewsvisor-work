@@ -349,7 +349,7 @@ export async function updateEstablishment(
   }
 
   const update: Record<string, unknown> = {};
-  if (payload.name !== undefined) update.nom = payload.name.trim() || null;
+  if (payload.name !== undefined) update.name = payload.name.trim() || null;
   if (payload.formatted_address !== undefined)
     update.formatted_address = payload.formatted_address.trim() || null;
   if (payload.phone !== undefined)

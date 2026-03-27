@@ -80,7 +80,7 @@ export default function MonEtablissementCard({
         setEtab({
           id: establishment.id,
           place_id: establishment.place_id,
-          name: establishment.nom,
+          name: establishment.name,
           address: establishment.formatted_address || "",
           phone: establishment.phone || undefined,
           website: establishment.website || undefined,
