@@ -542,6 +542,7 @@
       "phoneNumber": "Phone number",
       "mailingAddress": "Mailing address",
       "email": "Email",
+      "pictureUpdated": "Profile picture updated",
       "placeholder": {
         "profilePicture": "JPG, PNG, or WebP. Maximum size: 2 MB",
         "firstName": "Your first name",

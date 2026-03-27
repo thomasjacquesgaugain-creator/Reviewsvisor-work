@@ -91,12 +91,7 @@ export function ProfilePhotoUploader({
     try {
       setIsUploading(true);
       console.log("[ProfilePhotoUploader] Début de l'upload...");
-
-      // Supprimer l'ancien avatar si existe
-      if (avatarUrl) {
-        console.log("[ProfilePhotoUploader] Suppression de l'ancien avatar:", avatarUrl);
-        await deleteAvatar(avatarUrl);
-      }
+      const previousAvatarUrl = avatarUrl;
 
       // Upload le nouveau
       console.log("[ProfilePhotoUploader] Upload vers Supabase Storage...");
@@ -118,7 +113,13 @@ export function ProfilePhotoUploader({
       // Callback
       onAvatarUpdated?.(result.url);
 
-      toast.success("Photo de profil mise à jour");
+      // Supprimer l'ancien avatar seulement une fois le nouveau enregistré
+      if (previousAvatarUrl) {
+        console.log("[ProfilePhotoUploader] Suppression de l'ancien avatar:", previousAvatarUrl);
+        await deleteAvatar(previousAvatarUrl);
+      }
+
+      toast.success(t("settings.personalInformation.pictureUpdated"));
     } catch (err: any) {
       console.error("[ProfilePhotoUploader] Erreur lors de l'upload:", err);
       console.error("[ProfilePhotoUploader] Détails de l'erreur:", {
@@ -234,7 +235,7 @@ export function ProfilePhotoUploader({
               disabled={isUploading}
             >
               <X className="h-4 w-4" />
-              <span>Supprimer</span>
+              <span>{t("common.delete")}</span>
             </Button>
           )}
         </div>
