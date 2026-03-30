@@ -7,59 +7,32 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const LIVE_PRICE = {
-  basicAnnual:      Deno.env.get("VITE_STRIPE_PRICE_BASIC_ANNUAL"),
-  basicMonthly:    Deno.env.get("VITE_STRIPE_PRICE_BASIC_MONTHLY"),
-  standardAnnual:   Deno.env.get("VITE_STRIPE_PRICE_STANDARD_ANNUAL"),
-  standardMonthly:  Deno.env.get("VITE_STRIPE_PRICE_STANDARD_MONTHLY"),
-  proAnnual:       Deno.env.get("VITE_STRIPE_PRICE_PRO_ANNUAL"),
-  proMonthly:     Deno.env.get("VITE_STRIPE_PRICE_PRO_MONTHLY"),
-  premiumAnnual:   Deno.env.get("VITE_STRIPE_PRICE_PREMIUM_ANNUAL"),
-  premiumMonthly:  Deno.env.get("VITE_STRIPE_PRICE_PREMIUM_MONTHLY"),
-  addon: Deno.env.get("VITE_STRIPE_PRICE_ID_EXTRA_ESTABLISHMENT"),
-};
-
-function getTestPriceIds() {
+function getPriceIds() {
   return {
-    basicAnnual:     Deno.env.get("STRIPE_PRICE_BASIC_ANNUAL_TEST") ?? "",
-    basicMonthly:    Deno.env.get("STRIPE_PRICE_BASIC_MONTHLY_TEST") ?? "",
-    standardAnnual:  Deno.env.get("STRIPE_PRICE_STANDARD_ANNUAL_TEST") ?? "",
-    standardMonthly: Deno.env.get("STRIPE_PRICE_STANDARD_MONTHLY_TEST") ?? "",
-    proAnnual:       Deno.env.get("STRIPE_PRICE_PRO_ANNUAL_TEST") ?? "",
-    proMonthly:      Deno.env.get("STRIPE_PRICE_PRO_MONTHLY_TEST") ?? "",
-    premiumAnnual:   Deno.env.get("STRIPE_PRICE_PREMIUM_ANNUAL_TEST") ?? "",
-    premiumMonthly:  Deno.env.get("STRIPE_PRICE_PREMIUM_MONTHLY_TEST") ?? "",
-    addon:           Deno.env.get("STRIPE_PRICE_ADDON_TEST") ?? "",
+    basicAnnual:     Deno.env.get("STRIPE_PRICE_BASIC_ANNUAL") ?? "",
+    basicMonthly:    Deno.env.get("STRIPE_PRICE_BASIC_MONTHLY") ?? "",
+    standardAnnual:  Deno.env.get("STRIPE_PRICE_STANDARD_ANNUAL") ?? "",
+    standardMonthly: Deno.env.get("STRIPE_PRICE_STANDARD_MONTHLY") ?? "",
+    proAnnual:       Deno.env.get("STRIPE_PRICE_PRO_ANNUAL") ?? "",
+    proMonthly:      Deno.env.get("STRIPE_PRICE_PRO_MONTHLY") ?? "",
+    premiumAnnual:   Deno.env.get("STRIPE_PRICE_PREMIUM_ANNUAL") ?? "",
+    premiumMonthly:  Deno.env.get("STRIPE_PRICE_PREMIUM_MONTHLY") ?? "",
+    addon:           Deno.env.get("STRIPE_PRICE_ADDON") ?? "",
   };
 }
 
-function buildLiveToTest(): Record<string, string> {
-  const test = getTestPriceIds();
-  const map: Record<string, string> = {};
-  (Object.keys(LIVE_PRICE) as Array<keyof typeof LIVE_PRICE>).forEach((key) => {
-    if (test[key]) map[LIVE_PRICE[key]] = test[key];
-  });
-  return map;
-}
-
-function buildPriceIdToProductKey(): Record<string, string> {  
-  const test = getTestPriceIds();
-  const entries: Array<[string, string]> = [
-    [LIVE_PRICE.basicAnnual,     "basic_annual"],
-    [LIVE_PRICE.basicMonthly,    "basic_monthly"],
-    [LIVE_PRICE.standardAnnual,  "standard_annual"],
-    [LIVE_PRICE.standardMonthly, "standard_monthly"],
-    [LIVE_PRICE.proAnnual,       "pro_annual"],
-    [LIVE_PRICE.proMonthly,      "pro_monthly"],
-    [LIVE_PRICE.premiumAnnual,   "premium_annual"],
-    [LIVE_PRICE.premiumMonthly,  "premium_monthly"],
-  ];
-  const map: Record<string, string> = {};
-  entries.forEach(([liveId, key]) => { map[liveId] = key; });
-  (Object.keys(test) as Array<keyof typeof test>).forEach((k) => {
-    if (test[k]) map[test[k]] = k.replace(/([A-Z])/g, "_$1").toLowerCase();
-  });
-  return map;
+function buildPriceIdToProductKey(): Record<string, string> {
+  const prices = getPriceIds();
+  return {
+    [prices.basicAnnual]: "basic_annual",
+    [prices.basicMonthly]: "basic_monthly",
+    [prices.standardAnnual]: "standard_annual",
+    [prices.standardMonthly]: "standard_monthly",
+    [prices.proAnnual]: "pro_annual",
+    [prices.proMonthly]: "pro_monthly",
+    [prices.premiumAnnual]: "premium_annual",
+    [prices.premiumMonthly]: "premium_monthly",
+  };
 }
 
 const ADMIN_EMAIL = "thomas.jacquesgaugain@gmail.com";
@@ -162,14 +135,14 @@ serve(async (req) => {
       return errorResponse("PRICE_ID_INVALID", "Le price ID est un placeholder.", 400);
     }
 
-    const LIVE_TO_TEST = buildLiveToTest();
+    // const LIVE_TO_TEST = buildLiveToTest();
     const PRICE_ID_TO_PRODUCT_KEY = buildPriceIdToProductKey();
 
-    if (stripeMode === "TEST" && LIVE_TO_TEST[priceId]) {
-      const testPriceId = LIVE_TO_TEST[priceId];
-      logStep("LIVE priceId replaced by TEST mapping", { from: priceId, to: testPriceId });
-      priceId = testPriceId;
-    }
+    // if (stripeMode === "TEST" && LIVE_TO_TEST[priceId]) {
+    //   const testPriceId = LIVE_TO_TEST[priceId];
+    //   logStep("LIVE priceId replaced by TEST mapping", { from: priceId, to: testPriceId });
+    //   priceId = testPriceId;
+    // }
 
     logStep("Inputs", {
       userId: userId ?? "anonymous",
@@ -179,8 +152,7 @@ serve(async (req) => {
       hasPendingEstablishment: !!pendingEstablishment,
     });
 
-    const testPriceIds = getTestPriceIds();
-    const additionalEstablishmentPriceId = stripeMode === "TEST" ? testPriceIds.addon : LIVE_PRICE.addon;
+    const additionalEstablishmentPriceId = getPriceIds().addon;
     const origin = req.headers.get("origin") || Deno.env.get("APP_URL") || Deno.env.get("SITE_URL") || "https://reviewsvisor.fr";
 
     // ======= ADMIN BYPASS =======

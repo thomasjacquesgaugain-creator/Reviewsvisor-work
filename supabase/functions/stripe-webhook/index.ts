@@ -14,16 +14,19 @@ const supabaseAdmin = createClient(
   { auth: { persistSession: false } }
 );
 
-const PRICE_TO_PLAN: Record<string, string> = {
-  "price_1TGYyFGkt979eNWB9GvsNtlX": "basic_annual",
-  "price_1TGZ3bGkt979eNWBIBXHc1zj": "basic_monthly",
-  "price_1TGZAdGkt979eNWBfFszOkht": "standard-annual",
-  "price_1TGZD0Gkt979eNWBzOjJGjrd": "standard-monthly",
-  "price_1TFYCPGkt979eNWBGuj4ykgG": "pro-annual",
-  "price_1TGYlmGkt979eNWBrDpBYCoX": "pro-monthly",
-  "price_1TGZFVGkt979eNWBj6QLHo7G": "premium-annual",
-  "price_1TGZHvGkt979eNWBPdznQyh8": "premium-monthly",
-};
+
+function getPriceToPlanMap(): Record<string, string> {
+  return {
+    [Deno.env.get("STRIPE_PRICE_BASIC_ANNUAL") ?? ""]: "basic_annual",
+    [Deno.env.get("STRIPE_PRICE_BASIC_MONTHLY") ?? ""]: "basic_monthly",
+    [Deno.env.get("STRIPE_PRICE_STANDARD_ANNUAL") ?? ""]: "standard_annual",
+    [Deno.env.get("STRIPE_PRICE_STANDARD_MONTHLY") ?? ""]: "standard_monthly",
+    [Deno.env.get("STRIPE_PRICE_PRO_ANNUAL") ?? ""]: "pro_annual",
+    [Deno.env.get("STRIPE_PRICE_PRO_MONTHLY") ?? ""]: "pro_monthly",
+    [Deno.env.get("STRIPE_PRICE_PREMIUM_ANNUAL") ?? ""]: "premium_annual",
+    [Deno.env.get("STRIPE_PRICE_PREMIUM_MONTHLY") ?? ""]: "premium_monthly",
+  };
+}
 
 const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}`, details ? JSON.stringify(details) : "");
@@ -94,6 +97,7 @@ serve(async (req) => {
   const subscriptionId = session.subscription as string;
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const priceId = subscription.items.data[0]?.price.id || "";
+  const PRICE_TO_PLAN = getPriceToPlanMap();
   const planKey = PRICE_TO_PLAN[priceId] || "basic_monthly";
 
   logStep("Subscription details", { subscriptionId, priceId, planKey });
