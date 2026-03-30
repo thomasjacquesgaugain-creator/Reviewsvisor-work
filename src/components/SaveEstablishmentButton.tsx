@@ -28,13 +28,14 @@ export default function SaveEstablishmentButton({
 }: {
   selected: Etab | null;
   disabled?: boolean;
-  onSaveSuccess?: () => void;
+  // onSaveSuccess?: () => void;
+  onSaveSuccess?: (savedEtab: Etab) => void;
 }) {
   const [isAlreadySaved, setIsAlreadySaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [checkVersion, setCheckVersion] = useState(0);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [showAddonModal, setShowAddonModal] = useState(false);
+  // const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  // const [showAddonModal, setShowAddonModal] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [redirectingToCheckout, setRedirectingToCheckout] = useState(false);
   const [currentEstablishmentCount, setCurrentEstablishmentCount] = useState(0);
@@ -115,7 +116,7 @@ export default function SaveEstablishmentButton({
         );
 
         if (result.success) {
-          setShowSubscriptionModal(false);
+          // setShowSubscriptionModal(false);
           sonnerToast.success(t("subscription.activatedSuccess"));
           // Re-run the save process
           await performSave();
@@ -158,7 +159,7 @@ export default function SaveEstablishmentButton({
         window.location.href = data.url;
       } else if (data?.has_subscription) {
         // User already has a subscription, close modal and proceed
-        setShowSubscriptionModal(false);
+        // setShowSubscriptionModal(false);
         sonnerToast.success(t("subscription.alreadySubscribed"));
         // Re-run the save process
         await performSave();
@@ -252,7 +253,7 @@ export default function SaveEstablishmentButton({
         duration: 3000,
       });
 
-      onSaveSuccess?.();
+      onSaveSuccess?.(selected);
     } finally {
       setSaving(false);
     }
@@ -278,7 +279,7 @@ export default function SaveEstablishmentButton({
           );
           return;
         }
-        setShowAddonModal(false);
+        // setShowAddonModal(false);
         const result = await performSave();
         console.log(result);
         return;
@@ -306,7 +307,7 @@ export default function SaveEstablishmentButton({
 
       if (data?.success) {
         sonnerToast.success(t("subscription.establishmentAdded"));
-        setShowAddonModal(false);
+        // setShowAddonModal(false);
         await performSave();
       } else {
         sonnerToast.error(data?.error || t("common.updateError"));
@@ -341,69 +342,70 @@ export default function SaveEstablishmentButton({
     }
 
     // 3) BILLING GATE: Vérifier l'abonnement AVANT de sauvegarder
-    setCheckingSubscription(true);
-    try {
-      if (!import.meta.env.PROD) {
-        console.log(
-          "[SaveEstablishmentButton] Checking subscription status...",
-        );
-      }
-      const subscriptionStatus = await checkSubscription();
-      if (!import.meta.env.PROD) {
-        console.log(
-          "[SaveEstablishmentButton] Subscription status:",
-          subscriptionStatus,
-        );
-        console.log(
-          "[SaveEstablishmentButton] Current establishment count:",
-          currentEstablishmentCount,
-        );
-      }
+    // setCheckingSubscription(true);
+    // try {
+    //   if (!import.meta.env.PROD) {
+    //     console.log(
+    //       "[SaveEstablishmentButton] Checking subscription status...",
+    //     );
+    //   }
+    //   const subscriptionStatus = await checkSubscription();
+    //   if (!import.meta.env.PROD) {
+    //     console.log(
+    //       "[SaveEstablishmentButton] Subscription status:",
+    //       subscriptionStatus,
+    //     );
+    //     console.log(
+    //       "[SaveEstablishmentButton] Current establishment count:",
+    //       currentEstablishmentCount,
+    //     );
+    //   }
 
-      if (!subscriptionStatus.subscribed) {
-        // Pas d'abonnement -> afficher modal abonnement
-        if (!import.meta.env.PROD) {
-          console.log(
-            "[SaveEstablishmentButton] No subscription, showing subscription modal",
-          );
-        }
-        setShowSubscriptionModal(true);
-        return;
-      }
+    //   if (!subscriptionStatus.subscribed) {
+    //     // Pas d'abonnement -> afficher modal abonnement
+    //     if (!import.meta.env.PROD) {
+    //       console.log(
+    //         "[SaveEstablishmentButton] No subscription, showing subscription modal",
+    //       );
+    //     }
+    //     setShowSubscriptionModal(true);
+    //     return;
+    //   }
 
-      // 4) QUOTA CHECK: Vérifier si le quota inclus est dépassé
-      if (currentEstablishmentCount >= INCLUDED_ESTABLISHMENTS) {
-        // Quota dépassé -> afficher modal addon
-        if (!import.meta.env.PROD) {
-          console.log(
-            "[SaveEstablishmentButton] Quota exceeded, showing addon modal",
-            {
-              current: currentEstablishmentCount,
-              included: INCLUDED_ESTABLISHMENTS,
-            },
-          );
-        }
-        setShowAddonModal(true);
-        return;
-      }
+    //   // 4) QUOTA CHECK: Vérifier si le quota inclus est dépassé
+    //   if (currentEstablishmentCount >= INCLUDED_ESTABLISHMENTS) {
+    //     // Quota dépassé -> afficher modal addon
+    //     if (!import.meta.env.PROD) {
+    //       console.log(
+    //         "[SaveEstablishmentButton] Quota exceeded, showing addon modal",
+    //         {
+    //           current: currentEstablishmentCount,
+    //           included: INCLUDED_ESTABLISHMENTS,
+    //         },
+    //       );
+    //     }
+    //     setShowAddonModal(true);
+    //     return;
+    //   }
 
-      // Sous le quota -> procéder à la sauvegarde immédiate
-      if (!import.meta.env.PROD) {
-        console.log(
-          "[SaveEstablishmentButton] Under quota, saving immediately",
-        );
-      }
-      await performSave();
+    //   // Sous le quota -> procéder à la sauvegarde immédiate
+    //   if (!import.meta.env.PROD) {
+    //     console.log(
+    //       "[SaveEstablishmentButton] Under quota, saving immediately",
+    //     );
+    //   }
+      // await performSave();
+      onSaveSuccess?.(selected)
 
-    } catch (err) {
-      console.error(
-        "[SaveEstablishmentButton] Error checking subscription:",
-        err,
-      );
-      sonnerToast.error(t("subscription.checkError"));
-    } finally {
-      setCheckingSubscription(false);
-    }
+    // } catch (err) {
+    //   console.error(
+    //     "[SaveEstablishmentButton] Error checking subscription:",
+    //     err,
+    //   );
+    //   sonnerToast.error(t("subscription.checkError"));
+    // } finally {
+    //   setCheckingSubscription(false);
+    // }
   }
 
   return (
@@ -434,7 +436,7 @@ export default function SaveEstablishmentButton({
       </button>
 
       {/* Modal Abonnement Requis */}
-      <Dialog
+      {/* <Dialog
         open={showSubscriptionModal}
         onOpenChange={setShowSubscriptionModal}
       >
@@ -478,10 +480,10 @@ export default function SaveEstablishmentButton({
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
 
       {/* Modal Établissement supplémentaire (quota dépassé) */}
-      <Dialog open={showAddonModal} onOpenChange={setShowAddonModal}>
+      {/* <Dialog open={showAddonModal} onOpenChange={setShowAddonModal}>
         <DialogContent className="sm:max-w-md" hideCloseButton>
           <div className="absolute -top-3 -right-3 bg-purple-600 text-white px-3 py-1 text-xs font-semibold rounded-lg shadow-md z-10">
             +4,99 €/mois
@@ -577,7 +579,7 @@ export default function SaveEstablishmentButton({
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </>
   );
 }

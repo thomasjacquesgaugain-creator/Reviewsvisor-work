@@ -166,7 +166,8 @@
     "sessionExpired": "Session expirée",
     "pleaseReconnect": "Veuillez vous reconnecter",
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
-    "redirectingToLogin": "Redirection vers la page de connexion..."
+    "redirectingToLogin": "Redirection vers la page de connexion...",
+    "createAccount":"Créer un compte"
   },
   "nav": {
     "home": "Accueil",

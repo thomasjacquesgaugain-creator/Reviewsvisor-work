@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslation } from "react-i18next";
+import { supabase } from "@/integrations/supabase/client";
 
 type InscriptionFormData = {
   email: string;
@@ -61,47 +62,103 @@ export default function Inscription() {
     },
   });
 
-  async function onSubmit(formData: InscriptionFormData) {
-    setLoading(true);
-    
-    try {
-      // Stocker les données dans sessionStorage
-      const pendingUserData = {
+
+
+async function onSubmit(formData: InscriptionFormData) {
+  setLoading(true);
+  try {
+    const redirectUrl = `${window.location.origin}/`;
+
+    const { data, error } = await supabase.auth.signUp({
+      email: formData.email.trim(),
+      password: formData.password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          first_name: formData.firstName.trim(),
+          last_name: formData.lastName.trim(),
+          display_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+        },
+      },
+    });
+
+    if (error) {
+      toast({ variant: "destructive", title: t("errors.title"), description: error.message });
+      return;
+    }
+
+    if (!data.user) {
+      toast({ variant: "destructive", title: t("errors.title"), description: t("errors.generic") });
+      return;
+    }
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .upsert(
+        {
+          id: data.user.id,
+          user_id: data.user.id,
+          first_name: formData.firstName.trim(),
+          last_name: formData.lastName.trim(),
+          full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+          company: "",
+          role: "worker",
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      );
+
+    if (profileError) {
+      console.warn("Profile upsert warning:", profileError.message);
+    }
+
+    // Link any existing subscription row to this user by email
+    const { error: subError } = await supabase
+      .from("subscriptions")
+      .update({ user_id: data.user.id })
+      .or(`user_id.is.null,email.eq.${formData.email.trim()}`);
+
+    if (subError) {
+      console.warn("Subscription link warning:", subError.message);
+    }
+
+    supabase.functions.invoke("send-welcome-email", {
+      body: {
         email: formData.email.trim(),
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
-        password: formData.password,
-      };
+      },
+    }).then(({ error: emailError }) => {
+      if (emailError) console.error("Welcome email error:", emailError);
+      else console.log("Welcome email sent");
+    }).catch((err) => console.error("Welcome email call error:", err));
 
-      sessionStorage.setItem("pendingUser", JSON.stringify(pendingUserData));
+    sessionStorage.removeItem("pendingUser");
+    localStorage.removeItem("subscribed_ok");
+    localStorage.removeItem("subscribed_email");
 
-      toast({
-        title: t("auth.signupSuccess") || "Informations enregistrées",
-        description: "Redirection vers la sélection de l'abonnement..."
-      });
+    toast({
+      title: t("auth.signupSuccess") || "Compte créé !",
+      description: "Bienvenue ! Ajoutez votre établissement pour commencer.",
+    });
 
-      // Redirection vers la page d'abonnement
-      navigate("/abonnement");
-      
-    } catch (err) {
-      console.error('Erreur inattendue:', err);
-      toast({
-        variant: "destructive",
-        title: t("errors.title"),
-        description: t("errors.generic")
-      });
-    } finally {
-      setLoading(false);
-    }
+    navigate("/etablissement");
+
+  } catch (err) {
+    console.error("Erreur inattendue:", err);
+    toast({ variant: "destructive", title: t("errors.title"), description: t("errors.generic") });
+  } finally {
+    setLoading(false);
   }
+}
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-purple-100 px-4 py-12">
       <BackArrow />
       <div className="w-full max-w-md">
         {/* Indicateur d'étapes - au-dessus de la card */}
-        <div className="flex items-center justify-center gap-6 mb-6">
-          {/* Step 1: Créer un compte (actif) - GAUCHE */}
+        {/* <div className="flex items-center justify-center gap-6 mb-6">
+          Step 1: Créer un compte (actif) - GAUCHE
           <div className="flex items-center gap-3 flex-nowrap">
             <div className="bg-[#2F4FF7] text-white rounded-full flex items-center justify-center border border-[#2F4FF7] h-8 w-8 md:h-10 md:w-10 flex-shrink-0">
               <User className="text-white h-4 w-4 md:h-5 md:w-5" />
@@ -111,10 +168,10 @@ export default function Inscription() {
             </span>
           </div>
 
-          {/* Separator line */}
+          Separator line
           <div className="h-px w-10 md:w-14 bg-border flex-shrink-0" />
 
-          {/* Step 2: Abonnement (inactif) - DROITE */}
+          Step 2: Abonnement (inactif) - DROITE
           <div className="flex items-center gap-3 flex-nowrap">
             <div className="bg-transparent text-foreground rounded-full flex items-center justify-center border border-[#E3E8F2] h-8 w-8 md:h-10 md:w-10 flex-shrink-0">
               <CreditCard className="text-[#96A0B5] h-4 w-4 md:h-5 md:w-5" />
@@ -123,7 +180,7 @@ export default function Inscription() {
               Abonnement
             </span>
           </div>
-        </div>
+        </div> */}
 
         <Card className="w-full shadow-xl">
           <CardHeader className="space-y-1 text-center">
@@ -265,7 +322,7 @@ export default function Inscription() {
               disabled={loading}
               className="w-full"
             >
-              {loading ? t("auth.signingUp") || "Enregistrement..." : t("auth.continueToSubscription")}
+              {loading ? t("auth.signingUp") || "Création..." : t("auth.createAccount")|| "Créer mon compte"}
             </Button>
           </form>
         </CardContent>

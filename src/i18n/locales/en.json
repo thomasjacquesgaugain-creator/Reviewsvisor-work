@@ -146,7 +146,8 @@
     "emailSendError": "An error occurred while sending the email",
     "alreadyHaveAccount": "Already have an account?",
     "redirectingToLogin": "Redirecting to login page...",
-    "continueToSubscription": "Continue to subscription"
+    "continueToSubscription": "Continue to subscription",
+    "createAccount":"Create account"
   },
   "nav": {
     "home": "Home",

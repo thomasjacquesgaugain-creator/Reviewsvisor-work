@@ -7,41 +7,58 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Price IDs LIVE (prod) — source unique côté backend pour mapping et addon
 const LIVE_PRICE = {
-  proEngagement: "price_1SZT7tGkt979eNWB0MF2xczP",
-  proFlexible: "price_1SXnCbGkt979eNWBttiTM124",
-  addon: "price_1ShiPzGkt979eNWBSDapH7aJ",
+  basicAnnual:      Deno.env.get("VITE_STRIPE_PRICE_BASIC_ANNUAL"),
+  basicMonthly:    Deno.env.get("VITE_STRIPE_PRICE_BASIC_MONTHLY"),
+  standardAnnual:   Deno.env.get("VITE_STRIPE_PRICE_STANDARD_ANNUAL"),
+  standardMonthly:  Deno.env.get("VITE_STRIPE_PRICE_STANDARD_MONTHLY"),
+  proAnnual:       Deno.env.get("VITE_STRIPE_PRICE_PRO_ANNUAL"),
+  proMonthly:     Deno.env.get("VITE_STRIPE_PRICE_PRO_MONTHLY"),
+  premiumAnnual:   Deno.env.get("VITE_STRIPE_PRICE_PREMIUM_ANNUAL"),
+  premiumMonthly:  Deno.env.get("VITE_STRIPE_PRICE_PREMIUM_MONTHLY"),
+  addon: Deno.env.get("VITE_STRIPE_PRICE_ID_EXTRA_ESTABLISHMENT"),
 };
 
-/** Price IDs TEST depuis les secrets Supabase (STRIPE_PRICE_*_TEST). Jamais de placeholder. */
-function getTestPriceIds(): { proEngagement: string; proFlexible: string; addon: string } {
+function getTestPriceIds() {
   return {
-    proEngagement: Deno.env.get("STRIPE_PRICE_ENGAGEMENT_TEST") ?? "",
-    proFlexible: Deno.env.get("STRIPE_PRICE_FLEXIBLE_TEST") ?? "",
-    addon: Deno.env.get("STRIPE_PRICE_ADDON_TEST") ?? "",
+    basicAnnual:     Deno.env.get("STRIPE_PRICE_BASIC_ANNUAL_TEST") ?? "",
+    basicMonthly:    Deno.env.get("STRIPE_PRICE_BASIC_MONTHLY_TEST") ?? "",
+    standardAnnual:  Deno.env.get("STRIPE_PRICE_STANDARD_ANNUAL_TEST") ?? "",
+    standardMonthly: Deno.env.get("STRIPE_PRICE_STANDARD_MONTHLY_TEST") ?? "",
+    proAnnual:       Deno.env.get("STRIPE_PRICE_PRO_ANNUAL_TEST") ?? "",
+    proMonthly:      Deno.env.get("STRIPE_PRICE_PRO_MONTHLY_TEST") ?? "",
+    premiumAnnual:   Deno.env.get("STRIPE_PRICE_PREMIUM_ANNUAL_TEST") ?? "",
+    premiumMonthly:  Deno.env.get("STRIPE_PRICE_PREMIUM_MONTHLY_TEST") ?? "",
+    addon:           Deno.env.get("STRIPE_PRICE_ADDON_TEST") ?? "",
   };
 }
 
-/** Construit LIVE_TO_TEST uniquement pour les IDs TEST configurés (non vides). */
 function buildLiveToTest(): Record<string, string> {
   const test = getTestPriceIds();
   const map: Record<string, string> = {};
-  if (test.proEngagement) map[LIVE_PRICE.proEngagement] = test.proEngagement;
-  if (test.proFlexible) map[LIVE_PRICE.proFlexible] = test.proFlexible;
-  if (test.addon) map[LIVE_PRICE.addon] = test.addon;
+  (Object.keys(LIVE_PRICE) as Array<keyof typeof LIVE_PRICE>).forEach((key) => {
+    if (test[key]) map[LIVE_PRICE[key]] = test[key];
+  });
   return map;
 }
 
-/** Map priceId → productKey pour admin bypass (LIVE + TEST si configurés). */
-function buildPriceIdToProductKey(): Record<string, string> {
+function buildPriceIdToProductKey(): Record<string, string> {  
   const test = getTestPriceIds();
-  const map: Record<string, string> = {
-    [LIVE_PRICE.proEngagement]: "pro_1499_12m",
-    [LIVE_PRICE.proFlexible]: "pro_2499_monthly",
-  };
-  if (test.proEngagement) map[test.proEngagement] = "pro_1499_12m";
-  if (test.proFlexible) map[test.proFlexible] = "pro_2499_monthly";
+  const entries: Array<[string, string]> = [
+    [LIVE_PRICE.basicAnnual,     "basic_annual"],
+    [LIVE_PRICE.basicMonthly,    "basic_monthly"],
+    [LIVE_PRICE.standardAnnual,  "standard_annual"],
+    [LIVE_PRICE.standardMonthly, "standard_monthly"],
+    [LIVE_PRICE.proAnnual,       "pro_annual"],
+    [LIVE_PRICE.proMonthly,      "pro_monthly"],
+    [LIVE_PRICE.premiumAnnual,   "premium_annual"],
+    [LIVE_PRICE.premiumMonthly,  "premium_monthly"],
+  ];
+  const map: Record<string, string> = {};
+  entries.forEach(([liveId, key]) => { map[liveId] = key; });
+  (Object.keys(test) as Array<keyof typeof test>).forEach((k) => {
+    if (test[k]) map[test[k]] = k.replace(/([A-Z])/g, "_$1").toLowerCase();
+  });
   return map;
 }
 
@@ -52,13 +69,11 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
 
-/** Retourne le mode Stripe (TEST ou LIVE) sans logger la clé. */
 function getStripeMode(): "TEST" | "LIVE" {
   const key = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
   return key.startsWith("sk_test_") ? "TEST" : "LIVE";
 }
 
-/** Réponse JSON d'erreur standardisée. */
 function errorResponse(
   code: string,
   message: string,
@@ -69,6 +84,11 @@ function errorResponse(
     JSON.stringify({ ok: false, code, message, ...(details && { details }) }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" }, status }
   );
+}
+
+function safeMetaStr(val: unknown): string {
+  if (val === null || val === undefined) return "";
+  return String(val).slice(0, 500);
 }
 
 serve(async (req) => {
@@ -88,22 +108,20 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Get email from request body (for non-authenticated users) or from auth
     const body = await req.json().catch(() => ({}));
+    console.log("body----->", body)
     const emailFromBody = body.email;
-    const { priceId: priceIdFromBody, pendingUser } = body;
-    
+    const { priceId: priceIdFromBody, pendingUser, pendingEstablishment } = body;
+
     let userEmail = emailFromBody;
     let customerId: string | undefined;
     let userId: string | undefined;
-    
-    // Si pendingUser existe, utiliser son email
+
     if (pendingUser?.email) {
       userEmail = pendingUser.email;
       logStep("Using pendingUser email", { email: userEmail });
     }
-    
-    // Try to get authenticated user if available
+
     const authHeader = req.headers.get("Authorization");
     if (authHeader) {
       try {
@@ -119,48 +137,34 @@ serve(async (req) => {
       }
     }
 
-    // Validate email format if provided
     if (userEmail) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(userEmail)) {
-        logStep("Invalid email format", { email: userEmail });
         return errorResponse("INVALID_EMAIL", "Format d'email invalide", 400);
       }
-
-      // Block disposable email domains
       const disposableDomains = ['tempmail.com', 'guerrillamail.com', 'mailinator.com', 'throwaway.email', 'fakeinbox.com', 'temp-mail.org'];
       const emailDomain = userEmail.split('@')[1]?.toLowerCase();
       if (emailDomain && disposableDomains.includes(emailDomain)) {
-        logStep("Disposable email blocked", { domain: emailDomain });
         return errorResponse("DISPOSABLE_EMAIL", "Les adresses email temporaires ne sont pas autorisées", 400);
       }
     }
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
-      logStep("ERROR: STRIPE_SECRET_KEY is not set");
       return errorResponse("CONFIG_ERROR", "STRIPE_SECRET_KEY is not set", 500);
     }
 
-    // Use priceId from request body, fallback to env variable
     let priceId = (priceIdFromBody || Deno.env.get("STRIPE_PRICE_ID"))?.trim();
     if (!priceId || typeof priceId !== "string") {
-      logStep("ERROR: priceId missing or invalid", { hasPriceIdFromBody: !!priceIdFromBody });
       return errorResponse("PRICE_ID_MISSING", "priceId introuvable", 400);
     }
     if (priceId.includes("REPLACE")) {
-      logStep("ERROR: priceId is placeholder", { priceId });
-      return errorResponse(
-        "PRICE_ID_INVALID",
-        "Le price ID est un placeholder. Configurez les variables d'environnement Stripe (voir docs/STRIPE_TEST_LIVE.md).",
-        400
-      );
+      return errorResponse("PRICE_ID_INVALID", "Le price ID est un placeholder.", 400);
     }
 
     const LIVE_TO_TEST = buildLiveToTest();
     const PRICE_ID_TO_PRODUCT_KEY = buildPriceIdToProductKey();
 
-    // Bonus : en mode TEST, si on reçoit un priceId LIVE, le remplacer par le TEST correspondant
     if (stripeMode === "TEST" && LIVE_TO_TEST[priceId]) {
       const testPriceId = LIVE_TO_TEST[priceId];
       logStep("LIVE priceId replaced by TEST mapping", { from: priceId, to: testPriceId });
@@ -170,145 +174,154 @@ serve(async (req) => {
     logStep("Inputs", {
       userId: userId ?? "anonymous",
       hasEmail: !!userEmail,
-      emailDomain: userEmail ? userEmail.replace(/^[^@]+@/, "***@") : null,
       priceId,
       stripeMode,
+      hasPendingEstablishment: !!pendingEstablishment,
     });
 
     const testPriceIds = getTestPriceIds();
     const additionalEstablishmentPriceId = stripeMode === "TEST" ? testPriceIds.addon : LIVE_PRICE.addon;
-    
     const origin = req.headers.get("origin") || Deno.env.get("APP_URL") || Deno.env.get("SITE_URL") || "https://reviewsvisor.fr";
-    
+
     // ======= ADMIN BYPASS =======
     if (userEmail && userEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase() && userId) {
       logStep("Admin bypass detected", { email: userEmail, priceId });
-      
+
       const productKey = PRICE_ID_TO_PRODUCT_KEY[priceId];
       if (!productKey) {
-        logStep("ERROR: Unknown priceId for admin bypass", { priceId });
         throw new Error("PriceId non reconnu pour le bypass admin");
       }
-      
-      // Activate subscription directly
+
       const periodEnd = new Date();
       periodEnd.setDate(periodEnd.getDate() + 30);
       const periodEndISO = periodEnd.toISOString();
-      
-      const planKey = productKey === "pro_1499_12m" ? "pro_1499_12m" : "pro_2499_monthly";
-      
-      // Check if user already has an entitlement record
+
       const { data: existingEntitlement } = await supabaseClient
         .from('user_entitlements')
         .select('*')
         .eq('user_id', userId)
         .single();
-      
+
       const upsertData: Record<string, any> = {
         user_id: userId,
         source: 'admin_bypass',
-        pro_plan_key: planKey,
+        pro_plan_key: productKey,
         pro_status: 'active',
         pro_current_period_end: periodEndISO,
         updated_at: new Date().toISOString(),
       };
-      
+
       if (existingEntitlement) {
-        const { error: updateError } = await supabaseClient
-          .from('user_entitlements')
-          .update(upsertData)
-          .eq('user_id', userId);
-        
-        if (updateError) {
-          throw new Error(`Failed to update entitlements: ${updateError.message}`);
-        }
+        await supabaseClient.from('user_entitlements').update(upsertData).eq('user_id', userId);
       } else {
-        const insertData = {
+        await supabaseClient.from('user_entitlements').insert({
           ...upsertData,
           addon_multi_etablissements_status: 'inactive',
           addon_multi_etablissements_qty: 0,
-        };
-        
-        const { error: insertError } = await supabaseClient
-          .from('user_entitlements')
-          .insert(insertData);
-        
-        if (insertError) {
-          throw new Error(`Failed to insert entitlements: ${insertError.message}`);
-        }
+        });
       }
-      
-      logStep("Admin subscription activated", { userId, productKey, periodEnd: periodEndISO });
-      
-      // Return success URL instead of Stripe checkout URL
-      const successUrl = `${origin}/success?session_id=admin_bypass_${Date.now()}`;
+
+      // Admin bypass: also save the establishment immediately (no webhook needed)
+      if (pendingEstablishment?.place_id && userId) {
+        logStep("Admin bypass: saving establishment directly", { place_id: pendingEstablishment.place_id });
+        await supabaseClient.from("establishments").upsert(
+          {
+            user_id: userId,
+            place_id: pendingEstablishment.place_id,
+            nom: pendingEstablishment.name,
+            name: pendingEstablishment.name,
+            formatted_address: pendingEstablishment.address,
+            phone: pendingEstablishment.phone || null,
+            website: pendingEstablishment.website || null,
+            rating: pendingEstablishment.rating || null,
+            lat: pendingEstablishment.lat || null,
+            lng: pendingEstablishment.lng || null,
+            types: pendingEstablishment.type_etablissement || null,
+          },
+          { onConflict: "user_id,place_id", ignoreDuplicates: false }
+        );
+      }
+
+      const successUrl = `${origin}/billing/success?session_id=admin_bypass_${Date.now()}`;
       return new Response(JSON.stringify({ url: successUrl }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
-    
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    
-    // Count user's establishments if authenticated
-    let additionalEstablishments = 0;
-    if (userId) {
-      const { count: establishmentCount, error: countError } = await supabaseClient
-        .from("establishments")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userId);
-      
-      if (countError) {
-        logStep("Error counting establishments", { error: countError.message });
-      } else {
-        const totalEstablishments = establishmentCount || 0;
-        additionalEstablishments = Math.max(0, totalEstablishments - 1);
-        logStep("Establishment count", { total: totalEstablishments, additional: additionalEstablishments });
-      }
-    }
-    
-    // Check if customer already exists (only if we have an email)
+
+    // Count existing establishments (for addon line items)
+    // let additionalEstablishments = 0;
+    // if (userId) {
+    //   const { count: establishmentCount } = await supabaseClient
+    //     .from("establishments")
+    //     .select("*", { count: "exact", head: true })
+    //     .eq("user_id", userId);
+    //   const totalEstablishments = establishmentCount || 0;
+    //   additionalEstablishments = Math.max(0, totalEstablishments - 1);
+    //   logStep("Establishment count", { total: totalEstablishments, additional: additionalEstablishments });
+    // }
+
     if (userEmail) {
       const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
       if (customers.data.length > 0) {
         customerId = customers.data[0].id;
         logStep("Existing customer found", { customerId });
-      } else {
-        logStep("No customer found, will create in checkout");
       }
-    } else {
-      logStep("No email provided, Stripe Checkout will collect it");
     }
 
-    // Determine if trial should be applied (only for pro-annual engagement plan)
-    const isEngagementPlan =
-      priceId === LIVE_PRICE.proEngagement || priceId === testPriceIds.proEngagement;
-
-    // Build line items: main subscription + additional establishments if any
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
       { price: priceId, quantity: 1 },
     ];
 
-    if (additionalEstablishments > 0 && additionalEstablishmentPriceId) {
-      lineItems.push({
-        price: additionalEstablishmentPriceId,
-        quantity: additionalEstablishments,
-      });
-      logStep("Adding additional establishments to checkout", { quantity: additionalEstablishments });
-    } else if (additionalEstablishments > 0 && stripeMode === "TEST" && !testPriceIds.addon) {
-      logStep("Skipping addon line item: STRIPE_PRICE_ADDON_TEST not set", { additionalEstablishments });
-    }
-    
+    // if (additionalEstablishments > 0 && additionalEstablishmentPriceId) {
+    //   lineItems.push({ price: additionalEstablishmentPriceId, quantity: additionalEstablishments });
+    //   logStep("Adding additional establishments", { quantity: additionalEstablishments });
+    // }
+
     const cancelUrl = `${origin}/billing/cancel`;
     const successUrl = `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`;
-    
-    logStep("Creating checkout session", { 
-      cancelUrl, 
-      successUrl, 
-      origin,
-      lineItemsCount: lineItems.length,
-      additionalEstablishments
-    });
+
+    // Build metadata for both pendingUser (account creation) and pendingEstablishment (save after payment)
+    const sessionMetadata: Record<string, string> = {};
+    const subscriptionMetadata: Record<string, string> = {};
+
+    if (pendingUser) {
+      const puMeta = {
+        pending_user_email: safeMetaStr(pendingUser.email),
+        pending_user_firstName: safeMetaStr(pendingUser.firstName),
+        pending_user_lastName: safeMetaStr(pendingUser.lastName),
+        pending_user_company: safeMetaStr(pendingUser.establishmentName || pendingUser.company),
+        pending_user_address: safeMetaStr(pendingUser.address),
+        pending_user_password: safeMetaStr(pendingUser.password),
+        ...(pendingUser.establishmentType && {
+          pending_user_establishment_type: safeMetaStr(pendingUser.establishmentType),
+        }),
+      };
+      Object.assign(sessionMetadata, puMeta);
+      Object.assign(subscriptionMetadata, puMeta);
+    }
+
+    // ── NEW: store pending establishment in metadata so webhook can save it ──
+    if (pendingEstablishment) {
+      const etabMeta = {
+        pending_etab_place_id:   safeMetaStr(pendingEstablishment.place_id),
+        pending_etab_name:       safeMetaStr(pendingEstablishment.name),
+        pending_etab_address:    safeMetaStr(pendingEstablishment.address),
+        pending_etab_phone:      safeMetaStr(pendingEstablishment.phone),
+        pending_etab_website:    safeMetaStr(pendingEstablishment.website),
+        pending_etab_rating:     safeMetaStr(pendingEstablishment.rating),
+        pending_etab_lat:        safeMetaStr(pendingEstablishment.lat),
+        pending_etab_lng:        safeMetaStr(pendingEstablishment.lng),
+        pending_etab_type:       safeMetaStr(pendingEstablishment.type_etablissement),
+        // Also store user_id so webhook knows which user to save under
+        pending_etab_user_id:    safeMetaStr(userId),
+      };
+      Object.assign(sessionMetadata, etabMeta);
+      Object.assign(subscriptionMetadata, etabMeta);
+      logStep("Pending establishment added to metadata", { place_id: pendingEstablishment.place_id });
+    }
 
     let session;
     try {
@@ -317,30 +330,15 @@ serve(async (req) => {
         customer_email: customerId ? undefined : userEmail || undefined,
         line_items: lineItems,
         mode: "subscription",
-        payment_method_types: ["card"],
+        automatic_tax: { enabled: true },
         billing_address_collection: "auto",
+        customer_update: { address: "auto" },
+        payment_method_types: ["card"],
         allow_promotion_codes: false,
         locale: "fr",
-        metadata: pendingUser ? {
-          pending_user_email: pendingUser.email,
-          pending_user_firstName: pendingUser.firstName,
-          pending_user_lastName: pendingUser.lastName,
-          pending_user_company: pendingUser.establishmentName || pendingUser.company,
-          pending_user_address: pendingUser.address,
-          pending_user_password: pendingUser.password,
-          ...(pendingUser.establishmentType && { pending_user_establishment_type: pendingUser.establishmentType }),
-        } : undefined,
+        metadata: Object.keys(sessionMetadata).length > 0 ? sessionMetadata : undefined,
         subscription_data: {
-          metadata: pendingUser ? {
-            pending_user_email: pendingUser.email,
-            pending_user_firstName: pendingUser.firstName,
-            pending_user_lastName: pendingUser.lastName,
-            pending_user_company: pendingUser.establishmentName || pendingUser.company,
-            pending_user_address: pendingUser.address,
-            pending_user_password: pendingUser.password,
-            ...(pendingUser.establishmentType && { pending_user_establishment_type: pendingUser.establishmentType }),
-          } : undefined,
-          ...(isEngagementPlan && { trial_period_days: 14 }),
+          metadata: Object.keys(subscriptionMetadata).length > 0 ? subscriptionMetadata : undefined,
         },
         success_url: successUrl,
         cancel_url: cancelUrl,
@@ -353,26 +351,16 @@ serve(async (req) => {
         msg.toLowerCase().includes("no such price") ||
         msg.toLowerCase().includes("resource_missing");
       if (isMismatch) {
-        logStep("MISMATCH_TEST_LIVE", { stripeMode, priceId });
         const userMessage =
           stripeMode === "TEST"
-            ? "Ce prix est en mode Live. Utilisez des price_id Test (Dashboard Stripe → mode Test) ou une clé sk_test_*."
-            : "Ce prix est en mode Test. Utilisez des price_id Live ou une clé sk_live_*.";
-        return errorResponse("MISMATCH_TEST_LIVE", userMessage, 400, {
-          stripeMode,
-          hint: "Vérifiez que les price_id correspondent au mode de STRIPE_SECRET_KEY (sk_test_ vs sk_live_).",
-        });
+            ? "Ce prix est en mode Live. Utilisez des price_id Test."
+            : "Ce prix est en mode Test. Utilisez des price_id Live.";
+        return errorResponse("MISMATCH_TEST_LIVE", userMessage, 400, { stripeMode });
       }
-      logStep("STRIPE_ERROR", { message: msg, type: err?.type, code: err?.code });
       return errorResponse("STRIPE_ERROR", msg, 400, { type: err?.type, code: err?.code });
     }
 
-    logStep("Checkout session created", {
-      sessionId: session.id,
-      hasUrl: !!session.url,
-      lineItemsCount: lineItems.length,
-      additionalEstablishments,
-    });
+    logStep("Checkout session created", { sessionId: session.id, hasUrl: !!session.url });
 
     return new Response(JSON.stringify({ ok: true, url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -380,8 +368,7 @@ serve(async (req) => {
     });
   } catch (error) {
     const err = error as Error;
-    const errorMessage = err?.message ?? String(error);
-    logStep("ERROR", { message: errorMessage });
-    return errorResponse("CHECKOUT_ERROR", errorMessage, 500);
+    logStep("ERROR", { message: err?.message ?? String(error) });
+    return errorResponse("CHECKOUT_ERROR", err?.message ?? String(error), 500);
   }
 });

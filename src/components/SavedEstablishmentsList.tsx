@@ -348,7 +348,8 @@ export default function SavedEstablishmentsList({
         }
         const count = await loadEstablishmentsFromDb();
         setModalEstablishmentCount(count);
-        setShowSubscriptionModal(true);
+        onAddClick?.();
+        // setShowSubscriptionModal(true);
         return;
       }
 
@@ -365,7 +366,8 @@ export default function SavedEstablishmentsList({
         }
         const count = await loadEstablishmentsFromDb();
         setModalEstablishmentCount(count);
-        setShowSubscriptionModal(true);
+        onAddClick?.();
+        // setShowSubscriptionModal(true);
         return;
       }
 
