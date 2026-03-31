@@ -635,6 +635,7 @@
       "phoneNumber": "Numéro de téléphone",
       "mailingAddress": "Adresse postale",
       "email": "Email",
+      "pictureUpdated": "Photo de profil mise à jour",
       "placeholder": {
         "profilePicture": "JPG, PNG ou WebP. Taille maximale : 2 Mo",
         "firstName": "Votre Prénom",
@@ -665,7 +666,33 @@
       "establishmentClosed": "Établissement supprimé"
     },
     "establishmentInformation": {
-      "title": "Infos d'établissement"
+      "title": "Infos d'établissement",
+      "establishmentName": "Nom de l'établissement",
+      "address": "Adresse",
+      "googleRating": "Note Google",
+      "placeID": "ID du lieu",
+      "phoneNumber": "Numéro de téléphone",
+      "website": "Site web",
+      "establishmentType": "Type d'établissement",
+      "updatedEstablishmentType": "Type d'établissement mis à jour",
+      "establishmentTypesOptions": {
+        "restaurant": "Restaurant",
+        "bar": "Bar",
+        "cafe": "Café",
+        "hotel": "Hôtel",
+        "bakery": "Boulangerie",
+        "salon": "Salon de coiffure",
+        "spa": "Spa / Bien-être",
+        "retail": "Commerce de détail",
+        "other": "Autre"
+      },
+      "placeholder": {
+        "establishmentName": "Le nom de votre établissement",
+        "address": "1 Cr de la Bôve, 56100 Lorient",
+        "phoneNumber": "Le numéro de téléphone de votre établissement",
+        "website": "L'URL du site web de votre établissement",
+        "establishmentType": "Sélectionnez le type"
+      }
     },
     "connectionAndSecurity": {
       "title": "Connexion et sécurité",

@@ -209,7 +209,7 @@ export default function SaveEstablishmentButton({
             // google_maps_url: selected.url || null,
             lat: selected.lat || null,
             lng: selected.lng || null,
-            types: selected.type_etablissement || null, 
+            types: selected.types || null, 
           },
           {
             onConflict: "user_id,place_id",
