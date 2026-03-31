@@ -832,6 +832,11 @@
   "subscription": {
     "title": "Abonnement",
     "choosePlan": "Choisissez votre formule",
+    "activeSubscriptions":"Abonnements actifs",
+    "yearly":"Annuel",
+    "monthly":"Mensuel",
+    "endsOn":"Se termine le",
+    "renewsOn":"Renouvellement le",
     "freePlan": "Gratuit",
     "proPlan": "Pro",
     "businessPlan": "Business",

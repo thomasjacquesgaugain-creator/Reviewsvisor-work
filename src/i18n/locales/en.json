@@ -740,6 +740,12 @@
   "subscription": {
     "title": "Subscription",
     "choosePlan": "Choose your plan",
+    "activeSubscriptions":"Active Subscriptions",
+    "yearly":"Annual",
+    "monthly":"Monthly",
+    "endsOn":"Ends on",
+    "renewsOn":"Renews on",
+    "active":"Active",
     "freePlan": "Free",
     "proPlan": "Pro",
     "businessPlan": "Business",

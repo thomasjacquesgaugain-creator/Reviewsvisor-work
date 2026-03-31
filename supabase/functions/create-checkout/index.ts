@@ -297,26 +297,43 @@ serve(async (req) => {
 
     let session;
     try {
-      session = await stripe.checkout.sessions.create({
-        customer: customerId,
-        customer_email: customerId ? undefined : userEmail || undefined,
+      const sessionParams: Stripe.Checkout.SessionCreateParams = {
         line_items: lineItems,
         mode: "subscription",
         automatic_tax: { enabled: true },
         billing_address_collection: "auto",
-        customer_update: { address: "auto" },
         payment_method_types: ["card"],
         allow_promotion_codes: false,
         locale: "fr",
-        metadata: Object.keys(sessionMetadata).length > 0 ? sessionMetadata : undefined,
+        metadata:
+          Object.keys(sessionMetadata).length > 0 ? sessionMetadata : undefined,
         subscription_data: {
-          metadata: Object.keys(subscriptionMetadata).length > 0 ? subscriptionMetadata : undefined,
+          metadata:
+            Object.keys(subscriptionMetadata).length > 0
+              ? subscriptionMetadata
+              : undefined,
         },
         success_url: successUrl,
         cancel_url: cancelUrl,
-      });
+      };
+
+      if (customerId) {
+        sessionParams.customer = customerId;
+
+        sessionParams.customer_update = {
+          address: "auto",
+        };
+      } else {
+        sessionParams.customer_email = userEmail || undefined;
+      }
+
+      session = await stripe.checkout.sessions.create(sessionParams);
     } catch (stripeErr: unknown) {
-      const err = stripeErr as { message?: string; type?: string; code?: string };
+      const err = stripeErr as {
+        message?: string;
+        type?: string;
+        code?: string;
+      };
       const msg = err?.message ?? String(stripeErr);
       const isMismatch =
         msg.toLowerCase().includes("similar object exists in live mode") ||
@@ -327,9 +344,14 @@ serve(async (req) => {
           stripeMode === "TEST"
             ? "Ce prix est en mode Live. Utilisez des price_id Test."
             : "Ce prix est en mode Test. Utilisez des price_id Live.";
-        return errorResponse("MISMATCH_TEST_LIVE", userMessage, 400, { stripeMode });
+        return errorResponse("MISMATCH_TEST_LIVE", userMessage, 400, {
+          stripeMode,
+        });
       }
-      return errorResponse("STRIPE_ERROR", msg, 400, { type: err?.type, code: err?.code });
+      return errorResponse("STRIPE_ERROR", msg, 400, {
+        type: err?.type,
+        code: err?.code,
+      });
     }
 
     logStep("Checkout session created", { sessionId: session.id, hasUrl: !!session.url });

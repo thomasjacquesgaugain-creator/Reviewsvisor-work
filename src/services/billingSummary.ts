@@ -7,14 +7,27 @@ import { subscriptionPlans } from "@/config/subscriptionPlans";
  */
 export type BillingSummary = {
   planName: string;
+  planTier: "basic" | "standard" | "pro" | "premium" | null;
+  planBilling: "annual" | "monthly" | null;
   status: "active" | "trialing" | "canceled" | "past_due" | "inactive";
   interval?: "month" | "year";
   renewAt?: string | null;
-  includedEstablishments: number;
+  // includedEstablishments: number;
   /** Établissements supplémentaires achetés (add-ons). Source: billed_additional_establishments. */
-  extraEstablishments: number;
+  // extraEstablishments: number;
   /** Total autorisé = includedEstablishments + extraEstablishments. */
-  totalAllowed: number;
+  // totalAllowed: number;
+  activeSubscriptions: {
+    subscriptionId: string;
+    planName: string;
+    planTier: "basic" | "standard" | "pro" | "premium" | null;
+    planBilling: "annual" | "monthly" | null;
+    priceId: string | null;
+    periodEnd: string | null;
+    cancelAtPeriodEnd: boolean;
+    latestInvoicePdfUrl?: string | null;
+    latestInvoiceHostedUrl?: string | null;
+  }[];
 };
 
 const DEFAULT_INCLUDED = 1;
@@ -30,37 +43,51 @@ export function getBillingSummary(subscription: SubscriptionStatus | null): Bill
   if (!subscription || !subscription.subscribed) {
     return {
       planName: FREE_PLAN_NAME,
+      planTier:           null,
+      planBilling:        null,
       status: "inactive",
-      includedEstablishments: DEFAULT_INCLUDED,
+      // includedEstablishments: DEFAULT_INCLUDED,
       // TODO: brancher une colonne profiles.extra_establishments ou équivalent si le backend l'expose
-      extraEstablishments: 0,
-      totalAllowed: DEFAULT_INCLUDED,
+      // extraEstablishments: 0,
+      // totalAllowed: DEFAULT_INCLUDED,
+      interval:           null,
+      renewAt:            null,
+      activeSubscriptions: [],
     };
   }
 
-  const plan = subscription.price_id
-    ? subscriptionPlans.find((p) => p.priceId === subscription.price_id)
-    : null;
-  const planName = plan?.name ?? FREE_PLAN_NAME;
+  const subs = subscription.subscriptions ?? [];
 
-  // Premier établissement inclus dans le plan ; add-ons = établissements supplémentaires facturés
-  const includedEstablishments = DEFAULT_INCLUDED;
-  const extraEstablishments =
-    subscription.billed_additional_establishments ??
-    subscription.additional_establishments ??
-    0;
-  const totalAllowed = includedEstablishments + extraEstablishments;
+  const activeSubscriptions = subs.map((sub) => {
+    const plan = sub.plan_price_id
+      ? subscriptionPlans.find((p) => p.priceId === sub.plan_price_id)
+      : null;
 
-  // Statut détaillé (trialing, canceled, past_due) à brancher quand le backend les expose
-  const status: BillingSummary["status"] = subscription.subscribed ? "active" : "inactive";
+    return {
+      subscriptionId: sub.subscription_id,
+      planName:       plan?.name ?? FREE_PLAN_NAME,
+      planTier:       plan?.tier ?? null,
+      planBilling:    plan?.billing ?? null,
+      priceId:        sub.plan_price_id,
+      periodEnd:      sub.period_end,
+      cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
+      latestInvoicePdfUrl: sub.latest_invoice_pdf_url ?? null,
+      latestInvoiceHostedUrl: sub.latest_invoice_hosted_url ?? null,
+    };
+  });
+  const primary = activeSubscriptions[0] ?? null;
+  const interval: "month" | "year" | null =
+    primary?.planBilling === "annual"  ? "year"  :
+    primary?.planBilling === "monthly" ? "month" :
+    null;
 
   return {
-    planName,
-    status,
-    interval: "month",
-    renewAt: subscription.subscription_end ?? null,
-    includedEstablishments,
-    extraEstablishments,
-    totalAllowed,
+    planName:            primary?.planName    ?? FREE_PLAN_NAME,
+    planTier:            primary?.planTier    ?? null,
+    planBilling:         primary?.planBilling ?? null,
+    status:              "active",
+    interval,
+    renewAt:             primary?.periodEnd   ?? subscription.subscription_end ?? null,
+    activeSubscriptions,
   };
 }

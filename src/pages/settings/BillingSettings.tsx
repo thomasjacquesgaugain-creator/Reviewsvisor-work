@@ -7,7 +7,7 @@ import { createCustomerPortalSession } from "@/lib/stripe";
 import { CurrentPlanCard } from "@/components/CurrentPlanCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreditCard, Loader2, Building2 } from "lucide-react";
+import { CreditCard, Download, ExternalLink, Loader2, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -18,51 +18,53 @@ export function BillingSettings() {
   const summary = getBillingSummary(subscription);
   const isFree = summary.status === "inactive";
 
-  const [extraEstablishmentsCount, setExtraEstablishmentsCount] = useState<number | null>(null);
+  // const [extraEstablishmentsCount, setExtraEstablishmentsCount] = useState<number | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const { t } = useTranslation();
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user || cancelled) {
-        if (!cancelled) setExtraEstablishmentsCount(0);
-        return;
-      }
-      // change establishment from établissements
-      const { count, error } = await supabase
-        .from("establishments")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
-      if (cancelled) return;
-      if (error) {
-        console.error("Erreur comptage établissements:", error);
-        setExtraEstablishmentsCount(0);
-        return;
-      }
-      const total = count ?? 0;
-      setExtraEstablishmentsCount(Math.max(0, total - 1));
-    })();
-    return () => { cancelled = true; };
-  }, []);
+  // useEffect(() => {
+  //   let cancelled = false;
+  //   (async () => {
+  //     const { data: { user }, error: userError } = await supabase.auth.getUser();
+  //     if (userError || !user || cancelled) {
+  //       if (!cancelled) setExtraEstablishmentsCount(0);
+  //       return;
+  //     }
+  //     // change establishment from établissements
+  //     const { count, error } = await supabase
+  //       .from("establishments")
+  //       .select("*", { count: "exact", head: true })
+  //       .eq("user_id", user.id);
+  //     if (cancelled) return;
+  //     if (error) {
+  //       console.error("Erreur comptage établissements:", error);
+  //       setExtraEstablishmentsCount(0);
+  //       return;
+  //     }
+  //     const total = count ?? 0;
+  //     setExtraEstablishmentsCount(Math.max(0, total - 1));
+  //   })();
+  //   return () => { cancelled = true; };
+  // }, []);
 
-  const activePlan = useMemo(
-    () =>
-      subscription?.price_id
-        ? subscriptionPlans.find((p) => p.priceId === subscription.price_id) ?? null
-        : null,
-    [subscription?.price_id]
-  );
+const activePlan = useMemo(
+  () =>
+    summary.activeSubscriptions.length > 0
+      ? subscriptionPlans.find(
+          (p) => p.priceId === summary.activeSubscriptions[0].priceId
+        ) ?? null
+      : null,
+  [summary.activeSubscriptions]
+);
 
-  const basePlanMonthly = activePlan
-    ? activePlan.id === "pro-engagement"
-      ? activePlan.price / 12
-      : activePlan.price
-    : 0;
-  const extraCount = extraEstablishmentsCount ?? 0;
-  const addonTotal = extraCount * establishmentAddon.price;
-  const totalMonthly = basePlanMonthly + addonTotal;
+  // const basePlanMonthly = activePlan
+  //   ? activePlan.id === "pro-engagement"
+  //     ? activePlan.price / 12
+  //     : activePlan.price
+  //   : 0;
+  // const extraCount = extraEstablishmentsCount ?? 0;
+  // const addonTotal = extraCount * establishmentAddon.price;
+  // const totalMonthly = basePlanMonthly + addonTotal;
   const formatEuro = (n: number) => n.toFixed(2).replace(".", ",");
 
   return (
@@ -71,10 +73,10 @@ export function BillingSettings() {
 
       {/* Plan actuel - carte style /abonnement si plan Pro, sinon bloc simple */}
       <div className="mb-8 pb-8 border-b border-gray-200">
-        <div className="flex items-center gap-3 mb-6">
+        {/* <div className="flex items-center gap-3 mb-6">
           <CreditCard className="h-5 w-5 text-gray-400" />
           <h2 className="text-lg font-medium text-gray-900">{t("settings.BillingAndSubscription.currentPlan")}</h2>
-        </div>
+        </div> */}
 
         {loading ? (
           <div className="flex items-center gap-3 text-muted-foreground py-6">
@@ -85,76 +87,70 @@ export function BillingSettings() {
           <>
             <CurrentPlanCard summary={summary} activePlan={activePlan} />
             {/* Établissements supplémentaires : calculé depuis la table établissements (total - 1). Masqué si 0 ou négatif. */}
-            {extraEstablishmentsCount !== null && extraEstablishmentsCount > 0 && (
-              <div className="mt-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <Building2 className="h-5 w-5 text-gray-400" />
-                  <h2 className="text-lg font-medium text-gray-900">Établissements supplémentaires</h2>
+           {summary.activeSubscriptions.length > 0 && (
+  <div className="mt-8">
+    <div className="flex items-center gap-3 mb-4">
+      <CreditCard className="h-5 w-5 text-gray-400" />
+      <h2 className="text-lg font-medium text-gray-900">
+       {t("subscription.activeSubscriptions")} ({summary.activeSubscriptions.length})
+      </h2>
+    </div>
+    <div className="space-y-3 max-w-3xl">
+      {summary.activeSubscriptions.map((sub, i) => (
+        <Card key={sub.subscriptionId} className="bg-white border border-border rounded-xl">
+          <CardContent className="p-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold text-foreground">
+                {sub.planName}
+                {sub.planBilling && (
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                    · {sub.planBilling === "annual" ? t("subscription.yearly") : t("subscription.monthly")}
+                  </span>
+                )}
+              </p>
+              {sub.periodEnd && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {sub.cancelAtPeriodEnd ? t("subscription.endsOn") :t("subscription.renewsOn")}{" "}
+                  {new Date(sub.periodEnd).toLocaleDateString("fr-FR")}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
+                {t("subscription.active")}
+              </span>
+              {/* {(sub.latestInvoicePdfUrl || sub.latestInvoiceHostedUrl) ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => {
+                    const url = sub.latestInvoicePdfUrl || sub.latestInvoiceHostedUrl;
+                    if (url) {
+                      window.open(url, "_blank", "noopener,noreferrer");
+                    }
+                  }}
+                >
+                  <Download className="h-4 w-4" />
+                  Télécharger la facture
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" disabled className="gap-2">
+                  <ExternalLink className="h-4 w-4" />
+                  Facture indisponible
+                </Button>
+              )} */}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
                 </div>
-                <Card className="relative overflow-hidden bg-white rounded-2xl shadow-lg border-2 border-purple-500 w-full max-w-3xl">
-                  <CardHeader className="pb-4 pt-6 px-5">
-                    <CardTitle className="text-xl font-bold text-foreground">
-                      Établissements supplémentaires
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {extraEstablishmentsCount} établissement{extraEstablishmentsCount > 1 ? "s" : ""} supplémentaire{extraEstablishmentsCount > 1 ? "s" : ""}
-                    </p>
-                    <div className="mt-4 flex flex-wrap items-baseline gap-4">
-                      <div>
-                        <span className="text-2xl font-bold text-purple-600">
-                          {extraEstablishmentsCount}
-                        </span>
-                        <span className="text-sm text-muted-foreground ml-2">
-                          × {establishmentAddon.price.toFixed(2).replace(".", ",")} €/mois
-                        </span>
-                      </div>
-                      <div className="text-lg font-semibold text-purple-600">
-                        Total : {(extraEstablishmentsCount * establishmentAddon.price).toFixed(2).replace(".", ",")} €/mois
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pb-6 px-5 pt-0">
-                    <p className="text-sm text-muted-foreground">
-                      Prix unitaire : {establishmentAddon.price.toFixed(2).replace(".", ",")} €/mois par établissement
-                    </p>
-                  </CardContent>
-                </Card>
               </div>
             )}
-            {extraEstablishmentsCount === 0 && (
-              <p className="mt-6 text-sm text-muted-foreground">{t("settings.BillingAndSubscription.noAdditionalEstablishments")}</p>
-            )}
-
-            {/* Total mensuel : récap abonnement + établissements supplémentaires */}
-            {!loading && activePlan && (
-              <div className="mt-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <CreditCard className="h-5 w-5 text-gray-400" />
-                  <h2 className="text-lg font-medium text-gray-900">Total mensuel</h2>
-                </div>
-                <Card className="relative overflow-hidden bg-white rounded-2xl shadow-lg border-2 border-blue-500 w-full max-w-3xl">
-                  <CardContent className="p-6">
-                    <ul className="space-y-2 text-sm text-gray-700">
-                      <li className="flex justify-between items-center">
-                        <span>Abonnement Pro ({activePlan.priceLabel})</span>
-                        <span>{formatEuro(basePlanMonthly)} €/mois</span>
-                      </li>
-                      {extraCount > 0 && (
-                        <li className="flex justify-between items-center">
-                          <span>Établissements supplémentaires ({extraCount})</span>
-                          <span>{formatEuro(addonTotal)} €/mois</span>
-                        </li>
-                      )}
-                    </ul>
-                    <div className="mt-4 pt-4 border-t-2 border-blue-200 flex justify-between items-center">
-                      <span className="text-lg font-semibold text-foreground">Total mensuel</span>
-                      <span className="text-2xl font-bold text-blue-600">
-                        {formatEuro(totalMonthly)} €/mois
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+            {summary.activeSubscriptions.length === 0 && !isFree && (
+              <p className="mt-6 text-sm text-muted-foreground">
+                {t("settings.BillingAndSubscription.noAdditionalEstablishments")}
+              </p>
             )}
           </>
         )}

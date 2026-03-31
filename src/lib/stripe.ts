@@ -7,12 +7,23 @@ export type SubscriptionStatus = {
   subscribed: boolean;
   product_id?: string | null;
   price_id?: string | null;
+  plan_key?: string | null;
   subscription_end?: string | null;
+  subscriptions?: {
+    subscription_id:      string;
+    status:               string;
+    plan_price_id:        string | null;
+    period_start:         string | null;
+    period_end:           string | null;
+    cancel_at_period_end: boolean;
+    latest_invoice_pdf_url?: string | null;
+    latest_invoice_hosted_url?: string | null;
+  }[];
   total_establishments?: number;
   additional_establishments?: number;
   billed_additional_establishments?: number;
   billing_sync_needed?: boolean;
-  source?: 'stripe' | 'creator_bypass';
+  source?: "stripe" | "creator_bypass" | "admin_bypass";
   creator_bypass?: boolean;
 };
 

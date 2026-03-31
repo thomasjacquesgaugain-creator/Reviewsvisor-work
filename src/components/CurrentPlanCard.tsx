@@ -1,5 +1,5 @@
 import type { BillingSummary } from "@/services/billingSummary";
-import type { SubscriptionPlan } from "@/config/subscriptionPlans";
+import { subscriptionPlans, type SubscriptionPlan } from "@/config/subscriptionPlans";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -37,136 +37,107 @@ interface CurrentPlanCardProps {
 export function CurrentPlanCard({ summary, activePlan, className }: CurrentPlanCardProps) {
   const { t } = useTranslation();
   const isPaid = summary.status === "active" || summary.status === "trialing";
-  const showAbonnementStyle = activePlan && isPaid;
 
-  const renewLabel =
-    summary.renewAt && isPaid
-      ? new Date(summary.renewAt).toLocaleDateString("fr-FR", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        })
-      : null;
-  const intervalLabel = summary.interval === "year" ? "annuel" : "mensuel";
-
-  if (showAbonnementStyle && activePlan) {
-    const colorClasses =
-      activePlan.badgeColor === "purple"
-        ? {
-            badge: "bg-purple-600",
-            price: "text-purple-600",
-            check: "text-purple-600",
-          }
-        : {
-            badge: "bg-blue-600",
-            price: "text-blue-600",
-            check: "text-blue-600",
-          };
-
+  // ── Free / inactive ────────────────────────────────────────────────────────
+  if (!isPaid || summary.activeSubscriptions.length === 0) {
     return (
-      <Card
-        className={cn(
-          "relative overflow-hidden bg-white rounded-2xl shadow-lg border-2 flex flex-col w-full max-w-3xl",
-          isPaid ? "border-purple-500" : "border-border",
-          className
-        )}
-      >
-        {/* Badge plan (Meilleur prix / Flexible) */}
-        <div
-          className={cn(
-            "absolute top-0 right-0 text-white px-3 py-1 text-xs font-semibold rounded-bl-lg",
-            colorClasses.badge
-          )}
-        >
-          {t(`subscription.plans.${activePlan.id}.badge`)}
+      <div className={cn("rounded-lg border p-6 border-gray-200 bg-gray-50", className)}>
+        <h3 className="text-base font-semibold text-gray-900 mb-3">
+          {t("subscription.currentPlan")}
+        </h3>
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-medium text-gray-900">
+            {t("settings.BillingAndSubscription.freePlan")}
+          </span>
+          <Badge variant="outline" className={STATUS_VARIANTS["inactive"]}>
+            {STATUS_LABELS["inactive"]}
+          </Badge>
         </div>
-        {/* Badge Actif */}
-        <div className="absolute top-0 left-0 bg-blue-600 text-white px-3 py-1 text-xs font-semibold rounded-br-lg">
-          {STATUS_LABELS.active}
-        </div>
-
-        <CardHeader className="pb-4 pt-8 px-5">
-          <CardTitle className="text-xl font-bold text-foreground mb-2">
-            {t(`subscription.plans.${activePlan.id}.name`)}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground mb-3">
-            {t(`subscription.plans.${activePlan.id}.description`)}
-          </p>
-          <div className="mt-4">
-            <span className={cn("text-4xl font-bold", colorClasses.price)}>
-              {activePlan.priceLabel}
-            </span>
-            <span className="text-base text-muted-foreground ml-2">{t("common.perMonth")}</span>
-            {activePlan.billingHint && (
-              <p className="text-xs text-muted-foreground mt-1">{activePlan.billingHint}</p>
-            )}
-          </div>
-        </CardHeader>
-
-        <CardContent className="flex flex-col pb-6 px-5 pt-0">
-          <ul className="space-y-3">
-            {activePlan.benefits.map((_, index) => {
-              const benefitKey = `subscription.plans.${activePlan.id}.benefits.${index}`;
-              return (
-                <li key={index} className="flex items-start gap-3">
-                  <Check
-                    className={cn("w-4 h-4 mt-0.5 flex-shrink-0", colorClasses.check)}
-                    aria-hidden
-                  />
-                  <span className="text-sm text-foreground">{t(benefitKey)}</span>
-                </li>
-              );
-            })}
-          </ul>
-        </CardContent>
-      </Card>
+      </div>
     );
   }
 
-  /* Bloc simple pour Free / inactif */
   return (
-    <div
-      className={cn(
-        "rounded-lg border p-6",
-        isPaid ? "border-green-200 bg-green-50/50" : "border-gray-200 bg-gray-50",
-        className
-      )}
-    >
-      <h3 className="text-base font-semibold text-gray-900 mb-4">{t("subscription.currentPlan")}</h3>
+    <div className={cn("space-y-4 w-full max-w-3xl", className)}>
+      {summary.activeSubscriptions.map((sub) => {
+        const plan = subscriptionPlans.find((p) => p.priceId === sub.priceId);
 
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        <span className="text-lg font-medium text-gray-900">
-          {summary.planName === "Free" ? t("settings.BillingAndSubscription.freePlan") : summary.planName}
-        </span>
-        <Badge variant="outline" className={cn("font-medium", STATUS_VARIANTS[summary.status])}>
-          {STATUS_LABELS[summary.status]}
-        </Badge>
-      </div>
+        const tierColor = {
+          basic:    { badge: "bg-green-600",  price: "text-green-600",  check: "text-green-600",  border: "border-green-400" },
+          standard: { badge: "bg-blue-600",   price: "text-blue-600",   check: "text-blue-600",   border: "border-blue-400" },
+          pro:      { badge: "bg-violet-600", price: "text-violet-600", check: "text-violet-600", border: "border-violet-400" },
+          premium:  { badge: "bg-pink-600",   price: "text-pink-600",   check: "text-pink-600",   border: "border-pink-400" },
+        }[sub.planTier ?? "pro"] ?? { badge: "bg-blue-600", price: "text-blue-600", check: "text-blue-600", border: "border-blue-400" };
 
-      {summary.interval && (
-        <p className="text-sm text-gray-600 mb-2">
-          {intervalLabel === "annuel"
-            ? t("subscription.yearlyBilling")
-            : t("subscription.monthlyBilling")}
-          {renewLabel && (
-            <span className="ml-2">
-              • {t("subscription.renewalDate")} : {renewLabel}
-            </span>
-          )}
-        </p>
-      )}
+        const renewLabel = sub.periodEnd
+          ? new Date(sub.periodEnd).toLocaleDateString("fr-FR", {
+              day: "numeric", month: "long", year: "numeric",
+            })
+          : null;
 
-      <div className="space-y-1.5 text-sm text-gray-700">
-        <p>{t("subscription.establishmentsIncluded", "Établissements inclus")} : {summary.includedEstablishments}</p>
-        <p>
-          {summary.extraEstablishments === 0
-            ? `${t("subscription.additionalEstablishments")} : 0`
-            : `${t("subscription.additionalEstablishments")} : +${summary.extraEstablishments}`}
-        </p>
-        <p className="font-medium">
-          {t("subscription.totalAllowed")} : {summary.totalAllowed}
-        </p>
-      </div>
+        return (
+          <Card
+            key={sub.subscriptionId}
+            className={cn(
+              "relative overflow-hidden bg-white rounded-2xl shadow-md border-2",
+              tierColor.border
+            )}
+          >
+            <div className={cn("absolute top-0 left-0 text-white px-3 py-1 text-xs font-semibold rounded-br-lg", tierColor.badge)}>
+              Actif
+            </div>
+
+            <div className="absolute top-0 right-0 bg-gray-100 text-gray-600 px-3 py-1 text-xs font-semibold rounded-bl-lg">
+              {sub.planBilling === "annual" ? "💎 Annuel" : "⚡ Mensuel"}
+            </div>
+
+            <CardHeader className="pb-3 pt-8 px-5">
+              <CardTitle className="text-xl font-bold text-foreground">
+                {sub.planName}
+              </CardTitle>
+
+              {plan && (
+                <div className="mt-3">
+                  <span className={cn("text-3xl font-bold", tierColor.price)}>
+                    {plan.priceLabel}
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {plan.priceLabelHT} HT
+                  </p>
+                  {plan.billing === "annual" && plan.annualTotalTTC && (
+                    <p className={cn("text-xs font-semibold mt-1", tierColor.price)}>
+                      {plan.annualTotalTTC.toFixed(0)} € TTC / an{" "}
+                      <span className="font-normal text-muted-foreground">
+                        ({plan.annualTotalHT?.toFixed(2)} € HT)
+                      </span>
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {renewLabel && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {sub.cancelAtPeriodEnd ? "⚠ Se termine le" : "🔄 Renouvellement le"}{" "}
+                  <strong>{renewLabel}</strong>
+                </p>
+              )}
+            </CardHeader>
+
+            {plan && (
+              <CardContent className="pb-5 px-5 pt-0">
+                <ul className="space-y-2">
+                  {plan.benefits.map((benefit, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <Check className={cn("w-4 h-4 mt-0.5 flex-shrink-0", tierColor.check)} />
+                      <span className="text-sm text-muted-foreground">{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            )}
+          </Card>
+        );
+      })}
     </div>
   );
 }
