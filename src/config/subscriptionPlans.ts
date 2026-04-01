@@ -91,7 +91,7 @@ export interface SubscriptionPlan {
   reviewQuota: number | "100+";
   priceId: string;
   productKey: string;
-  benefits: string[];
+  benefitKeys: string[];
   targetAudience: string;
 }
 
@@ -104,10 +104,10 @@ const PLAN_TEMPLATES: PlanTemplate[] = [
     name: "Basic",
     tier: "basic",
     billing: "annual",
-    priceTTC: 15,          
-    priceHT: 12.50,         
-    annualTotalTTC: 180,   
-    annualTotalHT: 150,    
+    priceTTC: 15,
+    priceHT: 12.5,
+    annualTotalTTC: 180,
+    annualTotalHT: 150,
     priceLabel: "15,00 € TTC/mois",
     priceLabelHT: "12,50 € HT/mois",
     description: "Engagement 12 mois — 180 € TTC (150 € HT) en une fois",
@@ -116,12 +116,12 @@ const PLAN_TEMPLATES: PlanTemplate[] = [
     badgeColor: "green",
     reviewQuota: 25,
     productKey: "basic_annual",
-    benefits: [
-      "Jusqu'à 25 avis analysés / mois",
-      "Analyse complète",
-      "Recommandations personnalisées",
-      "Réponses IA à tous les avis analysés",
-      "Historique des analyses dans la limite du quota",
+    benefitKeys: [
+      "subscription.benefits.reviewsQuota25",
+      "subscription.benefits.fullAnalysis",
+      "subscription.benefits.recommendations",
+      "subscription.benefits.aiReplies",
+      "subscription.benefits.historyQuota",
     ],
     targetAudience: "Idéal pour la majorité des petites entreprises.",
   },
@@ -131,8 +131,8 @@ const PLAN_TEMPLATES: PlanTemplate[] = [
     name: "Basic",
     tier: "basic",
     billing: "monthly",
-    priceTTC: 25,          
-    priceHT: 20.83,        
+    priceTTC: 25,
+    priceHT: 20.83,
     priceLabel: "25,00 € TTC/mois",
     priceLabelHT: "20,83 € HT/mois",
     description: "Sans engagement — résiliable à tout moment",
@@ -141,12 +141,12 @@ const PLAN_TEMPLATES: PlanTemplate[] = [
     badgeColor: "blue",
     reviewQuota: 25,
     productKey: "basic_monthly",
-    benefits: [
-      "Jusqu'à 25 avis analysés / mois",
-      "Analyse complète",
-      "Recommandations personnalisées",
-      "Réponses IA à tous les avis analysés",
-      "Historique des analyses dans la limite du quota",
+    benefitKeys: [
+      "subscription.benefits.reviewsQuota25",
+      "subscription.benefits.fullAnalysis",
+      "subscription.benefits.recommendations",
+      "subscription.benefits.aiReplies",
+      "subscription.benefits.historyQuota",
     ],
     targetAudience: "Idéal pour la majorité des petites entreprises.",
   },
@@ -168,14 +168,15 @@ const PLAN_TEMPLATES: PlanTemplate[] = [
     badgeColor: "green",
     reviewQuota: 50,
     productKey: "standard_annual",
-    benefits: [
-      "Jusqu'à 50 avis analysés / mois",
-      "Analyse complète",
-      "Recommandations personnalisées",
-      "Réponses IA à tous les avis analysés",
-      "Historique des analyses dans la limite du quota",
+    benefitKeys: [
+      "subscription.benefits.reviewsQuota50",
+      "subscription.benefits.fullAnalysis",
+      "subscription.benefits.recommendations",
+      "subscription.benefits.aiReplies",
+      "subscription.benefits.historyQuota",
     ],
-    targetAudience: "Plan principal pour restaurants actifs ou commerces actifs.",
+    targetAudience:
+      "Plan principal pour restaurants actifs ou commerces actifs.",
   },
   {
     id: "standard-monthly",
@@ -193,14 +194,15 @@ const PLAN_TEMPLATES: PlanTemplate[] = [
     badgeColor: "blue",
     reviewQuota: 50,
     productKey: "standard_monthly",
-    benefits: [
-      "Jusqu'à 50 avis analysés / mois",
-      "Analyse complète",
-      "Recommandations personnalisées",
-      "Réponses IA à tous les avis analysés",
-      "Historique des analyses dans la limite du quota",
+    benefitKeys: [
+      "subscription.benefits.reviewsQuota50",
+      "subscription.benefits.fullAnalysis",
+      "subscription.benefits.recommendations",
+      "subscription.benefits.aiReplies",
+      "subscription.benefits.historyQuota",
     ],
-    targetAudience: "Plan principal pour restaurants actifs ou commerces actifs.",
+    targetAudience:
+      "Plan principal pour restaurants actifs ou commerces actifs.",
   },
   {
     id: "pro-annual",
@@ -220,12 +222,12 @@ const PLAN_TEMPLATES: PlanTemplate[] = [
     badgeColor: "purple",
     reviewQuota: 100,
     productKey: "pro_annual",
-    benefits: [
-      "Jusqu'à 100 avis analysés / mois",
-      "Analyse complète",
-      "Recommandations personnalisées",
-      "Réponses IA à tous les avis analysés",
-      "Historique des analyses dans la limite du quota",
+    benefitKeys: [
+      "subscription.benefits.reviewsQuota100",
+      "subscription.benefits.fullAnalysis",
+      "subscription.benefits.recommendations",
+      "subscription.benefits.aiReplies",
+      "subscription.benefits.historyQuota",
     ],
     targetAudience: "Adapté aux grands établissements / chaînes locales.",
   },
@@ -235,7 +237,7 @@ const PLAN_TEMPLATES: PlanTemplate[] = [
     name: "Pro",
     tier: "pro",
     billing: "monthly",
-    priceTTC: 58.80,
+    priceTTC: 58.8,
     priceHT: 49,
     priceLabel: "58,80 € TTC/mois",
     priceLabelHT: "49,00 € HT/mois",
@@ -245,12 +247,12 @@ const PLAN_TEMPLATES: PlanTemplate[] = [
     badgeColor: "blue",
     reviewQuota: 100,
     productKey: "pro_monthly",
-    benefits: [
-      "Jusqu'à 100 avis analysés / mois",
-      "Analyse complète",
-      "Recommandations personnalisées",
-      "Réponses IA à tous les avis analysés",
-      "Historique des analyses (demande spéciale si dépassement)",
+    benefitKeys: [
+      "subscription.benefits.reviewsQuota100",
+      "subscription.benefits.fullAnalysis",
+      "subscription.benefits.recommendations",
+      "subscription.benefits.aiReplies",
+      "subscription.benefits.historyQuota",
     ],
     targetAudience: "Adapté aux grands établissements / chaînes locales.",
   },
@@ -272,14 +274,15 @@ const PLAN_TEMPLATES: PlanTemplate[] = [
     badgeColor: "pink",
     reviewQuota: "100+",
     productKey: "premium_annual",
-    benefits: [
-      "Plus de 100 avis analysés / mois",
-      "Analyse complète",
-      "Recommandations personnalisées",
-      "Réponses IA à tous les avis analysés",
-      "Historique des analyses (demande spéciale si dépassement)",
+    benefitKeys: [
+      "subscription.benefits.reviewsQuota100plus",
+      "subscription.benefits.fullAnalysis",
+      "subscription.benefits.recommendations",
+      "subscription.benefits.aiReplies",
+      "subscription.benefits.historyQuota",
     ],
-    targetAudience: "Pour établissements exceptionnels / chaînes locales à fort volume d'avis.",
+    targetAudience:
+      "Pour établissements exceptionnels / chaînes locales à fort volume d'avis.",
   },
   {
     id: "premium-monthly",
@@ -297,14 +300,15 @@ const PLAN_TEMPLATES: PlanTemplate[] = [
     badgeColor: "blue",
     reviewQuota: "100+",
     productKey: "premium_monthly",
-    benefits: [
-      "Plus de 100 avis analysés / mois",
-      "Analyse complète",
-      "Recommandations personnalisées",
-      "Réponses IA à tous les avis analysés",
-      "Historique des analyses (demande spéciale si dépassement)",
+    benefitKeys: [
+      "subscription.benefits.reviewsQuota100plus",
+      "subscription.benefits.fullAnalysis",
+      "subscription.benefits.recommendations",
+      "subscription.benefits.aiReplies",
+      "subscription.benefits.historyQuota",
     ],
-    targetAudience: "Pour établissements exceptionnels / chaînes locales à fort volume d'avis.",
+    targetAudience:
+      "Pour établissements exceptionnels / chaînes locales à fort volume d'avis.",
   },
 ];
 

@@ -13,6 +13,7 @@ import { subscriptionPlans, type SubscriptionPlan } from "@/config/subscriptionP
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Etab } from "@/types/etablissement";
+import { useTranslation } from "react-i18next";
 
 const MONTHLY_AVERAGE_REVIEWS = 66; // TODO: replace with dynamic value
 
@@ -28,14 +29,12 @@ type TierKey = "basic" | "standard" | "pro" | "premium";
 const TIERS: {
   key: TierKey;
   label: string;
-  quota: string;
   color: string;
-  audience: string;
 }[] = [
-  { key: "basic",    label: "Basic",    quota: "Jusqu'à 25 avis / mois",   color: "green",  audience: "Idéal pour les petites entreprises." },
-  { key: "standard", label: "Standard", quota: "Jusqu'à 50 avis / mois",   color: "blue",   audience: "Pour les restaurants et commerces actifs." },
-  { key: "pro",      label: "Pro",      quota: "Jusqu'à 100 avis / mois",  color: "purple", audience: "Pour les grands établissements." },
-  { key: "premium",  label: "Premium",  quota: "Plus de 100 avis / mois",  color: "pink",   audience: "Pour les établissements à fort volume." },
+  { key: "basic",    label: "Basic",color: "green" },
+  { key: "standard", label: "Standard", color: "blue"},
+  { key: "pro",      label: "Pro", color: "purple" },
+  { key: "premium",  label: "Premium",color: "pink"},
 ];
 
 const TIER_COLORS: Record<string, {
@@ -92,6 +91,7 @@ interface Props {
 }
 
 export function PlanSelectionModal({ open, onClose, establishment }: Props) {
+  const { t } = useTranslation();
   const recommendedTier = getRecommendedTier(MONTHLY_AVERAGE_REVIEWS);
 
   const defaultPlan = subscriptionPlans.find(
@@ -143,7 +143,7 @@ export function PlanSelectionModal({ open, onClose, establishment }: Props) {
                 rating: establishment.rating ?? null,
                 lat: establishment.lat ?? null,
                 lng: establishment.lng ?? null,
-                type_etablissement: establishment.type_etablissement ?? null,
+                type_etablissement: establishment.types ?? null,
               }
             : null,
         },
@@ -178,20 +178,21 @@ export function PlanSelectionModal({ open, onClose, establishment }: Props) {
     if (!annualPlan || !monthlyPlan) return null;
     const saving = monthlyPlan.priceTTC - annualPlan.priceTTC;
     return saving > 0
-      ? `Économisez 20% — soit ${saving.toFixed(2).replace(".", ",")} € / mois`
+      ? t("subscription.annualSavingsHint", {
+      saving: saving.toFixed(2).replace(".", ",")
+    })
       : null;
   })();
-
+  
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-5xl max-h-[92vh] overflow-y-auto">
         <DialogHeader className="pb-1">
           <DialogTitle className="text-xl font-bold text-center">
-            Offre associée à votre établissement
+             {t("subscription.modalTitle")}
           </DialogTitle>
           <DialogDescription className="text-center text-sm">
-            Basé sur les informations de votre{" "}
-            <strong>établissement</strong>, l'offre appropriée est :
+           {t("subscription.modalDescription")}
           </DialogDescription>
         </DialogHeader>
 
@@ -206,7 +207,7 @@ export function PlanSelectionModal({ open, onClose, establishment }: Props) {
                   : "text-muted-foreground hover:text-gray-700"
               )}
             >
-              Mensuel
+               {t("subscription.monthly")}
             </button>
             <button
               onClick={() => handleBillingChange("annual")}
@@ -217,14 +218,9 @@ export function PlanSelectionModal({ open, onClose, establishment }: Props) {
                   : "text-muted-foreground hover:text-gray-700"
               )}
             >
-              • Annuel
+              {t("subscription.annual")}
             </button>
           </div>
-          {billingCycle === "annual" && annualSavingsHint && (
-            <p className="text-xs text-green-700 font-medium">
-              Facturation annuelle, {annualSavingsHint}
-            </p>
-          )}
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 py-2">
@@ -248,6 +244,13 @@ export function PlanSelectionModal({ open, onClose, establishment }: Props) {
                 isRecommended={isRecommended}
                 isDisabled={isDisabled}
                 isSelected={isSelected}
+                quota={t(`subscription.tiers.${tier.key}.quota`)}
+                audience={t(`subscription.tiers.${tier.key}.audience`)}
+                recommendedLabel={t("subscription.recommended")}
+                flexibleLabel={t("subscription.flexible")}
+                selectedLabel={t("subscription.selected")}
+                chooseLabel={t("subscription.choose")}
+                perMonthLabel={t("subscription.perMonth")}
                 onSelect={() => {
                   if (!isDisabled) setSelectedPlanId(plan.id);
                 }}
@@ -258,16 +261,16 @@ export function PlanSelectionModal({ open, onClose, establishment }: Props) {
 
         {billingCycle === "annual" && selectedPlan?.annualTotalTTC && (
           <p className="text-xs text-center text-muted-foreground">
-            Prix annuel de{" "}
-            <strong>{selectedPlan.annualTotalTTC.toFixed(0)} € TTC</strong>{" "}
-            (TVA 20% incluse), soit{" "}
-            <strong>{selectedPlan.priceHT.toFixed(2).replace(".", ",")} € / mois HT</strong>.
+            {t("subscription.annualPriceInfo", {
+              total: selectedPlan.annualTotalTTC.toFixed(0),
+              monthly: selectedPlan.priceHT.toFixed(2).replace(".", ",")
+            })}
           </p>
         )}
 
-        <div className="flex items-center justify-between gap-3 border-t pt-3">
+        <div className="flex items-center justify-end gap-3 border-t pt-3">
           <Button variant="outline" onClick={onClose} disabled={loading}>
-            Plus tard
+            {t("subscription.later")}
           </Button>
           <Button
             onClick={handleSubscribe}
@@ -277,10 +280,10 @@ export function PlanSelectionModal({ open, onClose, establishment }: Props) {
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                Redirection...
+                {t("subscription.redirecting")}
               </>
             ) : (
-              "S'abonner →"
+              t("subscription.subscribe")
             )}
           </Button>
         </div>
@@ -296,6 +299,13 @@ interface PlanCardProps {
   isRecommended: boolean;
   isDisabled: boolean;
   isSelected: boolean;
+  quota: string;
+  audience: string;
+  recommendedLabel: string;
+  flexibleLabel: string;
+  selectedLabel: string;
+  chooseLabel: string;
+  perMonthLabel: string;
   onSelect: () => void;
 }
 
@@ -306,11 +316,19 @@ function PlanCard({
   isRecommended,
   isDisabled,
   isSelected,
+  quota,
+  audience, 
+  recommendedLabel, 
+  flexibleLabel,
+  selectedLabel, 
+  chooseLabel, 
+  perMonthLabel,
   onSelect,
 }: PlanCardProps) {
+    const { t } = useTranslation();
   return (
     <div className="relative pt-4">
-      <div className="absolute -top-0 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap">
+      <div className="absolute top-5 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap">
         {isRecommended ? (
           <span
             className={cn(
@@ -318,12 +336,12 @@ function PlanCard({
               colors.recommended
             )}
           >
-            ★ Recommandé pour vous
+            ★ {recommendedLabel}
           </span>
         ) : (
           <span className="bg-gray-200 text-gray-500 text-[10px] font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1">
             <Lock className="w-2.5 h-2.5" />
-            {plan.billing === "annual" ? "Flexible" : "Flexible"}
+            {flexibleLabel}
           </span>
         )}
       </div>
@@ -363,10 +381,11 @@ function PlanCard({
           <span className="text-lg font-bold text-foreground leading-none">
             {plan.priceTTC.toFixed(2).replace(".", ",")} € TTC
           </span>
-          <span className="text-xs text-muted-foreground">/mois</span>
+          <span className="text-xs text-muted-foreground">{perMonthLabel}</span>
         </div>
         <p className="text-xs text-muted-foreground mb-2">
           {plan.priceHT.toFixed(2).replace(".", ",")} € HT
+          <span className="text-xs text-muted-foreground">{perMonthLabel}</span>
         </p>
 
         <button
@@ -384,13 +403,13 @@ function PlanCard({
               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           )}
         >
-          {isSelected ? "Sélectionné" : "Choisir"}
+          {isSelected ? selectedLabel: chooseLabel}
         </button>
 
         <div className="border-t border-border mb-2" />
 
         <ul className="space-y-1.5 flex-1">
-          {plan.benefits.slice(0, 4).map((benefit, i) => (
+          {plan.benefitKeys.slice(0, 4).map((key, i) => (
             <li key={i} className="flex items-start gap-1.5">
               <Check
                 className={cn(
@@ -399,7 +418,7 @@ function PlanCard({
                 )}
               />
               <span className="text-[11px] text-muted-foreground leading-snug">
-                {benefit}
+                {t(key)}
               </span>
             </li>
           ))}
@@ -416,7 +435,7 @@ function PlanCard({
                   )
             )}
           >
-            {tier.quota}
+             {quota}
           </span>
         </div>
       </button>

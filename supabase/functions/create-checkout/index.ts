@@ -275,7 +275,6 @@ serve(async (req) => {
       Object.assign(subscriptionMetadata, puMeta);
     }
 
-    // ── NEW: store pending establishment in metadata so webhook can save it ──
     if (pendingEstablishment) {
       const etabMeta = {
         pending_etab_place_id:   safeMetaStr(pendingEstablishment.place_id),
@@ -287,7 +286,6 @@ serve(async (req) => {
         pending_etab_lat:        safeMetaStr(pendingEstablishment.lat),
         pending_etab_lng:        safeMetaStr(pendingEstablishment.lng),
         pending_etab_type:       safeMetaStr(pendingEstablishment.type_etablissement),
-        // Also store user_id so webhook knows which user to save under
         pending_etab_user_id:    safeMetaStr(userId),
       };
       Object.assign(sessionMetadata, etabMeta);

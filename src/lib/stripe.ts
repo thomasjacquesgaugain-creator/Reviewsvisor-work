@@ -27,6 +27,22 @@ export type SubscriptionStatus = {
   creator_bypass?: boolean;
 };
 
+export type BillingInvoice = {
+  invoice_id: string;
+  invoice_number: string | null;
+  status: string;
+  amount_paid: number;
+  amount_due: number;
+  currency: string;
+  created_at: string;
+  period_start: string | null;
+  period_end: string | null;
+  subscription_id: string | null;
+  plan_name: string | null;
+  invoice_pdf_url: string | null;
+  hosted_invoice_url: string | null;
+};
+
 // Aligné avec src/config/subscriptionPlans.ts (plan par défaut = Pro annuel engagement)
 export const STRIPE_PRODUCTS = {
   pro: {
@@ -86,6 +102,24 @@ export async function createCustomerPortalSession(): Promise<string | null> {
     return data?.url || null;
   } catch (err) {
     console.error("Error creating portal session:", err);
+    throw err;
+  }
+}
+
+export async function listBillingInvoices(): Promise<BillingInvoice[]> {
+  try {
+    const { data, error } = await supabase.functions.invoke<{ invoices: BillingInvoice[] }>(
+      "billing-reports",
+    );
+
+    if (error) {
+      console.error("Error loading billing invoices:", error);
+      throw new Error(error.message);
+    }
+
+    return data?.invoices ?? [];
+  } catch (err) {
+    console.error("Error loading billing invoices:", err);
     throw err;
   }
 }

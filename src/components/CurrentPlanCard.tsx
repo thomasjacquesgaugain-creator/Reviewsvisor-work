@@ -6,13 +6,6 @@ import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const STATUS_LABELS: Record<BillingSummary["status"], string> = {
-  active: "Actif",
-  trialing: "Essai",
-  canceled: "Annulé",
-  past_due: "Expiré",
-  inactive: "Inactif",
-};
 
 const STATUS_VARIANTS: Record<BillingSummary["status"], string> = {
   active: "bg-green-100 text-green-800 border-green-200",
@@ -35,7 +28,15 @@ interface CurrentPlanCardProps {
  * Sinon → bloc simple (Free / inactif).
  */
 export function CurrentPlanCard({ summary, activePlan, className }: CurrentPlanCardProps) {
-  const { t } = useTranslation();
+  const { t,i18n } = useTranslation();
+
+  const STATUS_LABELS: Record<BillingSummary["status"], string> = {
+  active:   t("subscription.status.active"),
+  trialing: t("subscription.status.trialing"),
+  canceled: t("subscription.status.canceled"),
+  past_due: t("subscription.status.pastDue"),
+  inactive: t("subscription.status.inactive"),
+};
   const isPaid = summary.status === "active" || summary.status === "trialing";
 
   // ── Free / inactive ────────────────────────────────────────────────────────
@@ -70,9 +71,9 @@ export function CurrentPlanCard({ summary, activePlan, className }: CurrentPlanC
         }[sub.planTier ?? "pro"] ?? { badge: "bg-blue-600", price: "text-blue-600", check: "text-blue-600", border: "border-blue-400" };
 
         const renewLabel = sub.periodEnd
-          ? new Date(sub.periodEnd).toLocaleDateString("fr-FR", {
-              day: "numeric", month: "long", year: "numeric",
-            })
+          ? new Date(sub.periodEnd).toLocaleDateString(i18n.language === "fr" ? "fr-FR" : "en-GB", {
+            day: "numeric", month: "long", year: "numeric",
+          })
           : null;
 
         return (
@@ -84,11 +85,11 @@ export function CurrentPlanCard({ summary, activePlan, className }: CurrentPlanC
             )}
           >
             <div className={cn("absolute top-0 left-0 text-white px-3 py-1 text-xs font-semibold rounded-br-lg", tierColor.badge)}>
-              Actif
+              {t("subscription.status.active")}
             </div>
 
             <div className="absolute top-0 right-0 bg-gray-100 text-gray-600 px-3 py-1 text-xs font-semibold rounded-bl-lg">
-              {sub.planBilling === "annual" ? "💎 Annuel" : "⚡ Mensuel"}
+              {sub.planBilling === "annual" ? t("subscription.annualBadge") : t("subscription.monthlyBadge")}
             </div>
 
             <CardHeader className="pb-3 pt-8 px-5">
@@ -99,17 +100,20 @@ export function CurrentPlanCard({ summary, activePlan, className }: CurrentPlanC
               {plan && (
                 <div className="mt-3">
                   <span className={cn("text-3xl font-bold", tierColor.price)}>
-                    {plan.priceLabel}
+                    {plan.priceTTC.toFixed(2).replace(".", ",")} € TTC
+                    <span className="text-base font-normal text-muted-foreground">
+                      {t("subscription.perMonth")}
+                    </span>
                   </span>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {plan.priceLabelHT} HT
+                    {plan.priceHT.toFixed(2).replace(".", ",")} € {t("subscription.exclTax")}{t("subscription.perMonth")}
                   </p>
                   {plan.billing === "annual" && plan.annualTotalTTC && (
                     <p className={cn("text-xs font-semibold mt-1", tierColor.price)}>
-                      {plan.annualTotalTTC.toFixed(0)} € TTC / an{" "}
-                      <span className="font-normal text-muted-foreground">
-                        ({plan.annualTotalHT?.toFixed(2)} € HT)
-                      </span>
+                      {t("subscription.annualTotal", {
+                        total: plan.annualTotalTTC.toFixed(0),
+                        totalHT: plan.annualTotalHT?.toFixed(2)
+                      })}
                     </p>
                   )}
                 </div>
@@ -117,8 +121,9 @@ export function CurrentPlanCard({ summary, activePlan, className }: CurrentPlanC
 
               {renewLabel && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  {sub.cancelAtPeriodEnd ? "⚠ Se termine le" : "🔄 Renouvellement le"}{" "}
-                  <strong>{renewLabel}</strong>
+                  {sub.cancelAtPeriodEnd
+                    ? t("subscription.endsOnDate", { date: renewLabel })
+                    : t("subscription.renewsOnDate", { date: renewLabel })}
                 </p>
               )}
             </CardHeader>
@@ -126,10 +131,10 @@ export function CurrentPlanCard({ summary, activePlan, className }: CurrentPlanC
             {plan && (
               <CardContent className="pb-5 px-5 pt-0">
                 <ul className="space-y-2">
-                  {plan.benefits.map((benefit, i) => (
+                  {plan.benefitKeys.map((benefit, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <Check className={cn("w-4 h-4 mt-0.5 flex-shrink-0", tierColor.check)} />
-                      <span className="text-sm text-muted-foreground">{benefit}</span>
+                      <span className="text-sm text-muted-foreground">{t(benefit)}</span>
                     </li>
                   ))}
                 </ul>

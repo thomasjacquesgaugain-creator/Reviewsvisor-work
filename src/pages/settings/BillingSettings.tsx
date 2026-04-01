@@ -190,7 +190,7 @@ const activePlan = useMemo(
                   Ouverture...
                 </>
               ) : (
-                "Gérer mon abonnement"
+                  t("settings.BillingAndSubscription.manageMySubscription")
               )}
             </Button>
           )}
