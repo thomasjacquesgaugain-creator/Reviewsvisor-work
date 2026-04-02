@@ -66,13 +66,11 @@ Cookies tiers	4
 
 6	Durée de conservation	5
 
-7	Transferts hors Union européenne	5
+7	Lien avec la Politique de Confidentialité	5
 
-8	Lien avec la Politique de Confidentialité	5
+8	Mise à jour de la politique	5
 
-9	Mise à jour de la politique	5
-
-10	Contact	5
+9	Contact	5
 
 
 
@@ -96,7 +94,7 @@ persistants : conservés pour une durée limitée.
 
 
 
-Catégories de cookies utilises
+Catégories de cookies utilisés
 
 
 
@@ -152,7 +150,7 @@ rv_etab_selected : établissement sélectionné (session)
 
 Cookies tiers
 
-Analytics : mesure d’audience anonymisée (13 mois maximum)
+Outil de mesure d’audience : mesure d’audience anonymisée (13 mois maximum)
 
 
 
