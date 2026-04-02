@@ -18,6 +18,9 @@ verify_jwt = true
 [functions.customer-portal]
 verify_jwt = true
 
+[functions.billing-reports]
+verify_jwt = true
+
 [functions.create-subscription]
 verify_jwt = true
 

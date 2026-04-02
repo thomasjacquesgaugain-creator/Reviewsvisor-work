@@ -146,7 +146,8 @@
     "emailSendError": "An error occurred while sending the email",
     "alreadyHaveAccount": "Already have an account?",
     "redirectingToLogin": "Redirecting to login page...",
-    "continueToSubscription": "Continue to subscription"
+    "continueToSubscription": "Continue to subscription",
+    "createAccount":"Create account"
   },
   "nav": {
     "home": "Home",
@@ -662,13 +663,19 @@
       "noAdditionalEstablishments": "No additional establishments",
       "billingManagement": "Billing management",
       "viewAvailablePlans": "View available plans",
-      "invoiceHistory": "Invoice history"
+      "invoiceHistory": "Invoice history",
+      "manageMySubscription":"Manage My Subscription"
     },
     "myMonthlyReports": {
       "title": "My monthly reports",
       "back": "Back",
       "monthlyReportDescription": "Download your monthly billing and activity reports",
-      "download": "Download"
+      "download": "Download",
+      "loadingInvoices":"Loading invoices...",
+      "invoice":"invoice",
+      "stripeInvoice":"Stripe invoice",
+      "noInvoice":"No invoices for this month.",
+      "noInvoiceAvailable":"No invoice available"
     },
     "personalization": {
       "title": "Personalisation",
@@ -766,6 +773,12 @@
   "subscription": {
     "title": "Subscription",
     "choosePlan": "Choose your plan",
+    "activeSubscriptions":"Active Subscriptions",
+    "yearly":"Annual",
+    "monthly":"Monthly",
+    "endsOn":"Ends on",
+    "renewsOn":"Renews on",
+    "active":"Active",
     "freePlan": "Free",
     "proPlan": "Pro",
     "businessPlan": "Business",
@@ -778,7 +791,7 @@
     "downgrade": "Downgrade",
     "cancel": "Cancel subscription",
     "features": "Included features",
-    "subscribe": "Subscribe",
+    "subscribe": "Subscribe→",
     "chooseThisPlan": "Choose this plan",
     "planSelected": "Selected",
     "freeFeatures": [
@@ -893,7 +906,60 @@
           "2": "Cancel anytime"
         }
       }
+    },
+  "modalTitle": "Subscription linked to your establishment",
+  "modalDescription": "Based on your establishment's information, the appropriate subscription is:",
+  "annual": "Annual",
+  "annualBilling": "Annual billing, {hint}",
+  "annualSavingsHint": "Save 20% — that's {{saving}} € / month",
+  "annualPriceInfo": "Annual price of {{total}} € incl. tax (20% VAT included), i.e. {{monthly}} € /month excl. tax.",
+  "recommended": "Recommended for you",
+  "flexible": "Flexible",
+  "selected": "Selected",
+  "choose": "Choose",
+  "later": "Later",
+  "tiers": {
+    "basic": {
+      "quota": "Up to 25 reviews / month",
+      "audience": "Ideal for small businesses."
+    },
+    "standard": {
+      "quota": "Up to 50 reviews / month",
+      "audience": "For active restaurants and businesses."
+    },
+    "pro": {
+      "quota": "Up to 100 reviews / month",
+      "audience": "For large establishments."
+    },
+    "premium": {
+      "quota": "Over 100 reviews / month",
+      "audience": "For high-volume establishments."
     }
+  },
+  "benefits": {
+    "reviewsQuota25": "Up to 25 reviews analyzed / month",
+    "reviewsQuota50": "Up to 50 reviews analyzed / month",
+    "reviewsQuota100": "Up to 100 reviews analyzed / month",
+    "reviewsQuota100plus": "Over 100 reviews analyzed / month",
+    "fullAnalysis": "Full analysis",
+    "recommendations": "Personalized recommendations",
+    "aiReplies": "AI replies to all analyzed reviews",
+    "historyQuota": "Analysis history within quota limit",
+    "historySpecial": "Analysis history (special request if exceeded)"
+  },
+  "annualBadge": "💎 Annual",
+  "monthlyBadge": "⚡ Monthly",
+  "exclTax": "excl. tax",
+  "annualTotal": "{{total}} € incl. tax /year ({{totalHT}} € excl. tax)",
+  "endsOnDate": "⚠ Ends on {{date}}",
+  "renewsOnDate": "🔄 Renews on {{date}}",
+  "status": {
+    "active": "Active",
+    "trialing": "Trial",
+    "canceled": "Canceled",
+    "pastDue": "Past due",
+    "inactive": "Inactive"
+  }
   },
   "establishment": {
     "title": "My establishment",
