@@ -1,0 +1,174 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Reviewsvisor
+
+Mentions Légales 
+
+
+
+
+
+	
+
+
+
+	
+
+
+
+
+
+
+
+
+
+Contents
+
+	Page
+
+1	Éditeur du site	3
+
+2	Hébergeur du site	3
+
+3	Description du service	3
+
+4	Propriété intellectuelle	4
+
+5	Protection des données personnelles	4
+
+6	Cookies	4
+
+7	Liens hypertextes	4
+
+8	Contact	5
+
+
+
+
+
+MENTIONS LEGALES
+
+Éditeur du site
+
+Le site www.reviewsvisor.fr est édité par :
+
+Raison sociale : HAWKMAN
+
+Forme juridique : Société par actions simplifiée (SAS)
+
+Capital social : 1 000 €
+
+Siège social : 36, rue Scheffer, 75116 Paris, France
+
+SIRET : 103 010 294 00017
+
+RCS : Paris 103 010 294
+
+Numéro de TVA intracommunautaire : 
+
+Directeur de la publication : Thomas BONDER, Président
+
+Email : contact@reviewsvisor.fr
+
+Hébergeur du site
+
+Le site est hébergé par :
+
+Raison sociale : Vercel Inc
+
+Adresse : 340 S Lemon Avenue #4133 Walnut, CA 91789 USA
+
+Site web : https://vercel.com
+
+Téléphone et/ou courriel de contact : https://vercel.com/contact
+
+Description du service
+
+Reviewsvisor est une plateforme SaaS permettant aux professionnels de gérer, suivre et analyser les avis clients associés aux établissements Google Business Profile qu’ils possèdent, administrent ou gèrent valablement.L’accès aux données Google Business Profile s’effectue exclusivement via le protocole sécurisé OAuth 2.0, avec le consentement explicite de l’utilisateur.
+
+
+
+Les principales fonctionnalités du service incluent :
+
+Import et synchronisation automatique des avis Google
+
+Analyse et statistiques des avis clients
+
+Tableau de bord de suivi de la réputation en ligne
+
+Notifications des nouveaux avis
+
+Gestion multi-établissements
+
+Propriété intellectuelle
+
+L'ensemble du contenu du site www.reviewsvisor.fr (textes, graphismes, images, logos, icônes, sons, logiciels, base de données, etc.) est la propriété exclusive de Reviewsvisor ou de ses partenaires et est protégé par les lois françaises et internationales relatives à la propriété intellectuelle.
+
+Toute reproduction, représentation, modification, publication, adaptation, totale ou partielle, des éléments du site, quel que soit le moyen ou le procédé utilisé, est interdite sans l'autorisation écrite préalable de Reviewsvisor.
+
+Toute exploitation non autorisée du site ou de l'un quelconque des éléments qu'il contient sera considérée comme constitutive d'une contrefaçon et poursuivie conformément aux dispositions des articles L.335-2 et suivants du Code de la Propriété Intellectuelle.
+
+L’ensemble du contenu du site est protégé par les lois en vigueur relatives à la propriété intellectuelle.
+
+Protection des données personnelles
+
+Reviewsvisor s'engage à protéger les données personnelles de ses utilisateurs conformément au Règlement Général sur la Protection des Données (RGPD) n°2016/679 et à la loi n°78-17 du 6 janvier 1978 relative à l'informatique, aux fichiers et aux libertés.
+
+Pour plus d'informations sur la collecte et le traitement des données personnelles, veuillez consulter notre Politique de Confidentialité.
+
+Les données personnelles sont traitées conformément au RGPD et à la Politique de Confidentialité disponible sur le site.
+
+Cookies
+
+Le site utilise des cookies conformément à la Politique de Cookies.
+
+Le site www.reviewsvisor.fr utilise des cookies pour améliorer l'expérience utilisateur, réaliser des statistiques de visites et assurer le bon fonctionnement des services.
+
+Types de cookies utilisés :
+
+Cookies essentiels : nécessaires au fonctionnement du site
+
+Cookies analytiques : pour mesurer l'audience du site
+
+Cookies de fonctionnalité : pour mémoriser vos préférences
+
+Vous pouvez gérer vos préférences en matière de cookies via le bandeau de consentement ou les paramètres de votre navigateur.
+
+Liens hypertextes
+
+Le site www.reviewsvisor.fr peut contenir des liens hypertextes vers d'autres sites internet. Reviewsvisor n'exerce aucun contrôle sur ces sites et décline toute responsabilité quant à leur contenu.
+
+La mise en place de liens hypertextes vers le site www.reviewsvisor.fr est autorisée sans accord préalable, à condition que ces liens n'aient pas un caractère commercial ou publicitaire et qu'ils ne portent pas atteinte à l'image de Reviewsvisor.
+
+Contact
+
+Pour toute question ou demande d'information concernant le site, ou tout signalement de contenu ou d'activités illicites, vous pouvez contacter l'éditeur à l'adresse suivante :
+
+Email : contact@reviewsvisor.fr
+
+Adresse : 36, rue Scheffer, 75116 Paris, France
+
+
+
+---
+
+© 2026 Reviewsvisor - Tous droits réservés
+
+
+
+
+
+
+

@@ -3,10 +3,10 @@ const path = require("path");
 
 const legalDir = path.join(__dirname, "..", "legal");
 const files = [
-  "Reviewsvisor - CGU 01-2026 rev.docx",
-  "Reviewsvisor - Mentions legales 01-2026 rev.docx",
-  "Reviewsvisor - Politique Confidentialite 01-2026 rev.docx",
-  "Reviewsvisor - Politique Cookies 01-2026 rev.docx",
+  "Reviewsvisor - CGU - 04 -2026 rev 1.docx",
+  "Reviewsvisor - Mentions legales 04 -2026 rev 1.docx",
+  "Reviewsvisor - Politique Confidentialite 04 -2026 rev 1.docx",
+  "Reviewsvisor - Politique Cookies 04 -2026 rev 1.docx",
 ];
 
 async function extract(name) {
