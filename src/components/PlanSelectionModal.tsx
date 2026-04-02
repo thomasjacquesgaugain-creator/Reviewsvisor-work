@@ -328,7 +328,7 @@ function PlanCard({
     const { t } = useTranslation();
   return (
     <div className="relative pt-4">
-      <div className="absolute top-5 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap">
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap">
         {isRecommended ? (
           <span
             className={cn(
@@ -361,7 +361,7 @@ function PlanCard({
         {isSelected && !isDisabled && (
           <div
             className={cn(
-              "absolute top-2.5 right-2.5 w-5 h-5 rounded-full flex items-center justify-center",
+              "absolute top-1.5 right-2.5 w-5 h-5 rounded-full flex items-center justify-center",
               colors.badge
             )}
           >
@@ -370,12 +370,12 @@ function PlanCard({
         )}
 
         {isDisabled && (
-          <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center">
+          <div className="absolute top-1.5 right-2.5 w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center">
             <Lock className="w-3 h-3 text-gray-400" />
           </div>
         )}
 
-        <p className="text-sm font-black text-foreground mb-1">{tier.label}</p>
+        <p className="text-sm font-black text-foreground mb-1 mt-4">{tier.label}</p>
 
         <div className="mb-0.5">
           <span className="text-lg font-bold text-foreground leading-none">
