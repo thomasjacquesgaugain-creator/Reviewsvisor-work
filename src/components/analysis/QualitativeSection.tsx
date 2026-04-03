@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { QualitativeData, Review } from "@/types/analysis";
-import { useTranslation } from "react-i18next";
+import { useTranslation,Trans } from "react-i18next";
 import { MessageSquare, Star, TrendingUp, TrendingDown, ShoppingBag, Users } from "lucide-react";
 import { useState, useMemo } from "react";
 import { mapTextToTheme, mapThemeLabel, CanonicalTheme, computeSentimentFromRating, normalizeRating } from "@/utils/reviewProcessing";
@@ -63,21 +63,18 @@ const THEMES = {
 // Configuration pour le mode Sentiment avec couleurs Reviewsvisor pastels
 const SENTIMENT_THEMES = {
   positive: {
-    label: 'Positif',
     icon: TrendingUp,
     bgColor: '#ECFDF5', // Vert Reviewsvisor pastel
     textColor: '#065F46',
     badgeColor: '#10B981' // Vert Reviewsvisor plus foncé
   },
   neutral: {
-    label: 'Neutre',
     icon: Users,
     bgColor: '#FEF3C7', // Orange pastel (cohérent avec Répartition des avis)
     textColor: '#D97706', // Orange foncé
     badgeColor: '#F59E0B' // Orange Reviewsvisor (orange-500)
   },
   negative: {
-    label: 'Négatif',
     icon: TrendingDown,
     bgColor: '#FEE2E2', // Rouge pastel
     textColor: '#DC2626', // Rouge explicite (red-600)
@@ -188,6 +185,12 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
   const { t } = useTranslation();
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<'frequency' | 'sentiment' | 'theme'>('frequency');
+
+  const SENTIMENT_LABELS: Record<string, string> = {
+    positive: t("analysis.qualitative.positive", "Positif"),
+    neutral:  t("analysis.qualitative.neutral",  "Neutre"),
+    negative: t("analysis.qualitative.negative", "Négatif"),
+  };
 
   // Construire les groupes de thèmes dynamiques depuis insight?.themes
   const THEME_GROUPS = useMemo(() => {
@@ -392,24 +395,44 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
 
   // Pour le mode Fréquence : organiser par sentiment réel (positif/négatif/neutre) plutôt que par catégorie
   // Cela garantit que tous les mots négatifs sont visibles
-  const wordsBySentimentForFrequency = useMemo(() => {
-    const grouped: Record<'positive' | 'neutral' | 'negative', ClassifiedWord[]> = {
-      positive: [],
-      neutral: [],
-      negative: []
-    };
+
+  
+  // const wordsBySentimentForFrequency = useMemo(() => {
+  //   const grouped: Record<'positive' | 'neutral' | 'negative', ClassifiedWord[]> = {
+  //     positive: [],
+  //     neutral: [],
+  //     negative: []
+  //   };
     
-    classifiedWords.forEach(word => {
-      grouped[word.sentiment].push(word);
-    });
+  //   classifiedWords.forEach(word => {
+  //     grouped[word.sentiment].push(word);
+  //   });
     
-    // Trier par fréquence
-    Object.keys(grouped).forEach(key => {
-      grouped[key as 'positive' | 'neutral' | 'negative'].sort((a, b) => b.count - a.count);
-    });
+  //   // Trier par fréquence
+  //   Object.keys(grouped).forEach(key => {
+  //     grouped[key as 'positive' | 'neutral' | 'negative'].sort((a, b) => b.count - a.count);
+  //   });
     
-    return grouped;
-  }, [classifiedWords]);
+  //   return grouped;
+  // }, [classifiedWords]);
+
+  // Single flat list sorted by frequency, ignoring sentiment
+
+const wordsByFrequency = useMemo(() => {
+  const wordMap = new Map<string, { word: string; count: number; sentiment: 'positive' | 'neutral' | 'negative' }>();
+
+  classifiedWords.forEach(word => {
+    if (wordMap.has(word.word)) {
+      // Accumulate count if same word appears with different sentiments
+      const existing = wordMap.get(word.word)!;
+      existing.count += word.count;
+    } else {
+      wordMap.set(word.word, { ...word });
+    }
+  });
+
+  return Array.from(wordMap.values()).sort((a, b) => b.count - a.count);
+}, [classifiedWords]);
 
   // Organiser par thématique (mode Fréquence)
   const wordsByCategory = useMemo(() => {
@@ -520,8 +543,11 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
             </h3>
             <p className="text-xs text-gray-600 leading-5">
               {classifiedWords.length > 0
-                ? `Les avis font surtout ressortir les thèmes "${wordsByCategory.produit[0]?.word || wordsByCategory.experience[0]?.word || "produits et expérience"}" côté points forts, et "${wordsByCategory.friction[0]?.word || "certains irritants"}" comme principaux points de vigilance.`
-                : "Les premiers mots-clés analysés permettront de faire ressortir vos forces et vos principaux irritants."}
+                ? t("analysis.qualitative.quickSummaryText", {
+                  strong: wordsByCategory.produit[0]?.word || wordsByCategory.experience[0]?.word || t("analysis.qualitative.defaultStrong"),
+                  friction: wordsByCategory.friction[0]?.word || t("analysis.qualitative.defaultFriction"),
+                })
+                : t("analysis.qualitative.quickSummaryEmpty")}
             </p>
           </div>
 
@@ -534,7 +560,7 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
             {/* Tri et filtres */}
             <div className="flex flex-col gap-1 mb-4">
               <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600">Trier par :</span>
+                <span className="text-sm text-gray-600">{t("analysis.qualitative.sortBy")} :</span>
                 <div className="flex gap-2">
                 <button
                   onClick={() => setSortMode('frequency')}
@@ -544,7 +570,7 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
                       : 'bg-white text-blue-950 border-slate-200 hover:bg-blue-50 hover:text-blue-950 hover:border-blue-200'
                   }`}
                 >
-                  Fréquence
+                {t("analysis.qualitative.sortFrequency")}
                 </button>
                 <button
                   onClick={() => setSortMode('sentiment')}
@@ -554,7 +580,7 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
                       : 'bg-white text-blue-950 border-slate-200 hover:bg-blue-50 hover:text-blue-950 hover:border-blue-200'
                   }`}
                 >
-                  Sentiment
+                  {t("analysis.qualitative.sortSentiment")}
                 </button>
                 <button
                   onClick={() => setSortMode('theme')}
@@ -564,96 +590,67 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
                       : 'bg-white text-blue-950 border-slate-200 hover:bg-blue-50 hover:text-blue-950 hover:border-blue-200'
                   }`}
                 >
-                  Thème
+                  {t("analysis.qualitative.sortTheme")}
                 </button>
                 </div>
               </div>
               <p className="text-xs text-gray-500">
-                Fréquence = mots les plus cités · Sentiment = tonalité globale · Thème = regroupement par thèmes extraits dynamiquement depuis les avis.
-              </p>
+              {t("analysis.qualitative.sortDescription")}             
+               </p>
             </div>
 
             {/* Vue analytique par barres horizontales */}
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 md:p-6">
               {/* Mode Fréquence */}
               {sortMode === 'frequency' && (
-                <div className="grid gap-y-6 md:grid-cols-2 md:gap-x-12 lg:gap-x-16 transition-opacity duration-200">
-                  {Object.entries(SENTIMENT_THEMES).map(([sentimentKey, theme]) => {
-                    const words = [...wordsBySentimentForFrequency[sentimentKey as 'positive' | 'neutral' | 'negative']];
-                    const Icon = theme.icon;
+                <div className="transition-opacity duration-200">
+                  {wordsByFrequency.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-sm text-gray-500">Aucune donnée disponible pour ce mode.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {wordsByFrequency.slice(0, 20).map((word) => {
+                        const maxCount = wordsByFrequency[0].count; // already sorted, first is max
+                        const widthPercent = maxCount > 0 ? Math.max(10, (word.count / maxCount) * 100) : 0;
 
-                    if (!words.length) {
-                      return (
-                        <div key={sentimentKey} className="space-y-3">
-                          <div className="flex items-center gap-2">
-                            <Icon className="w-4 h-4" style={{ color: theme.textColor }} />
-                            <span className="text-[13px] font-semibold tracking-tight text-slate-800">
-                              {theme.label}
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-500">Aucune donnée disponible pour ce sentiment.</p>
-                        </div>
-                      );
-                    }
+                        // Color the bar based on the word's dominant sentiment
+                        const barBg =
+                          word.sentiment === 'positive' ? "bg-emerald-50"
+                            : word.sentiment === 'negative' ? "bg-red-50"
+                              : "bg-amber-50";
+                        const barFill =
+                          word.sentiment === 'positive' ? "bg-emerald-500"
+                            : word.sentiment === 'negative' ? "bg-red-500"
+                              : "bg-amber-500";
 
-                    // Tri par fréquence décroissante
-                    words.sort((a, b) => b.count - a.count);
-                    const maxCount = Math.max(...words.map((w) => w.count));
-
-                    // Couleurs selon le sentiment du MOT (pas du thème)
-                    const barBg =
-                      sentimentKey === 'positive' ? "bg-emerald-50" 
-                      : sentimentKey === 'negative' ? "bg-red-50" 
-                      : "bg-amber-50"; // Orange pastel pour neutre
-                    const barFill =
-                      sentimentKey === 'positive' ? "bg-emerald-500" 
-                      : sentimentKey === 'negative' ? "bg-red-500" 
-                      : "bg-amber-500"; // Orange pour neutre
-
-                    return (
-                      <div key={sentimentKey} className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Icon className="w-4 h-4" style={{ color: theme.textColor }} />
-                          <span className="text-[13px] font-semibold tracking-tight text-slate-800">
-                            {theme.label}
-                          </span>
-                        </div>
-
-                        <div className="space-y-2">
-                          {words.slice(0, 8).map((word) => {
-                            const widthPercent =
-                              maxCount > 0 ? Math.max(10, (word.count / maxCount) * 100) : 0;
-
-                            // Clé unique incluant le sentiment pour permettre la redondance (même mot, différents sentiments)
-                            return (
-                              <div
-                                key={`frequency-${sentimentKey}-${word.word}-${word.sentiment}`}
-                                className="flex items-center gap-3 group"
-                              >
-                                <div className="w-32 text-xs text-slate-700 truncate">
-                                  {word.word}
-                                </div>
-                                <div className="flex-1">
-                                  <div className={`h-2 rounded-full ${barBg}`}>
-                                    <div
-                                      className={`h-2 rounded-full ${barFill} transition-all duration-150 group-hover:opacity-90 group-hover:scale-[1.01]`}
-                                      style={{ width: `${widthPercent}%` }}
-                                    />
-                                  </div>
-                                </div>
-                                <div className="w-8 text-right text-xs font-medium text-slate-500">
-                                  {word.count}
-                                </div>
+                        return (
+                          <div
+                            key={`frequency-${word.word}`}
+                            className="flex items-center gap-3 group"
+                          >
+                            <div className="w-36 text-xs text-slate-700 truncate">
+                              {word.word}
+                            </div>
+                            <div className="flex-1">
+                              <div className={`h-2 rounded-full ${barBg}`}>
+                                <div
+                                  className={`h-2 rounded-full ${barFill} transition-all duration-150 group-hover:opacity-90`}
+                                  style={{ width: `${widthPercent}%` }}
+                                />
                               </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
+                            </div>
+                            <div className="w-8 text-right text-xs font-medium text-slate-500">
+                              {word.count}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
-              
+
               {/* Mode Sentiment */}
               {sortMode === 'sentiment' && (
                 <div className="grid gap-y-6 md:grid-cols-2 md:gap-x-10 lg:grid-cols-3 lg:gap-x-14 transition-opacity duration-200">
@@ -667,10 +664,11 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
                           <div className="flex items-center gap-2">
                             <Icon className="w-4 h-4" style={{ color: theme.textColor }} />
                             <span className="text-[13px] font-semibold tracking-tight text-slate-800">
-                              {theme.label}
+                              {/* {theme.label} */}
+                              {SENTIMENT_LABELS[sentimentKey]}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-500">Aucune donnée disponible pour ce sentiment.</p>
+                          <p className="text-xs text-gray-500">{t("analysis.qualitative.noDataForSentiment")}</p>
                         </div>
                       );
                     }
@@ -694,7 +692,8 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
                         <div className="flex items-center gap-2">
                           <Icon className="w-4 h-4" style={{ color: theme.textColor }} />
                           <span className="text-[13px] font-semibold tracking-tight text-slate-800">
-                            {theme.label}
+                            {/* {theme.label} */}
+                            {SENTIMENT_LABELS[sentimentKey]}
                           </span>
                         </div>
 
@@ -749,7 +748,7 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
                               {theme.label}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-500">Aucune donnée disponible pour ce thème.</p>
+                          <p className="text-xs text-gray-500">{t("analysis.qualitative.noDataForTheme")}</p>
                         </div>
                       );
                     }
@@ -795,7 +794,7 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
                         </div>
 
                         <div className="space-y-2">
-                          {words.slice(0, 8).map((word) => {
+                          {words.slice(0,8).map((word) => {
                             const widthPercent =
                               maxCount > 0 ? Math.max(10, (word.count / maxCount) * 100) : 0;
 
@@ -841,7 +840,7 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
               )}
 
               {/* État vide global si aucun mode n'a de données */}
-              {sortMode === 'frequency' && Object.values(wordsBySentimentForFrequency).every(arr => arr.length === 0) && (
+              {sortMode === 'frequency' && wordsByFrequency.length === 0 && (
                 <div className="text-center py-8">
                   <p className="text-sm text-gray-500">Aucune donnée disponible pour ce mode.</p>
                 </div>
@@ -901,7 +900,7 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
                               : ''
                           }`}
                         >
-                          {v.sentiment === 'positive' ? 'Positif' : v.sentiment === 'negative' ? 'Négatif' : 'Neutre'}
+                          {v.sentiment === 'positive' ? t("analysis.qualitative.positive") : v.sentiment === 'negative' ? t("analysis.qualitative.negative") : t("analysis.qualitative.neutral")}
                         </Badge>
                         </div>
                        <p className="text-sm text-gray-700 italic leading-relaxed">
@@ -910,7 +909,7 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
               </div>
                     ))
             ) : (
-                    <p className="text-sm text-gray-500">Aucun extrait disponible pour ce mot-clé.</p>
+                    <p className="text-sm text-gray-500">{t("analysis.qualitative.noVerbatimsForWord")}.</p>
                   )}
                 </div>
               </div>

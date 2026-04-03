@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ThemeAnalysis, Review } from "@/types/analysis";
-import { useTranslation } from "react-i18next";
+import { useTranslation,Trans } from "react-i18next";
 import {
   RadarChart,
   PolarGrid,
@@ -22,6 +22,7 @@ interface ThemesSectionProps {
 }
 
 export function ThemesSection({ data }: ThemesSectionProps) {
+    
   const { t } = useTranslation();
   const { filteredReviews } = useAnalysisFilters();
 
@@ -143,8 +144,8 @@ export function ThemesSection({ data }: ThemesSectionProps) {
                       const score = typeof value === "number" ? value : 0;
                       const mentions = theme?.count ?? 0;
                       return [
-                        `${score.toFixed(0)}/100 · ${mentions} avis`,
-                        t("analysis.themes.scoreTooltipLabel", "Score du thème"),
+                        t("analysis.themes.scoreTooltipValue", { score: score.toFixed(0), mentions }),
+                        t("analysis.themes.scoreTooltipLabel"),
                       ];
                     }}
                   />
@@ -157,11 +158,11 @@ export function ThemesSection({ data }: ThemesSectionProps) {
               <div className="flex items-center gap-1">
                 <Info className="w-3 h-3 text-gray-400" />
                 <span>
-                  Score sur 100 : combine la fréquence des avis et la tonalité globale.
+                 {t("analysis.themes.scoreExplanation")}
                 </span>
               </div>
               <p className="text-[11px] text-gray-400">
-                Basé sur {totalThemeMentions} avis mentionnant au moins un thème.
+                  {t("analysis.themes.basedOnMentions", { count: totalThemeMentions })}
               </p>
             </div>
 
@@ -169,14 +170,14 @@ export function ThemesSection({ data }: ThemesSectionProps) {
             <div className="space-y-4">
               {effectiveThemes.map((theme, index) => {
                 const scorePercent = Math.round((theme.score || 0) * 100);
-                let polarityLabel = "Perception mitigée";
+                let polarityLabel = t("analysis.themes.polarity.mixed");
                 let polarityClass = "bg-amber-50 text-amber-700 border-amber-200";
 
                 if (scorePercent >= 70) {
-                  polarityLabel = "Plutôt positif";
+                  polarityLabel = t("analysis.themes.polarity.positive");
                   polarityClass = "bg-green-50 text-green-700 border-green-200";
                 } else if (scorePercent < 40) {
-                  polarityLabel = "À surveiller";
+                  polarityLabel = t("analysis.themes.polarity.toWatch");
                   polarityClass = "bg-red-50 text-red-700 border-red-200";
                 }
 
@@ -197,13 +198,13 @@ export function ThemesSection({ data }: ThemesSectionProps) {
                         <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5">
                           <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                           <span className="font-medium text-gray-800">
-                            Score : {scorePercent}%
+                            {t("analysis.themes.score")}: {scorePercent}%
                           </span>
                         </span>
                         <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5">
                           <span className="h-1.5 w-1.5 rounded-full bg-gray-500" />
                           <span className="text-gray-700">
-                            Fréquence : {theme.count}{" "}
+                            {t("analysis.themes.frequency")}: {theme.count}{" "}
                             {t("analysis.themes.mentions", "mentions")}
                           </span>
                         </span>
@@ -239,11 +240,11 @@ export function ThemesSection({ data }: ThemesSectionProps) {
               <div className="flex items-center gap-2 mb-4">
                 <MessageSquare className="w-5 h-5 text-blue-600" />
                 <h3 className="text-lg font-semibold text-gray-800 border-b-2 border-yellow-400 pb-1">
-                  Commentaires
+                  {t("analysis.themes.comments")}
                 </h3>
               </div>
               <div className="text-gray-700 leading-relaxed space-y-3">
-                {generateThematicComment(effectiveThemes)}
+                {generateThematicComment(effectiveThemes,t)}
               </div>
             </div>
           </div>
@@ -258,9 +259,9 @@ export function ThemesSection({ data }: ThemesSectionProps) {
 }
 
 // Fonction pour générer un commentaire d'analyse dynamique basé sur les thèmes
-function generateThematicComment(themes: ThemeAnalysis[]): JSX.Element {
+function generateThematicComment(themes: ThemeAnalysis[],t: (key: string, opts?: any) => string): JSX.Element {
   if (!themes || themes.length === 0) {
-    return <p>Aucune donnée disponible pour générer une analyse.</p>;
+    return <p>{t("analysis.themes.noData")}</p>;
   }
 
   // Trier les thèmes par nombre de mentions (décroissant)
@@ -285,7 +286,15 @@ function generateThematicComment(themes: ThemeAnalysis[]): JSX.Element {
   if (mostMentioned) {
     paragraphs.push(
       <p key="most-mentioned">
-        L'analyse de vos avis révèle que <strong className="text-gray-900">{mostMentioned.theme}</strong> est le thème le plus mentionné ({mostMentioned.count} mention{mostMentioned.count > 1 ? 's' : ''}, {Math.round(mostMentioned.score * 100)}% de score).
+        <Trans
+          i18nKey="analysis.themes.comment.mostMentioned"
+          values={{
+            theme: mostMentioned.theme,
+            count: mostMentioned.count,
+            score: Math.round(mostMentioned.score * 100),
+          }}
+          components={{ bold: <strong className="text-gray-900" /> }}
+        />      
       </p>
     );
   }
@@ -299,7 +308,11 @@ function generateThematicComment(themes: ThemeAnalysis[]): JSX.Element {
     
     paragraphs.push(
       <p key="strengths">
-        Vos points forts sont <strong className="text-gray-900">{strengthsText}</strong> avec des scores respectifs de {strengths.map(s => `${Math.round(s.score * 100)}%`).join(' et ')}.
+        <Trans
+          i18nKey="analysis.themes.comment.strengths"
+          values={{ list: strengthsList }}
+          components={{ bold: <strong className="text-gray-900" /> }}
+        />    
       </p>
     );
   }
@@ -313,7 +326,15 @@ function generateThematicComment(themes: ThemeAnalysis[]): JSX.Element {
     
     paragraphs.push(
       <p key="improvements">
-        Le <strong className="text-gray-900">{improvementText}</strong> {improvements.length === 1 ? 'apparaît' : 'apparaissent'} moins fréquemment dans les retours clients ({improvements[0].count} mention{improvements[0].count > 1 ? 's' : ''}, {Math.round(improvements[0].score * 100)}% de score), ce qui peut indiquer un axe d'amélioration ou simplement un sujet moins discuté par vos clients.
+        <Trans
+          i18nKey="analysis.themes.comment.improvements"
+          values={{
+            theme: improvements[0].theme,
+            count: improvements[0].count,
+            score: Math.round(improvements[0].score * 100),
+          }}
+          components={{ bold: <strong className="text-gray-900" /> }}
+        />      
       </p>
     );
   } else if (sortedByCount.length > 0) {
@@ -322,7 +343,15 @@ function generateThematicComment(themes: ThemeAnalysis[]): JSX.Element {
     if (leastMentioned && leastMentioned.count < mostMentioned.count) {
       paragraphs.push(
         <p key="least-mentioned">
-          Le <strong className="text-gray-900">{leastMentioned.theme}</strong> apparaît moins fréquemment dans les retours clients ({leastMentioned.count} mention{leastMentioned.count > 1 ? 's' : ''}, {Math.round(leastMentioned.score * 100)}% de score), ce qui peut indiquer un axe d'amélioration ou simplement un sujet moins discuté par vos clients.
+          <Trans
+            i18nKey="analysis.themes.comment.leastMentioned"
+            values={{
+              theme: leastMentioned.theme,
+              count: leastMentioned.count,
+              score: Math.round(leastMentioned.score * 100),
+            }}
+            components={{ bold: <strong className="text-gray-900" /> }}
+          />        
         </p>
       );
     }

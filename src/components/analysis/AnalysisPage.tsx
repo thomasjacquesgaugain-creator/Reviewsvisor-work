@@ -12,6 +12,7 @@ import { AnalysisFiltersProvider, useAnalysisFilters } from "./AnalysisFiltersCo
 import { ThematicSegmentationBar } from "./ThematicSegmentationBar";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { APP_NAME, APP_TAGLINE } from "@/config/brand";
+import { useTranslation } from "react-i18next";
 
 interface AnalysisPageProps {
   data: CompleteAnalysisData;
@@ -21,6 +22,8 @@ interface AnalysisPageProps {
 }
 
 export function AnalysisPage({ data, establishmentName, reviews, dynamicThemes = [] }: AnalysisPageProps) {
+  const { t } = useTranslation();
+
   console.log('[AnalysisPage] Reviews reçus:', reviews);
   console.log('[AnalysisPage] Rendu avec données:', { 
     hasData: !!data, 
@@ -54,7 +57,8 @@ export function AnalysisPage({ data, establishmentName, reviews, dynamicThemes =
           <div className="mb-4 mt-4">
             <h1 className="text-3xl font-bold text-gray-800 normal-case">{APP_NAME}</h1>
             <p className="mt-1 text-lg md:text-xl font-normal text-slate-600 normal-case">
-              {APP_TAGLINE}
+              {/* {APP_TAGLINE} */}
+              {t("dashboard.appTagline")}
             </p>
           </div>
 
@@ -86,6 +90,8 @@ interface AnalysisContentProps {
 
 function AnalysisContent({ data, reviews, dynamicThemes = [] }: AnalysisContentProps) {
   const { filteredReviews, ratingFilter, periodFilter, sourceFilter, availableSources } = useAnalysisFilters();
+    const { t } = useTranslation();
+
   const isSourceFilterActive = sourceFilter !== "ALL" && availableSources.length > 1;
   const isAnyFilterActive =
     ratingFilter !== "ALL" || periodFilter.preset !== "all" || isSourceFilterActive;
@@ -112,7 +118,7 @@ function AnalysisContent({ data, reviews, dynamicThemes = [] }: AnalysisContentP
 
       {/* Titre de section 2 */}
       <h2 className="text-2xl font-bold text-gray-800 mt-12 mb-6">
-        2. Historique & dynamique des avis
+        2. {t("analysis.history.title")}
       </h2>
 
       {/* Section 2: Historique & dynamique */}
@@ -122,7 +128,7 @@ function AnalysisContent({ data, reviews, dynamicThemes = [] }: AnalysisContentP
 
       {/* Titre de section 3 */}
       <h2 className="text-2xl font-bold text-gray-800 mt-12 mb-6">
-        3. Répartition des avis (positifs / neutres / négatifs)
+        3. {t("analysis.sentiment.heading")}
       </h2>
 
       {/* Section 3: Répartition sentiments */}
@@ -132,7 +138,7 @@ function AnalysisContent({ data, reviews, dynamicThemes = [] }: AnalysisContentP
 
       {/* Titre de section 4 */}
       <h2 className="text-2xl font-bold text-gray-800 mt-12 mb-6">
-        4. Analyse thématique
+        4. {t("analysis.themes.heading")}
       </h2>
 
       {/* Section 4a: Analyse par thèmes (graphique radar + barres + commentaires) */}
@@ -147,9 +153,9 @@ function AnalysisContent({ data, reviews, dynamicThemes = [] }: AnalysisContentP
 
       {/* Titre de section 5 */}
       <h2 className="text-2xl font-bold text-gray-800 mt-12 mb-6 flex items-center gap-2">
-        5. Diagramme de Pareto des avis négatifs et positifs
+        5. {t("analysis.pareto.title")}
         <InfoTooltip 
-          content="Analyse de Pareto : méthode montrant quels problèmes génèrent la majorité des insatisfactions. Bénéfice : vous concentrez vos efforts sur les causes qui auront le plus d'impact."
+          content={t("analysis.pareto.tooltipInfo")}
         />
       </h2>
 

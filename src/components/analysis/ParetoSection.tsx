@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ComposedChart, Line, Label, Legend, LabelList, ReferenceLine, Customized } from "recharts";
 import { ParetoItem, ThemeAnalysis, QualitativeData, Review } from "@/types/analysis";
-import { useTranslation } from "react-i18next";
+import { useTranslation,Trans } from "react-i18next";
 import { AlertTriangle, CheckCircle, TrendingDown, TrendingUp, BarChart3, ArrowRight } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -19,7 +19,7 @@ interface ParetoSectionProps {
 
 // Composant personnalisé pour le tag "Seuil 80%" (callout à droite)
 // Utilise la scale de l'axe Y droit (% cumulé) pour un alignement parfait avec la ReferenceLine
-const ThresholdTag = ({ offset, fill = "#ef4444" }: any) => {
+const ThresholdTag = ({ offset, fill = "#ef4444", label = "Seuil 80%" }: any) => {
   const threshold = 80;
 
   // offset = zone de tracé réelle (prend en compte margins)
@@ -29,7 +29,7 @@ const ThresholdTag = ({ offset, fill = "#ef4444" }: any) => {
   const y = offset.top + (1 - threshold / 100) * offset.height; // ✅ Y exact sur l'axe % (0..100)
   const x = offset.left + offset.width + 32; // ✅ dans la marge droite
 
-  const label = `Seuil ${threshold}%`;
+  // const label = `Seuil ${threshold}%`;
   const fontSize = 12;
   const paddingX = 10;
   const paddingY = 6;
@@ -68,9 +68,9 @@ const ISSUE_COLORS = ['#ef4444', '#f97316', '#eab308']; // red, orange, yellow
 const STRENGTH_COLORS = ['#22c55e', '#3b82f6', '#8b5cf6']; // green, blue, purple
 
 // Fonction pour générer l'analyse des irritants
-function generateIssuesAnalysis(items: ParetoItem[]): JSX.Element {
+function generateIssuesAnalysis(items: ParetoItem[],t: (key: string, opts?: any) => string): JSX.Element {
   if (!items || items.length === 0) {
-    return <p>Aucune donnée disponible pour générer une analyse.</p>;
+    return <p>{t("analysis.pareto.noData")}</p>;
   }
 
   const totalMentions = items.reduce((sum, item) => sum + item.count, 0);
@@ -82,8 +82,11 @@ function generateIssuesAnalysis(items: ParetoItem[]): JSX.Element {
 
   paragraphs.push(
     <p key="pareto-principle">
-      Selon le principe de Pareto, <strong className="text-gray-900">{topItemsPercentage}% des avis négatifs</strong> proviennent de <strong className="text-gray-900">{topItems.length} cause{topItems.length > 1 ? 's principales' : ' principale'}</strong> :
-    </p>
+      <Trans
+      i18nKey="analysis.pareto.issuesParetoPrinciple"
+      values={{ percentage: topItemsPercentage, count: topItems.length }}
+      components={{ bold: <strong className="text-gray-900" /> }}
+    />    </p>
   );
 
   const itemsList = topItems.map((item, index) => {
@@ -91,7 +94,11 @@ function generateIssuesAnalysis(items: ParetoItem[]): JSX.Element {
     const percentage = totalMentions > 0 ? Math.round(((item.count / totalMentions) * 100) * 10) / 10 : 0;
     return (
       <p key={`item-${index}`} className="ml-4">
-        {index + 1}. <strong className="text-gray-900">{item.name}</strong> représente <strong className="text-gray-900">{percentage}%</strong> des irritants avec {item.count} mention{item.count > 1 ? 's' : ''}
+        <Trans
+        i18nKey="analysis.pareto.issuesItem"
+        values={{ rank: index + 1, name: item.name, percentage, count: item.count }}
+        components={{ bold: <strong className="text-gray-900" /> }}
+      />      
       </p>
     );
   });
@@ -102,8 +109,12 @@ function generateIssuesAnalysis(items: ParetoItem[]): JSX.Element {
     const mainIssue = topItems[0];
     paragraphs.push(
       <p key="recommendation" className="mt-2">
-        En vous concentrant sur l'amélioration du <strong className="text-gray-900">{mainIssue.name}</strong>, vous pourriez réduire significativement les retours négatifs.
-      </p>
+      <Trans
+      i18nKey="analysis.pareto.issuesRecommendation"
+      values={{ name: mainIssue.name }}
+      components={{ bold: <strong className="text-gray-900" /> }}
+    />      
+    </p>
     );
   }
 
@@ -111,9 +122,9 @@ function generateIssuesAnalysis(items: ParetoItem[]): JSX.Element {
 }
 
 // Fonction pour générer l'analyse des satisfactions
-function generateStrengthsAnalysis(items: ParetoItem[]): JSX.Element {
+function generateStrengthsAnalysis(items: ParetoItem[],t: (key: string, opts?: any) => string): JSX.Element {
   if (!items || items.length === 0) {
-    return <p>Aucune donnée disponible pour générer une analyse.</p>;
+    return <p>{t("analysis.pareto.noData")}</p>;
   }
 
   const totalMentions = items.reduce((sum, item) => sum + item.count, 0);
@@ -124,7 +135,10 @@ function generateStrengthsAnalysis(items: ParetoItem[]): JSX.Element {
 
   paragraphs.push(
     <p key="intro">
-      Vos <strong className="text-gray-900">points forts</strong> selon vos clients :
+    <Trans
+      i18nKey="analysis.pareto.strengthsIntro"
+      components={{ bold: <strong className="text-gray-900" /> }}
+    />   
     </p>
   );
 
@@ -133,7 +147,11 @@ function generateStrengthsAnalysis(items: ParetoItem[]): JSX.Element {
     const percentage = totalMentions > 0 ? Math.round(((item.count / totalMentions) * 100) * 10) / 10 : 0;
     return (
       <p key={`item-${index}`} className="ml-4">
-        {index + 1}. <strong className="text-gray-900">{item.name}</strong> représente <strong className="text-gray-900">{percentage}%</strong> des satisfactions avec {item.count} mention{item.count > 1 ? 's positives' : ' positive'}
+      <Trans
+        i18nKey="analysis.pareto.strengthsItem"
+        values={{ rank: index + 1, name: item.name, percentage, count: item.count }}
+        components={{ bold: <strong className="text-gray-900" /> }}
+      />      
       </p>
     );
   });
@@ -142,7 +160,10 @@ function generateStrengthsAnalysis(items: ParetoItem[]): JSX.Element {
 
   paragraphs.push(
     <p key="recommendation" className="mt-2">
-      Ces éléments sont vos <strong className="text-gray-900">leviers de fidélisation</strong>. Mettez-les en avant dans votre communication !
+    <Trans
+      i18nKey="analysis.pareto.strengthsRecommendation"
+      components={{ bold: <strong className="text-gray-900" /> }}
+    />    
     </p>
   );
 
@@ -244,12 +265,12 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
                     <BarChart3 className="w-4 h-4" />
-                    Diagramme de Pareto détaillé
+                     {t("analysis.pareto.detailedPareto")}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Diagramme de Pareto - Négatifs</DialogTitle>
+                    <DialogTitle>{t("analysis.pareto.issuesModalTitle")}</DialogTitle>
                   </DialogHeader>
                   <div className="h-96 mt-4 relative">
                     <ResponsiveContainer width="100%" height="100%">
@@ -266,7 +287,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                           yAxisId="left"
                           tick={{ fontSize: 12 }}
                         >
-                          <Label value="Nombre de mentions" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: 14 }} />
+                          <Label value={t("analysis.pareto.mentionsCount")} angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: 14 }} />
                         </YAxis>
                         <YAxis 
                           yAxisId="cumule" 
@@ -276,24 +297,24 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                           tickFormatter={(value) => `${value}%`}
                           width={50}
                         >
-                          <Label value="% cumulé" angle={90} position="insideRight" style={{ textAnchor: 'middle', fontSize: 14 }} />
+                          <Label value={t("analysis.pareto.cumulativePercent")} angle={90} position="insideRight" style={{ textAnchor: 'middle', fontSize: 14 }} />
                         </YAxis>
                         <Tooltip
                           formatter={(value: number, name: string, props: any) => {
                             if (name === 'count') {
                               // Utiliser le percentage calculé dans detailedIssuesData (basé sur total des mentions d'irritants)
                               const percentage = props.payload.percentage;
-                              return [`Mentions : ${value} (${percentage}%)`, 'Part des irritants'];
+                              return [`${t("analysis.pareto.mentions")} : ${value} (${percentage}%)`, t("analysis.pareto.issuesShare")];
                             } else {
-                              return [`${value}%`, '% cumulé'];
+                              return [`${value}%`, t("analysis.pareto.cumulativePercent")];
                             }
                           }}
                         />
                         <Legend 
                           wrapperStyle={{ paddingTop: '20px' }}
                           payload={[
-                            { value: 'Mentions', type: 'square', color: '#3B82F6' },
-                            { value: '% cumulé', type: 'line', color: '#000000' }
+                            { value: t("analysis.pareto.mentions"), type: 'square', color: '#3B82F6' },
+                            { value: t("analysis.pareto.cumulativePercent"), type: 'line', color: '#000000' }
                           ]}
                         />
                         <Bar yAxisId="left" dataKey="count" fill="#3B82F6" radius={[4, 4, 0, 0]}>
@@ -330,13 +351,16 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                           strokeWidth={2} 
                           strokeDasharray="4 4"
                         />
-                        <Customized component={(props: any) => <ThresholdTag {...props} fill="#ef4444" />} />
+                        <Customized component={(props: any) => <ThresholdTag {...props} fill="#ef4444" label={t("analysis.pareto.threshold")} />} />
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
                   <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-gray-700">
-                      <strong className="text-gray-900">Principe de Pareto :</strong> Les causes situées avant le seuil de 80% représentent l'essentiel de l'impact. Concentrez vos efforts sur ces priorités.
+                      <Trans
+                        i18nKey="analysis.pareto.issuesParetoInfo"
+                        components={{ bold: <strong className="text-gray-900" /> }}
+                      />                   
                     </p>
                   </div>
                 </DialogContent>
@@ -350,7 +374,10 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
               {/* Phrase explicative courte */}
               <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                 <p className="text-sm text-gray-700">
-                  <strong className="text-gray-900">Note :</strong> Les "mentions" représentent la <strong className="text-gray-900">fréquence</strong> à laquelle un thème apparaît dans les avis, et non la gravité perçue du problème.
+                  <Trans
+                    i18nKey="analysis.pareto.frequencyNote"
+                    components={{ bold: <strong className="text-gray-900" /> }}
+                  />
                 </p>
               </div>
               
@@ -376,7 +403,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                           // Recalculer le percentage basé sur le total des mentions d'irritants (cohérent avec detailedIssuesData)
                           const totalMentions = safeIssues.reduce((sum, item) => sum + item.count, 0);
                           const percentage = totalMentions > 0 ? Math.round(((value / totalMentions) * 100) * 10) / 10 : 0;
-                          return [`Mentions : ${value} (${percentage}%)`, 'Part des irritants'];
+                          return [`${t("analysis.pareto.mentions")} : ${value} (${percentage}%)`, t("analysis.pareto.issuesShare")];
                         }}
                         cursor={{ fill: 'transparent' }}
                       />
@@ -404,7 +431,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                 </div>
                 {/* Légende axe X - centrée par rapport à l'axe X du graphique */}
                 <div className="pl-[100px] flex justify-center" style={{ marginTop: '4px' }}>
-                  <p className="text-sm text-black text-center">Nombre de mentions (fréquence)</p>
+                  <p className="text-sm text-black text-center">{t("analysis.pareto.xAxisLabel")}</p>
                 </div>
               </div>
 
@@ -417,11 +444,11 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingDown className="w-5 h-5 text-red-600" />
                   <h3 className="text-lg font-semibold text-gray-800 border-b-2 border-red-400 pb-1">
-                    Analyse
+                    {t("analysis.pareto.analysis")}
                   </h3>
                 </div>
                 <div className="text-gray-700 leading-relaxed space-y-3">
-                  {generateIssuesAnalysis(safeIssues)}
+                  {generateIssuesAnalysis(safeIssues,t)}
                   
                   {/* CTA discret sur la cause principale */}
                   {safeIssues.length > 0 && rootCauseAnalysis && (
@@ -433,7 +460,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                         onClick={() => setOpenRootCauseModal(true)}
                       >
                         <ArrowRight className="w-4 h-4" />
-                        Analyser les causes de "{safeIssues[0]?.name}"
+                        {t("analysis.pareto.analyzeCause", { name: safeIssues[0]?.name })}
                       </Button>
                     </div>
                   )}
@@ -461,12 +488,12 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
                     <BarChart3 className="w-4 h-4" />
-                    Diagramme de Pareto détaillé
+                     {t("analysis.pareto.detailedPareto")}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Diagramme de Pareto - Positifs</DialogTitle>
+                    <DialogTitle>{t("analysis.pareto.strengthsModalTitle")}</DialogTitle>
                   </DialogHeader>
                   <div className="h-96 mt-4">
                     <ResponsiveContainer width="100%" height="100%">
@@ -483,7 +510,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                           yAxisId="left"
                           tick={{ fontSize: 12 }}
                         >
-                          <Label value="Nombre de mentions" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: 14 }} />
+                          <Label value={t("analysis.pareto.mentionsCount")} angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: 14 }} />
                         </YAxis>
                         <YAxis 
                           yAxisId="cumule" 
@@ -493,24 +520,24 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                           tickFormatter={(value) => `${value}%`}
                           width={50}
                         >
-                          <Label value="% cumulé" angle={90} position="insideRight" style={{ textAnchor: 'middle', fontSize: 14 }} />
+                          <Label value={t("analysis.pareto.cumulativePercent")} angle={90} position="insideRight" style={{ textAnchor: 'middle', fontSize: 14 }} />
                         </YAxis>
                         <Tooltip
                           formatter={(value: number, name: string, props: any) => {
                             if (name === 'count') {
                               // Utiliser le percentage calculé dans detailedStrengthsData (basé sur total des mentions de satisfactions)
                               const percentage = props.payload.percentage;
-                              return [`Mentions : ${value} (${percentage}%)`, 'Part des satisfactions'];
+                              return [`${t("analysis.pareto.mentions")} : ${value} (${percentage}%)`, t("analysis.pareto.strengthsShare")];
                             } else {
-                              return [`${value}%`, '% cumulé'];
+                              return [`${value}%`, t("analysis.pareto.cumulativePercent")];
                             }
                           }}
                         />
                         <Legend 
                           wrapperStyle={{ paddingTop: '20px' }}
                           payload={[
-                            { value: 'Mentions', type: 'square', color: '#3B82F6' },
-                            { value: '% cumulé', type: 'line', color: '#000000' }
+                            { value: t("analysis.pareto.mentions"), type: 'square', color: '#3B82F6' },
+                            { value: t("analysis.pareto.cumulativePercent"), type: 'line', color: '#000000' }
                           ]}
                         />
                         <Bar yAxisId="left" dataKey="count" fill="#3B82F6" radius={[4, 4, 0, 0]}>
@@ -541,13 +568,16 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                           strokeWidth={2} 
                           strokeDasharray="4 4"
                         />
-                        <Customized component={(props: any) => <ThresholdTag {...props} fill="#22c55e" />} />
+                        <Customized component={(props: any) => <ThresholdTag {...props} fill="#22c55e" label={t("analysis.pareto.threshold")}/>} />
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
                   <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <p className="text-sm text-gray-700">
-                      <strong className="text-gray-900">Principe de Pareto :</strong> Les points forts situés avant le seuil de 80% représentent l'essentiel de vos satisfactions. Mettez-les en avant pour renforcer votre image.
+                      <Trans
+                        i18nKey="analysis.pareto.strengthsParetoInfo"
+                        components={{ bold: <strong className="text-gray-900" /> }}
+                      />
                     </p>
                   </div>
                 </DialogContent>
@@ -561,8 +591,11 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
               {/* Phrase explicative courte */}
               <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                 <p className="text-sm text-gray-700">
-                  <strong className="text-gray-900">Note :</strong> Les "mentions" représentent la <strong className="text-gray-900">fréquence</strong> à laquelle un point fort apparaît dans les avis positifs.
-                </p>
+                  <Trans
+                    i18nKey="analysis.pareto.strengthsFrequencyNote"
+                    components={{ bold: <strong className="text-gray-900" /> }}
+                  />                
+                  </p>
               </div>
               
               <div className="flex flex-col items-center justify-center w-full px-6">
@@ -587,7 +620,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                           // Recalculer le percentage basé sur le total des mentions de satisfactions (cohérent avec detailedStrengthsData)
                           const totalMentions = safeStrengths.reduce((sum, item) => sum + item.count, 0);
                           const percentage = totalMentions > 0 ? Math.round(((value / totalMentions) * 100) * 10) / 10 : 0;
-                          return [`Mentions : ${value} (${percentage}%)`, 'Part des satisfactions'];
+                          return [`${t("analysis.pareto.mentions")} : ${value} (${percentage}%)`, t("analysis.pareto.strengthsShare")];
                         }}
                         cursor={{ fill: 'transparent' }}
                       />
@@ -615,7 +648,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                 </div>
                 {/* Légende axe X - centrée par rapport à l'axe X du graphique */}
                 <div className="pl-[100px] flex justify-center" style={{ marginTop: '4px' }}>
-                  <p className="text-sm text-black text-center">Nombre de mentions (fréquence)</p>
+                  <p className="text-sm text-black text-center">{t("analysis.pareto.xAxisLabel")}</p>
                 </div>
               </div>
 
@@ -628,11 +661,11 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp className="w-5 h-5 text-green-600" />
                   <h3 className="text-lg font-semibold text-gray-800 border-b-2 border-green-400 pb-1">
-                    Analyse
+                    {t("analysis.pareto.analysis")}
                   </h3>
                 </div>
                 <div className="text-gray-700 leading-relaxed space-y-3">
-                  {generateStrengthsAnalysis(safeStrengths)}
+                  {generateStrengthsAnalysis(safeStrengths,t)}
                   
                   {/* CTA discret sur le point fort principal */}
                   {safeStrengths.length > 0 && (
@@ -647,7 +680,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                         }}
                       >
                         <ArrowRight className="w-4 h-4" />
-                        Explorer "{safeStrengths[0]?.name}" en détail
+                        {t("analysis.pareto.exploreStrength", { name: safeStrengths[0]?.name })}
                       </Button>
                     </div>
                   )}
