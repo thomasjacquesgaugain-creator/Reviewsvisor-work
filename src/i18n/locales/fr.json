@@ -166,7 +166,8 @@
     "sessionExpired": "Session expirée",
     "pleaseReconnect": "Veuillez vous reconnecter",
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
-    "redirectingToLogin": "Redirection vers la page de connexion..."
+    "redirectingToLogin": "Redirection vers la page de connexion...",
+    "createAccount":"Créer un compte"
   },
   "nav": {
     "home": "Accueil",
@@ -655,6 +656,7 @@
       "phoneNumber": "Numéro de téléphone",
       "mailingAddress": "Adresse postale",
       "email": "Email",
+      "pictureUpdated": "Photo de profil mise à jour",
       "placeholder": {
         "profilePicture": "JPG, PNG ou WebP. Taille maximale : 2 Mo",
         "firstName": "Votre Prénom",
@@ -685,7 +687,33 @@
       "establishmentClosed": "Établissement supprimé"
     },
     "establishmentInformation": {
-      "title": "Infos d'établissement"
+      "title": "Infos d'établissement",
+      "establishmentName": "Nom de l'établissement",
+      "address": "Adresse",
+      "googleRating": "Note Google",
+      "placeID": "ID du lieu",
+      "phoneNumber": "Numéro de téléphone",
+      "website": "Site web",
+      "establishmentType": "Type d'établissement",
+      "updatedEstablishmentType": "Type d'établissement mis à jour",
+      "establishmentTypesOptions": {
+        "restaurant": "Restaurant",
+        "bar": "Bar",
+        "cafe": "Café",
+        "hotel": "Hôtel",
+        "bakery": "Boulangerie",
+        "salon": "Salon de coiffure",
+        "spa": "Spa / Bien-être",
+        "retail": "Commerce de détail",
+        "other": "Autre"
+      },
+      "placeholder": {
+        "establishmentName": "Le nom de votre établissement",
+        "address": "1 Cr de la Bôve, 56100 Lorient",
+        "phoneNumber": "Le numéro de téléphone de votre établissement",
+        "website": "L'URL du site web de votre établissement",
+        "establishmentType": "Sélectionnez le type"
+      }
     },
     "connectionAndSecurity": {
       "title": "Connexion et sécurité",
@@ -748,13 +776,19 @@
       "noAdditionalEstablishments": "Aucun établissement supplémentaire",
       "billingManagement": "Gestion de la facturation",
       "viewAvailablePlans": "Voir les plans disponibles",
-      "invoiceHistory": "Historique des factures"
+      "invoiceHistory": "Historique des factures",
+      "manageMySubscription":"Gérer mon abonnement"
     },
     "myMonthlyReports": {
       "title": "Mes rapports mensuels",
       "back": "Retour",
       "monthlyReportDescription": "Téléchargez vos rapports mensuels de facturation et d'activité",
-      "download": "Télécharger"
+      "download": "Télécharger",
+      "loadingInvoices": "Chargement des factures...",
+      "invoice": "facture",
+      "stripeInvoice": "Facture Stripe",
+      "noInvoice": "Aucune facture pour ce mois.",
+      "noInvoiceAvailable": "Aucune facture disponible"
     },
     "personalization": {
       "title": "Personnalisation",
@@ -852,6 +886,11 @@
   "subscription": {
     "title": "Abonnement",
     "choosePlan": "Choisissez votre formule",
+    "activeSubscriptions": "Abonnements actifs",
+    "yearly": "Annuel",
+    "monthly": "Mensuel",
+    "endsOn": "Se termine le",
+    "renewsOn": "Renouvellement le",
     "freePlan": "Gratuit",
     "proPlan": "Pro",
     "businessPlan": "Business",
@@ -864,7 +903,7 @@
     "downgrade": "Rétrograder",
     "cancel": "Annuler l'abonnement",
     "features": "Fonctionnalités incluses",
-    "subscribe": "S'abonner",
+    "subscribe": "S'abonner→",
     "centralizeAllLocations": "Centralisez la gestion de tous vos lieux",
     "idealForGroupsFranchises": "Idéal pour groupes et franchises",
     "independentTrackingPerEstablishment": "Suivi indépendant par établissement",
@@ -1037,7 +1076,61 @@
     "addingInProgress": "Ajout en cours...",
     "confirmAddonPrice": "Confirmer +{{price}} €/mois",
     "author": "Auteur",
-    "source": "Source"
+    "source": "Source",
+    "modalTitle": "Abonnement associé à votre établissement",
+    "modalDescription": "Basé sur les informations de votre établissement, l'abonnement approprié est :",
+    "annual": "Annuel",
+    "annualBilling": "Facturation annuelle, {hint}",
+    "annualSavingsHint": "Économisez 20% — soit {{saving}} € / mois",
+    "annualPriceInfo": "Prix annuel de {{total}} € TTC (TVA 20% incluse), soit {{monthly}} € / mois HT.",
+    "recommended": "Recommandé pour vous",
+    "flexible": "Flexible",
+    "selected": "Sélectionné",
+    "choose": "Choisir",
+    "later": "Plus tard",
+    "tiers": {
+      "basic": {
+        "quota": "Jusqu'à 25 avis / mois",
+        "audience": "Idéal pour les petites entreprises."
+      },
+      "standard": {
+        "quota": "Jusqu'à 50 avis / mois",
+        "audience": "Pour les restaurants et commerces actifs."
+      },
+      "pro": {
+        "quota": "Jusqu'à 100 avis / mois",
+        "audience": "Pour les grands établissements."
+      },
+      "premium": {
+        "quota": "Plus de 100 avis / mois",
+        "audience": "Pour les établissements à fort volume."
+      }
+    },
+    "benefits": {
+      "reviewsQuota25": "Jusqu'à 25 avis analysés / mois",
+      "reviewsQuota50": "Jusqu'à 50 avis analysés / mois",
+      "reviewsQuota100": "Jusqu'à 100 avis analysés / mois",
+      "reviewsQuota100plus": "Plus de 100 avis analysés / mois",
+      "fullAnalysis": "Analyse complète",
+      "recommendations": "Recommandations personnalisées",
+      "aiReplies": "Réponses IA à tous les avis analysés",
+      "historyQuota": "Historique des analyses dans la limite du quota",
+      "historySpecial": "Historique des analyses (demande spéciale si dépassement)"
+    },
+  
+  "annualBadge": "💎 Annuel",
+  "monthlyBadge": "⚡ Mensuel",
+  "exclTax": "HT",
+  "annualTotal": "{{total}} € TTC / an ({{totalHT}} € HT)",
+  "endsOnDate": "⚠ Se termine le {{date}}",
+  "renewsOnDate": "🔄 Renouvellement le {{date}}",
+  "status": {
+    "active": "Actif",
+    "trialing": "Essai",
+    "canceled": "Annulé",
+    "pastDue": "Expiré",
+    "inactive": "Inactif"
+  }
   },
   "establishment": {
     "title": "Mon établissement",

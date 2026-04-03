@@ -22,12 +22,16 @@ import { getCurrentEstablishment } from "@/services/establishments";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { mapGoogleTypeToCategory } from "@/utils/establishmentTypeMapping";
+import { PlanSelectionModal } from "@/components/PlanSelectionModal";
 export default function EtablissementPage() {
   const { displayName, loading, signOut } = useAuth();
   const [selected, setSelected] = useState<Etab | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [showImportBar, setShowImportBar] = useState(false);
   const [showReviewsVisual, setShowReviewsVisual] = useState(false);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [savedEtabForPlan, setSavedEtabForPlan] = useState<Etab | null>(null);
+
   const [isEstablishmentBeingAdded, setIsEstablishmentBeingAdded] =
     useState(false);
   const isEstablishmentBeingAddedRef = useRef(false);
@@ -143,6 +147,12 @@ export default function EtablissementPage() {
     }
   };
 
+  const handleEstablishmentSaved = async (savedEtab: Etab) => {
+  resetSearchAndClose();
+  setSavedEtabForPlan(savedEtab);
+  setShowPlanModal(true);
+};
+
   // Mapping des erreurs Google Places
   function mapPlacesStatus(
     status: string,
@@ -237,7 +247,7 @@ export default function EtablissementPage() {
         place.formatted_phone_number || place.international_phone_number || "",
       url: place.url || "",
       rating: place.rating ?? null,
-      type_etablissement: typeEtablissement || null,
+      types: typeEtablissement || null,
     };
   }
 
@@ -605,7 +615,8 @@ export default function EtablissementPage() {
 
               <SaveEstablishmentButton
                 selected={selected}
-                onSaveSuccess={resetSearchAndClose}
+                // onSaveSuccess={resetSearchAndClose}
+                onSaveSuccess={handleEstablishmentSaved}
               />
             </div>
 
@@ -694,6 +705,11 @@ export default function EtablissementPage() {
           </div>
         </div>
       </div>
+      <PlanSelectionModal
+        open={showPlanModal}
+        onClose={() => setShowPlanModal(false)}
+        establishment={savedEtabForPlan}
+      />
     </div>
   );
 }

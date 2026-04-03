@@ -208,7 +208,7 @@ export default function SavedEstablishmentsList({
       // Convertir vers le format Etab avec toutes les infos de la DB
       const dbList: Etab[] = (etablissements || []).map((etab) => ({
         place_id: etab.place_id,
-        name: etab.nom,
+        name: etab.name,
         address: etab.formatted_address || "",
         lat: etab.lat || null,
         lng: etab.lng || null,
@@ -251,7 +251,7 @@ export default function SavedEstablishmentsList({
       if (activeEtab) {
         const activeEtabFormatted: Etab = {
           place_id: activeEtab.place_id,
-          name: activeEtab.nom,
+          name: activeEtab.name,
           address: activeEtab.formatted_address || "",
           lat: activeEtab.lat || null,
           lng: activeEtab.lng || null,
@@ -348,7 +348,8 @@ export default function SavedEstablishmentsList({
         }
         const count = await loadEstablishmentsFromDb();
         setModalEstablishmentCount(count);
-        setShowSubscriptionModal(true);
+        onAddClick?.();
+        // setShowSubscriptionModal(true);
         return;
       }
 
@@ -365,7 +366,8 @@ export default function SavedEstablishmentsList({
         }
         const count = await loadEstablishmentsFromDb();
         setModalEstablishmentCount(count);
-        setShowSubscriptionModal(true);
+        onAddClick?.();
+        // setShowSubscriptionModal(true);
         return;
       }
 
