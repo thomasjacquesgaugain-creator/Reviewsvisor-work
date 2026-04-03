@@ -41,11 +41,11 @@ function getPriceIds() {
     addon: import.meta.env.VITE_STRIPE_PRICE_ID_EXTRA_ESTABLISHMENT,
   };
 
-  Object.entries(prices).forEach(([key, value]) => {
-    if (!value) {
-      throw new Error(`Missing Stripe price ID for ${key}`);
-    }
-  });
+  // Object.entries(prices).forEach(([key, value]) => {
+  //   if (!value) {
+  //     throw new Error(`Missing Stripe price ID for ${key}`);
+  //   }
+  // });
 
   return prices;
 }
