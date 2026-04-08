@@ -56,7 +56,7 @@ export function AnalysisTabContent({
     if (!analyse?.themes || !Array.isArray(analyse.themes)) {
       return [];
     }
-    return analyse.themes.map((theme: any) => ({
+    return analysisDataComputed.themes.map((theme: any) => ({
       theme: theme?.theme ?? theme?.name ?? theme,
       count: theme?.count ?? 0,
       importance: theme?.importance ?? theme?.score ?? 0
@@ -92,6 +92,7 @@ export function AnalysisTabContent({
           establishmentName={establishmentName}
           reviews={reviews}
           dynamicThemes={dynamicThemes}
+          insight={analyse}
         />
       </div>
     );

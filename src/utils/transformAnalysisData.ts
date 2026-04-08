@@ -250,14 +250,27 @@ export function transformAnalysisData(
 
   // Thèmes - utiliser les données de l'IA si disponibles, sinon calculer depuis les avis
   let themes = [];
-  if (safeInsight?.themes && Array.isArray(safeInsight.themes) && safeInsight.themes.length > 0) {
+  let universalThemes = [];
+  let industryThemes = [];
+  if ((safeInsight?.themes_industry||safeInsight?.themes_universal)
+     && (Array.isArray(safeInsight.themes_industry)||Array.isArray(safeInsight.themes_universal))
+     && (safeInsight.themes_industry.length > 0 ||safeInsight.themes_universal.length > 0)) {
     // Utiliser les thèmes de l'IA
-    themes = safeInsight.themes.map((theme: any) => ({
+    industryThemes = safeInsight.themes_industry.map((theme: any) => ({
       theme: theme.theme || theme,
       score: theme.score || (theme.count / totalReviews) || 0.5,
       count: theme.count || 0,
-      verbatims: theme.verbatims || []
+      verbatims: theme.verbatims || [],
+      importance:theme.importance
     }));
+    universalThemes = safeInsight.themes_universal.map((theme: any) => ({
+      theme: theme.theme || theme,
+      score: theme.score || (theme.count / totalReviews) || 0.5,
+      count: theme.count || 0,
+      verbatims: theme.verbatims || [],
+      importance:theme.importance
+    }));
+    themes=[...universalThemes ,...industryThemes]
   } else {
     // Calculer les thèmes depuis les top_issues et top_praises
     const allThemes = new Map<string, { count: number; score: number }>();

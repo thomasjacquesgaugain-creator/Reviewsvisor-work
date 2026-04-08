@@ -1,24 +1,34 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Minus, Star, ArrowRight } from "lucide-react";
-import { OverviewMetrics, Review } from "@/types/analysis";
+import { TrendingUp, TrendingDown, Minus, Star, ArrowRight , BarChart3, User, LogOut, Home, Eye, Trash2, AlertTriangle, CheckCircle, Lightbulb, Target, ChevronDown, ChevronUp, ChevronRight, Building2, UtensilsCrossed, Wine, Users, MapPin, Clock, MessageSquare, Info, Loader2, Copy, Calendar, Download, ClipboardList, Bot, X, Reply, Send, List, Sparkles, AlertCircle, Frown, ThumbsUp, Flag, Zap, Flame, Globe, Layers, Check} from "lucide-react";
+import { OverviewMetrics, Review, ThemeAnalysis } from "@/types/analysis";
 import { useTranslation } from "react-i18next";
 import { useAnalysisFilters } from "./AnalysisFiltersContext";
 import { formatPeriodLabel } from "@/utils/filterReviews";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BusinessType } from "@/config/industry";
+import { ThemesDisplay } from "@/components/ThemesDisplay";
 
 interface OverviewSectionProps {
   data: OverviewMetrics;
   reviews?: Review[];
+  insight?:any;
+  themes?:ThemeAnalysis[];
   onSentimentFilter?: (sentiment: 'positive' | 'neutral' | 'negative') => void;
 }
 
-export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSectionProps) {  
+export function OverviewSection({ data, reviews, insight,themes,onSentimentFilter }: OverviewSectionProps) {
   const { t } = useTranslation();
   const { periodFilter } = useAnalysisFilters();
   const [hoveredSentiment, setHoveredSentiment] = useState<string | null>(null);
 
+  const [openCard, setOpenCard] = useState<string | null>(null);
+  const [showBusinessTypeOverrideModal, setShowBusinessTypeOverrideModal] =useState(false);
+  const [byRating, setByRating] = useState<Record<string, number>>({});
+  const [totalThemeMentionsPercentage, setTotalThemeMentionPercentage]=useState(0)
   if (!data) {
     return (
       <div className="space-y-4">
@@ -37,6 +47,29 @@ export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSe
   // Formater le label de période
   const periodLabel = formatPeriodLabel(periodFilter);
 
+ const translateTheme = (theme: string): string => {
+    const themeLower = theme.toLowerCase();
+    const translations: Record<string, string> = {
+      "service / attente": t("charts.problems.serviceWait"),
+      "qualité des plats": t("charts.problems.foodQuality"),
+      prix: t("charts.problems.price"),
+      "qualité / goût": t("charts.strengths.tasteQuality"),
+      "ambiance agréable": t("charts.strengths.niceAmbiance"),
+      rapidité: t("dashboard.speed"),
+      cuisine: t("dashboard.cuisine"),
+      service: t("dashboard.service"),
+      ambiance: t("dashboard.ambiance"),
+      "rapport qualité/prix": t("charts.strengths.valueForMoney"),
+    };
+
+    // Chercher une correspondance exacte ou partielle
+    for (const [key, value] of Object.entries(translations)) {
+      if (themeLower.includes(key) || key.includes(themeLower)) {
+        return value;
+      }
+    }
+    return theme; // Retourner le thème original si aucune traduction trouvée
+  };
   const getTrendIcon = () => {
     if (data.trend === 'up') return <TrendingUp className="w-4 h-4 text-green-500 flex-shrink-0" aria-hidden="true" />;
     if (data.trend === 'down') return <TrendingDown className="w-4 h-4 text-red-500 flex-shrink-0" aria-hidden="true" />;
@@ -122,6 +155,20 @@ export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSe
       onSentimentFilter(sentiment);
     }
   };
+  useEffect(()=>{
+    const counts: Record<string, number> = {};
+        for (let i = 1; i <= 5; i++) {
+        counts[i] = reviews.filter((r) => (r.note ?? 0) === i).length;
+        }
+        const totalMention =themes?.reduce((sum, t) => sum + (t.count || 0),0) || 0;
+        const totalMentionPercentage = totalReviews
+        ? Math.round((Math.min(totalMention, totalReviews) / totalReviews) * 100)
+        : 0;
+
+        setTotalThemeMentionPercentage(totalMentionPercentage);
+        setByRating(counts);
+
+    }, [reviews, themes, totalReviews]);
 
   return (
     <div className="space-y-4">
@@ -377,6 +424,572 @@ export function OverviewSection({ data, reviews, onSentimentFilter }: OverviewSe
           </div>
         </CardContent>
       </Card>
+
+    {/* Analyse par thématiques et Décryptage des avis */}
+      <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <Card
+          className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+          onClick={() =>
+            setOpenCard(
+              openCard === "thematiques" ? null : "thematiques",
+            )
+          }
+        >
+          <CardContent className="p-6 text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <BarChart3
+                className="w-5 h-5"
+                style={{ color: "#9234ea" }}
+              />
+              <p
+                className="text-2xl font-bold"
+                style={{ color: "#9234ea" }}
+              >
+                {totalThemeMentionsPercentage}%
+              </p>
+            </div>
+            <p className="text-sm text-gray-600">
+              {t("dashboard.themesAnalysis")}
+            </p>
+            <p className="text-xs text-gray-500">
+              {t("dashboard.reviewsDistributionByCategories")}
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenCard(
+                  openCard === "thematiques" ? null : "thematiques",
+                );
+              }}
+              className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-violet-50"
+            >
+              {openCard === "thematiques" ? (
+                <ChevronUp className="w-3 h-3 text-violet-700" />
+              ) : (
+                <ChevronDown className="w-3 h-3 text-violet-700" />
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Décryptage des avis */}
+        <Card
+          className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+          onClick={() =>
+            setOpenCard(
+              openCard === "analyseDetaillee"
+                ? null
+                : "analyseDetaillee",
+            )
+          }
+        >
+          <CardContent className="p-6 text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <BarChart3 className="w-5 h-5 text-[#5048e5]" />
+              {data.totalReviews == null ? (
+                <Skeleton className="h-8 w-14 inline-block animate-shimmer" />
+              ) : (
+                <p className="text-2xl font-bold text-[#5048e5] animate-in fade-in duration-300">
+                  {data.totalReviews}
+                </p>
+              )}
+            </div>
+            <p className="text-sm text-gray-600">
+              {t("dashboard.reviewsDecryption")}
+            </p>
+            <p className="text-xs text-gray-500">
+              {t("dashboard.completeDetailsRatingsThemes")}
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenCard(
+                  openCard === "analyseDetaillee"
+                    ? null
+                    : "analyseDetaillee",
+                );
+              }}
+              className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-blue-50"
+            >
+              {openCard === "analyseDetaillee" ? (
+                <ChevronUp className="w-3 h-3 text-blue-600" />
+              ) : (
+                <ChevronDown className="w-3 h-3 text-blue-600" />
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Contenu Analyse par thématiques - EN DESSOUS, pleine largeur */}
+      {openCard === "thematiques" && (
+        <Card className="mt-4 mb-8" id="thematiques-content">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {/* Utiliser le nouveau format v2 si disponible, sinon fallback v1 */}
+              {insight?.analysis_version === "v2-auto-universal" ? (
+                <ThemesDisplay
+                  themesUniversal={insight?.themes_universal || []}
+                  themesIndustry={insight?.themes_industry || []}
+                  businessType={
+                    insight?.business_type as BusinessType | null
+                  }
+                  businessTypeConfidence={
+                    insight?.business_type_confidence || null
+                  }
+                  businessTypeCandidates={
+                    insight?.business_type_candidates || []
+                  }
+                  totalReviews={totalReviews || 1}
+                  onOverrideClick={() =>
+                    setShowBusinessTypeOverrideModal(true)
+                  }
+                />
+              ) : insight?.themes && insight.themes.length > 0 ? (
+                (() => {
+                  const totalForThemes = totalReviews || 1;
+
+                  // Calculer les pourcentages bruts
+                  const themesWithPercentages = themes.map(
+                    (theme: any) => {
+                      const themeCount = theme.count || 0;
+                      const rawPercentage =
+                        (themeCount / totalForThemes) * 100;
+
+                      // Calculer positifs et négatifs pour cette thématique
+                      let positiveCount = 0;
+                      let negativeCount = 0;
+
+                      if (
+                        theme.reviews &&
+                        Array.isArray(theme.reviews)
+                      ) {
+                        theme.reviews.forEach((review: any) => {
+                          const rating = review.rating || 0;
+                          if (rating >= 4) positiveCount++;
+                          else if (rating <= 2) negativeCount++;
+                        });
+                      } else {
+                        const globalPositiveRatio =
+                          insight?.positive_ratio || 0.7;
+                        positiveCount = Math.round(
+                          themeCount * globalPositiveRatio,
+                        );
+                        negativeCount = Math.round(
+                          themeCount * (1 - globalPositiveRatio),
+                        );
+                      }
+
+                      const totalCounted =
+                        positiveCount + negativeCount;
+                      const positivePercent =
+                        totalCounted > 0
+                          ? Math.round(
+                              (positiveCount / totalCounted) * 100,
+                            )
+                          : 0;
+                      const negativePercent =
+                        totalCounted > 0
+                          ? Math.round(
+                              (negativeCount / totalCounted) * 100,
+                            )
+                          : 0;
+
+                      return {
+                        ...theme,
+                        rawPercentage,
+                        positivePercent,
+                        negativePercent,
+                      };
+                    },
+                  );
+
+                  const totalPercentage =
+                    themesWithPercentages.reduce(
+                      (sum: number, t: any) => sum + t.rawPercentage,
+                      0,
+                    );
+
+                  const themesNormalized = themesWithPercentages.map(
+                    (theme: any) => ({
+                      ...theme,
+                      percentage:
+                        totalPercentage > 0
+                          ? Math.round(
+                              (theme.rawPercentage /
+                                totalPercentage) *
+                                100,
+                            )
+                          : 0,
+                    }),
+                  );
+
+                  const getThemeIcon = (themeName: string) => {
+                    const name = themeName.toLowerCase();
+                    if (
+                      name.includes("cuisine") ||
+                      name.includes("plat") ||
+                      name.includes("nourriture")
+                    ) {
+                      return (
+                        <UtensilsCrossed className="w-4 h-4 text-purple-500" />
+                      );
+                    } else if (
+                      name.includes("service") ||
+                      name.includes("personnel") ||
+                      name.includes("accueil")
+                    ) {
+                      return (
+                        <Users className="w-4 h-4 text-purple-500" />
+                      );
+                    } else if (
+                      name.includes("ambiance") ||
+                      name.includes("atmosphère") ||
+                      name.includes("décor")
+                    ) {
+                      return (
+                        <Wine className="w-4 h-4 text-purple-500" />
+                      );
+                    } else if (
+                      name.includes("emplacement") ||
+                      name.includes("localisation") ||
+                      name.includes("lieu")
+                    ) {
+                      return (
+                        <MapPin className="w-4 h-4 text-purple-500" />
+                      );
+                    }
+                    return (
+                      <BarChart3 className="w-4 h-4 text-purple-500" />
+                    );
+                  };
+
+                  const SentimentBadges: React.FC<{
+                    positivePct?: number;
+                    negativePct?: number;
+                    className?: string;
+                  }> = ({ positivePct, negativePct, className }) => {
+                    const clampPct = (n?: number) => {
+                      if (typeof n !== "number" || isNaN(n)) return 0;
+                      return Math.max(
+                        0,
+                        Math.min(100, Math.round(n)),
+                      );
+                    };
+                    const p = clampPct(positivePct);
+                    const n = clampPct(negativePct);
+                    return (
+                      <div
+                        className={`flex items-center gap-2 ${className ?? ""}`}
+                      >
+                        <span
+                          title={t("dashboard.positive")}
+                          className="inline-flex items-center justify-center min-w-[48px] h-9 px-3 rounded-xl text-sm font-semibold shadow-sm bg-green-50 text-green-600"
+                        >
+                          {p}%
+                        </span>
+                        <span
+                          title={t("dashboard.negative")}
+                          className="inline-flex items-center justify-center min-w-[48px] h-9 px-3 rounded-xl text-sm font-semibold shadow-sm bg-red-50 text-red-600"
+                        >
+                          {n}%
+                        </span>
+                      </div>
+                    );
+                  };
+
+                  return themesNormalized.map(
+                    (theme: any, index: number) => (
+                      <div
+                        key={index}
+                        className="p-3 bg-purple-50 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          {getThemeIcon(theme.theme)}
+                          <div className="flex-1">
+                            <div className="font-medium">
+                              {translateTheme(theme.theme)}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {t("dashboard.percentageOfReviews", {
+                                percentage: theme.percentage,
+                              })}
+                            </div>
+                          </div>
+                          <div className="ml-auto">
+                            <SentimentBadges
+                              positivePct={theme.positivePercent}
+                              negativePct={theme.negativePercent}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ),
+                  );
+                })()
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  <p className="text-sm">
+                    {t("dashboard.noThemesIdentified")}
+                  </p>
+                  <p className="text-xs mt-1">
+                    {t("dashboard.analyzeEstablishmentToSeeThemes")}
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Contenu Décryptage des avis - EN DESSOUS, pleine largeur */}
+      {
+      openCard === "analyseDetaillee" && (
+        <Card className="mt-4 mb-8">
+          <CardContent>
+            <div className="mt-6 space-y-8">
+              {/* Répartition des avis par note */}
+              <div>
+                <h4 className="font-semibold text-lg mb-4">
+                  {t("dashboard.distributionReviewsByRating")}
+                </h4>
+                {reviews && insight? (
+                  <div className="space-y-3">
+                    {
+                    [5, 4, 3, 2, 1].map((star) => {
+                      const count =
+                          byRating[star] || 0;
+                      const total = totalReviews || 1;
+                      const percentage = Math.round(
+                        (count / total) * 100,
+                      );
+                      const color =
+                        star >= 4
+                          ? "bg-green-500"
+                          : star === 3
+                            ? "bg-yellow-500"
+                            : "bg-red-500";
+                      return (
+                        <div
+                          key={star}
+                          className="flex items-center gap-4"
+                        >
+                          <span className="w-20 text-sm text-gray-600 font-medium">
+                            {star} étoile{star > 1 ? "s" : ""}
+                          </span>
+                          <div className="flex-1 bg-gray-100 rounded-full h-3">
+                            <div
+                              className={`${color} h-3 rounded-full`}
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-sm text-gray-600 w-20 text-right">
+                            {count} ({percentage}%)
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>{t("dashboard.uploadReviewToSeeBreakdown")}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Thématiques récurrentes */}
+              <div>
+                <h4 className="font-semibold text-lg mb-4">
+                  {t("dashboard.recurringThemes")}
+                </h4>
+                {(() => {
+                  // Mapper les données v2 (themes_universal et themes_industry) vers le format attendu
+                  const isV2 =
+                    insight?.analysis_version === "v2-auto-universal";
+                  const hasAnalysis =
+                    !!insight && !!insight.last_analyzed_at;
+
+                  // Extraire et mapper themes_universal (format v2)
+                  let themesUniversal: Array<{
+                    theme: string;
+                    count?: number;
+                    importance?: number;
+                  }> = [];
+                  if (isV2 && insight?.themes_universal) {
+                    try {
+                      // Gérer le cas où c'est déjà un tableau ou une chaîne JSON
+                      const universalData =
+                        typeof insight.themes_universal === "string"
+                          ? JSON.parse(insight.themes_universal)
+                          : insight.themes_universal;
+                      if (
+                        Array.isArray(universalData) &&
+                        universalData.length > 0
+                      ) {
+                        themesUniversal = universalData
+                          .map((t: any) => ({
+                            theme:
+                              t.theme ||
+                              t.name ||
+                              String(t) ||
+                              "Thématique",
+                            count:
+                              typeof t.count === "number"
+                                ? t.count
+                                : t.importance
+                                  ? Math.round(t.importance / 10)
+                                  : 0,
+                            importance:
+                              typeof t.importance === "number"
+                                ? t.importance
+                                : t.count
+                                  ? t.count * 10
+                                  : 0,
+                          }))
+                          .filter(
+                            (t: any) =>
+                              t.theme && t.theme !== "Thématique",
+                          );
+                      }
+                    } catch (e) {
+                      console.warn(
+                        "[Dashboard] Erreur parsing themes_universal:",
+                        e,
+                      );
+                    }
+                  }
+
+                  // Extraire et mapper themes_industry (format v2)
+                  let themesIndustry: Array<{
+                    theme: string;
+                    count?: number;
+                    importance?: number;
+                  }> = [];
+                  if (isV2 && insight?.themes_industry) {
+                    try {
+                      // Gérer le cas où c'est déjà un tableau ou une chaîne JSON
+                      const industryData =
+                        typeof insight.themes_industry === "string"
+                          ? JSON.parse(insight.themes_industry)
+                          : insight.themes_industry;
+
+                      if (
+                        Array.isArray(industryData) &&
+                        industryData.length > 0
+                      ) {
+                        themesIndustry = industryData
+                          .map((t: any) => ({
+                            theme:
+                              t.theme ||
+                              t.name ||
+                              String(t) ||
+                              "Thématique",
+                            count:
+                              typeof t.count === "number"
+                                ? t.count
+                                : t.importance
+                                  ? Math.round(t.importance / 10)
+                                  : 0,
+                            importance:
+                              typeof t.importance === "number"
+                                ? t.importance
+                                : t.count
+                                  ? t.count * 10
+                                  : 0,
+                          }))
+                          .filter(
+                            (t: any) =>
+                              t.theme && t.theme !== "Thématique",
+                          );
+                      }
+                    } catch (e) {
+                      console.warn(
+                        "[Dashboard] Erreur parsing themes_industry:",
+                        e,
+                      );
+                    }
+                  }
+
+                  // Fallback v1 : utiliser themes si themes_universal est vide
+                  if (
+                    !isV2 &&
+                    insight?.themes &&
+                    Array.isArray(insight.themes) &&
+                    themesUniversal.length === 0
+                  ) {
+                    themesUniversal = insight.themes.map(
+                      (t: any) => ({
+                        theme: t.theme || t.name || t,
+                        count: t.count || 0,
+                        importance: t.count ? t.count * 10 : 0,
+                      }),
+                    );
+                  }
+
+                  // Si aucune analyse n'existe, afficher le message d'invitation
+                  if (
+                    !hasAnalysis &&
+                    themesUniversal.length === 0 &&
+                    themesIndustry.length === 0
+                  ) {
+                    return (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>
+                          {t("dashboard.importReviewsToSeeTheThemes")}
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  // Si une analyse existe mais pas de thèmes, afficher un message différent
+                  if (
+                    hasAnalysis &&
+                    themesUniversal.length === 0 &&
+                    themesIndustry.length === 0
+                  ) {
+                    return (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>
+                          Aucune thématique identifiée pour le moment
+                        </p>
+                        <p className="text-xs mt-2">
+                          Les thématiques apparaîtront après l'analyse
+                          de vos avis
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  // Afficher les thèmes avec ThemesDisplay
+                  return (
+                    <ThemesDisplay
+                      themesUniversal={themesUniversal}
+                      themesIndustry={themesIndustry}
+                      businessType={
+                        insight?.business_type as BusinessType | null
+                      }
+                      businessTypeConfidence={
+                        insight?.business_type_confidence || null
+                      }
+                      businessTypeCandidates={
+                        insight?.business_type_candidates || []
+                      }
+                      totalReviews={totalReviews || 1}
+                      onOverrideClick={() =>
+                        setShowBusinessTypeOverrideModal(true)
+                      }
+                    />
+                  );
+                })()}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -429,6 +429,18 @@ export type Database = {
           total_count: number | null
           updated_at: string | null
           user_id: string
+          themes_universal: any[] | null;
+          themes_industry: any[] | null;
+          pain_points_prioritized: any[] | null;
+          recommendations_quick_wins: any[] | null;
+          recommendations_projects:any[] | null;
+          summary_one_liner: any[] | null;
+          summary_what_customers_love:any[] | null;
+          summary_what_customers_hate:any[] | null;
+          analysis_version:string|null
+          business_type: any[] | null;
+          business_type_confidence: number | null;
+          business_type_candidates: any[] | null;
         }
         Insert: {
           avg_rating?: number | null
@@ -442,6 +454,18 @@ export type Database = {
           total_count?: number | null
           updated_at?: string | null
           user_id: string
+          themes_universal: any[] | null;
+          themes_industry: any[] | null;
+          pain_points_prioritized: any[] | null;
+          recommendations_quick_wins: any[] | null;
+          recommendations_projects:any[] | null;
+          summary_one_liner: any[] | null;
+          summary_what_customers_love:any[] | null;
+          summary_what_customers_hate:any[] | null;
+          analysis_version:string|null
+          business_type: any[] | null;
+          business_type_confidence: number | null;
+          business_type_candidates: any[] | null;
         }
         Update: {
           avg_rating?: number | null
@@ -455,6 +479,18 @@ export type Database = {
           total_count?: number | null
           updated_at?: string | null
           user_id?: string
+          themes_universal: any[] | null;
+          themes_industry: any[] | null;
+          pain_points_prioritized: any[] | null;
+          recommendations_quick_wins: any[] | null;
+          recommendations_projects:any[] | null;
+          summary_one_liner: any[] | null;
+          summary_what_customers_love:any[] | null;
+          summary_what_customers_hate:any[] | null;
+          analysis_version:string|null
+          business_type: any[] | null;
+          business_type_confidence: number | null;
+          business_type_candidates: any[] | null;
         }
         Relationships: []
       }

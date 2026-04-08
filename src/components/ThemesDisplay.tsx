@@ -35,7 +35,7 @@ export function ThemesDisplay({
 }: ThemesDisplayProps) {
   const hasUniversalThemes = themesUniversal && Array.isArray(themesUniversal) && themesUniversal.length > 0;
   const hasIndustryThemes = themesIndustry && Array.isArray(themesIndustry) && themesIndustry.length > 0;
-  const showIndustryThemes = businessTypeConfidence !== null && businessTypeConfidence !== undefined && businessTypeConfidence >= 75;
+  const showIndustryThemes = businessTypeConfidence !== null && businessTypeConfidence !== undefined && businessTypeConfidence >= 45;
 
   // Si aucun thème, retourner null (le parent gère l'affichage)
   if (!hasUniversalThemes && !hasIndustryThemes) {
@@ -93,7 +93,7 @@ export function ThemesDisplay({
       )}
 
       {/* Indicateur de type si confidence faible */}
-      {businessTypeConfidence !== null && businessTypeConfidence !== undefined && businessTypeConfidence < 75 && (
+      {businessTypeConfidence !== null && businessTypeConfidence !== undefined && businessTypeConfidence < 45 && (
         <BusinessTypeIndicator
           businessType={businessType || null}
           confidence={businessTypeConfidence}

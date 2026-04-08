@@ -60,7 +60,7 @@ function env(key: string, fallback = "") {
 
 const SUPABASE_URL = env("SUPABASE_URL");
 const SERVICE_ROLE = env("SUPABASE_SERVICE_ROLE_KEY");
-const GOOGLE_KEY   = env("GOOGLE_PLACES_API_KEY");
+// const OPENAI_KEY   = env("GOOGLE_PLACES_API_KEY");
 const OPENAI_KEY   = env("OPENAI_API_KEY", "");
 
 const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE, {
@@ -70,7 +70,7 @@ const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE, {
 // Détection businessType simplifiée (version Deno)
 function detectBusinessType(
   name: string,
-  googlePlacesTypes?: string[] | null,
+  googlePlacesTypes?: string[]| null,
   reviewsTexts?: string[]
 ): { type: BusinessType; confidence: number; candidates: Array<{type: BusinessType; confidence: number}>; source: 'places' | 'keywords' | 'manual' } {
   const combinedText = `${name} ${(reviewsTexts || []).join(' ')}`.toLowerCase();
@@ -87,19 +87,27 @@ function detectBusinessType(
 
   // Keywords par type
   const keywords: Record<BusinessType, string[]> = {
-    restaurant: ['restaurant', 'resto', 'bistrot', 'brasserie', 'café', 'bar', 'pizzeria', 'burger', 'sushi', 'cuisine', 'manger', 'repas', 'plat'],
-    salon_coiffure: ['coiffeur', 'coiffeuse', 'salon', 'barber', 'hair', 'cheveux', 'coloration', 'coupe', 'coiffure'],
-    salle_sport: ['gym', 'fitness', 'salle de sport', 'sport', 'musculation', 'crossfit', 'yoga', 'coach'],
-    serrurier: ['serrurier', 'serrurerie', 'dépannage', 'clé', 'verrou', 'serrure', 'urgence'],
-    retail_chaussures: ['chaussure', 'chaussures', 'sneaker', 'basket', 'magasin', 'boutique'],
-    institut_beaute: ['institut', 'beauté', 'beaute', 'esthétique', 'soin', 'massage', 'épilation'],
-    autre: []
+    // restaurant: ['restaurant', 'resto', 'bistrot', 'brasserie', 'café', 'bar', 'pizzeria', 'burger', 'sushi', 'cuisine', 'manger', 'repas', 'plat'],
+    // salon_coiffure: ['coiffeur', 'coiffeuse', 'salon', 'barber', 'hair', 'cheveux', 'coloration', 'coupe', 'coiffure'],
+    // salle_sport: ['gym', 'fitness', 'salle de sport', 'sport', 'musculation', 'crossfit', 'yoga', 'coach'],
+    // serrurier: ['serrurier', 'serrurerie', 'dépannage', 'clé', 'verrou', 'serrure', 'urgence'],
+    // retail_chaussures: ['chaussure', 'chaussures', 'sneaker', 'basket', 'magasin', 'boutique'],
+    // institut_beaute: ['institut', 'beauté', 'beaute', 'esthétique', 'soin', 'massage', 'épilation'],
+    // autre: []
+      restaurant: ['restaurant', 'diner', 'bistro', 'brasserie', 'cafe', 'bar', 'pizzeria', 'burger', 'sushi', 'cuisine', 'eat', 'meal', 'dish'],
+      salon_coiffure: ['hairdresser', 'hair stylist', 'salon', 'barber', 'hair', 'hair', 'coloring', 'cut', 'hairstyle'],
+      salle_sport: ['gym', 'fitness', 'gym', 'sport', 'bodybuilding', 'crossfit', 'yoga', 'coach'],
+      serrurier: ['locksmith', 'locksmith service', 'repair', 'key', 'lock', 'lock', 'emergency'],
+      retail_chaussures: ['shoe', 'shoes', 'sneaker', 'sneakers', 'store', 'shop'],
+      institut_beaute: ['beauty institute', 'beauty', 'beauty', 'esthetic', 'care', 'massage', 'hair removal'],
+      autre: []
   };
 
   // 1. Essayer Google Places
   if (googlePlacesTypes && googlePlacesTypes.length > 0) {
     for (const placeType of googlePlacesTypes) {
-      const mapped = placesMapping[placeType];
+    const normalized = placeType.toLowerCase().replace(/\s+/g, '_');
+    const mapped = placesMapping[normalized];
       if (mapped) {
         return {
           type: mapped,
@@ -171,57 +179,113 @@ async function analyzePassA(
   }
 
   const universalThemes = ['Accueil', 'Propreté', 'Prix', 'Attente', 'Communication', 'SAV', 'Confiance'];
-  const industryThemesHint = businessTypeConfidence >= 75 
+  const industryThemesHint = businessTypeConfidence >= 45 
     ? `\nThèmes spécifiques au secteur ${businessType} à rechercher également.`
     : '\nFocus uniquement sur les thèmes universels (ne pas inventer de thèmes spécifiques au secteur).';
 
-  const prompt = [
-    { role: "system", content: `Tu es un analyste expert qui synthétise des avis clients en français.
-Tu dois extraire les thématiques UNIQUEMENT depuis le contenu réel des avis.
-Réponds exclusivement en JSON valide.` },
-    { role: "user", content:
-`Établissement: ${placeName}
-Type détecté: ${businessType} (confiance: ${businessTypeConfidence}%)
-Total d'avis analysés: ${totalReviews}
+//   const prompt = [
+//     { role: "system", content: `Tu es un analyste expert qui synthétise des avis clients en english.
+// Tu dois extraire les thématiques UNIQUEMENT depuis le contenu réel des avis.
+// Réponds exclusivement en JSON valide.` },
+//     { role: "user", content:
+// `Établissement: ${placeName}
+// Type détecté: ${businessType} (confiance: ${businessTypeConfidence}%)
+// Total d'avis analysés: ${totalReviews}
 
-Avis clients:
+// Avis clients:
+// ${samples.slice(0, 100).map((t,i)=>`${i+1}. ${t}`).join("\n")}
+
+// INSTRUCTIONS:
+// 1. Extrais les thèmes UNIVERSELS mentionnés: ${universalThemes.join(', ')}${industryThemesHint}
+// 2. Pour chaque thème, détermine le sentiment (positive/mixed/negative) et l'importance (0-100)
+// 3. Inclus 1-2 citations courtes comme preuve
+// 4. Si confidence >= 75%, extrais aussi les thèmes spécifiques au secteur ${businessType}
+// 5. Si confidence < 75%, ne liste QUE les thèmes universels
+
+// Retourne ce JSON:
+// {
+//   "themes_universal": [
+//     {
+//       "theme": "Accueil",
+//       "sentiment": "positive|mixed|negative",
+//       "importance": 0-100,
+//       "evidence_quotes": ["citation 1", "citation 2"],
+//       "what_it_means": "Explication courte"
+//     }
+//   ],
+//   "themes_industry": [
+//     {
+//       "theme": "Thème spécifique secteur",
+//       "sentiment": "positive|mixed|negative",
+//       "importance": 0-100,
+//       "evidence_quotes": ["citation"],
+//       "what_it_means": "Explication"
+//     }
+//   ],
+//   "summary": {
+//     "one_liner": "Résumé en une phrase",
+//     "what_customers_love": ["point 1", "point 2"],
+//     "what_customers_hate": ["point 1", "point 2"]
+//   }
+// }`
+//     }
+//   ];
+const prompt = [
+  { 
+    role: "system", 
+    content: `You are an expert analyst who synthesizes customer reviews in English.
+You must extract themes ONLY from the actual content of the reviews.
+Respond strictly with valid JSON.` 
+  },
+  { 
+    role: "user", 
+    content:
+`Business: ${placeName}
+Detected type: ${businessType} (confidence: ${businessTypeConfidence}%)
+Total reviews analyzed: ${totalReviews}
+
+Customer reviews:
 ${samples.slice(0, 100).map((t,i)=>`${i+1}. ${t}`).join("\n")}
 
 INSTRUCTIONS:
-1. Extrais les thèmes UNIVERSELS mentionnés: ${universalThemes.join(', ')}${industryThemesHint}
-2. Pour chaque thème, détermine le sentiment (positive/mixed/negative) et l'importance (0-100)
-3. Inclus 1-2 citations courtes comme preuve
-4. Si confidence >= 75%, extrais aussi les thèmes spécifiques au secteur ${businessType}
-5. Si confidence < 75%, ne liste QUE les thèmes universels
+1. Extract the UNIVERSAL themes mentioned: ${universalThemes.join(', ')}${industryThemesHint}
+2. For each theme, determine the sentiment (positive/mixed/negative) and importance (0–100)
+3. Include 1–2 short quotes as evidence
+4. If confidence >= 40%, also extract themes specific to the ${businessType} industry
+5. If confidence < 75%, list ONLY universal themes
 
-Retourne ce JSON:
+Return this JSON:
 {
+  "top_issues": [{"theme": "...", "count": X}, ...],
+  "top_strength": [{"theme": "...", "count": X}, ...],
   "themes_universal": [
     {
-      "theme": "Accueil",
+      "theme": "Welcome",
       "sentiment": "positive|mixed|negative",
       "importance": 0-100,
-      "evidence_quotes": ["citation 1", "citation 2"],
-      "what_it_means": "Explication courte"
+      "evidence_quotes": ["quote 1", "quote 2"],
+      "what_it_means": "Short explanation".
+      "count": X,
     }
   ],
   "themes_industry": [
     {
-      "theme": "Thème spécifique secteur",
+      "theme": "Industry-specific theme",
       "sentiment": "positive|mixed|negative",
       "importance": 0-100,
-      "evidence_quotes": ["citation"],
-      "what_it_means": "Explication"
+      "evidence_quotes": ["quote"],
+      "what_it_means": "Explanation",
+      "count": X,
     }
   ],
   "summary": {
-    "one_liner": "Résumé en une phrase",
+    "one_liner": "One-sentence summary",
     "what_customers_love": ["point 1", "point 2"],
     "what_customers_hate": ["point 1", "point 2"]
   }
 }`
-    }
-  ];
+  }
+];
 
   const resp = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -258,50 +322,117 @@ async function analyzePassB(
     return null;
   }
 
-  const prompt = [
-    { role: "system", content: `Tu es un consultant expert en amélioration de l'expérience client.
-Génère des recommandations actionnables et des templates de réponses adaptés au secteur.
-Réponds exclusivement en JSON valide.` },
-    { role: "user", content:
-`Établissement: ${placeName}
-Type: ${businessType} (confiance: ${businessTypeConfidence}%)
-Note moyenne: ${avgRating?.toFixed(1) || 'N/A'}
+//   const prompt = [
+//     { role: "system", content: `Tu es un consultant expert en amélioration de l'expérience client.
+// Génère des recommandations actionnables et des templates de réponses adaptés au secteur.
+// Réponds exclusivement en JSON valide.` },
+//     { role: "user", content:
+// `Établissement: ${placeName}
+// Type: ${businessType} (confiance: ${businessTypeConfidence}%)
+// Note moyenne: ${avgRating?.toFixed(1) || 'N/A'}
 
-Thèmes identifiés (universels): ${themesUniversal.map((t: any) => t.theme).join(', ')}
-${themesIndustry.length > 0 ? `Thèmes métier: ${themesIndustry.map((t: any) => t.theme).join(', ')}` : ''}
-Problèmes prioritaires: ${topIssues.map((i: any) => i.theme || i).join(', ')}
+// Thèmes identifiés (universels): ${themesUniversal.map((t: any) => t.theme).join(', ')}
+// ${themesIndustry.length > 0 ? `Thèmes métier: ${themesIndustry.map((t: any) => t.theme).join(', ')}` : ''}
+// Problèmes prioritaires: ${topIssues.map((i: any) => i.theme || i).join(', ')}
 
-Génère:
-1. Pain points priorisés (impact 0-100, ease 0-100, first_step concret)
-2. Quick wins (7 jours) - actions rapides avec résultat attendu
-3. Projets (30 jours) - actions plus structurées
-4. Reply templates (positive/neutral/negative) adaptés au secteur ${businessType}
+// Génère:
+// 1. Pain points priorisés (impact 0-100, ease 0-100, first_step concret)
+// 2. Quick wins (7 jours) - actions rapides avec résultat attendu
+// 3. Projets (30 jours) - actions plus structurées
+// 4. Reply templates (positive/neutral/negative) adaptés au secteur ${businessType}
 
-Retourne ce JSON:
+// Retourne ce JSON:
+// {
+//   "pain_points_prioritized": [
+//     {
+//       "issue": "Nom du problème",
+//       "why_it_matters": "Pourquoi c'est important",
+//       "impact": 0-100,
+//       "ease": 0-100,
+//       "first_step": "Première action concrète"
+//     }
+//   ],
+//   "recommendations": {
+//     "quick_wins_7_days": [
+//       {
+//         "title": "Titre action",
+//         "details": "Détails",
+//         "expected_result": "Résultat attendu",
+//         "priority": 1-5
+//       }
+//     ],
+//     "projects_30_days": [
+//       {
+//         "title": "Titre projet",
+//         "details": "Détails",
+//         "expected_result": "Résultat attendu",
+//         "priority": 1-5
+//       }
+//     ]
+//   },
+//   "reply_templates": {
+//     "positive": [
+//       {
+//         "title": "Titre template",
+//         "reply": "Texte de réponse",
+//         "use_when": "Quand utiliser"
+//       }
+//     ],
+//     "neutral": [...],
+//     "negative": [...]
+//   }
+// }`
+//     }
+//   ];
+const prompt = [
+  { 
+    role: "system", 
+    content: `You are an expert consultant in customer experience improvement.
+Generate actionable recommendations and response templates tailored to the business sector.
+Respond strictly with valid JSON.` 
+  },
+  { 
+    role: "user", 
+    content:
+`Business: ${placeName}
+Type: ${businessType} (confidence: ${businessTypeConfidence}%)
+Average rating: ${avgRating?.toFixed(1) || 'N/A'}
+
+Identified themes (universal): ${themesUniversal.map((t: any) => t.theme).join(', ')}
+${themesIndustry.length > 0 ? `Industry themes: ${themesIndustry.map((t: any) => t.theme).join(', ')}` : ''}
+Priority issues: ${topIssues.map((i: any) => i.theme || i).join(', ')}
+
+Generate:
+1. Prioritized pain points (impact 0–100, ease 0–100, concrete first_step)
+2. Quick wins (7 days) – fast actions with expected results
+3. Projects (30 days) – more structured initiatives
+4. Reply templates (positive/neutral/negative) adapted to the ${businessType} sector
+
+Return this JSON:
 {
   "pain_points_prioritized": [
     {
-      "issue": "Nom du problème",
-      "why_it_matters": "Pourquoi c'est important",
+      "issue": "Problem name",
+      "why_it_matters": "Why it matters",
       "impact": 0-100,
       "ease": 0-100,
-      "first_step": "Première action concrète"
+      "first_step": "First concrete action"
     }
   ],
   "recommendations": {
     "quick_wins_7_days": [
       {
-        "title": "Titre action",
-        "details": "Détails",
-        "expected_result": "Résultat attendu",
+        "title": "Action title",
+        "details": "Details",
+        "expected_result": "Expected result",
         "priority": 1-5
       }
     ],
     "projects_30_days": [
       {
-        "title": "Titre projet",
-        "details": "Détails",
-        "expected_result": "Résultat attendu",
+        "title": "Project title",
+        "details": "Details",
+        "expected_result": "Expected result",
         "priority": 1-5
       }
     ]
@@ -309,17 +440,17 @@ Retourne ce JSON:
   "reply_templates": {
     "positive": [
       {
-        "title": "Titre template",
-        "reply": "Texte de réponse",
-        "use_when": "Quand utiliser"
+        "title": "Template title",
+        "reply": "Response text",
+        "use_when": "When to use"
       }
     ],
     "neutral": [...],
     "negative": [...]
   }
 }`
-    }
-  ];
+  }
+];
 
   const resp = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -373,12 +504,18 @@ Deno.serve(async (req) => {
         .eq('place_id', place_id)
         .eq('user_id', userId)
         .maybeSingle();
-      
+
       if (establishment?.name) {
+        console.log("setting ename")
         establishmentName = establishment.name;
       }
-      if (establishment?.types && Array.isArray(establishment.types)) {
-        googlePlacesTypes = establishment.types as string[];
+    
+      if (establishment?.types) {
+      googlePlacesTypes = Array.isArray(establishment.types)
+    ? establishment.types
+    : [establishment.types];
+      console.log("googlePlacesTypes",typeof googlePlacesTypes);
+      console.log("googlePlacesTypes", googlePlacesTypes);
       }
     } catch (err) {
       console.warn('[analyze-reviews-v2] Erreur récupération établissement:', err);
@@ -457,6 +594,8 @@ Deno.serve(async (req) => {
 
     // Assembler le résultat final
     const analysisResult = {
+      top_praises: passAResult.top_strength, 
+      top_issues:passAResult.top_issues,
       business_type: detection.type,
       business_type_confidence: detection.confidence,
       business_type_candidates: detection.candidates,
@@ -472,7 +611,7 @@ Deno.serve(async (req) => {
         negative_ratio_estimate: stats.negative_pct
       },
       themes_universal: passAResult.themes_universal || [],
-      themes_industry: detection.confidence >= 75 ? (passAResult.themes_industry || []) : [],
+      themes_industry: detection.confidence >= 45 ? (passAResult.themes_industry || []) : [],
       pain_points_prioritized: passBResult.pain_points_prioritized || [],
       recommendations: passBResult.recommendations || {
         quick_wins_7_days: [],
@@ -503,18 +642,21 @@ Deno.serve(async (req) => {
           ...(passAResult.themes_universal || []).map((t: any) => ({ theme: t.theme, count: Math.round(t.importance / 10) })),
           ...(passAResult.themes_industry || []).map((t: any) => ({ theme: t.theme, count: Math.round(t.importance / 10) }))
         ],
-        top_issues: negativeThemes.map((t: any, idx: number) => ({
-          theme: t.theme,
-          count: Math.round(t.importance / 10),
-          severity: idx < 1 ? 'high' : 'medium'
-        })),
-        top_praises: [
-          ...(passAResult.themes_universal || []).filter((t: any) => t.sentiment === 'positive'),
-          ...(passAResult.themes_industry || []).filter((t: any) => t.sentiment === 'positive')
-        ].slice(0, 3).map((t: any) => ({
-          theme: t.theme,
-          count: Math.round(t.importance / 10)
-        })),
+        top_praises: passAResult.top_strength, 
+        top_issues:passAResult.top_issues,
+        // top_issues: negativeThemes.map((t: any, idx: number) => ({
+        //   theme: t.theme,
+        //   count: Math.round(t.importance / 10),
+        //   severity: idx < 1 ? 'high' : 'medium'
+        // })),
+        // top_praises: [
+        //   ...(passAResult.themes_universal || []).filter((t: any) => t.sentiment === 'positive'),
+        //   ...(passAResult.themes_industry || []).filter((t: any) => t.sentiment === 'positive')
+        // ].slice(0, 3).map((t: any) => ({
+        //   theme: t.theme,
+        //   count: Math.round(t.importance / 10)
+        // })),
+        
         summary: {
           total: stats.total,
           by_rating: stats.by_rating,
@@ -524,7 +666,7 @@ Deno.serve(async (req) => {
         },
         // Format v2 (nouveau)
         themes_universal: passAResult.themes_universal || [],
-        themes_industry: detection.confidence >= 75 ? (passAResult.themes_industry || []) : [],
+        themes_industry: detection.confidence >= 45 ? (passAResult.themes_industry || []) : [],
         pain_points_prioritized: passBResult.pain_points_prioritized || [],
         recommendations_quick_wins: passBResult.recommendations?.quick_wins_7_days || [],
         recommendations_projects: passBResult.recommendations?.projects_30_days || [],

@@ -17,11 +17,12 @@ import { useTranslation } from "react-i18next";
 interface AnalysisPageProps {
   data: CompleteAnalysisData;
   establishmentName?: string;
+  insight?:any;
   reviews?: Review[]; // Avis bruts pour le graphique d'historique
   dynamicThemes?: Array<{ theme: string; count?: number; importance?: number }>; // Thèmes dynamiques depuis insight
 }
 
-export function AnalysisPage({ data, establishmentName, reviews, dynamicThemes = [] }: AnalysisPageProps) {
+export function AnalysisPage({ data, establishmentName,insight,  reviews, dynamicThemes = [] }: AnalysisPageProps) {
   const { t } = useTranslation();
 
   console.log('[AnalysisPage] Reviews reçus:', reviews);
@@ -65,7 +66,7 @@ export function AnalysisPage({ data, establishmentName, reviews, dynamicThemes =
           {/* Contexte global d'analyse */}
           <ThematicSegmentationBar />
 
-          <AnalysisContent data={data} reviews={reviews} dynamicThemes={dynamicThemes} />
+          <AnalysisContent data={data} reviews={reviews} dynamicThemes={dynamicThemes} insight={insight} />
         </AnalysisFiltersProvider>
       </div>
     );
@@ -85,10 +86,11 @@ export function AnalysisPage({ data, establishmentName, reviews, dynamicThemes =
 interface AnalysisContentProps {
   data: CompleteAnalysisData;
   reviews?: Review[];
+  insight:any;
   dynamicThemes?: Array<{ theme: string; count?: number; importance?: number }>;
 }
 
-function AnalysisContent({ data, reviews, dynamicThemes = [] }: AnalysisContentProps) {
+function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: AnalysisContentProps) {
   const { filteredReviews, ratingFilter, periodFilter, sourceFilter, availableSources } = useAnalysisFilters();
     const { t } = useTranslation();
 
@@ -114,7 +116,7 @@ function AnalysisContent({ data, reviews, dynamicThemes = [] }: AnalysisContentP
   return (
     <>
       {/* Section 1: Vue d'ensemble */}
-      {data.overview && <OverviewSection data={data.overview} reviews={effectiveReviews} />}
+      {data.overview && <OverviewSection data={data.overview} reviews={effectiveReviews} insight={insight} themes={data.themes} />}
 
       {/* Titre de section 2 */}
       <h2 className="text-2xl font-bold text-gray-800 mt-12 mb-6">
