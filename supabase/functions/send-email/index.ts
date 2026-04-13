@@ -71,7 +71,7 @@ serve(async (req) => {
     );
   }
 });
-simport "jsr:@supabase/functions-js/edge-runtime.d.ts"
+import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
 console.log("Hello from Functions!")
 
