@@ -1,4 +1,4 @@
-import { format, eachMonthOfInterval, eachWeekOfInterval, eachDayOfInterval, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, startOfYear, endOfYear, eachYearOfInterval, isAfter, isBefore, parseISO, Locale } from 'date-fns';
+import { format, eachMonthOfInterval, eachWeekOfInterval, eachDayOfInterval, endOfMonth, endOfWeek, endOfDay, endOfYear, eachYearOfInterval, isBefore, parseISO, Locale } from 'date-fns';
 import { fr, enUS, it, es, ptBR } from 'date-fns/locale';
 
 export type Granularity = 'jour' | 'semaine' | 'mois' | 'année';
@@ -25,9 +25,9 @@ interface RatingDataPoint {
 }
 
 /**
- * Calcule l'évolution de la note moyenne depuis la date d'enregistrement
+ * Calcule l'évolution de la note moyenne à partir du premier avis disponible
  * @param reviews - Tous les avis de l'établissement
- * @param registrationDate - Date d'enregistrement de l'établissement
+ * @param registrationDate - Date d'enregistrement de l'établissement (utilisée en repli si aucun avis valide)
  * @param granularity - Granularité de l'agrégation (jour, semaine, mois, année)
  * @returns Série temporelle avec la note moyenne par période
  */
@@ -37,12 +37,11 @@ export function getRatingEvolution(
   granularity: Granularity = 'mois',
   language: string = 'fr'
 ): RatingDataPoint[] {
-  // Convertir la date d'enregistrement en objet Date
-  const startDate = typeof registrationDate === 'string' 
-    ? parseISO(registrationDate) 
-    : registrationDate;
-  
   const today = new Date();
+  const registration =
+    typeof registrationDate === 'string'
+      ? parseISO(registrationDate)
+      : registrationDate;
   
   // Filtrer les avis valides (avec note et date)
   const validReviews = reviews.filter(
@@ -54,7 +53,11 @@ export function getRatingEvolution(
   
   // Si aucun avis, retourner une courbe plate à 0
   if (validReviews.length === 0) {
-    const periods = getPeriods(startDate, today, granularity);
+    const fallbackStartDate =
+      !isNaN(registration.getTime()) && registration.getTime() <= today.getTime()
+        ? registration
+        : today;
+    const periods = getPeriods(fallbackStartDate, today, granularity);
     return periods.map(period => ({
       mois: formatPeriodLabel(period, granularity, locale),
       note: 0,
@@ -62,20 +65,41 @@ export function getRatingEvolution(
     }));
   }
   
-  // Trier les avis par date
+  // Trier les avis par date et ignorer les dates invalides
   const sortedReviews = validReviews
     .map(r => ({
       ...r,
       date: parseISO(r.published_at || r.inserted_at || ''),
     }))
+    .filter((review): review is Review & { date: Date } => !isNaN(review.date.getTime()))
     .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  if (sortedReviews.length === 0) {
+    const fallbackStartDate =
+      !isNaN(registration.getTime()) && registration.getTime() <= today.getTime()
+        ? registration
+        : today;
+    const periods = getPeriods(fallbackStartDate, today, granularity);
+    return periods.map(period => ({
+      mois: formatPeriodLabel(period, granularity, locale),
+      note: 0,
+      fullDate: format(period, 'yyyy-MM-dd'),
+    }));
+  }
+
+  // Utiliser tout l'historique disponible des avis, pas la date d'ajout en base
+  const startDate = sortedReviews[0].date;
+
+  if (startDate.getTime() > today.getTime()) {
+    const periods = getPeriods(today, today, granularity);
+    return periods.map(period => ({
+      mois: formatPeriodLabel(period, granularity, locale),
+      note: 0,
+      fullDate: format(period, 'yyyy-MM-dd'),
+    }));
+  }
   
-  // Calculer la note moyenne initiale (baseline)
-  const initialRating = sortedReviews.length > 0
-    ? sortedReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / sortedReviews.length
-    : 0;
-  
-  // Générer toutes les périodes entre la date d'enregistrement et aujourd'hui
+  // Générer toutes les périodes entre le premier avis disponible et aujourd'hui
   const periods = getPeriods(startDate, today, granularity);
   
   // Pour chaque période, calculer la moyenne des avis jusqu'à ce point
@@ -88,7 +112,7 @@ export function getRatingEvolution(
     });
     
     // Calculer la moyenne
-    let avgRating = initialRating;
+    let avgRating = 0;
     if (reviewsUpToMonth.length > 0) {
       const sum = reviewsUpToMonth.reduce((acc, r) => acc + (r.rating || 0), 0);
       avgRating = sum / reviewsUpToMonth.length;
