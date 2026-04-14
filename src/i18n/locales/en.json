@@ -556,7 +556,7 @@
          "narrativeWarning": "Your establishment shows mixed performance with clear areas that need improvement.",
          "narrativePositive": "Your establishment is performing well and delivers a positive overall customer experience.",
          "statRating": "Average Rating",
-         "statPositive": "Positive Sentiment Score",
+         "statPositive": "Sentiment Score",
          "statReviews": "Total Reviews",
          "noData":"No data available",
          "noDataHint":"Score will appear once reviews are collected.",
@@ -607,7 +607,8 @@
       "potentialGain": {
         "title": "Potential Gain",
         "estimatedGain": "+{{gain}} estimated if action applied.",
-        "label":"Estimated lift"
+        "label":"Estimated lift",
+        "viewActionPlan":"View Action Plan"
       }
      }
   },

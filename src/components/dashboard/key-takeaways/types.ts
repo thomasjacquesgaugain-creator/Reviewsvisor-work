@@ -83,8 +83,6 @@ export interface KeyTakeawaysPanelProps {
   mainStrengths?: StrengthItem[];
   recommendedActions?: ActionPoint[];
   className?: string;
-  reviews?:any[]
+  reviews?: Review[];
 }
-
-
 

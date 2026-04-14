@@ -66,11 +66,11 @@ export function RecommendedActionSection({
 
               <div>
                 <p className="text-sm leading-6 text-slate-700">
-                  {recommendedPoint.first_step}
+                  {recommendedPoint?.first_step}
                 </p>
 
                 <p className="mt-2 text-xs text-slate-500">
-                  {recommendedPoint.why_it_matters}
+                  {recommendedPoint?.why_it_matters}
                 </p>
               </div>
             </div>

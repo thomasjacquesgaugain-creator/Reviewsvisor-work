@@ -1,4 +1,4 @@
-import { Sparkles, TrendingUp } from "lucide-react";
+import { ChevronRight, Sparkles, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { PotentialGainSectionProps, Review } from "./types";
@@ -74,8 +74,9 @@ export function PotentialGainSection({
 
         <div className="mt-3 h-px w-full bg-slate-200/70" />
 
-        {potentialGain ? (
-          <div className="mt-4 rounded-[8px] border border-slate-100 bg-white/70 p-4">
+          {potentialGain ? (
+            <>
+        <div className="mt-4 rounded-[8px] border border-slate-100 bg-white/70 p-4">
             <div className="flex items-start gap-3">
               <span className="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#e9fbf6]">
                 <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
@@ -98,12 +99,24 @@ export function PotentialGainSection({
                 </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex flex-1 items-center justify-center rounded-[8px] border border-slate-100 bg-white/70 text-sm text-slate-500">
-            {t("analysis.history.noData", "No data available")}
-          </div>
-        )}
+              <button
+              type="button"
+              // onClick={}
+              className="flex w-full mt-4 items-center justify-between gap-2 rounded-[8px] bg-[#2563eb] px-4 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
+              >
+              {t("dashboard.keyTakeaways.potentialGain.viewActionPlan")}
+              <ChevronRight className="h-4 w-4" />
+            </button>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
+              {t("dashboard.keyTakeaways.potentialGain.noData", {
+                defaultValue: "No data available",
+              })}
+            </div>
+          )}
+
       </div>
     </div>
   );

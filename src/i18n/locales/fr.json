@@ -646,7 +646,7 @@
          "narrativeWarning": "Votre établissement présente des performances mitigées avec des axes d'amélioration clairs.",
          "narrativePositive": "Votre établissement performe bien et offre une expérience client globalement positive.",
          "statRating": "Note moyenne",
-         "statPositive": "Score de sentiment positif",
+         "statPositive": "Score de sentiment",
          "statReviews": "Total des avis",
          "noData":"Aucune donnée disponible",
          "noDataHint":"Le score apparaîtra une fois les avis recueillis.",
@@ -697,7 +697,8 @@
        "potentialGain": {
         "title": "Gain potentiel",
         "estimatedGain": "+{{gain}} estimé si l'action est appliquée.",
-        "label":"Portance estimée"
+        "label":"Portance estimée",
+        "viewActionPlan":"Afficher le plan d'action"
       }
      }
   },

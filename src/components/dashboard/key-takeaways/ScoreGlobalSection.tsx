@@ -123,7 +123,6 @@ export function ScoreGlobalSection({
   reviews,
 }: Omit<ScoreGlobalSectionProps, 'ratingChange'>) {
   const { t } = useTranslation();
-
   const isDataAvailable = hasEnoughData(avgRating, positivePct, reviewCount, reviews);
 
   const ratingChange = useMemo(() => {
@@ -192,8 +191,8 @@ export function ScoreGlobalSection({
           </div>
 
           <div className="mx-auto max-w-xl text-center">
-            <div className="mt-3 flex items-center justify-center gap-2 text-sm text-slate-500">
-              <Star className="h-4 w-4 text-amber-400" />
+            <div className="mt-3 flex items-start gap-2 text-sm text-slate-500">
+              <Star className="h-4 w-4 text-amber-400 mt-0.5" />
               <span>{scoreNarrative}</span>
             </div>
           </div>
@@ -206,7 +205,7 @@ export function ScoreGlobalSection({
             />
             <ScoreStat
               label={t("dashboard.keyTakeaways.overallScore.statPositive")}
-              value={`${Math.round(positivePct)}%`}
+              value={`${Math.round(positivePct)}`}
               accentClassName="text-emerald-700"
             />
             <ScoreStat
