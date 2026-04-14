@@ -543,7 +543,73 @@
     "projectedRating": "Projected rating",
     "basedOnCurrentRating": "Based on the current rating",
     "frequencyInNegativeReviews": "and frequency of mentions in negative reviews.",
-    "noReviewsForEstablishment": "No reviews recorded for this establishment. Import reviews to see statistics."
+    "noReviewsForEstablishment": "No reviews recorded for this establishment. Import reviews to see statistics.",
+     "keyTakeaways": {
+       "title":"Key takeaways",
+       "quickRead":"Quick read for decision makers",
+       "overallScore": {
+         "overallScore": "Overall Score",
+         "critical": "Critical",
+         "toImprove": "To Improve",
+         "good": "Good",
+         "narrativeCritical": "Your establishment is facing critical issues that are significantly impacting customer satisfaction.",
+         "narrativeWarning": "Your establishment shows mixed performance with clear areas that need improvement.",
+         "narrativePositive": "Your establishment is performing well and delivers a positive overall customer experience.",
+         "statRating": "Average Rating",
+         "statPositive": "Positive Sentiment Score",
+         "statReviews": "Total Reviews",
+         "noData":"No data available",
+         "noDataHint":"Score will appear once reviews are collected.",
+         "statRecentTrend": "Recent Trend",
+         "statRecentTrendHint": "Last 60 days"
+       },
+       "mainIssues": {
+         "majorIssue": "Major Issue",
+         "impactHigh": "Impact - High",
+         "mentionedIn": "Mentioned in {{percentage}}% of negative reviews",
+         "noData":"No data available"
+       },
+       "mainStrengths": {
+         "mainStrength": "Major Strength",
+         "positiveImpact": "Positive Impact",
+         "mentionedIn": "Mentioned in {{percentage}}% of positive reviews"
+       },
+       "recommandedActions":{
+        "title":"Recommended action",
+        "noData":"No recommended actions available at the moment."
+       } ,
+       "overallTrend": {
+         "title": "Overall Trend",
+         "recentTrend": "Last 60 days",
+         "change": "{{sign}}{{diff}} over 60 days",
+         "changeAvg": "{{avg}} avg",
+         "summaryNoPrevious": "Current average: {{current}}/5 ({{count}} reviews). No previous period data.",
+         "summaryUp": "Average rating up ({{diff}} over 60 days)",
+         "summaryDown": "Average rating down ({{diff}} over 60 days)",
+         "summaryFlat": "Average rating stable over 60 days"
+       },
+      "riskAlert": {
+        "title": "Risk - Alert",
+        "noData": "No data available",
+        "stable": "Stable",
+        "rising": "Rising",
+        "falling": "Falling",
+        "recentDrift": "Recent drift",
+        "stableMessage": "Negative reviews are stable at {{count}} in {{month}}.",
+        "risingMessage": "Negative reviews are up by {{pct}}% in {{month}}.",
+        "fallingMessage": "Negative reviews are down by {{pct}}% in {{month}}.",
+        "comparison": "This month: {{current}} negative reviews vs {{previous}} in {{previousMonth}}.",
+        "changeStable": "0.0% change vs previous month",
+        "changeRising": "+{{pct}}% vs previous month",
+        "changeFalling": "{{pct}}% down vs previous month",
+        "footer": "Negative reviews are being monitored closely."
+      },
+      "potentialGain": {
+        "title": "Potential Gain",
+        "estimatedGain": "+{{gain}} estimated if action applied.",
+        "label":"Estimated lift"
+      }
+     }
   },
   "headerAccountMenu": {
     "establishment": "Establishment",

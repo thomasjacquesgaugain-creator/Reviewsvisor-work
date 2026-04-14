@@ -438,7 +438,8 @@ export function transformAnalysisData(
     summary: summaryText,
     topStrengths: diagnosticInsights.topStrengths,
     topWeaknesses: diagnosticInsights.topWeaknesses,
-    recommendations
+    recommendations,
+    recommendations_for_main_issues:insight?.pain_points_prioritized
   };
 
   return {
