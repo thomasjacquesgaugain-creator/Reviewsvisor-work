@@ -96,7 +96,7 @@ function RatingChangeStat({ ratingChange, t }: { ratingChange: number; t: (key: 
 
   return (
     <div className="rounded-[8px] border border-slate-100 bg-slate-50 p-3 shadow-sm">
-      <div className={`flex items-center gap-1 text-xs font-medium ${accentClassName}`}>
+      <div className={`font-semibold uppercase tracking-[0.12em] flex items-center gap-1 text-[11px] ${accentClassName}`}>
         <Icon className="h-3 w-3" />
         <span>{t("dashboard.keyTakeaways.overallScore.statRecentTrend")}</span>
       </div>
@@ -206,7 +206,7 @@ export function ScoreGlobalSection({
             <ScoreStat
               label={t("dashboard.keyTakeaways.overallScore.statPositive")}
               value={`${Math.round(positivePct)}`}
-              accentClassName="text-emerald-700"
+              accentClassName="text-[#b18cf4]"
             />
             <ScoreStat
               label={t("dashboard.keyTakeaways.overallScore.statReviews")}

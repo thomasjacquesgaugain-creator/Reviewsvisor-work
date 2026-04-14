@@ -120,10 +120,10 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
 
   const xAngle      = granularity === 'day' ? -45 : 0;
   const xAnchor     = granularity === 'day' ? 'end' : 'middle';
-  const xHeight     = granularity === 'day' ? 70 : 40;
+  const xHeight     = granularity === 'day' ? 60 : 34;
 
   return (
-    <div className="flex-1 rounded-[8px] border border-white/70 bg-gradient-to-br from-white via-[#fbfaff] to-[#f4fbff] p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)]">
+    <div className="flex-1 rounded-[8px] border border-white/70 bg-gradient-to-br from-white via-[#fbfaff] to-[#f4fbff] p-4 shadow-[0_18px_45px_rgba(37,99,235,0.08)]">
 
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-[#e9fbf6]">
@@ -140,14 +140,14 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
       </div>
 
       {summary && (
-        <p className={`mt-3 rounded-xl  px-4 py-3 text-sm leading-relaxed  ${badgeClass}`}>
+        <p className={`mt-2 rounded-[8px] px-3 py-2 text-sm leading-5 ${badgeClass}`}>
           {summary}
         </p>
       )}
 
-      <div className="mt-3 h-px bg-slate-200/70" />
+      <div className="mt-2 h-px bg-slate-200/70" />
 
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
           <TrendingUp className="h-4 w-4 text-[#2563eb]" />
           {t("analysis.history.averageRatingTitle")}
@@ -166,9 +166,9 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
 
       {chartData.length > 0 ? (
         <>
-          <div className="mt-3" style={{ height: 260 }}>
+          <div className="mt-2" style={{ height: 185 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 8, right: 12, left: 36, bottom: xHeight }}>
+              <LineChart data={chartData} margin={{ top: 8, right: 12, left: 32, bottom: xHeight }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis
                   dataKey="label"
@@ -184,7 +184,7 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
                   domain={[1, 5]}
                   ticks={[1, 2, 3, 4, 5]}
                   tick={{ fill: '#94a3b8', fontSize: 11 }}
-                  width={32}
+                  width={30}
                   axisLine={false}
                   tickLine={false}
                 >
@@ -220,12 +220,12 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <p className="mt-1 text-center text-xs text-slate-400">
+          <p className="mt-0.5 text-center text-xs text-slate-400">
             {t("analysis.history.xAxisLabel", "Period")}
           </p>
         </>
       ) : (
-        <div className="mt-3 flex h-64 items-center justify-center rounded-[8px] bg-white/70 text-sm text-slate-400">
+        <div className="mt-3 flex h-52 items-center justify-center rounded-[8px] bg-white/70 text-sm text-slate-400">
           {t("analysis.history.noData", "No data available")}
         </div>
       )}
