@@ -572,7 +572,8 @@
        "mainStrengths": {
          "mainStrength": "Major Strength",
          "positiveImpact": "Positive Impact",
-         "mentionedIn": "Mentioned in {{percentage}}% of positive reviews"
+         "mentionedIn": "Mentioned in {{percentage}}% of positive reviews",
+         "noData":"No key strengths identified from recent reviews."
        },
        "recommandedActions":{
         "title":"Recommended action",
@@ -608,7 +609,8 @@
         "title": "Potential Gain",
         "estimatedGain": "+{{gain}} estimated if action applied.",
         "label":"Estimated lift",
-        "viewActionPlan":"View Action Plan"
+        "viewActionPlan":"View Action Plan",
+        "noData":"No data available"
       }
      }
   },

@@ -662,7 +662,8 @@
        "mainStrengths": {
          "mainStrength": "Force majeure",
          "positiveImpact": "Impact positif",
-         "mentionedIn": "Mentionné dans {{percentage}}% des avis positifs"
+         "mentionedIn": "Mentionné dans {{percentage}}% des avis positifs",
+         "noData":"Aucun point fort identifié dans les évaluations récentes."
        },
        "recommandedActions":{
         "title":"Action recommandée",
@@ -698,7 +699,8 @@
         "title": "Gain potentiel",
         "estimatedGain": "+{{gain}} estimé si l'action est appliquée.",
         "label":"Portance estimée",
-        "viewActionPlan":"Afficher le plan d'action"
+        "viewActionPlan":"Afficher le plan d'action",
+        "noData":"Aucune donnée disponible"
       }
      }
   },

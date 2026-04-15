@@ -57,8 +57,8 @@ export function PotentialGainSection({
   }, [reviews, recommendedActions, mainIssue]);
 
   return (
-    <div className="relative overflow-hidden rounded-[8px] border border-white/70 bg-gradient-to-br from-white via-[#fbfaff] to-[#f4fbff] p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(161,250,232,0.16),_transparent_34%),radial-gradient(circle_at_bottom_left,_rgba(109,189,250,0.12),_transparent_28%)]" />
+    <div className="relative overflow-hidden rounded-[8px] border border-[#c6f3e8] bg-gradient-to-br from-white via-[#f6fffd] to-[#defbf4] p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(109,189,250,0.14),_transparent_40%),radial-gradient(circle_at_bottom_right,_rgba(161,250,232,0.24),_transparent_30%)]" />
 
       <div className="relative flex min-h-[236px] flex-col">
         <div className="flex items-center gap-2">
