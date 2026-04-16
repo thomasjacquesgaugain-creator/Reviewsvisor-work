@@ -5,8 +5,8 @@ import type { Database } from './types';
 const SUPABASE_URL =
   import.meta.env.VITE_SUPABASE_URL || 'http://127.0.0.1:54321';
 const SUPABASE_PUBLISHABLE_KEY =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   '';
 const PROJECT_REF =
   SUPABASE_URL.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] || 'local';
@@ -22,8 +22,8 @@ if (import.meta.env.DEV) {
     url: SUPABASE_URL.substring(0, 20) + '***',
     projectRef: PROJECT_REF || 'not detected',
     hasEnvUrl: !!import.meta.env.VITE_SUPABASE_URL,
-    hasPublishableKey: !!import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     hasAnonKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
+    hasPublishableKey: !!import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
   });
 }
 
