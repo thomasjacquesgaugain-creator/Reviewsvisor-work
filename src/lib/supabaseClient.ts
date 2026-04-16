@@ -3,8 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 const SUPABASE_URL =
   import.meta.env.VITE_SUPABASE_URL || 'http://127.0.0.1:54321';
 const ANON_KEY =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   '';
 
 if (!SUPABASE_URL || !ANON_KEY) {
