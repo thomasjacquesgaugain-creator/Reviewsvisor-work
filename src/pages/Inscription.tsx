@@ -92,35 +92,6 @@ async function onSubmit(formData: InscriptionFormData) {
       return;
     }
 
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .upsert(
-        {
-          id: data.user.id,
-          user_id: data.user.id,
-          first_name: formData.firstName.trim(),
-          last_name: formData.lastName.trim(),
-          full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
-          company: "",
-          role: "worker",
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "id" }
-      );
-
-    if (profileError) {
-      console.warn("Profile upsert warning:", profileError.message);
-    }
-
-    // Link any existing subscription row to this user by email
-    const { error: subError } = await supabase
-      .from("subscriptions")
-      .update({ user_id: data.user.id })
-      .or(`user_id.is.null,email.eq.${formData.email.trim()}`);
-
-    if (subError) {
-      console.warn("Subscription link warning:", subError.message);
-    }
 
     supabase.functions.invoke("send-welcome-email", {
       body: {
