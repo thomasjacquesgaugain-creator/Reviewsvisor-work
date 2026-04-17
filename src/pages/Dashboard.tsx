@@ -129,6 +129,7 @@ import {
 } from "@/services/dashboardSnapshot";
 import { listAll } from "@/services/reviewsService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { KeyTakeawaysPanel } from "@/components/dashboard/KeyTakeawaysPanel";
 
 const GRANULARITY_LABEL_KEYS: Record<Granularity, string> = {
   jour: "dashboard.day",
@@ -162,6 +163,7 @@ const Dashboard = () => {
 
   // États UI généraux
   const [showAvis, setShowAvis] = useState(false);
+  const [byRating, setByRating] = useState<Record<string, number>>({});
   const [openCard, setOpenCard] = useState<string | null>(null);
   // États d'ouverture indépendants (onglet "Recommandations")
   const [isSynthesisOpen, setIsSynthesisOpen] = useState(false);
@@ -557,70 +559,129 @@ const Dashboard = () => {
         .replace(/\p{Diacritic}/gu, "");
 
     const sectorSignals = {
-      restauration: [
+      // restauration: [
+      //   "cuisine",
+      //   "plat",
+      //   "plats",
+      //   "serveur",
+      //   "serveuse",
+      //   "portion",
+      //   "goût",
+      //   "gout",
+      //   "menu",
+      //   "table",
+      //   "repas",
+      //   "frites",
+      //   "dessert",
+      // ],
+      // coiffure: [
+      //   "coupe",
+      //   "couleur",
+      //   "brushing",
+      //   "coiffeur",
+      //   "coiffeuse",
+      //   "cheveux",
+      //   "shampooing",
+      //   "balayage",
+      // ],
+      // sport: [
+      //   "equipement",
+      //   "équipement",
+      //   "machines",
+      //   "machine",
+      //   "coach",
+      //   "cours",
+      //   "vestiaires",
+      //   "salle",
+      //   "fitness",
+      // ],
+      // commerce: [
+      //   "produit",
+      //   "produits",
+      //   "stock",
+      //   "choix",
+      //   "vendeur",
+      //   "vendeuse",
+      //   "boutique",
+      //   "magasin",
+      //   "caisse",
+      // ],
+      // hotel: [
+      //   "chambre",
+      //   "lit",
+      //   "petit-dejeuner",
+      //   "petit déjeuner",
+      //   "reception",
+      //   "réception",
+      //   "hotel",
+      //   "hôtel",
+      //   "sejour",
+      //   "séjour",
+      // ],
+      resturant: [
         "cuisine",
-        "plat",
-        "plats",
-        "serveur",
-        "serveuse",
+        "dish",
+        "dishes",
+        "waiter",
+        "waitress",
         "portion",
-        "goût",
-        "gout",
+        "taste",
+        "taste",
         "menu",
         "table",
-        "repas",
-        "frites",
+        "meal",
+        "fries",
         "dessert",
       ],
-      coiffure: [
-        "coupe",
-        "couleur",
-        "brushing",
-        "coiffeur",
-        "coiffeuse",
-        "cheveux",
-        "shampooing",
+      salon: [
+        "haircut",
+        "color",
+        "blow-dry",
+        "hairdresser",
+        "hairdresser",
+        "hair",
+        "shampoo",
         "balayage",
       ],
       sport: [
-        "equipement",
-        "équipement",
+        "equipment",
+        "equipment",
         "machines",
         "machine",
         "coach",
-        "cours",
-        "vestiaires",
-        "salle",
+        "classes",
+        "locker room",
+        "gym",
         "fitness",
       ],
       commerce: [
-        "produit",
-        "produits",
+        "product",
+        "products",
         "stock",
-        "choix",
-        "vendeur",
-        "vendeuse",
-        "boutique",
-        "magasin",
-        "caisse",
+        "choice",
+        "salesperson",
+        "salesperson",
+        "shop",
+        "store",
+        "checkout",
       ],
       hotel: [
-        "chambre",
-        "lit",
-        "petit-dejeuner",
-        "petit déjeuner",
+        "room",
+        "bed",
+        "breakfast",
+        "breakfast",
         "reception",
-        "réception",
+        "reception",
         "hotel",
-        "hôtel",
-        "sejour",
-        "séjour",
+        "hotel",
+        "stay",
+        "stay",
       ],
     } as const;
 
     const scores: Record<string, number> = {
-      restauration: 0,
-      coiffure: 0,
+      resturant: 0,
+      salon: 0,
       sport: 0,
       commerce: 0,
       hotel: 0,
@@ -643,14 +704,22 @@ const Dashboard = () => {
     const sector = bestScore >= 3 ? bestKey : "general";
 
     return { sector } as {
-      sector:
-        | "restauration"
-        | "coiffure"
-        | "sport"
-        | "commerce"
-        | "hotel"
-        | "general";
-    };
+      //sector:
+    //     | "restauration"
+    //     | "coiffure"
+    //     | "sport"
+    //     | "commerce"
+    //     | "hotel"
+    //     | "general";
+    // };
+    sector:
+      | "restaurant"
+      | "hairdressing"
+      | "sports"
+      | "retail"
+      | "hotel"
+      | "general";
+      };
   }, [allReviewsForChart]);
 
   const linkedKeywords = useMemo(() => {
@@ -670,117 +739,241 @@ const Dashboard = () => {
 
     // Mots-clés universels (tous secteurs)
     add(
-      "attente",
-      "attentes",
-      "lent",
-      "lente",
-      "lents",
-      "lentes",
+      // "attente",
+      // "attentes",
+      // "lent",
+      // "lente",
+      // "lents",
+      // "lentes",
+      // "long",
+      // "rapide",
+      // "cher",
+      // "chère",
+      // "chers",
+      // "chères",
+      // "prix",
+      // "tarif",
+      // "accueil",
+      // "service",
+      // "services",
+      // "personnel",
+      // "staff",
+      // "qualité",
+      // "qualite",
+      // "professionnel",
+      // "propre",
+      // "propreté",
+      // "proprete",
+      // "sale",
+      // "ambiance",
+      // "atmosphère",
+      // "atmosphere",
+      "waiting",
+      "expectations",
+      "slow",
+     
       "long",
-      "rapide",
-      "cher",
-      "chère",
-      "chers",
-      "chères",
-      "prix",
-      "tarif",
-      "accueil",
+      "fast",
+      "expensive",
+    
+      "price",
+      "rate",
+      "welcome",
       "service",
       "services",
-      "personnel",
       "staff",
-      "qualité",
-      "qualite",
-      "professionnel",
-      "propre",
-      "propreté",
-      "proprete",
-      "sale",
-      "ambiance",
-      "atmosphère",
+      "staff",
+      "quality",
+      "quality",
+      "professional",
+      "clean",
+      "cleanliness",
+      "cleanliness",
+      "dirty",
+      "ambience",
       "atmosphere",
+ 
     );
 
     // Mots-clés spécifiques selon le secteur détecté
     switch (establishmentContext.sector) {
-      case "restauration":
-        add(
-          "cuisine",
-          "plat",
-          "plats",
-          "froid",
-          "froide",
-          "froids",
-          "froides",
-          "goût",
-          "gout",
-          "portion",
-          "serveur",
-          "serveuse",
-        );
-        break;
-      case "coiffure":
-        add("coupe", "couleur", "brushing", "coiffeur", "coiffeuse", "cheveux");
-        break;
-      case "sport":
-        add(
-          "équipement",
-          "equipement",
-          "machines",
-          "machine",
-          "coach",
-          "cours",
-          "vestiaires",
-        );
-        break;
-      case "commerce":
-        add("produit", "produits", "stock", "choix", "vendeur", "vendeuse");
-        break;
-      case "hotel":
-        add(
-          "chambre",
-          "lit",
-          "petit-déjeuner",
-          "petit déjeuner",
-          "réception",
-          "reception",
-        );
-        break;
-      default:
-        break;
+      // case "restauration":
+      //   add(
+      //     // "cuisine",
+      //     // "plat",
+      //     // "plats",
+      //     // "froid",
+      //     // "froide",
+      //     // "froids",
+      //     // "froides",
+      //     // "goût",
+      //     // "gout",
+      //     // "portion",
+      //     // "serveur",
+      //     // "serveuse",
+         
+
+      //   );
+      //   break;
+      // case "coiffure":
+      //   add("coupe", "couleur", "brushing", "coiffeur", "coiffeuse", "cheveux");
+      //   break;
+      // case "sport":
+      //   add(
+      //     "équipement",
+      //     "equipement",
+      //     "machines",
+      //     "machine",
+      //     "coach",
+      //     "cours",
+      //     "vestiaires",
+      //   );
+      //   break;
+      // case "commerce":
+      //   add("produit", "produits", "stock", "choix", "vendeur", "vendeuse");
+      //   break;
+      // case "hotel":
+      //   add(
+      //     "chambre",
+      //     "lit",
+      //     "petit-déjeuner",
+      //     "petit déjeuner",
+      //     "réception",
+      //     "reception",
+      //   );
+      //   break;
+      // default:
+      //   break;
+      case "restaurant":
+          add(
+            "cuisine",
+            "dish",
+            "dishes",
+            "cold",
+            "taste",
+            "portion",
+            "waiter",
+            "waitress"
+          );
+          break;
+
+        case "hairdressing":
+          add(
+            "haircut",
+            "color",
+            "blow-dry",
+            "hairdresser",
+            "hair",
+            "shampoo"
+          );
+          break;
+
+        case "sports":
+          add(
+            "equipment",
+            "machine",
+            "machines",
+            "coach",
+            "classes",
+            "locker room",
+            "gym",
+            "fitness"
+          );
+          break;
+
+        case "retail":
+          add(
+            "product",
+            "products",
+            "stock",
+            "choice",
+            "salesperson",
+            "store",
+            "shop",
+            "checkout"
+          );
+          break;
+
+        case "hotel":
+          add(
+            "room",
+            "bed",
+            "breakfast",
+            "reception",
+            "hotel",
+            "stay"
+          );
+          break;
+
+        default:
+          break;
     }
 
     // Prioriser les thèmes d'insights (top issues) en ajoutant quelques tokens nettoyés
+    // themes.forEach((t: string) => {
+    //   if (
+    //     t.includes("service") ||
+    //     t.includes("attente") ||
+    //     t.includes("wait")
+    //   ) {
+    //     add("attente", "service", "lent", "lente");
+    //   } else if (
+    //     t.includes("prix") ||
+    //     t.includes("cher") ||
+    //     t.includes("chère") ||
+    //     t.includes("chere") ||
+    //     t.includes("tarif")
+    //   ) {
+    //     add("prix", "cher", "chère", "tarif");
+    //   } else if (
+    //     t.includes("propreté") ||
+    //     t.includes("proprete") ||
+    //     t.includes("sale") ||
+    //     t.includes("nettoyage")
+    //   ) {
+    //     add("propreté", "sale", "nettoyage");
+    //   } else if (
+    //     t.includes("ambiance") ||
+    //     t.includes("bruit") ||
+    //     t.includes("atmos")
+    //   ) {
+    //     add("ambiance", "bruit");
+    //   } else {
+    //     const clean = t.replace(/[^a-z0-9àâçéèêëîïôùûüÿñæœ\s-]/gi, " ").trim();
+    //     if (clean) add(...clean.split(/\s+/).slice(0, 2));
+    //   }
+    // });
     themes.forEach((t: string) => {
+      const theme = t.toLowerCase();
+
       if (
-        t.includes("service") ||
-        t.includes("attente") ||
-        t.includes("wait")
+        theme.includes("service") ||
+        theme.includes("waiting") ||
+        theme.includes("wait")
       ) {
-        add("attente", "service", "lent", "lente");
+        add("waiting", "service", "slow");
       } else if (
-        t.includes("prix") ||
-        t.includes("cher") ||
-        t.includes("chère") ||
-        t.includes("chere") ||
-        t.includes("tarif")
+        theme.includes("price") ||
+        theme.includes("expensive") ||
+        theme.includes("cost") ||
+        theme.includes("rate")
       ) {
-        add("prix", "cher", "chère", "tarif");
+        add("price", "expensive", "cost");
       } else if (
-        t.includes("propreté") ||
-        t.includes("proprete") ||
-        t.includes("sale") ||
-        t.includes("nettoyage")
+        theme.includes("cleanliness") ||
+        theme.includes("clean") ||
+        theme.includes("dirty") ||
+        theme.includes("cleaning")
       ) {
-        add("propreté", "sale", "nettoyage");
+        add("cleanliness", "dirty", "cleaning");
       } else if (
-        t.includes("ambiance") ||
-        t.includes("bruit") ||
-        t.includes("atmos")
+        theme.includes("ambience") ||
+        theme.includes("noise") ||
+        theme.includes("atmosphere")
       ) {
-        add("ambiance", "bruit");
+        add("ambience", "noise");
       } else {
-        const clean = t.replace(/[^a-z0-9àâçéèêëîïôùûüÿñæœ\s-]/gi, " ").trim();
+        const clean = theme.replace(/[^a-z0-9\s-]/gi, " ").trim();
         if (clean) add(...clean.split(/\s+/).slice(0, 2));
       }
     });
@@ -796,21 +989,38 @@ const Dashboard = () => {
         .replace(/\p{Diacritic}/gu, "");
     const kws = linkedKeywords.map((k) => normalize(k)).filter(Boolean);
     const negativeHints = [
-      "decu",
-      "déçu",
-      "decevant",
-      "décevant",
-      "mauvais",
+      // "decu",
+      // "déçu",
+      // "decevant",
+      // "décevant",
+      // "mauvais",
+      // "horrible",
+      // "inadmissible",
+      // "pas bon",
+      // "pas bonne",
+      // "trop",
+      // "dommage",
+      // "probleme",
+      // "problème",
+      // "a eviter",
+      // "à éviter",
+      
+      "disappointed",
+      "disappointed",
+      "disappointing",
+      "disappointing",
+      "bad",
       "horrible",
-      "inadmissible",
-      "pas bon",
-      "pas bonne",
-      "trop",
-      "dommage",
-      "probleme",
-      "problème",
-      "a eviter",
-      "à éviter",
+      "unacceptable",
+      "not good",
+      "not good",
+      "too much",
+      "too bad",
+      "problem",
+      "problem",
+      "to avoid",
+      "to avoid",
+
     ].map(normalize);
     const containsWholeWord = (text: string, term: string) => {
       const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -907,52 +1117,86 @@ const Dashboard = () => {
         key: "wait",
         label: t("dashboard.waitTime"),
         maxImpact: 0.3,
+        // keywords: [
+        //   "attente",
+        //   "attendre",
+        //   "lent",
+        //   "lente",
+        //   "lenteur",
+        //   "retard",
+        //   "queue",
+        // ],
         keywords: [
-          "attente",
-          "attendre",
-          "lent",
-          "lente",
-          "lenteur",
-          "retard",
+          "waiting",
+          "wait",
+          "slow",
+          "slowness",
+          "delay",
           "queue",
-        ],
+          ]
       },
       {
         key: "service",
         label: t("dashboard.serviceReception"),
         maxImpact: 0.2,
+        // keywords: [
+        //   "service",
+        //   "serveur",
+        //   "serveuse",
+        //   "accueil",
+        //   "accueillant",
+        //   "impoli",
+        //   "désagréable",
+        //   "desagreable",
+        // ],
         keywords: [
           "service",
-          "serveur",
-          "serveuse",
-          "accueil",
-          "accueillant",
-          "impoli",
-          "désagréable",
-          "desagreable",
-        ],
+          "waiter",
+          "waitress",
+          "welcome",
+          "welcoming",
+          "rude",
+          "unpleasant",
+        ]
       },
       {
         key: "quality",
         label: t("dashboard.foodQuality"),
         maxImpact: 0.2,
+        // keywords: [
+        //   "froid",
+        //   "froide",
+        //   "tiède",
+        //   "tiede",
+        //   "cuisson",
+        //   "fade",
+        //   "qualité",
+        //   "qualite",
+        //   "cuisine",
+        // ],
         keywords: [
-          "froid",
-          "froide",
-          "tiède",
-          "tiede",
-          "cuisson",
-          "fade",
-          "qualité",
-          "qualite",
+          "cold",
+     
+          "lukewarm",
+     
+          "cooking",
+          "bland",
+          "quality",
+          
           "cuisine",
-        ],
+        ]
       },
       {
         key: "price",
         label: t("dashboard.price"),
         maxImpact: 0.1,
-        keywords: ["prix", "cher", "chère", "chere", "coûteux", "couteux"],
+        // keywords: ["prix", "cher", "chère", "chere", "coûteux", "couteux"],
+        keywords: [
+          "price",
+          "overpriced",
+          "expensive",
+          "costly",
+        ]
       },
     ] as const;
 
@@ -1114,11 +1358,17 @@ const Dashboard = () => {
       // Pas besoin de filtrer les avis car count est déjà calculé à partir des avis réels
       if (count > 0) {
         // Actions concrètes et actionnables par le gérant lui-même (pas de décisions RH/financières)
+        // if (
+        //   theme.includes("service") ||
+        //   theme.includes("attente") ||
+        //   theme.includes("lent")
+        // ) 
         if (
           theme.includes("service") ||
-          theme.includes("attente") ||
-          theme.includes("lent")
-        ) {
+          theme.includes("waiting") ||
+          theme.includes("slow")
+        )
+        {
           if (count >= 5) {
             generatedActions.push(
               `${count} clients mentionnent une attente trop longue → briefer l'équipe sur la rapidité de service`,
@@ -1132,11 +1382,16 @@ const Dashboard = () => {
             );
           }
         } else if (
-          theme.includes("qualité") ||
-          theme.includes("plat") ||
-          theme.includes("cuisson") ||
-          theme.includes("froid") ||
-          theme.includes("chaud")
+          // theme.includes("qualité") ||
+          // theme.includes("plat") ||
+          // theme.includes("cuisson") ||
+          // theme.includes("froid") ||
+          // theme.includes("chaud")
+          theme.includes("quality") ||
+          theme.includes("dish") ||
+          theme.includes("cooking") ||
+          theme.includes("cold") ||
+          theme.includes("hot")
         ) {
           if (count >= 5) {
             generatedActions.push(
@@ -1151,19 +1406,26 @@ const Dashboard = () => {
             );
           }
         } else if (
-          theme.includes("prix") ||
-          theme.includes("cher") ||
-          theme.includes("coûteux")
+          // theme.includes("prix") ||
+          // theme.includes("cher") ||
+          // theme.includes("coûteux")
+          theme.includes("price") ||
+          theme.includes("expensive") ||
+          theme.includes("costly")
         ) {
           // Pour le prix, on constate et on observe, on ne suggère jamais de modifier les prix
           generatedActions.push(
             `${count} clients trouvent les prix élevés → observer les réactions clients sur les prix et noter les plaintes`,
           );
         } else if (
-          theme.includes("accueil") ||
-          theme.includes("sourire") ||
-          theme.includes("froid") ||
-          theme.includes("sympathie")
+          // theme.includes("accueil") ||
+          // theme.includes("sourire") ||
+          // theme.includes("froid") ||
+          // theme.includes("sympathie")
+          theme.includes("welcome") ||
+          theme.includes("smile") ||
+          theme.includes("cold") ||
+          theme.includes("friendliness")
         ) {
           if (count >= 3) {
             generatedActions.push(
@@ -1175,18 +1437,25 @@ const Dashboard = () => {
             );
           }
         } else if (
-          theme.includes("bruit") ||
-          theme.includes("bruyant") ||
-          theme.includes("ambiance") ||
-          theme.includes("musique")
+          // theme.includes("bruit") ||
+          // theme.includes("bruyant") ||
+          // theme.includes("ambiance") ||
+          // theme.includes("musique")
+          theme.includes("noise") ||
+          theme.includes("noisy") ||
+          theme.includes("ambience") ||
+          theme.includes("music")
         ) {
           generatedActions.push(
             `${count} clients mentionnent le bruit ou l'ambiance → identifier les sources de nuisance sonore ce soir`,
           );
         } else if (
-          theme.includes("propreté") ||
-          theme.includes("sale") ||
-          theme.includes("nettoyage")
+          // theme.includes("propreté") ||
+          // theme.includes("sale") ||
+          // theme.includes("nettoyage")
+          theme.includes("cleanliness") ||
+          theme.includes("dirty") ||
+          theme.includes("cleaning")
         ) {
           if (count >= 3) {
             generatedActions.push(
@@ -1871,7 +2140,7 @@ const Dashboard = () => {
         website: row.website ?? undefined,
         phone: row.phone ?? undefined,
         rating: row.rating ?? null,
-        is_active: row.is_active ?? false,
+        // is_active?: row.is_active ?? false,
       }));
 
       setEstablishments(mapped);
@@ -2143,6 +2412,11 @@ const Dashboard = () => {
             setRecentReviews(reviewsData.slice(0, 3));
             setAllReviewsForChart(reviewsData);
 
+          const counts: Record<string, number> = {};
+          for (let i = 1; i <= 5; i++) {
+          counts[i] = reviewsData.filter((r) => (r.rating ?? 0) === i).length;
+          }
+        setByRating(counts);
             // Top 5 meilleurs avis (note >= 4)
             const bestReviews = reviewsData
               .filter((r) => r.rating && r.rating >= 4)
@@ -2460,25 +2734,19 @@ const Dashboard = () => {
     ? allReviewsForChart.length
     : (insight?.total_count ?? 0);
   const totalAnalyzed = totalReviews;
-  const avgRating = hasAnalysisData
-    ? (insight?.avg_rating ?? 0)
-    : hasReviews
-      ? allReviewsForChart.reduce((sum, r) => sum + (r.rating || 0), 0) /
-        allReviewsForChart.length
-      : 0;
+  const avgRating =  allReviewsForChart?allReviewsForChart.reduce((sum, r) => sum + (r.rating || 0), 0) /allReviewsForChart.length:0;
+
   const positivePct =
-    hasAnalysisData && insight?.positive_ratio != null
-      ? Math.round(insight.positive_ratio * 100)
-      : hasReviews
-        ? Math.round(
+    // hasAnalysisData && insight?.positive_ratio != null
+    //   ? Math.round(insight.positive_ratio * 100)
+     hasReviews?
+        Math.round(
             (allReviewsForChart.filter((r) => (r.rating || 0) >= 4).length /
               allReviewsForChart.length) *
               100,
           )
         : 0;
-  const negativePct = hasAnalysisData
-    ? 100 - positivePct
-    : hasReviews
+  const negativePct = hasReviews
       ? Math.round(
           (allReviewsForChart.filter((r) => (r.rating || 0) <= 2).length /
             allReviewsForChart.length) *
@@ -2857,9 +3125,9 @@ const Dashboard = () => {
                                   t("dashboard.startingAnalysis"),
                                   selectedEtab.place_id,
                                 );
-                                const { runAnalyze } =
+                                const { runAnalyzeV2 } =
                                   await import("@/lib/runAnalyze");
-                                const result = await runAnalyze({
+                                const result = await runAnalyzeV2({
                                   place_id: selectedEtab.place_id,
                                   name: selectedEtab.name,
                                   address: selectedEtab.address,
@@ -2874,7 +3142,7 @@ const Dashboard = () => {
                                   const { data: insightData } = await supabase
                                     .from("review_insights")
                                     .select(
-                                      "total_count, avg_rating, top_issues, top_praises, positive_ratio, last_analyzed_at, summary, themes",
+                                      "total_count, avg_rating, top_issues, top_praises, positive_ratio, last_analyzed_at, summary, themes,themes_universal,themes_industry,pain_points_prioritized , recommendations_quick_wins , recommendations_projects,summary_one_liner ,summary_what_customers_love ,summary_what_customers_hate,analysis_version ,business_type,business_type_confidence,business_type_candidates",
                                     )
                                     .eq("place_id", selectedEtab.place_id)
                                     .eq("user_id", user?.id)
@@ -3096,6 +3364,17 @@ const Dashboard = () => {
 
             {/* Navigation par onglets */}
             <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
+            {activeTab === "key-takeaways" &&
+              <KeyTakeawaysPanel
+                avgRating={avgRating||displayAvgRating}
+                positivePct={positivePct}
+                reviewCount={Number(allReviewsForChart?.length)}
+                reviews={reviewsForAnalysis||allReviewsForChart}             
+                mainProblems={analysisDataForTab?.diagnostic?.topWeaknesses}
+                mainStrengths={analysisDataForTab?.diagnostic?.topStrengths}
+                recommendedActions={analysisDataForTab?.diagnostic?.recommendations_for_main_issues}
+              />
+            }
 
             {activeTab === "indicateurs" && (
               <>
@@ -3953,11 +4232,12 @@ const Dashboard = () => {
                           <h4 className="font-semibold text-lg mb-4">
                             {t("dashboard.distributionReviewsByRating")}
                           </h4>
-                          {hasReviews && insight?.summary?.by_rating ? (
+                          {hasReviews && insight? (
                             <div className="space-y-3">
-                              {[5, 4, 3, 2, 1].map((star) => {
+                              {
+                              [5, 4, 3, 2, 1].map((star) => {
                                 const count =
-                                  insight.summary.by_rating[star] || 0;
+                                   byRating[star] || 0;
                                 const total = totalReviews || 1;
                                 const percentage = Math.round(
                                   (count / total) * 100,
@@ -5279,16 +5559,17 @@ const Dashboard = () => {
                                   {t(
                                     "dashboard.trainTeamOnIdentifiedImprovements",
                                   )}
+                                <span>: {topIssues[1]?.theme||t("dashboard.notIdentified")}</span>
                                 </li>
                                 <li className="text-sm text-gray-700 flex items-start gap-2">
                                   <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                                   {topStrengths.length > 0
                                     ? t("dashboard.enhanceStrengths", {
-                                        strength: translateTheme(
+                                        strength: 
                                           topStrengths[0]?.theme ||
                                             topStrengths[0]?.strength ||
                                             t("dashboard.notIdentified"),
-                                        ),
+                                            
                                       })
                                     : t(
                                         "dashboard.identifyAndEnhanceExistingStrengths",

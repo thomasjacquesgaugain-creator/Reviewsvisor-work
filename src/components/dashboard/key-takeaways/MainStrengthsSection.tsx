@@ -1,0 +1,82 @@
+import { TrendingUp } from "lucide-react";
+import type { MainStrengthsSectionProps } from "./types";
+import { useTranslation } from "react-i18next";
+
+export function MainStrengthsSection({ strengths }: MainStrengthsSectionProps) {
+  const { t } = useTranslation();
+  const mainStrength =
+    strengths && strengths.length > 0
+      ? strengths.reduce((max, current) =>
+          current.count > max.count ? current : max
+        )
+      : null;
+
+ if (!mainStrength) {
+  return (
+    <div className="relative flex  overflow-hidden rounded-[8px] border border-[#c6f3e8] bg-gradient-to-br from-white via-[#f6fffd] to-[#defbf4] p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(109,189,250,0.14),_transparent_40%),radial-gradient(circle_at_bottom_right,_rgba(161,250,232,0.24),_transparent_30%)]" />
+
+      <div className="relative flex w-full flex-col">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#defbf4]">
+            <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
+          </span>
+          <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+            {t("dashboard.keyTakeaways.mainStrengths.mainStrength")}
+          </div>
+        </div>
+
+        <div className="mt-2 h-px w-full bg-slate-200/70" />
+
+        <div className="mt-4 text-sm text-slate-500 text-center">
+          {t(
+            "dashboard.keyTakeaways.mainStrengths.noData",
+            "No key strengths identified from recent reviews."
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+  return (
+    <div className="relative flex  overflow-hidden rounded-[8px] border border-[#c6f3e8] bg-gradient-to-br from-white via-[#f6fffd] to-[#defbf4] p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(109,189,250,0.14),_transparent_40%),radial-gradient(circle_at_bottom_right,_rgba(161,250,232,0.24),_transparent_30%)]" />
+
+      <div className="relative flex w-full flex-col">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#defbf4]">
+            <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
+          </span>
+          <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+           {t("dashboard.keyTakeaways.mainStrengths.mainStrength")}
+          </div>
+        </div>
+
+        <div className="mt-2 h-px w-full bg-slate-200/70" />
+
+        <div className="mt-3">
+          <div className="flex items-start gap-2">
+            <span className="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#defbf4]">
+              <TrendingUp className="h-4 w-4 text-emerald-600" />
+            </span>
+
+            <div className="min-w-0">
+              <div className="text-[16px] font-semibold leading-tight text-slate-800">
+                {mainStrength.theme}
+              </div>
+
+              <div className="mt-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-emerald-600">
+                {t("dashboard.keyTakeaways.mainStrengths.positiveImpact")}
+              </div>
+
+              <div className="mt-1 text-[13px] leading-5 text-slate-600">
+                {t("dashboard.keyTakeaways.mainStrengths.mentionedIn", { percentage: Math.round(mainStrength.percentage) })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

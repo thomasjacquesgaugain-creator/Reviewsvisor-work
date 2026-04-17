@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentEstablishment } from "@/services/establishments";
 
 export interface AnalysisData {
   total_count: number | null;
@@ -9,11 +10,17 @@ export interface AnalysisData {
   last_analyzed_at: string | null;
   summary: any | null;
   themes: any[] | null;
-  business_type: string | null;
+  business_type: any[] | null;
   business_type_confidence: number | null;
   business_type_candidates: any[] | null;
   themes_universal: any[] | null;
   themes_industry: any[] | null;
+  pain_points_prioritized: any[] | null;
+  recommendations_quick_wins: any[] | null;
+  recommendations_projects:any[] | null;
+  summary_one_liner: any[] | null;
+  summary_what_customers_love:any[] | null;
+  summary_what_customers_hate:any[] | null;
   analysis_version: string | null;
 }
 
@@ -27,7 +34,7 @@ export interface LoadAnalysisResult {
 // Colonnes garanties présentes dans review_insights (schéma de base).
 // Les colonnes business_type, themes_universal, etc. sont optionnelles (migration 20260128).
 const REVIEW_INSIGHTS_BASE_COLUMNS =
-  'total_count, avg_rating, top_issues, top_praises, positive_ratio, last_analyzed_at, summary, themes';
+  'total_count, avg_rating, top_issues, top_praises, positive_ratio, last_analyzed_at, summary, themes,themes_universal,themes_industry,pain_points_prioritized , recommendations_quick_wins , recommendations_projects,summary_one_liner ,summary_what_customers_love ,summary_what_customers_hate,analysis_version ,business_type,business_type_confidence,business_type_candidates'
 
 /**
  * Charge la dernière analyse pour un établissement donné.
@@ -97,22 +104,28 @@ export async function loadLatestAnalysisForActiveEstablishment(
 ): Promise<LoadAnalysisResult & { placeId?: string }> {
   try {
     // Récupérer l'établissement actif
-    const { data: activeEstablishment, error: estabError } = await supabase
-      .from('établissements')
-      .select('place_id, nom')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .maybeSingle();
+    // const { data: activeEstablishment, error: estabError } = await supabase
+    //   .from('établissements')
+    //   .select('place_id, nom')
+    //   .eq('user_id', userId)
+    //   .eq('is_active', true)
+    //   .maybeSingle();
 
-    if (estabError) {
-      console.error('[loadLatestAnalysisForActiveEstablishment] Error loading active establishment:', estabError);
-      return {
-        success: false,
-        data: null,
-        error: estabError.message,
-        hasAnalysis: false,
-      };
-    }
+
+    const activeEstablishment = await getCurrentEstablishment();
+
+
+
+
+    // if (estabError) {
+    //   console.error('[loadLatestAnalysisForActiveEstablishment] Error loading active establishment:', estabError);
+    //   return {
+    //     success: false,
+    //     data: null,
+    //     error: estabError.message,
+    //     hasAnalysis: false,
+    //   };
+    // }
 
     if (!activeEstablishment?.place_id) {
       return {

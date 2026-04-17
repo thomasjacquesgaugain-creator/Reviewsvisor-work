@@ -633,7 +633,76 @@
     "mentionsInNegativeReviews": "mentions dans les avis négatifs",
     "projectedRating": "Note projetée",
     "basedOnCurrentRating": "Basée sur la note actuelle",
-    "frequencyInNegativeReviews": "et la fréquence des mentions dans les avis négatifs."
+    "frequencyInNegativeReviews": "et la fréquence des mentions dans les avis négatifs.",
+     "keyTakeaways": {
+       "title":"Essentiel à retenir",
+       "quickRead":"Lecture rapide pour les décideurs",
+       "overallScore": {
+         "overallScore": "Note globale",
+         "critical": "Critique",
+         "toImprove": "À améliorer",
+         "good": "Bon",
+         "narrativeCritical": "Votre établissement rencontre des problèmes critiques qui impactent significativement la satisfaction client.",
+         "narrativeWarning": "Votre établissement présente des performances mitigées avec des axes d'amélioration clairs.",
+         "narrativePositive": "Votre établissement performe bien et offre une expérience client globalement positive.",
+         "statRating": "Note moyenne",
+         "statPositive": "Score de sentiment",
+         "statReviews": "Total des avis",
+         "noData":"Aucune donnée disponible",
+         "noDataHint":"Le score apparaîtra une fois les avis recueillis.",
+         "statRecentTrend": "Tendance récente",
+         "statRecentTrendHint": "Les 60 derniers jours"
+       },
+       "mainIssues": {
+         "majorIssue": "Problème majeur",
+         "impactHigh": "Impact - Élevé",
+         "mentionedIn": "Mentionné dans {{percentage}}% des avis négatifs",
+         "noData":"Aucune donnée disponible"
+       },
+       "mainStrengths": {
+         "mainStrength": "Force majeure",
+         "positiveImpact": "Impact positif",
+         "mentionedIn": "Mentionné dans {{percentage}}% des avis positifs",
+         "noData":"Aucun point fort identifié dans les évaluations récentes."
+       },
+       "recommandedActions":{
+        "title":"Action recommandée",
+        "noData":"Aucune action recommandée n'est disponible pour le moment."
+       } ,
+       "overallTrend": {
+         "title": "Tendance globale",
+         "recentTrend": "60 derniers jours",
+         "change": "{{sign}}{{diff}} sur 60 jours",
+         "changeAvg": "{{avg}} moy.",
+         "summaryNoPrevious": "Note moyenne actuelle : {{current}}/5 ({{count}} avis). Aucune donnée sur la période précédente.",
+         "summaryUp": "Note moyenne en hausse ({{diff}} sur 60 jours)",
+         "summaryDown": "Note moyenne en baisse ({{diff}} sur 60 jours)",
+         "summaryFlat": "Note moyenne stable sur 60 jours"
+       },
+       "riskAlert": {
+          "title": "Risque - Alerte",
+          "noData": "Aucune donnée disponible",
+          "stable": "Écurie",
+          "rising": "En hausse",
+          "falling": "En baisse",
+          "recentDrift": "Évolution récente",
+          "stableMessage": "Les avis négatifs sont stables à {{count}} en {{month}}.",
+          "risingMessage": "Les avis négatifs sont en hausse de {{pct}} % en {{month}}.",
+          "fallingMessage": "Les avis négatifs sont en baisse de {{pct}} % en {{month}}.",
+          "comparison": "Ce mois-ci : {{current}} avis négatifs contre {{previous}} en {{previousMonth}}.",
+          "changeStable": "Variation de 0,0 % par rapport au mois précédent",
+          "changeRising": "+{{pct}} % par rapport au mois précédent",
+          "changeFalling": "-{{pct}} % par rapport au mois précédent",
+          "footer": "Les avis négatifs font l'objet d'une surveillance étroite." 
+        },
+       "potentialGain": {
+        "title": "Gain potentiel",
+        "estimatedGain": "+{{gain}} estimé si l'action est appliquée.",
+        "label":"Portance estimée",
+        "viewActionPlan":"Afficher le plan d'action",
+        "noData":"Aucune donnée disponible"
+      }
+     }
   },
   "headerAccountMenu": {
     "establishment": "Établissements",
