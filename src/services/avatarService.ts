@@ -74,17 +74,6 @@ export async function uploadAvatar(
     throw new Error("Vous devez être connecté pour uploader une photo de profil");
   }
 
-  // Vérifier que le bucket existe (en dev uniquement)
-  if (isDev) {
-    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-    if (!bucketsError) {
-      const bucketExists = buckets?.some(b => b.name === AVATAR_BUCKET);
-      if (!bucketExists) {
-        const bucketNames = buckets?.map(b => b.name).join(', ') || 'aucun';
-        throw new Error(`Bucket "${AVATAR_BUCKET}" introuvable. Buckets disponibles : ${bucketNames || 'aucun'}. Créez le bucket "avatars" dans Supabase Dashboard > Storage.`);
-      }
-    }
-  }
 
   // Upload vers Supabase Storage
   console.log("[avatarService] Upload vers bucket:", AVATAR_BUCKET);
