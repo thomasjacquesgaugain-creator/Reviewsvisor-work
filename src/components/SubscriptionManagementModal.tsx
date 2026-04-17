@@ -44,7 +44,7 @@ export function SubscriptionManagementModal({
   const [cancelling, setCancelling] = useState(false);
   const [showChangeConfirm, setShowChangeConfirm] = useState(false);
   const [targetPlanId, setTargetPlanId] = useState<string | null>(null);
-  const [establishments, setEstablishments] = useState<Array<{ id: string; place_id: string; name: string; address: string | null; is_active: boolean; lat?: number | null; lng?: number | null; phone?: string | null; website?: string | null; url?: string | null; rating?: number | null }>>([]);
+  const [establishments, setEstablishments] = useState<Array<{ id: string; place_id: string; name: string; address: string | null; is_active?: boolean; lat?: number | null; lng?: number | null; phone?: string | null; website?: string | null; url?: string | null; rating?: number | null }>>([]);
   const [establishmentsLoading, setEstablishmentsLoading] = useState(false);
   const [updatingEstablishment, setUpdatingEstablishment] = useState<string | null>(null);
   const { t, i18n } = useTranslation();
@@ -81,9 +81,15 @@ export function SubscriptionManagementModal({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data, error } = await supabase
-          .from("établissements")
-          .select("id, place_id, nom, adresse, is_active, lat, lng, telephone, website, google_maps_url, rating")
+        // const { data, error } = await supabase
+        //   .from("établissements")
+        //   .select("id, place_id, nom, adresse, is_active, lat, lng, telephone, website, google_maps_url, rating")
+        //   .eq("user_id", user.id)
+        //   .order("updated_at", { ascending: false });
+
+         const { data, error } = await supabase
+          .from("establishments")
+          .select("id, place_id, name, formatted_address, lat, lng, phone, website, rating")
           .eq("user_id", user.id)
           .order("updated_at", { ascending: false });
 
@@ -93,14 +99,14 @@ export function SubscriptionManagementModal({
           (data || []).map((row) => ({
             id: row.id,
             place_id: row.place_id,
-            name: row.nom,
-            address: row.adresse,
-            is_active: row.is_active ?? false,
+            name: row.name,
+            address: row.formatted_address,
+            // is_active: row.is_active ?? false,
             lat: row.lat,
             lng: row.lng,
-            phone: row.telephone,
+            phone: row.phone,
             website: row.website,
-            url: row.google_maps_url,
+            // url: row.google_maps_url,
             rating: row.rating,
           }))
         );
@@ -140,7 +146,7 @@ export function SubscriptionManagementModal({
 
       // Supprimer l'établissement de la base de données
       const { error: deleteError } = await supabase
-        .from("établissements")
+        .from("establishments")
         .delete()
         .eq("id", establishmentId)
         .eq("user_id", user.id);
@@ -156,11 +162,14 @@ export function SubscriptionManagementModal({
         const firstRemaining = remainingEstablishments[0];
         
         // Marquer comme actif dans la DB
-        await supabase
-          .from("établissements")
-          .update({ is_active: true })
-          .eq("user_id", user.id)
-          .eq("place_id", firstRemaining.place_id);
+        //To Test
+        //TODO
+        // await supabase
+        //   .from("établissements")
+        //   .update({ is_active: true })
+        //   .eq("user_id", user.id)
+        //   .eq("place_id", firstRemaining.place_id);
+          
 
         // Mettre à jour localStorage pour synchroniser avec useCurrentEstablishment
         const etabData: Etab = {
@@ -206,8 +215,8 @@ export function SubscriptionManagementModal({
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         if (currentUser) {
           const { data: updatedEstablishments } = await supabase
-            .from("établissements")
-            .select("id, place_id, nom, adresse, is_active, lat, lng, telephone, website, google_maps_url, rating")
+            .from("establishments")
+            .select("id, place_id, name, formatted_address, lat, lng,phone, website, rating")
             .eq("user_id", currentUser.id)
             .order("updated_at", { ascending: false });
           
@@ -216,14 +225,14 @@ export function SubscriptionManagementModal({
               updatedEstablishments.map((row) => ({
                 id: row.id,
                 place_id: row.place_id,
-                name: row.nom,
-                address: row.adresse,
-                is_active: row.is_active ?? false,
+                name: row.name,
+                address: row.formatted_address,
+                // is_active: row.is_active ?? false,
                 lat: row.lat,
                 lng: row.lng,
-                phone: row.telephone,
+                phone: row.phone,
                 website: row.website,
-                url: row.google_maps_url,
+                // url: row.google_maps_url,
                 rating: row.rating,
               }))
             );

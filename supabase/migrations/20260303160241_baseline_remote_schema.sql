@@ -1,5 +1,5 @@
-
-
+create extension if not exists "pg_cron" with schema "pg_catalog";
+create extension if not exists "pg_net" with schema "public";
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -147,43 +147,34 @@ $$;
 ALTER FUNCTION "public"."handle_active_establishment"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-BEGIN
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$BEGIN
   INSERT INTO public.profiles (
-    id, 
-    user_id, 
-    first_name, 
+    id,
+    user_id,
+    first_name,
     last_name,
-    display_name,
     company,
     role
   )
   VALUES (
-    new.id,
-    new.id,
-    COALESCE(new.raw_user_meta_data ->> 'first_name', ''),
-    COALESCE(new.raw_user_meta_data ->> 'last_name', ''),
-    COALESCE(
-      new.raw_user_meta_data ->> 'display_name',
-      CONCAT(
-        COALESCE(new.raw_user_meta_data ->> 'first_name', ''), 
-        ' ', 
-        COALESCE(new.raw_user_meta_data ->> 'last_name', '')
-      )
-    ),
-    COALESCE(new.raw_user_meta_data ->> 'company', ''),
+    NEW.id,
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data ->> 'first_name', ''),
+    COALESCE(NEW.raw_user_meta_data ->> 'last_name', ''),
+    COALESCE(NEW.raw_user_meta_data ->> 'company', ''),
     'worker'
   );
-  RETURN new;
-EXCEPTION WHEN OTHERS THEN
-  -- Log l'erreur mais ne bloque pas la création de l'utilisateur
-  RAISE WARNING 'Error in handle_new_user: %', SQLERRM;
-  RETURN new;
-END;
-$$;
+
+  RETURN NEW;
+END;$function$
+;
+
+CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 
 ALTER FUNCTION "public"."handle_new_user"() OWNER TO "postgres";
@@ -232,11 +223,14 @@ $$;
 ALTER FUNCTION "public"."identify_duplicate_reviews"("p_place_id" "text", "p_user_id" "uuid") OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."is_admin"("uid" "uuid") RETURNS boolean
-    LANGUAGE "sql" STABLE
-    AS $$
+CREATE OR REPLACE FUNCTION public.is_admin(uid uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+AS $function$
   select exists(select 1 from public.profiles p where p.id = uid and p.role = 'admin');
-$$;
+$function$
+;
 
 
 ALTER FUNCTION "public"."is_admin"("uid" "uuid") OWNER TO "postgres";

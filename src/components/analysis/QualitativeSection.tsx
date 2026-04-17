@@ -4,7 +4,8 @@ import { QualitativeData, Review } from "@/types/analysis";
 import { useTranslation,Trans } from "react-i18next";
 import { MessageSquare, Star, TrendingUp, TrendingDown, ShoppingBag, Users } from "lucide-react";
 import { useState, useMemo } from "react";
-import { mapTextToTheme, mapThemeLabel, CanonicalTheme, computeSentimentFromRating, normalizeRating } from "@/utils/reviewProcessing";
+import { mapTextToTheme, mapThemeLabel, CanonicalTheme, computeSentimentFromRating, normalizeRating  } from "@/utils/reviewProcessing";
+import { STOP_WORDS } from "@/utils/cleanReviewText";
 
 interface QualitativeSectionProps {
   data: QualitativeData;
@@ -23,11 +24,17 @@ interface ClassifiedWord {
 }
 
 // Mots-clés pour la classification automatique
-const PRODUCT_KEYWORDS = ['cocktail', 'cuisine', 'tapas', 'plat', 'menu', 'vin', 'boisson', 'dessert', 'fromage', 'charcuterie', 'burger', 'pizza', 'salade', 'pasta', 'repas', 'assiette'];
-const EXPERIENCE_KEYWORDS = ['ambiance', 'accueil', 'serveur', 'service', 'décor', 'musique', 'terrasse', 'salle', 'réservation', 'staff', 'équipe', 'personnel'];
-const POSITIVE_KEYWORDS = ['super', 'nickel', 'excellent', 'parfait', 'génial', 'top', 'recommandé', 'adore', 'fantastique', 'merveilleux', 'remarquable', 'formidable'];
-const FRICTION_KEYWORDS = ['attente', 'longue', 'trop', 'lent', 'cher', 'bruit', 'serré', 'froid', 'chaud', 'petit', 'déçu', 'décevant', 'long'];
+// const PRODUCT_KEYWORDS = ['cocktail', 'cuisine', 'tapas', 'plat', 'menu', 'vin', 'boisson', 'dessert', 'fromage', 'charcuterie', 'burger', 'pizza', 'salade', 'pasta', 'repas', 'assiette'];
+// const EXPERIENCE_KEYWORDS = ['ambiance', 'accueil', 'serveur', 'service', 'décor', 'musique', 'terrasse', 'salle', 'réservation', 'staff', 'équipe', 'personnel'];
+// const POSITIVE_KEYWORDS = ['super', 'nickel', 'excellent', 'parfait', 'génial', 'top', 'recommandé', 'adore', 'fantastique', 'merveilleux', 'remarquable', 'formidable'];
+// const FRICTION_KEYWORDS = ['attente', 'longue', 'trop', 'lent', 'cher', 'bruit', 'serré', 'froid', 'chaud', 'petit', 'déçu', 'décevant', 'long'];
+const PRODUCT_KEYWORDS = ['cocktail', 'food', 'tapas', 'dish', 'menu', 'wine', 'drink', 'dessert', 'cheese', 'cold cuts', 'burger', 'pizza', 'salad', 'pasta', 'meal', 'plate'];
 
+const EXPERIENCE_KEYWORDS = ['ambience', 'welcome', 'server', 'service', 'decor', 'music', 'terrace', 'room', 'reservation', 'staff', 'team', 'personnel'];
+
+const POSITIVE_KEYWORDS = ['great', 'perfect', 'excellent', 'amazing', 'awesome', 'top', 'recommended', 'love', 'fantastic', 'wonderful', 'remarkable', 'outstanding'];
+
+const FRICTION_KEYWORDS = ['wait', 'long', 'too', 'slow', 'expensive', 'noise', 'crowded', 'cold', 'hot', 'small', 'disappointed', 'disappointing'];
 // Configuration des thématiques avec couleurs Reviewsvisor pastels (mode Fréquence)
 const THEMES = {
   produit: {
@@ -91,7 +98,8 @@ const DEFAULT_THEME_GROUPS = {
     bgColor: '#F1F5F9',
     textColor: '#475569',
     badgeColor: '#64748B',
-    keywords: ['serveur', 'attente', 'longue', 'accueil', 'services', 'service', 'staff', 'équipe', 'personnel', 'lent']
+    keywords: ['server', 'wait', 'long', 'welcome', 'services', 'service', 'staff', 'team', 'personnel', 'slow']
+    // keywords: ['serveur', 'attente', 'longue', 'accueil', 'services', 'service', 'staff', 'équipe', 'personnel', 'lent']
   },
   cuisine: {
     label: 'Cuisine / Produits',
@@ -99,7 +107,8 @@ const DEFAULT_THEME_GROUPS = {
     bgColor: '#DBEAFE',
     textColor: '#1E40AF',
     badgeColor: '#3B82F6',
-    keywords: ['cocktail', 'cuisine', 'tapas', 'plat', 'plats', 'menu', 'vin', 'boisson', 'dessert', 'fromage', 'charcuterie', 'burger', 'pizza', 'salade', 'pasta', 'repas', 'assiette']
+    keywords: ['cocktail', 'food', 'tapas', 'dish', 'dishes', 'menu', 'wine', 'drink', 'dessert', 'cheese', 'cold cuts', 'burger', 'pizza', 'salad', 'pasta', 'meal', 'plate']
+    // keywords: ['cocktail', 'cuisine', 'tapas', 'plat', 'plats', 'menu', 'vin', 'boisson', 'dessert', 'fromage', 'charcuterie', 'burger', 'pizza', 'salade', 'pasta', 'repas', 'assiette']
   },
   ambiance: {
     label: 'Ambiance',
@@ -107,7 +116,8 @@ const DEFAULT_THEME_GROUPS = {
     bgColor: '#ECFDF5',
     textColor: '#065F46',
     badgeColor: '#10B981',
-    keywords: ['ambiance', 'bonne', 'super', 'nickel', 'excellent', 'parfait', 'génial', 'top', 'décor', 'musique', 'terrasse', 'salle']
+    keywords: ['ambience', 'good', 'great', 'perfect', 'excellent', 'awesome', 'top', 'decor', 'music', 'terrace', 'room']
+    // keywords: ['ambiance', 'bonne', 'super', 'nickel', 'excellent', 'parfait', 'génial', 'top', 'décor', 'musique', 'terrasse', 'salle']
   },
   prix: {
     label: 'Prix',
@@ -115,7 +125,8 @@ const DEFAULT_THEME_GROUPS = {
     bgColor: '#FEE2E2',
     textColor: '#DC2626',
     badgeColor: '#EF4444',
-    keywords: ['prix', 'tarif', 'cher', 'chère', 'coût', 'rapport qualité/prix', 'qualité/prix', 'value', 'expensive', 'price', 'pricing', 'prix élevés', 'trop cher', 'coûteux', 'coûteuse', 'bon marché', 'pas cher', 'raisonnable', 'addition', 'facture']
+    keywords: ['price', 'rate', 'expensive', 'cost', 'value for money', 'quality/price', 'value', 'pricing', 'high prices', 'too expensive', 'costly', 'cheap', 'affordable', 'reasonable', 'bill', 'invoice']
+    // keywords: ['prix', 'tarif', 'cher', 'chère', 'coût', 'rapport qualité/prix', 'qualité/prix', 'value', 'expensive', 'price', 'pricing', 'prix élevés', 'trop cher', 'coûteux', 'coûteuse', 'bon marché', 'pas cher', 'raisonnable', 'addition', 'facture']
   }
 } as const;
 
@@ -214,6 +225,13 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
         { bg: '#E9D5FF', text: '#7C3AED', badge: '#8B5CF6' }, // Violet
         { bg: '#FEE2E2', text: '#DC2626', badge: '#EF4444' }, // Rouge
       ];
+    function normalizeText(text: string): string {
+      return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\w\s]/g, " ");
+    }
 
       dynamicThemes.forEach((theme, index) => {
         const themeName = (theme.theme || '').toLowerCase().replace(/[^a-z0-9]/g, '_');
@@ -225,27 +243,42 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
         const themeNameLower = theme.theme?.toLowerCase() || '';
         
         // Ajouter le nom du thème comme keyword
+        const keywordScores: Record<string, number> = {};
+        const normalizedTheme = normalizeText(themeNameLower);
         themeKeywords.push(themeNameLower);
         
         // Extraire des mots-clés depuis les avis qui mentionnent ce thème
         if (reviews && reviews.length > 0) {
           reviews.forEach(review => {
-            const text = ((review as any).text || review.texte || '').toLowerCase();
-            if (text.includes(themeNameLower)) {
-              // Extraire quelques mots autour du thème
-              const words = text.split(/\s+/);
-              const themeIndex = words.findIndex(w => w.includes(themeNameLower));
-              if (themeIndex >= 0) {
-                const contextWords = words.slice(Math.max(0, themeIndex - 2), themeIndex + 3);
-                contextWords.forEach(w => {
-                  if (w.length > 3 && !themeKeywords.includes(w)) {
-                    themeKeywords.push(w);
-                  }
-                });
+            const rawText = (review as any).text || review.texte || '';
+          const text = normalizeText(rawText);
+
+          if (!text.includes(normalizedTheme)) return;
+
+          const words = text.split(/\s+/).filter(w => w.length > 2);
+
+      
+          for (let i = 0; i < words.length; i++) {
+            for (let n = 1; n <= 3; n++) {
+              const gram = words.slice(i, i + n).join(" ");
+
+              if (
+                gram.length < 3 ||
+                STOP_WORDS.has(gram) ||
+                normalizedTheme.includes(gram)
+              ) continue;
+              if (text.includes(gram)) {
+                keywordScores[gram] = (keywordScores[gram] || 0) + 1;
+                }
               }
             }
           });
         }
+      const sortedKeywords = Object.entries(keywordScores)
+        .sort((a, b) => b[1] - a[1])
+        .map(([word]) => word)
+        .filter(w => !STOP_WORDS.has(w))
+        .slice(0, 10);
 
         dynamicGroups[themeName] = {
           label: theme.theme || 'Thème',
@@ -253,7 +286,7 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
           bgColor: colors.bg,
           textColor: colors.text,
           badgeColor: colors.badge,
-          keywords: themeKeywords.slice(0, 10) // Limiter à 10 keywords
+          keywords: [themeNameLower, ...sortedKeywords].slice(0, 10) // Limiter à 10 keywords
         };
       });
 

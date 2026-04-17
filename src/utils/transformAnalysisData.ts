@@ -256,22 +256,185 @@ export function transformAnalysisData(
      && (Array.isArray(safeInsight.themes_industry)||Array.isArray(safeInsight.themes_universal))
      && (safeInsight.themes_industry.length > 0 ||safeInsight.themes_universal.length > 0)) {
     // Utiliser les thèmes de l'IA
-    industryThemes = safeInsight.themes_industry.map((theme: any) => ({
-      theme: theme.theme || theme,
-      score: theme.score || (theme.count / totalReviews) || 0.5,
-      count: theme.count || 0,
-      verbatims: theme.verbatims || [],
-      importance:theme.importance
-    }));
-    universalThemes = safeInsight.themes_universal.map((theme: any) => ({
-      theme: theme.theme || theme,
-      score: theme.score || (theme.count / totalReviews) || 0.5,
-      count: theme.count || 0,
-      verbatims: theme.verbatims || [],
-      importance:theme.importance
-    }));
-    themes=[...universalThemes ,...industryThemes]
+
+   const totalcountcheck = safeInsight.themes_universal.reduce((sum, item) => sum + item.count, 0) +
+  safeInsight.themes_industry.reduce((sum, item) => sum + item.count, 0) ;
+   const totalcount = totalcountcheck>=totalReviews?totalcountcheck:totalReviews
+    industryThemes = safeInsight.themes_industry.map((theme: any) => {
+  const count = theme.count || 0;
+  const ratio = totalReviews > 0 ? count / totalcount : 0;   //1/4
+
+  let sentimentScore;
+
+  if (theme.sentiment === 'negative') {               //20 comments of each sentiment with 80 usable reviews
+    // from 0 → -1
+    sentimentScore = -Math.min(1, ratio);             //-1/4
+  } else if (theme.sentiment === 'positive') {
+    // from 0 → +1
+    sentimentScore = Math.min(1, ratio);              //1/4
   } else {
+    sentimentScore = 0; // neutral
+  }
+
+  return {
+    theme: theme.theme || theme,
+    score: (sentimentScore + 1) / 2,            //positive = 62.5   //negative = 37.5      //0.5
+    count,
+    verbatims: theme.verbatims || [],
+    importance: theme.importance
+  };
+});
+  universalThemes = safeInsight.themes_universal.map((theme: any) => {
+  const count = theme.count || 0;
+  const ratio = totalReviews > 0 ? count / totalcount : 0;
+
+  let sentimentScore;
+
+  if (theme.sentiment === 'negative') {
+   
+    sentimentScore = -Math.min(1, ratio);
+  } else if (theme.sentiment === 'positive') {
+   
+    sentimentScore = Math.min(1, ratio);
+  } else {
+    sentimentScore = 0; 
+  }
+
+  return {
+      theme: theme.theme || theme,
+      score: (sentimentScore + 1) / 2, 
+      count,
+      verbatims: theme.verbatims || [],
+      importance:theme.importance
+    };
+});
+    themes=[...universalThemes ,...industryThemes]
+    themes = themes.map(theme => {
+  
+      if (theme.verbatims && theme.verbatims.length > 0) {
+        return theme;
+      }
+
+      const themeWords = theme.theme
+        .toLowerCase()
+        .replace(/[^\w\s]/g, "")
+        .split(/\s+/);
+
+      const matched = (safeReviews || [])
+        .map(r => {
+          const text = cleanReviewText(r.texte || "");
+          if (!text) return null;
+
+          const rating = normalizeRating(r.note || 0);
+          const sentiment = computeSentimentFromRating(rating);
+          return {
+            text,
+            lower: text.toLowerCase(),
+            sentiment
+          };
+        })
+        .filter(r => r !== null)
+        .filter(r =>
+          themeWords.some(word => r!.lower.includes(word))
+        );
+
+      
+      const positive = matched.filter(r => r!.sentiment === 'positive');
+      const negative = matched.filter(r => r!.sentiment === 'negative');
+      const neutral  = matched.filter(r => r!.sentiment === 'neutral');
+      
+      const selected = [
+        ...negative.slice(0, 2),  
+        ...positive.slice(0, 2),
+        ...neutral.slice(0, 1)  
+      ];
+
+      // Step 4: fallback if not enough data
+      if (selected.length < 5) {
+        const remaining = matched.slice(0, 5 - selected.length);
+        selected.push(...remaining);
+      }
+
+      return {
+        ...theme,
+        verbatims: selected.map(v => v!.text)
+      };
+    });
+
+// const totalcount =
+//   safeInsight.themes_universal.reduce((sum, item) => sum + item.count, 0) +
+//   safeInsight.themes_industry.reduce((sum, item) => sum + item.count, 0);
+
+//  const allThemes = new Map<string, { count: number; score: number }>();
+
+//  //for issues
+//  (safeInsight?.themes_industry||[]).forEach((issue: any) => {
+
+//       if(issue.sentiment.toLowerCase()==='negative'){
+//         const themeName = issue.theme || issue.issue || '';
+//         if (themeName) {
+//           const count = issue.count || 0;
+//           allThemes.set(themeName, { count, score: Math.max(0, 1 - (count / totalcount)) });
+//         }}
+
+//       else if(issue.sentiment.toLowerCase()==='positive'){
+//          const themeName = issue.theme || issue.issue || '';
+//         if (themeName) {
+//           const count = issue.count || 0;
+//          allThemes.set(themeName, { count, score: Math.min(1, 0.5 + (count / totalcount)) });
+//         }
+//       }
+
+      // else if(issue.sentiment.toLowerCase()==='mixed'){
+      //    const themeName = issue.theme || issue.strength || '';
+      //    if (themeName) {
+      //     const count = issue.count || 0;
+      //     allThemes.set(themeName, { count, score: Math.max(0, 1 - (count / totalReviews)) });
+      //   }}
+    // });
+
+    
+    // (safeInsight?.themes_universal||[]).forEach((issue: any) => {
+
+    //   if(issue.sentiment.toLowerCase()==='negative'){
+    //     const themeName = issue.theme || issue.issue || '';
+    //     if (themeName) {
+    //       const count = issue.count || 0;
+    //       allThemes.set(themeName, { count, score: Math.max(0, 1 - (count / totalcount)) });
+    //     }}
+
+    //   else if(issue.sentiment.toLowerCase()==='positive'){
+    //      const themeName = issue.theme || issue.issue || '';
+    //     if (themeName) {
+    //       const count = issue.count || 0;
+    //      allThemes.set(themeName, { count, score: Math.min(1, 0.5 + (count / totalcount)) });
+    //     }
+    //   }
+
+      // else if(issue.sentiment.toLowerCase()==='mixed'){
+      //    const themeName = issue.theme || issue.strength || '';
+      //    if (themeName) {
+      //     const count = issue.count || 0;
+      //     allThemes.set(themeName, { count, score: Math.max(0, 1 - (count / totalReviews)) });
+      //   }}
+    // });
+
+
+   
+  // themes = Array.from(allThemes.entries()).map(([theme, data]) => ({
+  //     theme,
+  //     score: data.score,
+  //     count: data.count,
+  //     verbatims: []
+  //   }));
+
+
+
+
+
+
+  } 
+  else {
     // Calculer les thèmes depuis les top_issues et top_praises
     const allThemes = new Map<string, { count: number; score: number }>();
     

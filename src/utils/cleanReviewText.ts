@@ -38,7 +38,9 @@ export function cleanReviewText(text: string): string {
  * Liste des mots vides (stop words) en français
  * Utilisés pour filtrer les mots non significatifs lors de l'analyse de texte
  */
-export const STOP_WORDS = [
+
+// actual french words
+export const STOP_WORDS2 = [
   // Articles
   'le', 'la', 'les', 'un', 'une', 'des', 'de', 'du', 'au', 'aux',
   // Pronoms
@@ -65,3 +67,47 @@ export const STOP_WORDS = [
   // Formes contractées
   "d'", "l'", "m'", "n'", "s'", "t'", "c'", "j'"
 ];
+
+
+
+//testing for english
+export const STOP_WORDS = new Set( [
+  // Articles
+  'the', 'a', 'an',
+  
+  // Pronouns
+  'i', 'you', 'he', 'she', 'it', 'we', 'they',
+  'me', 'him', 'her', 'us', 'them',
+  'myself', 'yourself', 'himself', 'herself', 'itself', 'ourselves', 'themselves',
+  'this', 'that', 'these', 'those',
+
+  // Prepositions
+  'in', 'on', 'at', 'with', 'without', 'for', 'by', 'under', 'over', 'between', 'into', 'onto', 'from', 'to', 'of',
+
+  // Conjunctions
+  'and', 'or', 'but', 'so', 'because', 'nor', 'yet',
+
+  // Common adverbs
+  'very', 'more', 'less', 'well', 'badly', 'too', 'quite', 'enough', 'much', 'many', 'little',
+  'also', 'still', 'already', 'always', 'never', 'often', 'sometimes',
+
+  // Auxiliary verbs
+  'be', 'have', 'do', 'go', 'come', 'can', 'will', 'shall', 'must', 'may', 'might',
+
+  // Common words
+  'what', 'which', 'who', 'whom', 'whose', 'where', 'when', 'how', 'why',
+  'if', 'as', 'than', 'while', 'though',
+
+  // Demonstratives / determiners
+  'my', 'your', 'his', 'her', 'its', 'our', 'their',
+  'mine', 'yours', 'his', 'hers', 'ours', 'theirs',
+
+  // Linking words
+  'then', 'thus', 'so', 'after', 'before', 'during', 'next',
+
+  // Contractions
+  "i'm", "you're", "he's", "she's", "it's", "we're", "they're",
+  "i've", "you've", "we've", "they've",
+  "i'll", "you'll", "he'll", "she'll", "we'll", "they'll",
+  "don't", "doesn't", "didn't", "won't", "wouldn't", "can't", "couldn't", "shouldn't"
+]);
