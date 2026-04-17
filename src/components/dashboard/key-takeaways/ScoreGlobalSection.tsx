@@ -157,6 +157,7 @@ export function ScoreGlobalSection({
   }, [isDataAvailable, avgRating, positivePct, ratingChange, reviewCount]);
 
   const status = getScoreStatus(normalizedScore, t);
+  const displaySentimentScore=positivePct/10;
 
   const scoreNarrative =
     status.tone === "critical" ? t("dashboard.keyTakeaways.overallScore.narrativeCritical") :
@@ -205,7 +206,7 @@ export function ScoreGlobalSection({
             />
             <ScoreStat
               label={t("dashboard.keyTakeaways.overallScore.statPositive")}
-              value={`${Math.round(positivePct)}`}
+              value={`${(displaySentimentScore)}/10`}
               accentClassName="text-[#b18cf4]"
             />
             <ScoreStat
