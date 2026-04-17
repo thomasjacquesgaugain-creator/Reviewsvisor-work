@@ -129,6 +129,7 @@ import {
 } from "@/services/dashboardSnapshot";
 import { listAll } from "@/services/reviewsService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { KeyTakeawaysPanel } from "@/components/dashboard/KeyTakeawaysPanel";
 
 const GRANULARITY_LABEL_KEYS: Record<Granularity, string> = {
   jour: "dashboard.day",
@@ -3363,6 +3364,17 @@ const Dashboard = () => {
 
             {/* Navigation par onglets */}
             <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
+            {activeTab === "key-takeaways" &&
+              <KeyTakeawaysPanel
+                avgRating={avgRating||displayAvgRating}
+                positivePct={positivePct}
+                reviewCount={Number(allReviewsForChart?.length)}
+                reviews={reviewsForAnalysis||allReviewsForChart}             
+                mainProblems={analysisDataForTab?.diagnostic?.topWeaknesses}
+                mainStrengths={analysisDataForTab?.diagnostic?.topStrengths}
+                recommendedActions={analysisDataForTab?.diagnostic?.recommendations_for_main_issues}
+              />
+            }
 
             {activeTab === "indicateurs" && (
               <>

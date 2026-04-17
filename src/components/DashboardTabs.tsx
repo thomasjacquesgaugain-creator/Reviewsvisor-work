@@ -8,6 +8,7 @@ interface DashboardTabsProps {
 export const DashboardTabs = ({ activeTab, onTabChange }: DashboardTabsProps) => {
   const { t } = useTranslation();
   const tabs = [
+    { id: 'key-takeaways', label:t("dashboard.keyTakeaways.title"), icon: '✅' },
     { id: 'indicateurs', label: t("dashboard.keyIndicators"), icon: '📊' },
     { id: 'analyse', label: t("dashboard.analyse"), icon: '🔍' },
     { id: 'recommandations', label: t("dashboard.recommendations"), icon: '⚡' },
