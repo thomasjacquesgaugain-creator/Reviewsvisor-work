@@ -126,30 +126,30 @@ export function ProfileSettings() {
     }
   };
 
-  const handleSaveDisplayName = async (value: string) => {
-    if (!user) return;
-    
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .upsert({
-          user_id: user.id,
-          display_name: value,
-        }, {
-          onConflict: "user_id",
-        });
+  // const handleSaveDisplayName = async (value: string) => {
+  //   if (!user) return;
 
-      if (error) throw error;
+  //   try {
+  //     const { error } = await supabase
+  //       .from("profiles")
+  //       .upsert({
+  //         user_id: user.id,
+  //         display_name: value,
+  //       }, {
+  //         onConflict: "user_id",
+  //       });
+
+  //     if (error) throw error;
       
-      setDisplayNameState(value);
-      await refreshProfile();
-      toast.success("Nom d'affichage mis à jour");
-    } catch (err) {
-      logSupabaseError("ProfileSettings (save display name)", err);
-      toast.error("Erreur lors de la mise à jour");
-      throw err;
-    }
-  };
+  //     setDisplayNameState(value);
+  //     await refreshProfile();
+  //     toast.success("Nom d'affichage mis à jour");
+  //   } catch (err) {
+  //     logSupabaseError("ProfileSettings (save display name)", err);
+  //     toast.error("Erreur lors de la mise à jour");
+  //     throw err;
+  //   }
+  // };
 
   const handleSavePhone = async (value: string) => {
     if (!user) return;
@@ -267,8 +267,8 @@ export function ProfileSettings() {
         <EditableField
           label={t("settings.personalInformation.displayName")}
           value={displayNameState}
-          onSave={handleSaveDisplayName}
-          placeholder={t("settings.personalInformation.placeholder.displayName")}
+          // onSave={handleSaveDisplayName}
+          // placeholder={t("settings.personalInformation.placeholder.displayName")}
         />
         <EditableField
           label={t("settings.personalInformation.phoneNumber")}
