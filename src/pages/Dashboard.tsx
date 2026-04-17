@@ -5547,16 +5547,17 @@ const Dashboard = () => {
                                   {t(
                                     "dashboard.trainTeamOnIdentifiedImprovements",
                                   )}
+                                <span>: {topIssues[1]?.theme||t("dashboard.notIdentified")}</span>
                                 </li>
                                 <li className="text-sm text-gray-700 flex items-start gap-2">
                                   <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                                   {topStrengths.length > 0
                                     ? t("dashboard.enhanceStrengths", {
-                                        strength: translateTheme(
+                                        strength: 
                                           topStrengths[0]?.theme ||
                                             topStrengths[0]?.strength ||
                                             t("dashboard.notIdentified"),
-                                        ),
+                                            
                                       })
                                     : t(
                                         "dashboard.identifyAndEnhanceExistingStrengths",
