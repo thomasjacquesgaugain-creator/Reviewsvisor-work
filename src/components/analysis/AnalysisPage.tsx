@@ -104,10 +104,10 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
     return (
       <div className="mb-8 rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
         <p className="text-sm font-semibold text-slate-900">
-          Aucun avis sur la période sélectionnée
+          {t("dashboard.noReviewsForSelectedPeriod")}
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Essayez d’élargir la période ou de réinitialiser les filtres.
+         {t("dashboard.tryWiderPeriod")}
         </p>
       </div>
     );

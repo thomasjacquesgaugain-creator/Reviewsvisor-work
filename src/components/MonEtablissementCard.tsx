@@ -504,7 +504,7 @@ export default function MonEtablissementCard({
             data-name={etab.name}
           >
             <BarChart3 className="w-4 h-4" />
-            <span className="text-[10px] font-medium">Visuel des avis</span>
+            <span className="text-[10px] font-medium">{t("establishment.visualReviews")}</span>
           </button>
         </div>
       </div>

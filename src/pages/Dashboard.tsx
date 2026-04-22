@@ -195,7 +195,7 @@ const Dashboard = () => {
     GRANULARITY_LABEL_KEYS[granularityEvolution] ?? "dashboard.month",
   );
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
-  const [activeTab, setActiveTab] = useState("indicateurs");
+  const [activeTab, setActiveTab] = useState("key-takeaways");
   const [showBusinessTypeOverrideModal, setShowBusinessTypeOverrideModal] =
     useState(false);
 
