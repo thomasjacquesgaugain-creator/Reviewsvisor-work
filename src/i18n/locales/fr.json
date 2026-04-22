@@ -366,6 +366,7 @@
     "apply": "Appliquer",
     "limitedDataCaution": "Données limitées - interprétation prudente",
     "noReviewsForSelectedPeriod": "Aucun avis sur la période sélectionnée",  
+    "tryWiderPeriod": "Essayez d’élargir la période ou de réinitialiser les filtres.",
     "reset":"Réinitialiser",
     "appTagline":"Analyse complète des avis clients",
     "rating4StarsOrMore": "Note ≥ 4 étoiles",

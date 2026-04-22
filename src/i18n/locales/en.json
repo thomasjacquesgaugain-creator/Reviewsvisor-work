@@ -427,6 +427,7 @@
     "validate": "Validate",
     "limitedDataCaution": "Limited data - interpret with caution",
     "noReviewsForSelectedPeriod": "No reviews for the selected period", 
+    "tryWiderPeriod": "Try widening the period or resetting the filters.",
     "rating4StarsOrMore": "Rating ≥ 4 stars",
     "reset":"Reset",
     "appTagline":"Comprehensive Customer Review Analysis",
@@ -1293,6 +1294,16 @@
     "exampleReview": "Example: \"Excellent restaurant, impeccable service and delicious dishes! A bit tired tart but the quality was there. Very very nice!\""
   },
   "aiAssistance": {
+    "emptyQuestion": "Empty question",
+    "pleaseAskQuestion": "Please ask a question.",
+    "analysisInProgress": "Analysis in progress…",
+    "errorOccurred": "An error occurred. Please try again.",
+    "cannotContactAI": "Unable to contact the AI assistant.",
+    "tooManyRequests": "Too many requests",
+    "limitReached": "Limit reached",
+    "noAnswerReceived": "No answer received.",
+    "askQuestionsAboutReviewsvisor": "Ask your questions here only about Reviewsvisor.",
+    "placeholderExample": "E.g.: How do I import my reviews?",
     "ask": "Ask"
   },
   "about": {
