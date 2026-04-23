@@ -5,6 +5,7 @@ export interface ImportGoogleReviewsResult {
   total: number;
   inserted: number;
   skipped: number;
+  updated:number;
   message?: string;
   error?: string;
 }
@@ -62,6 +63,7 @@ export async function importGoogleReviews(
         total: data.total ?? 0,
         inserted: data.inserted ?? 0,
         skipped: data.skipped ?? 0,
+        updated:data.updated??0,
         message: data.message,
       };
     }
@@ -70,6 +72,7 @@ export async function importGoogleReviews(
       total: 0,
       inserted: 0,
       skipped: 0,
+      updated:0,
       error: data.error || `HTTP ${res.status}`,
     };
   } catch (localErr) {
@@ -91,6 +94,7 @@ export async function importGoogleReviews(
       total: 0,
       inserted: 0,
       skipped: 0,
+      updated:0,
       error: error.message || "Erreur lors de l'import",
     };
   }
@@ -102,6 +106,7 @@ export async function importGoogleReviews(
       total: 0,
       inserted: 0,
       skipped: 0,
+      updated:0,
       error: "Réponse invalide",
     };
   }
@@ -119,6 +124,7 @@ export async function importGoogleReviews(
     total: body.total ?? 0,
     inserted: body.inserted ?? 0,
     skipped: body.skipped ?? 0,
+    updated:body.updated??0,
     message: body.message,
   };
 }

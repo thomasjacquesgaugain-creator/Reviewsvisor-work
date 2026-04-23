@@ -667,6 +667,9 @@ export default function EtablissementPage() {
                 onOpenVisualPanel={handleOpenVisualPanel}
                 placeId={currentEstablishment?.place_id || selected?.place_id}
                 establishmentName={currentEstablishment?.name || selected?.name}
+                establishmentAddress={
+                  currentEstablishment?.formatted_address || selected?.address
+                }
               />
             ) : showImportBar ? (
               <div className="border border-yellow-200 rounded-lg p-6 bg-yellow-50">

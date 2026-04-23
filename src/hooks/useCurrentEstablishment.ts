@@ -4,6 +4,7 @@ export interface CurrentEstablishment {
   id: string;
   name: string;
   place_id: string;
+  formatted_address?: string | null;
 }
 
 /**
@@ -17,6 +18,7 @@ export function useCurrentEstablishment(): { establishment: CurrentEstablishment
         id: selectedEstablishment.id ?? selectedEstablishment.place_id,
         name: selectedEstablishment.name,
         place_id: selectedEstablishment.place_id,
+        formatted_address: selectedEstablishment.formatted_address ?? null,
       }
     : null;
   return { establishment, loading: false };
