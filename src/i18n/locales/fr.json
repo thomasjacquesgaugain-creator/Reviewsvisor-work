@@ -401,6 +401,7 @@
     "stars3": "3 étoiles",
     "stars2": "2 étoiles",
     "stars1": "1 étoile",
+    "stars": "étoile",
     "ratingEvolutionFor": "Évolution des avis pour {{name}}",
     "ratingEvolutionLast12Months": "Évolution des avis sur les 12 derniers mois",
     "insufficientData": "Pas assez de données pour afficher une tendance.",
@@ -1747,6 +1748,7 @@
 
       "trendTooltipAria": "Explication des tendances"
     },
+    "universalThemes": "Thèmes universels",
     "history": {
       "title": "Historique & dynamique des avis",
       "averageRatingTitle": "Évolution Note Moyenne",
@@ -1896,6 +1898,33 @@
           "occasional": "Occasionnelle"
         }
       }
+    },
+    "ishikawa": {
+      "title": "Analyse des causes racines (Ishikawa IA)",
+      "problemAnalyzed": "Problème analysé",
+      "probableCausesIdentified": "Causes probables identifiées par l'IA",
+      "process": "Processus",
+      "automatedSummary": "Synthèse automatique",
+      "automatedSummaryDescription": "L'analyse des avis suggère que le problème \"${problem}\" peut avoir plusieurs origines — une investigation terrain complémentaire est recommandée."
+    },
+    "syntheseAndDiagnostic": {
+      "title": "Synthèse & diagnostic",
+      "averageRating": "Note moyenne",
+      "positiveReviews": "Avis positifs",
+      "topIrritant": "Irritant #1",
+      "overview": "Résumé",
+      "top3PrioritizedIssues": "Top 3 Problèmes prioritaires",
+      "themePresencePercentage": "part des avis dans lesquels le thème apparaît"
+    },
+    "lexique": {
+      "title": "Lexicon and Definitions",
+      "kpiDescription": "Un KPI (Key Performance Indicator) est une mesure quantitative utilisée pour évaluer le niveau d’atteinte d’un objectif défini. Il sert à suivre l’évolution de la performance dans le temps et à appuyer les décisions de pilotage. ",
+      "paretoAnalysis": "Analyse de Pareto",
+      "paretoAnalysisDescription": "L’analyse de Pareto est une méthode de priorisation fondée sur le principe selon lequel une part limitée des causes produit la majorité des effets. Elle permet d’identifier les quelques facteurs qui contribuent le plus à un résultat, par exemple des problèmes, des défauts ou de l’insatisfaction.",
+      "rootCauseAnalysis": "Analyse des causes racines (Ishikawa)",
+      "rootCauseAnalysisDescription": "L’analyse des causes racines de type Ishikawa (ou diagramme en arêtes de poisson) est un outil visuel de cause à effet qui structure les causes potentielles d’un problème. Les causes sont regroupées en grandes catégories, qui peuvent varier selon le contexte (par exemple processus, méthodes, ressources ou environnement).",
+      "aiTrust": "Confiance IA",
+      "aiTrustDescription": "La confiance IA désigne un indicateur du degré de fiabilité des résultats produits par un modèle au regard de la quantité, de la qualité et de la cohérence des données utilisées. Elle reflète le niveau d’incertitude associé aux analyses et doit être interprétée comme un niveau de confiance plutôt que comme une vérité absolue."
     }
   }
 }
