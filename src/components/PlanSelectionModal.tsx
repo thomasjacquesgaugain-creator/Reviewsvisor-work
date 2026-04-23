@@ -91,7 +91,7 @@ interface Props {
 }
 
 export function PlanSelectionModal({ open, onClose, establishment }: Props) {
-  const { t } = useTranslation();
+  const { t,i18n } = useTranslation();
   const recommendedTier = getRecommendedTier(MONTHLY_AVERAGE_REVIEWS);
 
   const defaultPlan = subscriptionPlans.find(
@@ -133,6 +133,7 @@ export function PlanSelectionModal({ open, onClose, establishment }: Props) {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: {
           priceId: plan.priceId,
+          language: i18n.language,
           pendingEstablishment: establishment
             ? {
                 place_id: establishment.place_id,
