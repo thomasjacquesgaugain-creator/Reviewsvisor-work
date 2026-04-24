@@ -130,6 +130,7 @@ import {
 import { listAll } from "@/services/reviewsService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KeyTakeawaysPanel } from "@/components/dashboard/KeyTakeawaysPanel";
+import { DeleteEstablishmentButton } from "@/components/DeleteEstablishmentButton";
 
 const GRANULARITY_LABEL_KEYS: Record<Granularity, string> = {
   jour: "dashboard.day",
@@ -2130,7 +2131,7 @@ const Dashboard = () => {
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
-
+      
       const mapped: Etab[] = (data ?? []).map((row) => ({
         place_id: row.place_id,
         name: row.name,
@@ -2140,6 +2141,7 @@ const Dashboard = () => {
         website: row.website ?? undefined,
         phone: row.phone ?? undefined,
         rating: row.rating ?? null,
+        id:row.id?? null
         // is_active?: row.is_active ?? false,
       }));
 
@@ -2948,6 +2950,10 @@ const Dashboard = () => {
     );
   }
 
+  const fallbackEstab = establishments.find(
+  e => e.place_id !== selectedEtab?.place_id
+) ?? null;
+
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1 relative overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
@@ -3252,19 +3258,27 @@ const Dashboard = () => {
                             )}
                           </Button>
 
-                          {/* Bouton oublier établissement */}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              localStorage.removeItem(STORAGE_KEY);
-                              setSelectedEtab(null);
+                          <DeleteEstablishmentButton
+                            establishment={selectedEtab}
+                            fallbackForActivePlace={
+                              fallbackEstab
+                                ? {
+                                  place_id: fallbackEstab.place_id,
+                                  name: fallbackEstab.name,
+                                  formatted_address: fallbackEstab.address ?? "",
+                                  lat: fallbackEstab.lat ?? 0,
+                                  lng: fallbackEstab.lng ?? 0,
+                                  phone: fallbackEstab.phone,
+                                  website: fallbackEstab.website,
+                                  rating: fallbackEstab.rating ?? undefined,
+                                }
+                                : null
+                            }
+                            onSuccess={() => {
+                              setSelectedEtab(fallbackEstab);
+                              loadEstablishmentsFromDB();
                             }}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
-                            title={t("establishment.forgetThisEstablishment")}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          />
                         </div>
                       </div>
                     </CardContent>

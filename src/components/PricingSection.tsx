@@ -184,7 +184,7 @@ export function PricingSection() {
                 </CardHeader>
                 <CardContent className="flex flex-col flex-1 pb-10 px-8">
                   <ul className="space-y-5 flex-1">
-                    {plan.benefits.map((benefit, index) => {
+                    {plan?.benefits?.map((benefit, index) => {
                       const benefitKey = `subscription.plans.${plan.id}.benefits.${index}`;
                       return (
                         <li key={index} className="flex items-start gap-4">

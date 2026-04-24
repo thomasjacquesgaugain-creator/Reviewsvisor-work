@@ -78,73 +78,81 @@ serve(async (req) => {
   logStep("Event received", { type: event.type });
 
   try {
-   if (event.type === "checkout.session.completed") {
+ if (event.type === "checkout.session.completed") {
   const session = event.data.object as Stripe.Checkout.Session;
   logStep("Checkout session completed", { sessionId: session.id });
 
-  // Only keep establishment metadata — no more pendingUser fields needed
   const metadata = session.metadata || {};
-  const pendingEtabPlaceId   = metadata.pending_etab_place_id || null;
-  const pendingEtabName      = metadata.pending_etab_name || null;
-  const pendingEtabAddress   = metadata.pending_etab_address || null;
-  const pendingEtabPhone     = metadata.pending_etab_phone || null;
-  const pendingEtabWebsite   = metadata.pending_etab_website || null;
-  const pendingEtabRating    = metadata.pending_etab_rating || null;
-  const pendingEtabLat       = metadata.pending_etab_lat || null;
-  const pendingEtabLng       = metadata.pending_etab_lng || null;
-  const pendingEtabType      = metadata.pending_etab_type || null;
+
+  const pendingEtabPlaceId = metadata.pending_etab_place_id || null;
+  const pendingEtabName = metadata.pending_etab_name || null;
+  const pendingEtabAddress = metadata.pending_etab_address || null;
+  const pendingEtabPhone = metadata.pending_etab_phone || null;
+  const pendingEtabWebsite = metadata.pending_etab_website || null;
+  const pendingEtabRating = metadata.pending_etab_rating || null;
+  const pendingEtabLat = metadata.pending_etab_lat || null;
+  const pendingEtabLng = metadata.pending_etab_lng || null;
+  const pendingEtabType = metadata.pending_etab_type || null;
 
   const subscriptionId = session.subscription as string;
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+
   const priceId = subscription.items.data[0]?.price.id || "";
   const PRICE_TO_PLAN = getPriceToPlanMap();
   const planKey = PRICE_TO_PLAN[priceId] || "basic_monthly";
 
   logStep("Subscription details", { subscriptionId, priceId, planKey });
 
-  // Resolve user — they already exist since signup creates the account
   const customerEmail = session.customer_email || session.customer_details?.email;
-  logStep("Looking up user by email", { email: customerEmail });
 
   const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
   const user = existingUsers.users.find((u) => u.email === customerEmail);
 
   if (!user) {
     logStep("User not found", { email: customerEmail });
-    return new Response(JSON.stringify({ received: true, warning: "user_not_found" }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return new Response(JSON.stringify({ received: true }), { status: 200 });
   }
 
   const userId = user.id;
-  logStep("User resolved", { userId });
-
   const periodEnd = new Date(subscription.items.data[0]?.current_period_end * 1000).toISOString();
 
-  // Update entitlements
-  const { error: entitlementError } = await supabaseAdmin
-    .from("user_entitlements")
-    .upsert(
-      {
-        user_id: userId,
-        source: "stripe",
-        pro_plan_key: planKey,
-        pro_status: "active",
-        pro_current_period_end: periodEnd,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" }
-    );
-  if (entitlementError) {
-    logStep("Error updating entitlements", { error: entitlementError.message });
+  let establishmentId: string | null = null;
+
+  if (pendingEtabPlaceId) {
+    const { data: est, error: etabError } = await supabaseAdmin
+      .from("establishments")
+      .upsert(
+        {
+          user_id: userId,
+          place_id: pendingEtabPlaceId,
+          name: pendingEtabName,
+          formatted_address: pendingEtabAddress,
+          phone: pendingEtabPhone,
+          website: pendingEtabWebsite,
+          rating: pendingEtabRating ? parseFloat(pendingEtabRating) : null,
+          lat: pendingEtabLat ? parseFloat(pendingEtabLat) : null,
+          lng: pendingEtabLng ? parseFloat(pendingEtabLng) : null,
+          types: pendingEtabType,
+        },
+        { onConflict: "user_id,place_id" }
+      )
+      .select()
+      .single();
+
+    if (etabError) {
+      logStep("Error saving establishment", { error: etabError.message });
+      throw etabError;
+    }
+
+    establishmentId = est.id;
+    logStep("Establishment saved", { establishmentId });
   }
 
-  // Update subscriptions table
   const { error: subscriptionError } = await supabaseAdmin
     .from("subscriptions")
     .upsert({
       user_id: userId,
+      establishment_id: establishmentId,
       plan_code: planKey,
       provider: "stripe",
       provider_customer_id: String(session.customer || ""),
@@ -156,39 +164,25 @@ serve(async (req) => {
       created_at: new Date(subscription.created * 1000).toISOString(),
       updated_at: new Date().toISOString(),
     });
+
   if (subscriptionError) {
     logStep("Error creating subscription record", { error: subscriptionError.message });
+    throw subscriptionError;
   }
 
-  // Save pending establishment if present in metadata
-  if (pendingEtabPlaceId) {
-    logStep("Saving pending establishment", { placeId: pendingEtabPlaceId, userId });
-    const { error: etabError } = await supabaseAdmin
-      .from("establishments")
-      .upsert(
-        {
-          user_id: userId,
-          place_id: pendingEtabPlaceId,
-          nom: pendingEtabName || null,
-          name: pendingEtabName || null,
-          formatted_address: pendingEtabAddress || null,
-          phone: pendingEtabPhone || null,
-          website: pendingEtabWebsite || null,
-          rating: pendingEtabRating ? parseFloat(pendingEtabRating) : null,
-          lat: pendingEtabLat ? parseFloat(pendingEtabLat) : null,
-          lng: pendingEtabLng ? parseFloat(pendingEtabLng) : null,
-          types: pendingEtabType || null,
-        },
-        { onConflict: "user_id,place_id", ignoreDuplicates: false }
-      );
-    if (etabError) {
-      logStep("Error saving establishment", { error: etabError.message });
-    } else {
-      logStep("Establishment saved", { placeId: pendingEtabPlaceId });
-    }
-  }
+  await supabaseAdmin.from("user_entitlements").upsert(
+    {
+      user_id: userId,
+      source: "stripe",
+      pro_plan_key: planKey,
+      pro_status: "active",
+      pro_current_period_end: periodEnd,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" }
+  );
 
-  logStep("Checkout processed", { userId, planKey });
+  logStep("Checkout processed", { userId, planKey, establishmentId });
 }
 
     if (event.type === "customer.subscription.updated") {

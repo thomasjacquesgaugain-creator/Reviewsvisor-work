@@ -18,6 +18,8 @@ export type SubscriptionStatus = {
     cancel_at_period_end: boolean;
     latest_invoice_pdf_url?: string | null;
     latest_invoice_hosted_url?: string | null;
+    establishment_name?: string;
+
   }[];
   total_establishments?: number;
   additional_establishments?: number;
@@ -57,14 +59,55 @@ export const STRIPE_PRODUCTS = {
 
 export async function checkSubscription(): Promise<SubscriptionStatus> {
   try {
-    const { data, error } = await supabase.functions.invoke<SubscriptionStatus>("check-subscription");
+    const { data, error } = await supabase.functions.invoke<SubscriptionStatus>(
+      "check-subscription"
+    );
 
     if (error) {
       console.error("Error checking subscription:", error);
       return { subscribed: false };
     }
 
-    return data || { subscribed: false };
+    if (!data || !data.subscriptions?.length) {
+      return data || { subscribed: false };
+    }
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData.user;
+    if (!user) return data;
+
+    const { data: dbSubs, error: dbError } = await supabase
+      .from("subscriptions")
+      .select(`
+        provider_subscription_id,
+        establishment:establishment_id (
+          name
+        )
+      `)
+      .eq("user_id", user.id);
+
+    if (dbError) {
+      console.error("Error fetching subscription mapping:", dbError);
+      return data;
+    }
+
+    const map: Record<string, string> = {};
+
+    (dbSubs || []).forEach((row: any) => {
+      if (row.provider_subscription_id) {
+        map[row.provider_subscription_id] =
+          row.establishment?.name ?? "—";
+      }
+    });
+
+    const enrichedSubscriptions = data.subscriptions.map((sub: any) => ({
+      ...sub,
+      establishment_name: map[sub.subscription_id] ?? "—",
+    }));
+
+    return {
+      ...data,
+      subscriptions: enrichedSubscriptions,
+    };
   } catch (err) {
     console.error("Error checking subscription:", err);
     return { subscribed: false };
@@ -140,6 +183,28 @@ export async function updateSubscriptionQuantity(newQuantity: number): Promise<{
     return { success: data?.success ?? false };
   } catch (err) {
     console.error("Error updating subscription quantity:", err);
+    throw err;
+  }
+}
+
+export async function cancelSubscription(
+  subscriptionId: string
+): Promise<{ success: boolean }> {
+  try {
+    const { data, error } = await supabase.functions.invoke<{
+      success: boolean;
+    }>("cancel-subscription-by-id", {
+      body: { subscription_id: subscriptionId },
+    });
+
+    if (error) {
+      console.error("Error cancelling subscription:", error);
+      throw new Error(error.message);
+    }
+
+    return { success: data?.success ?? false };
+  } catch (err) {
+    console.error("Error cancelling subscription:", err);
     throw err;
   }
 }

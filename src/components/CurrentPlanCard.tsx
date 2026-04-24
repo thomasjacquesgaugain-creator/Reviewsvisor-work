@@ -3,7 +3,7 @@ import { subscriptionPlans, type SubscriptionPlan } from "@/config/subscriptionP
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Building2, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 
@@ -94,8 +94,17 @@ export function CurrentPlanCard({ summary, activePlan, className }: CurrentPlanC
 
             <CardHeader className="pb-3 pt-8 px-5">
               <CardTitle className="text-xl font-bold text-foreground">
-                {sub.planName}
+                {sub.planName} 
               </CardTitle>
+
+              {sub.establishmentName && (
+                <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted">
+                    <Building2 className="w-3 h-3" />
+                    {sub.establishmentName}
+                  </div>
+                </div>
+              )}
 
               {plan && (
                 <div className="mt-3">

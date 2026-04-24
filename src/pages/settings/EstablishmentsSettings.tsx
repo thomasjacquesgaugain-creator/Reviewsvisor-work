@@ -1,9 +1,7 @@
+// EstablishmentsSettings.tsx — simplified with DeleteEstablishmentButton
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthProvider";
-import {
-  getUserEstablishments,
-  EstablishmentData,
-} from "@/services/establishments";
+import { getUserEstablishments, EstablishmentData } from "@/services/establishments";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { toastActiveEstablishment } from "@/lib/toastActiveEstablishment";
 import {
@@ -13,21 +11,11 @@ import {
 } from "@/lib/establishmentCardStyles";
 import { sortEstablishmentsWithActiveFirst } from "@/utils/sortEstablishmentsWithActiveFirst";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Building2, Check, Plus, Loader2, Star, Trash2 } from "lucide-react";
+import { Building2, Check, Plus, Loader2, Star } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { updateSubscriptionQuantity } from "@/lib/stripe";
-import { EVT_LIST_UPDATED } from "@/types/etablissement";
+import { DeleteEstablishmentButton } from "@/components/DeleteEstablishmentButton";
 import { useTranslation } from "react-i18next";
 
 export function EstablishmentsSettings() {
@@ -37,9 +25,6 @@ export function EstablishmentsSettings() {
   const [establishments, setEstablishments] = useState<EstablishmentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [settingActiveId, setSettingActiveId] = useState<string | null>(null);
-  const [establishmentToDelete, setEstablishmentToDelete] =
-    useState<EstablishmentData | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { t } = useTranslation();
 
   const loadEstablishments = useCallback(async () => {
@@ -57,9 +42,7 @@ export function EstablishmentsSettings() {
   }, [user]);
 
   useEffect(() => {
-    if (user) {
-      loadEstablishments();
-    }
+    if (user) loadEstablishments();
   }, [user, loadEstablishments]);
 
   const sortedEstablishments = useMemo(
@@ -82,78 +65,10 @@ export function EstablishmentsSettings() {
       });
       toastActiveEstablishment(establishment.name);
       await loadEstablishments();
-    } catch (error) {
+    } catch {
       toast.error("Impossible de définir l'établissement actif");
     } finally {
       setSettingActiveId(null);
-    }
-  };
-
-  const handleDeleteClick = (est: EstablishmentData) => {
-    setEstablishmentToDelete(est);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!establishmentToDelete || !user) return;
-    const est = establishmentToDelete;
-    setDeletingId(est.id ?? est.place_id);
-    try {
-      let query = supabase
-        .from("establishments")
-        .delete()
-        .eq("user_id", user.id);
-      if (est.id) {
-        query = query.eq("id", est.id);
-      } else {
-        query = query.eq("place_id", est.place_id);
-      }
-      const { error } = await query;
-      if (error) throw error;
-      setEstablishmentToDelete(null);
-      const remaining = establishments.filter(
-        (e) => (e.id ?? e.place_id) !== (est.id ?? est.place_id),
-      );
-      setEstablishments(remaining);
-      if (remaining.length > 0 && activePlaceId === est.place_id) {
-        const first = remaining[0];
-        await setActivePlace(first.place_id, {
-          place_id: first.place_id,
-          name: first.name,
-          formatted_address: first.formatted_address,
-          lat: first.lat,
-          lng: first.lng,
-          phone: first.phone,
-          website: first.website,
-          rating: first.rating,
-        });
-      }
-      await loadEstablishments();
-      window.dispatchEvent(new CustomEvent(EVT_LIST_UPDATED));
-
-      // Mettre à jour la quantité d'établissements supplémentaires dans Stripe (1 inclus dans le plan)
-      const newExtraQuantity = Math.max(0, remaining.length - 1);
-      try {
-        await updateSubscriptionQuantity(newExtraQuantity);
-      } catch (stripeErr) {
-        console.error(
-          "Erreur mise à jour Stripe après suppression:",
-          stripeErr,
-        );
-        toast.error(
-          "Abonnement mis à jour en base, mais la facturation Stripe n'a pas pu être synchronisée.",
-        );
-      }
-
-      toast.success(t("settings.establishmentAndAccess.establishmentClosed"));
-    } catch (error: unknown) {
-      console.error("Error deleting establishment:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Erreur lors de la suppression",
-      );
-    } finally {
-      setDeletingId(null);
     }
   };
 
@@ -171,7 +86,9 @@ export function EstablishmentsSettings() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">{t("settings.establishmentAndAccess.title")}</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">
+          {t("settings.establishmentAndAccess.title")}
+        </h1>
         <Button onClick={() => navigate("/etablissement")} className="gap-2">
           <Plus className="h-4 w-4" />
           <span>{t("settings.establishmentAndAccess.addEstablishment")}</span>
@@ -181,7 +98,9 @@ export function EstablishmentsSettings() {
       {sortedEstablishments.length === 0 ? (
         <div className="text-center py-12">
           <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 mb-4">{t("settings.establishmentAndAccess.noEstablishment")}</p>
+          <p className="text-gray-500 mb-4">
+            {t("settings.establishmentAndAccess.noEstablishment")}
+          </p>
           <Button onClick={() => navigate("/etablissement")} className="gap-2">
             <Plus className="h-4 w-4" />
             <span>{t("settings.establishmentAndAccess.addFirstEstablishment")}</span>
@@ -192,18 +111,20 @@ export function EstablishmentsSettings() {
           {sortedEstablishments.map((est) => {
             const isActive = activePlaceId === est.place_id;
             const isSettingActive = settingActiveId === est.place_id;
+
+            // The first establishment that is NOT the current one becomes the fallback
+            const fallback = establishments.find(
+              (e) => (e.id ?? e.place_id) !== (est.id ?? est.place_id)
+            ) ?? null;
+
             return (
               <div
                 key={est.id ?? est.place_id}
                 className={cn(
                   "border rounded-lg p-4 shadow-sm",
                   ESTABLISHMENT_CARD_HOVER,
-                  isActive
-                    ? "border-blue-200 bg-blue-50"
-                    : "border-gray-200 bg-white",
-                  isActive
-                    ? ESTABLISHMENT_CARD_HOVER_ACTIVE
-                    : ESTABLISHMENT_CARD_HOVER_NEUTRAL,
+                  isActive ? "border-blue-200 bg-blue-50" : "border-gray-200 bg-white",
+                  isActive ? ESTABLISHMENT_CARD_HOVER_ACTIVE : ESTABLISHMENT_CARD_HOVER_NEUTRAL,
                 )}
               >
                 <div className="flex items-start justify-between gap-4">
@@ -231,9 +152,7 @@ export function EstablishmentsSettings() {
                       )}
                     </div>
                     {est.formatted_address && (
-                      <p className="text-sm text-gray-500 ml-7">
-                        {est.formatted_address}
-                      </p>
+                      <p className="text-sm text-gray-500 ml-7">{est.formatted_address}</p>
                     )}
                     {est.rating != null && (
                       <p className="flex items-center gap-1 text-sm text-gray-500 ml-7 mt-1">
@@ -269,15 +188,12 @@ export function EstablishmentsSettings() {
                         {t("settings.establishmentAndAccess.manage")}
                       </Button>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteClick(est)}
-                      className="shrink-0 text-red-600 hover:text-red-700 hover:bg-red-50 self-end"
-                      aria-label="Supprimer cet établissement"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+
+                    <DeleteEstablishmentButton
+                      establishment={est}
+                      fallbackForActivePlace={fallback}
+                      onSuccess={() => loadEstablishments()}
+                    />
                   </div>
                 </div>
               </div>
@@ -285,37 +201,6 @@ export function EstablishmentsSettings() {
           })}
         </div>
       )}
-
-      <Dialog
-        open={!!establishmentToDelete}
-        onOpenChange={(open) => !open && setEstablishmentToDelete(null)}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t("settings.establishmentAndAccess.deleteEstablishment")}</DialogTitle>
-            <DialogDescription>
-              {t("settings.establishmentAndAccess.deleteConfirmation")}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setEstablishmentToDelete(null)}
-              disabled={!!deletingId}
-            >
-              {t("settings.establishmentAndAccess.cancel")}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-              disabled={!!deletingId}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {deletingId ? <Loader2 className="h-4 w-4 animate-spin" /> : t("settings.establishmentAndAccess.delete")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

@@ -27,6 +27,7 @@ export type BillingSummary = {
     cancelAtPeriodEnd: boolean;
     latestInvoicePdfUrl?: string | null;
     latestInvoiceHostedUrl?: string | null;
+    establishmentName?: string;
   }[];
 };
 
@@ -65,7 +66,7 @@ export function getBillingSummary(subscription: SubscriptionStatus | null): Bill
 
     return {
       subscriptionId: sub.subscription_id,
-      planName:       plan?.name ?? FREE_PLAN_NAME,
+      planName:       plan?.name ?? null,
       planTier:       plan?.tier ?? null,
       planBilling:    plan?.billing ?? null,
       priceId:        sub.plan_price_id,
@@ -73,6 +74,7 @@ export function getBillingSummary(subscription: SubscriptionStatus | null): Bill
       cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
       latestInvoicePdfUrl: sub.latest_invoice_pdf_url ?? null,
       latestInvoiceHostedUrl: sub.latest_invoice_hosted_url ?? null,
+      establishmentName:  sub.establishment_name ?? "—",
     };
   });
   const primary = activeSubscriptions[0] ?? null;
