@@ -7179,7 +7179,7 @@ const Dashboard = () => {
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">
-                            {t("dashboard.replied")}
+                            {t("dashboard.reply")}
                           </p>
                           <p className="text-2xl font-bold">
                             {
@@ -7455,7 +7455,7 @@ const Dashboard = () => {
                                             <div className="flex items-center gap-2">
                                               <AlertCircle className="w-5 h-5 text-red-600" />
                                               <h3 className="font-semibold text-red-900">
-                                                🔴 Avec une plainte
+                                                {t("dashboard.containsComplaint")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-red-600 text-white">
@@ -7473,22 +7473,22 @@ const Dashboard = () => {
                                                   )}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -7580,8 +7580,8 @@ const Dashboard = () => {
                                                             }
                                                           >
                                                             {hasResponse
-                                                              ? "Répondu"
-                                                              : "En attente"}
+                                                              ? t("dashboard.replied")
+                                                              : t("dashboard.pending")}
                                                           </Badge>
                                                         </td>
                                                         <td className="px-4 py-3">
@@ -7597,7 +7597,7 @@ const Dashboard = () => {
                                                                 )
                                                               }
                                                             >
-                                                              Voir la réponse
+                                                              {t("dashboard.viewResponse")}
                                                             </Badge>
                                                           ) : (
                                                             <Button
@@ -7617,7 +7617,7 @@ const Dashboard = () => {
                                                               }}
                                                             >
                                                               <Reply className="w-3 h-3 mr-1" />
-                                                              Répondre
+                                                              {t("dashboard.reply")}
                                                             </Button>
                                                           )}
                                                         </td>
@@ -7671,7 +7671,7 @@ const Dashboard = () => {
                                             <div className="flex items-center gap-2">
                                               <Lightbulb className="w-5 h-5 text-yellow-600" />
                                               <h3 className="font-semibold text-yellow-900">
-                                                💡 Contient une suggestion
+                                                {t("dashboard.containsSuggestion")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-yellow-600 text-white">
@@ -7684,25 +7684,25 @@ const Dashboard = () => {
                                             <thead className="bg-yellow-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -7794,8 +7794,8 @@ const Dashboard = () => {
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
@@ -7811,7 +7811,7 @@ const Dashboard = () => {
                                                               )
                                                             }
                                                           >
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -7831,7 +7831,7 @@ const Dashboard = () => {
                                                             }}
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -7860,7 +7860,7 @@ const Dashboard = () => {
                                             <div className="flex items-center gap-2">
                                               <Frown className="w-5 h-5 text-orange-600" />
                                               <h3 className="font-semibold text-orange-900">
-                                                😠 Ton négatif détecté
+                                                {t("dashboard.negativeToneDetected")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-orange-600 text-white">
@@ -7873,25 +7873,25 @@ const Dashboard = () => {
                                             <thead className="bg-orange-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -7983,8 +7983,8 @@ const Dashboard = () => {
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
@@ -8000,7 +8000,7 @@ const Dashboard = () => {
                                                               )
                                                             }
                                                           >
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -8020,7 +8020,7 @@ const Dashboard = () => {
                                                             }}
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -8049,7 +8049,7 @@ const Dashboard = () => {
                                             <div className="flex items-center gap-2">
                                               <ThumbsUp className="w-5 h-5 text-green-600" />
                                               <h3 className="font-semibold text-green-900">
-                                                👍 Avis positif
+                                                {t("dashboard.positiveReview")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-green-600 text-white">
@@ -8062,25 +8062,25 @@ const Dashboard = () => {
                                             <thead className="bg-green-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -8172,8 +8172,8 @@ const Dashboard = () => {
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
@@ -8183,7 +8183,7 @@ const Dashboard = () => {
                                                           className="text-xs"
                                                         >
                                                           <Reply className="w-3 h-3 mr-1" />
-                                                          Répondre
+                                                          {t("dashboard.replied")}
                                                         </Button>
                                                       </td>
                                                     </tr>
@@ -8216,7 +8216,7 @@ const Dashboard = () => {
                                             <div className="flex items-center gap-2">
                                               <Star className="w-5 h-5 fill-red-500 text-red-500" />
                                               <h3 className="font-semibold text-red-900">
-                                                ⭐ 1-2 étoiles
+                                                {t("analysis.overview.stars.1to2")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-red-600 text-white">
@@ -8229,25 +8229,25 @@ const Dashboard = () => {
                                             <thead className="bg-red-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -8339,14 +8339,14 @@ const Dashboard = () => {
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -8355,7 +8355,7 @@ const Dashboard = () => {
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -8384,7 +8384,7 @@ const Dashboard = () => {
                                             <div className="flex items-center gap-2">
                                               <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" />
                                               <h3 className="font-semibold text-yellow-900">
-                                                ⭐ 3 étoiles
+                                                {t("analysis.overview.stars.3")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-yellow-600 text-white">
@@ -8397,25 +8397,25 @@ const Dashboard = () => {
                                             <thead className="bg-yellow-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -8491,14 +8491,14 @@ const Dashboard = () => {
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -8507,7 +8507,7 @@ const Dashboard = () => {
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -8536,7 +8536,7 @@ const Dashboard = () => {
                                             <div className="flex items-center gap-2">
                                               <Star className="w-5 h-5 fill-green-500 text-green-500" />
                                               <h3 className="font-semibold text-green-900">
-                                                ⭐ 4-5 étoiles
+                                                {t("analysis.overview.stars.4to5")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-green-600 text-white">
@@ -8549,25 +8549,25 @@ const Dashboard = () => {
                                             <thead className="bg-green-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -8643,14 +8643,14 @@ const Dashboard = () => {
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -8659,7 +8659,7 @@ const Dashboard = () => {
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -8719,22 +8719,22 @@ const Dashboard = () => {
                                                   )}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -8810,14 +8810,14 @@ const Dashboard = () => {
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -8826,7 +8826,7 @@ const Dashboard = () => {
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -8853,7 +8853,7 @@ const Dashboard = () => {
                                             <div className="flex items-center gap-2">
                                               <AlertTriangle className="w-5 h-5 text-orange-600" />
                                               <h3 className="font-semibold text-orange-900">
-                                                ⚠️ À surveiller
+                                                {t("dashboard.needsAttention")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-orange-600 text-white">
@@ -8866,25 +8866,25 @@ const Dashboard = () => {
                                             <thead className="bg-orange-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -8960,14 +8960,14 @@ const Dashboard = () => {
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -8976,7 +8976,7 @@ const Dashboard = () => {
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -9005,7 +9005,7 @@ const Dashboard = () => {
                                             <div className="flex items-center gap-2">
                                               <CheckCircle className="w-5 h-5 text-green-600" />
                                               <h3 className="font-semibold text-green-900">
-                                                ✅ Réponses rapides
+                                                {t("dashboard.quickResponses")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-green-600 text-white">
@@ -9018,25 +9018,25 @@ const Dashboard = () => {
                                             <thead className="bg-green-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -9112,14 +9112,14 @@ const Dashboard = () => {
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -9128,7 +9128,7 @@ const Dashboard = () => {
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -9175,25 +9175,25 @@ const Dashboard = () => {
                                             <thead className="bg-blue-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -9269,14 +9269,14 @@ const Dashboard = () => {
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -9285,7 +9285,7 @@ const Dashboard = () => {
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -9328,25 +9328,25 @@ const Dashboard = () => {
                                             <thead className="bg-blue-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -9422,14 +9422,14 @@ const Dashboard = () => {
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -9438,7 +9438,7 @@ const Dashboard = () => {
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -9482,25 +9482,25 @@ const Dashboard = () => {
                                             <thead className="bg-green-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -9576,14 +9576,14 @@ const Dashboard = () => {
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -9592,7 +9592,7 @@ const Dashboard = () => {
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -9655,13 +9655,13 @@ const Dashboard = () => {
                                                   <thead className="bg-gray-50">
                                                     <tr>
                                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                                                        Auteur
+                                                        {t("dashboard.dashResponseTableHeading.author")}
                                                       </th>
                                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                                                         Note
                                                       </th>
                                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                                                        Commentaire
+                                                        {t("dashboard.dashResponseTableHeading.comment")}
                                                       </th>
                                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                                                         Source
@@ -9670,7 +9670,7 @@ const Dashboard = () => {
                                                         Date
                                                       </th>
                                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                                                        Statut
+                                                        {t("dashboard.dashResponseTableHeading.status")}
                                                       </th>
                                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                                                         Action
@@ -9755,8 +9755,8 @@ const Dashboard = () => {
                                                                 }
                                                               >
                                                                 {hasResponse
-                                                                  ? "Répondu"
-                                                                  : "En attente"}
+                                                                  ? t("dashboard.replied")
+                                                                  : t("dashboard.pending")}
                                                               </Badge>
                                                             </td>
                                                             <td className="px-4 py-3">
@@ -9766,7 +9766,7 @@ const Dashboard = () => {
                                                                 className="text-xs"
                                                               >
                                                                 <Reply className="w-3 h-3 mr-1" />
-                                                                Répondre
+                                                                {t("dashboard.reply")}
                                                               </Button>
                                                             </td>
                                                           </tr>
@@ -9893,8 +9893,8 @@ const Dashboard = () => {
                                                     }
                                                   >
                                                     {hasResponse
-                                                      ? "Répondu"
-                                                      : "En attente"}
+                                                      ? t("dashboard.replied")
+                                                      : t("dashboard.pending")}
                                                   </Badge>
                                                 </td>
                                                 <td className="px-4 py-3">
@@ -9910,7 +9910,7 @@ const Dashboard = () => {
                                                         )
                                                       }
                                                     >
-                                                      Voir la réponse
+                                                      {t("dashboard.viewResponse")}
                                                     </Badge>
                                                   ) : (
                                                     <Button
@@ -9929,7 +9929,7 @@ const Dashboard = () => {
                                                       }}
                                                     >
                                                       <Reply className="w-3 h-3 mr-1" />
-                                                      Répondre
+                                                      {t("dashboard.reply")}
                                                     </Button>
                                                   )}
                                                 </td>
@@ -9943,7 +9943,7 @@ const Dashboard = () => {
                                                     >
                                                       <div className="border-l-4 border-green-500 pl-4">
                                                         <p className="font-semibold text-green-700 mb-2">
-                                                          Réponse publiée :
+                                                          {t("dashboard.responsePublished")} :
                                                         </p>
                                                         <p className="text-gray-700">
                                                           {review.owner_reply_text ||
@@ -9989,7 +9989,7 @@ const Dashboard = () => {
                                   }
                                   className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                                 >
-                                  Afficher plus
+                                  {t("dashboard.showMore")}
                                   <ChevronDown className="w-4 h-4" />
                                 </button>
                               </div>
