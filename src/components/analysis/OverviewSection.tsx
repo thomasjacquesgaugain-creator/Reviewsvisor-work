@@ -779,7 +779,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                           className="flex items-center gap-4"
                         >
                           <span className="w-20 text-sm text-gray-600 font-medium">
-                            {star} étoile{star > 1 ? "s" : ""}
+                            {star} {t("dashboard.stars")}{star > 1 ? "s" : ""}
                           </span>
                           <div className="flex-1 bg-gray-100 rounded-full h-3">
                             <div

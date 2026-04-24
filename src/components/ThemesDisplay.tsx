@@ -4,6 +4,7 @@
  * Affiche les thèmes métier uniquement si confidence >= 75
  */
 
+import { useTranslation } from "react-i18next";
 import { BusinessTypeIndicator } from "./BusinessTypeIndicator";
 import { BusinessType } from "@/config/industry";
 
@@ -33,6 +34,7 @@ export function ThemesDisplay({
   totalReviews = 1,
   onOverrideClick
 }: ThemesDisplayProps) {
+  const { t } = useTranslation();
   const hasUniversalThemes = themesUniversal && Array.isArray(themesUniversal) && themesUniversal.length > 0;
   const hasIndustryThemes = themesIndustry && Array.isArray(themesIndustry) && themesIndustry.length > 0;
   const showIndustryThemes = businessTypeConfidence !== null && businessTypeConfidence !== undefined && businessTypeConfidence >= 45;
@@ -47,7 +49,7 @@ export function ThemesDisplay({
       {/* Thèmes universels - TOUJOURS affichés */}
       {hasUniversalThemes && (
         <div>
-          <h4 className="font-semibold text-lg mb-4">Thèmes universels</h4>
+          <h4 className="font-semibold text-lg mb-4">{t("analysis.overview.universalThemes")}</h4>
           <div className="space-y-2">
             {themesUniversal.map((theme, index) => {
               const themeName = theme.theme || 'Thématique';

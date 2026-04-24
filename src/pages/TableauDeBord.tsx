@@ -369,7 +369,7 @@ const Dashboard = () => {
                   <Link to="/etablissement">
                     <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
                       <Plus className="w-5 h-5 mr-2" />
-                      Ajouter un établissement
+                      {t("dashboard.addEstablishment")}
                     </Button>
                   </Link>
                 </div>
