@@ -56,15 +56,42 @@ export const useEstablishmentStore = create<EstablishmentStore>((set, get) => ({
     } = await supabase.auth.getUser();
     if (!user?.id) return;
     try {
-      // find establishment id from place_id
+      // Read back the full DB row so callers can pass a partial payload and the
+      // store still gets fields like `types` without waiting for a page refresh.
       const { data: estab, error: estabError } = await supabase
         .from("establishments")
-        .select("id")
+        .select(
+          "id, user_id, place_id, name, formatted_address, lat, lng, phone, website, rating, user_ratings_total, types, source, raw, created_at, updated_at",
+        )
         .eq("place_id", placeId)
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (estabError || !estab) throw estabError;
+
+      set({
+        selectedEstablishment: {
+          id: estab.id,
+          user_id: estab.user_id ?? undefined,
+          place_id: estab.place_id,
+          name: estab.name ?? payload.name,
+          formatted_address:
+            estab.formatted_address ?? payload.formatted_address,
+          lat: estab.lat ?? payload.lat,
+          lng: estab.lng ?? payload.lng,
+          phone: estab.phone ?? payload.phone,
+          website: estab.website ?? payload.website,
+          rating: estab.rating ?? payload.rating,
+          user_ratings_total:
+            estab.user_ratings_total ?? payload.user_ratings_total,
+          types: estab.types ?? payload.types ?? null,
+          source: estab.source ?? payload.source,
+          raw: estab.raw ?? payload.raw,
+          created_at: estab.created_at ?? payload.created_at,
+          updated_at: estab.updated_at ?? payload.updated_at,
+        },
+        activePlaceId: placeId,
+      });
 
       // update profile current establishment
       const { error } = await supabase
