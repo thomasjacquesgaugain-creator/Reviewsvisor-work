@@ -160,11 +160,6 @@ const activePlan = useMemo(
       <div>
         <h2 className="text-lg font-medium text-gray-900 mb-4">{t("settings.BillingAndSubscription.billingManagement")}</h2>
         <div className="flex flex-wrap gap-3">
-          {isFree ? (
-            <Button onClick={() => navigate("/abonnement")}>
-              {t("settings.BillingAndSubscription.viewAvailablePlans")}
-            </Button>
-          ) : (
             <Button
               onClick={async () => {
                 setPortalLoading(true);
@@ -193,7 +188,6 @@ const activePlan = useMemo(
                   t("settings.BillingAndSubscription.manageMySubscription")
               )}
             </Button>
-          )}
           <Button
             variant="outline"
             onClick={() => navigate("/settings/billing/reports")}
