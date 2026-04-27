@@ -3024,11 +3024,11 @@ const Dashboard = () => {
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent
-                                className="w-80 p-2 bg-white z-50 shadow-lg border"
+                                className="w-[480px] max-w-[calc(100vw-2rem)] p-2 bg-white z-50 shadow-lg border"
                                 align="start"
                               >
                                 <div className="space-y-1">
-                                  <div className="text-sm font-medium text-gray-700 px-3 py-2">
+                                  <div className="text-sm font-medium text-gray-700 px-3 py-2 border-b">
                                     {t("establishment.myEstablishments")}
                                   </div>
                                   {establishmentsLoading ? (
@@ -3087,13 +3087,13 @@ const Dashboard = () => {
                                           <Building2 className="w-4 h-4 text-blue-600" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                          <div className="flex flex-wrap items-center gap-2">
-                                            <span className="font-medium text-gray-900 break-words leading-snug">
+                                          <div className="flex items-start justify-between gap-2">
+                                            <span className="font-medium text-gray-900 break-words leading-snug min-w-0 pr-2">
                                               {etab.name}
                                             </span>
                                             {selectedEtab?.place_id ===
                                               etab.place_id && (
-                                              <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                                              <span className="shrink-0 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
                                                 {t("establishment.active")}
                                               </span>
                                             )}
