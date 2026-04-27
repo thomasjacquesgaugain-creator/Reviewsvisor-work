@@ -3129,7 +3129,8 @@ const Dashboard = () => {
                         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2"></div>
 
                         {/* Icônes en bas à droite */}
-                        <div className="absolute bottom-0 right-0 flex gap-1">
+                        <div className="absolute bottom-0 right-0 flex gap-1"></div>
+                        <div className="flex items-center gap-1 self-center flex-shrink-0">
                           {/* Bouton analyser établissement */}
                           <Button
                             variant="ghost"
