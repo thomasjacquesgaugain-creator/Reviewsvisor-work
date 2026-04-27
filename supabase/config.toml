@@ -60,6 +60,9 @@ verify_jwt = true
 [functions.update-addon-quantity]
 verify_jwt = true
 
+[functions.cancel-subscription-by-id]
+verify_jwt = true
+
 [functions.send-email]
 enabled = true
 verify_jwt = true
