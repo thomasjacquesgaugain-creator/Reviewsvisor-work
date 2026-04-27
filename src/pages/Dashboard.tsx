@@ -3137,6 +3137,7 @@ const Dashboard = () => {
                                   place_id: selectedEtab.place_id,
                                   name: selectedEtab.name,
                                   address: selectedEtab.address,
+                                  language: i18n.language,
                                 });
 
                                 if (result.ok) {
@@ -6342,6 +6343,7 @@ const Dashboard = () => {
                                         body: {
                                           question: agentQuestion.trim(),
                                           establishmentContext,
+                                          language: i18n.language,
                                         },
                                       },
                                     );

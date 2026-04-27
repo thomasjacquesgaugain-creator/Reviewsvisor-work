@@ -6,6 +6,23 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+type OutputLanguage = "fr" | "en";
+
+function normalizeLanguage(value: string | null | undefined): OutputLanguage {
+  const normalized = String(value || "").trim().toLowerCase();
+
+  if (normalized.startsWith("en")) return "en";
+  if (normalized.startsWith("fr")) return "fr";
+
+  return "fr";
+}
+
+function getLanguageInstruction(language: OutputLanguage): string {
+  return language === "en"
+    ? "Respond only in English."
+    : "Répondez uniquement en français.";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -38,7 +55,15 @@ serve(async (req) => {
 
     console.log('Authenticated user:', user.id);
 
-    const { question, systemPrompt: customSystemPrompt, establishmentContext } = await req.json();
+    const {
+      question,
+      systemPrompt: customSystemPrompt,
+      establishmentContext,
+      language,
+    } = await req.json();
+    const outputLanguage = normalizeLanguage(
+      language ?? req.headers.get("accept-language"),
+    );
     
     console.log('Question reçue:', question);
     console.log('EstablishmentContext présent:', !!establishmentContext);
@@ -178,8 +203,8 @@ EXEMPLES DE QUESTIONS QUE TU DOIS TOUJOURS ACCEPTER :
 
     // Préparer le message utilisateur avec une instruction explicite
     const userMessage = establishmentContext 
-      ? `Analyse les données de l'établissement "${establishmentContext.name}" et réponds à cette question en utilisant les données réelles fournies. Question : ${question}`
-      : question;
+      ? `${getLanguageInstruction(outputLanguage)} Analyse les données de l'établissement "${establishmentContext.name}" et réponds à cette question en utilisant les données réelles fournies. Question : ${question}`
+      : `${getLanguageInstruction(outputLanguage)} ${question}`;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -243,9 +268,21 @@ EXEMPLES DE QUESTIONS QUE TU DOIS TOUJOURS ACCEPTER :
       if (establishmentContext) {
         const ctx = establishmentContext;
         const topIssue = ctx.topIssues?.[0];
-        const issueName = topIssue ? (typeof topIssue === 'string' ? topIssue : topIssue.theme || topIssue.issue || topIssue.name) : 'les problèmes identifiés';
+        const issueName = topIssue
+          ? (typeof topIssue === 'string' ? topIssue : topIssue.theme || topIssue.issue || topIssue.name)
+          : outputLanguage === "en"
+            ? "the identified issues"
+            : "les problèmes identifiés";
         
-        answer = `D'après l'analyse de vos ${ctx.totalReviews} avis pour "${ctx.name}", je peux vous aider à comprendre vos données clients.
+        answer = outputLanguage === "en"
+          ? `Based on the analysis of your ${ctx.totalReviews} reviews for "${ctx.name}", I can help you understand your customer feedback.
+
+Your current average rating is ${ctx.avgRating}/5, with ${ctx.positiveReviews} positive reviews and ${ctx.negativeReviews} negative reviews.
+
+${topIssue ? `The most frequent issue in your reviews is: ${issueName}.` : "I can analyze your reviews to identify recurring issues."}
+
+To improve your rating and reputation, I recommend focusing on the priority issues identified in your reviews. You can see the details in the Dashboard Analysis tab.`
+          : `D'après l'analyse de vos ${ctx.totalReviews} avis pour "${ctx.name}", je peux vous aider à comprendre vos données clients.
 
 Votre note moyenne actuelle est de ${ctx.avgRating}/5, avec ${ctx.positiveReviews} avis positifs et ${ctx.negativeReviews} avis négatifs.
 
@@ -253,7 +290,17 @@ ${topIssue ? `Le problème le plus fréquent dans vos avis concerne : ${issueNam
 
 Pour améliorer votre note et votre réputation, je recommande de vous concentrer sur les problèmes prioritaires identifiés dans vos avis. Vous pouvez voir le détail dans l'onglet Analyse du Dashboard.`;
       } else {
-        answer = `Je peux vous aider à analyser vos avis clients et améliorer votre réputation en ligne.
+        answer = outputLanguage === "en"
+          ? `I can help you analyze your customer reviews and improve your online reputation.
+
+For personalized analysis based on your real reviews, I recommend:
+- Identifying recurring issues in your reviews
+- Analyzing the most frequent themes (service, quality, price, etc.)
+- Taking concrete actions to improve your average rating
+- Responding effectively to negative reviews
+
+Ask me a specific question about your reviews and I will give you concrete, actionable advice.`
+          : `Je peux vous aider à analyser vos avis clients et améliorer votre réputation en ligne.
 
 Pour des analyses personnalisées basées sur vos vrais avis, je recommande de :
 - Identifier les problèmes récurrents dans vos avis
