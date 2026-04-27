@@ -5,6 +5,7 @@ interface AnalyzeParams {
   name?: string;
   address?: string;
   dryRun?: boolean;
+  language?: string;
 }
 
 interface AnalyzeResponse {
@@ -65,9 +66,9 @@ export async function runAnalyze({ place_id, name, address, dryRun }: AnalyzePar
 /**
  * Lancer l'analyse avec le nouveau format v2-auto-universal
  */
-export async function runAnalyzeV2({ place_id, name, address, dryRun }: AnalyzeParams): Promise<AnalyzeResponse> {
+export async function runAnalyzeV2({ place_id, name, address, dryRun, language }: AnalyzeParams): Promise<AnalyzeResponse> {
   try {
-    console.log('[runAnalyzeV2] Calling analyze-reviews-v2 function with:', { place_id, name, address, dryRun });
+    console.log('[runAnalyzeV2] Calling analyze-reviews-v2 function with:', { place_id, name, address, dryRun, language });
     
     const { data: session } = await supabase.auth.getSession();
     
@@ -80,7 +81,8 @@ export async function runAnalyzeV2({ place_id, name, address, dryRun }: AnalyzeP
         place_id,
         name,
         address,
-        dryRun
+        dryRun,
+        language
       },
       headers: {
         Authorization: `Bearer ${session.session.access_token}`,

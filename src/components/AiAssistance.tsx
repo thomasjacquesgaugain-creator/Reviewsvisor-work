@@ -11,7 +11,7 @@ interface AiAssistanceProps {
 }
 
 const AiAssistance = ({ className }: AiAssistanceProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +34,7 @@ const AiAssistance = ({ className }: AiAssistanceProps) => {
 
     try {
       const { data, error } = await supabase.functions.invoke("ai-assistance", {
-        body: { question: question.trim() },
+        body: { question: question.trim(), language: i18n.language },
       });
 
       if (error) {

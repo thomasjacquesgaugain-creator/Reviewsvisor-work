@@ -508,6 +508,8 @@
     "automatedSystemForReviews": "Automated customer review system",
     "toValidate": "To Validate",
     "proposedAutomaticResponse": "Suggested automatic reply",
+    "generating": "Generating...",
+    "regenerateWithAI": "Regenerate with AI",
     "generateWithAI": "Generate with AI",
     "reply": "Reply",
     "viewResponse": "View Response",
