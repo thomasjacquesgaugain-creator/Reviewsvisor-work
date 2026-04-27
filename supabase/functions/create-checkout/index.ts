@@ -84,7 +84,7 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     console.log("body----->", body)
     const emailFromBody = body.email;
-    const { priceId: priceIdFromBody, pendingUser, pendingEstablishment } = body;
+    const { priceId: priceIdFromBody,language, pendingUser, pendingEstablishment } = body;
 
     let userEmail = emailFromBody;
     let customerId: string | undefined;
@@ -302,7 +302,7 @@ serve(async (req) => {
         billing_address_collection: "auto",
         payment_method_types: ["card"],
         allow_promotion_codes: false,
-        locale: "fr",
+        locale: language?language:'fr',
         metadata:
           Object.keys(sessionMetadata).length > 0 ? sessionMetadata : undefined,
         subscription_data: {

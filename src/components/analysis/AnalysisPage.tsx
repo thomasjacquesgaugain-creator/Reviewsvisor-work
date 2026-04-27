@@ -173,7 +173,7 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
 
       {/* Titre de section 6 */}
       <h2 className="text-2xl font-bold text-gray-800 mt-12 mb-6">
-        6. Analyse des causes racines (Ishikawa IA)
+        {t("analysis.ishikawa.title")}
       </h2>
 
       {/* Section 6: Analyse des causes racines */}
@@ -188,7 +188,7 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
 
       {/* Titre de section 7 */}
       <h2 className="text-2xl font-bold text-gray-800 mt-12 mb-6" id="diagnostic-section">
-        7. Synthèse & diagnostic
+        7. {t("analysis.syntheseAndDiagnostic.title")}
       </h2>
 
       {/* Section 7: Synthèse & diagnostic */}

@@ -8,6 +8,7 @@ import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { Button } from "../ui/button";
 import Questionare from "./Questionare";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface RootCauseSectionProps {
   paretoIssues: ParetoItem[];
@@ -208,6 +209,7 @@ export function RootCauseSection({
 
   const [currentStep, setCurrentStep] = useState(0);
   const [showQuestionare, setShowQuestionare] = useState(false);
+  const { t } = useTranslation();
 
   const currentIssue =
     paretoIssues && paretoIssues.length > 0
@@ -243,7 +245,7 @@ export function RootCauseSection({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>6. Analyse des causes racines (Ishikawa IA)</span>
+          <span>6.  {t("analysis.ishikawa.title")}</span>
 
           {/* Step Indicator */}
           <span className="text-sm text-gray-500">
@@ -280,7 +282,7 @@ export function RootCauseSection({
         {/* 6.1 Problem */}
         <div>
           <h3 className="text-lg font-semibold mb-3">
-            6.1 Problème analysé
+            6.1 {t("analysis.ishikawa.problemAnalyzed")}
           </h3>
           <div className="p-4 bg-gray-50 border rounded-lg">
             <p className="text-lg font-semibold">
@@ -293,7 +295,7 @@ export function RootCauseSection({
         {/* 6.2 Causes */}
         <div>
           <h3 className="text-lg font-semibold mb-4">
-            6.2 Causes probables identifiées par l'IA
+            6.2 {t("analysis.ishikawa.probableCausesIdentified")}
           </h3>
 
           {rootCauseAnalysis.categories.length > 0 ? (
@@ -334,7 +336,7 @@ export function RootCauseSection({
         {/* Summary */}
         <div>
           <h3 className="text-lg font-semibold mb-3">
-            6.4 Synthèse automatique
+            6.4 {t("analysis.ishikawa.automatedSummary")}
           </h3>
           <div className="p-4 bg-blue-50 border rounded-lg">
             {rootCauseAnalysis.summary}

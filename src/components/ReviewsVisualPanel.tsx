@@ -619,7 +619,7 @@ export function ReviewsVisualPanel({
                           onClick={() => setDisplayCount(prev => prev + 10)}
                           className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                         >
-                          Afficher plus
+                          {t("establishment.showMore")}
                           <ChevronDown className="w-4 h-4" />
                         </button>
                       </div>

@@ -483,7 +483,9 @@
     "stars3": "3 stars",
     "stars2": "2 stars",
     "stars1": "1 star",
+    "stars": "star",
     "analysisBasedOnImportedReviews":"Analysis based on imported reviews",
+    "lastAnalysis": "Last analysis : {{date}}",
     "paretoStrengthsDescription": "Identification of the 20% of strengths that generate 80% of satisfaction",
     "noRecentReviewsAvailable": "No recent reviews available",
     "analysisHistory": "Analysis history",
@@ -505,6 +507,21 @@
     "analyzeEstablishmentToGetAdvice": "Analyze your establishment to get personalized advice.",
     "recommendedStartHighImpactLowEffort": "Suggestion for consideration: prioritize items with high impact and low effort based on your priorities.",
     "automatedSystemForReviews": "Automated customer review system",
+    "toValidate": "To Validate",
+    "proposedAutomaticResponse": "Suggested automatic reply",
+    "generating": "Generating...",
+    "regenerateWithAI": "Regenerate with AI",
+    "generateWithAI": "Generate with AI",
+    "reply": "Reply",
+    "viewResponse": "View Response",
+    "positiveReview": "Positive Review",
+    "containsComplaint": "Contains a complaint",
+    "containsSuggestion": "Contains a suggestion",
+    "negativeToneDetected": "Negative tone detected",
+    "needsAttention": "Needs attention",
+    "quickResponses": "Quick Responses",
+    "responsePublished": "Response published",
+    "showMore": "Show more",
     "noPendingReviews": "No reviews awaiting validation at the moment.",
     "responseCenter": "Response Center",
     "manageCustomerReviewResponses": "Manage your responses to customer reviews",
@@ -1008,6 +1025,7 @@
   "annualSavingsHint": "Save 20% — that's {{saving}} € / month",
   "annualPriceInfo": "Annual price of {{total}} € incl. tax (20% VAT included), i.e. {{monthly}} € /month excl. tax.",
   "recommended": "Recommended for you",
+  "alreadySaved": "Already saved",
   "flexible": "Flexible",
   "selected": "Selected",
   "choose": "Choose",
@@ -1094,7 +1112,8 @@
     "forceFullImport": "Force full import",
     "importNoReviews": "No reviews found for this place",
     "visualReviews": "Visual reviews",
-    "placeId": "place_id",
+    "showMore": "Show more",
+    "placeId": "Place ID",
     "savedEstablishments": "Saved establishments",
     "noEstablishmentsSaved": "No establishments saved yet.",
     "addFirstEstablishment": "Add your first establishment",
@@ -1524,7 +1543,8 @@
         "partial": "Comparison: start vs. end of period",
         "previous3Months": "vs. previous 3 months"
       },
-      "trendTooltipAria": "Trend explanation"
+      "trendTooltipAria": "Trend explanation",
+      "universalThemes": "Universal Themes"
     },
     "history": {
       "title": "Review History and Dynamics",
@@ -1675,6 +1695,33 @@
           "occasional": "Occasional"
         }
       }
+    },
+    "ishikawa": {
+      "title": "Root Cause Analysis (Ishikawa/AI)",
+      "problemAnalyzed": "Problem Analyzed",
+      "probableCausesIdentified": "Probable Causes Identified by AI",
+      "process": "Process",
+      "automatedSummary": "Automated Summary",
+      "automatedSummaryDescription": "Review analysis suggests that the \"${problem}\" issue may stem from multiple sources—further on-site investigation is recommended."
+    },
+    "syntheseAndDiagnostic": {
+      "title": "Synthesis and Diagnostic",
+      "averageRating": "Average Rating",
+      "positiveReviews": "Positive Reviews",
+      "topIrritant": "Top Irritant",
+      "overview": "Overview",
+      "top3PrioritizedIssues": "Top 3 Priority Issues",
+      "themePresencePercentage": "% = percentage of reviews in which the theme appears"
+    },
+    "lexique": {
+      "title": "Lexicon and Definitions",
+      "kpiDescription": "A KPI (Key Performance Indicator) is a quantitative measure used to assess the extent to which a defined objective has been achieved. It serves to track performance trends over time and to support management decision-making.",
+      "paretoAnalysis": "Analyse de Pareto",
+      "paretoAnalysisDescription": "Pareto analysis is a prioritization method based on the principle that a limited number of causes produce the majority of effects. It enables the identification of the few factors that contribute most to a result—for example, problems, defects, or dissatisfaction.",
+      "rootCauseAnalysis": "Analyse des causes racines (Ishikawa)",
+      "rootCauseAnalysisDescription": "Ishikawa root cause analysis (or fishbone diagram) is a visual cause-and-effect tool that structures the potential causes of a problem. The causes are grouped into broad categories, which may vary depending on the context (for example, processes, methods, resources, or environment).",
+      "aiTrust": "AI Trust",
+      "aiTrustDescription": "AI confidence refers to an indicator of the degree of reliability of the results produced by a model, based on the quantity, quality, and consistency of the data used. It reflects the level of uncertainty associated with the analyses and should be interpreted as a confidence level rather than as an absolute truth."
     }
   }
 }

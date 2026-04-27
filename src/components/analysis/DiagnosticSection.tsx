@@ -117,7 +117,7 @@ export function DiagnosticSection({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>{t("analysis.diagnostic.title", "Synthèse & diagnostic")}</CardTitle>
+          <CardTitle>{t("analysis.syntheseAndDiagnostic.title")}</CardTitle>
           {totalReviews > 0 && (
             <div className="flex items-center gap-1.5">
               <Badge variant="outline" className={confidence.color}>
@@ -139,7 +139,7 @@ export function DiagnosticSection({
               <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <Star className="w-4 h-4 text-amber-500" />
-                  <span className="text-sm font-medium text-gray-600">Note moyenne</span>
+                  <span className="text-sm font-medium text-gray-600">{t("analysis.syntheseAndDiagnostic.averageRating")}</span>
                 </div>
                 <p className="text-2xl font-bold text-gray-900">
                   {overview.averageRating.toFixed(1)}/5
@@ -152,7 +152,7 @@ export function DiagnosticSection({
               <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingUp className="w-4 h-4 text-green-500" />
-                  <span className="text-sm font-medium text-gray-600">Avis positifs</span>
+                  <span className="text-sm font-medium text-gray-600">{t("analysis.syntheseAndDiagnostic.positiveReviews")}</span>
                 </div>
                 <p className="text-2xl font-bold text-gray-900">
                   {overview.positivePercentage.toFixed(0)}%
@@ -165,7 +165,7 @@ export function DiagnosticSection({
               <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <Target className="w-4 h-4 text-red-500" />
-                  <span className="text-sm font-medium text-gray-600">Irritant #1</span>
+                  <span className="text-sm font-medium text-gray-600">{t("analysis.syntheseAndDiagnostic.topIrritant")}</span>
                 </div>
                 <p className="text-lg font-semibold text-gray-900 truncate" title={topIssue.name}>
                   {topIssue.name}
@@ -181,7 +181,7 @@ export function DiagnosticSection({
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
               <Lightbulb className="w-5 h-5" />
-              {t("analysis.diagnostic.summary", "Résumé")}
+              {t("analysis.syntheseAndDiagnostic.overview")}
             </h3>
             <p className="text-gray-700 leading-relaxed">{summaryText}</p>
 
@@ -213,7 +213,7 @@ export function DiagnosticSection({
             <div>
               <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-red-500" />
-                {t("analysis.diagnostic.topWeaknesses", "Top 3 Problèmes prioritaires")}
+                {t("analysis.syntheseAndDiagnostic.top3PrioritizedIssues")}
               </h3>
               {topWeaknesses.length > 0 ? (
                 <div className="space-y-2">
@@ -237,7 +237,7 @@ export function DiagnosticSection({
                         </Badge>
                         <span 
                           className="text-xs text-gray-600"
-                          title="% = part des avis dans lesquels le thème apparaît"
+                          title= {t("analysis.syntheseAndDiagnostic.themePresencePercentage")}
                         >
                           ({weakness.percentage.toFixed(1)}%)
                         </span>
@@ -245,7 +245,7 @@ export function DiagnosticSection({
                     </div>
                   ))}
                   <p className="text-xs text-gray-500 mt-2 italic">
-                    % = part des avis dans lesquels le thème apparaît
+                    {t("analysis.syntheseAndDiagnostic.themePresencePercentage")}
                   </p>
                 </div>
               ) : (
@@ -283,7 +283,7 @@ export function DiagnosticSection({
                         </Badge>
                         <span 
                           className="text-xs text-gray-600"
-                          title="% = part des avis dans lesquels le thème apparaît"
+                          title= {t("analysis.syntheseAndDiagnostic.themePresencePercentage")}
                         >
                           ({strength.percentage.toFixed(1)}%)
                         </span>
@@ -291,7 +291,7 @@ export function DiagnosticSection({
                     </div>
                   ))}
                   <p className="text-xs text-gray-500 mt-2 italic">
-                    % = part des avis dans lesquels le thème apparaît
+                    {t("analysis.syntheseAndDiagnostic.themePresencePercentage")}
                   </p>
                 </div>
               ) : (
