@@ -1143,6 +1143,7 @@
     "searchLocationPlaceholder": "Search for a location...",
     "cannotRetrieveDetails": "Unable to retrieve establishment details",
     "contactAdminForApiKey": "Contact the administrator to configure the Google Maps API key.",
+    "active": "Active",
     "establishmentNamePlaceholder": "Name of your establishment...",
     "websiteLabel": "Website",
     "googleMapsLabel": "Google Maps:",

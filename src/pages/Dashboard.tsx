@@ -3027,7 +3027,7 @@ const Dashboard = () => {
                                 className="w-[480px] max-w-[calc(100vw-2rem)] p-2 bg-white z-50 shadow-lg border"
                                 align="start"
                               >
-                                <div className="space-y-1">
+                                <div className="space-y-1 overflow-auto h-[400px] p-2 position-relative">
                                   <div className="text-sm font-medium text-gray-700 px-3 py-2 border-b">
                                     {t("establishment.myEstablishments")}
                                   </div>
