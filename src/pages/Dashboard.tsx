@@ -2125,7 +2125,7 @@ const Dashboard = () => {
       const { data, error } = await supabase
         .from("establishments")
         .select(
-          "id, place_id, name, formatted_address, lat, lng, website, phone, rating, updated_at",
+          "id, place_id, name, formatted_address, lat, lng, website, phone, rating, types, updated_at",
         )
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
@@ -2141,6 +2141,7 @@ const Dashboard = () => {
         website: row.website ?? undefined,
         phone: row.phone ?? undefined,
         rating: row.rating ?? null,
+        types: row.types ?? null,
         id:row.id?? null
         // is_active?: row.is_active ?? false,
       }));
@@ -2213,6 +2214,13 @@ const Dashboard = () => {
         website: selectedEstablishment.website,
         phone: selectedEstablishment.phone,
         rating: selectedEstablishment.rating ?? null,
+        types:
+          typeof selectedEstablishment.types === "string"
+            ? selectedEstablishment.types
+            : Array.isArray(selectedEstablishment.types)
+              ? selectedEstablishment.types.filter(Boolean).join(", ")
+              : null,
+        id: selectedEstablishment.id,
       });
     }
   }, [selectedEstablishment]);
@@ -2991,11 +2999,10 @@ const Dashboard = () => {
 
                 {/* Carte établissement au milieu */}
                 {selectedEtab && (
-                  <Card className="w-[600px]">
+                  <Card className="w-full max-w-[600px]">
                     <CardContent className="p-4">
-                      <div className="relative">
-                        <div className="flex items-center gap-3">
-                          <div className="relative">
+                        <div className="flex items-start gap-3">
+                          <div className="relative flex-shrink-0">
                             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                               <Building2 className="w-5 h-5 text-blue-600" />
                             </div>
@@ -3017,11 +3024,11 @@ const Dashboard = () => {
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent
-                                className="w-80 p-2 bg-white z-50 shadow-lg border"
+                                className="w-[480px] max-w-[calc(100vw-2rem)] p-2 bg-white z-50 shadow-lg border"
                                 align="start"
                               >
                                 <div className="space-y-1">
-                                  <div className="text-sm font-medium text-gray-700 px-3 py-2">
+                                  <div className="text-sm font-medium text-gray-700 px-3 py-2 border-b">
                                     {t("establishment.myEstablishments")}
                                   </div>
                                   {establishmentsLoading ? (
@@ -3038,7 +3045,7 @@ const Dashboard = () => {
                                       <button
                                         key={etab.place_id}
                                         type="button"
-                                        className={`w-full flex items-center gap-3 p-3 text-left rounded-lg cursor-pointer transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                        className={`w-full flex items-start gap-3 p-3 text-left rounded-lg cursor-pointer transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                           selectedEtab?.place_id ===
                                           etab.place_id
                                             ? "bg-blue-50"
@@ -3054,6 +3061,8 @@ const Dashboard = () => {
                                             website: etab.website,
                                             phone: etab.phone,
                                             rating: etab.rating ?? undefined,
+                                            types: etab.types ?? null,
+                                            id: etab.id,
                                           };
                                           await setActivePlace(
                                             etab.place_id,
@@ -3078,18 +3087,18 @@ const Dashboard = () => {
                                           <Building2 className="w-4 h-4 text-blue-600" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                          <div className="flex items-center gap-2">
-                                            <span className="font-medium text-gray-900 truncate">
+                                          <div className="flex items-start justify-between gap-2">
+                                            <span className="font-medium text-gray-900 break-words leading-snug min-w-0 pr-2">
                                               {etab.name}
                                             </span>
                                             {selectedEtab?.place_id ===
                                               etab.place_id && (
-                                              <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                                              <span className="shrink-0 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
                                                 {t("establishment.active")}
                                               </span>
                                             )}
                                           </div>
-                                          <div className="text-sm text-gray-500 truncate">
+                                          <div className="text-sm text-gray-500 break-words leading-snug">
                                             {etab.address}
                                           </div>
                                         </div>
@@ -3100,13 +3109,19 @@ const Dashboard = () => {
                               </PopoverContent>
                             </Popover>
                           </div>
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-900">
-                              {selectedEtab.name}
-                            </div>
-                            <div className="text-sm text-gray-500">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-gray-900 break-words leading-snug">
+                            <span>{selectedEtab.name}</span>
+                            {selectedEtab.types ? (
+                              <span className="ml-2 text-sm font-normal text-slate-500">
+                                • (<span className="italic">{selectedEtab.types}</span>)
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="mt-1 flex items-start gap-1 text-sm text-gray-500 leading-snug">
+                            <span className="min-w-0 break-words">
                               {selectedEtab.address}
-                            </div>
+                            </span>
                           </div>
                         </div>
 
@@ -3114,7 +3129,8 @@ const Dashboard = () => {
                         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2"></div>
 
                         {/* Icônes en bas à droite */}
-                        <div className="absolute bottom-0 right-0 flex gap-1">
+                        <div className="absolute bottom-0 right-0 flex gap-1"></div>
+                        <div className="flex items-center gap-1 self-center flex-shrink-0">
                           {/* Bouton analyser établissement */}
                           <Button
                             variant="ghost"
@@ -3246,6 +3262,7 @@ const Dashboard = () => {
                                 );
                               } finally {
                                 setIsAnalyzing(false);
+                                toast.success(t("establishment.establishmentAnalysed"))
                               }
                             }}
                             disabled={isAnalyzing}
