@@ -3,6 +3,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { toast as sonnerToast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { importGoogleReviews } from '@/lib/importGoogleReviews';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -17,6 +18,8 @@ interface GoogleImportButtonProps {
   placeId?: string;
   onOpenVisualPanel?: () => void;
   onClose?: () => void;
+  establishmentName?: string;
+  establishmentAddress?: string;
 }
 
 interface Location {
@@ -129,6 +132,8 @@ export default function GoogleImportButton({
   placeId,
   onOpenVisualPanel,
   onClose,
+  establishmentName,
+  establishmentAddress,
 }: GoogleImportButtonProps) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -136,6 +141,9 @@ export default function GoogleImportButton({
   const [locations, setLocations] = useState<Location[]>([]);
   const [accountId, setAccountId] = useState<string>('');
   const [hasExistingConnection, setHasExistingConnection] = useState(false);
+  const [showApiNotConfiguredDialog, setShowApiNotConfiguredDialog] = useState(false);
+  const [isOutscraperImporting, setIsOutscraperImporting] = useState(false);
+
 
   // Ref to track if an operation is in progress (prevents double-clicks)
   const operationInProgress = useRef(false);
@@ -185,6 +193,91 @@ export default function GoogleImportButton({
   const getRedirectUri = () => {
     const origin = window.location.origin;
     return `${origin}/api/auth/callback/google/index.html`;
+  };
+
+  const handleContinueWithOutscraper = async () => {
+    if (!placeId) {
+      toast({
+        title: t('common.error'),
+        description: t('import.pleaseAddEstablishmentFirst'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const name = establishmentName?.trim() || '';
+    const address = establishmentAddress?.trim() || '';
+    if (!name || !address) {
+      toast({
+        title: t('common.error'),
+        description: t(
+          'googleImport.cannotFallbackWithoutEstablishmentInfo',
+          'Missing establishment name or address for Outscraper fallback.',
+        ),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsOutscraperImporting(true);
+
+    try {
+      const result = await importGoogleReviews(placeId, 2000, {
+        name,
+        address,
+        source: 'google',
+      });      
+
+      if (result.success) {
+        const inserted = Number(result.inserted ?? 0);
+        const skipped = Number(result.skipped ?? 0);
+        const updated=Number(result.updated??0)
+
+        setShowApiNotConfiguredDialog(false);
+        sonnerToast.success(
+          t(
+            'googleImport.fallbackImportSuccess',
+            'Outscraper import completed successfully',
+          ),
+          {
+            description: t("googleImport.import_summary", { inserted, skipped, updated }),
+          },
+        );
+
+        window.dispatchEvent(new CustomEvent('reviews:imported'));
+        onSuccess?.();
+
+        if (onOpenVisualPanel) {
+          onOpenVisualPanel();
+          setTimeout(() => {
+            document.getElementById('reviews-visual-anchor')?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start',
+            });
+          }, 100);
+        }
+
+        if (onClose) {
+          onClose();
+        }
+        return;
+      }
+
+      toast({
+        title: `${t('common.error')}: ${t('googleImport.fallbackImportFailed')}`,
+        description: result.error || t('googleImport.syncFailure'),
+        variant: 'destructive',
+      });
+    } catch (error: any) {
+      console.error('[google-sync] Outscraper fallback failed:', error);
+      toast({
+        title: `${t('common.error')}: ${t('googleImport.fallbackImportFailed')}`,
+        description: error?.message || t('googleImport.syncFailure'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsOutscraperImporting(false);
+    }
   };
 
   const handleImportClick = async () => {
@@ -298,14 +391,31 @@ export default function GoogleImportButton({
 
       window.addEventListener('message', handleMessage);
 
-      // Check periodically if popup was closed without completing
-      const checkPopupClosed = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(checkPopupClosed);
-          window.removeEventListener('message', handleMessage);
-          // Don't show error - user might have just closed the popup
-        }
-      }, 1000);
+
+const checkPopupClosed = setInterval(() => {
+  if (!popup || popup.closed) {
+    clearInterval(checkPopupClosed);
+    window.removeEventListener('message', handleMessage);
+
+    // If popup closed but we never got oauth-success, it means it failed or errored
+    // Check if connection was established — if not, show the fallback dialog
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase
+        .from('google_connections')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('provider', 'google')
+        .maybeSingle()
+        .then(({ data: connection }) => {
+          if (!connection) {
+            // Popup closed with no successful connection → show dialog
+            setShowApiNotConfiguredDialog(true);
+          }
+        });
+    });
+  }
+}, 500);
     } catch (error: any) {
       console.error('❌ Error initiating OAuth:', error);
       toast({
@@ -684,6 +794,54 @@ export default function GoogleImportButton({
                 </div>
               </Button>
             ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Google APIs Not Configured Dialog */}
+      <Dialog
+        open={showApiNotConfiguredDialog}
+        onOpenChange={setShowApiNotConfiguredDialog}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {t(
+                'googleImport.googleUnavailableTitle',
+                'Google import is unavailable',
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-2 text-sm text-muted-foreground">
+            <p>
+              {t(
+                'googleImport.googleUnavailableMessage',
+                'Google Business APIs are not configured. You can continue with Outscraper instead.',
+              )}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 mt-4">
+            <Button
+              variant="accent"
+              className="w-full"
+              onClick={handleContinueWithOutscraper}
+              disabled={isOutscraperImporting}
+            >
+              {isOutscraperImporting
+                ? t('googleImport.importingInProgress')
+                : t(
+                    'googleImport.proceedWithOutscraper',
+                    'Continue with Outscraper',
+                  )}
+            </Button>
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => setShowApiNotConfiguredDialog(false)}
+              disabled={isOutscraperImporting}
+            >
+              {t('common.cancel', 'Cancel')}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

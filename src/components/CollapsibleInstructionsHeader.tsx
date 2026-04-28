@@ -35,9 +35,10 @@ export default function CollapsibleInstructionsHeader({
         </div>
       </button>
       <div
-        className="overflow-hidden transition-all duration-200 ease-out"
+        className={`overflow-hidden transition-all duration-300 ease-out ${isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+          }`}
         style={{
-          maxHeight: isOpen ? '200px' : '0px',
+          // maxHeight: isOpen ? '200px' : '0px',
           opacity: isOpen ? 1 : 0,
         }}
       >

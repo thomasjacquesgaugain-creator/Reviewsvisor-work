@@ -409,9 +409,9 @@ const mapStarRating = (rating: string) => {
           <li>{t("import.instruction2")}</li>
           <li>{t("import.instruction3")}</li>
           <li>{t("import.instruction4")}</li>
-          <li>{t("import.instruction5")}</li>
-          <li>{t("import.instruction6")}</li>
-          <li>{t("import.instruction7")}</li>
+          <li>{t("import.instruction9")}</li>
+          {/* <li>{t("import.instruction6")}</li> */}
+          {/* <li>{t("import.instruction7")}</li> */}
           <li>{t("import.instruction8")}</li>
         </ul>
       </CollapsibleInstructionsHeader>

@@ -1,3 +1,7 @@
+// This edge function is depreceated as it was working only for importing google reviews not tripadvisor or trustpilot.
+// Also it was use fetch url method to call outscraper which lacks polling.
+// Now outsrcaper-google-reviews edge funcion is working instead which uses outscraper sdk
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 

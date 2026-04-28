@@ -16,13 +16,14 @@ interface ImportAvisToolbarProps {
   onOpenVisualPanel?: () => void;
   placeId?: string;
   establishmentName?: string;
+  establishmentAddress?: string;
 }
 
 type ActiveTab = "csv" | "paste" | "auto";
 
-export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuccess, onOpenVisualPanel, placeId, establishmentName }: ImportAvisToolbarProps) {
+export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuccess, onOpenVisualPanel, placeId, establishmentName, establishmentAddress }: ImportAvisToolbarProps) {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<ActiveTab>("auto"); // Start with auto tab for Google import
+  const [activeTab, setActiveTab] = useState<ActiveTab>("auto"); // Start with auto tab for Google import  
 
   const handleManualReviewSubmit = (review: { firstName: string; lastName: string; rating: number; comment: string }) => {
     // Pour l'instant, simple log
@@ -74,7 +75,14 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
                   ? t("import.autoImportForEstablishment", { name: establishmentName || t("establishment.thisEstablishment") })
                   : t("import.selectEstablishmentToImport")}
               </p>
-              <GoogleImportButton onSuccess={onImportSuccess} placeId={placeId} onOpenVisualPanel={onOpenVisualPanel} onClose={onClose} />
+              <GoogleImportButton
+                onSuccess={onImportSuccess}
+                placeId={placeId}
+                onOpenVisualPanel={onOpenVisualPanel}
+                onClose={onClose}
+                establishmentName={establishmentName}
+                establishmentAddress={establishmentAddress}
+              />
             </div>
           </div>
         );

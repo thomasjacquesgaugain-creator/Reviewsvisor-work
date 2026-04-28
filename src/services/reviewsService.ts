@@ -511,6 +511,16 @@ export async function deleteAllReviews(establishmentId: string): Promise<number>
     throw error;
   }
 
+  const { error: resetError } =await supabase
+  .from("establishments")
+  .update({ last_reviews_import: null } as any)
+  .eq("user_id", user.user.id)
+  .eq("place_id", establishmentId);
+
+if (resetError) {
+  console.error('[PROTECTION DONNÉES] ❌ Erreur reset last_reviews_import:', resetError);
+}
+
   console.warn(`[PROTECTION DONNÉES] ⚠️ ${count || 0} avis supprimés pour l'établissement ${establishmentId}`);
 
   return count || 0;

@@ -1252,7 +1252,7 @@
     "forceFullImport": "Forcer l'import complet",
     "importNoReviews": "Aucun avis trouvé pour ce lieu",
     "visualReviews": "Visuel des avis",
-    "placeId": "Place ID",
+    "placeId": "ID de lieu",
     "showMore": "Afficher plus",
     "savedEstablishments": "Établissements enregistrés",
     "noEstablishmentsSaved": "Aucun établissement enregistré pour le moment.",
@@ -1400,7 +1400,7 @@
   },
   "import": {
     "pasteReviews": "Coller des avis",
-    "importCsv": "Import CSV",
+    "importCsv": "Importer CSV/JSON",
     "autoRecovery": "Récupération auto",
     "autoImportForEstablishment": "Importation automatique des avis Google pour \"{{name}}\"",
     "selectEstablishmentToImport": "Sélectionnez un établissement pour importer les avis Google",
@@ -1428,6 +1428,7 @@
     "instruction6": "Ouvrez le fichier avec le Bloc-notes.",
     "instruction7": "Copiez le contenu et collez-le ici.",
     "instruction8": "Cliquez ensuite sur « Importer les avis ».",
+    "instruction9": "Une fois l'export terminé et le téléchargement effectué, extrayez et téléversez le fichier JSON/CSV.",
     "pastePlaceholder": "Collez ici les avis copiés depuis Google Maps ou Tripadvisor...",
     "pasteHelp": "Collez plusieurs avis en une fois. Le système détectera automatiquement les notes, auteurs et commentaires.",
     "preview": "Aperçu",
@@ -1609,7 +1610,14 @@
     "reviewsImportedUpdated": "{{total}} avis importés / mis à jour",
     "newReviews": "{{inserted}} nouveaux",
     "updatedReviews": "{{updated}} mis à jour",
-    "noReviewsFound": "0 avis trouvés (vérifier compte Google + établissement)"
+    "noReviewsFound": "0 avis trouvés (vérifier compte Google + établissement)",
+    "googleUnavailableTitle":"L'importation Google est indisponible",
+    "googleUnavailableMessage":"Les API Google Business ne sont pas configurées. Vous pouvez poursuivre avec Outscraper à la place.",
+    "proceedWithOutscraper":"Continuer avec Outscraper",
+    "cannotFallbackWithoutEstablishmentInfo":"Nom ou adresse de l'établissement manquant pour le repli Outscraper.",
+    "fallbackImportSuccess":"Import Outscraper terminé avec succès",
+    "fallbackImportFailed":"L'import Outscraper a échoué",
+    "import_summary": "{{inserted}} importés - {{skipped}} déjà présents - {{updated}} mis à jour"
   },
   "aiAssistance": {
     "emptyQuestion": "Question vide",
