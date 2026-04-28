@@ -219,7 +219,6 @@ export default function GoogleImportButton({
       return;
     }
 
-    setShowApiNotConfiguredDialog(false);
     setIsOutscraperImporting(true);
 
     try {
@@ -227,13 +226,14 @@ export default function GoogleImportButton({
         name,
         address,
         source: 'google',
-      });
+      });      
 
       if (result.success) {
         const inserted = Number(result.inserted ?? 0);
         const skipped = Number(result.skipped ?? 0);
         const updated=Number(result.updated??0)
 
+        setShowApiNotConfiguredDialog(false);
         sonnerToast.success(
           t(
             'googleImport.fallbackImportSuccess',

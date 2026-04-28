@@ -221,6 +221,7 @@
     "viewDashboard": "View my dashboard",
     "reviewsOverview": "Reviews overview",
     "totalReviews": "Total reviews",
+    "allReviews": "All Reviews",
     "averageRating": "Average rating",
     "positiveReviews": "Positive reviews",
     "negativeReviews": "Negative reviews",
@@ -427,11 +428,11 @@
     "apply": "Apply",
     "validate": "Validate",
     "limitedDataCaution": "Limited data - interpret with caution",
-    "noReviewsForSelectedPeriod": "No reviews for the selected period", 
+    "noReviewsForSelectedPeriod": "No reviews for the selected period",
     "tryWiderPeriod": "Try widening the period or resetting the filters.",
     "rating4StarsOrMore": "Rating ≥ 4 stars",
-    "reset":"Reset",
-    "appTagline":"Comprehensive Customer Review Analysis",
+    "reset": "Reset",
+    "appTagline": "Comprehensive Customer Review Analysis",
     "top3PriorityProblems": "Top 3 Priority Problems",
     "mostMentionedByFrequency": "Most mentioned by frequency and percentage in priority",
     "top3Strengths": "Top 3 Strengths",
@@ -478,16 +479,27 @@
     "occurrences": "Occurrences",
     "mentions": "mentions",
     "mention": "mention",
+    "positiveReviewsFilter": "Positive reviews (≥ 4 stars)",
+    "negativeReviewsFilter": "Negative reviews (≤ 2 stars)",
+    "suspectReviews": "Suspect reviews",
+    "suspectReviewsTitle": "Suspected fake reviews",
+    "filter": "Filter",
+    "monthlyTrend": "Monthly trend (last 12 months)",
     "stars5": "5 stars",
     "stars4": "4 stars",
     "stars3": "3 stars",
     "stars2": "2 stars",
     "stars1": "1 star",
     "stars": "star",
-    "analysisBasedOnImportedReviews":"Analysis based on imported reviews",
+    "analysisBasedOnImportedReviews": "Analysis based on imported reviews",
     "lastAnalysis": "Last analysis : {{date}}",
     "paretoStrengthsDescription": "Identification of the 20% of strengths that generate 80% of satisfaction",
     "noRecentReviewsAvailable": "No recent reviews available",
+    "ratingEvolutionFor": "Rating Evolution for {{name}}",
+    "insufficientData": "Not enough data to display a trend.",
+    "ratingEvolutionLast12Months": "Rating Evolution over the Last 12 Months",
+    "ratingDistributionFor": "Rating distribution for {{name}}",
+    "ratingDistribution5Stars": "5-star rating distribution",
     "analysisHistory": "Analysis history",
     "previousAnalysesDescription": "Previous and completed analyses. Results",
     "noNegativeReviewsFound": "No negative reviews found",
@@ -563,51 +575,51 @@
     "basedOnCurrentRating": "Based on the current rating",
     "frequencyInNegativeReviews": "and frequency of mentions in negative reviews.",
     "noReviewsForEstablishment": "No reviews recorded for this establishment. Import reviews to see statistics.",
-     "keyTakeaways": {
-       "title":"Key takeaways",
-       "quickRead":"Quick read for decision makers",
-       "overallScore": {
-         "overallScore": "Overall Score",
-         "critical": "Critical",
-         "toImprove": "To Improve",
-         "good": "Good",
-         "narrativeCritical": "Your establishment is facing critical issues that are significantly impacting customer satisfaction.",
-         "narrativeWarning": "Your establishment shows mixed performance with clear areas that need improvement.",
-         "narrativePositive": "Your establishment is performing well and delivers a positive overall customer experience.",
-         "statRating": "Average Rating",
-         "statPositive": "Sentiment Score",
-         "statReviews": "Total Reviews",
-         "noData":"No data available",
-         "noDataHint":"Score will appear once reviews are collected.",
-         "statRecentTrend": "Recent Trend",
-         "statRecentTrendHint": "Last 60 days"
-       },
-       "mainIssues": {
-         "majorIssue": "Major Issue",
-         "impactHigh": "Impact - High",
-         "mentionedIn": "Mentioned in {{percentage}}% of negative reviews",
-         "noData":"No data available"
-       },
-       "mainStrengths": {
-         "mainStrength": "Major Strength",
-         "positiveImpact": "Positive Impact",
-         "mentionedIn": "Mentioned in {{percentage}}% of positive reviews",
-         "noData":"No key strengths identified from recent reviews."
-       },
-       "recommandedActions":{
-        "title":"Recommended action",
-        "noData":"No recommended actions available at the moment."
-       } ,
-       "overallTrend": {
-         "title": "Overall Trend",
-         "recentTrend": "Last 60 days",
-         "change": "{{sign}}{{diff}} over 60 days",
-         "changeAvg": "{{avg}} avg",
-         "summaryNoPrevious": "Current average: {{current}}/5 ({{count}} reviews). No previous period data.",
-         "summaryUp": "Average rating up ({{diff}} over 60 days)",
-         "summaryDown": "Average rating down ({{diff}} over 60 days)",
-         "summaryFlat": "Average rating stable over 60 days"
-       },
+    "keyTakeaways": {
+      "title": "Key takeaways",
+      "quickRead": "Quick read for decision makers",
+      "overallScore": {
+        "overallScore": "Overall Score",
+        "critical": "Critical",
+        "toImprove": "To Improve",
+        "good": "Good",
+        "narrativeCritical": "Your establishment is facing critical issues that are significantly impacting customer satisfaction.",
+        "narrativeWarning": "Your establishment shows mixed performance with clear areas that need improvement.",
+        "narrativePositive": "Your establishment is performing well and delivers a positive overall customer experience.",
+        "statRating": "Average Rating",
+        "statPositive": "Sentiment Score",
+        "statReviews": "Total Reviews",
+        "noData": "No data available",
+        "noDataHint": "Score will appear once reviews are collected.",
+        "statRecentTrend": "Recent Trend",
+        "statRecentTrendHint": "Last 60 days"
+      },
+      "mainIssues": {
+        "majorIssue": "Major Issue",
+        "impactHigh": "Impact - High",
+        "mentionedIn": "Mentioned in {{percentage}}% of negative reviews",
+        "noData": "No data available"
+      },
+      "mainStrengths": {
+        "mainStrength": "Major Strength",
+        "positiveImpact": "Positive Impact",
+        "mentionedIn": "Mentioned in {{percentage}}% of positive reviews",
+        "noData": "No key strengths identified from recent reviews."
+      },
+      "recommandedActions": {
+        "title": "Recommended action",
+        "noData": "No recommended actions available at the moment."
+      },
+      "overallTrend": {
+        "title": "Overall Trend",
+        "recentTrend": "Last 60 days",
+        "change": "{{sign}}{{diff}} over 60 days",
+        "changeAvg": "{{avg}} avg",
+        "summaryNoPrevious": "Current average: {{current}}/5 ({{count}} reviews). No previous period data.",
+        "summaryUp": "Average rating up ({{diff}} over 60 days)",
+        "summaryDown": "Average rating down ({{diff}} over 60 days)",
+        "summaryFlat": "Average rating stable over 60 days"
+      },
       "riskAlert": {
         "title": "Risk - Alert",
         "noData": "No data available",
@@ -627,11 +639,11 @@
       "potentialGain": {
         "title": "Potential Gain",
         "estimatedGain": "+{{gain}} estimated if action applied.",
-        "label":"Estimated lift",
-        "viewActionPlan":"View Action Plan",
-        "noData":"No data available"
+        "label": "Estimated lift",
+        "viewActionPlan": "View Action Plan",
+        "noData": "No data available"
       }
-     }
+    }
   },
   "headerAccountMenu": {
     "establishment": "Establishment",

@@ -38,7 +38,18 @@ export function RatingDistributionModal({
 }: RatingDistributionModalProps) {
   const [distribution, setDistribution] = useState<RatingDistribution | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { t } = useTranslation();
+ const { t, i18n } = useTranslation();
+
+const numberFormatter = new Intl.NumberFormat(i18n.language, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const percentFormatter = new Intl.NumberFormat(i18n.language, {
+  style: "percent",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
   useEffect(() => {
     if (!open || !establishmentId) {
@@ -130,27 +141,25 @@ export function RatingDistributionModal({
             <Skeleton className="h-full w-full" />
           </div>
         ) : distribution && distribution.total > 0 ? (
-          <div className="grid grid-cols-2 gap-8 py-4">
-            {/* Note moyenne à gauche */}
-            <div className="flex flex-col items-center justify-center">
-              <div className="text-5xl font-bold text-primary mb-2">
-                {distribution.avgRating.toFixed(2)}
+            <div className="grid grid-cols-2 gap-8 py-4">
+              {/* Note moyenne à gauche */}
+              <div className="flex flex-col items-center justify-center">
+                <div className="text-5xl font-bold text-primary mb-2">
+                  {numberFormatter.format(distribution.avgRating)}
+                </div>
+                <div className="text-sm text-muted-foreground mb-1">{t("dashboard.averageRating")}</div>
+                <div className="text-lg font-semibold text-muted-foreground">
+                  {numberFormatter.format(distribution.avgRating)}/5
+                </div>
               </div>
-              <div className="text-sm text-muted-foreground mb-1">{t("dashboard.averageRating")}</div>
-              <div className="text-lg font-semibold text-muted-foreground">
-                {distribution.avgRating.toFixed(2)}/5
-              </div>
-            </div>
 
-            {/* Distribution à droite */}
-            <div className="space-y-3">
+              {/* Distribution à droite */}
+              <div className="space-y-3">
               {[5, 4, 3, 2, 1].map((rating) => {
                 const count = distribution.byStars[rating as keyof typeof distribution.byStars];
-                const percentage = distribution.total > 0 
-                  ? ((count / distribution.total) * 100).toFixed(2).replace('.', ',')
-                  : "0,00";
-                const percentageNum = parseFloat(percentage.replace(',', '.'));
-
+                const ratio = distribution.total > 0 ? count / distribution.total : 0;
+                const percentage = percentFormatter.format(ratio);
+                const percentageNum = ratio * 100;
                 return (
                   <div key={rating} className="space-y-1.5">
                     <div className="flex items-center justify-between text-sm">
@@ -158,7 +167,7 @@ export function RatingDistributionModal({
                         {renderStarRating(rating)}
                         <span className="font-medium">{count}</span>
                         <span className="text-muted-foreground">|</span>
-                        <span className="text-muted-foreground">{percentage}%</span>
+                        <span className="text-muted-foreground">{percentage}</span>
                       </div>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2.5">

@@ -1,11 +1,20 @@
+// This endpoint for importing reviews has been deprecated ,as we are using edge function to import reviews via outscraper (outscraper-google-reviews)
+
+
 /**
- * Handler pour POST /api/reviews/import
+ * Handler pour POST /api/reviews/import (utilisé par le middleware Vite en dev).
+ * Utilise les variables backend (chargées via loadEnv dans vite.config) :
+ * - SUPABASE_URL
+ * - SUPABASE_ANON_KEY
+ * - OUTSCRAPER_API_KEY
+ *
+ * Body requis : placeId, name, address. La query Outscraper est construite en "[name], [address]"
+ * et passée au SDK (reviews-v3), pas le place_id.
  */
 
 import { createClient } from "@supabase/supabase-js";
 import Outscraper from "outscraper";
 
-// Stable hash — used for identity (who + when) and content (rating + text)
 function simpleHash(text) {
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
@@ -80,9 +89,8 @@ export async function handleImportReviews(body, authHeader, env = {}) {
     ? String(body.source).toLowerCase()
     : "google";
   const forceFullImport = !!body.forceFullImport;
-  const query = `${name}, ${address}, France`;
+  const query = `${name}, ${address}`;
 
-  // Import incremental
   let cutoffTimestamp = null;
   if (sourceParam === "google" && !forceFullImport) {
     const { data: etabRow } = await supabase
@@ -93,7 +101,8 @@ export async function handleImportReviews(body, authHeader, env = {}) {
       .maybeSingle();
     if (etabRow?.last_reviews_import) {
       const lastImportDate = new Date(etabRow.last_reviews_import);
-      cutoffTimestamp = Math.floor(lastImportDate.getTime() / 1000);
+      const bufferMs = 24 * 60 * 60 * 1000;
+      cutoffTimestamp = Math.floor((lastImportDate.getTime() - bufferMs) / 1000);
       console.log("[api/reviews/import] Import incrémental depuis le", lastImportDate.toISOString(), "| cutoff (s):", cutoffTimestamp);
     }
   }
@@ -101,7 +110,7 @@ export async function handleImportReviews(body, authHeader, env = {}) {
 
   let rows = [];
   try {
-    // const client = new Outscraper(apiKey);
+    const client = new Outscraper(apiKey);
     let response;
 
     if (sourceParam === "tripadvisor") {
@@ -113,57 +122,6 @@ export async function handleImportReviews(body, authHeader, env = {}) {
         [query], limit, null, 1, "newest", null, null,
         cutoffTimestamp, null, false, "google", "fr", null, "", false
       );
-
-      // MOCK DATA — remove when Outscraper is configured
-      // response = [
-      //   {
-      //     reviews_data: [
-      //       {
-      //         author_title: "Jean Dupont",
-      //         review_rating: 5,
-      //         review_text: "Excellent service, je recommande vivement cet établissement !",
-      //         review_datetime_utc: "2026-04-20T10:00:00.000Z",
-      //       },
-      //       {
-      //         author_title: "Marie Martin",
-      //         review_rating: 4,
-      //         review_text: "Très bon accueil, personnel sympathique. Quelques petits détails à améliorer.",
-      //         review_datetime_utc: "2026-04-18T09:00:00.000Z",
-      //       },
-      //       {
-      //         author_title: "Pierre Bernard",
-      //         review_rating: 2,
-      //         review_text: "Service décevant, temps d'attente trop long.",
-      //         review_datetime_utc: "2026-04-11T14:30:00.000Z",
-      //       },
-      //       {
-      //         author_title: "Sophie Leclerc",
-      //         review_rating: 5,
-      //         review_text: "Parfait ! Je reviendrai sans hésiter.",
-      //         review_datetime_utc: "2026-04-01T08:00:00.000Z",
-      //       },
-      //       {
-      //         author_title: "Thomas Moreau",
-      //         review_rating: 3,
-      //         review_text: "Correct sans plus. L'expérience était moyenne.",
-      //         review_datetime_utc: "2026-03-07T11:00:00.000Z",
-      //       },
-      //       // { author_title: "Isabelle Petit", ... } // commented out to simulate deletion
-      //       {
-      //         author_title: "Jackes Kallis",
-      //         review_rating: 2,
-      //         review_text: "A very bad experience. I do not recommend it.Also the atmosphere was not good",
-      //         review_datetime_utc: "2026-02-11T17:00:00.000Z",
-      //       },
-      //       {
-      //         author_title: "Yonous Khan",
-      //         review_rating: 4,
-      //         review_text: "Great experioence",
-      //         review_datetime_utc: "2026-02-13T17:20:00.000Z",
-      //       },
-      //     ],
-      //   },
-      // ];
     }
 
     console.log("[api/reviews/import] Réponse brute Outscraper (avant normalisation):", response);
@@ -219,13 +177,10 @@ export async function handleImportReviews(body, authHeader, env = {}) {
     const dateRaw = r.review_datetime_utc ?? r.review_date ?? r.date ?? r.published_at ?? "";
     const publishedAt = dateRaw ? new Date(dateRaw).toISOString().slice(0, 19) : "";
 
-    // Identity hash — stable key: who wrote it, when, and where (never changes)
     const identityHash = simpleHash(`${source}|${authorName}|${publishedAt}|${placeId}`);
 
-    // Content hash — changes if rating or text is edited by the reviewer
     const contentHash = simpleHash(`${rating}|${text.toLowerCase().trim().replace(/\s+/g, " ")}`);
 
-    // Check if this review already exists in DB by its stable identity hash
     const { data: existingReview } = await supabase
       .from("reviews")
       .select("id, rating, text")
@@ -234,16 +189,13 @@ export async function handleImportReviews(body, authHeader, env = {}) {
       .maybeSingle();
 
     if (existingReview) {
-      // Review exists — compare content hash to detect any edits
       const existingContentHash = simpleHash(
         `${existingReview.rating}|${(existingReview.text || "").toLowerCase().trim().replace(/\s+/g, " ")}`
       );
 
       if (existingContentHash === contentHash) {
-        // Exact same content — nothing to do
         skipped++;
       } else {
-        // Rating or text changed — update the existing row
         const { error: updateError } = await supabase
           .from("reviews")
           .update({ rating, text })
