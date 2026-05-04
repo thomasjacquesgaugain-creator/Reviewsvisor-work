@@ -1,3 +1,6 @@
+// This endpoint for importing reviews has been deprecated ,as we are using edge function to import reviews via outscraper (outscraper-google-reviews)
+
+
 /**
  * Handler pour POST /api/reviews/import (utilisé par le middleware Vite en dev).
  * Utilise les variables backend (chargées via loadEnv dans vite.config) :
@@ -5,12 +8,22 @@
  * - SUPABASE_ANON_KEY
  * - OUTSCRAPER_API_KEY
  *
- * Body requis : placeId, name, address. La query Outscraper est construite en "[name], [address], France"
+ * Body requis : placeId, name, address. La query Outscraper est construite en "[name], [address]"
  * et passée au SDK (reviews-v3), pas le place_id.
  */
 
 import { createClient } from "@supabase/supabase-js";
 import Outscraper from "outscraper";
+
+function simpleHash(text) {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(16);
+}
 
 export async function handleImportReviews(body, authHeader, env = {}) {
   const supabaseUrl = env.SUPABASE_URL;
@@ -76,9 +89,8 @@ export async function handleImportReviews(body, authHeader, env = {}) {
     ? String(body.source).toLowerCase()
     : "google";
   const forceFullImport = !!body.forceFullImport;
-  const query = `${name}, ${address}, France`;
+  const query = `${name}, ${address}`;
 
-  // Import incrémental : récupérer la date du dernier import pour cet établissement
   let cutoffTimestamp = null;
   if (sourceParam === "google" && !forceFullImport) {
     const { data: etabRow } = await supabase
@@ -89,7 +101,8 @@ export async function handleImportReviews(body, authHeader, env = {}) {
       .maybeSingle();
     if (etabRow?.last_reviews_import) {
       const lastImportDate = new Date(etabRow.last_reviews_import);
-      cutoffTimestamp = Math.floor(lastImportDate.getTime() / 1000);
+      const bufferMs = 24 * 60 * 60 * 1000;
+      cutoffTimestamp = Math.floor((lastImportDate.getTime() - bufferMs) / 1000);
       console.log("[api/reviews/import] Import incrémental depuis le", lastImportDate.toISOString(), "| cutoff (s):", cutoffTimestamp);
     }
   }
@@ -106,23 +119,11 @@ export async function handleImportReviews(body, authHeader, env = {}) {
       response = await client.trustpilotReviews([query], limit, "default", "", null, "", false);
     } else {
       response = await client.googleMapsReviews(
-        [query],
-        limit,
-        null,
-        1,
-        "newest",
-        null,
-        null,
-        cutoffTimestamp,
-        null,
-        false,
-        "google",
-        "fr",
-        null,
-        "",
-        false
+        [query], limit, null, 1, "newest", null, null,
+        cutoffTimestamp, null, false, "google", "fr", null, "", false
       );
     }
+
     console.log("[api/reviews/import] Réponse brute Outscraper (avant normalisation):", response);
 
     if (response?.error || response?.errorMessage) {
@@ -163,17 +164,8 @@ export async function handleImportReviews(body, authHeader, env = {}) {
     };
   }
 
-  const { data: existingReviews } = await supabase
-    .from("reviews")
-    .select("author_name, published_at, source")
-    .eq("place_id", placeId)
-    .eq("user_id", user.id);
-
-  const existingSet = new Set(
-    (existingReviews ?? []).map((r) => `${r.source ?? "google"}|${(r.author_name ?? "").trim()}|${(r.published_at ?? "").slice(0, 19)}`)
-  );
-
   let inserted = 0;
+  let updated = 0;
   let skipped = 0;
   const source = sourceParam;
 
@@ -184,18 +176,49 @@ export async function handleImportReviews(body, authHeader, env = {}) {
     const text = (r.review_text ?? r.review ?? r.text ?? r.content ?? "").trim();
     const dateRaw = r.review_datetime_utc ?? r.review_date ?? r.date ?? r.published_at ?? "";
     const publishedAt = dateRaw ? new Date(dateRaw).toISOString().slice(0, 19) : "";
-    const dedupKey = `${source}|${authorName}|${publishedAt}`;
-    if (existingSet.has(dedupKey)) {
-      skipped++;
+
+    const identityHash = simpleHash(`${source}|${authorName}|${publishedAt}|${placeId}`);
+
+    const contentHash = simpleHash(`${rating}|${text.toLowerCase().trim().replace(/\s+/g, " ")}`);
+
+    const { data: existingReview } = await supabase
+      .from("reviews")
+      .select("id, rating, text")
+      .eq("user_id", user.id)
+      .eq("source_review_id", identityHash)
+      .maybeSingle();
+
+    if (existingReview) {
+      const existingContentHash = simpleHash(
+        `${existingReview.rating}|${(existingReview.text || "").toLowerCase().trim().replace(/\s+/g, " ")}`
+      );
+
+      if (existingContentHash === contentHash) {
+        skipped++;
+      } else {
+        const { error: updateError } = await supabase
+          .from("reviews")
+          .update({ rating, text })
+          .eq("id", existingReview.id);
+
+        if (updateError) {
+          console.error("[api/reviews/import] Update error:", updateError);
+          skipped++;
+        } else {
+          console.log(`[api/reviews/import] Review updated (id=${existingReview.id}): text or rating changed`);
+          updated++;
+        }
+      }
       continue;
     }
-    const sourceReviewId = `${source}_${placeId}_${authorName}_${publishedAt}`.replace(/\s/g, "_");
+
+    // New review — insert it with identityHash as the stable source_review_id
     const reviewData = {
       user_id: user.id,
       place_id: placeId,
       source,
-      source_review_id: sourceReviewId,
-      review_id_ext: sourceReviewId,
+      source_review_id: identityHash,
+      review_id_ext: identityHash,
       author_name: authorName || null,
       author: authorName || null,
       rating,
@@ -207,14 +230,11 @@ export async function handleImportReviews(body, authHeader, env = {}) {
 
     const { error: insertError } = await supabase.from("reviews").insert(reviewData);
     if (insertError) {
-      if (insertError.code === "23505") {
-        skipped++;
-        existingSet.add(dedupKey);
-      }
-      continue;
+      console.error("[api/reviews/import] Insert error:", insertError);
+      skipped++;
+    } else {
+      inserted++;
     }
-    inserted++;
-    existingSet.add(dedupKey);
   }
 
   // Mettre à jour last_reviews_import après un import réussi
@@ -229,6 +249,6 @@ export async function handleImportReviews(body, authHeader, env = {}) {
 
   return {
     status: 200,
-    data: { success: true, total: rows.length, inserted, skipped },
+    data: { success: true, total: rows.length, inserted, updated, skipped },
   };
 }

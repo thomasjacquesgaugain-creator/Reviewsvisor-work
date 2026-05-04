@@ -448,12 +448,13 @@ export default function MonEtablissementCard({
               data-testid="select-import-source"
             >
               <option value="google">{t("platforms.google")}</option>
-              <option value="tripadvisor">{t("platforms.tripadvisor")}</option>
-              <option value="trustpilot">{t("platforms.trustpilot")}</option>
+              {/* Commented the below code for now as will integrate the below sources in phase 2 */}
+              {/* <option value="tripadvisor">{t("platforms.tripadvisor")}</option> */} 
+              {/* <option value="trustpilot">{t("platforms.trustpilot")}</option> */}
             </select>
             <button
               type="button"
-              onClick={() => handleImportReviews()}
+              // onClick={() => handleImportReviews()}
               disabled={isImportingReviews}
               className="inline-flex px-4 py-2 h-auto items-center justify-center gap-1 rounded-lg border border-blue-600 bg-blue-600 text-white shadow-sm disabled:opacity-70 disabled:cursor-not-allowed text-xs font-medium"
               title={t("establishment.importFromPlatform", {
@@ -471,7 +472,7 @@ export default function MonEtablissementCard({
               })}
             </button>
           </div>
-          <button
+          {/* <button
             type="button"
             onClick={handleImportAllReviews}
             disabled={isImportingReviews}
@@ -480,8 +481,8 @@ export default function MonEtablissementCard({
             data-testid="btn-import-all-avis"
           >
             {t("establishment.importAllReviews")}
-          </button>
-          <label className="inline-flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+          </button> */}
+          {/* <label className="inline-flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
             <input
               type="checkbox"
               checked={forceFullImport}
@@ -490,7 +491,7 @@ export default function MonEtablissementCard({
               data-testid="checkbox-force-full-import"
             />
             {t("establishment.forceFullImport", "Forcer l'import complet")}
-          </label>
+          </label> */}
         </div>
 
         {/* Visuel à droite */}
@@ -504,7 +505,7 @@ export default function MonEtablissementCard({
             data-name={etab.name}
           >
             <BarChart3 className="w-4 h-4" />
-            <span className="text-[10px] font-medium">Visuel des avis</span>
+            <span className="text-[10px] font-medium">{t("establishment.visualReviews")}</span>
           </button>
         </div>
       </div>

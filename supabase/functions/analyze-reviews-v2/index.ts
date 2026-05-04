@@ -38,6 +38,8 @@ type ReviewRow = {
   like_count: number | null;
 };
 
+type OutputLanguage = 'fr' | 'en';
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
@@ -66,6 +68,35 @@ const OPENAI_KEY   = env("OPENAI_API_KEY", "");
 const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false },
 });
+
+function normalizeLanguage(code: string | null | undefined): OutputLanguage {
+  const normalized = String(code || '').trim().toLowerCase();
+
+  if (normalized.startsWith('en')) return 'en';
+  if (normalized.startsWith('fr')) return 'fr';
+
+  return 'fr';
+}
+
+function getOutputLanguageName(language: OutputLanguage): string {
+  return language === 'fr' ? 'French' : 'English';
+}
+
+function getLanguageInstruction(language: OutputLanguage): string {
+  return `All output text values in the JSON must be in ${getOutputLanguageName(language)}. Keep JSON keys exactly as requested and do not translate the field names.`;
+}
+
+function getUniversalThemes(language: OutputLanguage): string[] {
+  return language === 'fr'
+    ? ['Accueil', 'Propreté', 'Prix', 'Attente', 'Communication', 'SAV', 'Confiance']
+    : ['Cleanliness', 'Price', 'Wait Time', 'Communication', 'After-sales Service', 'Trust'];
+}
+
+function getFallbackSummaryOneLiner(language: OutputLanguage, establishmentName: string, reviewCount: number): string {
+  return language === 'fr'
+    ? `Analyse de ${reviewCount} avis pour ${establishmentName}`
+    : `Analysis of ${reviewCount} reviews for ${establishmentName}`;
+}
 
 // Détection businessType simplifiée (version Deno)
 function detectBusinessType(
@@ -172,16 +203,18 @@ async function analyzePassA(
   samples: string[],
   totalReviews: number,
   businessType: BusinessType,
-  businessTypeConfidence: number
+  businessTypeConfidence: number,
+  language: OutputLanguage
 ) {
   if (!OPENAI_KEY) {
     return null;
   }
-
-  const universalThemes = ['Accueil', 'Propreté', 'Prix', 'Attente', 'Communication', 'SAV', 'Confiance'];
+console.log("language-language", language)
+  const universalThemes = getUniversalThemes(language);
+  const languageInstruction = getLanguageInstruction(language);
   const industryThemesHint = businessTypeConfidence >= 45 
-    ? `\nThèmes spécifiques au secteur ${businessType} à rechercher également.`
-    : '\nFocus uniquement sur les thèmes universels (ne pas inventer de thèmes spécifiques au secteur).';
+    ? `\nAlso look for themes specific to the ${businessType} industry.`
+    : '\nFocus only on universal themes and do not invent industry-specific themes.';
 
 //   const prompt = [
 //     { role: "system", content: `Tu es un analyste expert qui synthétise des avis clients en english.
@@ -233,9 +266,10 @@ async function analyzePassA(
 const prompt = [
   { 
     role: "system", 
-    content: `You are an expert analyst who synthesizes customer reviews in English.
+    content: `You are an expert analyst who synthesizes customer reviews.
 You must extract themes ONLY from the actual content of the reviews.
-Respond strictly with valid JSON.` 
+Respond strictly with valid JSON.
+${languageInstruction}` 
   },
   { 
     role: "user", 
@@ -253,6 +287,8 @@ INSTRUCTIONS:
 3. Include 1–2 short quotes as evidence
 4. If confidence >= 40%, also extract themes specific to the ${businessType} industry
 5. If confidence < 75%, list ONLY universal themes
+6. Reviews can be multilingual; analyze them as-is without translating the original review text
+7. ${languageInstruction}
 
 Return this JSON:
 {
@@ -316,11 +352,14 @@ async function analyzePassB(
   themesUniversal: any[],
   themesIndustry: any[],
   topIssues: any[],
-  avgRating: number | null
+  avgRating: number | null,
+  language: OutputLanguage
 ) {
   if (!OPENAI_KEY) {
     return null;
   }
+
+  const languageInstruction = getLanguageInstruction(language);
 
 //   const prompt = [
 //     { role: "system", content: `Tu es un consultant expert en amélioration de l'expérience client.
@@ -389,7 +428,8 @@ const prompt = [
     role: "system", 
     content: `You are an expert consultant in customer experience improvement.
 Generate actionable recommendations and response templates tailored to the business sector.
-Respond strictly with valid JSON.` 
+Respond strictly with valid JSON.
+${languageInstruction}` 
   },
   { 
     role: "user", 
@@ -407,6 +447,7 @@ Generate:
 2. Quick wins (7 days) – fast actions with expected results
 3. Projects (30 days) – more structured initiatives
 4. Reply templates (positive/neutral/negative) adapted to the ${businessType} sector
+5. ${languageInstruction}
 
 Return this JSON:
 {
@@ -490,8 +531,9 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: "authentication_required" }, 401);
     }
 
-    const { place_id, name, dryRun = false } = await req.json().catch(()=>({}));
+    const { place_id, name, dryRun = false, language } = await req.json().catch(()=>({}));
     if (!place_id) return json({ ok:false, error:"missing_place_id" }, 400);
+    const outputLanguage = normalizeLanguage(language);
 
     // Récupérer l'établissement pour obtenir Google Places types
     let establishmentName = name || 'Établissement';
@@ -553,6 +595,9 @@ Deno.serve(async (req) => {
     const stats = computeStats(rows);
     const sampleTexts = rows.map(r => r.text ?? "").filter(Boolean).slice(0, 120);
     const reviewTexts = sampleTexts;
+    console.log("sampleTexts-sampleTexts", sampleTexts)
+    console.log("establishmentName-establishmentName", establishmentName)
+    console.log("googlePlacesTypes-googlePlacesTypes", googlePlacesTypes)
 
     // Détection businessType
     const detection = detectBusinessType(establishmentName, googlePlacesTypes, reviewTexts);
@@ -564,7 +609,8 @@ Deno.serve(async (req) => {
       sampleTexts,
       rows.length,
       detection.type,
-      detection.confidence
+      detection.confidence,
+      outputLanguage
     );
 
     if (!passAResult) {
@@ -585,7 +631,8 @@ Deno.serve(async (req) => {
       passAResult.themes_universal || [],
       passAResult.themes_industry || [],
       negativeThemes,
-      stats.overall
+      stats.overall,
+      outputLanguage
     );
 
     if (!passBResult) {
@@ -593,17 +640,20 @@ Deno.serve(async (req) => {
     }
 
     // Assembler le résultat final
+    const summaryData = passAResult.summary || {
+      one_liner: getFallbackSummaryOneLiner(outputLanguage, establishmentName, rows.length),
+      what_customers_love: [],
+      what_customers_hate: []
+    };
+
     const analysisResult = {
+      analysis_language: outputLanguage,
       top_praises: passAResult.top_strength, 
       top_issues:passAResult.top_issues,
       business_type: detection.type,
       business_type_confidence: detection.confidence,
       business_type_candidates: detection.candidates,
-      summary: passAResult.summary || {
-        one_liner: `Analyse de ${rows.length} avis pour ${establishmentName}`,
-        what_customers_love: [],
-        what_customers_hate: []
-      },
+      summary: summaryData,
       kpis: {
         avg_rating: stats.overall,
         total_reviews: stats.total,
@@ -658,6 +708,7 @@ Deno.serve(async (req) => {
         // })),
         
         summary: {
+          analysis_language: outputLanguage,
           total: stats.total,
           by_rating: stats.by_rating,
           positive_pct: stats.positive_pct,
@@ -671,9 +722,9 @@ Deno.serve(async (req) => {
         recommendations_quick_wins: passBResult.recommendations?.quick_wins_7_days || [],
         recommendations_projects: passBResult.recommendations?.projects_30_days || [],
         reply_templates: passBResult.reply_templates || {},
-        summary_one_liner: passAResult.summary?.one_liner || '',
-        summary_what_customers_love: passAResult.summary?.what_customers_love || [],
-        summary_what_customers_hate: passAResult.summary?.what_customers_hate || []
+        summary_one_liner: summaryData.one_liner || '',
+        summary_what_customers_love: summaryData.what_customers_love || [],
+        summary_what_customers_hate: summaryData.what_customers_hate || []
       };
 
       const { data: existsRows } = await supabaseAdmin
@@ -711,6 +762,7 @@ Deno.serve(async (req) => {
 
     return json({
       ok: true,
+      analysis_language: outputLanguage,
       analysis: analysisResult,
       counts: { collected: rows.length },
       dryRun

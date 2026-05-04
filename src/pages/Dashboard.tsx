@@ -138,6 +138,8 @@ import { RecommendationsSection } from "@/components/RecommendationsSection";
 import { getCurrentEstablishment } from "@/services/establishments";
 import { useSmartProgress } from "@/hooks/useSmartProgress";
 import { useSmartStore } from "@/store/smartStore";
+import { DeleteEstablishmentButton } from "@/components/DeleteEstablishmentButton";
+
 const GRANULARITY_LABEL_KEYS: Record<Granularity, string> = {
   jour: "dashboard.day",
   semaine: "dashboard.week",
@@ -202,7 +204,7 @@ const Dashboard = () => {
     GRANULARITY_LABEL_KEYS[granularityEvolution] ?? "dashboard.month",
   );
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
-  const [activeTab, setActiveTab] = useState("indicateurs");
+  const [activeTab, setActiveTab] = useState("key-takeaways");
   const [showBusinessTypeOverrideModal, setShowBusinessTypeOverrideModal] =
     useState(false);
 
@@ -2259,13 +2261,13 @@ const Dashboard = () => {
       const { data, error } = await supabase
         .from("establishments")
         .select(
-          "id, place_id, name, formatted_address, lat, lng, website, phone, rating, updated_at",
+          "id, place_id, name, formatted_address, lat, lng, website, phone, rating, types, updated_at",
         )
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
-
+      
       const mapped: Etab[] = (data ?? []).map((row) => ({
         place_id: row.place_id,
         name: row.name,
@@ -2275,6 +2277,8 @@ const Dashboard = () => {
         website: row.website ?? undefined,
         phone: row.phone ?? undefined,
         rating: row.rating ?? null,
+        types: row.types ?? null,
+        id:row.id?? null
         // is_active?: row.is_active ?? false,
       }));
 
@@ -2346,6 +2350,13 @@ const Dashboard = () => {
         website: selectedEstablishment.website,
         phone: selectedEstablishment.phone,
         rating: selectedEstablishment.rating ?? null,
+        types:
+          typeof selectedEstablishment.types === "string"
+            ? selectedEstablishment.types
+            : Array.isArray(selectedEstablishment.types)
+              ? selectedEstablishment.types.filter(Boolean).join(", ")
+              : null,
+        id: selectedEstablishment.id,
       });
     }
   }, [selectedEstablishment]);
@@ -3159,6 +3170,10 @@ const getLatestDate = (reviews: any[]): Date | null =>
     );
   }
 
+  const fallbackEstab = establishments.find(
+  e => e.place_id !== selectedEtab?.place_id
+) ?? null;
+
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1 relative overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
@@ -3196,11 +3211,10 @@ const getLatestDate = (reviews: any[]): Date | null =>
 
                 {/* Carte établissement au milieu */}
                 {selectedEtab && (
-                  <Card className="w-[600px]">
+                  <Card className="w-full max-w-[600px]">
                     <CardContent className="p-4">
-                      <div className="relative">
-                        <div className="flex items-center gap-3">
-                          <div className="relative">
+                        <div className="flex items-start gap-3">
+                          <div className="relative flex-shrink-0">
                             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                               <Building2 className="w-5 h-5 text-blue-600" />
                             </div>
@@ -3222,11 +3236,11 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent
-                                className="w-80 p-2 bg-white z-50 shadow-lg border"
+                                className="w-[480px] max-w-[calc(100vw-2rem)] p-2 bg-white z-50 shadow-lg border"
                                 align="start"
                               >
-                                <div className="space-y-1">
-                                  <div className="text-sm font-medium text-gray-700 px-3 py-2">
+                                <div className="space-y-1 overflow-auto h-[400px] p-2 position-relative">
+                                  <div className="text-sm font-medium text-gray-700 px-3 py-2 border-b">
                                     {t("establishment.myEstablishments")}
                                   </div>
                                   {establishmentsLoading ? (
@@ -3243,7 +3257,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                       <button
                                         key={etab.place_id}
                                         type="button"
-                                        className={`w-full flex items-center gap-3 p-3 text-left rounded-lg cursor-pointer transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                        className={`w-full flex items-start gap-3 p-3 text-left rounded-lg cursor-pointer transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                           selectedEtab?.place_id ===
                                           etab.place_id
                                             ? "bg-blue-50"
@@ -3259,6 +3273,8 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             website: etab.website,
                                             phone: etab.phone,
                                             rating: etab.rating ?? undefined,
+                                            types: etab.types ?? null,
+                                            id: etab.id,
                                           };
                                           await setActivePlace(
                                             etab.place_id,
@@ -3283,18 +3299,18 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                           <Building2 className="w-4 h-4 text-blue-600" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                          <div className="flex items-center gap-2">
-                                            <span className="font-medium text-gray-900 truncate">
+                                          <div className="flex items-start justify-between gap-2">
+                                            <span className="font-medium text-gray-900 break-words leading-snug min-w-0 pr-2">
                                               {etab.name}
                                             </span>
                                             {selectedEtab?.place_id ===
                                               etab.place_id && (
-                                              <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                                              <span className="shrink-0 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
                                                 {t("establishment.active")}
                                               </span>
                                             )}
                                           </div>
-                                          <div className="text-sm text-gray-500 truncate">
+                                          <div className="text-sm text-gray-500 break-words leading-snug">
                                             {etab.address}
                                           </div>
                                         </div>
@@ -3305,13 +3321,19 @@ const getLatestDate = (reviews: any[]): Date | null =>
                               </PopoverContent>
                             </Popover>
                           </div>
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-900">
-                              {selectedEtab.name}
-                            </div>
-                            <div className="text-sm text-gray-500">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-gray-900 break-words leading-snug">
+                            <span>{selectedEtab.name}</span>
+                            {selectedEtab.types ? (
+                              <span className="ml-2 text-sm font-normal text-slate-500">
+                                • (<span className="italic">{selectedEtab.types}</span>)
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="mt-1 flex items-start gap-1 text-sm text-gray-500 leading-snug">
+                            <span className="min-w-0 break-words">
                               {selectedEtab.address}
-                            </div>
+                            </span>
                           </div>
                         </div>
 
@@ -3319,7 +3341,8 @@ const getLatestDate = (reviews: any[]): Date | null =>
                         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2"></div>
 
                         {/* Icônes en bas à droite */}
-                        <div className="absolute bottom-0 right-0 flex gap-1">
+                        <div className="absolute bottom-0 right-0 flex gap-1"></div>
+                        <div className="flex items-center gap-1 self-center flex-shrink-0">
                           {/* Bouton analyser établissement */}
                           <Button
                             variant="ghost"
@@ -3342,6 +3365,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                   place_id: selectedEtab.place_id,
                                   name: selectedEtab.name,
                                   address: selectedEtab.address,
+                                  language: i18n.language,
                                 });
 
                                 if (result.ok) {
@@ -3450,6 +3474,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                 );
                               } finally {
                                 setIsAnalyzing(false);
+                                toast.success(t("establishment.establishmentAnalysed"))
                               }
                             }}
                             disabled={isAnalyzing}
@@ -3463,19 +3488,27 @@ const getLatestDate = (reviews: any[]): Date | null =>
                             )}
                           </Button>
 
-                          {/* Bouton oublier établissement */}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              localStorage.removeItem(STORAGE_KEY);
-                              setSelectedEtab(null);
+                          <DeleteEstablishmentButton
+                            establishment={selectedEtab}
+                            fallbackForActivePlace={
+                              fallbackEstab
+                                ? {
+                                  place_id: fallbackEstab.place_id,
+                                  name: fallbackEstab.name,
+                                  formatted_address: fallbackEstab.address ?? "",
+                                  lat: fallbackEstab.lat ?? 0,
+                                  lng: fallbackEstab.lng ?? 0,
+                                  phone: fallbackEstab.phone,
+                                  website: fallbackEstab.website,
+                                  rating: fallbackEstab.rating ?? undefined,
+                                }
+                                : null
+                            }
+                            onSuccess={() => {
+                              setSelectedEtab(fallbackEstab);
+                              loadEstablishmentsFromDB();
                             }}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
-                            title={t("establishment.forgetThisEstablishment")}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          />
                         </div>
                       </div>
                     </CardContent>
@@ -6715,6 +6748,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                         body: {
                                           question: agentQuestion.trim(),
                                           establishmentContext,
+                                          language: i18n.language,
                                         },
                                       },
                                     );
@@ -7566,7 +7600,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">
-                            {t("dashboard.replied")}
+                            {t("dashboard.reply")}
                           </p>
                           <p className="text-2xl font-bold">
                             {
@@ -7842,7 +7876,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <div className="flex items-center gap-2">
                                               <AlertCircle className="w-5 h-5 text-red-600" />
                                               <h3 className="font-semibold text-red-900">
-                                                🔴 Avec une plainte
+                                                {t("dashboard.containsComplaint")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-red-600 text-white">
@@ -7860,22 +7894,22 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                   )}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -7967,8 +8001,8 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                             }
                                                           >
                                                             {hasResponse
-                                                              ? "Répondu"
-                                                              : "En attente"}
+                                                              ? t("dashboard.replied")
+                                                              : t("dashboard.pending")}
                                                           </Badge>
                                                         </td>
                                                         <td className="px-4 py-3">
@@ -7984,7 +8018,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                                 )
                                                               }
                                                             >
-                                                              Voir la réponse
+                                                              {t("dashboard.viewResponse")}
                                                             </Badge>
                                                           ) : (
                                                             <Button
@@ -8004,7 +8038,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                               }}
                                                             >
                                                               <Reply className="w-3 h-3 mr-1" />
-                                                              Répondre
+                                                              {t("dashboard.reply")}
                                                             </Button>
                                                           )}
                                                         </td>
@@ -8058,7 +8092,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <div className="flex items-center gap-2">
                                               <Lightbulb className="w-5 h-5 text-yellow-600" />
                                               <h3 className="font-semibold text-yellow-900">
-                                                💡 Contient une suggestion
+                                                {t("dashboard.containsSuggestion")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-yellow-600 text-white">
@@ -8071,25 +8105,25 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <thead className="bg-yellow-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -8181,8 +8215,8 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
@@ -8198,7 +8232,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                               )
                                                             }
                                                           >
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -8218,7 +8252,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                             }}
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -8247,7 +8281,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <div className="flex items-center gap-2">
                                               <Frown className="w-5 h-5 text-orange-600" />
                                               <h3 className="font-semibold text-orange-900">
-                                                😠 Ton négatif détecté
+                                                {t("dashboard.negativeToneDetected")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-orange-600 text-white">
@@ -8260,25 +8294,25 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <thead className="bg-orange-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -8370,8 +8404,8 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
@@ -8387,7 +8421,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                               )
                                                             }
                                                           >
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -8407,7 +8441,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                             }}
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -8436,7 +8470,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <div className="flex items-center gap-2">
                                               <ThumbsUp className="w-5 h-5 text-green-600" />
                                               <h3 className="font-semibold text-green-900">
-                                                👍 Avis positif
+                                                {t("dashboard.positiveReview")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-green-600 text-white">
@@ -8449,25 +8483,25 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <thead className="bg-green-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -8559,8 +8593,8 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
@@ -8570,7 +8604,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                           className="text-xs"
                                                         >
                                                           <Reply className="w-3 h-3 mr-1" />
-                                                          Répondre
+                                                          {t("dashboard.replied")}
                                                         </Button>
                                                       </td>
                                                     </tr>
@@ -8603,7 +8637,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <div className="flex items-center gap-2">
                                               <Star className="w-5 h-5 fill-red-500 text-red-500" />
                                               <h3 className="font-semibold text-red-900">
-                                                ⭐ 1-2 étoiles
+                                                {t("analysis.overview.stars.1to2")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-red-600 text-white">
@@ -8616,25 +8650,25 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <thead className="bg-red-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -8726,14 +8760,14 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -8742,7 +8776,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -8771,7 +8805,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <div className="flex items-center gap-2">
                                               <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" />
                                               <h3 className="font-semibold text-yellow-900">
-                                                ⭐ 3 étoiles
+                                                {t("analysis.overview.stars.3")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-yellow-600 text-white">
@@ -8784,25 +8818,25 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <thead className="bg-yellow-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -8878,14 +8912,14 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -8894,7 +8928,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -8923,7 +8957,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <div className="flex items-center gap-2">
                                               <Star className="w-5 h-5 fill-green-500 text-green-500" />
                                               <h3 className="font-semibold text-green-900">
-                                                ⭐ 4-5 étoiles
+                                                {t("analysis.overview.stars.4to5")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-green-600 text-white">
@@ -8936,25 +8970,25 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <thead className="bg-green-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -9030,14 +9064,14 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -9046,7 +9080,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -9106,22 +9140,22 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                   )}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -9197,14 +9231,14 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -9213,7 +9247,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -9240,7 +9274,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <div className="flex items-center gap-2">
                                               <AlertTriangle className="w-5 h-5 text-orange-600" />
                                               <h3 className="font-semibold text-orange-900">
-                                                ⚠️ À surveiller
+                                                {t("dashboard.needsAttention")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-orange-600 text-white">
@@ -9253,25 +9287,25 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <thead className="bg-orange-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -9347,14 +9381,14 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -9363,7 +9397,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -9392,7 +9426,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <div className="flex items-center gap-2">
                                               <CheckCircle className="w-5 h-5 text-green-600" />
                                               <h3 className="font-semibold text-green-900">
-                                                ✅ Réponses rapides
+                                                {t("dashboard.quickResponses")}
                                               </h3>
                                             </div>
                                             <Badge className="bg-green-600 text-white">
@@ -9405,25 +9439,25 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <thead className="bg-green-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -9499,14 +9533,14 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -9515,7 +9549,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -9562,25 +9596,25 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <thead className="bg-blue-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -9656,14 +9690,14 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -9672,7 +9706,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -9715,25 +9749,25 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <thead className="bg-blue-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -9809,14 +9843,14 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -9825,7 +9859,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -9869,25 +9903,25 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <thead className="bg-green-50">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Auteur
+                                                  {t("dashboard.dashResponseTableHeading.author")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Note
+                                                  {t("dashboard.dashResponseTableHeading.rating")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Commentaire
+                                                  {t("dashboard.dashResponseTableHeading.comment")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Source
+                                                  {t("dashboard.dashResponseTableHeading.source")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Date
+                                                  {t("dashboard.dashResponseTableHeading.date")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Statut
+                                                  {t("dashboard.dashResponseTableHeading.status")}
                                                 </th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
-                                                  Action
+                                                  {t("dashboard.dashResponseTableHeading.action")}
                                                 </th>
                                               </tr>
                                             </thead>
@@ -9963,14 +9997,14 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                           }
                                                         >
                                                           {hasResponse
-                                                            ? "Répondu"
-                                                            : "En attente"}
+                                                            ? t("dashboard.replied")
+                                                            : t("dashboard.pending")}
                                                         </Badge>
                                                       </td>
                                                       <td className="px-4 py-3">
                                                         {hasResponse ? (
                                                           <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            Voir la réponse
+                                                            {t("dashboard.viewResponse")}
                                                           </Badge>
                                                         ) : (
                                                           <Button
@@ -9979,7 +10013,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                             className="text-xs"
                                                           >
                                                             <Reply className="w-3 h-3 mr-1" />
-                                                            Répondre
+                                                            {t("dashboard.reply")}
                                                           </Button>
                                                         )}
                                                       </td>
@@ -10042,13 +10076,13 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                   <thead className="bg-gray-50">
                                                     <tr>
                                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                                                        Auteur
+                                                        {t("dashboard.dashResponseTableHeading.author")}
                                                       </th>
                                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                                                         Note
                                                       </th>
                                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                                                        Commentaire
+                                                        {t("dashboard.dashResponseTableHeading.comment")}
                                                       </th>
                                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                                                         Source
@@ -10057,7 +10091,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                         Date
                                                       </th>
                                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                                                        Statut
+                                                        {t("dashboard.dashResponseTableHeading.status")}
                                                       </th>
                                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                                                         Action
@@ -10142,8 +10176,8 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                                 }
                                                               >
                                                                 {hasResponse
-                                                                  ? "Répondu"
-                                                                  : "En attente"}
+                                                                  ? t("dashboard.replied")
+                                                                  : t("dashboard.pending")}
                                                               </Badge>
                                                             </td>
                                                             <td className="px-4 py-3">
@@ -10153,7 +10187,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                                 className="text-xs"
                                                               >
                                                                 <Reply className="w-3 h-3 mr-1" />
-                                                                Répondre
+                                                                {t("dashboard.reply")}
                                                               </Button>
                                                             </td>
                                                           </tr>
@@ -10280,8 +10314,8 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                     }
                                                   >
                                                     {hasResponse
-                                                      ? "Répondu"
-                                                      : "En attente"}
+                                                      ? t("dashboard.replied")
+                                                      : t("dashboard.pending")}
                                                   </Badge>
                                                 </td>
                                                 <td className="px-4 py-3">
@@ -10297,7 +10331,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                         )
                                                       }
                                                     >
-                                                      Voir la réponse
+                                                      {t("dashboard.viewResponse")}
                                                     </Badge>
                                                   ) : (
                                                     <Button
@@ -10316,7 +10350,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                       }}
                                                     >
                                                       <Reply className="w-3 h-3 mr-1" />
-                                                      Répondre
+                                                      {t("dashboard.reply")}
                                                     </Button>
                                                   )}
                                                 </td>
@@ -10330,7 +10364,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                     >
                                                       <div className="border-l-4 border-green-500 pl-4">
                                                         <p className="font-semibold text-green-700 mb-2">
-                                                          Réponse publiée :
+                                                          {t("dashboard.responsePublished")} :
                                                         </p>
                                                         <p className="text-gray-700">
                                                           {review.owner_reply_text ||
@@ -10376,7 +10410,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                   }
                                   className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                                 >
-                                  Afficher plus
+                                  {t("dashboard.showMore")}
                                   <ChevronDown className="w-4 h-4" />
                                 </button>
                               </div>

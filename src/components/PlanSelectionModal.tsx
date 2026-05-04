@@ -47,39 +47,39 @@ const TIER_COLORS: Record<string, {
   disabledBg: string;
 }> = {
   green:  {
-    border: "border-green-400",
-    badge: "bg-green-600",
-    check: "text-green-600",
-    selected: "border-green-500 bg-green-50",
-    recommended: "bg-green-600",
-    recommendedText: "text-green-700",
+    border: "border-[#2563eb]",
+    badge: "bg-[#2563eb]",
+    check: "text-[#2563eb]",
+    selected: "border-[#2563eb] bg-[#2563eb]/10",
+    recommended: "bg-[#2563eb]",
+    recommendedText: "text-[#2563eb]",
     disabledBg: "bg-gray-50",
   },
   blue:   {
-    border: "border-blue-400",
-    badge: "bg-blue-600",
-    check: "text-blue-600",
-    selected: "border-blue-500 bg-blue-50",
-    recommended: "bg-blue-600",
-    recommendedText: "text-blue-700",
+    border: "border-[#2563eb]",
+    badge: "bg-[#2563eb]",
+    check: "text-[#2563eb]",
+    selected: "border-[#2563eb] bg-[#2563eb]/10",
+    recommended: "bg-[#2563eb]",
+    recommendedText: "text-[#2563eb]",
     disabledBg: "bg-gray-50",
   },
   purple: {
-    border: "border-violet-400",
-    badge: "bg-violet-600",
-    check: "text-violet-600",
-    selected: "border-violet-500 bg-violet-50",
-    recommended: "bg-violet-600",
-    recommendedText: "text-violet-700",
+    border: "border-[#2563eb]",
+    badge: "bg-[#2563eb]",
+    check: "text-[#2563eb]",
+    selected: "border-[#2563eb] bg-[#2563eb]/10",
+    recommended: "bg-[#2563eb]",
+    recommendedText: "text-[#2563eb]",
     disabledBg: "bg-gray-50",
   },
   pink:   {
-    border: "border-pink-400",
-    badge: "bg-pink-600",
-    check: "text-pink-600",
-    selected: "border-pink-500 bg-pink-50",
-    recommended: "bg-pink-600",
-    recommendedText: "text-pink-700",
+    border: "border-[#2563eb]",
+    badge: "bg-[#2563eb]",
+    check: "text-[#2563eb]",
+    selected: "border-[#2563eb] bg-[#2563eb]/10",
+    recommended: "bg-[#2563eb]",
+    recommendedText: "text-[#2563eb]",
     disabledBg: "bg-gray-50",
   },
 };
@@ -91,7 +91,7 @@ interface Props {
 }
 
 export function PlanSelectionModal({ open, onClose, establishment }: Props) {
-  const { t } = useTranslation();
+  const { t,i18n } = useTranslation();
   const recommendedTier = getRecommendedTier(MONTHLY_AVERAGE_REVIEWS);
 
   const defaultPlan = subscriptionPlans.find(
@@ -133,6 +133,7 @@ export function PlanSelectionModal({ open, onClose, establishment }: Props) {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: {
           priceId: plan.priceId,
+          language: i18n.language,
           pendingEstablishment: establishment
             ? {
                 place_id: establishment.place_id,

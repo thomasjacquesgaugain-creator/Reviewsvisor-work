@@ -242,33 +242,33 @@ export function ReviewsVisualPanel({
     if (!effectiveId) return;
     
     // ⚠️ PROTECTION 3: Double confirmation
-    const firstConfirm = window.confirm(
-      `⚠️ ATTENTION - ACTION IRRÉVERSIBLE ⚠️\n\n` +
-      `Vous êtes sur le point de supprimer TOUS les avis pour cet établissement.\n\n` +
-      `Cette action est irréversible et tous les avis seront perdus.\n\n` +
-      `Un backup automatique sera créé, mais il est recommandé de faire un export manuel avant.\n\n` +
-      `Êtes-vous ABSOLUMENT sûr de vouloir continuer ?`
-    );
+    // const firstConfirm = window.confirm(
+    //   `⚠️ ATTENTION - ACTION IRRÉVERSIBLE ⚠️\n\n` +
+    //   `Vous êtes sur le point de supprimer TOUS les avis pour cet établissement.\n\n` +
+    //   `Cette action est irréversible et tous les avis seront perdus.\n\n` +
+    //   `Un backup automatique sera créé, mais il est recommandé de faire un export manuel avant.\n\n` +
+    //   `Êtes-vous ABSOLUMENT sûr de vouloir continuer ?`
+    // );
     
-    if (!firstConfirm) {
-      console.log('[PROTECTION DONNÉES] ✅ Suppression annulée par l\'utilisateur (première confirmation)');
-      setShowDeleteDialog(false);
-      return;
-    }
+    // if (!firstConfirm) {
+    //   console.log('[PROTECTION DONNÉES] ✅ Suppression annulée par l\'utilisateur (première confirmation)');
+    //   setShowDeleteDialog(false);
+    //   return;
+    // }
     
-    // Deuxième confirmation
-    const secondConfirm = window.confirm(
-      `🚨 DERNIÈRE CONFIRMATION 🚨\n\n` +
-      `Cette action va supprimer DÉFINITIVEMENT tous les avis.\n\n` +
-      `Il est encore temps d'annuler.\n\n` +
-      `Confirmez-vous une dernière fois la suppression ?`
-    );
+    // // Deuxième confirmation
+    // const secondConfirm = window.confirm(
+    //   `🚨 DERNIÈRE CONFIRMATION 🚨\n\n` +
+    //   `Cette action va supprimer DÉFINITIVEMENT tous les avis.\n\n` +
+    //   `Il est encore temps d'annuler.\n\n` +
+    //   `Confirmez-vous une dernière fois la suppression ?`
+    // );
     
-    if (!secondConfirm) {
-      console.log('[PROTECTION DONNÉES] ✅ Suppression annulée par l\'utilisateur (seconde confirmation)');
-      setShowDeleteDialog(false);
-      return;
-    }
+    // if (!secondConfirm) {
+    //   console.log('[PROTECTION DONNÉES] ✅ Suppression annulée par l\'utilisateur (seconde confirmation)');
+    //   setShowDeleteDialog(false);
+    //   return;
+    // }
     
     try {
       setIsDeleting(true);
@@ -619,7 +619,7 @@ export function ReviewsVisualPanel({
                           onClick={() => setDisplayCount(prev => prev + 10)}
                           className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                         >
-                          Afficher plus
+                          {t("establishment.showMore")}
                           <ChevronDown className="w-4 h-4" />
                         </button>
                       </div>

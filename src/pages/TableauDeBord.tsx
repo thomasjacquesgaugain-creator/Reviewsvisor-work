@@ -31,7 +31,18 @@ const Dashboard = () => {
   const { establishment: currentEstablishment, loading: establishmentLoading } = useCurrentEstablishment();
   const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState('apercu');
-  
+
+  const currentEstablishmentTypes = useMemo(() => {
+    const types = currentEstablishment?.types;
+    if (!types) return null;
+    if (Array.isArray(types)) {
+      return types
+        .map((type) => String(type).trim())
+        .filter(Boolean)
+        .join(", ");
+    }
+    return String(types).trim() || null;
+  }, [currentEstablishment?.types]);
 
   useEffect(() => {
     const getUserProfile = async () => {
@@ -344,9 +355,16 @@ const Dashboard = () => {
               <h2 className="text-2xl font-bold text-gray-900">{t("dashboard.welcomeWithName", { name: displayName })}</h2>
               {!isLoading && currentEstablishment?.name ? (
                 <>
-                  <div className="flex items-center justify-center gap-2 text-blue-600 font-semibold">
-                    <Building className="w-5 h-5" />
-                    <span>{currentEstablishment.name}</span>
+                  <div className="flex items-center justify-center gap-2 text-center text-blue-600 font-semibold max-w-2xl mx-auto">
+                    <Building className="w-5 h-5 flex-shrink-0" />
+                    <span className="break-words leading-snug">
+                      {currentEstablishment.name}
+                      {currentEstablishmentTypes ? (
+                        <span className="ml-2 text-sm font-medium text-slate-500">
+                          • (<span className="italic">{currentEstablishmentTypes}</span>)
+                        </span>
+                      ) : null}
+                    </span>
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
@@ -369,7 +387,7 @@ const Dashboard = () => {
                   <Link to="/etablissement">
                     <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
                       <Plus className="w-5 h-5 mr-2" />
-                      Ajouter un établissement
+                      {t("dashboard.addEstablishment")}
                     </Button>
                   </Link>
                 </div>

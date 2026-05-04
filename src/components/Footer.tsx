@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Shield, Cookie, FileText, HelpCircle } from "lucide-react";
+import { Mail, Shield, Cookie, FileText, HelpCircle, Scale, Info, Layers } from "lucide-react";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useTranslation } from "react-i18next";
 import { APP_NAME } from "@/config/brand";
@@ -32,12 +32,14 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/a-propos" className="text-white hover:underline hover:opacity-80 transition-all">
+                <Link to="/a-propos" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
+                <Info className="h-4 w-4" />
                   {t("nav.about")}
                 </Link>
               </li>
               <li>
-                <Link to="/fonctionnalites" className="text-white hover:underline hover:opacity-80 transition-all">
+                <Link to="/fonctionnalites" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
+                <Layers className="h-4 w-4" />
                   {t("nav.features")}
                 </Link>
               </li>
@@ -49,12 +51,12 @@ export function Footer() {
             <h3 className="text-white font-bold text-lg mb-4">{t("nav.account")}</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/login" className="text-white hover:underline hover:opacity-80 transition-all">
+                <Link to="/login" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
                   {t("auth.login")}
                 </Link>
               </li>
               <li>
-                <Link to="/inscription" className="text-white hover:underline hover:opacity-80 transition-all">
+                <Link to="/inscription" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
                   {t("auth.signup")}
                 </Link>
               </li>
@@ -67,12 +69,13 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link to="/mentions-legales" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
+                  <Scale className="h-4 w-4" />
                   {t("footer.legalNotice")}
                 </Link>
               </li>
               <li>
-                <Link to="/cgu" className="text-white hover:underline hover:opacity-80 transition-all">
+                <Link to="/cgu" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
                   {t("footer.termsOfUse")}
                 </Link>
               </li>

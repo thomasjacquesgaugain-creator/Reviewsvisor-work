@@ -366,6 +366,7 @@
     "apply": "Appliquer",
     "limitedDataCaution": "Données limitées - interprétation prudente",
     "noReviewsForSelectedPeriod": "Aucun avis sur la période sélectionnée",  
+    "tryWiderPeriod": "Essayez d’élargir la période ou de réinitialiser les filtres.",
     "reset":"Réinitialiser",
     "appTagline":"Analyse complète des avis clients",
     "rating4StarsOrMore": "Note ≥ 4 étoiles",
@@ -400,6 +401,7 @@
     "stars3": "3 étoiles",
     "stars2": "2 étoiles",
     "stars1": "1 étoile",
+    "stars": "étoile",
     "ratingEvolutionFor": "Évolution des avis pour {{name}}",
     "ratingEvolutionLast12Months": "Évolution des avis sur les 12 derniers mois",
     "insufficientData": "Pas assez de données pour afficher une tendance.",
@@ -600,6 +602,16 @@
     "manageCustomerReviewResponses": "Gérez vos réponses aux avis clients",
     "pending": "En attente",
     "replied": "Répondu",
+    "reply": "Répondre",
+    "viewResponse": "Voir la réponse",
+    "positiveReview": "Avis positif",
+    "containsComplaint": "Avec une plainte",
+    "containsSuggestion": "Contient une suggestion",
+    "negativeToneDetected": "Ton négatif détecté",
+    "needsAttention": "À surveiller",
+    "quickResponses": "Réponses rapides",
+    "responsePublished": "Réponse publiée",
+    "showMore": "Afficher plus",
     "contentAnalysis": "Analyse du contenu",
     "aiReviewClassification": "Classification IA des avis",
     "filterByRating": "Filtrer par note",
@@ -1240,7 +1252,8 @@
     "forceFullImport": "Forcer l'import complet",
     "importNoReviews": "Aucun avis trouvé pour ce lieu",
     "visualReviews": "Visuel des avis",
-    "placeId": "place_id",
+    "placeId": "ID de lieu",
+    "showMore": "Afficher plus",
     "savedEstablishments": "Établissements enregistrés",
     "noEstablishmentsSaved": "Aucun établissement enregistré pour le moment.",
     "addFirstEstablishment": "Ajouter votre premier établissement",
@@ -1255,6 +1268,7 @@
     "chooseAnotherEstablishment": "Choisir un autre établissement",
     "myEstablishments": "Mes Établissements",
     "analyzeThisEstablishment": "Analyser cet établissement",
+    "establishmentAnalysed": "Établissement analysé",
     "forgetThisEstablishment": "Oublier cet établissement",
     "selectedEstablishment": "Établissement sélectionné",
     "searchLocationPlaceholder": "Rechercher un lieu...",
@@ -1386,7 +1400,7 @@
   },
   "import": {
     "pasteReviews": "Coller des avis",
-    "importCsv": "Import CSV",
+    "importCsv": "Importer CSV/JSON",
     "autoRecovery": "Récupération auto",
     "autoImportForEstablishment": "Importation automatique des avis Google pour \"{{name}}\"",
     "selectEstablishmentToImport": "Sélectionnez un établissement pour importer les avis Google",
@@ -1414,6 +1428,7 @@
     "instruction6": "Ouvrez le fichier avec le Bloc-notes.",
     "instruction7": "Copiez le contenu et collez-le ici.",
     "instruction8": "Cliquez ensuite sur « Importer les avis ».",
+    "instruction9": "Une fois l'export terminé et le téléchargement effectué, extrayez et téléversez le fichier JSON/CSV.",
     "pastePlaceholder": "Collez ici les avis copiés depuis Google Maps ou Tripadvisor...",
     "pasteHelp": "Collez plusieurs avis en une fois. Le système détectera automatiquement les notes, auteurs et commentaires.",
     "preview": "Aperçu",
@@ -1595,7 +1610,14 @@
     "reviewsImportedUpdated": "{{total}} avis importés / mis à jour",
     "newReviews": "{{inserted}} nouveaux",
     "updatedReviews": "{{updated}} mis à jour",
-    "noReviewsFound": "0 avis trouvés (vérifier compte Google + établissement)"
+    "noReviewsFound": "0 avis trouvés (vérifier compte Google + établissement)",
+    "googleUnavailableTitle":"L'importation Google est indisponible",
+    "googleUnavailableMessage":"Les API Google Business ne sont pas configurées. Vous pouvez poursuivre avec Outscraper à la place.",
+    "proceedWithOutscraper":"Continuer avec Outscraper",
+    "cannotFallbackWithoutEstablishmentInfo":"Nom ou adresse de l'établissement manquant pour le repli Outscraper.",
+    "fallbackImportSuccess":"Import Outscraper terminé avec succès",
+    "fallbackImportFailed":"L'import Outscraper a échoué",
+    "import_summary": "{{inserted}} importés - {{skipped}} déjà présents - {{updated}} mis à jour"
   },
   "aiAssistance": {
     "emptyQuestion": "Question vide",
@@ -1746,6 +1768,7 @@
 
       "trendTooltipAria": "Explication des tendances"
     },
+    "universalThemes": "Thèmes universels",
     "history": {
       "title": "Historique & dynamique des avis",
       "averageRatingTitle": "Évolution Note Moyenne",
@@ -1895,6 +1918,33 @@
           "occasional": "Occasionnelle"
         }
       }
+    },
+    "ishikawa": {
+      "title": "Analyse des causes racines (Ishikawa IA)",
+      "problemAnalyzed": "Problème analysé",
+      "probableCausesIdentified": "Causes probables identifiées par l'IA",
+      "process": "Processus",
+      "automatedSummary": "Synthèse automatique",
+      "automatedSummaryDescription": "L'analyse des avis suggère que le problème \"${problem}\" peut avoir plusieurs origines — une investigation terrain complémentaire est recommandée."
+    },
+    "syntheseAndDiagnostic": {
+      "title": "Synthèse & diagnostic",
+      "averageRating": "Note moyenne",
+      "positiveReviews": "Avis positifs",
+      "topIrritant": "Irritant #1",
+      "overview": "Résumé",
+      "top3PrioritizedIssues": "Top 3 Problèmes prioritaires",
+      "themePresencePercentage": "part des avis dans lesquels le thème apparaît"
+    },
+    "lexique": {
+      "title": "Lexicon and Definitions",
+      "kpiDescription": "Un KPI (Key Performance Indicator) est une mesure quantitative utilisée pour évaluer le niveau d’atteinte d’un objectif défini. Il sert à suivre l’évolution de la performance dans le temps et à appuyer les décisions de pilotage. ",
+      "paretoAnalysis": "Analyse de Pareto",
+      "paretoAnalysisDescription": "L’analyse de Pareto est une méthode de priorisation fondée sur le principe selon lequel une part limitée des causes produit la majorité des effets. Elle permet d’identifier les quelques facteurs qui contribuent le plus à un résultat, par exemple des problèmes, des défauts ou de l’insatisfaction.",
+      "rootCauseAnalysis": "Analyse des causes racines (Ishikawa)",
+      "rootCauseAnalysisDescription": "L’analyse des causes racines de type Ishikawa (ou diagramme en arêtes de poisson) est un outil visuel de cause à effet qui structure les causes potentielles d’un problème. Les causes sont regroupées en grandes catégories, qui peuvent varier selon le contexte (par exemple processus, méthodes, ressources ou environnement).",
+      "aiTrust": "Confiance IA",
+      "aiTrustDescription": "La confiance IA désigne un indicateur du degré de fiabilité des résultats produits par un modèle au regard de la quantité, de la qualité et de la cohérence des données utilisées. Elle reflète le niveau d’incertitude associé aux analyses et doit être interprétée comme un niveau de confiance plutôt que comme une vérité absolue."
     }
   }
 }

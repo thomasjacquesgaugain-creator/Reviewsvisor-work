@@ -13,6 +13,7 @@ import { useSmartStore } from "@/store/smartStore";
 import { useEffect , useRef } from "react";
 import { getCurrentEstablishment } from "@/services/establishments";
 
+import { useTranslation } from "react-i18next";
 
 interface RootCauseSectionProps {
   paretoIssues: ParetoItem[];
@@ -233,6 +234,8 @@ export function RootCauseSection({
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [establishmentId, setEstablishmentId] = useState<string | null>(null);
   const [questionnaireSkipped, setQuestionnaireSkipped] = useState(false);
+  const [showQuestionare, setShowQuestionare] = useState(false);
+  const { t } = useTranslation();
 
 
 const establishmentIdRef = useRef<string | null>(null);
@@ -481,8 +484,8 @@ const currentSmartObjective = useMemo(() => {
 
         {/* 6.1 Problème analysé */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
-            6.1 Problème analysé
+          <h3 className="text-lg font-semibold mb-3">
+            6.1 {t("analysis.ishikawa.problemAnalyzed")}
           </h3>
           <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
             <p className="text-lg font-semibold text-gray-900">
@@ -497,8 +500,8 @@ const currentSmartObjective = useMemo(() => {
 
         {/* 6.2 Causes probables identifiées par l'IA */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            6.2 Causes probables identifiées par l'IA
+          <h3 className="text-lg font-semibold mb-4">
+            6.2 {t("analysis.ishikawa.probableCausesIdentified")}
           </h3>
 
           {rootCauseAnalysis.categories.length > 0 ? (
@@ -554,8 +557,8 @@ const currentSmartObjective = useMemo(() => {
 
         {/* 6.3 Niveau de probabilité — unchanged from original */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
-            6.3 Niveau de probabilité
+          <h3 className="text-lg font-semibold mb-3">
+            6.4 {t("analysis.ishikawa.automatedSummary")}
           </h3>
           <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
             <div className="flex flex-wrap gap-4">

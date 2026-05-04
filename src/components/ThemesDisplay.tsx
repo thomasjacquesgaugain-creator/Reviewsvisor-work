@@ -4,9 +4,9 @@
  * Affiche les thèmes métier uniquement si confidence >= 75
  */
 
+import { useTranslation } from "react-i18next";
 import { BusinessTypeIndicator } from "./BusinessTypeIndicator";
 import { BusinessType } from "@/config/industry";
-import { useTranslation } from "react-i18next";
 
 import {
   BarChart3,TrendingUp,User,LogOut,Home,Eye,Trash2,AlertTriangle,CheckCircle,Lightbulb,Target,ChevronDown,ChevronUp,ChevronRight,Building2,Star,UtensilsCrossed,Wine,Users,MapPin,Clock,MessageSquare,Info,Loader2,Copy,Calendar,Download,ClipboardList,Bot,X,Reply,Send,List,Sparkles,AlertCircle,Frown,ThumbsUp,Flag,Zap,Flame,Globe,Layers,Check,
@@ -41,14 +41,11 @@ export function ThemesDisplay({
   onOverrideClick
 }: ThemesDisplayProps) {
   const { t } = useTranslation();
+  const hasUniversalThemes = themesUniversal && Array.isArray(themesUniversal) && themesUniversal.length > 0;
+  const hasIndustryThemes = themesIndustry && Array.isArray(themesIndustry) && themesIndustry.length > 0;
+  const showIndustryThemes = businessTypeConfidence !== null && businessTypeConfidence !== undefined && businessTypeConfidence >= 45;
 
-  const hasUniversalThemes = themesUniversal?.length > 0;
-  const hasIndustryThemes = themesIndustry?.length > 0;
 
-  const showIndustryThemes =
-    businessTypeConfidence !== null &&
-    businessTypeConfidence !== undefined &&
-    businessTypeConfidence >= 45;
 
   // ✅ GLOBAL TOTAL (KEY FIX)
   const allThemes = [
@@ -177,9 +174,7 @@ export function ThemesDisplay({
       {/* Universal */}
       {hasUniversalThemes && (
         <div>
-          <h4 className="font-semibold text-lg mb-4">
-            Thèmes universels
-          </h4>
+          <h4 className="font-semibold text-lg mb-4">{t("analysis.overview.universalThemes")}</h4>
           <div className="space-y-2">
             {renderThemes(insight?.themes_universal || [])}
           </div>

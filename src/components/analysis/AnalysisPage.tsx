@@ -104,10 +104,10 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
     return (
       <div className="mb-8 rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
         <p className="text-sm font-semibold text-slate-900">
-          Aucun avis sur la période sélectionnée
+          {t("dashboard.noReviewsForSelectedPeriod")}
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Essayez d’élargir la période ou de réinitialiser les filtres.
+         {t("dashboard.tryWiderPeriod")}
         </p>
       </div>
     );
@@ -173,7 +173,7 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
 
       {/* Titre de section 6 */}
       <h2 className="text-2xl font-bold text-gray-800 mt-12 mb-6">
-        6. Analyse des causes racines (Ishikawa IA)
+        {t("analysis.ishikawa.title")}
       </h2>
 
       {/* Section 6: Analyse des causes racines */}
@@ -188,7 +188,7 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
 
       {/* Titre de section 7 */}
       <h2 className="text-2xl font-bold text-gray-800 mt-12 mb-6" id="diagnostic-section">
-        7. Synthèse & diagnostic
+        7. {t("analysis.syntheseAndDiagnostic.title")}
       </h2>
 
       {/* Section 7: Synthèse & diagnostic */}

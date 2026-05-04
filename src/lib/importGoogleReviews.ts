@@ -5,6 +5,7 @@ export interface ImportGoogleReviewsResult {
   total: number;
   inserted: number;
   skipped: number;
+  updated:number;
   message?: string;
   error?: string;
 }
@@ -39,45 +40,48 @@ export async function importGoogleReviews(
     forceFullImport: options?.forceFullImport ?? false,
   };
 
+  // deprecated import reviews code
   // 1) Essayer la route API locale (même origin = pas de CORS)
-  try {
-    const base = typeof window !== "undefined" ? window.location.origin : "";
-    const res = await fetch(`${base}/api/reviews/import`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
-    const data = (await res.json()) as ImportGoogleReviewsResult & { error?: string };
-    console.log("[importGoogleReviews] Réponse complète api/reviews/import (avant traitement):", {
-      ok: res.ok,
-      status: res.status,
-      data,
-    });
-    if (res.ok) {
-      return {
-        success: true,
-        total: data.total ?? 0,
-        inserted: data.inserted ?? 0,
-        skipped: data.skipped ?? 0,
-        message: data.message,
-      };
-    }
-    return {
-      success: false,
-      total: 0,
-      inserted: 0,
-      skipped: 0,
-      error: data.error || `HTTP ${res.status}`,
-    };
-  } catch (localErr) {
-    // 2) Fallback : Edge Function (peut échouer à cause de CORS si non déployée correctement)
-    console.warn("[importGoogleReviews] Local API failed, trying Edge Function:", localErr);
-  }
+  // try {
+  //   const base = typeof window !== "undefined" ? window.location.origin : "";
+  //   const res = await fetch(`${base}/api/reviews/import`, {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //     body: JSON.stringify(payload),
+  //   });
+  //   const data = (await res.json()) as ImportGoogleReviewsResult & { error?: string };
+  //   console.log("[importGoogleReviews] Réponse complète api/reviews/import (avant traitement):", {
+  //     ok: res.ok,
+  //     status: res.status,
+  //     data,
+  //   });
+  //   if (res.ok) {
+  //     return {
+  //       success: true,
+  //       total: data.total ?? 0,
+  //       inserted: data.inserted ?? 0,
+  //       skipped: data.skipped ?? 0,
+  //       updated:data.updated??0,
+  //       message: data.message,
+  //     };
+  //   }
+  //   return {
+  //     success: false,
+  //     total: 0,
+  //     inserted: 0,
+  //     skipped: 0,
+  //     updated:0,
+  //     error: data.error || `HTTP ${res.status}`,
+  //   };
+  // } catch (localErr) {
+  //   // 2) Fallback : Edge Function (peut échouer à cause de CORS si non déployée correctement)
+  //   console.warn("[importGoogleReviews] Local API failed, trying Edge Function:", localErr);
+  // }
 
-  const { data, error } = await supabase.functions.invoke("import-google-reviews", {
+  const { data, error } = await supabase.functions.invoke("outscraper-google-reviews", {
     body: payload,
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -91,17 +95,35 @@ export async function importGoogleReviews(
       total: 0,
       inserted: 0,
       skipped: 0,
+      updated:0,
       error: error.message || "Erreur lors de l'import",
     };
   }
 
-  const body = data as ImportGoogleReviewsResult | null;
+
+
+  let body: ImportGoogleReviewsResult | null = null;
+
+if (typeof data === "string") {
+  try {
+    const fixed = data.replace(/(\w+):/g, '"$1":');
+    body = JSON.parse(fixed);
+  } catch (e) {
+    console.error("Parsing failed:", e);
+    body = null;
+  }
+} else {
+  body = data;
+}
+
+
   if (!body) {
     return {
       success: false,
       total: 0,
       inserted: 0,
       skipped: 0,
+      updated:0,
       error: "Réponse invalide",
     };
   }
@@ -112,13 +134,14 @@ export async function importGoogleReviews(
       success: false,
       error: body.error,
     };
-  }
+  }  
 
   return {
     success: true,
     total: body.total ?? 0,
     inserted: body.inserted ?? 0,
     skipped: body.skipped ?? 0,
+    updated:body.updated??0,
     message: body.message,
   };
 }
