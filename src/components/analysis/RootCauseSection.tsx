@@ -355,15 +355,15 @@ const currentSmartObjective = useMemo(() => {
       await saveQuestionnaireOnly(estId, currentIssue, result);
 
       //  regenerate SMART
-      await generateSmart(
-        estId,
-        currentIssue,
-        rootCauseAnalysis,
-        result.dominantEffort,
-        result.dominantCategory,
-        "user_questionnaire",
-        result.scores
-      );
+      // await generateSmart(
+      //   estId,
+      //   currentIssue,
+      //   rootCauseAnalysis,
+      //   result.dominantEffort,
+      //   result.dominantCategory,
+      //   "user_questionnaire",
+      //   result.scores
+      // );
 
       setShowQuestionnaire(false);
     };
@@ -374,27 +374,39 @@ const currentSmartObjective = useMemo(() => {
 };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          6. Analyse des causes racines (Ishikawa IA)
-          <InfoTooltip
-            content="Analyse des causes racines (Ishikawa) : outil pour identifier les causes profondes d'un problème récurrent. Bénéfice : vous comprenez pourquoi un problème survient et pouvez agir à la source."
-          />
-          {/* Step indicator */}
-          <span className="ml-auto text-sm font-normal text-gray-500">
-            {currentStep + 1} / {paretoIssues.length}
-          </span>
-        </CardTitle>
-        {!questionnaireSubmitted && (
-            <div className="mt-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-700">
-              ⚠️ You have not filled the questionnaire for this issue.
-              Recommendations may be less accurate.
-            </div>
-          )}
+  <Card>
+    <CardHeader className="space-y-4">
+      <CardTitle className="flex items-center gap-2">
+        6. Analyse des causes racines (Ishikawa IA)
+        <InfoTooltip
+          content="Analyse des causes racines (Ishikawa) : outil pour identifier les causes profondes d'un problème récurrent. Bénéfice : vous comprenez pourquoi un problème survient et pouvez agir à la source."
+        />
 
-        {/* Navigation + Questionnaire button */}
-        <div className="flex gap-2 flex-wrap mt-2">
+        {/* Step indicator */}
+        <span className="ml-auto text-sm font-normal text-gray-500">
+          {currentStep + 1} / {paretoIssues.length}
+        </span>
+      </CardTitle>
+
+      {/* Warning banner */}
+      {!questionnaireSubmitted && (
+        <div className="flex items-start justify-between bg-red-50 border border-red-200 rounded-xl p-4">
+          <div>
+            <p className="text-sm font-semibold text-red-800">
+              ⚠️ You have not filled the questionnaire for this issue.
+            </p>
+            <p className="text-sm text-red-700 mt-1">
+              Recommendations may be less accurate.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Navigation + Questionnaire actions */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-2">
+        
+        {/* Step navigation */}
+        <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={prevStep}
@@ -410,16 +422,18 @@ const currentSmartObjective = useMemo(() => {
           >
             Next
           </Button>
+        </div>
 
-          {/* Questionnaire toggle — label reflects per-issue state */}
+        {/* Questionnaire action */}
+        <div>
           {!showQuestionnaire ? (
             <Button
               variant="outline"
               onClick={() => setShowQuestionnaire(true)}
               className={
                 questionnaireSubmitted
-                  ? "border-green-400 text-green-700 hover:bg-green-50"
-                  : "border-yellow-400 text-yellow-700 hover:bg-yellow-50"
+                  ? "border-green-400 text-green-700 hover:bg-green-700 hover:text-white"
+                  : "border-yellow-400 text-yellow-700 hover:bg-yellow-700 hover:text-white animate-pulse"
               }
             >
               {questionnaireSubmitted
@@ -431,11 +445,11 @@ const currentSmartObjective = useMemo(() => {
               variant="ghost"
               onClick={() => setShowQuestionnaire(false)}
             >
-              ✕ Close questionnaire
+              ✕ Close Questionnaire
             </Button>
           )}
         </div>
-
+      </div>
         {/* Effort override banner */}
         {questionnaireSubmitted && currentQuestionnaire && (
           <div className="mt-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-xs text-green-700 flex items-center gap-2">

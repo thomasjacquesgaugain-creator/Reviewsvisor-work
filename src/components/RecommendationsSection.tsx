@@ -90,16 +90,12 @@ export function RecommendationsSection({ paretoCauses, rcaByIssue = {} }: Props)
 
   // 🔥 GENERATE SMART (NOW USES NEXT ISSUE, NOT FIXED MAIN)
   const handleGenerate = async () => {
-    console.log("button clicked")
+
     
   const estId = establishmentIdRef.current ?? establishmentId;
-  if (!estId || !activeObjective) return;
+  if (!estId) return;
 
-  const pareto = paretoCauses.find(
-    p =>
-      p.name.toLowerCase() ===
-      activeObjective.pareto_cause?.toLowerCase()
-  );
+  const pareto = sortedPareto[0];
 
   const rca = pareto ? rcaByIssue[pareto.name] : null;
   const questionnaire = pareto
@@ -208,6 +204,23 @@ export function RecommendationsSection({ paretoCauses, rcaByIssue = {} }: Props)
           Step {currentStep} of {sortedPareto.length}
         </p>
       )}
+
+      {/* If questionare for active is not filled */}
+
+      {
+          activeObjective && !activeObjective?.questionnaire_scores && (
+              <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl p-4">
+                <div>
+                  <p className="text-sm font-semibold text-red-800">
+                    Fill the questionnaire first for accurate result
+                  </p>
+                </div>
+              </div>
+            )
+          }
+
+
+
 
       {/* 🔥 CURRENT OBJECTIVE (ONLY ONE CARD) */}
       {activeObjective && (

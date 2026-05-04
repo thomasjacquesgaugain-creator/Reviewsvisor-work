@@ -2267,8 +2267,8 @@ const Dashboard = () => {
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
-      
-      const mapped: Etab[] = (data ?? []).map((row) => ({
+      //need to change any with Etab
+      const mapped: any[] = (data ?? []).map((row) => ({
         place_id: row.place_id,
         name: row.name,
         address: row.formatted_address ?? "",
