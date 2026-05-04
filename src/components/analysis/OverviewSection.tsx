@@ -533,6 +533,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
               {/* Utiliser le nouveau format v2 si disponible, sinon fallback v1 */}
               {insight?.analysis_version === "v2-auto-universal" ? (
                 <ThemesDisplay
+                  insight={insight}
                   themesUniversal={insight?.themes_universal || []}
                   themesIndustry={insight?.themes_industry || []}
                   businessType={
@@ -967,6 +968,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                   // Afficher les thèmes avec ThemesDisplay
                   return (
                     <ThemesDisplay
+                      insight={insight}
                       themesUniversal={themesUniversal}
                       themesIndustry={themesIndustry}
                       businessType={

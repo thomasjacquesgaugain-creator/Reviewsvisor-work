@@ -59,6 +59,7 @@ export interface CompleteAnalysisData {
   themes: ThemeAnalysis[];
   qualitative: QualitativeData;
   diagnostic: DiagnosticSummary;
+  rcaByIssue:any;
 }
 
 export interface Review {

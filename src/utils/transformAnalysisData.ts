@@ -2,6 +2,8 @@ import { CompleteAnalysisData, Review } from "@/types/analysis";
 import { format, parseISO, subMonths } from "date-fns";
 import { cleanReviewText, STOP_WORDS } from "@/utils/cleanReviewText";
 import { formatDiagnosticSummary, formatRecommendations } from "@/utils/formatDiagnosticSummary";
+import { analyzeRootCauses } from "@/utils/rootCauseAnalysis";
+import { RootCauseAnalysis } from "@/utils/rootCauseAnalysis";
 import { 
   computeSentimentFromRating, 
   normalizeRating,
@@ -9,6 +11,15 @@ import {
   aggregateKeywords,
   mapThemeLabel
 } from "@/utils/reviewProcessing";
+
+
+function createEmptyRCA(problem: string = ""): RootCauseAnalysis {
+  return {
+    problem,
+    summary: "",
+    categories: []
+  };
+}
 
 /**
  * Transforme les données brutes (insight + reviews) en structure CompleteAnalysisData
@@ -262,23 +273,23 @@ export function transformAnalysisData(
    const totalcount = totalcountcheck>=totalReviews?totalcountcheck:totalReviews
     industryThemes = safeInsight.themes_industry.map((theme: any) => {
   const count = theme.count || 0;
-  const ratio = totalReviews > 0 ? count / totalcount : 0;   //1/4
+  const ratio = totalReviews > 0 ? count / totalcount : 0; 
 
   let sentimentScore;
 
-  if (theme.sentiment === 'negative') {               //20 comments of each sentiment with 80 usable reviews
+  if (theme.sentiment === 'negative') {               
     // from 0 → -1
-    sentimentScore = -Math.min(1, ratio);             //-1/4
+    sentimentScore = -Math.min(1, ratio);
   } else if (theme.sentiment === 'positive') {
     // from 0 → +1
-    sentimentScore = Math.min(1, ratio);              //1/4
+    sentimentScore = Math.min(1, ratio);  
   } else {
     sentimentScore = 0; // neutral
   }
 
   return {
     theme: theme.theme || theme,
-    score: (sentimentScore + 1) / 2,            //positive = 62.5   //negative = 37.5      //0.5
+    score: (sentimentScore + 1) / 2,  
     count,
     verbatims: theme.verbatims || [],
     importance: theme.importance
@@ -605,6 +616,36 @@ export function transformAnalysisData(
     recommendations_for_main_issues:insight?.pain_points_prioritized
   };
 
+  // ----------------------
+// Root Cause Analysis (RCA
+// ----------------------
+// ----------------------
+// RCA PER ISSUE
+// ----------------------
+const rcaByIssue: Record<string, RootCauseAnalysis> = {};
+
+const safePareto = Array.isArray(paretoIssues) ? paretoIssues : [];
+const safeQualitative = qualitative || {
+  topKeywords: [],
+  keyVerbatims: []
+};
+const safeReviewsArray = Array.isArray(safeReviews) ? safeReviews : [];
+
+safePareto.forEach(issue => {
+  try {
+    const rca = analyzeRootCauses(
+      issue.name,   
+      themes,
+      safeQualitative,
+      safePareto,
+      safeReviewsArray
+    );
+    rcaByIssue[issue.name] = rca || createEmptyRCA(issue.name);
+  } catch (e) {
+    console.warn(`RCA failed for issue: ${issue.name}`, e);
+    rcaByIssue[issue.name] = createEmptyRCA(issue.name);
+  }
+});
   return {
     overview,
     history,
@@ -613,6 +654,7 @@ export function transformAnalysisData(
     paretoStrengths,
     themes,
     qualitative,
-    diagnostic
+    diagnostic,
+    rcaByIssue
   };
 }

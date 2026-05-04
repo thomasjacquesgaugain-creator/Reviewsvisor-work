@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { parseISO, subDays, isAfter, isBefore } from "date-fns";
+import {  CheckCircle2 ,Circle } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -130,7 +132,12 @@ import {
 import { listAll } from "@/services/reviewsService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KeyTakeawaysPanel } from "@/components/dashboard/KeyTakeawaysPanel";
-
+import { EffortMatrix } from "@/components/analysis/recommendation/EffortMatrix";
+import { analyzeRootCauses } from "@/utils/rootCauseAnalysis";
+import { RecommendationsSection } from "@/components/RecommendationsSection";
+import { getCurrentEstablishment } from "@/services/establishments";
+import { useSmartProgress } from "@/hooks/useSmartProgress";
+import { useSmartStore } from "@/store/smartStore";
 const GRANULARITY_LABEL_KEYS: Record<Granularity, string> = {
   jour: "dashboard.day",
   semaine: "dashboard.week",
@@ -211,6 +218,33 @@ const Dashboard = () => {
   const [establishmentCreatedAt, setEstablishmentCreatedAt] = useState<
     string | null
   >(null);
+  const [establishmentId, setEstablishmentId] = useState<string | null>(null);
+
+  const establishmentIdRef = useRef<string | null>(null);
+    const {
+      objectives,
+      fetchObjectives,
+      toggleAction
+    } = useSmartStore();
+
+  useEffect(() => {
+    async function loadEst() {
+      const est = await getCurrentEstablishment();
+      const id = est?.id ?? null;
+      setEstablishmentId(id);
+      establishmentIdRef.current = id;
+      if (id) fetchObjectives(id);
+    }
+    loadEst();
+  }, []);
+  const safeObjectives = Array.isArray(objectives) ? objectives : [];
+
+  function handleClickActionPlan(){
+   setActiveTab("recommandations"); // third tab id
+  setOpenCard("checklist");
+
+  }
+  
 
   // Review insights data — initialisation depuis snapshot pour affichage instantané (pas de flash 0/vide)
   const getInitialSnapshot = () => {
@@ -1104,142 +1138,243 @@ const Dashboard = () => {
     });
   };
 
-  const impactStats = useMemo(() => {
-    const normalize = (s: string) =>
-      (s || "")
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/\p{Diacritic}/gu, "");
-    const neg = allReviewsForChart.filter((r: any) => (r?.rating ?? 0) <= 3);
+  // calculating impact for the objective tab
+    const issueImpactMap = useMemo(() => {
+      if (!insight?.pain_points_prioritized?.length || !allReviewsForChart?.length) return {};
 
-    const buckets = [
-      {
-        key: "wait",
-        label: t("dashboard.waitTime"),
-        maxImpact: 0.3,
-        // keywords: [
-        //   "attente",
-        //   "attendre",
-        //   "lent",
-        //   "lente",
-        //   "lenteur",
-        //   "retard",
-        //   "queue",
-        // ],
-        keywords: [
-          "waiting",
-          "wait",
-          "slow",
-          "slowness",
-          "delay",
-          "queue",
-          ]
-      },
-      {
-        key: "service",
-        label: t("dashboard.serviceReception"),
-        maxImpact: 0.2,
-        // keywords: [
-        //   "service",
-        //   "serveur",
-        //   "serveuse",
-        //   "accueil",
-        //   "accueillant",
-        //   "impoli",
-        //   "désagréable",
-        //   "desagreable",
-        // ],
-        keywords: [
-          "service",
-          "waiter",
-          "waitress",
-          "welcome",
-          "welcoming",
-          "rude",
-          "unpleasant",
-        ]
-      },
-      {
-        key: "quality",
-        label: t("dashboard.foodQuality"),
-        maxImpact: 0.2,
-        // keywords: [
-        //   "froid",
-        //   "froide",
-        //   "tiède",
-        //   "tiede",
-        //   "cuisson",
-        //   "fade",
-        //   "qualité",
-        //   "qualite",
-        //   "cuisine",
-        // ],
-        keywords: [
-          "cold",
-     
-          "lukewarm",
-     
-          "cooking",
-          "bland",
-          "quality",
-          
-          "cuisine",
-        ]
-      },
-      {
-        key: "price",
-        label: t("dashboard.price"),
-        maxImpact: 0.1,
-        // keywords: ["prix", "cher", "chère", "chere", "coûteux", "couteux"],
-        keywords: [
-          "price",
-          "overpriced",
-          "expensive",
-          "costly",
-        ]
-      },
-    ] as const;
+      const normalize = (s: string) =>
+        (s || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/\p{Diacritic}/gu, "");
 
-    const counts: Record<string, number> = {};
-    buckets.forEach((b) => (counts[b.key] = 0));
+      const negReviews = allReviewsForChart.filter((r) => (r.rating ?? 0) <= 3);
+      const totalNeg = Math.max(1, negReviews.length);
 
-    neg.forEach((r: any) => {
-      const txt = normalize(extractOriginalText(r?.text) || r?.text || "");
-      if (!txt) return;
-      buckets.forEach((b) => {
-        const hit = b.keywords.some((k) => txt.includes(normalize(k)));
-        if (hit) counts[b.key] += 1;
+      // same theoretical max gain logic
+      const theoreticalMaxGain = negReviews.reduce((sum, r) => {
+        return sum + (3 - (r.rating ?? 1)) /allReviewsForChart.length;
+      }, 0);
+
+      const result: Record<string, number> = {};
+
+      insight.pain_points_prioritized.forEach((point) => {
+        const issueWords = normalize(point.issue).split(/\s+/);
+
+        const mentionCount = negReviews.filter((r) => {
+          const txt = normalize(
+            extractOriginalText(r?.text) || r?.text || ""
+          );
+          return issueWords.some((w) => w.length > 3 && txt.includes(w));
+        }).length;
+
+        const mentionWeight = mentionCount / totalNeg;
+
+        const aiShare = point.impact / 100;
+
+        const normalizedImpact = Number(
+          (
+            theoreticalMaxGain *
+            aiShare *
+            Math.sqrt(mentionWeight + 0.1)
+          ).toFixed(3)
+        );
+
+        result[point.issue] = Math.max(0.05, normalizedImpact);
       });
-    });
 
-    const maxCount = Math.max(1, ...Object.values(counts));
-    const lines = buckets.map((b) => {
-      const c = counts[b.key] || 0;
-      const weight = Math.min(1, c / Math.max(1, maxCount));
-      const impact = Number((b.maxImpact * weight).toFixed(2));
-      return {
-        key: b.key,
-        label: b.label,
-        impact,
-        maxImpact: b.maxImpact,
-        count: c,
-        pct: b.maxImpact > 0 ? (impact / b.maxImpact) * 100 : 0,
-      };
-    });
+      return result;
+    }, [insight?.pain_points_prioritized, allReviewsForChart]);
+
+    const issueImpactList = useMemo(() => {
+      if (!issueImpactMap) return [];
+
+      const normalize = (s: string) =>
+        (s || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/\p{Diacritic}/gu, "");
+
+      const negReviews = allReviewsForChart.filter((r) => (r.rating ?? 0) <= 3);
+
+      return Object.entries(issueImpactMap)
+        .map(([issue, impact]) => {
+          const issueWords = normalize(issue).split(/\s+/);
+
+          const count = negReviews.filter((r) => {
+            const txt = normalize(
+              extractOriginalText(r?.text) || r?.text || ""
+            );
+            return issueWords.some((w) => w.length > 3 && txt.includes(w));
+          }).length;
+
+          return {
+            key: issue,
+            label: issue,
+            impact,
+            pct: Math.min(100, impact * 100), // convert to %
+            count,
+          };
+        })
+        .sort((a, b) => b.impact - a.impact);
+    }, [issueImpactMap, allReviewsForChart]);
+
+
+  const projectedStats = useMemo(() => {
+    if (!issueImpactList.length) return null;
 
     const current = Number(currentAvgRatingForTarget.toFixed(1));
-    const totalImpact = lines.reduce((acc, l) => acc + l.impact, 0);
-    const projectedMid = Math.min(5, current + totalImpact);
-    const projectedLow = Math.min(5, current + totalImpact * 0.85);
-    const projectedHigh = Math.min(5, current + totalImpact * 1.0);
+
+    const totalImpact = issueImpactList.reduce(
+      (sum, i) => sum + i.impact,
+      0
+    );
 
     return {
-      lines,
+      totalImpact,
       current,
-      projectedLow,
-      projectedHigh,
+      low: Math.min(5, current + totalImpact * 0.85),
+      high: Math.min(5, current + totalImpact),
     };
-  }, [allReviewsForChart, currentAvgRatingForTarget]);
+  }, [issueImpactList, currentAvgRatingForTarget]);
+
+
+  // const impactStats = useMemo(() => {
+  //   const normalize = (s: string) =>
+  //     (s || "")
+  //       .toLowerCase()
+  //       .normalize("NFD")
+  //       .replace(/\p{Diacritic}/gu, "");
+  //   const neg = allReviewsForChart.filter((r: any) => (r?.rating ?? 0) <= 3);
+
+  //   const buckets = [
+  //     {
+  //       key: "wait",
+  //       label: t("dashboard.waitTime"),
+  //       maxImpact: 0.3,
+  //       // keywords: [
+  //       //   "attente",
+  //       //   "attendre",
+  //       //   "lent",
+  //       //   "lente",
+  //       //   "lenteur",
+  //       //   "retard",
+  //       //   "queue",
+  //       // ],
+  //       keywords: [
+  //         "waiting",
+  //         "wait",
+  //         "slow",
+  //         "slowness",
+  //         "delay",
+  //         "queue",
+  //         ]
+  //     },
+  //     {
+  //       key: "service",
+  //       label: t("dashboard.serviceReception"),
+  //       maxImpact: 0.2,
+  //       // keywords: [
+  //       //   "service",
+  //       //   "serveur",
+  //       //   "serveuse",
+  //       //   "accueil",
+  //       //   "accueillant",
+  //       //   "impoli",
+  //       //   "désagréable",
+  //       //   "desagreable",
+  //       // ],
+  //       keywords: [
+  //         "service",
+  //         "waiter",
+  //         "waitress",
+  //         "welcome",
+  //         "welcoming",
+  //         "rude",
+  //         "unpleasant",
+  //       ]
+  //     },
+  //     {
+  //       key: "quality",
+  //       label: t("dashboard.foodQuality"),
+  //       maxImpact: 0.2,
+  //       // keywords: [
+  //       //   "froid",
+  //       //   "froide",
+  //       //   "tiède",
+  //       //   "tiede",
+  //       //   "cuisson",
+  //       //   "fade",
+  //       //   "qualité",
+  //       //   "qualite",
+  //       //   "cuisine",
+  //       // ],
+  //       keywords: [
+  //         "cold",
+     
+  //         "lukewarm",
+     
+  //         "cooking",
+  //         "bland",
+  //         "quality",
+          
+  //         "cuisine",
+  //       ]
+  //     },
+  //     {
+  //       key: "price",
+  //       label: t("dashboard.price"),
+  //       maxImpact: 0.1,
+  //       // keywords: ["prix", "cher", "chère", "chere", "coûteux", "couteux"],
+  //       keywords: [
+  //         "price",
+  //         "overpriced",
+  //         "expensive",
+  //         "costly",
+  //       ]
+  //     },
+  //   ] as const;
+
+  //   const counts: Record<string, number> = {};
+  //   buckets.forEach((b) => (counts[b.key] = 0));
+
+  //   neg.forEach((r: any) => {
+  //     const txt = normalize(extractOriginalText(r?.text) || r?.text || "");
+  //     if (!txt) return;
+  //     buckets.forEach((b) => {
+  //       const hit = b.keywords.some((k) => txt.includes(normalize(k)));
+  //       if (hit) counts[b.key] += 1;
+  //     });
+  //   });
+
+  //   const maxCount = Math.max(1, ...Object.values(counts));
+  //   const lines = buckets.map((b) => {
+  //     const c = counts[b.key] || 0;
+  //     const weight = Math.min(1, c / Math.max(1, maxCount));
+  //     const impact = Number((b.maxImpact * weight).toFixed(2));
+  //     return {
+  //       key: b.key,
+  //       label: b.label,
+  //       impact,
+  //       maxImpact: b.maxImpact,
+  //       count: c,
+  //       pct: b.maxImpact > 0 ? (impact / b.maxImpact) * 100 : 0,
+  //     };
+  //   });
+
+  //   const current = Number(currentAvgRatingForTarget.toFixed(1));
+  //   const totalImpact = lines.reduce((acc, l) => acc + l.impact, 0);
+  //   const projectedMid = Math.min(5, current + totalImpact);
+  //   const projectedLow = Math.min(5, current + totalImpact * 0.85);
+  //   const projectedHigh = Math.min(5, current + totalImpact * 1.0);
+
+  //   return {
+  //     lines,
+  //     current,
+  //     projectedLow,
+  //     projectedHigh,
+  //   };
+  // }, [allReviewsForChart, currentAvgRatingForTarget]);
 
   // États supplémentaires
   const [isDownloadingReport, setIsDownloadingReport] = useState(false);
@@ -2937,6 +3072,82 @@ const Dashboard = () => {
     i18n.language,
   ]);
 
+
+const getNote = (r: any): number => r.note || r.rating || 0;
+const getDateStr = (r: any): string => r.published_at || r.inserted_at || r.created_at || r.date || '';
+
+const parseReviewDate = (r: any): Date | null => {
+  const s = getDateStr(r);
+  if (!s) return null;
+  try { const d = parseISO(s); return isNaN(d.getTime()) ? null : d; }
+  catch { return null; }
+};
+
+const computeAverage = (reviews: any[]): number | null => {
+  const valid = reviews.filter(r => { const n = getNote(r); return n >= 1 && n <= 5; });
+  if (!valid.length) return null;
+  return valid.reduce((acc, r) => acc + getNote(r), 0) / valid.length;
+};
+
+const getLatestDate = (reviews: any[]): Date | null =>
+  reviews.reduce<Date | null>((latest, r) => {
+    const d = parseReviewDate(r);
+    return d && (!latest || d > latest) ? d : latest;
+  }, null);
+
+ const ratingChange = useMemo(() => {
+  
+    if (!allReviewsForChart?.length) return 0;
+
+    const anchorDate = getLatestDate(allReviewsForChart) ?? new Date();
+    const start60    = subDays(anchorDate, 60);
+
+    const current = allReviewsForChart.filter((r) => {
+      const d = parseReviewDate(r);
+      return d && isAfter(d, start60) && !isAfter(d, anchorDate);
+    });
+    const previous = allReviewsForChart.filter((r) => {
+      const d = parseReviewDate(r);
+      return d && isBefore(d, start60);
+    });
+
+    const currentAvg  = computeAverage(current);
+    const previousAvg = computeAverage(previous);
+
+    if (currentAvg === null || previousAvg === null) return 0;
+    return currentAvg - previousAvg;
+  }, [allReviewsForChart]);
+
+
+    //for progress in objective
+  
+    // ✅ SORT PARETO BY COUNT (FIX CORE ISSUE)
+    const sortedPareto = useMemo(
+      () =>
+        (analysisDataForTab?.paretoIssues ?? [])
+          .slice()
+          .sort((a, b) => b.count - a.count),
+      [analysisDataForTab?.paretoIssues]
+    );
+  
+    // ✅ MAP OBJECTIVES IN PARETO ORDER
+    const orderedObjectives = useMemo(() => {
+      return sortedPareto
+        .map(p =>
+          safeObjectives.find(
+            o => o.pareto_cause?.toLowerCase() === p.name.toLowerCase()
+          )
+        )
+        .filter(Boolean);
+    }, [sortedPareto, safeObjectives]);
+  
+    const activeObjective =orderedObjectives.find(o => o.status !== "completed") || null;
+
+    const progress = useSmartProgress(activeObjective);
+
+
+
+
   // If we have an etablissementId in URL, show analysis dashboard
   if (etablissementId) {
     return (
@@ -3373,6 +3584,7 @@ const Dashboard = () => {
                 mainProblems={analysisDataForTab?.diagnostic?.topWeaknesses}
                 mainStrengths={analysisDataForTab?.diagnostic?.topStrengths}
                 recommendedActions={analysisDataForTab?.diagnostic?.recommendations_for_main_issues}
+                handleClick={handleClickActionPlan}
               />
             }
 
@@ -4009,6 +4221,7 @@ const Dashboard = () => {
                         {/* Utiliser le nouveau format v2 si disponible, sinon fallback v1 */}
                         {insight?.analysis_version === "v2-auto-universal" ? (
                           <ThemesDisplay
+                            insight={insight}
                             themesUniversal={insight?.themes_universal || []}
                             themesIndustry={insight?.themes_industry || []}
                             businessType={
@@ -4443,6 +4656,7 @@ const Dashboard = () => {
                             // Afficher les thèmes avec ThemesDisplay
                             return (
                               <ThemesDisplay
+                                insight={insight}
                                 themesUniversal={themesUniversal}
                                 themesIndustry={themesIndustry}
                                 businessType={
@@ -5566,13 +5780,13 @@ const Dashboard = () => {
                                   {topStrengths.length > 0
                                     ? t("dashboard.enhanceStrengths", {
                                         strength: 
-                                          topStrengths[0]?.theme ||
                                             topStrengths[0]?.strength ||
                                             t("dashboard.notIdentified"),
                                             
                                       })
                                     : t(
-                                        "dashboard.identifyAndEnhanceExistingStrengths",
+                                           topStrengths[0]?.theme ||
+                                 "dashboard.identifyAndEnhanceExistingStrengths",
                                       )}
                                 </li>
                               </ul>
@@ -5601,103 +5815,98 @@ const Dashboard = () => {
 
                         {/* Séparateur visuel */}
                         <div className="border-t border-gray-200"></div>
+                               
+                          <EffortMatrix analysisData={analysisDataForTab}></EffortMatrix>
 
-                        {/* Section 2 - Priorisation des actions */}
-                        <div>
-                          <h4 className="font-semibold text-gray-800 mb-4">
-                            {t("dashboard.actionPrioritization")}
-                          </h4>
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="border-b border-gray-200">
-                                  <th className="text-left py-3 px-4 font-semibold text-gray-700">
-                                    {t("dashboard.action")}
-                                  </th>
-                                  <th className="text-center py-3 px-4 font-semibold text-gray-700">
-                                    {t("dashboard.impact")}
-                                  </th>
-                                  <th className="text-center py-3 px-4 font-semibold text-gray-700">
-                                    {t("dashboard.effort")}
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr className="border-b border-gray-100">
-                                  <td className="py-3 px-4 text-gray-700">
-                                    {t(
-                                      "dashboard.fixMainFrictionPointIdentified",
-                                    )}
-                                  </td>
-                                  <td className="py-3 px-4 text-center">
-                                    <Badge className="bg-red-100 text-red-700 border-red-200">
-                                      {t("dashboard.high")}
-                                    </Badge>
-                                  </td>
-                                  <td className="py-3 px-4 text-center">
-                                    <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">
-                                      {t("dashboard.medium")}
-                                    </Badge>
-                                  </td>
-                                </tr>
-                                <tr className="border-b border-gray-100">
-                                  <td className="py-3 px-4 text-gray-700">
-                                    {t(
-                                      "dashboard.trainTeamOnIdentifiedImprovements",
-                                    )}
-                                  </td>
-                                  <td className="py-3 px-4 text-center">
-                                    <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">
-                                      {t("dashboard.medium")}
-                                    </Badge>
-                                  </td>
-                                  <td className="py-3 px-4 text-center">
-                                    <Badge className="bg-green-100 text-green-700 border-green-200">
-                                      {t("dashboard.low")}
-                                    </Badge>
-                                  </td>
-                                </tr>
-                                <tr className="border-b border-gray-100">
-                                  <td className="py-3 px-4 text-gray-700">
-                                    {t("dashboard.respondSystematically")}
-                                  </td>
-                                  <td className="py-3 px-4 text-center">
-                                    <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">
-                                      {t("dashboard.medium")}
-                                    </Badge>
-                                  </td>
-                                  <td className="py-3 px-4 text-center">
-                                    <Badge className="bg-green-100 text-green-700 border-green-200">
-                                      {t("dashboard.low")}
-                                    </Badge>
-                                  </td>
-                                </tr>
-                                <tr className="border-b border-gray-100">
-                                  <td className="py-3 px-4 text-gray-700">
-                                    {t("dashboard.enhanceStrengthsGeneric")}
-                                  </td>
-                                  <td className="py-3 px-4 text-center">
-                                    <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">
-                                      {t("dashboard.medium")}
-                                    </Badge>
-                                  </td>
-                                  <td className="py-3 px-4 text-center">
-                                    <Badge className="bg-green-100 text-green-700 border-green-200">
-                                      {t("dashboard.low")}
-                                    </Badge>
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                          <p className="text-sm text-gray-500 mt-4 italic">
-                            {t("dashboard.recommendedStartHighImpactLowEffort")}
-                          </p>
-                        </div>
                       </div>
                     </CardContent>
                   </Card>
                 )}
+
+                {/* SECTION 2 : SMART Objectives */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
+                <div className="col-span-1 md:col-span-2">
+                  <Card
+                    className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+                    onClick={() =>
+                      setOpenCard(openCard === "smart" ? null : "smart")
+                    }
+                  >
+                    <CardHeader className="relative text-center">
+                      <div className="flex flex-col items-center mb-2">
+                        <Target className="w-5 h-5 text-blue-500 mb-2" />
+                        <span className="text-lg font-semibold">
+                          SMART objectives
+                        </span>
+                        <Badge className="mt-1 bg-blue-100 text-blue-700 text-xs">
+                          new
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        AI-generated, user-validated goals
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenCard(openCard === "smart" ? null : "smart");
+                        }}
+                        className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-blue-50"
+                      >
+                        {openCard === "smart" ? (
+                          <ChevronUp className="w-3 h-3 text-blue-500" />
+                        ) : (
+                          <ChevronDown className="w-3 h-3 text-blue-500" />
+                        )}
+                      </Button>
+                    </CardHeader>
+                  </Card>
+                </div>
+              </div>
+
+
+            {/* Contenu SMART — EN DESSOUS */}
+            {openCard === "smart" && (
+              <Card className="mb-8">
+                <CardHeader>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-5 h-5 text-blue-500" />
+                    <span className="text-lg font-semibold">SMART objectives</span>
+                    <Badge className="bg-blue-100 text-blue-700 text-xs">new</Badge>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    AI-generated, user-validated goals
+                  </p>
+
+                  {/* Flow breadcrumb — matches image 2 from earlier */}
+                  <div className="flex items-center gap-2 mt-3 flex-wrap">
+                    <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
+                      Pareto analysis
+                    </span>
+                    <span className="text-xs text-gray-400">→</span>
+                    <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
+                      Ishikawa root causes
+                    </span>
+                    <span className="text-xs text-gray-400">→</span>
+                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
+                      SMART objective generated
+                    </span>
+                    <span className="text-xs text-gray-400">→</span>
+                    <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
+                      PDCA tracking
+                    </span>
+                  </div>
+                </CardHeader>
+
+                <CardContent>
+                  <RecommendationsSection
+                    paretoCauses={analysisDataForTab.paretoIssues}
+                    rcaByIssue={analysisDataForTab.rcaByIssue}
+                  />
+                </CardContent>
+              </Card>
+            )}
 
                 {/* SECTION 2 : Plan d'actions (gauche) et Checklist opérationnelle (droite) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -5876,7 +6085,7 @@ const Dashboard = () => {
                                         </div>
                                       </div>
                                       <div className="flex flex-col items-end gap-2">
-                                        <Badge
+                                        {/* <Badge
                                           variant={
                                             action.status === "completed"
                                               ? "default"
@@ -5885,9 +6094,9 @@ const Dashboard = () => {
                                           className={`text-xs ${statusBadgeClass}`}
                                         >
                                           {statusLabel}
-                                        </Badge>
+                                        </Badge> */}
 
-                                        <button
+                                        {/* <button
                                           type="button"
                                           onClick={() => {
                                             const key = `${action.title}__${action.issue}`;
@@ -5916,7 +6125,7 @@ const Dashboard = () => {
                                               ) : null;
                                             })()}
                                           </div>
-                                        </button>
+                                        </button> */}
                                       </div>
                                     </div>
                                   </div>
@@ -5938,7 +6147,7 @@ const Dashboard = () => {
                 )}
 
                 {/* Contenu Checklist opérationnelle - EN DESSOUS */}
-                {openCard === "checklist" && (
+                {/* {openCard === "checklist" && (
                   <Card className="mb-8">
                     <CardHeader className="relative text-left">
                       <div className="flex items-center gap-2 mb-2">
@@ -6057,6 +6266,184 @@ const Dashboard = () => {
                         )}
                       </div>
                     </CardContent>
+                  </Card>
+                )} */}
+                {openCard === "checklist" && (
+                  <Card className="mb-8">
+                    <CardHeader className="relative text-left">
+                      <div className="flex items-center gap-2 mb-2">
+                        <ClipboardList className="w-5 h-5 text-emerald-600" />
+                        <span className="text-lg font-semibold">
+                          Operational Checklist
+                        </span>
+                      </div>
+
+                      <p className="text-sm text-gray-600">
+                        Concrete actions to execute and track
+                      </p>
+                    </CardHeader>
+
+
+                      <CardContent>
+                        {!activeObjective ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <p className="text-sm">
+                              No SMART actions available yet
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-8">
+                            {(() => {
+                              const objective = activeObjective;
+
+                              const actions = objective.actions || [];
+
+                              const grouped = {
+                                daily: actions.filter(
+                                  (a) => a.frequency === "daily"
+                                ),
+                                weekly: actions.filter(
+                                  (a) => a.frequency === "weekly"
+                                ),
+                                monthly: actions.filter(
+                                  (a) => a.frequency === "once"
+                                ),
+                              };
+
+                              const totalActions = actions.length;
+
+                              const completedActions = actions.filter(
+                                (a) => a.completed
+                              ).length;
+
+                              const progress =
+                                totalActions > 0
+                                  ? Math.round(
+                                      (completedActions / totalActions) * 100
+                                    )
+                                  : 0;
+
+                              return (
+                                <div
+                                  key={objective.id}
+                                  className="border rounded-xl p-5 bg-white"
+                                >
+                                  {/* Objective header */}
+                                  <div className="mb-5">
+                                    <div className="flex items-center justify-between gap-4 mb-2">
+                                      <div>
+                                        <h3 className="font-semibold text-gray-900">
+                                          {objective.problem ||
+                                            objective.kpi_label ||
+                                            "SMART Objective"}
+                                        </h3>
+
+                                        {objective.pareto_cause && (
+                                          <p className="text-xs text-gray-500 mt-1">
+                                            Related issue:{" "}
+                                            {objective.pareto_cause}
+                                          </p>
+                                        )}
+                                      </div>
+
+                                      <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+                                        {completedActions}/{totalActions}
+                                      </Badge>
+                                    </div>
+
+                                    {/* Progress */}
+                                    
+                                  </div>
+
+                                  {/* Sections */}
+                                  <div className="space-y-6">
+                                    {Object.entries(grouped).map(
+                                      ([frequency, list]) => {
+                                        if (!list.length) return null;
+
+                                        return (
+                                          <div key={frequency}>
+                                            <h4 className="text-xs uppercase tracking-wide font-semibold text-gray-500 mb-3">
+                                              {frequency === "daily" &&
+                                                "Daily"}
+                                              {frequency === "weekly" &&
+                                                "Weekly"}
+                                              {frequency === "monthly" &&
+                                                "Monthly"}
+                                              {frequency === "once" &&
+                                                "One-time"}
+                                            </h4>
+
+                                            <div className="space-y-2">
+                                              {list.map((action, index) => {
+                                                const realIndex =
+                                                  actions.findIndex(
+                                                    (a) =>
+                                                      a.text === action.text
+                                                  );
+
+                                                return (
+                                                  <div
+                                                    key={`${objective.id}-${index}`}
+                                                    onClick={() =>
+                                                      toggleAction(
+                                                        objective.id!,
+                                                        realIndex
+                                                      )
+                                                    }
+                                                    className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-all"
+                                                  >
+                                                    {/* Checkbox */}
+                                                    <div className="mt-0.5 shrink-0">
+                                                      {action.completed ? (
+                                                        <CheckCircle2 className="w-5 h-5 text-green-600" />
+                                                      ) : (
+                                                        <Circle className="w-5 h-5 text-gray-300" />
+                                                      )}
+                                                    </div>
+
+                                                    {/* Text */}
+                                                    <div className="flex-1">
+                                                      <p
+                                                        className={`text-sm leading-relaxed ${
+                                                          action.completed
+                                                            ? "line-through text-gray-400"
+                                                            : "text-gray-800"
+                                                        }`}
+                                                      >
+                                                        {action.text}
+                                                      </p>
+                                                    </div>
+
+                                                    {/* Frequency badge */}
+                                                    <Badge
+                                                      className={
+                                                        frequency === "daily"
+                                                          ? "bg-green-100 text-green-700 border-green-200"
+                                                          : frequency === "weekly"
+                                                            ? "bg-blue-100 text-blue-700 border-blue-200"
+                                                            : frequency === "monthly"
+                                                              ? "bg-purple-100 text-purple-700 border-purple-200"
+                                                              : "bg-gray-100 text-gray-700 border-gray-200"
+                                                      }
+                                                    >
+                                                      {frequency}
+                                                    </Badge>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+                                        );
+                                      }
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
+                      </CardContent>
                   </Card>
                 )}
 
@@ -10028,6 +10415,116 @@ const Dashboard = () => {
                             })}
                           </p>
                         </div>
+                     </div>
+                            
+                        {/* AI impact */}
+                     <div>
+                    <h4 className="font-semibold text-gray-800 mb-2">
+                      AI PREDICTION
+                    </h4>
+
+                    {(() => {
+                      const predictedRating = Math.max(
+                        1,
+                        Math.min(5, displayAvgRating + ratingChange)
+                      );
+
+                      const formattedRating = predictedRating.toFixed(1);
+
+                      const isNegative = ratingChange < 0;
+                      const isNeutral = ratingChange === 0;
+
+                      return (
+                        <div
+                          className={`p-4 rounded-lg border shadow-sm transition ${
+                            isNegative
+                              ? "bg-red-50 border-red-200"
+                              : "bg-emerald-50 border-emerald-200"
+                          }`}
+                        >
+                          <p className="text-lg font-semibold text-gray-900 leading-snug">
+                            {isNegative
+                              ? "Potential decline detected"
+                              : "Stable performance expected"}
+                          </p>
+
+                          <p className="mt-2 text-sm text-gray-600">
+                            {isNegative
+                              ? `Your rating could drop to `
+                              : `Your rating is likely to stay around `}
+                            <span
+                              className={`font-semibold ${
+                                isNegative ? "text-red-700" : "text-emerald-700"
+                              }`}
+                            >
+                              {formattedRating}/5
+                            </span>
+                            {!isNegative && !isNeutral && " or improve slightly"}
+                            {isNegative && " if no action is taken"}
+                          </p>
+
+                          <div className="mt-3 text-xs text-gray-400">
+                            Based on recent review trends
+                          </div>
+                        </div>
+                      );
+                    })()}
+                      </div>
+              
+                      {/* Simulation */}
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">
+                          Simulation
+                        </h4>
+                        <p className="text-sm text-gray-500 mb-3">
+                          If you follow the recommendations
+                        </p>
+
+                        {(() => {
+                          const baseRating = displayAvgRating ?? 0;
+                          const impact = projectedStats?.totalImpact ?? 0;
+
+                          // Clamp rating between 1 and 5
+                          const estimated = Math.max(1, Math.min(5, baseRating + impact));
+
+                          const formattedEstimated = estimated.toFixed(1);
+                          const formattedImpact = impact.toFixed(2);
+
+                          const isPositive = impact > 0;
+
+                          return (
+                            <div
+                              className={`p-4 rounded-lg border shadow-sm transition ${
+                                isPositive
+                                  ? "bg-green-50 border-green-200"
+                                  : "bg-gray-50 border-gray-200"
+                              }`}
+                            >
+                              <p className="text-lg font-semibold text-gray-900">
+                                Estimated Rating:{" "}
+                                <span className={isPositive ? "text-green-700" : "text-gray-800"}>
+                                  {formattedEstimated}/5
+                                </span>
+                              </p>
+
+                              <p className="mt-1 text-sm">
+                                {isPositive ? (
+                                  <span className="text-green-600 font-medium">
+                                    +{formattedImpact} improvement expected
+                                  </span>
+                                ) : impact < 0 ? (
+                                  <span className="text-red-600 font-medium">
+                                    {formattedImpact} decline risk
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-500">
+                                    No significant change expected
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       <div
@@ -10102,6 +10599,8 @@ const Dashboard = () => {
                               : `${displayAvgRating.toFixed(1)}/5`}
                           </span>
                         </div>
+
+
                         <div className="space-y-3">
                           <div>
                             <div className="flex items-center justify-between mb-1">
@@ -10297,10 +10796,92 @@ const Dashboard = () => {
                 </div>
 
                 {openCard === "progression" && (
+                  <>
+                  {/* Actionable progress */}
                   <Card className="mb-8">
                     <CardHeader className="pb-1">
                       <CardTitle className="text-xl">
-                        {t("dashboard.progress")}
+                        Actions Progress
+                      </CardTitle>
+                    </CardHeader>
+                   <CardContent className="pt-0">
+                      {(() => {
+                        const actions = activeObjective?.actions || [];
+
+                        const totalActions = actions.length;
+
+                        const completedActions = actions.filter(
+                          (a) => a.completed
+                        ).length;
+
+                        const percentage =
+                          totalActions > 0
+                            ? Math.round(
+                                (completedActions / totalActions) * 100
+                              )
+                            : 0;
+
+                        return (
+                          <div className="space-y-3">
+                            {/* Stats */}
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {completedActions}/{totalActions} actions completed
+                                </p>
+                              </div>
+
+                              <span className="text-sm font-semibold text-gray-900">
+                                {percentage}%
+                              </span>
+                            </div>
+
+                            {/* Progress bar */}
+                            <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-green-600 rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${percentage}%`,
+                                }}
+                              />
+                            </div>
+
+                            {/* Optional status */}
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>
+                                {activeObjective?.pareto_cause
+                                  ? `Focus: ${activeObjective.pareto_cause}`
+                                  : "Action tracking"}
+                              </span>
+
+                              {percentage === 100 ? (
+                                <span className="text-green-600 font-medium">
+                                  Completed
+                                </span>
+                              ) : percentage >= 60 ? (
+                                <span className="text-blue-600 font-medium">
+                                  In Progress
+                                </span>
+                              ) :percentage >= 1 ? (
+                                <span className="text-orange-500 font-medium">
+                                  Started
+                                </span>
+                              ): (
+                                <span className="text-orange-500 font-medium">
+                                  Yet to start
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </CardContent>
+                  </Card>
+                   {/* objectives progress */}
+                  <Card className="mb-8">
+                    <CardHeader className="pb-1">
+                      <CardTitle className="text-xl">
+                        Objectives Progress
                       </CardTitle>
                       <p className="text-sm text-gray-600">
                         {t("dashboard.trackYourActionsProgress")}
@@ -10310,20 +10891,23 @@ const Dashboard = () => {
                       <div className="mt-0 space-y-0">
                         <div className="flex items-center justify-end">
                           <span className="text-sm font-semibold text-gray-900">
-                            {Math.round(progressionStats.percentage)}%
+                            {Math.round(progress.percentage)}%
                           </span>
                         </div>
                         <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-green-600 rounded-full transition-all"
                             style={{
-                              width: `${Math.min(100, Math.max(0, progressionStats.percentage))}%`,
+                              width: `${Math.min(100, Math.max(0, progress.percentage))}%`,
                             }}
                           />
                         </div>
                       </div>
                     </CardContent>
                   </Card>
+
+                </>
+
                 )}
 
                 {openCard === "avisLies" && (
@@ -10396,7 +10980,7 @@ const Dashboard = () => {
                         <p className="text-sm text-gray-700">
                           {t("dashboard.estimatedImpactOnRating")}
                         </p>
-                        {impactStats.lines.map((l) => (
+                        {issueImpactList.map((l) => (
                           <div
                             key={l.key}
                             className="p-3 rounded-lg border border-gray-200 bg-white/70"
@@ -10427,12 +11011,12 @@ const Dashboard = () => {
                         <div className="mt-2 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
                           <div className="text-sm font-semibold text-gray-900">
                             {t("dashboard.projectedRating")} :{" "}
-                            {impactStats.projectedLow.toFixed(1)} -{" "}
-                            {impactStats.projectedHigh.toFixed(1)}
+                            {projectedStats?.low.toFixed(1)} -{" "}
+                          {projectedStats?.high.toFixed(1)}
                           </div>
                           <div className="text-xs text-gray-600 mt-1">
                             {t("dashboard.basedOnCurrentRating")} (
-                            {impactStats.current.toFixed(1)}/5){" "}
+                            {projectedStats?.current.toFixed(1)}
                             {t("dashboard.frequencyInNegativeReviews")}
                           </div>
                         </div>

@@ -22,6 +22,7 @@ export function KeyTakeawaysPanel({
   reviews,
   recommendedActions,
   className,
+  handleClick
 }: KeyTakeawaysPanelProps) {
 
   const [mainIssue, setMainIssue] = useState("");
@@ -83,6 +84,7 @@ export function KeyTakeawaysPanel({
             reviews={reviews}
             recommendedActions={recommendedActions}
             mainIssue={mainIssue}
+            handleClick={handleClick}
           />
         </div>
       </div>
