@@ -8,6 +8,10 @@ import { useTranslation } from "react-i18next";
 import { BusinessTypeIndicator } from "./BusinessTypeIndicator";
 import { BusinessType } from "@/config/industry";
 
+import {
+  BarChart3,TrendingUp,User,LogOut,Home,Eye,Trash2,AlertTriangle,CheckCircle,Lightbulb,Target,ChevronDown,ChevronUp,ChevronRight,Building2,Star,UtensilsCrossed,Wine,Users,MapPin,Clock,MessageSquare,Info,Loader2,Copy,Calendar,Download,ClipboardList,Bot,X,Reply,Send,List,Sparkles,AlertCircle,Frown,ThumbsUp,Flag,Zap,Flame,Globe,Layers,Check,
+} from "lucide-react";
+
 interface Theme {
   theme: string;
   count?: number;
@@ -16,6 +20,7 @@ interface Theme {
 }
 
 interface ThemesDisplayProps {
+  insight:any,
   themesUniversal?: Theme[];
   themesIndustry?: Theme[];
   businessType?: BusinessType | null;
@@ -26,12 +31,13 @@ interface ThemesDisplayProps {
 }
 
 export function ThemesDisplay({
+  insight,
   themesUniversal = [],
   themesIndustry = [],
   businessType,
   businessTypeConfidence,
   businessTypeCandidates = [],
-  totalReviews = 1,
+  totalReviews,
   onOverrideClick
 }: ThemesDisplayProps) {
   const { t } = useTranslation();
@@ -39,70 +45,165 @@ export function ThemesDisplay({
   const hasIndustryThemes = themesIndustry && Array.isArray(themesIndustry) && themesIndustry.length > 0;
   const showIndustryThemes = businessTypeConfidence !== null && businessTypeConfidence !== undefined && businessTypeConfidence >= 45;
 
-  // Si aucun thème, retourner null (le parent gère l'affichage)
-  if (!hasUniversalThemes && !hasIndustryThemes) {
-    return null;
-  }
+
+
+  // ✅ GLOBAL TOTAL (KEY FIX)
+  const allThemes = [
+    ...(insight?.themes_universal || []),
+    ...(insight?.themes_industry || [])
+  ];
+
+  const totalThemeMentions = allThemes.reduce(
+    (sum: number, t: any) => sum + (t.count || 0),
+    0
+  );
+
+  const translateTheme = (theme: string): string => {
+    const themeLower = theme.toLowerCase();
+    const map: Record<string, string> = {
+      "service / attente": t("charts.problems.serviceWait"),
+      "qualité des plats": t("charts.problems.foodQuality"),
+      prix: t("charts.problems.price"),
+      "qualité / goût": t("charts.strengths.tasteQuality"),
+      ambiance: t("dashboard.ambiance"),
+      service: t("dashboard.service"),
+    };
+
+    for (const [key, val] of Object.entries(map)) {
+      if (themeLower.includes(key) || key.includes(themeLower)) return val;
+    }
+    return theme;
+  };
+
+  const getThemeIcon = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes("cuisine") || n.includes("plat"))
+      return <UtensilsCrossed className="w-4 h-4 text-purple-500" />;
+    if (n.includes("service"))
+      return <Users className="w-4 h-4 text-purple-500" />;
+    if (n.includes("ambiance"))
+      return <Wine className="w-4 h-4 text-purple-500" />;
+    if (n.includes("emplacement"))
+      return <MapPin className="w-4 h-4 text-purple-500" />;
+    return <BarChart3 className="w-4 h-4 text-purple-500" />;
+  };
+
+  const processThemes = (themes: any[]) => {
+    return themes
+      .map((theme) => {
+        const count = theme.count || 0;
+
+        let positive = 0;
+        let negative = 0;
+
+        if (theme.reviews?.length) {
+          theme.reviews.forEach((r: any) => {
+            if (r.rating >= 4) positive++;
+            else if (r.rating <= 2) negative++;
+          });
+        } else {
+          const ratio = insight?.positive_ratio || 0.7;
+          positive = Math.round(count * ratio);                             
+          negative = Math.round(count * (1 - ratio));                
+        }
+
+        const total = positive + negative;
+
+        return {
+          ...theme,
+          percentage:
+            totalThemeMentions > 0
+              ? Math.round((count / totalThemeMentions) * 100)            //total theme = 10
+              : 0,
+          positivePercent:
+            total > 0 ? Math.round((positive / total) * 100) : 0,       
+          negativePercent:
+            total > 0 ? Math.round((negative / total) * 100) : 0,         
+        };
+      })
+      .sort((a, b) => (b.count || 0) - (a.count || 0));
+  };
+
+  const SentimentBadges = ({ p, n }: any) => (
+    <div className="flex gap-2">
+      <span className="px-3 py-1 bg-green-50 text-green-600 rounded-xl text-sm font-semibold">
+        {p}%
+      </span>
+      <span className="px-3 py-1 bg-red-50 text-red-600 rounded-xl text-sm font-semibold">
+        {n}%
+      </span>
+    </div>
+  );
+
+  const renderThemes = (themes: any[]) => {
+    if (!themes?.length) {
+      return (
+        <div className="text-center py-4 text-gray-500">
+          {t("dashboard.noThemesIdentified")}
+        </div>
+      );
+    }
+
+    return processThemes(themes).map((theme, i) => (
+      <div key={i} className="p-3 bg-purple-50 rounded-lg">
+        <div className="flex items-center gap-3">
+          {getThemeIcon(theme.theme)}
+          <div className="flex-1">
+            <div className="font-medium">
+              {translateTheme(theme.theme)}
+            </div>
+            <div className="text-sm text-gray-500">
+              {t("dashboard.percentageOfReviews", {
+                percentage: theme.percentage,
+              })}
+            </div>
+          </div>
+          <SentimentBadges
+            p={theme.positivePercent}
+            n={theme.negativePercent}
+          />
+        </div>
+      </div>
+    ));
+  };
+
+  if (!hasUniversalThemes && !hasIndustryThemes) return null;
 
   return (
     <div className="space-y-6">
-      {/* Thèmes universels - TOUJOURS affichés */}
+      {/* Universal */}
       {hasUniversalThemes && (
         <div>
           <h4 className="font-semibold text-lg mb-4">{t("analysis.overview.universalThemes")}</h4>
           <div className="space-y-2">
-            {themesUniversal.map((theme, index) => {
-              const themeName = theme.theme || 'Thématique';
-              const count = theme.count || Math.round((theme.importance || 0) / 10) || 0;
-              const percentage = Math.round((count / totalReviews) * 100);
-              
-              return (
-                <div key={index} className="flex items-center justify-between bg-[#f0f3ff] rounded-lg px-4 py-3">
-                  <span className="font-medium">{themeName}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500">{count} mention{count > 1 ? 's' : ''}</span>
-                    <span className="px-3 py-1 rounded-full border border-[#5048e5] text-[#5048e5] text-sm font-medium">{percentage}%</span>
-                  </div>
-                </div>
-              );
-            })}
+            {renderThemes(insight?.themes_universal || [])}
           </div>
         </div>
       )}
 
-      {/* Thèmes métier - UNIQUEMENT si confidence >= 75 */}
+      {/* Industry */}
       {showIndustryThemes && hasIndustryThemes && (
         <div>
-          <h4 className="font-semibold text-lg mb-4">Thèmes spécifiques au secteur</h4>
+          <h4 className="font-semibold text-lg mb-4">
+            Thèmes spécifiques au secteur
+          </h4>
           <div className="space-y-2">
-            {themesIndustry.map((theme, index) => {
-              const themeName = theme.theme || 'Thématique';
-              const count = theme.count || Math.round((theme.importance || 0) / 10) || 0;
-              const percentage = Math.round((count / totalReviews) * 100);
-              
-              return (
-                <div key={index} className="flex items-center justify-between bg-[#e8f5e9] rounded-lg px-4 py-3 border border-green-200">
-                  <span className="font-medium">{themeName}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500">{count} mention{count > 1 ? 's' : ''}</span>
-                    <span className="px-3 py-1 rounded-full border border-green-600 text-green-700 text-sm font-medium">{percentage}%</span>
-                  </div>
-                </div>
-              );
-            })}
+            {renderThemes(insight?.themes_industry || [])}
           </div>
         </div>
       )}
 
-      {/* Indicateur de type si confidence faible */}
-      {businessTypeConfidence !== null && businessTypeConfidence !== undefined && businessTypeConfidence < 45 && (
-        <BusinessTypeIndicator
-          businessType={businessType || null}
-          confidence={businessTypeConfidence}
-          candidates={businessTypeCandidates}
-          onOverrideClick={onOverrideClick}
-        />
-      )}
+      {/* Low confidence */}
+      {businessTypeConfidence !== null &&
+        businessTypeConfidence !== undefined &&
+        businessTypeConfidence < 45 && (
+          <BusinessTypeIndicator
+            businessType={businessType || null}
+            confidence={businessTypeConfidence}
+            candidates={businessTypeCandidates}
+            onOverrideClick={onOverrideClick}
+          />
+        )}
     </div>
   );
 }

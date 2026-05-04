@@ -178,12 +178,15 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
   const [openIssuesModal, setOpenIssuesModal] = useState(false);
   const [openStrengthsModal, setOpenStrengthsModal] = useState(false);
   const [openRootCauseModal, setOpenRootCauseModal] = useState(false);
+  
 
   const safeIssues = issues || [];
   const safeStrengths = strengths || [];
   
   // Inverser l'ordre pour avoir la plus grande barre en bas
-  const reversedIssues = [...safeIssues].reverse();
+  const reversedIssues = [...safeIssues]
+  .sort((a, b) => a.count - b.count) // sort ascending by count
+  
   const reversedStrengths = [...safeStrengths].reverse();
 
   // Préparer l'analyse des causes racines pour le problème principal

@@ -22,7 +22,16 @@ export interface Review {
   text?:string;
   texte?:string;
 }
-
+export interface ReviewDash {
+  note?: number;
+  rating?: number;
+  published_at?: string;
+  inserted_at?: string;
+  created_at?: string;
+  date?: string;
+  text?:string;
+  texte?:string;
+}
 export interface ActionPoint {
   ease: number;
   issue:string;
@@ -73,6 +82,7 @@ export interface PotentialGainSectionProps {
   reviews?: Review[];
   recommendedActions?: ActionPoint[];
   mainIssue?: string;
+  handleClick?:()=>void;
 }
 
 export interface KeyTakeawaysPanelProps {
@@ -84,5 +94,6 @@ export interface KeyTakeawaysPanelProps {
   recommendedActions?: ActionPoint[];
   className?: string;
   reviews?: Review[];
+  handleClick?:()=>void;
 }
 

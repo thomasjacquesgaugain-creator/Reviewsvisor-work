@@ -343,6 +343,7 @@ export interface RootCause {
   description: string;
   probability: ProbabilityLevel;
   evidence?: string[];
+  count: number;
 }
 
 export interface RootCauseCategory {
@@ -356,96 +357,22 @@ export interface RootCauseAnalysis {
   summary: string;
 }
 
-/* ---------------- HELPERS ---------------- */
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
-/**
- * Expands a problem token set with semantically related English words.
- * This ensures reviews using synonyms or indirect language still get matched.
- */
-const PROBLEM_SYNONYMS: Record<string, string[]> = {
-  // Hygiene & cleanliness
-  "hygiene":     ["dirty", "filthy", "unclean", "disgusting", "gross", "grimy",
-                  "unhygienic", "contaminated", "bacteria", "mold", "mould",
-                  "stain", "stained", "sticky", "smell", "smells", "smelly",
-                  "odor", "odour", "stench", "cockroach", "rat", "mice",
-                  "insect", "pest", "hair", "trash", "garbage", "waste",
-                  "toilet", "bathroom", "restroom", "washroom", "floor",
-                  "table", "plate", "glass", "utensil", "kitchen"],
-  "cleanliness": ["dirty", "filthy", "unclean", "disgusting", "gross",
-                  "stain", "sticky", "smell", "smelly", "trash", "messy"],
-
-  // Service & wait time
-  "service":     ["wait", "waiting", "slow", "staff", "rude", "unhelpful",
-                  "ignored", "attitude", "unprofessional", "server", "waiter"],
-  "wait":        ["slow", "long", "waiting", "delay", "delayed", "forever",
-                  "hours", "queue", "line", "took", "minutes"],
-  "speed":       ["slow", "fast", "quick", "delay", "delayed", "wait", "long"],
-
-  // Food quality
-  "food":        ["taste", "flavor", "bland", "cold", "raw", "overcooked",
-                  "undercooked", "stale", "expired", "fresh", "quality",
-                  "portion", "small", "wrong", "missing"],
-  "quality":     ["poor", "bad", "terrible", "awful", "mediocre", "cheap",
-                  "fake", "defective", "broken", "damaged", "wrong"],
-
-  // Pricing
-  "price":       ["expensive", "overpriced", "costly", "cheap", "value",
-                  "worth", "rip", "ripoff", "charged", "billing", "refund"],
-  "pricing":     ["expensive", "overpriced", "costly", "cheap", "value",
-                  "worth", "rip", "ripoff", "charged", "billing", "refund"],
-
-  // Delivery
-  "delivery":    ["late", "delayed", "missing", "wrong", "damaged", "lost",
-                  "driver", "courier", "tracking", "package", "shipping"],
-
-  // Staff
-  "staff":       ["rude", "unprofessional", "unhelpful", "ignorant", "arrogant",
-                  "impolite", "dismissive", "lazy", "incompetent", "attitude"],
-
-  // Noise & environment
-  "noise":       ["loud", "noisy", "crowded", "music", "sound", "quiet"],
-  "environment": ["dirty", "crowded", "noisy", "dark", "cold", "hot",
-                  "uncomfortable", "small", "parking", "access"],
-
-  // Technical / app issues
-  "app":         ["crash", "bug", "error", "slow", "loading", "freeze",
-                  "broken", "login", "payment", "update"],
-  "website":     ["crash", "bug", "error", "slow", "loading", "freeze",
-                  "broken", "login", "payment", "update", "down"],
-};
-
-/**
- * Expands problem tokens with synonyms for broader review matching.
- */
-function expandProblemTokens(problemTokens: string[]): string[] {
-  const expanded = new Set(problemTokens);
-  problemTokens.forEach(token => {
-    PROBLEM_SYNONYMS[token]?.forEach(syn => expanded.add(syn));
-  });
-  return [...expanded];
-}
+/* ─────────────────────────────────────────────
+   NLP HELPERS
+───────────────────────────────────────────── */
 
 const STOPWORDS = new Set([
-  // English stopwords
-  "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
-  "of", "with", "by", "from", "is", "are", "was", "were", "be", "been",
-  "have", "has", "had", "do", "did", "will", "would", "could", "should",
-  "not", "no", "very", "too", "so", "just", "get", "got", "its", "it",
-  "this", "that", "they", "them", "their", "we", "our", "you", "your",
-  "my", "me", "he", "she", "his", "her", "i", "am", "up", "out", "about",
-  "than", "then", "also", "even", "all", "any", "been", "more", "much",
-  "never", "ever", "only", "still", "same", "such", "over", "after",
-  "again", "back", "there", "here", "when", "what", "which", "who",
-  "how", "why", "where", "if", "as", "us",
-  // French stopwords (for category names / descriptions — not matched against reviews)
-  "le", "la", "les", "de", "du", "des", "un", "une", "et", "en",
-  "est", "pas", "plus", "tres", "bien", "bon", "mauvais", "trop"
+  "the","a","an","and","or","but","in","on","at","to","for","of","with",
+  "by","from","is","are","was","were","be","been","have","has","had",
+  "do","did","will","would","could","should","not","no","very","too",
+  "so","just","get","got","its","it","this","that","they","them","their",
+  "we","our","you","your","my","me","he","she","his","her","i","am",
+  "up","out","about","than","then","also","even","all","any","more",
+  "much","never","ever","only","still","same","such","over","after",
+  "again","back","there","here","when","what","which","who","how",
+  "why","where","if","as","us","one","two","been","into","during"
 ]);
 
-/**
- * Tokenise a string into lowercase words, stripping punctuation and stopwords.
- */
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
@@ -456,187 +383,341 @@ function tokenize(text: string): string[] {
     .filter(w => w.length > 2 && !STOPWORDS.has(w));
 }
 
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .trim();
+}
+
+/* ─────────────────────────────────────────────
+   PROBLEM SYNONYM EXPANSION
+   Expands problem tokens with semantically related
+   English words so indirect reviews are captured
+───────────────────────────────────────────── */
+
+const PROBLEM_SYNONYMS: Record<string, string[]> = {
+  // Hygiene & cleanliness
+  hygiene:      ["dirty","filthy","unclean","disgusting","gross","grimy",
+                 "unhygienic","contaminated","stain","stained","sticky",
+                 "smell","smells","smelly","odor","odour","stench",
+                 "cockroach","rat","mice","insect","pest","hair","mold",
+                 "mould","trash","garbage","waste","bathroom","toilet",
+                 "restroom","washroom","floor","table","plate","glass",
+                 "utensil","kitchen","grease","greasy","residue"],
+  cleanliness:  ["dirty","filthy","unclean","disgusting","gross","stain",
+                 "sticky","smell","smelly","trash","messy","grimy"],
+
+  // Service & wait
+  service:      ["wait","waiting","slow","staff","rude","unhelpful",
+                 "ignored","attitude","unprofessional","server","waiter",
+                 "attentive","inattentive","helpless","useless"],
+  wait:         ["slow","long","waiting","delay","delayed","forever",
+                 "hours","queue","line","took","minutes","ages","eternity"],
+  speed:        ["slow","fast","quick","delay","delayed","wait","long","sluggish"],
+  attente:      ["slow","long","waiting","delay","queue","line","took","minutes"],
+
+  // Food & product quality
+  food:         ["taste","flavor","bland","cold","raw","overcooked",
+                 "undercooked","stale","expired","fresh","quality",
+                 "portion","small","wrong","missing","soggy","hard",
+                 "burnt","chewy","dry","greasy","spicy","salty"],
+  quality:      ["poor","bad","terrible","awful","mediocre","cheap",
+                 "fake","defective","broken","damaged","wrong","inferior",
+                 "substandard","disappointing","unacceptable"],
+
+  // Pricing
+  price:        ["expensive","overpriced","costly","cheap","value","worth",
+                 "rip","ripoff","charged","billing","refund","fee","cost"],
+  pricing:      ["expensive","overpriced","costly","value","worth",
+                 "rip","ripoff","charged","billing","refund"],
+
+  // Delivery & logistics
+  delivery:     ["late","delayed","missing","wrong","damaged","lost",
+                 "driver","courier","tracking","package","shipping",
+                 "undelivered","returned","address"],
+
+  // Staff & personnel
+  staff:        ["rude","unprofessional","unhelpful","ignorant","arrogant",
+                 "impolite","dismissive","lazy","incompetent","attitude",
+                 "untrained","disrespectful","offensive","hostile"],
+  personnel:    ["rude","unprofessional","unhelpful","attitude","untrained",
+                 "dismissive","incompetent","disrespectful"],
+
+  // Noise & environment
+  noise:        ["loud","noisy","crowded","music","sound","quiet","disturbing"],
+  environment:  ["dirty","crowded","noisy","dark","cold","hot","uncomfortable",
+                 "small","parking","access","cramped","stuffy","unkempt"],
+
+  // Technical / digital
+  app:          ["crash","bug","error","slow","loading","freeze","broken",
+                 "login","payment","update","glitch","down","unavailable"],
+  website:      ["crash","bug","error","slow","loading","freeze","broken",
+                 "login","payment","update","glitch","down","unavailable"],
+  system:       ["crash","bug","error","slow","freeze","broken","down",
+                 "unavailable","glitch","malfunction","offline"],
+};
+
 /**
- * Returns a relevance score (0–1) between problem tokens and a review text.
- * Bonus for direct substring match.
+ * Returns the full expanded token set for a given problem string.
+ * e.g. "hygiene" → ["hygiene", "dirty", "filthy", "smelly", ...]
  */
-function relevanceScore(problemTokens: string[], text: string): number {
-  const textTokens = new Set(tokenize(text));
-  const matches = problemTokens.filter(t => textTokens.has(t)).length;
-  const directMatch = text.toLowerCase().includes(problemTokens.join(" ")) ? 0.3 : 0;
-  return matches / Math.max(problemTokens.length, 1) + directMatch;
+function expandProblemTokens(problemTokens: string[]): string[] {
+  const expanded = new Set(problemTokens);
+  problemTokens.forEach(token => {
+    PROBLEM_SYNONYMS[token]?.forEach(syn => expanded.add(syn));
+  });
+  return [...expanded];
 }
 
 /**
- * Returns true if a review is negative (rating ≤ 3).
+ * Returns true if ANY expanded token appears in the review text.
+ * Uses both tokenized words AND raw substring for multi-word signals.
  */
-function isNegative(review: Review): boolean {
-  return review.note <= 3;
+function isRelatedToProblem(expandedTokens: string[], text: string): boolean {
+  const words = new Set(tokenize(text));
+  const raw = normalize(text);
+  return expandedTokens.some(token => words.has(token) || raw.includes(token));
 }
 
-/**
- * Returns true if a text is related to the problem.
- */
-function isRelatedToProblem(problemTokens: string[], text: string): boolean {
-  const expandedTokens = expandProblemTokens(problemTokens);
-  return relevanceScore(expandedTokens, text) >= 0.15;
-}
-// ─── Ishikawa Category Builders (English seeds, French labels) ───────────────
+/* ─────────────────────────────────────────────
+   ISHIKAWA CATEGORY DEFINITIONS
+   Each category has:
+   - seeds: English words that signal this category
+   - rules: specific cause descriptions triggered by
+     matched keyword groups (from old version logic)
+───────────────────────────────────────────── */
 
-const ISHIKAWA_CATEGORIES = [
+interface CategoryRule {
+  match: string[];           // if ANY of these appear in evidence → use this description
+  description: string;       // French cause description
+}
+
+interface CategoryDefinition {
+  name: string;
+  seeds: string[];
+  rules: CategoryRule[];
+  fallbackDescription: string;
+}
+
+const ISHIKAWA_CATEGORIES: CategoryDefinition[] = [
   {
     name: "Main-d'œuvre",
     seeds: [
-      // Staff behavior & attitude
-      "staff", "employee", "employees", "worker", "workers", "team", "agent",
-      "manager", "supervisor", "representative", "rep", "associate", "cashier",
-      "waiter", "waitress", "server", "driver", "technician", "consultant",
-      // Negative descriptors
-      "rude", "unprofessional", "unhelpful", "incompetent", "unfriendly",
-      "impolite", "ignorant", "arrogant", "dismissive", "lazy", "untrained",
-      "inexperienced", "careless", "indifferent",
-      // Action words
-      "ignored", "refused", "yelled", "lied", "mislead", "forgot",
-      "attitude", "behavior", "manner", "training", "knowledge",
+      "staff","employee","employees","worker","workers","team","agent","manager",
+      "supervisor","representative","associate","cashier","waiter","waitress",
+      "server","driver","technician","consultant","crew","attendant",
+      "rude","unprofessional","unhelpful","incompetent","unfriendly","impolite",
+      "ignorant","arrogant","dismissive","lazy","untrained","inexperienced",
+      "careless","indifferent","disrespectful","hostile","offensive",
+      "ignored","refused","yelled","lied","forgot","attitude","behavior","training"
     ],
+    rules: [
+      {
+        match: ["rude","impolite","arrogant","disrespectful","hostile","offensive","yelled"],
+        description: "Comportement irrespectueux ou impoli du personnel envers les clients"
+      },
+      {
+        match: ["unprofessional","untrained","inexperienced","incompetent","useless"],
+        description: "Manque de formation ou compétences insuffisantes du personnel"
+      },
+      {
+        match: ["ignored","unhelpful","dismissive","indifferent","careless","forgot"],
+        description: "Personnel inattentif ou négligent vis-à-vis des demandes clients"
+      },
+      {
+        match: ["shortage","few staff","understaffed","not enough staff","one person"],
+        description: "Effectif insuffisant pour gérer la demande"
+      },
+    ],
+    fallbackDescription: "Problèmes liés au comportement ou aux compétences du personnel"
   },
   {
     name: "Processus",
     seeds: [
-      // Process & flow
-      "process", "procedure", "system", "queue", "line", "wait", "waiting",
-      "delay", "delayed", "slow", "booking", "reservation", "appointment",
-      "scheduling", "dispatch", "tracking", "confirmation", "approval",
-      "verification", "checkout", "checkin", "onboarding", "registration",
-      // Outcome words
-      "stuck", "confused", "lost", "pending", "unresolved", "backlog",
-      "bottleneck", "inefficient", "disorganized", "chaotic", "complicated",
+      "process","procedure","queue","line","wait","waiting","delay","delayed",
+      "slow","booking","reservation","appointment","scheduling","dispatch",
+      "tracking","confirmation","approval","verification","checkout","checkin",
+      "onboarding","registration","stuck","pending","unresolved","backlog",
+      "bottleneck","inefficient","disorganized","chaotic","complicated","order",
+      "refund","return","exchange","complaint"
     ],
+    rules: [
+      {
+        match: ["wait","waiting","queue","line","long time","ages","forever","hours","minutes"],
+        description: "Temps d'attente excessif dû à une mauvaise gestion des flux"
+      },
+      {
+        match: ["reservation","booking","appointment","overbooked","surbooking"],
+        description: "Système de réservation inefficace ou surbooking"
+      },
+      {
+        match: ["delay","delayed","late","slow","took long","pending","unresolved"],
+        description: "Délais de traitement trop longs ou non respectés"
+      },
+      {
+        match: ["refund","return","exchange","complaint","unresolved","ignored"],
+        description: "Processus de réclamation ou retour mal géré"
+      },
+      {
+        match: ["disorganized","chaotic","complicated","confusing","no system"],
+        description: "Organisation du service à revoir — processus peu clairs"
+      },
+    ],
+    fallbackDescription: "Dysfonctionnement dans le processus de service"
   },
   {
     name: "Méthodes",
     seeds: [
-      // Methods & practices
-      "method", "approach", "policy", "protocol", "standard", "practice",
-      "guideline", "rule", "instruction", "communication", "coordination",
-      "response", "follow", "followup", "escalation", "handling", "priority",
-      "workflow",
-      // Negative signals
-      "inconsistent", "unclear", "confusing", "misleading", "wrong",
-      "incorrect", "outdated", "inadequate", "poor", "lack", "missing",
-      "no response", "ignored", "unacknowledged",
+      "method","approach","policy","protocol","standard","practice","guideline",
+      "rule","instruction","communication","coordination","response","followup",
+      "escalation","handling","priority","workflow","inconsistent","unclear",
+      "confusing","misleading","wrong","incorrect","outdated","inadequate","poor",
+      "lack","missing","no response","unacknowledged","priority","forgot"
     ],
+    rules: [
+      {
+        match: ["coordination","communication","team","internal","between"],
+        description: "Manque de coordination entre les équipes de service"
+      },
+      {
+        match: ["inconsistent","different","every time","sometimes","depends"],
+        description: "Pratiques de service incohérentes selon les situations"
+      },
+      {
+        match: ["no response","ignored","unacknowledged","followup","never heard"],
+        description: "Absence de suivi ou de réponse aux demandes clients"
+      },
+      {
+        match: ["priority","forgot","skipped","missed","overlooked"],
+        description: "Mauvaise priorisation ou oubli de certaines demandes"
+      },
+    ],
+    fallbackDescription: "Méthodes de travail inadaptées impactant la qualité du service"
   },
   {
     name: "Outils & systèmes",
     seeds: [
-      // Technology
-      "app", "application", "website", "site", "platform", "software",
-      "system", "tool", "machine", "device", "terminal", "kiosk",
-      "payment", "checkout", "interface", "portal", "dashboard",
-      // Issues
-      "bug", "crash", "error", "glitch", "broken", "not working",
-      "down", "unavailable", "offline", "slow", "loading", "freeze",
-      "failed", "malfunction", "outdated", "update",
+      "app","application","website","site","platform","software","system","tool",
+      "machine","device","terminal","kiosk","payment","checkout","interface",
+      "portal","dashboard","bug","crash","error","glitch","broken","not working",
+      "down","unavailable","offline","loading","freeze","failed","malfunction",
+      "outdated","update","pos","register","scanner","printer"
     ],
+    rules: [
+      {
+        match: ["bug","crash","error","glitch","freeze","not working","broken","malfunction"],
+        description: "Pannes ou dysfonctionnements des outils technologiques"
+      },
+      {
+        match: ["payment","billing","checkout","transaction","charged","refund"],
+        description: "Problèmes avec les systèmes de paiement ou de facturation"
+      },
+      {
+        match: ["slow","loading","down","unavailable","offline","lag"],
+        description: "Performances insuffisantes des systèmes ou applications"
+      },
+      {
+        match: ["outdated","old","update","obsolete","legacy"],
+        description: "Outils obsolètes ne répondant plus aux besoins opérationnels"
+      },
+    ],
+    fallbackDescription: "Outils ou systèmes défaillants impactant le service"
   },
   {
     name: "Environnement",
     seeds: [
-      // Physical environment
-      "place", "location", "store", "shop", "restaurant", "branch",
-      "outlet", "facility", "parking", "access", "entrance", "space",
-      "area", "room", "table", "seat", "seating", "floor",
-      // Conditions
-      "dirty", "unclean", "noisy", "crowded", "packed", "small", "dark",
-      "hot", "cold", "smelly", "messy", "disorganized", "unsafe",
-      "uncomfortable", "broken", "maintenance", "hygiene", "cleanliness",
-      "hours", "open", "closed", "busy", "rush",
+      "place","location","store","shop","restaurant","branch","outlet","facility",
+      "parking","access","entrance","space","area","room","table","seat","seating",
+      "floor","dirty","unclean","filthy","disgusting","gross","grimy","unhygienic",
+      "contaminated","stain","sticky","smell","smells","smelly","odor","stench",
+      "cockroach","rat","mice","insect","pest","hair","mold","trash","garbage",
+      "noisy","crowded","packed","small","dark","hot","cold","uncomfortable",
+      "broken","maintenance","hygiene","cleanliness","hours","busy","rush",
+      "bathroom","toilet","restroom","washroom","grease","greasy"
     ],
+    rules: [
+      {
+        match: ["dirty","filthy","unclean","disgusting","gross","grimy","unhygienic",
+                "stain","sticky","mold","grease","greasy","residue"],
+        description: "Manque de propreté ou d'hygiène des locaux et équipements"
+      },
+      {
+        match: ["smell","smells","smelly","odor","odour","stench"],
+        description: "Problèmes d'odeurs désagréables affectant l'expérience client"
+      },
+      {
+        match: ["cockroach","rat","mice","insect","pest","hair","contaminated","bacteria"],
+        description: "Présence de nuisibles ou contamination — problème d'hygiène critique"
+      },
+      {
+        match: ["noisy","loud","noise","music","disturbing"],
+        description: "Environnement sonore perturbant l'expérience client"
+      },
+      {
+        match: ["crowded","packed","full","busy","rush","small","cramped"],
+        description: "Capacité d'accueil insuffisante lors des pics d'affluence"
+      },
+      {
+        match: ["cold","hot","temperature","stuffy","ventilation","air"],
+        description: "Conditions de confort thermique ou d'aération insuffisantes"
+      },
+      {
+        match: ["parking","access","location","entrance","find","hard to"],
+        description: "Accessibilité ou localisation difficile pour les clients"
+      },
+    ],
+    fallbackDescription: "Facteurs environnementaux dégradant l'expérience client"
   },
   {
     name: "Produit / Service",
     seeds: [
-      // Product/service quality
-      "product", "item", "order", "food", "meal", "dish", "drink",
-      "service", "quality", "quality", "taste", "flavor", "portion",
-      "size", "quantity", "packaging", "delivery", "shipping",
-      // Issues
-      "wrong", "missing", "damaged", "expired", "stale", "cold",
-      "overpriced", "expensive", "cheap", "value", "waste", "refund",
-      "return", "exchange", "complaint", "defective", "fake", "counterfeit",
-      "false", "inaccurate", "description", "expectation",
+      "product","item","order","food","meal","dish","drink","service","quality",
+      "taste","flavor","portion","size","quantity","packaging","delivery",
+      "shipping","wrong","missing","damaged","expired","stale","cold","overpriced",
+      "expensive","cheap","value","waste","defective","fake","inaccurate",
+      "description","expectation","bland","raw","overcooked","undercooked",
+      "soggy","hard","burnt","chewy","dry","spicy","salty"
     ],
+    rules: [
+      {
+        match: ["cold","warm","temperature","not hot","lukewarm","reheated"],
+        description: "Produits servis à mauvaise température"
+      },
+      {
+        match: ["bland","tasteless","flavor","taste","bad taste","awful","terrible"],
+        description: "Qualité gustative ou sensorielle insuffisante du produit"
+      },
+      {
+        match: ["wrong","missing","incorrect","not what","different","expected"],
+        description: "Commande incorrecte ou non conforme à la description"
+      },
+      {
+        match: ["small","portion","tiny","not enough","quantity","size"],
+        description: "Portions ou quantités insuffisantes par rapport au prix"
+      },
+      {
+        match: ["overpriced","expensive","costly","not worth","value","rip"],
+        description: "Rapport qualité-prix insuffisant aux yeux des clients"
+      },
+      {
+        match: ["stale","expired","old","fresh","freshness","raw","undercooked"],
+        description: "Problèmes de fraîcheur ou de cuisson des produits"
+      },
+      {
+        match: ["damaged","broken","defective","leaking","packaging"],
+        description: "Produits endommagés ou emballage défectueux à la livraison"
+      },
+    ],
+    fallbackDescription: "Qualité du produit ou service non conforme aux attentes clients"
   },
 ];
 
-function buildCategory(
-  categoryDef: { name: string; seeds: string[] },
-  problemTokens: string[],          // original — used for description generation
-  relevantTexts: string[]
-): RootCauseCategory | null {
-  const expandedTokens = expandProblemTokens(problemTokens); // ← use expanded for scoring
-
-  const categoryEvidence = relevantTexts.filter(text => {
-    const rawText = text.toLowerCase();
-    return categoryDef.seeds.some(seed =>
-      tokenize(text).includes(seed) || rawText.includes(seed)
-    );
-  });
-
-  if (categoryEvidence.length === 0) return null;
-
-  const scored = categoryEvidence
-    .map(text => ({ text, score: relevanceScore(expandedTokens, text) })) // ← expanded
-    .sort((a, b) => b.score - a.score);
-
-
-  const probability: ProbabilityLevel =
-    scored.length >= 3 ? "Probable" :
-    scored.length >= 2 ? "Possible" : "Occasionnelle";
-
-  const matchedSeeds = categoryDef.seeds.filter(seed =>
-    categoryEvidence.some(text =>
-      tokenize(text).includes(seed) || text.toLowerCase().includes(seed)
-    )
-  );
-
-  const topSeeds = matchedSeeds.slice(0, 3).join(", ");
-  const description = generateCauseDescription(categoryDef.name, topSeeds, problemTokens);
-
-  return {
-    name: categoryDef.name,
-    causes: [
-      {
-        description,
-        probability,
-        evidence: scored.slice(0, 2).map(s => s.text),
-      },
-    ],
-  };
-}
-
-/**
- * Generates a French cause description from English matched signals.
- */
-function generateCauseDescription(
-  categoryName: string,
-  matchedSeeds: string,
-  problemTokens: string[]
-): string {
-  const problem = problemTokens.join(" ");
-  const descriptionMap: Record<string, string> = {
-    "Main-d'œuvre":      `Personnel impliqué dans le problème de "${problem}" (signaux : ${matchedSeeds})`,
-    "Processus":         `Dysfonctionnement du processus lié à "${problem}" (signaux : ${matchedSeeds})`,
-    "Méthodes":          `Méthodes inadaptées contribuant au problème "${problem}" (signaux : ${matchedSeeds})`,
-    "Outils & systèmes": `Outils ou systèmes défaillants autour de "${problem}" (signaux : ${matchedSeeds})`,
-    "Environnement":     `Facteurs environnementaux aggravant "${problem}" (signaux : ${matchedSeeds})`,
-    "Produit / Service": `Qualité du produit/service en cause pour "${problem}" (signaux : ${matchedSeeds})`,
-  };
-  return descriptionMap[categoryName] ?? `Cause identifiée dans "${categoryName}" pour le problème "${problem}"`;
-}
-
-// ─── Main exported function ──────────────────────────────────────────────────
+/* ─────────────────────────────────────────────
+   MAIN FUNCTION
+───────────────────────────────────────────── */
 
 export function analyzeRootCauses(
   problem: string,
@@ -646,81 +727,114 @@ export function analyzeRootCauses(
   reviews?: Review[]
 ): RootCauseAnalysis {
 
-  // 1. Tokenise the problem dynamically
-
-  const problemTokens = tokenize(problem);
-
-  // ── Step 1: Collect ALL text sources ──────────────────────────────────────
+  /* ── STEP 1: Collect all texts from all sources ── */
   const allTexts: string[] = [];
 
-  if (reviews && reviews.length > 0) {
-    reviews.forEach(r => {
-      if (r.texte?.trim()) allTexts.push(r.texte.trim());
-    });
-  }
+  reviews?.forEach(r => { if (r.texte?.trim()) allTexts.push(r.texte.trim()); });
+  qualitative.keyVerbatims?.forEach(v => { if (v.text?.trim()) allTexts.push(v.text.trim()); });
+  themes.forEach(t => t.verbatims?.forEach(v => { if (v?.trim()) allTexts.push(v.trim()); }));
+  qualitative.topKeywords?.forEach(kw => { if (kw.word?.trim()) allTexts.push(kw.word.trim()); });
 
-  qualitative.keyVerbatims?.forEach(v => {
-    if (v.text?.trim()) allTexts.push(v.text.trim());
-  });
-
-  themes.forEach(t => {
-    t.verbatims?.forEach(v => {
-      if (v?.trim()) allTexts.push(v.trim());
-    });
-  });
-
-  qualitative.topKeywords?.forEach(kw => {
-    if (kw.word?.trim()) allTexts.push(kw.word.trim());
-  });
-
-  // Deduplicate
   const uniqueTexts = [...new Set(allTexts)];
 
-  // ── Step 2: Filter NEGATIVE texts only ────────────────────────────────────
+  /* ── STEP 2: Filter NEGATIVE reviews only ── */
   const negativeTexts = uniqueTexts.filter(text => {
     const matchingReview = reviews?.find(r => r.texte?.trim() === text);
-    if (matchingReview) return isNegative(matchingReview);
+    if (matchingReview) return matchingReview.note <= 3;
 
     const matchingVerbatim = qualitative.keyVerbatims?.find(v => v.text?.trim() === text);
     if (matchingVerbatim) {
       return matchingVerbatim.sentiment === "negative" || matchingVerbatim.rating <= 3;
     }
 
-    return true; // Keep theme verbatims and keywords (no rating info)
+    return true; // theme verbatims and keywords kept by default
   });
 
-  // ── Step 3: Filter texts RELATED to the problem ───────────────────────────
+  /* ── STEP 3: Expand problem tokens with synonyms ── */
+  const problemTokens = tokenize(problem);
+  const expandedTokens = expandProblemTokens(problemTokens);
+
+  /* ── STEP 4: Filter reviews RELATED to the problem ── */
   const relevantTexts = negativeTexts.filter(text =>
-    isRelatedToProblem(problemTokens, text)
+    isRelatedToProblem(expandedTokens, text)
   );
 
-  // Fallback: if too few relevant texts, use all negative texts
+  // Fallback: if too few matched, use all negative texts
   const textsForAnalysis = relevantTexts.length >= 2 ? relevantTexts : negativeTexts;
 
-  // ── Step 4: Ishikawa category analysis ────────────────────────────────────
-  const categories: RootCauseCategory[] = ISHIKAWA_CATEGORIES
-    .map(catDef => buildCategory(catDef, problemTokens, textsForAnalysis))
-    .filter((cat): cat is RootCauseCategory => cat !== null);
+  /* ── STEP 5: Build Ishikawa categories ── */
+  const finalCategories: RootCauseCategory[] = [];
 
-  // ── Step 5: Fallback if nothing matched ───────────────────────────────────
-  if (categories.length === 0 && textsForAnalysis.length > 0) {
-    categories.push({
+  for (const categoryDef of ISHIKAWA_CATEGORIES) {
+    // Find evidence texts that match this category's seeds
+    const categoryEvidence = textsForAnalysis.filter(text => {
+      const raw = normalize(text);
+      const words = new Set(tokenize(text));
+      return categoryDef.seeds.some(seed => words.has(seed) || raw.includes(seed));
+    });
+
+    if (categoryEvidence.length === 0) continue;
+
+    // Within this category's evidence, apply business rules to find specific causes
+    const causes: RootCause[] = [];
+
+    for (const rule of categoryDef.rules) {
+      // Find evidence texts that match this specific rule
+      const ruleEvidence = categoryEvidence.filter(text => {
+        const raw = normalize(text);
+        const words = new Set(tokenize(text));
+        return rule.match.some(keyword => words.has(keyword) || raw.includes(keyword));
+      });
+
+      if (ruleEvidence.length === 0) continue;
+
+      const count = ruleEvidence.length;
+      const probability: ProbabilityLevel =
+        count >= 5 ? "Probable" :
+        count >= 3 ? "Possible" :
+        "Occasionnelle";
+
+      causes.push({
+        description: rule.description,
+        probability,
+        evidence: ruleEvidence.slice(0, 3),
+        count
+      });
+    }
+
+    // If no rules matched but category has evidence → use fallback description
+    if (causes.length === 0 && categoryEvidence.length > 0) {
+      const count = categoryEvidence.length;
+      causes.push({
+        description: categoryDef.fallbackDescription,
+        probability: count >= 5 ? "Probable" : count >= 3 ? "Possible" : "Occasionnelle",
+        evidence: categoryEvidence.slice(0, 3),
+        count
+      });
+    }
+
+    if (causes.length > 0) {
+      finalCategories.push({ name: categoryDef.name, causes });
+    }
+  }
+
+  /* ── STEP 6: Global fallback ── */
+  if (finalCategories.length === 0 && textsForAnalysis.length > 0) {
+    finalCategories.push({
       name: "Processus",
       causes: [{
         description: `Problème lié à "${problem}" identifié dans les avis négatifs`,
         probability: "Possible",
-        evidence: textsForAnalysis.slice(0, 2),
-      }],
+        evidence: textsForAnalysis.slice(0, 3),
+        count: textsForAnalysis.length
+      }]
     });
   }
 
-  // ── Step 6: Build French summary ──────────────────────────────────────────
-  const probableCauses = categories.flatMap(cat =>
-    cat.causes.filter(c => c.probability === "Probable")
-  );
-  const possibleCauses = categories.flatMap(cat =>
-    cat.causes.filter(c => c.probability === "Possible")
-  );
+  /* ── STEP 7: Build French summary ── */
+  const allCauses = finalCategories.flatMap(c => c.causes).sort((a, b) => b.count - a.count);
+  const probableCauses = allCauses.filter(c => c.probability === "Probable");
+  const possibleCauses = allCauses.filter(c => c.probability === "Possible");
 
   let summary = "";
   if (probableCauses.length > 0) {
@@ -729,9 +843,11 @@ export function analyzeRootCauses(
     summary = `Les causes dominantes du problème "${problem}" sont principalement liées à ${main.description.toLowerCase()}${others ? `, avec des contributions de ${others}` : ""}.`;
   } else if (possibleCauses.length > 0) {
     summary = `Les causes probables du problème "${problem}" semblent liées à ${possibleCauses[0].description.toLowerCase()}, nécessitant une analyse plus approfondie.`;
+  } else if (allCauses.length > 0) {
+    summary = `Des causes occasionnelles ont été identifiées pour "${problem}" : ${allCauses[0].description.toLowerCase()}.`;
   } else {
-    summary = `L'analyse des avis suggère que le problème "${problem}" peut avoir plusieurs origines — une investigation terrain complémentaire est recommandée.`;
+    summary = `L'analyse des avis ne permet pas de déterminer une cause claire pour "${problem}" — une investigation terrain est recommandée.`;
   }
 
-  return { problem, categories, summary };
+  return { problem, categories: finalCategories, summary };
 }

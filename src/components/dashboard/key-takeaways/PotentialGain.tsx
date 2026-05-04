@@ -20,6 +20,7 @@ export function PotentialGainSection({
   reviews = [],
   recommendedActions = [],
   mainIssue = "",
+  handleClick
 }: PotentialGainSectionProps) {
   const { t } = useTranslation();
 
@@ -101,7 +102,7 @@ export function PotentialGainSection({
             </div>
               <button
               type="button"
-              // onClick={}
+               onClick={handleClick}
               className="flex w-full mt-4 items-center justify-between gap-2 rounded-[8px] bg-[#2563eb] px-4 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
               >
               {t("dashboard.keyTakeaways.potentialGain.viewActionPlan")}
