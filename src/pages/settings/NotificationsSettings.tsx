@@ -1,9 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Bell, Mail, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthProvider";
+import { supabase } from "@/integrations/supabase/client";
+
+type NotificationToggleKey =
+  | "newReviews"
+  | "weeklyReport"
+  | "importantUpdates"
+  | "inAppNotifications";
 
 export function NotificationsSettings() {
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -12,10 +20,87 @@ export function NotificationsSettings() {
   const [weeklyReport, setWeeklyReport] = useState(true);
   const [importantUpdates, setImportantUpdates] = useState(true);
   const { t } = useTranslation();
+  const { user } = useAuth();
 
-  const handleToggle = async (key: string, value: boolean) => {
-    // TODO: Sauvegarder les préférences
-    toast.success(t("settings.notifications.validation.preferencesUpdated"));
+  useEffect(() => {
+    const loadNotificationPreferences = async () => {
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error loading notification preferences:", error);
+        return;
+      }
+
+      const profile = data as {
+        monthly_report_enabled?: boolean | null;
+        new_reviews_enabled?: boolean | null;
+        important_updates_enabled?: boolean | null;
+        in_app_notifications_enabled?: boolean | null;
+      } | null;
+
+      if (profile?.monthly_report_enabled !== null && profile?.monthly_report_enabled !== undefined) {
+        setWeeklyReport(profile.monthly_report_enabled);
+      }
+
+      if (profile?.new_reviews_enabled !== null && profile?.new_reviews_enabled !== undefined) {
+        setNewReviews(profile.new_reviews_enabled);
+      }
+
+      if (profile?.important_updates_enabled !== null && profile?.important_updates_enabled !== undefined) {
+        setImportantUpdates(profile.important_updates_enabled);
+      }
+
+      if (profile?.in_app_notifications_enabled !== null && profile?.in_app_notifications_enabled !== undefined) {
+        setInAppNotifications(profile.in_app_notifications_enabled);
+      }
+    };
+
+    void loadNotificationPreferences();
+  }, [user]);
+
+  const handleToggle = async (key: NotificationToggleKey, value: boolean) => {
+    try {
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const columnByKey = {
+        newReviews: "new_reviews_enabled",
+        weeklyReport: "monthly_report_enabled",
+        importantUpdates: "important_updates_enabled",
+        inAppNotifications: "in_app_notifications_enabled",
+      } as const;
+
+      const profileUpdate = {
+        user_id: user.id,
+        [columnByKey[key]]: value,
+      };
+
+      const { error } = await supabase
+        .from("profiles")
+        .upsert(profileUpdate, { onConflict: "user_id" });
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success(t("settings.notifications.validation.preferencesUpdated"));
+    } catch (error) {
+      console.error("Error updating notification preferences:", error);
+
+      if (key === "newReviews") setNewReviews(!value);
+      if (key === "weeklyReport") setWeeklyReport(!value);
+      if (key === "importantUpdates") setImportantUpdates(!value);
+      if (key === "inAppNotifications") setInAppNotifications(!value);
+
+      toast.error(t("common.error"));
+    }
   };
 
   return (

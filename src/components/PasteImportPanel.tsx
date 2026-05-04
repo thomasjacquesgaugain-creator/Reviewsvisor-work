@@ -12,6 +12,7 @@ import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable
 import { getDisplayAuthor } from "@/utils/getDisplayAuthor";
 import CollapsibleInstructionsHeader from "./CollapsibleInstructionsHeader";
 import { useTranslation } from "react-i18next";
+import { sendReviewImportNotification } from "@/services/importNotificationService";
 
 interface PasteImportPanelProps {
   onImportBulk?: (reviews: any[]) => void;
@@ -117,6 +118,14 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
       if (onImportSuccess) {
         onImportSuccess();
       }
+
+      void sendReviewImportNotification({
+        establishmentName: est.name,
+        source: "paste",
+        inserted,
+        skipped,
+        total: inserted,
+      });
       
       // Option : fermer la barre
       if (onClose) {

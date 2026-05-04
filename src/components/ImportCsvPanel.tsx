@@ -12,6 +12,7 @@ import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { toast as sonnerToast } from "sonner";
 import { getDisplayAuthor } from "@/utils/getDisplayAuthor";
 import { useTranslation } from "react-i18next";
+import { sendReviewImportNotification } from "@/services/importNotificationService";
 
 interface ImportCsvPanelProps {
   onFileAnalyzed?: () => void;
@@ -339,6 +340,14 @@ const mapStarRating = (rating: string) => {
       const result = await bulkCreateReviews(reviewsToCreate);
       
       console.log(`✅ Résultat de l'import: ${result.inserted} insérés, ${result.skipped} ignorés`);
+
+      void sendReviewImportNotification({
+        establishmentName,
+        source: isJSON ? "json_upload" : "csv_upload",
+        inserted: result.inserted,
+        skipped: result.skipped,
+        total: result.inserted,
+      });
       
       // Lancer l'analyse des avis
       console.log('Lancement de l\'analyse pour place_id:', activeEstablishment);

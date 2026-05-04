@@ -87,6 +87,26 @@ async function onSubmit(formData: InscriptionFormData) {
       return;
     }
 
+     const { error: profileError } = await supabase
+      .from("profiles")
+      .upsert(
+        {
+          id: data.user.id,
+          user_id: data.user.id,
+          first_name: formData.firstName.trim(),
+          last_name: formData.lastName.trim(),
+          full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+          company: "",
+          role: "worker",
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      );
+
+    if (profileError) {
+      console.warn("Profile upsert warning:", profileError.message);
+    }
+
     if (!data.user) {
       toast({ variant: "destructive", title: t("errors.title"), description: t("errors.generic") });
       return;

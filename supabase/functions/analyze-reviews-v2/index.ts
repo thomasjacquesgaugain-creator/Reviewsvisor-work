@@ -10,6 +10,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "npm:resend@2.0.0";
 import "https://deno.land/x/dotenv@v3.2.2/load.ts";
 
 // Note: Pour Deno, on ne peut pas importer directement depuis src/
@@ -40,6 +41,11 @@ type ReviewRow = {
 
 type OutputLanguage = 'fr' | 'en';
 
+type IssueSummary = {
+  theme: string;
+  count?: number;
+};
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
@@ -64,6 +70,8 @@ const SUPABASE_URL = env("SUPABASE_URL");
 const SERVICE_ROLE = env("SUPABASE_SERVICE_ROLE_KEY");
 // const OPENAI_KEY   = env("GOOGLE_PLACES_API_KEY");
 const OPENAI_KEY   = env("OPENAI_API_KEY", "");
+const RESEND_API_KEY = env("RESEND_API_KEY", "");
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false },
@@ -96,6 +104,154 @@ function getFallbackSummaryOneLiner(language: OutputLanguage, establishmentName:
   return language === 'fr'
     ? `Analyse de ${reviewCount} avis pour ${establishmentName}`
     : `Analysis of ${reviewCount} reviews for ${establishmentName}`;
+}
+
+function normalizeIssues(raw: unknown): IssueSummary[] {
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+
+      const issue = item as Record<string, unknown>;
+      const theme = typeof issue.theme === "string" ? issue.theme.trim() : "";
+      if (!theme) return null;
+
+      const count = typeof issue.count === "number"
+        ? issue.count
+        : typeof issue.count === "string"
+          ? Number(issue.count)
+          : undefined;
+
+      return {
+        theme,
+        count: Number.isFinite(count as number) ? (count as number) : undefined,
+      };
+    })
+    .filter((item): item is IssueSummary => item !== null);
+}
+
+
+function shouldSendSignificantChangeNotification(
+  previousAvgRating: number | null,
+  currentAvgRating: number | null,
+  previousIssues: IssueSummary[],
+  currentIssues: IssueSummary[],
+): { send: boolean; reason: "rating_drop" | "major_issue" | null } {
+  const ratingDrop = (previousAvgRating ?? 0) - (currentAvgRating ?? 0);
+
+  if (previousAvgRating !== null && currentAvgRating !== null && ratingDrop >= 0.3) {
+    return { send: true, reason: "rating_drop" };
+  }
+  const currentTop = currentIssues[0];
+  if (currentTop) {
+    const currentCount = currentTop.count ?? 0;
+    const previousThemes = new Set(previousIssues.map((issue) => issue.theme.toLowerCase()));
+    const isNewTheme = !previousThemes.has(currentTop.theme.toLowerCase());
+    if (currentCount > 4 && isNewTheme) {
+      return { send: true, reason: "major_issue" };
+    }
+  }
+  return { send: false, reason: null };
+}
+
+function buildAlertEmailHtml(input: {
+  language: OutputLanguage;
+  displayName: string;
+  establishmentName: string;
+  reportMonthName: string;
+  previousAvg: number | null;
+  currentAvg: number | null;
+  ratingDrop: number;
+  issues: IssueSummary[];
+  reason: "rating_drop" | "major_issue";
+}): string {
+  const isFrench = input.language === "fr";
+  const title = isFrench ? "Alerte de réputation" : "Reputation alert";
+  const greeting = isFrench ? "Bonjour" : "Hi";
+  const intro = isFrench
+    ? "Un changement significatif a été détecté sur votre établissement."
+    : "A significant change was detected for your establishment.";
+  const ratingLabel = isFrench ? "Note moyenne" : "Average rating";
+  const previousLabel = isFrench ? "Période précédente" : "Previous period";
+  const currentLabel = isFrench ? "Période actuelle" : "Current period";
+  const issuesLabel = isFrench ? "Points prioritaires" : "Top issues";
+  const ctaLabel = isFrench ? "Voir le tableau de bord" : "Open dashboard";
+  const reasonLabel = input.reason === "rating_drop"
+    ? (isFrench ? "Baisse de note détectée" : "Rating drop detected")
+    : (isFrench ? "Problème majeur détecté" : "Major issue detected");
+  const previousDisplay = input.previousAvg !== null ? input.previousAvg.toFixed(1) : "N/A";
+  const currentDisplay = input.currentAvg !== null ? input.currentAvg.toFixed(1) : "N/A";
+  const issueItems = input.issues.length > 0
+    ? input.issues.slice(0, 3).map((issue) => {
+        const countSuffix = typeof issue.count === "number" ? ` (${issue.count})` : "";
+        return `<li style="margin-bottom:8px;"><strong>${issue.theme}</strong>${countSuffix}</li>`;
+      }).join("")
+    : `<li style="color:#9CA3AF;">${isFrench ? "Aucun point prioritaire identifié." : "No top issues identified."}</li>`;
+
+  return `
+    <div style="font-family: Arial, Helvetica, sans-serif; background:#f8fafc; padding:24px;">
+      <div style="max-width:640px; margin:0 auto; background:#ffffff; border-radius:16px; overflow:hidden; border:1px solid #e5e7eb;">
+        <div style="background: linear-gradient(135deg, #2F6BFF 0%, #1E40AF 100%); color:#fff; padding:32px;">
+          <h1 style="margin:0; font-size:24px; line-height:1.2;">${title}</h1>
+          <p style="margin:8px 0 0 0; opacity:0.9;">${input.establishmentName} • ${input.reportMonthName}</p>
+        </div>
+        <div style="padding:32px; color:#1f2937;">
+          <p style="margin:0 0 16px 0; font-size:16px;">${greeting} ${input.displayName},</p>
+          <p style="margin:0 0 16px 0; font-size:16px; line-height:1.7;">${intro}</p>
+          <div style="background:#f9fafb; border-radius:12px; padding:16px; margin-bottom:20px;">
+            <p style="margin:0 0 8px 0; font-size:14px; color:#6b7280;">${reasonLabel}</p>
+            <p style="margin:0; font-size:16px;">
+              ${ratingLabel}: <strong>${previousLabel}</strong> ${previousDisplay} → <strong>${currentLabel}</strong> ${currentDisplay}
+              ${input.reason === "rating_drop" ? `(${isFrench ? "baisse" : "drop"} ${input.ratingDrop.toFixed(1)})` : ""}
+            </p>
+          </div>
+          <div style="background:#F9FAFB; border-radius:12px; padding:24px; margin-bottom:24px; border-left:4px solid #F59E0B;">
+            <h2 style="color:#1F2937; font-size:18px; font-weight:700; margin:0 0 16px 0;">${issuesLabel}</h2>
+            <ul style="margin:0; padding-left:20px; color:#374151; font-size:14px; line-height:1.8;">
+              ${issueItems}
+            </ul>
+          </div>
+          <div style="text-align:center;">
+            <a href="https://reviewsvisor.com/tableau-de-bord" style="display:inline-block; background:#2F6BFF; color:#fff; text-decoration:none; padding:12px 24px; border-radius:8px; font-weight:600;">
+              ${ctaLabel}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function sendSignificantChangeNotification(input: {
+  language: OutputLanguage;
+  displayName: string;
+  userEmail: string;
+  establishmentName: string;
+  reportMonthName: string;
+  previousAvg: number | null;
+  currentAvg: number | null;
+  ratingDrop: number;
+  issues: IssueSummary[];
+  reason: "rating_drop" | "major_issue";
+}) {
+  if (!resend) {
+    console.warn("[analyze-reviews-v2] RESEND_API_KEY missing, skipping notification");
+    return;
+  }
+
+  const subject = input.language === "fr"
+    ? `Alerte de réputation - ${input.establishmentName}`
+    : `Reputation alert - ${input.establishmentName}`;
+
+  const html = buildAlertEmailHtml(input);
+
+  await resend.emails.send({
+    from: "Reviewsvisor <contact@reviewsvisor.fr>",
+    to: [input.userEmail],
+    subject,
+    html,
+  });
 }
 
 // Détection businessType simplifiée (version Deno)
@@ -531,6 +687,19 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: "authentication_required" }, 401);
     }
 
+    const { data: userRecord } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const userEmail = userRecord.user?.email ?? "";
+    const { data: userProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('first_name, last_name, important_updates_enabled')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    const firstName = userProfile?.first_name || userRecord.user?.user_metadata?.first_name || "";
+    const lastName = userProfile?.last_name || userRecord.user?.user_metadata?.last_name || "";
+    const displayName = [firstName, lastName].filter(Boolean).join(" ") || userEmail || "User";
+    const importantUpdatesEnabled = userProfile?.important_updates_enabled === true;
+
     const { place_id, name, dryRun = false, language } = await req.json().catch(()=>({}));
     if (!place_id) return json({ ok:false, error:"missing_place_id" }, 400);
     const outputLanguage = normalizeLanguage(language);
@@ -674,6 +843,23 @@ Deno.serve(async (req) => {
       }
     };
 
+    const previousInsight = dryRun ? null : await supabaseAdmin
+      .from('review_insights')
+      .select('avg_rating, top_issues, last_analyzed_at')
+      .eq('user_id', userId)
+      .eq('place_id', place_id)
+      .maybeSingle();
+
+    const previousAvgRating = previousInsight?.data?.avg_rating ?? null;
+    const previousIssues = normalizeIssues(previousInsight?.data?.top_issues);
+    const currentIssues = normalizeIssues(passAResult.top_issues);
+    const notificationDecision = shouldSendSignificantChangeNotification(
+      previousAvgRating,
+      stats.overall,
+      previousIssues,
+      currentIssues,
+    );
+
     // Sauvegarder dans review_insights (format v2)
     if (!dryRun) {
     const payload = {
@@ -740,6 +926,41 @@ Deno.serve(async (req) => {
       }
 
       // Mettre à jour l'établissement avec le businessType détecté
+      if (
+        importantUpdatesEnabled &&
+        notificationDecision.send &&
+        notificationDecision.reason &&
+        userEmail &&
+        previousInsight?.data
+      ) {
+        try {
+          await sendSignificantChangeNotification({
+            language: outputLanguage,
+            displayName,
+            userEmail,
+            establishmentName,
+            reportMonthName: new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
+            previousAvg: previousAvgRating,
+            currentAvg: stats.overall,
+            ratingDrop: (previousAvgRating ?? 0) - (stats.overall ?? 0),
+            issues: currentIssues,
+            reason: notificationDecision.reason,
+          });
+          console.log('[analyze-reviews-v2] Significant change notification sent', {
+            reason: notificationDecision.reason,
+            userId,
+            place_id,
+          });
+        } catch (notificationError) {
+          console.error('[analyze-reviews-v2] Failed to send notification:', notificationError);
+        }
+      } else if (!importantUpdatesEnabled) {
+        console.log('[analyze-reviews-v2] Important updates notifications disabled for user', {
+          userId,
+          place_id,
+        });
+      }
+
       await supabaseAdmin
         .from('establishments')
         .update({

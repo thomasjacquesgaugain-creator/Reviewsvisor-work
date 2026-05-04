@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { importGoogleReviews } from '@/lib/importGoogleReviews';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { sendReviewImportNotification } from '@/services/importNotificationService';
 import {
   Dialog,
   DialogContent,
@@ -243,6 +244,15 @@ export default function GoogleImportButton({
             description: t("googleImport.import_summary", { inserted, skipped, updated }),
           },
         );
+
+        void sendReviewImportNotification({
+          establishmentName: establishmentName?.trim() || 'Your establishment',
+          source: 'outscraper',
+          inserted,
+          skipped,
+          updated,
+          total: inserted + updated,
+        });
 
         window.dispatchEvent(new CustomEvent('reviews:imported'));
         onSuccess?.();
@@ -691,6 +701,15 @@ const checkPopupClosed = setInterval(() => {
           description: `${t('googleImport.newReviews', { inserted })} • ${t('googleImport.updatedReviews', { updated })} • place_id=${placeId || '(manquant)'}`,
         });
       }
+
+      void sendReviewImportNotification({
+        establishmentName: establishmentName?.trim() || 'Your establishment',
+        source: 'google',
+        inserted,
+        skipped: 0,
+        updated,
+        total,
+      });
 
       setShowLocationSelector(false);
 
