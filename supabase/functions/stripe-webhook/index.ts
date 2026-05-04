@@ -189,9 +189,6 @@ serve(async (req) => {
       const subscription = event.data.object as Stripe.Subscription;
       logStep("Subscription updated", { subscriptionId: subscription.id, status: subscription.status });
 
-      console.log("Subscription need to be updated----->",subscription);
-      
-
       // const resolvedUserId = await getUserIdFromSubscription(subscription.id);
       // if (!resolvedUserId) {
       //   logStep("No subscription row found for update", { subscriptionId: subscription.id });
