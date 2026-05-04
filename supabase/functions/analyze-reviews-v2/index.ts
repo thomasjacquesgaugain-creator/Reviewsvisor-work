@@ -676,13 +676,14 @@ Deno.serve(async (req) => {
 
     // Sauvegarder dans review_insights (format v2)
     if (!dryRun) {
-      const payload = {
-        place_id,
-        user_id: userId,
-        last_analyzed_at: new Date().toISOString(),
-        business_type: detection.type,
-        business_type_confidence: detection.confidence,
-        business_type_candidates: detection.candidates,
+    const payload = {
+      place_id,
+      user_id: userId,
+      last_analyzed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      business_type: detection.type,
+      business_type_confidence: detection.confidence,
+      business_type_candidates: detection.candidates,
         analysis_version: 'v2-auto-universal',
         total_count: stats.total,
         avg_rating: stats.overall,
@@ -727,23 +728,15 @@ Deno.serve(async (req) => {
         summary_what_customers_hate: summaryData.what_customers_hate || []
       };
 
-      const { data: existsRows } = await supabaseAdmin
+      const { data: upsertedInsight, error: insightError } = await supabaseAdmin
         .from('review_insights')
-        .select('place_id')
-        .eq('place_id', place_id)
-        .eq('user_id', userId)
-        .limit(1);
+        .upsert(payload, { onConflict: 'user_id,place_id' })
+        .select('place_id, user_id, last_analyzed_at');
 
-      if (existsRows && existsRows.length > 0) {
-        await supabaseAdmin
-          .from('review_insights')
-          .update(payload)
-          .eq('place_id', place_id)
-          .eq('user_id', userId);
+      if (insightError) {
+        console.error("❌ UPSERT FAILED:", insightError);
       } else {
-        await supabaseAdmin
-          .from('review_insights')
-          .insert(payload);
+        console.log("✅ review_insights saved:", upsertedInsight);
       }
 
       // Mettre à jour l'établissement avec le businessType détecté
