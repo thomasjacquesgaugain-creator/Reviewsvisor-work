@@ -52,34 +52,33 @@ export function DiagnosticSection({
       ? (data as any).recommendations
       : normalizedSummary?.recommendations || [];
 
-  // Badge de confiance
   const getConfidenceLevel = (total: number) => {
-    if (total < 30) {
-      return { 
-        label: "Confiance : faible", 
-        color: "bg-amber-100 text-amber-700 border-amber-300",
-        tooltipTitle: "Pourquoi la confiance est faible ?",
-        tooltipText: "Cette analyse est basée sur un nombre limité d'avis. Les tendances observées sont indicatives et peuvent évoluer à mesure que de nouveaux avis sont collectés.",
-        tooltipSecondary: "Plus vous recevez d'avis, plus l'analyse devient précise et fiable."
-      };
-    }
-    if (total < 100) {
-      return { 
-        label: "Confiance : moyenne", 
-        color: "bg-blue-100 text-blue-700 border-blue-300",
-        tooltipTitle: "Pourquoi la confiance est moyenne ?",
-        tooltipText: "Cette analyse est basée sur un volume modéré d'avis. Les tendances observées sont fiables, mais peuvent encore évoluer avec davantage de données.",
-        tooltipSecondary: "Plus vous recevez d'avis, plus l'analyse devient précise et fiable."
-      };
-    }
-    return { 
-      label: "Confiance : élevée", 
-      color: "bg-green-100 text-green-700 border-green-300",
-      tooltipTitle: "Pourquoi la confiance est élevée ?",
-      tooltipText: "Cette analyse est basée sur un volume important d'avis. Les tendances observées sont fiables et représentatives de l'expérience client globale.",
-      tooltipSecondary: null
+  if (total < 30) {
+    return {
+      label: t("analysis.syntheseAndDiagnostic.confidence.lowLabel"),
+      color: "bg-amber-100 text-amber-700 border-amber-300",
+      tooltipTitle: t("analysis.syntheseAndDiagnostic.confidence.lowTooltipTitle"),
+      tooltipText: t("analysis.syntheseAndDiagnostic.confidence.lowTooltipText"),
+      tooltipSecondary: t("analysis.syntheseAndDiagnostic.confidence.tooltipSecondary")
     };
+  }
+  if (total < 100) {
+    return {
+      label: t("analysis.syntheseAndDiagnostic.confidence.mediumLabel"),
+      color: "bg-blue-100 text-blue-700 border-blue-300",
+      tooltipTitle: t("analysis.syntheseAndDiagnostic.confidence.mediumTooltipTitle"),
+      tooltipText: t("analysis.syntheseAndDiagnostic.confidence.mediumTooltipText"),
+      tooltipSecondary: t("analysis.syntheseAndDiagnostic.confidence.tooltipSecondary")
+    };
+  }
+  return {
+    label: t("analysis.syntheseAndDiagnostic.confidence.highLabel"),
+    color: "bg-green-100 text-green-700 border-green-300",
+    tooltipTitle: t("analysis.syntheseAndDiagnostic.confidence.highTooltipTitle"),
+    tooltipText: t("analysis.syntheseAndDiagnostic.confidence.highTooltipText"),
+    tooltipSecondary: null
   };
+};
 
   const confidence = getConfidenceLevel(totalReviews);
 
@@ -94,15 +93,15 @@ export function DiagnosticSection({
     if (!mainProblem) return null;
     
     const problemName = mainProblem.theme;
-    const strengthsList = mainStrengths.map(s => s.theme).join(" et ");
-    
-    if (mainStrengths.length === 0) {
-      return `Priorité : réduire "${problemName}".`;
-    } else if (mainStrengths.length === 1) {
-      return `Priorité : réduire "${problemName}", tout en préservant "${strengthsList}".`;
-    } else {
-      return `Priorité : réduire "${problemName}", tout en préservant "${strengthsList}".`;
-    }
+    const strengthsList = mainStrengths.map(s => s.theme).join(t("analysis.syntheseAndDiagnostic.decisionAnd")); 
+
+   if (mainStrengths.length === 0) {
+    return t("analysis.syntheseAndDiagnostic.decisionPhraseOnly", { problem: problemName });
+  }
+  return t("analysis.syntheseAndDiagnostic.decisionPhraseWithStrengths", {
+    problem: problemName,
+    strengths: strengthsList
+  });
   }, [topWeaknesses, topStrengths]);
 
   // Handler pour clic sur un thème
@@ -123,8 +122,12 @@ export function DiagnosticSection({
               <Badge variant="outline" className={confidence.color}>
                 {confidence.label}
               </Badge>
-              <InfoTooltip 
-                content={`${confidence.tooltipTitle}\n\n${confidence.tooltipText}\n\nConfiance IA : niveau de fiabilité des résultats selon le volume et la cohérence des avis analysés. Bénéfice : vous savez dans quelle mesure vous pouvez vous appuyer sur les analyses pour prendre des décisions.${confidence.tooltipSecondary ? `\n\n${confidence.tooltipSecondary}` : ''}`}
+              <InfoTooltip
+                content={t("analysis.syntheseAndDiagnostic.confidence.tooltipFull", {
+                  title: confidence.tooltipTitle,
+                  text: confidence.tooltipText,
+                  secondary: confidence.tooltipSecondary ?? ""
+                })}
               />
             </div>
           )}
@@ -171,7 +174,7 @@ export function DiagnosticSection({
                   {topIssue.name}
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
-                  {topIssue.percentage.toFixed(0)}% • {topIssue.count} mentions
+                  {topIssue.percentage.toFixed(0)}% • {t("analysis.syntheseAndDiagnostic.mentions", { count: topIssue.count })}
                 </p>
               </div>
             )}
@@ -193,7 +196,9 @@ export function DiagnosticSection({
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-gray-500">Aucune recommandation disponible</p>
+                <p className="text-sm text-gray-500">
+                  {t("analysis.syntheseAndDiagnostic.noRecommendations")}
+                </p>
               )}
             </div>
           </div>
@@ -250,7 +255,7 @@ export function DiagnosticSection({
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  {t("analysis.diagnostic.noWeaknesses", "Aucun problème identifié")}
+                  {t("analysis.syntheseAndDiagnostic.noWeaknesses")}
                 </p>
               )}
             </div>
@@ -259,7 +264,7 @@ export function DiagnosticSection({
             <div>
               <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-500" />
-                {t("analysis.diagnostic.topStrengths", "Top 3 Points forts")}
+                {t("analysis.syntheseAndDiagnostic.top3Strengths")}
               </h3>
               {topStrengths.length > 0 ? (
                 <div className="space-y-2">
@@ -296,7 +301,7 @@ export function DiagnosticSection({
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  {t("analysis.diagnostic.noStrengths", "Aucun point fort identifié")}
+                  {t("analysis.syntheseAndDiagnostic.noStrengths")}
                 </p>
               )}
             </div>

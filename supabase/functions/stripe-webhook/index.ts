@@ -189,23 +189,23 @@ serve(async (req) => {
       const subscription = event.data.object as Stripe.Subscription;
       logStep("Subscription updated", { subscriptionId: subscription.id, status: subscription.status });
 
-      const resolvedUserId = await getUserIdFromSubscription(subscription.id);
-      if (!resolvedUserId) {
-        logStep("No subscription row found for update", { subscriptionId: subscription.id });
-      } else {
-        const { error } = await supabaseAdmin
-          .from("user_entitlements")
-          .update({
-            pro_status: subscription.status === "active" ? "active" : "inactive",
-            pro_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq("user_id", resolvedUserId);
+      // const resolvedUserId = await getUserIdFromSubscription(subscription.id);
+      // if (!resolvedUserId) {
+      //   logStep("No subscription row found for update", { subscriptionId: subscription.id });
+      // } else {
+      //   const { error } = await supabaseAdmin
+      //     .from("user_entitlements")
+      //     .update({
+      //       pro_status: subscription.status === "active" ? "active" : "inactive",
+      //       pro_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      //       updated_at: new Date().toISOString(),
+      //     })
+      //     .eq("user_id", resolvedUserId);
 
-        if (error) {
-          logStep("Error updating subscription status", { error: error.message });
-        }
-      }
+      //   if (error) {
+      //     logStep("Error updating subscription status", { error: error.message });
+      //   }
+      // }
 
       const { error: subscriptionUpdateError } = await supabaseAdmin
         .from("subscriptions")
@@ -214,6 +214,7 @@ serve(async (req) => {
           current_period_start: new Date(subscription.items.data[0]?.current_period_start * 1000).toISOString(),
           current_period_end: new Date(subscription.items.data[0]?.current_period_end * 1000).toISOString(),
           updated_at: new Date().toISOString(),
+          cancel_at_period_end:subscription.cancel_at_period_end,
         })
         .eq("provider_subscription_id", subscription.id);
 
@@ -226,22 +227,22 @@ serve(async (req) => {
       const subscription = event.data.object as Stripe.Subscription;
       logStep("Subscription deleted", { subscriptionId: subscription.id });
 
-      const resolvedUserId = await getUserIdFromSubscription(subscription.id);
-      if (!resolvedUserId) {
-        logStep("No subscription row found for delete", { subscriptionId: subscription.id });
-      } else {
-        const { error } = await supabaseAdmin
-          .from("user_entitlements")
-          .update({
-            pro_status: "canceled",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("user_id", resolvedUserId);
+      // const resolvedUserId = await getUserIdFromSubscription(subscription.id);
+      // if (!resolvedUserId) {
+      //   logStep("No subscription row found for delete", { subscriptionId: subscription.id });
+      // } else {
+      //   const { error } = await supabaseAdmin
+      //     .from("user_entitlements")
+      //     .update({
+      //       pro_status: "canceled",
+      //       updated_at: new Date().toISOString(),
+      //     })
+      //     .eq("user_id", resolvedUserId);
 
-        if (error) {
-          logStep("Error updating canceled subscription", { error: error.message });
-        }
-      }
+      //   if (error) {
+      //     logStep("Error updating canceled subscription", { error: error.message });
+      //   }
+      // }
 
       const { error: subscriptionDeleteError } = await supabaseAdmin
         .from("subscriptions")

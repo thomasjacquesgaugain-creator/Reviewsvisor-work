@@ -139,26 +139,23 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
       <CardContent className="p-6 pt-0">
         {total > 0 ? (
           <>
-            {/* Phrase de synthèse + avertissement faible volume */}
             <div className="mb-4 space-y-1">
               <p className="text-sm text-gray-700">
-                {nonPositive > 0 ? (
-                  <Trans
-                    i18nKey="analysis.sentiment.withAttention"
-                    values={{ positive: positiveOnTen, nonPositive }}
-                    components={{
-                      bold: <span className="font-semibold text-gray-900" />,
-                    }}
-                  />
-                ) : (
-                  <Trans
-                    i18nKey="analysis.sentiment.positiveOnly"
-                    values={{ count: positiveOnTen }}
-                    components={{
-                      bold: <span className="font-semibold text-gray-900" />,
-                    }}
-                  />
-                )}
+                <Trans
+                  i18nKey={
+                    nonPositive > 0
+                      ? "analysis.sentiment.withAttention"
+                      : "analysis.sentiment.positiveOnly"
+                  }
+                  values={{
+                    positive: positiveCount,
+                    total: total,
+                    nonPositive: nonPositive,
+                  }}
+                  components={{
+                    bold: <span className="font-semibold text-gray-900" />,
+                  }}
+                />
               </p>
               {isLowVolume && (
                 <p className="text-xs text-amber-600">
@@ -255,8 +252,8 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
               {/* Carte Positifs */}
               <button
                 type="button"
-                onClick={() => handleClickSentiment("positive")}
-                className={`w-full text-left p-4 rounded-xl border flex justify-between items-center transition-colors ${
+                // onClick={() => handleClickSentiment("positive")}
+                className={`w-full text-left p-4 rounded-xl border flex justify-between items-center transition-colors cursor-default ${
                   ratingFilter === "POS"
                     ? "bg-green-100 border-green-400"
                     : "bg-green-50 border-green-100 hover:bg-green-100"
@@ -281,8 +278,8 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
               {/* Carte Neutres */}
               <button
                 type="button"
-                onClick={() => handleClickSentiment("neutral")}
-                className={`w-full text-left p-4 rounded-xl border flex justify-between items-center transition-colors ${
+                // onClick={() => handleClickSentiment("neutral")}
+                className={`w-full text-left p-4 rounded-xl border flex justify-between items-center transition-colors cursor-default ${
                   ratingFilter === "NEU"
                     ? "bg-orange-100 border-orange-400"
                     : "bg-orange-50 border-orange-100 hover:bg-orange-100"
@@ -307,8 +304,8 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
               {/* Carte Négatifs */}
               <button
                 type="button"
-                onClick={() => handleClickSentiment("negative")}
-                className={`w-full text-left p-4 rounded-xl border flex justify-between items-center transition-colors ${
+                // onClick={() => handleClickSentiment("negative")}
+                className={`w-full text-left p-4 rounded-xl border flex justify-between items-center transition-colors cursor-default ${
                   ratingFilter === "NEG"
                     ? "bg-red-100 border-red-400"
                     : "bg-red-50 border-red-100 hover:bg-red-100"
