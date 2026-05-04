@@ -258,9 +258,9 @@
     "granularity": "Granularity",
     "noDataForRatingEvolution": "No data available to display the evolution of the rating",
     "distributionReviewsByRating": "Distribution of reviews by rating",
-    "importReviewsToSeeTheThemes": "Import your reviews to see the themes",
+    "importReviewsToSeeTheThemes": "Analyse your reviews to see the themes",
     "recurringThemes": "Recurring themes",
-    "uploadReviewToSeeBreakdown": "Upload your reviews to see the breakdown",
+    "uploadReviewToSeeBreakdown": "Analyse your reviews to see the breakdown",
     "day": "Day",
     "week": "Week",
     "month": "Month",
@@ -1259,10 +1259,10 @@
   "billing": {
     "paymentSuccess": "Payment successful! Your subscription is activated.",
     "paymentSuccessTitle": "Payment successful!",
-    "proSubscriptionActivated": "Your Pro subscription has been successfully activated",
+    "proSubscriptionActivated": "Your subscription has been successfully activated",
     "sessionId": "Session ID",
     "yourBenefits": "Your benefits",
-    "benefit1": "Unlimited establishment analyses",
+    "benefit1": "Unlimited analyses",
     "benefit2": "Automatic responses to reviews",
     "benefit3": "Advanced statistics",
     "benefit4": "Priority support",
@@ -1600,8 +1600,8 @@
       "ofTotal": "of total",
       "total": "Total:",
       "reviews": "reviews",
-      "positiveOnly": "<bold>{{count}} out of 10 reviews</bold> are positive.",
-      "withAttention": "<bold>{{positive}} out of 10 reviews</bold> are positive, but <bold>{{nonPositive}} reviews</bold> deserve special attention."
+      "positiveOnly": "<bold>{{positive}} out of {{total}} reviews</bold> are positive.",
+      "withAttention": "<bold>{{positive}} out of {{total}} reviews</bold> are positive, and <bold>{{nonPositive}} reviews</bold> need attention."
     },
     "themes": {
       "heading": "Thematic Analysis",
@@ -1725,7 +1725,28 @@
       "topIrritant": "Top Irritant",
       "overview": "Overview",
       "top3PrioritizedIssues": "Top 3 Priority Issues",
-      "themePresencePercentage": "% = percentage of reviews in which the theme appears"
+      "top3Strengths": "Top 3 Strengths",
+      "themePresencePercentage": "% = percentage of reviews in which the theme appears",
+      "noRecommendations": "No recommendations available",
+      "noStrengths": "No strengths identified",
+      "noWeaknesses": "No issues identified",
+      "mentions": "{{count}} mentions",
+      "decisionAnd": " and ",
+      "decisionPhraseOnly": "Focus your efforts on improving \"{{problem}}\".",
+      "decisionPhraseWithStrengths": "Improve \"{{problem}}\" while continuing to build on \"{{strengths}}\".",
+      "confidence": {
+        "lowLabel": "Confidence: low",
+        "mediumLabel": "Confidence: medium",
+        "highLabel": "Confidence: high",
+        "lowTooltipTitle": "Why is confidence low?",
+        "lowTooltipText": "This analysis is based on a limited number of reviews. The observed trends are indicative and may evolve as more reviews are collected.",
+        "mediumTooltipTitle": "Why is confidence medium?",
+        "mediumTooltipText": "This analysis is based on a moderate volume of reviews. The observed trends are reliable but may still evolve with more data.",
+        "highTooltipTitle": "Why is confidence high?",
+        "highTooltipText": "This analysis is based on a large volume of reviews. The observed trends are reliable and representative of the overall customer experience.",
+        "tooltipSecondary": "The more reviews you receive, the more precise and reliable the analysis becomes.",
+        "tooltipFull": "{{title}}\n\n{{text}}\n\nAI Confidence: reliability level of results based on the volume and consistency of analyzed reviews. Benefit: you know to what extent you can rely on the analyses to make decisions.{{secondary}}"
+      }
     },
     "lexique": {
       "title": "Lexicon and Definitions",
