@@ -139,12 +139,28 @@ import { getCurrentEstablishment } from "@/services/establishments";
 import { useSmartProgress } from "@/hooks/useSmartProgress";
 import { useSmartStore } from "@/store/smartStore";
 import { DeleteEstablishmentButton } from "@/components/DeleteEstablishmentButton";
+import { getEstablishmentTypeTranslationKey } from "@/utils/establishmentTypeMapping";
 
 const GRANULARITY_LABEL_KEYS: Record<Granularity, string> = {
   jour: "dashboard.day",
   semaine: "dashboard.week",
   mois: "dashboard.month",
   année: "dashboard.year",
+};
+
+const getTranslatedEstablishmentType = (
+  value: string | null | undefined,
+  t: (key: string, options?: Record<string, unknown>) => string,
+) => {
+  if (!value) return "";
+
+  const translationKey = getEstablishmentTypeTranslationKey(value);
+  if (!translationKey) return value;
+
+  return t(
+    `settings.establishmentInformation.establishmentTypesOptions.${translationKey}`,
+    { defaultValue: value },
+  );
 };
 
 const Dashboard = () => {
@@ -3239,7 +3255,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                 className="w-[480px] max-w-[calc(100vw-2rem)] p-2 bg-white z-50 shadow-lg border"
                                 align="start"
                               >
-                                <div className="space-y-1 overflow-auto h-[400px] p-2 position-relative">
+                                <div className="space-y-1 overflow-auto min-h-[150px] max-h-[400px] p-2 position-relative">
                                   <div className="text-sm font-medium text-gray-700 px-3 py-2 border-b">
                                     {t("establishment.myEstablishments")}
                                   </div>
@@ -3326,7 +3342,14 @@ const getLatestDate = (reviews: any[]): Date | null =>
                             <span>{selectedEtab.name}</span>
                             {selectedEtab.types ? (
                               <span className="ml-2 text-sm font-normal text-slate-500">
-                                • (<span className="italic">{selectedEtab.types}</span>)
+                                • (
+                                <span className="italic">
+                                  {getTranslatedEstablishmentType(
+                                    selectedEtab.types,
+                                    t,
+                                  )}
+                                </span>
+                                )
                               </span>
                             ) : null}
                           </div>

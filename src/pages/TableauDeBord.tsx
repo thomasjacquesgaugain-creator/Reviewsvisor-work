@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { DashboardTabs } from "@/components/DashboardTabs";
 import { capitalizeName } from "@/utils/capitalizeName";
 import { extractOriginalText } from "@/utils/extractOriginalText";
+import { getEstablishmentTypeTranslationKey } from "@/utils/establishmentTypeMapping";
 
 
 const Dashboard = () => {
@@ -35,14 +36,29 @@ const Dashboard = () => {
   const currentEstablishmentTypes = useMemo(() => {
     const types = currentEstablishment?.types;
     if (!types) return null;
+
+    const translateType = (value: string) => {
+      const trimmedValue = String(value).trim();
+      if (!trimmedValue) return null;
+
+      const translationKey = getEstablishmentTypeTranslationKey(trimmedValue);
+      if (!translationKey) return trimmedValue;
+
+      return t(
+        `settings.establishmentInformation.establishmentTypesOptions.${translationKey}`,
+        { defaultValue: trimmedValue }
+      );
+    };
+
     if (Array.isArray(types)) {
       return types
-        .map((type) => String(type).trim())
+        .map((type) => translateType(String(type)))
         .filter(Boolean)
         .join(", ");
     }
-    return String(types).trim() || null;
-  }, [currentEstablishment?.types]);
+
+    return translateType(String(types));
+  }, [currentEstablishment?.types, t]);
 
   useEffect(() => {
     const getUserProfile = async () => {

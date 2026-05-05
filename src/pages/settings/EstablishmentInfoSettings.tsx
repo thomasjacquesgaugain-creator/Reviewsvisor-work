@@ -10,7 +10,10 @@ import { Loader2, Building2, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { validatePhoneNumber, formatPhoneNumber } from "@/utils/phoneValidation";
-import { ESTABLISHMENT_TYPE_OPTIONS } from "@/utils/establishmentTypeMapping";
+import {
+  ESTABLISHMENT_TYPE_OPTIONS,
+  getEstablishmentTypeTranslationKey,
+} from "@/utils/establishmentTypeMapping";
 import {
   Select,
   SelectContent,
@@ -30,6 +33,21 @@ export function EstablishmentInfoSettings() {
   const [editingTypeEtablissement, setEditingTypeEtablissement] = useState(false);
   const [typeEtablissementEditValue, setTypeEtablissementEditValue] = useState<string>("");
   const [savingTypeEtablissement, setSavingTypeEtablissement] = useState(false);
+
+  const getTranslatedEstablishmentType = useCallback(
+    (value?: string | null) => {
+      if (!value) return "";
+
+      const translationKey = getEstablishmentTypeTranslationKey(value);
+      if (!translationKey) return value;
+
+      return t(
+        `settings.establishmentInformation.establishmentTypesOptions.${translationKey}`,
+        { defaultValue: value }
+      );
+    },
+    [t]
+  );
 
   const loadEstablishments = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -272,12 +290,14 @@ export function EstablishmentInfoSettings() {
                 onValueChange={setTypeEtablissementEditValue}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={t("settings.establishmentInformation.placeholder.establishmentType")} />
+                  <SelectValue placeholder={t("settings.establishmentInformation.placeholder.establishmentType")}>
+                    {getTranslatedEstablishmentType(typeEtablissementEditValue)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {ESTABLISHMENT_TYPE_OPTIONS.map((opt) => (
                     <SelectItem key={opt} value={opt}>
-                      {opt}
+                      {getTranslatedEstablishmentType(opt)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -320,7 +340,9 @@ export function EstablishmentInfoSettings() {
               <div className="flex-1 min-w-0">
                 <label className="block text-sm font-medium text-gray-500 mb-1">{t("settings.establishmentInformation.establishmentType")}</label>
                 <div className="text-sm text-gray-900">
-                  {displayedEstablishment.types || "Information non fournie"}
+                  {displayedEstablishment.types
+                    ? getTranslatedEstablishmentType(displayedEstablishment.types)
+                    : "Information non fournie"}
                 </div>
               </div>
               <Button
