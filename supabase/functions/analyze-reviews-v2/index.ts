@@ -140,7 +140,7 @@ function shouldSendSignificantChangeNotification(
 ): { send: boolean; reason: "rating_drop" | "major_issue" | null } {
   const ratingDrop = (previousAvgRating ?? 0) - (currentAvgRating ?? 0);
 
-  if (previousAvgRating !== null && currentAvgRating !== null && ratingDrop >= 0) {
+  if (previousAvgRating !== null && currentAvgRating !== null && ratingDrop > 0) {
     return { send: true, reason: "rating_drop" };
   }
   const currentTop = currentIssues[0];
@@ -926,11 +926,10 @@ Deno.serve(async (req) => {
 
       // Mettre à jour l'établissement avec le businessType détecté
       if (
-        importantUpdatesEnabled &&
-        notificationDecision.send &&
-        notificationDecision.reason &&
-        userEmail &&
-        previousInsight?.data
+      importantUpdatesEnabled &&
+      notificationDecision.send &&
+      notificationDecision.reason &&
+      userEmail
       ) {
         try {
           const reportLocale = outputLanguage === "fr" ? "fr-FR" : "en-US";
