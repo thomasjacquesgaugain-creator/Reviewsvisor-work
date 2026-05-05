@@ -334,7 +334,11 @@ export type Database = {
           first_name: string | null
           full_name: string | null
           id: string
+          important_updates_enabled: boolean | null
+          in_app_notifications_enabled: boolean | null
           last_name: string | null
+          monthly_report_enabled: boolean | null
+          new_reviews_enabled: boolean | null
           phone: string | null
           role: string
           updated_at: string
@@ -349,7 +353,11 @@ export type Database = {
           first_name?: string | null
           full_name?: string | null
           id?: string
+          important_updates_enabled?: boolean | null
+          in_app_notifications_enabled?: boolean | null
           last_name?: string | null
+          monthly_report_enabled?: boolean | null
+          new_reviews_enabled?: boolean | null
           phone?: string | null
           role?: string
           updated_at?: string
@@ -364,7 +372,11 @@ export type Database = {
           first_name?: string | null
           full_name?: string | null
           id?: string
+          important_updates_enabled?: boolean | null
+          in_app_notifications_enabled?: boolean | null
           last_name?: string | null
+          monthly_report_enabled?: boolean | null
+          new_reviews_enabled?: boolean | null
           phone?: string | null
           role?: string
           updated_at?: string
