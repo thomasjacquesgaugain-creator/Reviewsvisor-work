@@ -69,7 +69,8 @@ function generateReportHTML(data: MonthlyReportData): string {
   const ratingDiff = data.currentMonth.avgRating - data.previousMonth.avgRating;
   const ratingDiffFormatted = ratingDiff >= 0 ? `+${ratingDiff.toFixed(1)}` : ratingDiff.toFixed(1);
   const badge = getPerformanceBadge(ratingDiff);
-  const appUrl = typeof window !== "undefined" ? window.location.origin : "https://reviewsvisor.com";
+
+  const appUrl = "https://reviewsvisor.com";
   const dashboardUrl = `${appUrl}/tableau-de-bord`;
 
   return `
@@ -450,7 +451,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: profiles, error: profilesError } = await supabaseAdmin
         .from('profiles')
         .select('user_id, monthly_report_enabled, report_frequency')
-        .eq('monthly_report_enabled', true);        
+        .eq('monthly_report_enabled', true);
 
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
