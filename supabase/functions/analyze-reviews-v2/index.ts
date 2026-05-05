@@ -187,8 +187,6 @@ function buildAlertEmailHtml(input: {
         return `<li style="margin-bottom:8px;"><strong>${issue.theme}</strong>${countSuffix}</li>`;
       }).join("")
     : `<li style="color:#9CA3AF;">${isFrench ? "Aucun point prioritaire identifié." : "No top issues identified."}</li>`;
-  const appUrl = typeof window !== "undefined" ? window.location.origin : "https://reviewsvisor.com";
-
 
   return `
     <div style="font-family: Arial, Helvetica, sans-serif; background:#f8fafc; padding:24px;">
@@ -214,7 +212,7 @@ function buildAlertEmailHtml(input: {
             </ul>
           </div>
           <div style="text-align:center;">
-            <a href=${appUrl} style="display:inline-block; background:#2F6BFF; color:#fff; text-decoration:none; padding:12px 24px; border-radius:8px; font-weight:600;">
+            <a href="https://reviewsvisor.com/tableau-de-bord" style="display:inline-block; background:#2F6BFF; color:#fff; text-decoration:none; padding:12px 24px; border-radius:8px; font-weight:600;">
               ${ctaLabel}
             </a>
           </div>
