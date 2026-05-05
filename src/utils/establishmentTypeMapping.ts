@@ -20,6 +20,28 @@ export const ESTABLISHMENT_TYPE_OPTIONS = [
 
 export type EstablishmentTypeOption = (typeof ESTABLISHMENT_TYPE_OPTIONS)[number];
 
+export const ESTABLISHMENT_TYPE_TRANSLATION_KEYS: Record<EstablishmentTypeOption, string> = {
+  Restaurant: "restaurant",
+  Bar: "bar",
+  "Café": "cafe",
+  "Hôtel": "hotel",
+  Boulangerie: "bakery",
+  "Salon de coiffure": "salon",
+  "Spa / Bien-être": "spa",
+  "Commerce de détail": "retail",
+  Autre: "other",
+};
+
+export function getEstablishmentTypeTranslationKey(value?: string | null): string | null {
+  if (!value) return null;
+
+  return (
+    ESTABLISHMENT_TYPE_TRANSLATION_KEYS[
+      value as keyof typeof ESTABLISHMENT_TYPE_TRANSLATION_KEYS
+    ] ?? null
+  );
+}
+
 // =============================================================================
 // MAPPING COMPLET DES TYPES GOOGLE
 // =============================================================================
