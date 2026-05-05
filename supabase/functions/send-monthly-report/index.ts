@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL");
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SB_SERVICE_ROLE_KEY") || "";
+const APP_URL = Deno.env.get("APP_URL") || "https://reviewsvisor.com";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -70,8 +71,7 @@ function generateReportHTML(data: MonthlyReportData): string {
   const ratingDiffFormatted = ratingDiff >= 0 ? `+${ratingDiff.toFixed(1)}` : ratingDiff.toFixed(1);
   const badge = getPerformanceBadge(ratingDiff);
 
-  const appUrl = "https://reviewsvisor.com";
-  const dashboardUrl = `${appUrl}/tableau-de-bord`;
+  const dashboardUrl = `${APP_URL}/tableau-de-bord`;
 
   return `
 <!DOCTYPE html>
@@ -410,14 +410,25 @@ async function generateAndSendReportForEstablishment({
   const htmlContent = generateReportHTML(reportData);
 
   console.log(`Sending monthly report to ${userEmail} for establishment: ${establishment.name}`);
-  const emailResponse = await resend.emails.send({
-    from: "Reviewsvisor <contact@reviewsvisor.fr>",
-    to: [userEmail],
-    subject: `📊 Rapport mensuel – ${establishment.name} – ${reportMonthName}`,
-    html: htmlContent,
+  const emailResponse = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+    },
+    body: JSON.stringify({
+      to: [userEmail],
+      subject: `📊 Rapport mensuel – ${establishment.name} – ${reportMonthName}`,
+      html: htmlContent,
+    }),
   });
 
-  console.log(`Report sent for ${establishment.name}:`, emailResponse);
+  if (!emailResponse.ok) {
+    const errorText = await emailResponse.text().catch(() => "");
+    throw new Error(`send-email failed: ${emailResponse.status} ${errorText}`);
+  }
+
+  console.log(`Report sent for ${establishment.name}:`, await emailResponse.json().catch(() => ({})));
 }
 
 const handler = async (req: Request): Promise<Response> => {

@@ -30,6 +30,13 @@ serve(async (req) => {
       throw new Error("RESEND_API_KEY is not set");
     }
 
+    const appUrl = Deno.env.get("APP_URL") || "https://reviewsvisor.com";
+    const dashboardUrl = `${appUrl}/tableau-de-bord`;
+    const finalHtml = typeof html === "string"
+      ? html
+          .replaceAll("{{APP_URL}}", appUrl)
+          .replaceAll("{{DASHBOARD_URL}}", dashboardUrl)
+      : html;
     const resend = new Resend(resendApiKey);
 
     logStep("Sending email", { to, subject });
@@ -38,7 +45,7 @@ serve(async (req) => {
       from: "Reviewsvisor <contact@reviewsvisor.fr>",
       to: Array.isArray(to) ? to : [to],
       subject,
-      html,
+      html: finalHtml,
     });
 
     if (error) {
