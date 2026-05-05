@@ -407,8 +407,6 @@ async function generateAndSendReportForEstablishment({
     recommendations,
   };
 
-  console.log("report Data----->", reportData);
-
   const htmlContent = generateReportHTML(reportData);
 
   console.log(`Sending monthly report to ${userEmail} for establishment: ${establishment.name}`);

@@ -140,15 +140,14 @@ function shouldSendSignificantChangeNotification(
 ): { send: boolean; reason: "rating_drop" | "major_issue" | null } {
   const ratingDrop = (previousAvgRating ?? 0) - (currentAvgRating ?? 0);
 
-  if (previousAvgRating !== null && currentAvgRating !== null && ratingDrop >= 0.3) {
+  if (previousAvgRating !== null && currentAvgRating !== null && ratingDrop >= 0) {
     return { send: true, reason: "rating_drop" };
   }
   const currentTop = currentIssues[0];
   if (currentTop) {
-    const currentCount = currentTop.count ?? 0;
     const previousThemes = new Set(previousIssues.map((issue) => issue.theme.toLowerCase()));
     const isNewTheme = !previousThemes.has(currentTop.theme.toLowerCase());
-    if (currentCount > 4 && isNewTheme) {
+    if (isNewTheme) {
       return { send: true, reason: "major_issue" };
     }
   }
@@ -934,12 +933,18 @@ Deno.serve(async (req) => {
         previousInsight?.data
       ) {
         try {
+          const reportLocale = outputLanguage === "fr" ? "fr-FR" : "en-US";
+          const reportMonthName = new Intl.DateTimeFormat(reportLocale, {
+            month: "long",
+            year: "numeric",
+          }).format(new Date());
+
           await sendSignificantChangeNotification({
             language: outputLanguage,
             displayName,
             userEmail,
             establishmentName,
-            reportMonthName: new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
+            reportMonthName,
             previousAvg: previousAvgRating,
             currentAvg: stats.overall,
             ratingDrop: (previousAvgRating ?? 0) - (stats.overall ?? 0),
