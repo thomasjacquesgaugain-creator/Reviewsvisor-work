@@ -450,10 +450,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: profiles, error: profilesError } = await supabaseAdmin
         .from('profiles')
         .select('user_id, monthly_report_enabled, report_frequency')
-        .eq('monthly_report_enabled', true);
-
-        console.log("profiles------>",profiles);
-        
+        .eq('monthly_report_enabled', true);        
 
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
