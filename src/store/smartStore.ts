@@ -47,7 +47,8 @@ export function buildSmartPayload(
   effortOverride?:      SmartEffort,
   ishikawaTopCategory?: string,
   effortSource?:        "auto_detected" | "user_questionnaire",
-  questionnaireScores?: IshikawaScores | null
+  questionnaireScores?: IshikawaScores | null,
+  paretoPercentage? :    number,
 ): GenerateSmartPayload {
   const totalNegative = paretoIssue.count ?? 1;
 
@@ -84,8 +85,15 @@ export function buildSmartPayload(
     ishikawa_top_category:    ishikawaTopCategory ?? topCause?.categoryName,
     effort_source:            effortSource ?? "auto_detected",
     questionnaire_scores:     questionnaireScores ?? null,
+    pareto_percentage:        paretoPercentage
   };
 }
+// TYPES
+export type ObjectiveStatus =
+  | "todo"
+  | "in_progress"
+  | "completed"
+  |"overdue";
 
 /* ─────────────────────────────────────────────
    STORE INTERFACE
@@ -104,14 +112,15 @@ interface SmartStore {
     result: QuestionnaireResult
   ) => void;
 
-  generateSmart: (
+  generateSmart: ( 
     establishmentId:      string,
     paretoIssue:          ParetoItem,
     rca:                  RootCauseAnalysis,
     effortOverride?:      SmartEffort,
     ishikawaTopCategory?: string,
     effortSource?:        "auto_detected" | "user_questionnaire",
-    questionnaireScores?: IshikawaScores | null
+    questionnaireScores?: IshikawaScores | null,
+    paretoPercetage? :     number,
   ) => Promise<void>;
 
   updateDraft:     (updates: Partial<SmartObjective>) => void;
@@ -126,6 +135,10 @@ interface SmartStore {
   paretoIssue: ParetoItem,
   result: QuestionnaireResult
 ) => Promise<void>;
+ updateObjectiveStatus: (
+    objectiveId: string,
+    status: ObjectiveStatus
+  ) => Promise<SmartObjective | null>;
 }
 
 /* ─────────────────────────────────────────────
@@ -207,7 +220,8 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
     effortOverride,
     ishikawaTopCategory,
     effortSource,
-    questionnaireScores
+    questionnaireScores,
+    paretoPercentage,
   ) => {
     set({ isGenerating: true, error: null });
 
@@ -226,7 +240,8 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
         effortOverride,
         ishikawaTopCategory,
         effortSource,
-        questionnaireScores
+        questionnaireScores,
+        paretoPercentage,
       );
 
       console.log("payload:", payload);
@@ -336,6 +351,78 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
   await get().updateObjective(id, { actions: updatedActions });
 },
   updateProgress: async (id, current_progress) => {
-    await get().updateObjective(id, { current_progress });
-  },
+  const { objectives, updateObjectiveStatus } = get();
+
+  const objective = objectives.find(o => o.id === id);
+
+  if (!objective) return;
+
+  // only active objective can progress
+  if (objective.status !== "in_progress") {
+    return;
+  }
+
+  await get().updateObjective(id, {
+    current_progress
+  });
+
+  const targetReached =
+    current_progress <= objective.target_value;
+
+  if (targetReached) {
+    await updateObjectiveStatus(
+      id,
+      "completed"
+    );
+  }
+},
+
+  updateObjectiveStatus: async (
+  objectiveId: string,
+  status: "todo" | "in_progress" | "completed"|"overdue"
+) => {
+  try {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+
+    if (!session?.user) {
+      throw new Error("User not authenticated");
+    }
+
+    const { data, error } = await db
+      .from("smart_objectives")
+      .update({
+        status,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", objectiveId)
+      .eq("user_id", session.user.id)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    // Zustand local sync
+    set(state => ({
+      objectives: state.objectives.map(obj =>
+        obj.id === objectiveId
+          ? {
+              ...obj,
+              status
+            }
+          : obj
+      )
+    }));
+
+    return data;
+  } catch (err) {
+    console.error("updateObjectiveStatus error:", err);
+    throw err;
+  }
+},
+
+
 }));

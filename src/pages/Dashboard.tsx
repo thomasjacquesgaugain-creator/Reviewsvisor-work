@@ -5927,7 +5927,8 @@ const getLatestDate = (reviews: any[]): Date | null =>
 
 
             {/* Contenu SMART — EN DESSOUS */}
-            {openCard === "smart" && (
+            {openCard === "smart" &&(analysisDataForTab?.paretoIssues?.length ?? 0) > 0 &&
+             (
               <Card className="mb-8">
                 <CardHeader>
                   <div className="flex items-center gap-2 mb-2">
@@ -5961,12 +5962,28 @@ const getLatestDate = (reviews: any[]): Date | null =>
 
                 <CardContent>
                   <RecommendationsSection
-                    paretoCauses={analysisDataForTab.paretoIssues}
-                    rcaByIssue={analysisDataForTab.rcaByIssue}
+                    paretoCauses={analysisDataForTab?.paretoIssues}
+                    rcaByIssue={analysisDataForTab?.rcaByIssue}
                   />
                 </CardContent>
               </Card>
             )}
+
+
+                {openCard === "smart" && (analysisDataForTab?.paretoIssues?.length ?? 0) === 0 && (
+                  <Card className="mb-8">
+                    <CardContent className="py-10 text-center text-gray-500">
+                      <p className="text-sm font-medium">
+                        No Pareto issues available
+                      </p>
+
+                      <p className="text-xs mt-1">
+                        Analyze your establishment reviews to
+                        generate SMART objectives and PDCA tracking
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* SECTION 2 : Plan d'actions (gauche) et Checklist opérationnelle (droite) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

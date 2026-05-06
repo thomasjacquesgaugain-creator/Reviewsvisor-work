@@ -23,14 +23,13 @@ export function RecommendationsSection({ paretoCauses, rcaByIssue = {} }: Props)
     isGenerating,
     isSaving,
     error,
-    generateSmart,
     updateDraft,
     saveDraft,
     discardDraft,
     fetchObjectives,
     updateProgress,
-    questionnaireByIssue,
-    toggleAction
+    toggleAction,
+    updateObjectiveStatus
   } = useSmartStore();
 
   const [establishmentId, setEstablishmentId] = useState<string | null>(null);
@@ -39,83 +38,96 @@ export function RecommendationsSection({ paretoCauses, rcaByIssue = {} }: Props)
 
   const establishmentIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    async function loadEst() {
-      const est = await getCurrentEstablishment();
-      const id = est?.id ?? null;
-      setEstablishmentId(id);
-      establishmentIdRef.current = id;
-      if (id) fetchObjectives(id);
-    }
-    loadEst();
-  }, []);
+useEffect(() => {
+  async function loadEstablishment() {
+    const est = await getCurrentEstablishment();
+    const id = est?.id ?? null;
+    setEstablishmentId(id);
+    establishmentIdRef.current = id;
+    if (!id) return;
+    // only fetch
+    await fetchObjectives(id);
+  }
+  loadEstablishment();
+}, []);
 
-  const safeObjectives = Array.isArray(objectives) ? objectives : [];
+useEffect(() => {
+  async function syncActiveObjective() {
+    if (!objectives.length) return;
 
-  // ✅ SORT PARETO BY COUNT (FIX CORE ISSUE)
-  const sortedPareto = useMemo(() => {
-    return [...paretoCauses].sort((a, b) => b.count - a.count);
-  }, [paretoCauses]);
-
-  // ✅ MAP OBJECTIVES IN PARETO ORDER
-  const orderedObjectives = useMemo(() => {
-    return sortedPareto
-      .map(p =>
-        safeObjectives.find(
-          o => o.pareto_cause?.toLowerCase() === p.name.toLowerCase()
-        )
-      )
-      .filter(Boolean);
-  }, [sortedPareto, safeObjectives]);
-
-  // ✅ SPLIT STATES
-  const completedObjectives = orderedObjectives.filter(o => o.status === "completed");
-
-  const activeObjective =
-    orderedObjectives.find(o => o.status !== "completed") || null;
-
-  const pendingObjectives =
-    orderedObjectives.filter(
-      o => o.status !== "completed" && o.id !== activeObjective?.id
+    const sortedPareto = [...paretoCauses].sort(
+      (a, b) => b.count - a.count
     );
 
-  // ✅ NEXT ISSUE (NOT GENERATED YET)
-  const nextIssue = useMemo(() => {
-    return sortedPareto.find(p =>
-      !safeObjectives.some(
-        o => o.pareto_cause?.toLowerCase() === p.name.toLowerCase()
+    const nextObjective = sortedPareto
+      .map(p =>
+        objectives.find(
+          o =>
+            o.pareto_cause?.toLowerCase() ===
+            p.name.toLowerCase()
+        )
       )
-    ) || null;
-  }, [sortedPareto, safeObjectives]);
+      .find(o => o &&o.status !== "completed");
+    if (!nextObjective) return;
 
-  // 🔥 GENERATE SMART (NOW USES NEXT ISSUE, NOT FIXED MAIN)
-  const handleGenerate = async () => {
+    // already active
+    if (nextObjective.status === "in_progress") {
+      return;
+    }
 
-    
-  const estId = establishmentIdRef.current ?? establishmentId;
-  if (!estId) return;
+    await updateObjectiveStatus(
+      nextObjective.id,
+      "in_progress"
+    );
+  }
 
-  const pareto = sortedPareto[0];
+  syncActiveObjective();
+}, [objectives, paretoCauses]);
 
-  const rca = pareto ? rcaByIssue[pareto.name] : null;
-  const questionnaire = pareto
-    ? questionnaireByIssue?.[pareto.name]
-    : null;
 
-  if (!pareto || !rca) return;
 
-  await generateSmart(
-    estId,
-    pareto,
-    rca,
-    questionnaire?.dominantEffort,
-    questionnaire?.dominantCategory,
-    questionnaire ? "user_questionnaire" : "auto_detected",
-    questionnaire?.scores ?? null
+
+  const safeObjectives = Array.isArray(objectives)
+    ? objectives
+    : [];
+
+  // ACTIVE OBJECTIVE DIRECTLY FROM DB
+  const activeObjective =
+    safeObjectives.find(o => o.status === "in_progress") ||
+    null;
+
+  // COMPLETED
+  const completedObjectives = safeObjectives.filter(
+    o => o.status === "completed"
   );
 
-  setModalOpen(true);
-};
+  // PENDING
+  const pendingObjectives = safeObjectives.filter(
+    o =>
+      o.status !== "completed" &&
+      o.status !== "in_progress"
+  );
+
+  // NEXT ISSUE (NOT GENERATED YET)
+  const sortedPareto = useMemo(() => {
+    return [...paretoCauses].sort(
+      (a, b) => b.count - a.count
+    );
+  }, [paretoCauses]);
+
+  const nextIssue = useMemo(() => {
+    return (
+      sortedPareto.find(
+        p =>
+          !safeObjectives.some(
+            o =>
+              o.pareto_cause?.toLowerCase() ===
+              p.name.toLowerCase()
+          )
+      ) || null
+    );
+  }, [sortedPareto, safeObjectives]);
+
 
   const handleUpdate = async()=>{
 
@@ -138,88 +150,82 @@ export function RecommendationsSection({ paretoCauses, rcaByIssue = {} }: Props)
   };
 
   if (!sortedPareto.length) {
-    return <p className="text-sm text-gray-500">No Pareto issues available.</p>;
+    return <p className="text-sm text-gray-500">No Pareto issues available .</p>;
   }
 
-  const currentStep =
-    orderedObjectives.findIndex(o => o.id === activeObjective?.id) + 1;
+
 
   return (
     <div className="space-y-6">
+        {/* 🔥 HEADER */}
+          {activeObjective && (
+            <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl p-4">
+              <div>
+                <p className="text-sm font-semibold text-orange-800">
+                  Main issue: "{activeObjective.pareto_cause}"
+                </p>
 
-      {/* 🔥 HEADER (MAIN ISSUE BASED ON REAL PRIORITY) */}
-  
-      <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl p-4">
-        <div>
-          <p className="text-sm font-semibold text-orange-800">
-            Main issue: "{sortedPareto[0]?.name}"
-          </p>
-          <p className="text-xs text-orange-600 mt-0.5">
-            {sortedPareto[0]?.percentage?.toFixed(0)}% of negative reviews
-          </p>
-        </div>
-
-        {!activeObjective?<Button
-          onClick={handleGenerate}
-          disabled={isGenerating || !establishmentId}
-          size="sm"
-          className="bg-orange-500 hover:bg-orange-600 text-white"
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4 mr-1.5" />
-              Generate SMART
-            </>
-          )}
-        </Button>:<Button
-          onClick={handleUpdate}
-          disabled={isUpdating || !establishmentId}
-          size="sm"
-          className="bg-orange-500 hover:bg-orange-600 text-white"
-        >
-          {isUpdating ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-              updating...
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4 mr-1.5" />
-              update SMART
-            </>
-          )}
-        </Button>
-        }
-      
-      </div>
-
-      {/* 🔥 STEP INDICATOR */}
-      {activeObjective && (
-        <p className="text-xs text-gray-500">
-          Step {currentStep} of {sortedPareto.length}
-        </p>
-      )}
-
-      {/* If questionare for active is not filled */}
-
-      {
-          activeObjective && !activeObjective?.questionnaire_scores && (
-              <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl p-4">
-                <div>
-                  <p className="text-sm font-semibold text-red-800">
-                    Fill the questionnaire first for accurate result
-                  </p>
-                </div>
+                <p className="text-xs text-orange-600 mt-0.5">
+                  {Math.round(activeObjective.pareto_percentage ?? 0)}%
+                  {" "}of negative reviews
+                </p>
               </div>
-            )
-          }
 
+              <Button
+                onClick={handleUpdate}
+                disabled={isUpdating || !establishmentId}
+                size="sm"
+                className="bg-orange-500 hover:bg-orange-600 text-white"
+              >
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                    updating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-1.5" />
+                    update SMART
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+    
+      {/* If questionare for active is not filled */}
+      {/* 🚨 Questionnaire missing */}
+        {!activeObjective && nextIssue && (
+          <div className="flex items-start justify-between bg-red-50 border border-red-200 rounded-xl p-4">
+            <div>
+              <p className="text-sm font-semibold text-red-800">
+                ⚠️ Questionnaire missing for next Pareto issue
+              </p>
 
+              <p className="text-sm text-red-700 mt-1">
+                Please complete the questionnaire for:
+                <span className="font-semibold">
+                  {" "}
+                  {nextIssue.name}
+                </span>
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ✅ All objectives completed */}
+        {!activeObjective && !nextIssue && (
+          <div className="flex items-start justify-between bg-green-50 border border-green-200 rounded-xl p-4">
+            <div>
+              <p className="text-sm font-semibold text-green-800">
+                🎉 No issues left to resolve
+              </p>
+
+              <p className="text-sm text-green-700 mt-1">
+                All Pareto objectives have been completed.
+              </p>
+            </div>
+          </div>
+        )}
 
 
       {/* 🔥 CURRENT OBJECTIVE (ONLY ONE CARD) */}

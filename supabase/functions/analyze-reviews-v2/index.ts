@@ -10,7 +10,6 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "npm:resend@2.0.0";
 import "https://deno.land/x/dotenv@v3.2.2/load.ts";
 
 // Note: Pour Deno, on ne peut pas importer directement depuis src/
@@ -66,12 +65,11 @@ function env(key: string, fallback = "") {
          fallback;
 }
 
-const SUPABASE_URL = env("SUPABASE_URL");
-const SERVICE_ROLE = env("SUPABASE_SERVICE_ROLE_KEY");
+const SUPABASE_URL = env("SB_URL");
+const SERVICE_ROLE = env("SB_SERVICE_ROLE_KEY");
 // const OPENAI_KEY   = env("GOOGLE_PLACES_API_KEY");
 const OPENAI_KEY   = env("OPENAI_API_KEY", "");
-const RESEND_API_KEY = env("RESEND_API_KEY", "");
-const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+const APP_URL = env("APP_URL", "https://reviewsvisor.com");
 
 const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false },
@@ -212,7 +210,7 @@ function buildAlertEmailHtml(input: {
             </ul>
           </div>
           <div style="text-align:center;">
-            <a href="https://reviewsvisor.com/tableau-de-bord" style="display:inline-block; background:#2F6BFF; color:#fff; text-decoration:none; padding:12px 24px; border-radius:8px; font-weight:600;">
+            <a href="${APP_URL}/tableau-de-bord" style="display:inline-block; background:#2F6BFF; color:#fff; text-decoration:none; padding:12px 24px; border-radius:8px; font-weight:600;">
               ${ctaLabel}
             </a>
           </div>
@@ -234,23 +232,29 @@ async function sendSignificantChangeNotification(input: {
   issues: IssueSummary[];
   reason: "rating_drop" | "major_issue";
 }) {
-  if (!resend) {
-    console.warn("[analyze-reviews-v2] RESEND_API_KEY missing, skipping notification");
-    return;
-  }
-
   const subject = input.language === "fr"
     ? `Alerte de réputation - ${input.establishmentName}`
     : `Reputation alert - ${input.establishmentName}`;
 
   const html = buildAlertEmailHtml(input);
 
-  await resend.emails.send({
-    from: "Reviewsvisor <contact@reviewsvisor.fr>",
-    to: [input.userEmail],
-    subject,
-    html,
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${SERVICE_ROLE}`,
+    },
+    body: JSON.stringify({
+      to: [input.userEmail],
+      subject,
+      html,
+    }),
   });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    throw new Error(`send-email failed: ${response.status} ${errorText}`);
+  }
 }
 
 // Détection businessType simplifiée (version Deno)

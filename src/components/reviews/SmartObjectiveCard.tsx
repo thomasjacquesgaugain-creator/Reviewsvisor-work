@@ -136,7 +136,7 @@ export function SmartObjectiveCard({
               <p className="text-xs text-gray-400 mt-0.5">
                 From Pareto: "{objective.pareto_cause}
                 {objective.pareto_percentage
-                  ? ` – ${objective.pareto_percentage}% of negative reviews`
+                  ? ` – ${Math.round(objective.pareto_percentage ?? 0)}% of negative reviews`
                   : ""}"
                 {objective.ishikawa_top_category && (
                   <span>

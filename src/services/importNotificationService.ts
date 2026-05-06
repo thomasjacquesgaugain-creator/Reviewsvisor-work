@@ -80,7 +80,6 @@ function buildImportEmailHtml(
   const updated = input.updated ?? 0;
   const skipped = input.skipped ?? 0;
   const sourceLabel = strings.sourceLabels[input.source];
-  const appUrl = typeof window !== "undefined" ? window.location.origin : "https://reviewsvisor.com";
 
   return `
     <div style="font-family: Arial, Helvetica, sans-serif; background:#f8fafc; padding:24px;">
@@ -113,7 +112,7 @@ function buildImportEmailHtml(
             </div>
           </div>
           <div style="text-align:center; margin-top:28px;">
-            <a href="${appUrl}/tableau-de-bord" style="display:inline-block; background:#2F6BFF; color:#fff; text-decoration:none; padding:12px 24px; border-radius:8px; font-weight:600;">
+            <a href="{{DASHBOARD_URL}}" style="display:inline-block; background:#2F6BFF; color:#fff; text-decoration:none; padding:12px 24px; border-radius:8px; font-weight:600;">
               ${strings.dashboardCta}
             </a>
           </div>
