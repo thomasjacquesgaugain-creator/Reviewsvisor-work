@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
       computed_effort,          // from questionnaire if submitted, else auto
       computed_deadline_months, // from effort lookup table
       computed_quadrant,
-
+      pareto_percentage,
       // Questionnaire data
       ishikawa_top_category,
       effort_source,            // "user_questionnaire" | "auto_detected"
@@ -266,7 +266,7 @@ Return ONLY valid JSON, no markdown:
       // Source
       pareto_cause,
       pareto_count:       computed_count,
-      pareto_percentage:  computed_impact === "High" ? 25 : computed_impact === "Medium" ? 15 : 5,
+      pareto_percentage:  pareto_percentage,
 
       // Ishikawa / Questionnaire
       ishikawa_top_category: ishikawa_top_category ?? null,

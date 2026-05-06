@@ -352,18 +352,18 @@ const currentSmartObjective = useMemo(() => {
       setQuestionnaireResult(currentIssue.name, result);
 
       //  save in DB
-      await saveQuestionnaireOnly(estId, currentIssue, result);
-
-      //  regenerate SMART
-      // await generateSmart(
-      //   estId,
-      //   currentIssue,
-      //   rootCauseAnalysis,
-      //   result.dominantEffort,
-      //   result.dominantCategory,
-      //   "user_questionnaire",
-      //   result.scores
-      // );
+    
+    
+      await generateSmart(
+        estId,
+        currentIssue,
+        rootCauseAnalysis,
+        result.dominantEffort,
+        result.dominantCategory,
+        "user_questionnaire",
+        result.scores,
+        currentIssue.percentage
+      );
 
       setShowQuestionnaire(false);
     };
