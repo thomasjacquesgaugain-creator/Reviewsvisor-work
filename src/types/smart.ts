@@ -136,6 +136,7 @@ export interface GenerateSmartPayload {
   ishikawa_top_category?:   string;
   effort_source?:           EffortSource;
   questionnaire_scores?:    IshikawaScores | null;
+  pareto_percentage?:       number;
 }
 
 /* ─────────────────────────────────────────────
