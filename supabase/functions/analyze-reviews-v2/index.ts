@@ -65,8 +65,8 @@ function env(key: string, fallback = "") {
          fallback;
 }
 
-const SUPABASE_URL = env("SUPABASE_URL");
-const SERVICE_ROLE = env("SUPABASE_SERVICE_ROLE_KEY");
+const SUPABASE_URL = env("SB_URL");
+const SERVICE_ROLE = env("SB_SERVICE_ROLE_KEY");
 // const OPENAI_KEY   = env("GOOGLE_PLACES_API_KEY");
 const OPENAI_KEY   = env("OPENAI_API_KEY", "");
 const APP_URL = env("APP_URL", "https://reviewsvisor.com");
