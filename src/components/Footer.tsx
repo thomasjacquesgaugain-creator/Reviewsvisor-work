@@ -10,7 +10,7 @@ export function Footer() {
   const reviewsvisorLink = user ? "/tableau-de-bord" : "/";
   
   return (
-    <footer className="bg-blue-600 text-white mt-auto shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+    <footer className="bg-[linear-gradient(135deg,_rgba(100,20,100,0.88),_rgba(20,30,80,0.92))] text-white mt-auto shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           {/* Colonne 1 - Reviewsvisor */}

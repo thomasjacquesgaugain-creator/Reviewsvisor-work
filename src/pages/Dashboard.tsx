@@ -3191,14 +3191,18 @@ const getLatestDate = (reviews: any[]): Date | null =>
 ) ?? null;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <main className="flex-1 relative overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
-        {/* Background with organic shapes - absolute so they scroll with content and don't overlap footer */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-violet-200 rounded-full blur-3xl opacity-30"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-200 to-yellow-200 rounded-full blur-3xl opacity-30"></div>
-          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-full blur-3xl opacity-30"></div>
-        </div>
+    <div className="relative min-h-screen flex flex-col overflow-x-hidden">
+      {/* Fixed background keeps the gradient visually stable while the page scrolls */}
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 -z-10 bg-[linear-gradient(135deg,_rgb(255,110,180)_0%,_rgb(192,132,252)_40%,_rgb(96,165,250)_75%,_rgb(52,211,153)_100%)]"
+      >
+        <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-gradient-to-br from-blue-200 to-violet-200 opacity-30 blur-3xl" />
+        <div className="absolute bottom-0 left-0 h-96 w-96 rounded-full bg-gradient-to-br from-orange-200 to-yellow-200 opacity-30 blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-gradient-to-br from-blue-200 to-cyan-200 opacity-30 blur-3xl" />
+      </div>
+
+      <main className="relative flex-1">
 
         {/* Main content */}
         <div className="relative z-10">

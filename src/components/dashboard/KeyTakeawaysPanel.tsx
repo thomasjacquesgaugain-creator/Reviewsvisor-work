@@ -31,22 +31,22 @@ export function KeyTakeawaysPanel({
   return (
     <section
       className={cn(
-        "relative overflow-hidden rounded-[8px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(250,247,255,0.92))] p-5 shadow-[0_30px_90px_rgba(37,99,235,0.12)] backdrop-blur-xl md:p-6",
+        "relative overflow-hidden rounded-[8px]",
         className,
       )}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(254,83,179,0.10),_transparent_34%),radial-gradient(circle_at_top_right,_rgba(177,140,244,0.12),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(161,250,232,0.16),_transparent_30%)]" />
+      <div className="absolute inset-0" />
       <div className="relative flex flex-col gap-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-[8px] bg-white shadow-[0_12px_28px_rgba(37,99,235,0.12)]">
+          {/* <div className="flex items-center gap-3"> */}
+            {/* <div className="flex h-12 w-12 items-center justify-center rounded-[8px] bg-white shadow-[0_12px_28px_rgba(37,99,235,0.12)]">
               <img
                 src={logoHeader}
                 alt="Reviewsvisor"
                 className="h-8 w-8 object-contain"
               />
-            </div>
-            <div>
+            </div> */}
+            <div className="p-4 px-5 rounded-lg bg-white w-full">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
                 {t("dashboard.keyTakeaways.title")}
               </p>
@@ -54,7 +54,7 @@ export function KeyTakeawaysPanel({
                 {t("dashboard.keyTakeaways.quickRead")}
               </h2>
             </div>
-          </div>
+          {/* </div> */}
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[0.65fr_1.2fr] items-stretch">

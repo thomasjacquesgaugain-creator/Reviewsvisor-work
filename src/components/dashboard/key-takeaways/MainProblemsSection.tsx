@@ -20,9 +20,7 @@ export function MainProblemsSection({ problems,setMainIssue }: MainProblemsSecti
 
  if (!mainProblem) {
   return (
-    <div className="relative h-fit overflow-hidden rounded-[8px] border border-[#f1c1de] bg-gradient-to-br from-white via-[#fff3fa] to-[#f3ecff] p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(254,83,179,0.16),_transparent_38%),radial-gradient(circle_at_bottom_right,_rgba(177,140,244,0.14),_transparent_30%)]" />
-      
+    <div className="relative h-fit overflow-hidden rounded-[8px] border border-slate-200 bg-white p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
       <div className="relative">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#ffe7f2]">
@@ -44,12 +42,12 @@ export function MainProblemsSection({ problems,setMainIssue }: MainProblemsSecti
 }
 
   return (
-    <div className="relative overflow-hidden rounded-[8px] border border-[#f1c1de] bg-gradient-to-br from-white via-[#fff3fa] to-[#f3ecff] p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(254,83,179,0.16),_transparent_38%),radial-gradient(circle_at_bottom_right,_rgba(177,140,244,0.14),_transparent_30%)]" />
+    <div className="relative overflow-hidden rounded-[8px] border bg-white p-4">
+      <div className="absolute inset-0" />
       
       <div className="relative">
         <div className="flex items-center gap-2">
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#ffe7f2]">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#ffffff] border-none">
             <ShieldAlert className="h-3.5 w-3.5 text-[#fe53b3]" />
           </span>
           <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
