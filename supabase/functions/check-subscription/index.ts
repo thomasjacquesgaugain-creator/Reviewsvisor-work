@@ -59,6 +59,46 @@ serve(async (req) => {
     const additionalEstablishments = Math.max(0, totalEstablishments - 1);
     logStep("Establishment count", { total: totalEstablishments, additional: additionalEstablishments });
 
+    const { data: dbSubscriptions, error: dbSubscriptionsError } = await supabaseClient
+      .from("subscriptions")
+      .select(`
+        provider_subscription_id,
+        establishment:establishment_id (
+          name
+        )
+      `)
+      .eq("user_id", user.id);
+
+    if (dbSubscriptionsError) {
+      logStep("Error loading local subscriptions", { message: dbSubscriptionsError.message });
+      return new Response(JSON.stringify({
+        subscribed: false,
+        total_establishments: totalEstablishments,
+        additional_establishments: additionalEstablishments,
+        source: "stripe",
+        creator_bypass: false,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    const allowedSubscriptionIds = new Set(
+      (dbSubscriptions || [])
+        .map((row: any) => row.provider_subscription_id)
+        .filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0),
+    );
+
+    const subscriptionNameMap = new Map<string, string>();
+    (dbSubscriptions || []).forEach((row: any) => {
+      if (row.provider_subscription_id) {
+        subscriptionNameMap.set(
+          row.provider_subscription_id,
+          row.establishment?.name ?? "—",
+        );
+      }
+    });
+
     // // ======= CHECK USER_ENTITLEMENTS FIRST (creator bypass) =======
     // const { data: entitlement, error: entitlementError } = await supabaseClient
     //   .from("user_entitlements")
@@ -129,9 +169,12 @@ serve(async (req) => {
       status: "active",
       limit: 100,
     });
-    const hasActiveSub = subscriptions.data.length > 0;
+    const filteredStripeSubscriptions = subscriptions.data.filter((sub: Stripe.Subscription) =>
+      allowedSubscriptionIds.has(sub.id)
+    );
+    const hasActiveSub = filteredStripeSubscriptions.length > 0;
     const parsedSubscriptions = await Promise.all(
-      subscriptions.data.map(async (sub: Stripe.Subscription) => {
+      filteredStripeSubscriptions.map(async (sub: Stripe.Subscription) => {
         const fullSubscription = await stripe.subscriptions.retrieve(sub.id, {
           expand: ["latest_invoice"],
         });
@@ -154,6 +197,7 @@ serve(async (req) => {
           cancel_at_period_end: fullSubscription.cancel_at_period_end,
           latest_invoice_pdf_url: latestInvoiceObject?.invoice_pdf ?? null,
           latest_invoice_hosted_url: latestInvoiceObject?.hosted_invoice_url ?? null,
+          establishment_name: subscriptionNameMap.get(fullSubscription.id) ?? "—",
         };
       })
     );
