@@ -49,14 +49,8 @@ export default function EtablissementPage() {
   const { t } = useTranslation();
 
   // Synchroniser visualEstablishment avec currentEstablishment quand il change
-  // MAIS seulement si le panel n'est pas déjà ouvert (pour éviter d'écraser l'établissement choisi manuellement)
+  // Toujours suivre l'établissement actif pour garder le panneau de reviews synchronisé
   useEffect(() => {
-    // Ne pas écraser visualEstablishment si le panel est ouvert
-    // Cela permet au clic sur le bouton d'utiliser l'établissement affiché dans "Mon Établissement"
-    if (showReviewsVisual) {
-      return; // Garder l'établissement actuellement affiché dans le panel
-    }
-
     if (currentEstablishment) {
       setVisualEstablishment({
         id: currentEstablishment.place_id, // Utiliser place_id comme id car les services utilisent place_id
@@ -70,7 +64,6 @@ export default function EtablissementPage() {
   }, [
     currentEstablishment?.place_id,
     currentEstablishment?.name,
-    showReviewsVisual,
   ]);
 
   // Sync the local establishment card from the DB (source of truth)
