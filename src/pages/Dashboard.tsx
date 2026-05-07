@@ -2356,6 +2356,20 @@ const Dashboard = () => {
 
   // Synchroniser avec le store si mis à jour
   useEffect(() => {
+    const placeId =
+      selectedEstablishment?.place_id ?? activePlaceId ?? null;
+
+    if (!placeId) {
+      setSelectedEtab(null);
+      return;
+    }
+
+    const fromList = establishments.find((e) => e.place_id === placeId);
+    if (fromList) {
+      setSelectedEtab(fromList);
+      return;
+    }
+
     if (selectedEstablishment) {
       setSelectedEtab({
         place_id: selectedEstablishment.place_id,
@@ -2375,7 +2389,7 @@ const Dashboard = () => {
         id: selectedEstablishment.id,
       });
     }
-  }, [selectedEstablishment]);
+  }, [activePlaceId, establishments, selectedEstablishment]);
 
   // Ces déclarations ont été déplacées en haut du composant
 
@@ -2427,8 +2441,9 @@ const Dashboard = () => {
   >({});
 
   // Hydrater depuis cache au changement d'établissement : mémoire d'abord, puis snapshot (stale-while-revalidate)
-  const placeIdForCache =
+  const currentPlaceId =
     selectedEtab?.place_id ?? selectedEstablishment?.place_id ?? null;
+  const placeIdForCache = currentPlaceId;
   useLayoutEffect(() => {
     if (!placeIdForCache) return;
     const fromMemory = kpiMemoryCacheRef.current[placeIdForCache];
@@ -2458,6 +2473,7 @@ const Dashboard = () => {
   // Fetch review insights data - Chargement automatique au mount
   // Utilise le place_id de l'établissement sélectionné (selectedEtab) en priorité, sinon l'actif en DB
   useEffect(() => {
+    let cancelled = false;
     const fetchInsights = async () => {
       if (!user?.id) {
         setIsLoadingInsight(false);
@@ -2499,6 +2515,7 @@ const Dashboard = () => {
         const { loadLatestAnalysis } =
           await import("@/services/analysisLoader");
         const result = await loadLatestAnalysis(placeId, user.id);
+        if (cancelled) return;
 
         const hadAnalysisForThisPlace =
           result.success && result.hasAnalysis && !!result.data;
@@ -2549,6 +2566,7 @@ const Dashboard = () => {
           sampleReview:
             reviewsData && reviewsData.length > 0 ? reviewsData[0] : null,
         });
+        if (cancelled) return;
         if (reviewsData && reviewsData.length >= 0) {
           // ⚠️ PROTECTION DONNÉES: Vérification avant utilisation
           if (!reviewsData || reviewsData.length === 0) {
@@ -2631,6 +2649,7 @@ const Dashboard = () => {
                 .eq("user_id", user.id)
                 .eq("statut", "valide");
 
+              if (cancelled) return;
               if (responsesData) {
                 const validatedSet = new Set(
                   responsesData.map((r) => parseInt(r.avis_id)),
@@ -2670,6 +2689,7 @@ const Dashboard = () => {
                     currentEstab.place_id,
                     user.id,
                   );
+                  if (cancelled) return;
                   setReponsesStats(stats);
                 }
               } else {
@@ -2703,6 +2723,7 @@ const Dashboard = () => {
             ? result.data
             : null;
         const reviewsPayload = reviewsData ?? [];
+        if (cancelled) return;
         kpiMemoryCacheRef.current[placeId] = {
           insight: insightPayload,
           reviews: reviewsPayload,
@@ -2724,6 +2745,7 @@ const Dashboard = () => {
           .eq("user_id", user.id)
           // .eq('is_active', true)
           .maybeSingle();
+        if (cancelled) return;
 
         if (!import.meta.env.PROD) {
           console.log("[Dashboard] Récupération établissement:", {
@@ -2736,6 +2758,7 @@ const Dashboard = () => {
         }
 
         if (!estError && establishmentData) {
+          if (cancelled) return;
           setEstablishmentCreatedAt(establishmentData.created_at);
           setEstablishmentDbId(establishmentData.id);
           if (!import.meta.env.PROD) {
@@ -2772,10 +2795,13 @@ const Dashboard = () => {
           }
         }
       } catch (error) {
+        if (cancelled) return;
         console.error("[dashboard] fetch insights error:", error);
       } finally {
-        setIsLoadingInsight(false);
-        setIsHydrated(true); // Données chargées (ou erreur) → on peut afficher KPI ou "—"
+        if (!cancelled) {
+          setIsLoadingInsight(false);
+          setIsHydrated(true); // Données chargées (ou erreur) → on peut afficher KPI ou "—"
+        }
       }
     };
     fetchInsights();
@@ -2850,6 +2876,7 @@ const Dashboard = () => {
     window.addEventListener("reviews:imported", handleReviewsImported);
 
     return () => {
+      cancelled = true;
       window.removeEventListener("reviews:imported", handleReviewsImported);
       if (refreshTimeout) {
         clearTimeout(refreshTimeout);
@@ -2858,7 +2885,7 @@ const Dashboard = () => {
         supabase.removeChannel(channel);
       }
     };
-  }, [user?.id, selectedEstablishment?.place_id, selectedEtab?.place_id]);
+  }, [user?.id, currentPlaceId]);
 
   // Mise à jour de l'heure en temps réel
   useEffect(() => {
@@ -2936,8 +2963,7 @@ const Dashboard = () => {
     () =>
       (allReviewsForChart || []).map((r: any) => ({
         id: r.id?.toString() || "",
-        etablissementId:
-          selectedEtab?.place_id || selectedEstablishment?.place_id || "",
+        etablissementId: currentPlaceId || "",
         source: (r.source || "google") as Review["source"],
         note: r.rating || 0,
         texte: r.text || r.comment || "",
@@ -2953,8 +2979,7 @@ const Dashboard = () => {
       })),
     [
       allReviewsForChart,
-      selectedEtab?.place_id,
-      selectedEstablishment?.place_id,
+      currentPlaceId,
     ],
   );
 
@@ -3292,23 +3317,35 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             types: etab.types ?? null,
                                             id: etab.id,
                                           };
-                                          await setActivePlace(
-                                            etab.place_id,
-                                            payload,
-                                          );
-                                          toastActiveEstablishment(etab.name);
-                                          setSelectedEtab(etab);
-                                          setShowEstablishmentsDropdown(false);
-                                          window.dispatchEvent(
-                                            new CustomEvent(EVT_SAVED, {
-                                              detail: etab,
-                                            }),
-                                          );
-                                          window.dispatchEvent(
-                                            new CustomEvent(
-                                              "establishment:updated",
-                                            ),
-                                          );
+
+                                          try {
+                                            await setActivePlace(
+                                              etab.place_id,
+                                              payload,
+                                            );
+                                            toastActiveEstablishment(
+                                              etab.name,
+                                            );
+                                            window.dispatchEvent(
+                                              new CustomEvent(EVT_SAVED, {
+                                                detail: etab,
+                                              }),
+                                            );
+                                            window.dispatchEvent(
+                                              new CustomEvent(
+                                                "establishment:updated",
+                                              ),
+                                            );
+                                            await loadEstablishmentsFromDB();
+                                          } catch (error) {
+                                            console.error(
+                                              "[Dashboard] Erreur lors du changement d'etablissement:",
+                                              error,
+                                            );
+                                            toast.error(t("common.error"));
+                                          } finally {
+                                            setShowEstablishmentsDropdown(false);
+                                          }
                                         }}
                                       >
                                         <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
