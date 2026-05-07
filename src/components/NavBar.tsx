@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { capitalizeName } from "@/utils/capitalizeName";
 import { APP_NAME } from "@/config/brand";
 import { AccountMenu } from "@/components/AccountMenu";
+import { Building, House, LayoutDashboard } from 'lucide-react';
+import logoHeader from "@/assets/reviewsvisor-logo-header.png";
 
 export default function NavBar() {
   const { t } = useTranslation();
@@ -65,11 +67,11 @@ export default function NavBar() {
   }
 
   const handleLogoClick = (e: React.MouseEvent) => {
-    if (isCreator) {
+    // if (isCreator) {
       e.preventDefault();
       e.stopPropagation();
       navigate("/");
-    }
+    // }
     // Sinon ne rien faire
   };
 
@@ -80,7 +82,8 @@ export default function NavBar() {
       {/* Gauche : Logo + barre */}
       <div className="flex items-center gap-4">
         <div 
-          className={`flex items-center gap-2 ${isCreator ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+          // className={`flex items-center gap-2 ${isCreator ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+          className={`flex items-center gap-2 cursor-pointer`}
           onClick={handleLogoClick}
           role={isCreator ? "button" : undefined}
           tabIndex={isCreator ? 0 : undefined}
@@ -91,8 +94,11 @@ export default function NavBar() {
             }
           } : undefined}
         >
-          <span className="text-xl">📊</span>
-          <div className="text-2xl font-bold text-blue-600 normal-case">{APP_NAME}</div>
+          <img 
+            src={logoHeader} 
+            alt={`${APP_NAME} Logo`}
+            className="h-10 w-auto object-contain"
+          />
         </div>
         {/* Barre de séparation bleue */}
         <div className="h-10 w-px bg-gradient-to-b from-transparent via-blue-500 to-transparent opacity-70"></div>
@@ -101,15 +107,18 @@ export default function NavBar() {
       {/* Centre : Navigation */}
       <div className="flex items-center gap-8">
         <NavLink to="/tableau-de-bord" className={`flex items-center gap-2 ${getLinkClass("/tableau-de-bord")}`}>
-          🏠 {t("nav.home")}
+          <House className="w-5 h-5" />
+          {t("nav.home")}
         </NavLink>
 
         <NavLink to="/dashboard" className={`flex items-center gap-2 ${getLinkClass("/dashboard")}`}>
-          📈 {t("nav.dashboard")}
+          <LayoutDashboard className="w-5 h-5" />
+          {t("nav.dashboard")}
         </NavLink>
 
         <NavLink to="/etablissement" className={`flex items-center gap-2 ${getLinkClass("/etablissement")}`}>
-          🏢 {t("nav.establishment")}
+          <Building className="w-5 h-5" />
+          {t("nav.establishment")}
         </NavLink>
       </div>
 

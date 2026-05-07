@@ -894,16 +894,12 @@
       },
       "background": "Fond",
       "backgroundDescription": "Choisissez la teinte de fond de l'interface",
+      "backgroundBrightness": "Luminosité du fond",
+      "backgroundBrightnessDescription": "Ajustez la luminosité du fond selectionne",
       "backgroundColor": {
-        "neutral": "Neutre",
-        "warm": "Gris Chaud",
-        "cool": "Froid",
-        "paleBlue": "Bleu doux",
-        "paleGreen": "Vert doux",
-        "palePink": "Rose doux",
-        "palePurple": "Violet doux",
-        "cream": "Crème",
-        "stone": "Pierre"
+        "cottonCandy": "Barbe à papa",
+        "dusk": "Crépuscule",
+        "lavender": "Lavande"
       },
       "validation": {
         "settingsReset": "Paramètres réinitialisés",
@@ -1214,8 +1210,8 @@
   }
   },
   "establishment": {
-    "title": "Mon établissement",
-    "myEstablishment": "🏢 Mon Établissement",
+    "title": "Mon Établissements",
+    "myEstablishment": "Mon Établissement",
     "search": "Rechercher un établissement",
     "searchPlaceholder": "Rechercher un établissement…",
     "name": "Nom de l'établissement",
@@ -1967,5 +1963,8 @@
       "aiTrust": "Confiance IA",
       "aiTrustDescription": "La confiance IA désigne un indicateur du degré de fiabilité des résultats produits par un modèle au regard de la quantité, de la qualité et de la cohérence des données utilisées. Elle reflète le niveau d’incertitude associé aux analyses et doit être interprétée comme un niveau de confiance plutôt que comme une vérité absolue."
     }
+  },
+  "messages": {
+    "featureAvailableSoon": "Cette fonctionnalite sera bientot disponible."
   }
 }

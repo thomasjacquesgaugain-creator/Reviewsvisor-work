@@ -45,6 +45,7 @@ import { LanguageSettings } from "./pages/settings/LanguageSettings";
 import { BillingSettings } from "./pages/settings/BillingSettings";
 import { BillingReports } from "./pages/settings/BillingReports";
 import { CustomizationSettings } from "./pages/settings/CustomizationSettings";
+import Messages from "./pages/Messages";
 
 const ScrollToTop = () => {
   const location = useLocation();
@@ -149,7 +150,7 @@ const App = () => {
             <Route path="/a-propos" element={<APropos />} />
             <Route path="/fonctionnalites" element={<Fonctionnalites />} />
             <Route path="/aide" element={<Aide />} />
-            <Route path="/abonnement" element={<Abonnement />} />
+            {/* <Route path="/abonnement" element={<Abonnement />} /> */}
             <Route path="/cgu" element={<Cgu />} />
             <Route path="/mentions-legales" element={<MentionsLegales />} />
             <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
@@ -169,11 +170,11 @@ const App = () => {
                 <OnboardingSignup />
               </RequireGuest>
             } />
-            <Route path="/creer-compte-preview" element={
+            {/* <Route path="/creer-compte-preview" element={
               <RequireGuest>
                 <CreerComptePreview />
               </RequireGuest>
-            } />
+            } /> */}
             <Route path="/tableau-de-bord" element={
               <Protected>
                 <TableauDeBord />
@@ -184,11 +185,11 @@ const App = () => {
                 <Dashboard />
               </Protected>
             } />
-            <Route path="/compte" element={
+            {/* <Route path="/compte" element={
               <Protected>
                 <Compte />
               </Protected>
-            } />
+            } /> */}
             <Route path="/settings" element={<Navigate to="/settings/profile" replace />} />
             <Route path="/settings/profile" element={
               <Protected>
@@ -255,10 +256,7 @@ const App = () => {
             } />
             <Route path="/messages" element={
               <Protected>
-                <div className="p-8">
-                  <h1 className="text-2xl font-semibold mb-4">Messages</h1>
-                  <p className="text-gray-500">Cette fonctionnalité sera bientôt disponible.</p>
-                </div>
+                <Messages />
               </Protected>
             } />
             <Route path="/etablissement" element={

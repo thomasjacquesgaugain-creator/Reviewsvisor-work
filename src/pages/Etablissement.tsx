@@ -13,7 +13,7 @@ import {
   EVT_LIST_UPDATED,
 } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
-import { Building2, Home, LogOut, X, AlertTriangle } from "lucide-react";
+import { Building2, Home, LogOut, X, AlertTriangle, Building } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -23,6 +23,7 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { mapGoogleTypeToCategory } from "@/utils/establishmentTypeMapping";
 import { PlanSelectionModal } from "@/components/PlanSelectionModal";
+import { AppPageBackground } from "@/components/AppPageBackground";
 export default function EtablissementPage() {
   const { displayName, loading, signOut } = useAuth();
   const [selected, setSelected] = useState<Etab | null>(null);
@@ -559,18 +560,13 @@ export default function EtablissementPage() {
   ]);
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
-      {/* Background with organic shapes */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-violet-200 rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-200 to-yellow-200 rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-full blur-3xl opacity-30"></div>
-      </div>
+    <div className="app-page-shell">
+      <AppPageBackground />
 
       {/* Main content */}
       <div className="relative z-10">
         <div className="container mx-auto px-4 py-8 pb-16">
-          <h1 className="text-3xl font-bold mb-8">
+          <h1 className="text-3xl font-bold mb-8 text-white">
             {t("establishment.title")}
           </h1>
 
@@ -625,7 +621,8 @@ export default function EtablissementPage() {
               data-testid="card-mon-etablissement"
               className="border border-border rounded-lg p-4 bg-primary-foreground"
             >
-              <h2 className="text-xl font-semibold mb-3">
+              <h2 className="mb-3 flex items-center gap-2 text-xl font-semibold">
+                <Building className="h-6 w-6 text-[#2663eb]" />
                 {t("establishment.myEstablishment")}
               </h2>
               <MonEtablissementCard onAddClick={openSearch} />

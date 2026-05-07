@@ -140,6 +140,7 @@ import { useSmartProgress } from "@/hooks/useSmartProgress";
 import { useSmartStore } from "@/store/smartStore";
 import { DeleteEstablishmentButton } from "@/components/DeleteEstablishmentButton";
 import { getEstablishmentTypeTranslationKey } from "@/utils/establishmentTypeMapping";
+import { AppPageBackground } from "@/components/AppPageBackground";
 
 const GRANULARITY_LABEL_KEYS: Record<Granularity, string> = {
   jour: "dashboard.day",
@@ -3178,8 +3179,9 @@ const getLatestDate = (reviews: any[]): Date | null =>
   // If we have an etablissementId in URL, show analysis dashboard
   if (etablissementId) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
+      <div className="app-page-shell">
+        <AppPageBackground />
+        <div className="relative z-10 container mx-auto px-4 py-8">
           <AnalyseDashboard />
         </div>
       </div>
@@ -3191,16 +3193,8 @@ const getLatestDate = (reviews: any[]): Date | null =>
 ) ?? null;
 
   return (
-    <div className="relative min-h-screen flex flex-col overflow-x-hidden">
-      {/* Fixed background keeps the gradient visually stable while the page scrolls */}
-      <div
-        aria-hidden="true"
-        className="fixed inset-0 -z-10 bg-[linear-gradient(135deg,_rgb(255,110,180)_0%,_rgb(192,132,252)_40%,_rgb(96,165,250)_75%,_rgb(52,211,153)_100%)]"
-      >
-        <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-gradient-to-br from-blue-200 to-violet-200 opacity-30 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-96 w-96 rounded-full bg-gradient-to-br from-orange-200 to-yellow-200 opacity-30 blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-gradient-to-br from-blue-200 to-cyan-200 opacity-30 blur-3xl" />
-      </div>
+    <div className="app-page-shell">
+      <AppPageBackground />
 
       <main className="relative flex-1">
 

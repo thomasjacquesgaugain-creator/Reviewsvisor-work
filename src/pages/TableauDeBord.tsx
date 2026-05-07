@@ -16,6 +16,7 @@ import { DashboardTabs } from "@/components/DashboardTabs";
 import { capitalizeName } from "@/utils/capitalizeName";
 import { extractOriginalText } from "@/utils/extractOriginalText";
 import { getEstablishmentTypeTranslationKey } from "@/utils/establishmentTypeMapping";
+import { AppPageBackground } from "@/components/AppPageBackground";
 
 
 const Dashboard = () => {
@@ -343,8 +344,11 @@ const Dashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">{t("common.loading")}</div>
+      <div className="app-page-shell">
+        <AppPageBackground />
+        <div className="relative z-10 min-h-screen flex items-center justify-center">
+          <div className="text-lg">{t("common.loading")}</div>
+        </div>
       </div>
     );
   }
@@ -354,13 +358,8 @@ const Dashboard = () => {
     : t("dashboard.user");
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Background with organic shapes */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-purple-100">
-        <div className="absolute top-20 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-orange-200 to-yellow-200 rounded-full blur-3xl opacity-40"></div>
-        <div className="absolute bottom-20 right-20 w-60 h-60 bg-gradient-to-bl from-blue-300 to-cyan-300 rounded-full blur-2xl opacity-25"></div>
-      </div>
+    <div className="app-page-shell">
+      <AppPageBackground />
 
       <div className="relative z-10">
         {/* Main content */}

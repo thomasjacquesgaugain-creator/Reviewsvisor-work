@@ -80,7 +80,7 @@ export function AnalysisTabContent({
     return (
       <div className="space-y-1">
         {(isFallbackAnalysis || formattedLastAnalysis) && (
-          <p className="text-xs text-muted-foreground mb-1">
+          <p className="text-xs text-white text-muted-foreground mb-1">
             {isFallbackAnalysis && t("dashboard.analysisBasedOnImportedReviews", "Analyse basée sur les avis importés")}
             {isFallbackAnalysis && formattedLastAnalysis && " · "}
             {formattedLastAnalysis &&

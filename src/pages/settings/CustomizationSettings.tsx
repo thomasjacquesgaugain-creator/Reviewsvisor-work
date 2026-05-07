@@ -3,17 +3,21 @@ import { Sun, Moon, Monitor, Check, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Slider } from "@/components/ui/slider";
 import {
   getStoredTheme,
   getStoredAccent,
   getStoredBackground,
+  getStoredBackgroundBrightness,
   setTheme,
   setAccent,
   setBackground,
+  setBackgroundBrightness,
   resetTheme,
   type ThemeMode,
   type AccentColor,
   type BackgroundTint,
+  type BackgroundBrightness,
   ACCENT_COLORS_LIST,
   BACKGROUND_TINTS_LIST,
 } from "@/utils/theme";
@@ -23,6 +27,9 @@ export function CustomizationSettings() {
   const [theme, setThemeState] = useState<ThemeMode>(() => getStoredTheme());
   const [accent, setAccentState] = useState<AccentColor>(() => getStoredAccent());
   const [bg, setBgState] = useState<BackgroundTint>(() => getStoredBackground());
+  const [brightness, setBrightnessState] = useState<BackgroundBrightness>(() =>
+    getStoredBackgroundBrightness(),
+  );
   const { t } = useTranslation();
 
   // Appliquer les changements immédiatement
@@ -37,6 +44,10 @@ export function CustomizationSettings() {
   useEffect(() => {
     setBackground(bg);
   }, [bg]);
+
+  useEffect(() => {
+    setBackgroundBrightness(brightness);
+  }, [brightness]);
 
   const handleThemeChange = (newTheme: ThemeMode) => {
     setThemeState(newTheme);
@@ -56,6 +67,12 @@ export function CustomizationSettings() {
     toast.success(t("settings.personalization.validation.backgroundUpdated"));
   };
 
+  const handleBrightnessChange = (newBrightness: number) => {
+    const safeBrightness = Math.max(-50, Math.min(50, Math.round(newBrightness)));
+    setBrightnessState(safeBrightness);
+    setBackgroundBrightness(safeBrightness);
+  };
+
   const handleReset = () => {
     // Réinitialiser les valeurs par défaut
     resetTheme();
@@ -63,7 +80,8 @@ export function CustomizationSettings() {
     // Mettre à jour l'état local
     setThemeState("light");
     setAccentState("blue");
-    setBgState("neutral");
+    setBgState("cottonCandy");
+    setBrightnessState(0);
     
     // Afficher un toast de confirmation
     toast.success(t("settings.personalization.validation.settingsReset"));
@@ -188,11 +206,42 @@ export function CustomizationSettings() {
 
         {/* Card Fond */}
         <div className="border border-gray-200 rounded-lg p-6 bg-white">
-          <div className="mb-4">
-            <h2 className="text-lg font-medium text-gray-900">{t("settings.personalization.background")}</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {t("settings.personalization.backgroundDescription")}
-            </p>
+          <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h2 className="text-lg font-medium text-gray-900">{t("settings.personalization.background")}</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {t("settings.personalization.backgroundDescription")}
+              </p>
+            </div>
+
+            <div className="w-full max-w-[250px] rounded-full border border-gray-200 bg-white px-2.5 py-1.5 shadow-sm">
+              <div className="flex items-center gap-2">
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(147,197,253,0.42),rgba(30,41,59,0.95))] text-white/85 shadow-[0_0_8px_rgba(96,165,250,0.16)]">
+                  <Moon className="h-2.5 w-2.5" />
+                </div>
+
+                <Slider
+                  value={[brightness]}
+                  min={-50}
+                  max={50}
+                  step={1}
+                  onValueChange={(values) => handleBrightnessChange(values[0] ?? 0)}
+                  className="flex-1"
+                  trackClassName="h-1 bg-[linear-gradient(90deg,#1e293b,#64748b,#f8fafc)]"
+                  rangeClassName="bg-white/40"
+                  thumbClassName="h-5 w-5 border-2 border-[#c4b5fd] bg-[#dbeafe] shadow-[0_0_0_2px_rgba(191,219,254,0.14),0_0_12px_rgba(196,181,253,0.35)]"
+                  aria-label={t("settings.personalization.backgroundBrightness")}
+                />
+
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(254,240,138,0.95),rgba(245,158,11,0.9))] text-slate-900 shadow-[0_0_10px_rgba(250,204,21,0.2)]">
+                  <Sun className="h-2.5 w-2.5" />
+                </div>
+
+                <div className="min-w-8 text-right text-[11px] font-semibold text-gray-700">
+                  {brightness > 0 ? `+${brightness}` : brightness}
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
@@ -212,7 +261,7 @@ export function CustomizationSettings() {
                 {/* Swatch de couleur */}
                 <div
                   className="w-12 h-12 rounded-lg border-2 border-white shadow-sm"
-                  style={{ backgroundColor: tint.preview }}
+                  style={{ background: tint.preview }}
                 />
                 <span className="text-xs font-medium text-gray-700">
                   {t(`settings.personalization.backgroundColor.${tint.value}`)}

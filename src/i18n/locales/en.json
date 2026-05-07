@@ -823,16 +823,12 @@
       },
       "background": "Background",
       "backgroundDescription": "Choose the background color of the interface",
+      "backgroundBrightness": "Background brightness",
+      "backgroundBrightnessDescription": "Adjust the brightness of the selected background",
       "backgroundColor": {
-        "neutral": "Neutral",
-        "warm": "Warm",
-        "cool": "Cool",
-        "paleBlue": "Pale blue",
-        "paleGreen": "Pale green",
-        "palePink": "Pale pink",
-        "palePurple": "Pale purple",
-        "cream": "Cream",
-        "stone": "Stone"
+        "cottonCandy": "Cotton Candy",
+        "dusk": "Dusk",
+        "lavender": "Lavender"
       },
       "validation": {
         "settingsReset": "Settings reset",
@@ -1086,8 +1082,8 @@
   }
   },
   "establishment": {
-    "title": "My establishment",
-    "myEstablishment": "🏢 My Establishment",
+    "title": "My Establishments",
+    "myEstablishment": "My Establishment",
     "search": "Search for an establishment",
     "searchPlaceholder": "Search for an establishment…",
     "name": "Establishment name",
@@ -1758,5 +1754,8 @@
       "aiTrust": "AI Trust",
       "aiTrustDescription": "AI confidence refers to an indicator of the degree of reliability of the results produced by a model, based on the quantity, quality, and consistency of the data used. It reflects the level of uncertainty associated with the analyses and should be interpreted as a confidence level rather than as an absolute truth."
     }
+  },
+  "messages": {
+    "featureAvailableSoon": "This feature will be available soon."
   }
 }
