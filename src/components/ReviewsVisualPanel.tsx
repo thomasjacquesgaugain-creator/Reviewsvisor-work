@@ -108,6 +108,12 @@ export function ReviewsVisualPanel({
   const effectiveId = establishmentId || currentEstablishment?.id || currentEstablishment?.place_id;
   const displayName = establishmentName ?? currentEstablishment?.name ?? null;
   useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setIsLoadingReviews(true);
+    setSummary(null);
+    setReviewsList([]);
+
     const loadData = async () => {
       if (!effectiveId) {
         setIsLoading(false);
@@ -121,12 +127,14 @@ export function ReviewsVisualPanel({
         
         // RÈGLE CRITIQUE : Vérifier et restaurer createTime au chargement
         await verifyAndRestoreCreateTimes(effectiveId);
+        if (cancelled) return;
         
         // Load summary and ALL reviews in parallel
         const [summaryData, allReviews] = await Promise.all([
           getReviewsSummary(effectiveId),
           listAll(effectiveId)
         ]);
+        if (cancelled) return;
         
         setSummary(summaryData);
         
@@ -187,18 +195,25 @@ export function ReviewsVisualPanel({
           };
         });
         
+        if (cancelled) return;
         setReviewsList(mappedRows);
       } catch (error) {
+        if (cancelled) return;
         console.error("Error loading reviews data:", error);
         setSummary(null);
         setReviewsList([]);
       } finally {
-        setIsLoading(false);
-        setIsLoadingReviews(false);
+        if (!cancelled) {
+          setIsLoading(false);
+          setIsLoadingReviews(false);
+        }
       }
     };
     
     loadData();
+    return () => {
+      cancelled = true;
+    };
   }, [effectiveId]);
 
   // Function to reload data

@@ -23,6 +23,11 @@ type BillingInvoiceRow = {
   hosted_invoice_url: string | null;
 };
 
+type LocalSubscriptionRow = {
+  provider_subscription_id: string | null;
+  establishment?: { name?: string | null } | null;
+};
+
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[BILLING-REPORTS] ${step}${detailsStr}`);
@@ -67,12 +72,58 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found customer", { customerId });
 
+    const { data: dbSubscriptions, error: dbSubscriptionsError } = await supabaseClient
+      .from("subscriptions")
+      .select(`
+        provider_subscription_id,
+        establishment:establishment_id (
+          name
+        )
+      `)
+      .eq("user_id", user.id);
+
+    if (dbSubscriptionsError) {
+      logStep("Error loading local subscriptions", {
+        message: dbSubscriptionsError.message,
+      });
+      return new Response(JSON.stringify({ invoices: [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    const allowedSubscriptionIds = new Set(
+      (dbSubscriptions || [])
+        .map((row: LocalSubscriptionRow) => row.provider_subscription_id)
+        .filter((id): id is string => typeof id === "string" && id.trim().length > 0),
+    );
+
+    const subscriptionNameMap = new Map<string, string>();
+    (dbSubscriptions || []).forEach((row: LocalSubscriptionRow) => {
+      if (row.provider_subscription_id) {
+        subscriptionNameMap.set(
+          row.provider_subscription_id,
+          row.establishment?.name ?? "Invoice",
+        );
+      }
+    });
+
     const invoices = await stripe.invoices.list({
       customer: customerId,
       limit: 100,
     });
 
-    const rows: BillingInvoiceRow[] = invoices.data
+    const filteredInvoices = invoices.data.filter((invoice: Stripe.Invoice) => {
+      const subscriptionId =
+        typeof invoice.subscription === "string"
+          ? invoice.subscription
+          : invoice.subscription?.id ??
+            invoice.parent?.subscription_details?.subscription ??
+            null;
+      return !!subscriptionId && allowedSubscriptionIds.has(subscriptionId);
+    });
+
+    const rows: BillingInvoiceRow[] = filteredInvoices
       .map((invoice: Stripe.Invoice) => {
         const firstLine = invoice.lines.data[0];
         const planName =
@@ -98,8 +149,17 @@ serve(async (req) => {
           subscription_id:
             typeof invoice.subscription === "string"
               ? invoice.subscription
-              : invoice.subscription?.id ?? null,
-          plan_name: planName,
+              : invoice.subscription?.id ??
+                invoice.parent?.subscription_details?.subscription ??
+                null,
+          plan_name:
+            subscriptionNameMap.get(
+              typeof invoice.subscription === "string"
+                ? invoice.subscription
+                : invoice.subscription?.id ??
+                  invoice.parent?.subscription_details?.subscription ??
+                  "",
+            ) ?? planName,
           invoice_pdf_url: invoice.invoice_pdf ?? null,
           hosted_invoice_url: invoice.hosted_invoice_url ?? null,
         };
