@@ -25,6 +25,7 @@ export default function Inscription() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -66,6 +67,7 @@ export default function Inscription() {
 
 async function onSubmit(formData: InscriptionFormData) {
   setLoading(true);
+  setFormError(null);
   try {
     const redirectUrl = `${window.location.origin}/`;
 
@@ -83,11 +85,34 @@ async function onSubmit(formData: InscriptionFormData) {
     });
 
     if (error) {
-      toast({ variant: "destructive", title: t("errors.title"), description: error.message });
+      let message=""
+      if (error.message==="User already registered"){
+         message =
+          t("auth.accountAlreadyExists", {
+            defaultValue: "Un compte existe déjà avec cette adresse email.",
+          });
+      }
+      else{
+        message=error.message
+      }
+      setFormError(message);
+      // toast({ variant: "destructive", title: t("errors.title"), description: message });
       return;
     }
 
-     const { error: profileError } = await supabase
+    if (!data.user) {
+      const message = t(
+        "auth.accountAlreadyExists",
+        {
+          defaultValue: "Un compte existe déjà avec cette adresse email.",
+        },
+      );
+      setFormError(message);
+      toast({ variant: "destructive", title: t("errors.title"), description: message });
+      return;
+    }
+
+    const { error: profileError } = await supabase
       .from("profiles")
       .upsert(
         {
@@ -105,11 +130,6 @@ async function onSubmit(formData: InscriptionFormData) {
 
     if (profileError) {
       console.warn("Profile upsert warning:", profileError.message);
-    }
-
-    if (!data.user) {
-      toast({ variant: "destructive", title: t("errors.title"), description: t("errors.generic") });
-      return;
     }
 
 
@@ -178,6 +198,11 @@ async function onSubmit(formData: InscriptionFormData) {
             <CardTitle className="text-2xl font-bold">{t("auth.signup") || "Inscription"}</CardTitle>
           </CardHeader>
         <CardContent>
+          {formError && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {formError}
+            </div>
+          )}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">{t("auth.email")}</Label>

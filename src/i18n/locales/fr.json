@@ -90,6 +90,7 @@
     "loginError": "Erreur de connexion",
     "invalidCredentials": "E-mail ou mot de passe invalide",
     "signupError": "Erreur d'inscription",
+    "accountAlreadyExists": "Un compte existe déjà avec cette adresse email.",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "fillNameFields": "Veuillez remplir votre prénom et nom.",
     "accountRequired": "Un compte est requis pour analyser vos avis clients",
@@ -734,6 +735,7 @@
     "personalInformation": {
       "title": "Informations personnelles",
       "profilePicture": "Photo de profil",
+      "profilePictureDeleted":"Photo de profil supprimée",
       "addPhoto": "Ajouter une photo",
       "changePhoto": "Changer la photo",
       "firstName": "Prénom",
