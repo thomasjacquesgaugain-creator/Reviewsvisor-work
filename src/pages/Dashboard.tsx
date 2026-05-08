@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { parseISO, subDays, isAfter, isBefore } from "date-fns";
 import {  CheckCircle2 ,Circle } from "lucide-react";
+  import { Trans } from "react-i18next";
 import {
   Accordion,
   AccordionContent,
@@ -1510,119 +1511,48 @@ const Dashboard = () => {
       // On utilise directement count qui vient des insights (basé sur les vrais avis)
       // Pas besoin de filtrer les avis car count est déjà calculé à partir des avis réels
       if (count > 0) {
-        // Actions concrètes et actionnables par le gérant lui-même (pas de décisions RH/financières)
-        // if (
-        //   theme.includes("service") ||
-        //   theme.includes("attente") ||
-        //   theme.includes("lent")
-        // ) 
-        if (
-          theme.includes("service") ||
-          theme.includes("waiting") ||
-          theme.includes("slow")
-        )
-        {
-          if (count >= 5) {
-            generatedActions.push(
-              `${count} clients mentionnent une attente trop longue → briefer l'équipe sur la rapidité de service`,
-            );
-            generatedActions.push(
-              `Le problème d'attente revient dans ${count} avis → observer le service ce soir pour identifier les points de blocage`,
-            );
-          } else {
-            generatedActions.push(
-              `${count} clients se plaignent de l'attente → rappeler à l'équipe l'importance de servir rapidement`,
-            );
-          }
-        } else if (
-          // theme.includes("qualité") ||
-          // theme.includes("plat") ||
-          // theme.includes("cuisson") ||
-          // theme.includes("froid") ||
-          // theme.includes("chaud")
-          theme.includes("quality") ||
-          theme.includes("dish") ||
-          theme.includes("cooking") ||
-          theme.includes("cold") ||
-          theme.includes("hot")
-        ) {
-          if (count >= 5) {
-            generatedActions.push(
-              `Le problème de qualité des plats revient dans ${count} avis → vérifier le process en cuisine ce soir`,
-            );
-            generatedActions.push(
-              `${count} clients mentionnent des problèmes de cuisson → observer la préparation des plats en cuisine`,
-            );
-          } else {
-            generatedActions.push(
-              `${count} clients signalent un problème de qualité → vérifier en cuisine si le problème est résolu`,
-            );
-          }
-        } else if (
-          // theme.includes("prix") ||
-          // theme.includes("cher") ||
-          // theme.includes("coûteux")
-          theme.includes("price") ||
-          theme.includes("expensive") ||
-          theme.includes("costly")
-        ) {
-          // Pour le prix, on constate et on observe, on ne suggère jamais de modifier les prix
-          generatedActions.push(
-            `${count} clients trouvent les prix élevés → observer les réactions clients sur les prix et noter les plaintes`,
-          );
-        } else if (
-          // theme.includes("accueil") ||
-          // theme.includes("sourire") ||
-          // theme.includes("froid") ||
-          // theme.includes("sympathie")
-          theme.includes("welcome") ||
-          theme.includes("smile") ||
-          theme.includes("cold") ||
-          theme.includes("friendliness")
-        ) {
-          if (count >= 3) {
-            generatedActions.push(
-              `${count} clients mentionnent un accueil froid → discuter avec l'équipe de l'importance du sourire et de l'accueil chaleureux`,
-            );
-          } else {
-            generatedActions.push(
-              `${count} clients se plaignent de l'accueil → faire un point avec l'équipe sur l'accueil`,
-            );
-          }
-        } else if (
-          // theme.includes("bruit") ||
-          // theme.includes("bruyant") ||
-          // theme.includes("ambiance") ||
-          // theme.includes("musique")
-          theme.includes("noise") ||
-          theme.includes("noisy") ||
-          theme.includes("ambience") ||
-          theme.includes("music")
-        ) {
-          generatedActions.push(
-            `${count} clients mentionnent le bruit ou l'ambiance → identifier les sources de nuisance sonore ce soir`,
-          );
-        } else if (
-          // theme.includes("propreté") ||
-          // theme.includes("sale") ||
-          // theme.includes("nettoyage")
-          theme.includes("cleanliness") ||
-          theme.includes("dirty") ||
-          theme.includes("cleaning")
-        ) {
-          if (count >= 3) {
-            generatedActions.push(
-              `${count} clients signalent des problèmes de propreté → vérifier la propreté des tables et sanitaires ce soir`,
-            );
-          } else {
-            generatedActions.push(
-              `${count} clients mentionnent la propreté → observer le nettoyage des tables entre les services`,
+      if (theme.includes("service") || theme.includes("waiting") || theme.includes("slow")) {
+        if (count >= 5) {
+          generatedActions.push(t("recommendations.actionPlan.actions.service.high_1", { count }));
+          generatedActions.push(t("recommendations.actionPlan.actions.service.high_2", { count }));
+        } else {
+          generatedActions.push(t("recommendations.actionPlan.actions.service.low", { count }));
+        }
+
+      } else if (theme.includes("quality") || theme.includes("dish") || theme.includes("cooking") || theme.includes("cold") || theme.includes("hot")) {
+        if (count >= 5) {
+          generatedActions.push(t("recommendations.actionPlan.actions.quality.high_1", { count }));
+          generatedActions.push(t("recommendations.actionPlan.actions.quality.high_2", { count }));
+        } else {
+          generatedActions.push(t("recomendations.actionPlan.actions.quality.low", { count }));
+        }
+
+      } else if (theme.includes("price") || theme.includes("expensive") || theme.includes("costly")) {
+        generatedActions.push(t("recommendations.actionPlan.actions.price.default", { count }));
+
+      } else if (theme.includes("welcome") || theme.includes("smile") || theme.includes("friendliness")) {
+        if (count >= 3) {
+          generatedActions.push(t("recommendations.actionPlan.actions.welcome.high", { count }));
+        } else {
+          generatedActions.push(t("recommendations.actionPlan.actions.welcome.low", { count }));
+        }
+
+      } else if (theme.includes("noise") || theme.includes("noisy") || theme.includes("ambience") || theme.includes("music")) {
+        generatedActions.push(t("recommendations.actionPlan.actions.noise.default", { count }));
+
+      } else if (theme.includes("cleanliness") || theme.includes("dirty") || theme.includes("cleaning")) {
+        if (count >= 3) {
+          generatedActions.push(t("recommendations.actionPlan.actions.cleanliness.high", { count }));
+        } else {
+          generatedActions.push(t("recommendations.actionPlan.actions.cleanliness.low", { count })
             );
           }
         } else {
-          // Pour les autres problèmes, générer une action concrète basée sur les avis
-          generatedActions.push(
-            `${count} clients mentionnent "${translateTheme(theme)}" → analyser les avis concernant ce point et faire un point avec l'équipe`,
+        // "other" — translate the theme label too
+        const translatedTheme = t(`recommendations.actionPlan.themes.${theme}`, {
+          defaultValue: theme,   // fallback: show raw theme if no key matches
+        });
+        generatedActions.push(t("recommendations.actionPlan.actions.other.default", { count, theme: translatedTheme })
           );
         }
       }
@@ -6384,12 +6314,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                       <div className="flex items-center gap-2 mb-2">
                         <ClipboardList className="w-5 h-5 text-emerald-600" />
                         <span className="text-lg font-semibold">
-                          Operational Checklist
+                          {t("dashboard.operationalChecklist")}
                         </span>
                       </div>
 
                       <p className="text-sm text-gray-600">
-                        Concrete actions to execute and track
+                        {t("dashboard.concreteActions")}
                       </p>
                     </CardHeader>
 
@@ -6416,7 +6346,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                   (a) => a.frequency === "weekly"
                                 ),
                                 monthly: actions.filter(
-                                  (a) => a.frequency === "once"
+                                  (a) => a.frequency === "once" || a.frequency === "monthly"
                                 ),
                               };
 
@@ -6450,7 +6380,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
 
                                         {objective.pareto_cause && (
                                           <p className="text-xs text-gray-500 mt-1">
-                                            Related issue:{" "}
+                                            {t("dashboard.relatedIssue")} {" : "}
                                             {objective.pareto_cause}
                                           </p>
                                         )}
@@ -6475,13 +6405,13 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                           <div key={frequency}>
                                             <h4 className="text-xs uppercase tracking-wide font-semibold text-gray-500 mb-3">
                                               {frequency === "daily" &&
-                                                "Daily"}
+                                               t(`dashboard.${frequency}`)}
                                               {frequency === "weekly" &&
-                                                "Weekly"}
+                                                t(`dashboard.${frequency}`)}
                                               {frequency === "monthly" &&
-                                                "Monthly"}
+                                                t(`dashboard.${frequency}`)}
                                               {frequency === "once" &&
-                                                "One-time"}
+                                                t(`dashboard.${frequency}`)}
                                             </h4>
 
                                             <div className="space-y-2">
@@ -6537,7 +6467,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                               : "bg-gray-100 text-gray-700 border-gray-200"
                                                       }
                                                     >
-                                                      {frequency}
+                                                      {t(`dashboard.${frequency}`)}
                                                     </Badge>
                                                   </div>
                                                 );
@@ -10531,7 +10461,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                         {/* AI impact */}
                      <div>
                     <h4 className="font-semibold text-gray-800 mb-2">
-                      AI PREDICTION
+                      {t("objective.aiPrediction")}
                     </h4>
 
                     {(() => {
@@ -10555,27 +10485,28 @@ const getLatestDate = (reviews: any[]): Date | null =>
                         >
                           <p className="text-lg font-semibold text-gray-900 leading-snug">
                             {isNegative
-                              ? "Potential decline detected"
-                              : "Stable performance expected"}
+                            ? t("objective.prediction.negativeTitle")
+                            : t("objective.prediction.positiveTitle")}
                           </p>
 
                           <p className="mt-2 text-sm text-gray-600">
+                          <Trans
+                            i18nKey=
                             {isNegative
-                              ? `Your rating could drop to `
-                              : `Your rating is likely to stay around `}
-                            <span
-                              className={`font-semibold ${
-                                isNegative ? "text-red-700" : "text-emerald-700"
-                              }`}
-                            >
-                              {formattedRating}/5
-                            </span>
-                            {!isNegative && !isNeutral && " or improve slightly"}
-                            {isNegative && " if no action is taken"}
+                                 ? "objective.prediction.negativeDesc"
+                                 : isNeutral ? "objective.prediction.neutralDesc"
+                                 : "objective.prediction.positiveDesc"
+                              }
+                              values={{ rating: `${formattedRating}/5` }}
+                              components={{
+                                rating: (
+                                  <span className={`font-semibold ${isNegative ? "text-red-700" : "text-emerald-700"}`} />
+                                ),
+                              }}/>
                           </p>
 
                           <div className="mt-3 text-xs text-gray-400">
-                            Based on recent review trends
+                            {t("objective.prediction.basedOn")}
                           </div>
                         </div>
                       );
@@ -10585,10 +10516,10 @@ const getLatestDate = (reviews: any[]): Date | null =>
                       {/* Simulation */}
                       <div>
                         <h4 className="font-semibold text-gray-800 mb-2">
-                          Simulation
+                          {t("objective.simulation.title")}
                         </h4>
                         <p className="text-sm text-gray-500 mb-3">
-                          If you follow the recommendations
+                          {t("objective.simulationFollow")}
                         </p>
 
                         {(() => {
@@ -10612,7 +10543,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                               }`}
                             >
                               <p className="text-lg font-semibold text-gray-900">
-                                Estimated Rating:{" "}
+                                {t("objective.estimatedRating")}:{" "}
                                 <span className={isPositive ? "text-green-700" : "text-gray-800"}>
                                   {formattedEstimated}/5
                                 </span>
@@ -10621,15 +10552,15 @@ const getLatestDate = (reviews: any[]): Date | null =>
                               <p className="mt-1 text-sm">
                                 {isPositive ? (
                                   <span className="text-green-600 font-medium">
-                                    +{formattedImpact} improvement expected
+                                    {t("objective.simulation.improvement", { value: `+${formattedImpact}` })}
                                   </span>
                                 ) : impact < 0 ? (
                                   <span className="text-red-600 font-medium">
-                                    {formattedImpact} decline risk
+                                    {t("objective.simulation.decline", { value: formattedImpact })}
                                   </span>
                                 ) : (
                                   <span className="text-gray-500">
-                                    No significant change expected
+                                    {t("objective.simulation.noChange")}
                                   </span>
                                 )}
                               </p>

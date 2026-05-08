@@ -336,6 +336,7 @@
 
 //----------------------------------------------------------------------------------------------------------------
 import { ThemeAnalysis, QualitativeData, ParetoItem, Review } from "@/types/analysis";
+import i18n from "i18next";
 
 export type ProbabilityLevel = "Probable" | "Possible" | "Occasionnelle";
 
@@ -491,20 +492,23 @@ function isRelatedToProblem(expandedTokens: string[], text: string): boolean {
 ───────────────────────────────────────────── */
 
 interface CategoryRule {
-  match: string[];           // if ANY of these appear in evidence → use this description
-  description: string;       // French cause description
+  match: string[];
+  /** i18n key — resolved via t() at runtime */
+  descriptionKey: string;
 }
 
 interface CategoryDefinition {
-  name: string;
+  /** i18n key for the category name */
+  nameKey: string;
   seeds: string[];
   rules: CategoryRule[];
-  fallbackDescription: string;
+  /** i18n key used when no specific rule matches */
+  fallbackKey: string;
 }
 
 const ISHIKAWA_CATEGORIES: CategoryDefinition[] = [
   {
-    name: "Main-d'œuvre",
+    nameKey: "rootCause.categories.workforce.name",
     seeds: [
       "staff","employee","employees","worker","workers","team","agent","manager",
       "supervisor","representative","associate","cashier","waiter","waitress",
@@ -517,25 +521,25 @@ const ISHIKAWA_CATEGORIES: CategoryDefinition[] = [
     rules: [
       {
         match: ["rude","impolite","arrogant","disrespectful","hostile","offensive","yelled"],
-        description: "Comportement irrespectueux ou impoli du personnel envers les clients"
+        descriptionKey: "rootCause.categories.workforce.causes.disrespectful"
       },
       {
         match: ["unprofessional","untrained","inexperienced","incompetent","useless"],
-        description: "Manque de formation ou compétences insuffisantes du personnel"
+        descriptionKey: "rootCause.categories.workforce.causes.untrained"
       },
       {
         match: ["ignored","unhelpful","dismissive","indifferent","careless","forgot"],
-        description: "Personnel inattentif ou négligent vis-à-vis des demandes clients"
+        descriptionKey: "rootCause:categories.workforce.causes.inattentive"
       },
       {
         match: ["shortage","few staff","understaffed","not enough staff","one person"],
-        description: "Effectif insuffisant pour gérer la demande"
+        descriptionKey: "rootCause.categories.workforce.causes.understaffed"
       },
     ],
-    fallbackDescription: "Problèmes liés au comportement ou aux compétences du personnel"
+    fallbackKey: "rootCause.categories.workforce.fallback"
   },
   {
-    name: "Processus",
+    nameKey: "rootCause.categories.process.name",
     seeds: [
       "process","procedure","queue","line","wait","waiting","delay","delayed",
       "slow","booking","reservation","appointment","scheduling","dispatch",
@@ -547,29 +551,29 @@ const ISHIKAWA_CATEGORIES: CategoryDefinition[] = [
     rules: [
       {
         match: ["wait","waiting","queue","line","long time","ages","forever","hours","minutes"],
-        description: "Temps d'attente excessif dû à une mauvaise gestion des flux"
+        descriptionKey: "rootCause.categories.process.causes.waitTime"
       },
       {
         match: ["reservation","booking","appointment","overbooked","surbooking"],
-        description: "Système de réservation inefficace ou surbooking"
+        descriptionKey: "rootCause.categories.process.causes.booking"
       },
       {
         match: ["delay","delayed","late","slow","took long","pending","unresolved"],
-        description: "Délais de traitement trop longs ou non respectés"
+        descriptionKey: "rootCause.categories.process.causes.delays"
       },
       {
         match: ["refund","return","exchange","complaint","unresolved","ignored"],
-        description: "Processus de réclamation ou retour mal géré"
+        descriptionKey: "rootCause.categories.process.causes.complaints"
       },
       {
         match: ["disorganized","chaotic","complicated","confusing","no system"],
-        description: "Organisation du service à revoir — processus peu clairs"
+        descriptionKey: "rootCause.categories.process.causes.disorganized"
       },
     ],
-    fallbackDescription: "Dysfonctionnement dans le processus de service"
+    fallbackKey: "rootCause.categories.process.fallback"
   },
   {
-    name: "Méthodes",
+    nameKey: "rootCause.categories.methods.name",
     seeds: [
       "method","approach","policy","protocol","standard","practice","guideline",
       "rule","instruction","communication","coordination","response","followup",
@@ -580,25 +584,25 @@ const ISHIKAWA_CATEGORIES: CategoryDefinition[] = [
     rules: [
       {
         match: ["coordination","communication","team","internal","between"],
-        description: "Manque de coordination entre les équipes de service"
+        descriptionKey: "rootCause.categories.methods.causes.coordination"
       },
       {
         match: ["inconsistent","different","every time","sometimes","depends"],
-        description: "Pratiques de service incohérentes selon les situations"
+        descriptionKey: "rootCause.categories.methods.causes.inconsistent"
       },
       {
         match: ["no response","ignored","unacknowledged","followup","never heard"],
-        description: "Absence de suivi ou de réponse aux demandes clients"
+        descriptionKey: "rootCause.categories.methods.causes.noFollowUp"
       },
       {
         match: ["priority","forgot","skipped","missed","overlooked"],
-        description: "Mauvaise priorisation ou oubli de certaines demandes"
+        descriptionKey: "rootCause.categories.methods.causes.badPriority"
       },
     ],
-    fallbackDescription: "Méthodes de travail inadaptées impactant la qualité du service"
+    fallbackKey: "rootCause.categories.methods.fallback"
   },
   {
-    name: "Outils & systèmes",
+    nameKey: "rootCause.categories.tools.name",
     seeds: [
       "app","application","website","site","platform","software","system","tool",
       "machine","device","terminal","kiosk","payment","checkout","interface",
@@ -609,25 +613,25 @@ const ISHIKAWA_CATEGORIES: CategoryDefinition[] = [
     rules: [
       {
         match: ["bug","crash","error","glitch","freeze","not working","broken","malfunction"],
-        description: "Pannes ou dysfonctionnements des outils technologiques"
+        descriptionKey: "rootCause.categories.tools.causes.crashes"
       },
       {
         match: ["payment","billing","checkout","transaction","charged","refund"],
-        description: "Problèmes avec les systèmes de paiement ou de facturation"
+        descriptionKey: "rootCause.categories.tools.causes.payment"
       },
       {
         match: ["slow","loading","down","unavailable","offline","lag"],
-        description: "Performances insuffisantes des systèmes ou applications"
+        descriptionKey: "rootCause.categories.tools.causes.performance"
       },
       {
         match: ["outdated","old","update","obsolete","legacy"],
-        description: "Outils obsolètes ne répondant plus aux besoins opérationnels"
+        descriptionKey: "rootCause.categories.tools.causes.outdated"
       },
     ],
-    fallbackDescription: "Outils ou systèmes défaillants impactant le service"
+    fallbackKey: "rootCause.categories.tools.fallback"
   },
   {
-    name: "Environnement",
+    nameKey: "rootCause.categories.environment.name",
     seeds: [
       "place","location","store","shop","restaurant","branch","outlet","facility",
       "parking","access","entrance","space","area","room","table","seat","seating",
@@ -642,37 +646,37 @@ const ISHIKAWA_CATEGORIES: CategoryDefinition[] = [
       {
         match: ["dirty","filthy","unclean","disgusting","gross","grimy","unhygienic",
                 "stain","sticky","mold","grease","greasy","residue"],
-        description: "Manque de propreté ou d'hygiène des locaux et équipements"
+        descriptionKey: "rootCause.categories.environment.causes.cleanliness"
       },
       {
         match: ["smell","smells","smelly","odor","odour","stench"],
-        description: "Problèmes d'odeurs désagréables affectant l'expérience client"
+        descriptionKey: "rootCause.categories.environment.causes.odor"
       },
       {
         match: ["cockroach","rat","mice","insect","pest","hair","contaminated","bacteria"],
-        description: "Présence de nuisibles ou contamination — problème d'hygiène critique"
+        descriptionKey: "rootCause.categories.environment.causes.pests"
       },
       {
         match: ["noisy","loud","noise","music","disturbing"],
-        description: "Environnement sonore perturbant l'expérience client"
+        descriptionKey: "rootCause.categories.environment.causes.noise"
       },
       {
         match: ["crowded","packed","full","busy","rush","small","cramped"],
-        description: "Capacité d'accueil insuffisante lors des pics d'affluence"
+        descriptionKey: "rootCause.categories.environment.causes.overcrowded"
       },
       {
         match: ["cold","hot","temperature","stuffy","ventilation","air"],
-        description: "Conditions de confort thermique ou d'aération insuffisantes"
+        descriptionKey: "rootCause.categories.environment.causes.temperature"
       },
       {
         match: ["parking","access","location","entrance","find","hard to"],
-        description: "Accessibilité ou localisation difficile pour les clients"
+        descriptionKey: "rootCause.categories.environment.causes.access"
       },
     ],
-    fallbackDescription: "Facteurs environnementaux dégradant l'expérience client"
+    fallbackKey: "rootCause.categories.environment.fallback"
   },
   {
-    name: "Produit / Service",
+    nameKey: "rootCause.categories.product.name",
     seeds: [
       "product","item","order","food","meal","dish","drink","service","quality",
       "taste","flavor","portion","size","quantity","packaging","delivery",
@@ -684,36 +688,59 @@ const ISHIKAWA_CATEGORIES: CategoryDefinition[] = [
     rules: [
       {
         match: ["cold","warm","temperature","not hot","lukewarm","reheated"],
-        description: "Produits servis à mauvaise température"
+        descriptionKey: "rootCause.categories.product.causes.temperature"
       },
       {
         match: ["bland","tasteless","flavor","taste","bad taste","awful","terrible"],
-        description: "Qualité gustative ou sensorielle insuffisante du produit"
+        descriptionKey: "rootCause.categories.product.causes.taste"
       },
       {
         match: ["wrong","missing","incorrect","not what","different","expected"],
-        description: "Commande incorrecte ou non conforme à la description"
+        descriptionKey: "rootCause.categories.product.causes.wrongOrder"
       },
       {
         match: ["small","portion","tiny","not enough","quantity","size"],
-        description: "Portions ou quantités insuffisantes par rapport au prix"
+        descriptionKey: "rootCause.categories.product.causes.portions"
       },
       {
         match: ["overpriced","expensive","costly","not worth","value","rip"],
-        description: "Rapport qualité-prix insuffisant aux yeux des clients"
+        descriptionKey: "rootCause.categories.product.causes.pricing"
       },
       {
         match: ["stale","expired","old","fresh","freshness","raw","undercooked"],
-        description: "Problèmes de fraîcheur ou de cuisson des produits"
+        descriptionKey: "rootCause.categories.product.causes.freshness"
       },
       {
         match: ["damaged","broken","defective","leaking","packaging"],
-        description: "Produits endommagés ou emballage défectueux à la livraison"
+        descriptionKey: "rootCause.categories.product.causes.damaged"
       },
     ],
-    fallbackDescription: "Qualité du produit ou service non conforme aux attentes clients"
+    fallbackKey: "rootCause.categories.product.fallback"
   },
 ];
+
+/* ─────────────────────────────────────────────
+   PROBABILITY HELPER
+   Maps count → i18n key, then resolves via t()
+───────────────────────────────────────────── */
+
+function getProbabilityKey(count: number): string {
+  if (count >= 5) return "rootCause.probability.probable";
+  if (count >= 3) return "rootCause.probability.possible";
+  return "rootCause.probability.occasional";
+}
+
+/**
+ * Maps the resolved translated probability string back to the
+ * ProbabilityLevel type so the rest of the app stays compatible.
+ * We keep the internal enum in French (matching the original type)
+ * and use t() only for display.
+ */
+function getProbabilityLevel(count: number): ProbabilityLevel {
+  if (count >= 5) return "Probable";
+  if (count >= 3) return "Possible";
+  return "Occasionnelle";
+}
 
 /* ─────────────────────────────────────────────
    MAIN FUNCTION
@@ -726,7 +753,7 @@ export function analyzeRootCauses(
   paretoIssues: ParetoItem[],
   reviews?: Review[]
 ): RootCauseAnalysis {
-
+  const t = i18n.t.bind(i18n); 
   /* ── STEP 1: Collect all texts from all sources ── */
   const allTexts: string[] = [];
 
@@ -789,41 +816,39 @@ export function analyzeRootCauses(
       if (ruleEvidence.length === 0) continue;
 
       const count = ruleEvidence.length;
-      const probability: ProbabilityLevel =
-        count >= 5 ? "Probable" :
-        count >= 3 ? "Possible" :
-        "Occasionnelle";
 
       causes.push({
-        description: rule.description,
-        probability,
+        description: t(rule.descriptionKey),
+        probability: getProbabilityLevel(count),
         evidence: ruleEvidence.slice(0, 3),
         count
       });
     }
 
-    // If no rules matched but category has evidence → use fallback description
     if (causes.length === 0 && categoryEvidence.length > 0) {
       const count = categoryEvidence.length;
       causes.push({
-        description: categoryDef.fallbackDescription,
-        probability: count >= 5 ? "Probable" : count >= 3 ? "Possible" : "Occasionnelle",
+        description: t(categoryDef.fallbackKey),
+        probability: getProbabilityLevel(count),
         evidence: categoryEvidence.slice(0, 3),
         count
       });
     }
 
     if (causes.length > 0) {
-      finalCategories.push({ name: categoryDef.name, causes });
+      finalCategories.push({
+        name: t(categoryDef.nameKey),
+        causes
+      });
     }
   }
 
   /* ── STEP 6: Global fallback ── */
   if (finalCategories.length === 0 && textsForAnalysis.length > 0) {
     finalCategories.push({
-      name: "Processus",
+      name: t("rootCause.categories.process.name"),
       causes: [{
-        description: `Problème lié à "${problem}" identifié dans les avis négatifs`,
+        description: t("rootCause.summary.globalFallback", { problem }),
         probability: "Possible",
         evidence: textsForAnalysis.slice(0, 3),
         count: textsForAnalysis.length
@@ -831,7 +856,7 @@ export function analyzeRootCauses(
     });
   }
 
-  /* ── STEP 7: Build French summary ── */
+  /* ── STEP 7: Build localised summary ── */
   const allCauses = finalCategories.flatMap(c => c.causes).sort((a, b) => b.count - a.count);
   const probableCauses = allCauses.filter(c => c.probability === "Probable");
   const possibleCauses = allCauses.filter(c => c.probability === "Possible");
@@ -839,14 +864,34 @@ export function analyzeRootCauses(
   let summary = "";
   if (probableCauses.length > 0) {
     const main = probableCauses[0];
-    const others = probableCauses.slice(1).map(c => c.description.toLowerCase()).join(" et ");
-    summary = `Les causes dominantes du problème "${problem}" sont principalement liées à ${main.description.toLowerCase()}${others ? `, avec des contributions de ${others}` : ""}.`;
+    const otherDescriptions = probableCauses
+      .slice(1)
+      .map(c => c.description.toLowerCase())
+      .join(t("rootCause.summary.and"));
+
+    summary = otherDescriptions
+      ? t("rootCause.summary.dominantWithOthers", {
+          problem,
+          main: main.description.toLowerCase(),
+          others: otherDescriptions
+        })
+      : t("rootCause.summary.dominant", {
+          problem,
+          main: main.description.toLowerCase()
+        });
+
   } else if (possibleCauses.length > 0) {
-    summary = `Les causes probables du problème "${problem}" semblent liées à ${possibleCauses[0].description.toLowerCase()}, nécessitant une analyse plus approfondie.`;
+    summary = t("rootCause.summary.possible", {
+      problem,
+      cause: possibleCauses[0].description.toLowerCase()
+    });
   } else if (allCauses.length > 0) {
-    summary = `Des causes occasionnelles ont été identifiées pour "${problem}" : ${allCauses[0].description.toLowerCase()}.`;
+    summary = t("rootCause.summary.occasional", {
+      problem,
+      cause: allCauses[0].description.toLowerCase()
+    });
   } else {
-    summary = `L'analyse des avis ne permet pas de déterminer une cause claire pour "${problem}" — une investigation terrain est recommandée.`;
+    summary = t("rootCause.summary.noData", { problem });
   }
 
   return { problem, categories: finalCategories, summary };

@@ -285,12 +285,7 @@ useEffect(() => {
         </div>
       )}
 
-      {/* ERROR */}
-      {error && (
-        <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-          {error}
-        </p>
-      )}
+
 
       {/* MODAL */}
       <SmartGenerateModal

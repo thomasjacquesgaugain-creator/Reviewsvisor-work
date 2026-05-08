@@ -1,4 +1,8 @@
 import { formatRecommendations } from "@/utils/formatDiagnosticSummary";
+import i18n from "i18next";
+
+// use i18n.t() directly — no hook, no props needed
+const t = i18n.t.bind(i18n);
 
 export interface NormalizedSummary {
   /** Human-readable summary text (never JSON). */
@@ -89,11 +93,11 @@ export function normalizeSummary(input: unknown): NormalizedSummary | null {
 
     const synthesized =
       total !== undefined && (positivePct !== undefined || negativePct !== undefined)
-        ? `Analyse basée sur ${Math.round(total)} avis :${
-            positivePct !== undefined ? ` ${Math.round(positivePct)}% positifs` : ""
+        ? `${t("dashboard.analysisBasedOn")} ${Math.round(total)} ${t("dashboard.reviews")} :${
+            positivePct !== undefined ? ` ${Math.round(positivePct)}% ${t("analysis.history.positifs")}` : ""
           }${
             positivePct !== undefined && negativePct !== undefined ? "," : ""
-          }${negativePct !== undefined ? ` ${Math.round(negativePct)}% négatifs` : ""}.`
+          }${negativePct !== undefined ? ` ${Math.round(negativePct)}% ${t("analysis.history.negatifs")}` : ""}.`
         : "";
 
     const text = explicitText || synthesized;
