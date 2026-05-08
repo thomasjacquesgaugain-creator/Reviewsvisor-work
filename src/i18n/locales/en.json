@@ -265,6 +265,10 @@
     "week": "Week",
     "month": "Month",
     "year": "Year",
+    "daily":"Daily",
+    "once":"Monthly",
+    "monthly":"Monthly",
+    "weekly":"Weekly",
     "review": "review",
     "reviews": "reviews",
     "stars": "stars",
@@ -280,6 +284,7 @@
     "saveResponse": "Save",
     "cancelEdit": "Cancel",
     "nextReview": "Next review",
+    "relatedIssue":"Related issue",
     "previousReview": "Previous review",
     "queueEmpty": "Queue empty",
     "allReviewsProcessed": "All reviews have been processed",
@@ -1558,7 +1563,8 @@
         "previous3Months": "vs. previous 3 months"
       },
       "trendTooltipAria": "Trend explanation",
-      "universalThemes": "Universal Themes"
+      "universalThemes": "Universal Themes",
+      "industryThemes":"Sector-specific Themes"
     },
     "history": {
       "title": "Review History and Dynamics",
@@ -1713,10 +1719,21 @@
     "ishikawa": {
       "title": "Root Cause Analysis (Ishikawa/AI)",
       "problemAnalyzed": "Problem Analyzed",
+      "dataSrc":"Data from the Pareto chart of negative reviews.",
       "probableCausesIdentified": "Probable Causes Identified by AI",
+      "causeMentioned":"Cause frequently mentioned in reviews",
+      "causeSuggested":"Cause suggested by some reviews",
+      "causeRare":"Rarely mentioned cause",
       "process": "Process",
+      "probabilityLevel":"Probability level",
       "automatedSummary": "Automated Summary",
-      "automatedSummaryDescription": "Review analysis suggests that the \"${problem}\" issue may stem from multiple sources—further on-site investigation is recommended."
+      "automatedSummaryDescription": "Review analysis suggests that the \"${problem}\" issue may stem from multiple sources—further on-site investigation is recommended.",
+      "editQuestionare":"Edit Questionnaire",
+      "fillQuestionare":"Fill Questionnaire",
+      "closeQuestionare":"Close Questionnaire",
+      "questionareSkipped":"Questionnaire skipped — effort level is auto-detected",
+      "recommendMessage":"Recommendations may be less accurate.",
+      "questionareWarning":"You have not completed the questionnaire for this issue."
     },
     "syntheseAndDiagnostic": {
       "title": "Synthesis and Diagnostic",
@@ -1758,5 +1775,199 @@
       "aiTrust": "AI Trust",
       "aiTrustDescription": "AI confidence refers to an indicator of the degree of reliability of the results produced by a model, based on the quantity, quality, and consistency of the data used. It reflects the level of uncertainty associated with the analyses and should be interpreted as a confidence level rather than as an absolute truth."
     }
+  },
+
+ "rootCause": {
+  "probability": {
+    "probable": "Probable",
+    "possible": "Possible",
+    "occasional": "Occasional"
+  },
+  "categories": {
+    "workforce": {
+      "name": "Workforce",
+      "fallback": "Issues related to staff behaviour or competencies",
+      "causes": {
+        "disrespectful": "Disrespectful or impolite behaviour by staff toward customers",
+        "untrained": "Lack of training or insufficient staff competencies",
+        "inattentive": "Staff inattentive or negligent toward customer requests",
+        "understaffed": "Insufficient headcount to handle demand"
+      }
+    },
+    "process": {
+      "name": "Process",
+      "fallback": "Service process malfunction",
+      "causes": {
+        "waitTime": "Excessive wait times due to poor flow management",
+        "booking": "Ineffective reservation system or overbooking",
+        "delays": "Processing delays that are too long or not met",
+        "complaints": "Complaint or return process poorly managed",
+        "disorganized": "Service organisation needs review — unclear processes"
+      }
+    },
+    "methods": {
+      "name": "Methods",
+      "fallback": "Unsuitable working methods impacting service quality",
+      "causes": {
+        "coordination": "Lack of coordination between service teams",
+        "inconsistent": "Inconsistent service practices depending on situation",
+        "noFollowUp": "No follow-up or response to customer requests",
+        "badPriority": "Poor prioritisation or overlooked requests"
+      }
+    },
+    "tools": {
+      "name": "Tools & Systems",
+      "fallback": "Failing tools or systems impacting service",
+      "causes": {
+        "crashes": "Failures or malfunctions in technological tools",
+        "payment": "Issues with payment or billing systems",
+        "performance": "Insufficient performance of systems or applications",
+        "outdated": "Outdated tools no longer meeting operational needs"
+      }
+    },
+    "environment": {
+      "name": "Environment",
+      "fallback": "Environmental factors degrading customer experience",
+      "causes": {
+        "cleanliness": "Lack of cleanliness or hygiene in premises and equipment",
+        "odor": "Unpleasant odour issues affecting customer experience",
+        "pests": "Presence of pests or contamination — critical hygiene issue",
+        "noise": "Disruptive sound environment affecting customer experience",
+        "overcrowded": "Insufficient capacity during peak periods",
+        "temperature": "Insufficient thermal comfort or ventilation conditions",
+        "access": "Difficult accessibility or location for customers"
+      }
+    },
+    "product": {
+      "name": "Product / Service",
+      "fallback": "Product or service quality not meeting customer expectations",
+      "causes": {
+        "temperature": "Products served at the wrong temperature",
+        "taste": "Insufficient taste or sensory quality of the product",
+        "wrongOrder": "Incorrect order or not matching the description",
+        "portions": "Portions or quantities insufficient relative to the price",
+        "pricing": "Insufficient value for money in customers' view",
+        "freshness": "Freshness or cooking issues with products",
+        "damaged": "Damaged products or defective packaging on delivery"
+      }
+    }
+  },
+  "summary": {
+    "and": " and ",
+    "dominant": "The dominant causes of the \"{{problem}}\" issue are primarily related to {{main}}.",
+    "dominantWithOthers": "The dominant causes of the \"{{problem}}\" issue are primarily related to {{main}}, with contributions from {{others}}.",
+    "possible": "The likely causes of the \"{{problem}}\" issue appear to be related to {{cause}}, requiring further analysis.",
+    "occasional": "Occasional causes have been identified for \"{{problem}}\": {{cause}}.",
+    "noData": "The review analysis does not allow a clear cause to be determined for \"{{problem}}\" — an on-site investigation is recommended.",
+    "globalFallback": "Issue related to \"{{problem}}\" identified in negative reviews"
   }
+},
+"questionnaire": {
+  "options": {
+    "no":         "No",
+    "unlikely":   "Unlikely",
+    "uncertain":  "Uncertain",
+    "likely":     "Likely",
+    "veryLikely": "Very likely"
+  },
+  "sections": {
+    "manpower": {
+      "title":    "Workforce (People)",
+      "subtitle": "Is the issue related to staff skills, training, or behaviour?"
+    },
+    "method": {
+      "title":    "Methods (Processes)",
+      "subtitle": "Is the issue related to the way tasks are performed or a lack of clear procedures?"
+    },
+    "machine": {
+      "title":    "Equipment & Tools",
+      "subtitle": "Is the issue related to tools, equipment, or software used?"
+    },
+    "material": {
+      "title":    "Materials (Products & Components)",
+      "subtitle": "Is the issue related to the quality of raw materials or components used?"
+    },
+    "measurement": {
+      "title":    "Environment & Context",
+      "subtitle": "Is the issue related to the environment or external conditions?"
+    }
+  },
+  "validation": {
+    "tooManySame":    "Please vary your answers — no more than 2 categories can have the same score.",
+    "noStrongSignal": "Please mark at least one category as \"Likely\" or \"Very likely\".",
+    "incomplete":     "Please answer all questions before submitting."
+  },
+  "button": {
+    "submit":    "Submit Questionnaire",
+    "saving":    "Saving & generating...",
+    "skip":      "Skip — recommendations may be less accurate",
+    "answerAll": "Answer all questions ({{answered}}/{{total}})",
+    "tooSimilar":"Too many similar answers",
+    "needStrong":"Select at least one strong factor"
+  },
+  "errors": {
+    "saveFailed": "Failed to save. Please try again."
+  }
+},
+"recommendations":{
+  "actionPlan": {
+    "themes": {
+      "service":     "service & wait times",
+      "quality":     "food quality",
+      "price":       "pricing",
+      "welcome":     "customer welcome",
+      "noise":       "noise & ambience",
+      "cleanliness": "cleanliness",
+      "other":       "{{theme}}"
+    },
+  "actions": {
+    "service": {
+      "high_1": "{{count}} customers mention excessive wait times → brief the team on service speed",
+      "high_2": "Wait time issue appears in {{count}} reviews → observe service tonight to identify bottlenecks",
+      "low":    "{{count}} customers complain about wait times → remind the team to serve quickly"
+    },
+    "quality": {
+      "high_1": "Food quality issue appears in {{count}} reviews → check kitchen process tonight",
+      "high_2": "{{count}} customers mention cooking issues → observe food preparation in the kitchen",
+      "low":    "{{count}} customers report a quality issue → check with the kitchen if the problem is resolved"
+    },
+    "price": {
+      "default": "{{count}} customers find prices high → observe customer reactions to prices and note complaints"
+    },
+    "welcome": {
+      "high": "{{count}} customers mention a cold welcome → discuss the importance of smiling and warm greeting with the team",
+      "low":  "{{count}} customers complain about the welcome → debrief the team on customer greeting"
+    },
+    "noise": {
+      "default": "{{count}} customers mention noise or ambience → identify sources of noise disturbance tonight"
+    },
+    "cleanliness": {
+      "high": "{{count}} customers report cleanliness issues → check table and restroom cleanliness tonight",
+      "low":  "{{count}} customers mention cleanliness → observe table cleaning between services"
+    },
+    "other": {
+      "default": "{{count}} customers mention \"{{theme}}\" → analyse reviews on this point and debrief the team"
+    }
+  }
+}
+},
+"objective":{
+  "aiPrediction":"AI PREDICTION",
+  "simulationFollow":"If you follow the recommendations",
+  "estimatedRating":"estimated rating",
+      "prediction": {
+        "negativeTitle": "Potential decline detected",
+        "positiveTitle": "Stable performance expected",
+        "negativeDesc":  "Your rating could drop to <rating>{{rating}}</rating> if no action is taken",
+        "neutralDesc":   "Your rating is likely to stay around <rating>{{rating}}</rating>",
+        "positiveDesc":  "Your rating is likely to stay around <rating>{{rating}}</rating> or improve slightly",
+        "basedOn":       "Based on recent review trends"
+      },
+      "simulation": {
+        "title":       "Simulation",
+        "improvement": "{{value}} improvement expected",
+        "decline":     "{{value}} decline risk",
+        "noChange":    "No significant change expected"
+      }
+    }
 }

@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { PotentialGainSectionProps, Review } from "./types";
 
-const getNote = (review: Review): number => review?.note || review?.rating || 0;
+const getNote = (review: Review): number => review?.note ?? review?.rating ?? 0;
 const normalize = (s: string) =>
   (s || "").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
 const extractOriginalText = (
@@ -39,7 +39,7 @@ export function PotentialGainSection({
     const neg = reviews.filter((r) => (getNote(r) ?? 0) <= 3);
     const totalNeg = Math.max(1, neg.length);
     const theoreticalMaxGain = neg.reduce((sum, r) => {
-      return sum + (3 - (r.rating ?? 1)) / reviews?.length;
+      return sum + (3 - (getNote(r) ?? 1)) / reviews.length;
     }, 0);
 
     const issueWords = normalize(selectedAction.issue).split(/\s+/);
@@ -51,10 +51,10 @@ export function PotentialGainSection({
     const mentionWeight = count / totalNeg;
     const aiShare = selectedAction.impact / 100;
     const starDelta = Number(
-      (theoreticalMaxGain * aiShare * Math.sqrt(mentionWeight + 0.1)).toFixed(2)
+      (theoreticalMaxGain * aiShare * Math.sqrt(mentionWeight + 0.1)).toFixed(3)
     );
 
-    return Math.max(0.1, starDelta);
+    return Math.max(0.05, starDelta);
   }, [reviews, recommendedActions, mainIssue]);
 
   return (
@@ -85,7 +85,7 @@ export function PotentialGainSection({
 
               <div className="min-w-0">
                 <div className="text-[26px] font-semibold leading-none tracking-tight text-slate-900">
-                  +{potentialGain.toFixed(1)}
+                  +{potentialGain.toFixed(2)}
                 </div>
                 <div className="mt-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#2563eb]">
                   {t("dashboard.keyTakeaways.potentialGain.label", {
@@ -94,8 +94,8 @@ export function PotentialGainSection({
                 </div>
                 <div className="mt-2 text-sm leading-6 text-slate-600">
                   {t("dashboard.keyTakeaways.potentialGain.estimatedGain", {
-                    gain: potentialGain.toFixed(1),
-                    defaultValue: `+${potentialGain.toFixed(1)} estimated if action applied.`,
+                    gain: potentialGain.toFixed(2),
+                    defaultValue: `+${potentialGain.toFixed(2)} estimated if action applied.`,
                   })}
                 </div>
               </div>
