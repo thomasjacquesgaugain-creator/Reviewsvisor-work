@@ -473,6 +473,53 @@
     "encouragePositiveReviews": "Encouragez vos clients satisfaits à laisser des avis positifs",
     "analyzeRecurringThemes": "Analysez les thèmes récurrents pour identifier les axes d'amélioration prioritaires",
     "advisorDescription": "Ces conseils sont générés automatiquement en fonction de l'analyse de vos avis clients.",
+    "consultantAdvice": {
+      "mainIssue": {
+        "serviceHigh": "Le temps d'attente est très souvent mentionné négativement ({{percentage}}% des avis). C'est le premier point qui ressort dans les retours clients.",
+        "qualityHigh": "La qualité des plats revient souvent dans les avis négatifs ({{percentage}}% des mentions). C'est un point qui impacte la perception de tes clients.",
+        "priceHigh": "Les prix sont souvent perçus comme élevés ({{percentage}}% des avis). C'est une tendance à surveiller dans les retours clients.",
+        "otherHigh": "{{theme}} revient fréquemment dans les avis ({{percentage}}% des mentions). C'est un point récurrent à analyser.",
+        "serviceMedium": "L'attente revient régulièrement dans les avis ({{percentage}}% des mentions). C'est une tendance à surveiller.",
+        "otherMedium": "{{theme}} est mentionné dans {{percentage}}% des avis. C'est un point à prendre en compte dans tes réflexions."
+      },
+      "mainStrength": {
+        "ambianceHigh": "L'ambiance est un point fort récurrent ({{percentage}}% des avis positifs). C'est un atout à conserver selon tes clients.",
+        "qualityHigh": "La qualité de ta cuisine revient souvent dans les avis positifs ({{percentage}}% des mentions). C'est un point fort à valoriser.",
+        "welcomeHigh": "L'accueil est souvent mentionné positivement ({{percentage}}% des avis). C'est un atout selon tes clients.",
+        "otherHigh": "{{theme}} revient dans {{percentage}}% des avis positifs. C'est un point fort à prendre en compte."
+      },
+      "overall": {
+        "lowRating": "Ta note moyenne est à {{rating}}/5, en dessous de la moyenne du secteur. C'est une tendance à analyser dans les retours clients.",
+        "goodRating": "Ta note moyenne est de {{rating}}/5. Les points qui reviennent souvent dans les avis pourraient être des pistes d'amélioration.",
+        "excellentRating": "Ta note moyenne est excellente ({{rating}}/5). Les points forts mentionnés dans les avis sont des atouts à conserver."
+      },
+      "ratio": {
+        "negativeHigh": "{{percentage}}% d'avis négatifs dans tes retours clients. C'est une tendance à analyser, le problème principal revient souvent.",
+        "positiveHigh": "{{percentage}}% d'avis positifs dans tes retours. Les points forts mentionnés sont des atouts à valoriser."
+      },
+      "response": {
+        "low": "Tu réponds à moins de {{percentage}}% des avis. C'est une tendance à analyser dans ta gestion des retours clients.",
+        "high": "Tu réponds à {{percentage}}% des avis. C'est une bonne pratique dans la gestion de tes retours clients."
+      },
+      "secondaryIssue": "En plus du problème principal, {{theme}} revient aussi souvent ({{percentage}}% des avis). C'est un point secondaire à analyser.",
+      "secondaryStrength": "{{theme}} revient souvent dans les avis positifs ({{percentage}}%). C'est un point fort à prendre en compte.",
+      "retention": {
+        "recentPositive": "Tu as {{count}} avis positifs récents. C'est une tendance positive dans les retours clients."
+      },
+      "continuousImprovement": {
+        "thirdIssue": "{{theme}} revient aussi ({{percentage}}% des avis). C'est un point secondaire à surveiller."
+      },
+      "differentiation": {
+        "ambiance": "L'ambiance est un point fort récurrent selon tes clients. C'est un atout à conserver.",
+        "quality": "Ta cuisine est souvent appréciée dans les avis. C'est un point fort à valoriser."
+      },
+      "proactive": {
+        "recentNegative": "Tu as {{count}} avis négatifs récents. C'est une tendance à surveiller dans tes retours clients."
+      },
+      "globalExperience": {
+        "veryPositive": "{{percentage}}% de tes clients donnent 5 étoiles. C'est une tendance très positive dans les retours."
+      }
+    },
     "objective": "Objectif",
     "defineProgressionGoals": "Définissez vos objectifs de progression",
     "mainObjective": "Objectif principal",

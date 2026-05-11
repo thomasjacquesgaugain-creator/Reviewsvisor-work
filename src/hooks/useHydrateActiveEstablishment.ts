@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import type { EstablishmentData } from "@/services/establishments";
@@ -11,15 +11,24 @@ import type { EstablishmentData } from "@/services/establishments";
 // TODO :- find alternative for isActive
 export function useHydrateActiveEstablishment(userId: string | undefined) {
   const hydratedRef = useRef(false);
-  useEffect(() => {
-    if (!userId) {
-      hydratedRef.current = false;
-      return;
-    }
+  const hydratedForUserRef = useRef<string | null>(null);
+
+  useLayoutEffect(() => {
     const store = useEstablishmentStore.getState();
-    if (store.selectedEstablishment !== null && store.activePlaceId !== null) {
+
+    if (!userId) {
+      hydratedForUserRef.current = null;
+      hydratedRef.current = false;
+      store.clearSelectedEstablishment();
       return;
     }
+
+    if (hydratedForUserRef.current !== userId) {
+      hydratedForUserRef.current = userId;
+      hydratedRef.current = false;
+      store.clearSelectedEstablishment();
+    }
+
     if (hydratedRef.current) return;
     hydratedRef.current = true;
 

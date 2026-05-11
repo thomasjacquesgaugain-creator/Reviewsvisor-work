@@ -6,6 +6,7 @@ import { toast } from "sonner";
 interface EstablishmentStore {
   selectedEstablishment: EstablishmentData | null;
   setSelectedEstablishment: (establishment: EstablishmentData | null) => void;
+  clearSelectedEstablishment: () => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
   /** place_id de l'établissement actif (source unique pour badge / sync). */
@@ -27,6 +28,11 @@ export const useEstablishmentStore = create<EstablishmentStore>((set, get) => ({
     set({
       selectedEstablishment: establishment,
       activePlaceId: establishment?.place_id ?? null,
+    }),
+  clearSelectedEstablishment: () =>
+    set({
+      selectedEstablishment: null,
+      activePlaceId: null,
     }),
   isLoading: false,
   setIsLoading: (loading) => set({ isLoading: loading }),
