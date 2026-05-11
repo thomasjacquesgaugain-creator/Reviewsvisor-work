@@ -90,6 +90,7 @@
     "loginError": "Erreur de connexion",
     "invalidCredentials": "E-mail ou mot de passe invalide",
     "signupError": "Erreur d'inscription",
+    "accountAlreadyExists": "Un compte existe déjà avec cette adresse email.",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "fillNameFields": "Veuillez remplir votre prénom et nom.",
     "accountRequired": "Un compte est requis pour analyser vos avis clients",
@@ -280,6 +281,10 @@
     "granularity": "Granularité",
     "day": "Jour",
     "week": "Semaine",
+    "daily":"Quotidien",
+    "monthly":"Mensuel",
+    "once":"Mensuel",
+    "weekly":"Hebdomadaire",
     "review": "avis",
     "reviews": "avis",
     "stars": "étoiles",
@@ -294,6 +299,7 @@
     "saveResponse": "Sauvegarder",
     "cancelEdit": "Annuler",
     "nextReview": "Avis suivant",
+    "relatedIssue":"Problème connexe",
     "previousReview": "Avis précédent",
     "queueEmpty": "File d'attente vide",
     "allReviewsProcessed": "Tous les avis ont été traités",
@@ -729,6 +735,7 @@
     "personalInformation": {
       "title": "Informations personnelles",
       "profilePicture": "Photo de profil",
+      "profilePictureDeleted":"Photo de profil supprimée",
       "addPhoto": "Ajouter une photo",
       "changePhoto": "Changer la photo",
       "firstName": "Prénom",
@@ -1761,10 +1768,12 @@
         "partial": "Comparaison début vs fin de période",
         "previous3Months": "vs 3 mois précédents"
       },
+    "universalThemes": "Thèmes universels",
+    "industryThemes":"Thèmes spécifiques au secteur",
 
       "trendTooltipAria": "Explication des tendances"
     },
-    "universalThemes": "Thèmes universels",
+    
     "history": {
       "title": "Historique & dynamique des avis",
       "averageRatingTitle": "Évolution Note Moyenne",
@@ -1918,10 +1927,21 @@
     "ishikawa": {
       "title": "Analyse des causes racines (Ishikawa IA)",
       "problemAnalyzed": "Problème analysé",
+      "dataSrc":"Données issues du diagramme de Pareto des avis négatifs.",
       "probableCausesIdentified": "Causes probables identifiées par l'IA",
+      "causeMentioned":"Cause fréquemment mentionnée dans les avis",
+      "causeSuggested":"Cause suggérée par certains avis",
+      "causeRare":"Cause rarement mentionnée",
       "process": "Processus",
+      "probabilityLevel":"Niveau de probabilité",
       "automatedSummary": "Synthèse automatique",
-      "automatedSummaryDescription": "L'analyse des avis suggère que le problème \"${problem}\" peut avoir plusieurs origines — une investigation terrain complémentaire est recommandée."
+      "automatedSummaryDescription": "L'analyse des avis suggère que le problème \"${problem}\" peut avoir plusieurs origines — une investigation terrain complémentaire est recommandée.",
+      "editQuestionare":"Modifier le questionnaire",
+      "fillQuestionare":"Remplir le questionnaire",
+      "closeQuestionare":"Fermer le questionnaire",
+      "questionareSkipped":"Questionnaire ignoré — le niveau d'effort est détecté automatiquement.",
+      "recommendMessage":"Les recommandations peuvent être moins précises.",
+      "questionareWarning":"Vous n'avez pas rempli le questionnaire pour ce problème."
     },
     "syntheseAndDiagnostic": {
       "title": "Synthèse & diagnostic",
@@ -1966,5 +1986,200 @@
   },
   "messages": {
     "featureAvailableSoon": "Cette fonctionnalite sera bientot disponible."
+  },
+  "rootCause":{
+  "probability": {
+    "probable": "Probable",
+    "possible": "Possible",
+    "occasional": "Occasionnelle"
+  },
+  "categories": {
+    "workforce": {
+      "name": "Main-d'œuvre",
+      "fallback": "Problèmes liés au comportement ou aux compétences du personnel",
+      "causes": {
+        "disrespectful": "Comportement irrespectueux ou impoli du personnel envers les clients",
+        "untrained": "Manque de formation ou compétences insuffisantes du personnel",
+        "inattentive": "Personnel inattentif ou négligent vis-à-vis des demandes clients",
+        "understaffed": "Effectif insuffisant pour gérer la demande"
+      }
+    },
+    "process": {
+      "name": "Processus",
+      "fallback": "Dysfonctionnement dans le processus de service",
+      "causes": {
+        "waitTime": "Temps d'attente excessif dû à une mauvaise gestion des flux",
+        "booking": "Système de réservation inefficace ou surbooking",
+        "delays": "Délais de traitement trop longs ou non respectés",
+        "complaints": "Processus de réclamation ou retour mal géré",
+        "disorganized": "Organisation du service à revoir — processus peu clairs"
+      }
+    },
+    "methods": {
+      "name": "Méthodes",
+      "fallback": "Méthodes de travail inadaptées impactant la qualité du service",
+      "causes": {
+        "coordination": "Manque de coordination entre les équipes de service",
+        "inconsistent": "Pratiques de service incohérentes selon les situations",
+        "noFollowUp": "Absence de suivi ou de réponse aux demandes clients",
+        "badPriority": "Mauvaise priorisation ou oubli de certaines demandes"
+      }
+    },
+    "tools": {
+      "name": "Outils & systèmes",
+      "fallback": "Outils ou systèmes défaillants impactant le service",
+      "causes": {
+        "crashes": "Pannes ou dysfonctionnements des outils technologiques",
+        "payment": "Problèmes avec les systèmes de paiement ou de facturation",
+        "performance": "Performances insuffisantes des systèmes ou applications",
+        "outdated": "Outils obsolètes ne répondant plus aux besoins opérationnels"
+      }
+    },
+    "environment": {
+      "name": "Environnement",
+      "fallback": "Facteurs environnementaux dégradant l'expérience client",
+      "causes": {
+        "cleanliness": "Manque de propreté ou d'hygiène des locaux et équipements",
+        "odor": "Problèmes d'odeurs désagréables affectant l'expérience client",
+        "pests": "Présence de nuisibles ou contamination — problème d'hygiène critique",
+        "noise": "Environnement sonore perturbant l'expérience client",
+        "overcrowded": "Capacité d'accueil insuffisante lors des pics d'affluence",
+        "temperature": "Conditions de confort thermique ou d'aération insuffisantes",
+        "access": "Accessibilité ou localisation difficile pour les clients"
+      }
+    },
+    "product": {
+      "name": "Produit / Service",
+      "fallback": "Qualité du produit ou service non conforme aux attentes clients",
+      "causes": {
+        "temperature": "Produits servis à mauvaise température",
+        "taste": "Qualité gustative ou sensorielle insuffisante du produit",
+        "wrongOrder": "Commande incorrecte ou non conforme à la description",
+        "portions": "Portions ou quantités insuffisantes par rapport au prix",
+        "pricing": "Rapport qualité-prix insuffisant aux yeux des clients",
+        "freshness": "Problèmes de fraîcheur ou de cuisson des produits",
+        "damaged": "Produits endommagés ou emballage défectueux à la livraison"
+      }
+    }
+  },
+  "summary": {
+    "and": " et ",
+    "dominant": "Les causes dominantes du problème \"{{problem}}\" sont principalement liées à {{main}}.",
+    "dominantWithOthers": "Les causes dominantes du problème \"{{problem}}\" sont principalement liées à {{main}}, avec des contributions de {{others}}.",
+    "possible": "Les causes probables du problème \"{{problem}}\" semblent liées à {{cause}}, nécessitant une analyse plus approfondie.",
+    "occasional": "Des causes occasionnelles ont été identifiées pour \"{{problem}}\" : {{cause}}.",
+    "noData": "L'analyse des avis ne permet pas de déterminer une cause claire pour \"{{problem}}\" — une investigation terrain est recommandée.",
+    "globalFallback": "Problème lié à \"{{problem}}\" identifié dans les avis négatifs"
+  }
+},
+"questionnaire": {
+  "options": {
+    "no":         "Non",
+    "unlikely":   "Peu probable",
+    "uncertain":  "Incertain",
+    "likely":     "Probable",
+    "veryLikely": "Très probable"
+  },
+  "sections": {
+    "manpower": {
+      "title":    "Main-d'œuvre (Personnel)",
+      "subtitle": "Le problème est-il lié aux compétences, à la formation ou au comportement du personnel ?"
+    },
+    "method": {
+      "title":    "Méthodes (Procédures)",
+      "subtitle": "Le problème est-il lié à la façon dont les tâches sont effectuées ou à un manque de procédures claires ?"
+    },
+    "machine": {
+      "title":    "Matériel (Équipements & Outils)",
+      "subtitle": "Le problème est-il lié aux outils, équipements ou logiciels utilisés ?"
+    },
+    "material": {
+      "title":    "Matières (Produits & Composants)",
+      "subtitle": "Le problème est-il lié à la qualité des matières premières ou des composants utilisés ?"
+    },
+    "measurement": {
+      "title":    "Milieu (Environnement & Contexte)",
+      "subtitle": "Le problème est-il lié à l'environnement ou à des conditions externes ?"
+    }
+  },
+  "validation": {
+    "tooManySame":    "Merci de varier vos réponses — pas plus de 2 catégories ne peuvent avoir le même score.",
+    "noStrongSignal": "Veuillez marquer au moins une catégorie comme « Probable » ou « Très probable ».",
+    "incomplete":     "Veuillez répondre à toutes les questions avant de soumettre."
+  },
+  "button": {
+    "submit":    "Soumettre le questionnaire",
+    "saving":    "Enregistrement en cours...",
+    "skip":      "Passer — les recommandations pourraient être moins précises",
+    "answerAll": "Répondre à toutes les questions ({{answered}}/{{total}})",
+    "tooSimilar":"Trop de réponses similaires",
+    "needStrong":"Sélectionnez au moins un facteur fort"
+  },
+  "errors": {
+    "saveFailed": "Échec de l'enregistrement. Veuillez réessayer."
+  }
+},
+"recommendations":{
+  
+"actionPlan": {
+  "themes": {
+    "service":     "service & temps d'attente",
+    "quality":     "qualité des plats",
+    "price":       "tarifs",
+    "welcome":     "accueil client",
+    "noise":       "bruit & ambiance",
+    "cleanliness": "propreté",
+    "other":       "{{theme}}"
+  },
+  "actions": {
+    "service": {
+      "high_1": "{{count}} clients mentionnent une attente trop longue → briefer l'équipe sur la rapidité de service",
+      "high_2": "Le problème d'attente revient dans {{count}} avis → observer le service ce soir pour identifier les points de blocage",
+      "low":    "{{count}} clients se plaignent de l'attente → rappeler à l'équipe l'importance de servir rapidement"
+    },
+    "quality": {
+      "high_1": "Le problème de qualité des plats revient dans {{count}} avis → vérifier le process en cuisine ce soir",
+      "high_2": "{{count}} clients mentionnent des problèmes de cuisson → observer la préparation des plats en cuisine",
+      "low":    "{{count}} clients signalent un problème de qualité → vérifier en cuisine si le problème est résolu"
+    },
+    "price": {
+      "default": "{{count}} clients trouvent les prix élevés → observer les réactions clients sur les prix et noter les plaintes"
+    },
+    "welcome": {
+      "high": "{{count}} clients mentionnent un accueil froid → discuter avec l'équipe de l'importance du sourire et de l'accueil chaleureux",
+      "low":  "{{count}} clients se plaignent de l'accueil → faire un point avec l'équipe sur l'accueil"
+    },
+    "noise": {
+      "default": "{{count}} clients mentionnent le bruit ou l'ambiance → identifier les sources de nuisance sonore ce soir"
+    },
+    "cleanliness": {
+      "high": "{{count}} clients signalent des problèmes de propreté → vérifier la propreté des tables et sanitaires ce soir",
+      "low":  "{{count}} clients mentionnent la propreté → observer le nettoyage des tables entre les services"
+    },
+    "other": {
+      "default": "{{count}} clients mentionnent \"{{theme}}\" → analyser les avis concernant ce point et faire un point avec l'équipe"
+    }
   }
 }
+},
+"objective":{
+  "aiPrediction":"Prédiction IA",
+  "simulationFollow":"Si vous appliquez les recommandations ",
+  "estimatedRating":"Note estimée",
+    "prediction": {
+      "negativeTitle": "Risque de baisse détecté",
+      "positiveTitle": "Performance stable attendue",
+      "negativeDesc":  "Votre note pourrait descendre à <rating>{{rating}}</rating> sans action corrective",
+      "neutralDesc":   "Votre note devrait rester autour de <rating>{{rating}}</rating>",
+      "positiveDesc":  "Votre note devrait rester autour de <rating>{{rating}}</rating> ou s'améliorer légèrement",
+      "basedOn":       "Basé sur les tendances récentes des avis"
+    },
+    "simulation": {
+      "title":       "Simulation",
+      "improvement": "{{value}} d'amélioration attendue",
+      "decline":     "Risque de baisse de {{value}}",
+      "noChange":    "Aucun changement significatif attendu"
+    }
+  }
+}
+

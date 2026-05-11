@@ -185,7 +185,7 @@ export function ThemesDisplay({
       {showIndustryThemes && hasIndustryThemes && (
         <div>
           <h4 className="font-semibold text-lg mb-4">
-            Thèmes spécifiques au secteur
+            {t("analysis.overview.industryThemes")}
           </h4>
           <div className="space-y-2">
             {renderThemes(insight?.themes_industry || [])}

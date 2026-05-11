@@ -13,14 +13,13 @@ import { getReponsesStats } from "@/lib/reponses";
 import { SubscriptionCard } from "@/components/SubscriptionCard";
 import { useTranslation } from "react-i18next";
 import { DashboardTabs } from "@/components/DashboardTabs";
-import { capitalizeName } from "@/utils/capitalizeName";
 import { extractOriginalText } from "@/utils/extractOriginalText";
 import { getEstablishmentTypeTranslationKey } from "@/utils/establishmentTypeMapping";
 import { AppPageBackground } from "@/components/AppPageBackground";
+import { useAuth } from "@/contexts/AuthProvider";
 
 
 const Dashboard = () => {
-  const [userProfile, setUserProfile] = useState<{ first_name: string; last_name: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [recentReviewsCount, setRecentReviewsCount] = useState(0);
   const [lastReviewDate, setLastReviewDate] = useState<Date | null>(null);
@@ -32,6 +31,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const { establishment: currentEstablishment, loading: establishmentLoading } = useCurrentEstablishment();
   const { t, i18n } = useTranslation();
+  const { displayName: authDisplayName } = useAuth();
   const [activeTab, setActiveTab] = useState('apercu');
 
   const currentEstablishmentTypes = useMemo(() => {
@@ -70,14 +70,6 @@ const Dashboard = () => {
           navigate('/auth');
           return;
         }
-
-        // Pour l'instant, utiliser les données de base de l'utilisateur
-        const profile = {
-          first_name: session.user.user_metadata?.first_name || t("common.user"),
-          last_name: session.user.user_metadata?.last_name || ''
-        };
-
-        setUserProfile(profile);
 
         // Si aucun établissement n'est sélectionné, réinitialiser les données
         if (!currentEstablishment?.place_id) {
@@ -353,9 +345,7 @@ const Dashboard = () => {
     );
   }
 
-  const displayName = userProfile 
-    ? capitalizeName(`${userProfile.first_name} ${userProfile.last_name}`)
-    : t("dashboard.user");
+  const displayName = authDisplayName || t("dashboard.user");
 
   return (
     <div className="app-page-shell">

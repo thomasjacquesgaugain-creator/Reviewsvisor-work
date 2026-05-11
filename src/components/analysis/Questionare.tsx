@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button } from "../ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 /* ─────────────────────────────────────────────
    TYPES
@@ -17,11 +18,11 @@ export type IshikawaKey =
 export type IshikawaScores = Record<IshikawaKey, number | null>;
 
 export const ISHIKAWA_CATEGORY_MAP: Record<IshikawaKey, string> = {
-  manpower:    "Main-d'œuvre",
-  method:      "Méthodes",
-  machine:     "Outils & systèmes",
-  material:    "Produit / Service",
-  measurement: "Environnement",
+  manpower:    "manpower",
+  method:      "method",
+  machine:     "machine",
+  material:    "material",
+  measurement: "measurement",
 };
 
 export const EFFORT_BY_5M: Record<IshikawaKey, "Low" | "Medium" | "High"> = {
@@ -47,55 +48,6 @@ export interface QuestionnaireResult {
   isComplete: boolean;
 }
 
-/* ─────────────────────────────────────────────
-   CONSTANTS
-───────────────────────────────────────────── */
-
-const OPTIONS = [
-  { label: "No",          value: 0, icon: "" },
-  { label: "Unlikely",    value: 1, icon: "" },
-  { label: "Uncertain",   value: 2, icon: "" },
-  { label: "Likely",      value: 3, icon: "" },
-  { label: "Very likely", value: 4, icon: "" },
-];
-
-const SCORE_LABELS: Record<number, string> = {
-  0: "No",
-  1: "Unlikely",
-  2: "Uncertain",
-  3: "Likely",
-  4: "Very likely",
-};
-
-const SECTIONS: { key: IshikawaKey; title: string; subtitle: string }[] = [
-  {
-    key: "manpower",
-    title: "Manpower (People)",
-    subtitle: "Is the issue related to staff skills or training?",
-  },
-  {
-    key: "method",
-    title: "Method (Processes)",
-    subtitle:
-      "Is the issue related to the way tasks are performed or to a lack of clear procedures?",
-  },
-  {
-    key: "machine",
-    title: "Machine (Equipment & Tools)",
-    subtitle: "Is the issue related to tools, equipment, or software used?",
-  },
-  {
-    key: "material",
-    title: "Material (Products)",
-    subtitle: "Is the issue related to the quality of the products used?",
-  },
-  {
-    key: "measurement",
-    title: "Measurement (Environment & Context)",
-    subtitle:
-      "Is the issue related to the environment or external conditions?",
-  },
-];
 
 /* ─────────────────────────────────────────────
    HELPER — build result from scores
@@ -103,7 +55,8 @@ const SECTIONS: { key: IshikawaKey; title: string; subtitle: string }[] = [
 
 export function buildQuestionnaireResult(
   paretoIssue: string,
-  scores: IshikawaScores
+  scores: IshikawaScores,
+  scoreLabels: Record<number, string>
 ): QuestionnaireResult {
   const confirmedCategories = (
     Object.entries(scores) as [IshikawaKey, number | null][]
@@ -114,7 +67,7 @@ export function buildQuestionnaireResult(
       categoryName: ISHIKAWA_CATEGORY_MAP[key],
       score: score as number,
       effort: EFFORT_BY_5M[key],
-      label: SCORE_LABELS[score as number],
+      label: scoreLabels[score as number],
     }))
     .sort((a, b) => b.score - a.score);
 
@@ -123,7 +76,7 @@ export function buildQuestionnaireResult(
   return {
     paretoIssue,
     scores,
-    dominantCategory: dominant?.categoryName ?? "Méthodes",
+    dominantCategory: dominant?.categoryName ?? "Methods",
     dominantEffort:   dominant?.effort       ?? "Low",
     confirmedCategories,
     isComplete: Object.values(scores).every((s) => s !== null),
@@ -136,18 +89,20 @@ const Section = ({
   subtitle,
   value,
   onChange,
+  options,
 }: {
   title: string;
   subtitle: string;
   value: number | null;
   onChange: (val: number) => void;
+  options: { label: string; value: number }[];
 }) => (
   <div className="border-b border-gray-300 p-3">
     <div className="font-semibold">{title}</div>
     <div className="mb-2 text-sm text-gray-700">{subtitle}</div>
 
     <div className="flex justify-between gap-3 border rounded-full px-3 py-2 w-full">
-      {OPTIONS.map((opt) => {
+      {options.map((opt) => {
         const selected = value === opt.value;
         return (
           <button
@@ -159,7 +114,6 @@ const Section = ({
                 : "hover:bg-gray-100"
               }`}
           >
-            <span>{opt.icon}</span>
             <span className="text-sm">{opt.label}</span>
           </button>
         );
@@ -188,18 +142,75 @@ const Questionnaire = ({
   onSkip,
 }: Props) => {
   const [scores, setScores] = useState<IshikawaScores>(
-  initialScores ?? {
-    manpower:    null,
-    method:      null,
-    machine:     null,
-    material:    null,
-    measurement: null,
-  }
-);
+    initialScores ?? {
+      manpower:    null,
+      method:      null,
+      machine:     null,
+      material:    null,
+      measurement: null,
+    }
+  );
+  const { t } = useTranslation();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [error, setError] = useState<string | null>(null);
+
+
+
+
+
+/* ─────────────────────────────────────────────
+   CONSTANTS
+───────────────────────────────────────────── */
+
+  const OPTIONS = [
+    { label: t("questionnaire.options.no"),         value: 0 },
+    { label: t("questionnaire.options.unlikely"),   value: 1 },
+    { label: t("questionnaire.options.uncertain"),  value: 2 },
+    { label: t("questionnaire.options.likely"),     value: 3 },
+    { label: t("questionnaire.options.veryLikely"), value: 4 },
+  ];
+
+  const SCORE_LABELS: Record<number, string> = {
+    0: t("questionnaire.options.no"),
+    1: t("questionnaire.options.unlikely"),
+    2: t("questionnaire.options.uncertain"),
+    3: t("questionnaire.options.likely"),
+    4: t("questionnaire.options.veryLikely"),
+  };
+
+  const SECTIONS: { key: IshikawaKey; title: string; subtitle: string }[] = [
+    {
+      key: "manpower",
+      title:    t("questionnaire.sections.manpower.title"),
+      subtitle: t("questionnaire.sections.manpower.subtitle"),
+    },
+    {
+      key: "method",
+      title:    t("questionnaire.sections.method.title"),
+      subtitle: t("questionnaire.sections.method.subtitle"),
+    },
+    {
+      key: "machine",
+      title:    t("questionnaire.sections.machine.title"),
+      subtitle: t("questionnaire.sections.machine.subtitle"),
+    },
+    {
+      key: "material",
+      title:    t("questionnaire.sections.material.title"),
+      subtitle: t("questionnaire.sections.material.subtitle"),
+    },
+    {
+      key: "measurement",
+      title:    t("questionnaire.sections.measurement.title"),
+      subtitle: t("questionnaire.sections.measurement.subtitle"),
+    },
+  ];
+
+
+
+
 
   const getValueCounts = (scores: IshikawaScores) => {
   const map: Record<number, number> = {};
@@ -260,7 +271,7 @@ const hasStrongSignal = (scores: IshikawaScores) => {
     setError(null);
 
     try {
-      const result = buildQuestionnaireResult(problemTitle, scores);
+      const result = buildQuestionnaireResult(problemTitle, scores,SCORE_LABELS);
 
       // Save questionnaire scores + derived effort override to smart_objectives
       // const { error: dbError } = await supabase
@@ -291,11 +302,21 @@ const hasStrongSignal = (scores: IshikawaScores) => {
       await onSuccess(result);
 
     } catch (err: any) {
-      setError(err.message ?? "Failed to save. Please try again.");
+      setError(err.message ?? t("questionnaire.errors.saveFailed"));
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  /* ── Submit button label ── */
+
+  const submitLabel = isSubmitting ? null
+    : !isComplete            ? t("questionnaire.button.answerAll",    { answered: answeredCount, total: 5 })
+    : isInvalidDistribution  ? t("questionnaire.button.tooSimilar")
+    : lacksStrongSignal      ? t("questionnaire.button.needStrong")
+    :                          t("questionnaire.button.submit");
+
+  /* ── Render ── */
 
   return (
     <div className="border border-gray-400 rounded w-full font-sans">
@@ -325,6 +346,7 @@ const hasStrongSignal = (scores: IshikawaScores) => {
           subtitle={section.subtitle}
           value={scores[section.key]}
           onChange={(val) => handleChange(section.key, val)}
+          options={OPTIONS}
         />
       ))}
 
@@ -335,20 +357,20 @@ const hasStrongSignal = (scores: IshikawaScores) => {
 
       {isInvalidDistribution && (
         <p className="px-3 pt-2 text-xs text-orange-500">
-          Please vary your answers — no more than 2 categories can have the same score.
+          {t("questionnaire.validation.tooManySame")}
         </p>
       )}
       
 
       {!isInvalidDistribution && lacksStrongSignal && (
         <p className="px-3 pt-2 text-xs text-orange-500">
-          Please mark at least one category as "Likely" or "Very likely".
+          {t("questionnaire.validation.noStrongSignal")}
         </p>
       )}
 
       {!isComplete && (
         <p className="px-3 pt-2 text-xs text-orange-500">
-          Please answer all questions before submitting.
+          {t("questionnaire.validation.incomplete")}
         </p>
       )}
 
@@ -359,34 +381,24 @@ const hasStrongSignal = (scores: IshikawaScores) => {
             onClick={onSkip}
             className="text-xs text-gray-400 underline hover:text-gray-600"
           >
-            Skip — recommendations may be less accurate
+            {t("questionnaire.button.skip")}
           </button>
         )}
-      <Button
-        onClick={handleSubmit}
-        disabled={
-          !isComplete ||
-          isSubmitting ||
-          isInvalidDistribution ||
-          lacksStrongSignal
-        }
-        className="ml-auto flex items-center gap-2 min-w-[170px]"
-      >
-        {isSubmitting ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Saving & generating...
-          </>
-        ) : !isComplete ? (
-          `Answer all questions (${answeredCount}/5)`
-        ) : isInvalidDistribution ? (
-          "Too many similar answers"
-        ) : lacksStrongSignal ? (
-          "Select at least one strong factor"
-        ) : (
-          "Submit Questionnaire"
-        )}
-      </Button>
+
+        <Button
+          onClick={handleSubmit}
+          disabled={!isComplete || isSubmitting || isInvalidDistribution || lacksStrongSignal}
+          className="ml-auto flex items-center gap-2 min-w-[170px]"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              {t("questionnaire.button.saving")}
+            </>
+          ) : (
+            submitLabel
+          )}
+        </Button>
       </div>
     </div>
   );
