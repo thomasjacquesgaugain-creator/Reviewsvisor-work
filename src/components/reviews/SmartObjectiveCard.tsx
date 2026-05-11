@@ -1,6 +1,7 @@
 // src/components/reviews/SmartObjectiveCard.tsx
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,53 +34,6 @@ const STATUS_STYLE: Record<string, string> = {
   overdue:     "bg-red-100 text-red-700",
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  todo:        "To do",
-  in_progress: "In progress",
-  completed:   "Completed",
-  overdue:     "Overdue",
-};
-
-// Spec §7.3.2 PDCA phases
-const PDCA_CONFIG: Record<string, {
-  phase: string;
-  label: string;
-  color: string;
-  dot:   string;
-}> = {
-  todo: {
-    phase: "PLAN",
-    label: "PLAN — defining objective",
-    color: "bg-blue-50 border-blue-200",
-    dot:   "bg-blue-500",
-  },
-  in_progress: {
-    phase: "DO",
-    label: "DO — executing",
-    color: "bg-green-50 border-green-200",
-    dot:   "bg-green-500",
-  },
-  completed: {
-    phase: "ACT",
-    label: "ACT — standardizing",
-    color: "bg-purple-50 border-purple-200",
-    dot:   "bg-purple-500",
-  },
-  overdue: {
-    phase: "CHECK",
-    label: "CHECK — review needed",
-    color: "bg-red-50 border-red-200",
-    dot:   "bg-red-500",
-  },
-};
-
-const FREQUENCY_STYLE: Record<string, string> = {
-  daily:   "bg-blue-50 text-blue-600 border-blue-100",
-  weekly:  "bg-orange-50 text-orange-600 border-orange-100",
-  monthly: "bg-purple-50 text-purple-600 border-purple-100",
-  once:    "bg-gray-100 text-gray-500 border-gray-200",
-};
-
 const SMART_LETTER_STYLE: Record<string, string> = {
   S: "bg-blue-100 text-blue-700",
   M: "bg-green-100 text-green-700",
@@ -97,8 +51,8 @@ export function SmartObjectiveCard({
   onUpdateProgress,
   onToggleAction,
 }: Props) {
+  const { t } = useTranslation();
   const progress = useSmartProgress(objective);
-  const pdca     = PDCA_CONFIG[objective.status ?? "todo"];
 
   const [showProgress, setShowProgress]   = useState(false);
   const [progressInput, setProgressInput] = useState(
@@ -131,18 +85,19 @@ export function SmartObjectiveCard({
             }`} />
             <div>
               <p className="text-sm font-semibold text-gray-800 leading-snug">
-                SMART objective — {objective.pareto_cause}
+                {t("smartCard.header.title", { cause: objective.pareto_cause })}
               </p>
               <p className="text-xs text-gray-400 mt-0.5">
-                From Pareto: "{objective.pareto_cause}
-                {objective.pareto_percentage
-                  ? ` – ${Math.round(objective.pareto_percentage ?? 0)}% of negative reviews`
-                  : ""}"
+                {t("smartCard.header.pareto", {
+                  cause:      objective.pareto_cause,
+                  percentage: objective.pareto_percentage
+                    ? Math.round(objective.pareto_percentage ?? 0)
+                  : null,})}
                 {objective.ishikawa_top_category && (
                   <span>
-                    {" · "}Ishikawa: {objective.ishikawa_top_category}
+                    {" · "}{t("smartCard.header.ishikawa", {category: objective.ishikawa_top_category,})}
                     {objective.effort_source === "user_questionnaire" && (
-                      <span className="text-green-600"> (validated)</span>
+                      <span className="text-green-600">{" "}{t("smartCard.header.validated")}</span>
                     )}
                   </span>
                 )}
@@ -154,17 +109,17 @@ export function SmartObjectiveCard({
             <Badge className={`text-xs border ${
               PRIORITY_STYLE[objective.priority ?? "medium"]
             }`}>
-              {objective.priority} priority
+              {t(`smartCard.priority.${objective.priority ?? "medium"}`)}
             </Badge>
             <Badge className={`text-xs ${
               STATUS_STYLE[objective.status ?? "todo"]
             }`}>
-              {STATUS_LABEL[objective.status ?? "todo"]}
+              {t(`smartCard.status.${objective.status ?? "todo"}`)}
             </Badge>
             {objective.ai_generated && (
               <span className="text-xs text-gray-400 bg-gray-50
                                px-2 py-0.5 rounded-full border">
-                AI generated
+                {t("smartCard.aiGenerated")}
               </span>
             )}
           </div>
@@ -182,7 +137,7 @@ export function SmartObjectiveCard({
                 S
               </span>
               <span className="text-xs font-semibold text-blue-700">
-                Specific
+                {t("smartCard.smart.specific")}
               </span>
             </div>
             <p className="text-xs text-gray-700 leading-relaxed line-clamp-3">
@@ -199,7 +154,7 @@ export function SmartObjectiveCard({
                 R
               </span>
               <span className="text-xs font-semibold text-orange-700">
-                Relevant
+                {t("smartCard.smart.relevant")}
               </span>
             </div>
             <p className="text-xs text-gray-700 leading-relaxed line-clamp-3">
@@ -216,7 +171,7 @@ export function SmartObjectiveCard({
                 M
               </span>
               <span className="text-xs font-semibold text-green-700">
-                Measurable
+                {t("smartCard.smart.measurable")}
               </span>
             </div>
             <p className="text-xs text-gray-500">{objective.kpi_label}</p>
@@ -235,17 +190,17 @@ export function SmartObjectiveCard({
                 T
               </span>
               <span className="text-xs font-semibold text-purple-700">
-                Temporal
+                {t("smartCard.smart.temporal")}
               </span>
             </div>
             <p className="text-xs text-gray-700">
-              Deadline:{" "}
-              {objective.deadline
+              {t("smartCard.temporal.deadline", {
+                date: objective.deadline
                 ? format(new Date(objective.deadline), "MMM d, yyyy")
-                : "—"}
+                : "—",})}
             </p>
             <p className="text-xs text-gray-500">
-              Duration: {objective.duration_months}mo · Review: 6 weeks
+              {t("smartCard.temporal.duration",{months: objective.duration_months,})}
             </p>
           </div>
         </div>
@@ -259,14 +214,14 @@ export function SmartObjectiveCard({
               A
             </span>
             <span className="text-xs font-semibold text-yellow-700">
-              Achievable
+              {t("smartCard.smart.achievable")}
             </span>
           </div>
           <p className="text-xs text-gray-700">
-            {objective.actions?.[0]?.text ?? "No actions defined"}
+            {objective.actions?.[0]?.text ?? t("smartCard.achievable.noActions")}
             {(objective.actions?.length ?? 0) > 1 && (
               <span className="text-gray-400">
-                {" "}+ {(objective.actions?.length ?? 0) - 1} more
+                {" "}{t("smartCard.achievable.more", {count: (objective.actions?.length ?? 0) - 1,})}
               </span>
             )}
           </p>
@@ -276,7 +231,7 @@ export function SmartObjectiveCard({
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500">
-              Progress toward target
+              {t("smartCard.progress.label")}
             </span>
             <span className={`text-xs font-semibold ${
               progress.label === "improvement" ? "text-blue-600" :
@@ -286,21 +241,20 @@ export function SmartObjectiveCard({
               {progress.percentage}%
               {progress.label === "improvement" && (
                 <span className="ml-1 font-normal text-gray-500">
-                  · {objective.current_progress ?? objective.current_value}{" "}
-                  mentions now
+                  · {t("smartCard.progress.mentionsNow", {value: objective.current_progress ?? objective.current_value,})}
                 </span>
               )}
             </span>
           </div>
           <Progress value={progress.percentage} className="h-2" />
           <div className="flex justify-between text-xs text-gray-400">
-            <span>Start: {objective.current_value}</span>
+            <span>{t("smartCard.progress.start", { value: objective.current_value })}</span>
             <span className={progress.isOverdue ? "text-red-500" : ""}>
               {progress.isOverdue
-                ? `${Math.abs(progress.daysRemaining)}d overdue`
-                : `${progress.daysRemaining} days left`}
+                ? t("smartCard.progress.overdue",   { days: Math.abs(progress.daysRemaining) })
+                : t("smartCard.progress.daysLeft",  { days: progress.daysRemaining })}
             </span>
-            <span>Target: {objective.target_value}</span>
+            <span>{t("smartCard.progress.target", { value: objective.target_value })}</span>
           </div>
 
           {/* Manual progress update */}
@@ -311,7 +265,7 @@ export function SmartObjectiveCard({
                 className="text-xs text-blue-500 hover:text-blue-700
                            flex items-center gap-1"
               >
-                Update progress
+                {t("smartCard.progress.updateBtn")}
                 {showProgress
                   ? <ChevronUp className="h-3 w-3" />
                   : <ChevronDown className="h-3 w-3" />}
@@ -320,7 +274,7 @@ export function SmartObjectiveCard({
               {showProgress && (
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-xs text-gray-500">
-                    Current mentions:
+                    {t("smartCard.progress.currentMentions")}
                   </span>
                   <input
                     type="number"
@@ -342,7 +296,7 @@ export function SmartObjectiveCard({
                     className="text-xs bg-blue-600 text-white
                                px-2 py-1 rounded hover:bg-blue-700"
                   >
-                    Save
+                    {t("smartCard.progress.saveBtn")}
                   </button>
                 </div>
               )}
@@ -357,28 +311,28 @@ export function SmartObjectiveCard({
 {/* ── PDCA Cycle — spec §7.3.2 ── */}
 <div className="border-t border-gray-100 pt-3">
   <p className="text-xs font-semibold text-gray-500 mb-2">
-    PDCA — Monitoring, execution, continuous improvement
+    {t("smartCard.pdca.title")}
   </p>
 
   <div className="space-y-2">
 
     {/* PLAN */}
     <div className="flex items-start gap-2 p-2.5 bg-blue-50 rounded-lg border-l-2 border-blue-400">
-      <span className="text-xs font-bold text-blue-600 w-12 shrink-0">PLAN</span>
+      <span className="text-xs font-bold text-blue-600 w-12 shrink-0">{t("smartCard.pdca.plan.label")}</span>
       <div className="text-xs text-gray-700">
         <p className="font-medium">{objective.problem}</p>
         <p className="text-gray-500 mt-0.5">
-          Target: {objective.current_value} → {objective.target_value} · {objective.duration_months} months
+          {t("smartCard.pdca.plan.target", {  current:objective.current_value,target:objective.target_value,months:   objective.duration_months,})}
         </p>
       </div>
     </div>
 
     {/* DO */}
     <div className="flex items-start gap-2 p-2.5 bg-red-50 rounded-lg border-l-2 border-red-400">
-      <span className="text-xs font-bold text-red-600 w-12 shrink-0">DO</span>
+      <span className="text-xs font-bold text-red-600 w-12 shrink-0">{t("smartCard.pdca.do.label")}</span>
       <div className="text-xs text-gray-700 flex-1">
         <p className="font-medium mb-1">
-          Tasks ({completedActions}/{totalActions})
+          {t("smartCard.pdca.do.tasks", {completed: completedActions,total:totalActions,})}
         </p>
         {objective.actions?.slice(0, 2).map((a, i) => (
           <div key={i} className="flex items-center gap-1.5">
@@ -395,9 +349,9 @@ export function SmartObjectiveCard({
 
     {/* CHECK */}
     <div className="flex items-start gap-2 p-2.5 bg-yellow-50 rounded-lg border-l-2 border-yellow-400">
-      <span className="text-xs font-bold text-yellow-600 w-12 shrink-0">CHECK</span>
+      <span className="text-xs font-bold text-yellow-600 w-12 shrink-0">{t("smartCard.pdca.check.label")}</span>
       <div className="text-xs text-gray-700 flex-1">
-        <p className="font-medium mb-1">KPI tracking</p>
+        <p className="font-medium mb-1">{t("smartCard.pdca.check.kpiTracking")}</p>
         <p className="font-mono text-gray-600">
           {objective.kpi_label}: {objective.current_value}
           {objective.current_progress != null &&
@@ -406,7 +360,7 @@ export function SmartObjectiveCard({
                 {" → "}{objective.current_progress}
               </span>
             )}
-          {" → "}<span className="text-green-600">target {objective.target_value}</span>
+          {" → "}<span className="text-green-600">{t("smartCard.pdca.check.target", { value: objective.target_value })}</span>
         </p>
         <div className="mt-1 h-1 bg-gray-200 rounded-full overflow-hidden">
           <div
@@ -419,23 +373,19 @@ export function SmartObjectiveCard({
 
     {/* ACT */}
     <div className="flex items-start gap-2 p-2.5 bg-green-50 rounded-lg border-l-2 border-green-400">
-      <span className="text-xs font-bold text-green-600 w-12 shrink-0">ACT</span>
+      <span className="text-xs font-bold text-green-600 w-12 shrink-0">{t("smartCard.pdca.act.label")}</span>
       <div className="text-xs text-gray-700 flex-1">
-        <p className="font-medium mb-1.5">Decision</p>
+        <p className="font-medium mb-1.5">{t("smartCard.pdca.act.decision")}</p>
         <div className="space-y-1">
-          {[
-            { label: "Effective → standardize",  value: "effective" },
-            { label: "Partial → adjust",          value: "partial"   },
-            { label: "Ineffective → new action",  value: "ineffective"},
-          ].map((opt) => (
-            <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+          {(["effective", "partial", "ineffective"] as const).map((val) => (
+            <label key={val} className="flex items-center gap-2 cursor-pointer">
               <input
                 type="radio"
                 name={`act-${objective.id}`}
-                value={opt.value}
+                value={val}
                 className="w-3 h-3 accent-green-600"
               />
-              <span>{opt.label}</span>
+              <span>{t(`smartCard.pdca.act.options.${val}`)}</span>
             </label>
           ))}
         </div>
@@ -446,7 +396,7 @@ export function SmartObjectiveCard({
             progress.label === "degradation" ? "bg-red-500" :
                                                "bg-yellow-500"
           }`} />
-          <span className="text-gray-500 capitalize">{progress.label}</span>
+          <span className="text-gray-500">{t(`smartCard.pdca.act.trend.${progress.label}`)}</span>
           </div>
           </div>
         </div>

@@ -173,7 +173,7 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
 
       {/* Titre de section 6 */}
       <h2 className="text-2xl font-bold text-gray-800 mt-12 mb-6">
-        {t("analysis.ishikawa.title")}
+       6. {t("analysis.ishikawa.title")}
       </h2>
 
       {/* Section 6: Analyse des causes racines */}
