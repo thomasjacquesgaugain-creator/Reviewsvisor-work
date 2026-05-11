@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
 import { capitalizeName } from "@/utils/capitalizeName";
+import { useEstablishmentStore } from "@/store/establishmentStore";
 
 type Profile = {
   id: string;
@@ -93,6 +94,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }, 0);
         } else {
           setProfile(null);
+          useEstablishmentStore.getState().clearSelectedEstablishment();
         }
         
         setLoading(false);
@@ -159,6 +161,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Force le nettoyage de l'état local
       setSession(null);
       setProfile(null);
+      useEstablishmentStore.getState().clearSelectedEstablishment();
     }
   };
 

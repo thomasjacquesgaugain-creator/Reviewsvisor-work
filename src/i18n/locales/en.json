@@ -371,6 +371,53 @@
     "encouragePositiveReviews": "Encourage satisfied customers to leave positive reviews",
     "analyzeRecurringThemes": "Analyze recurring themes to identify priority areas for improvement",
     "advisorDescription": "These tips are automatically generated based on the analysis of your customer reviews.",
+    "consultantAdvice": {
+      "mainIssue": {
+        "serviceHigh": "Waiting time is mentioned very often negatively ({{percentage}}% of reviews). This is the first point that stands out in customer feedback.",
+        "qualityHigh": "Food quality comes up often in negative reviews ({{percentage}}% of mentions). This is a point that affects how customers perceive your establishment.",
+        "priceHigh": "Prices are often perceived as high ({{percentage}}% of reviews). This is a trend worth monitoring in customer feedback.",
+        "otherHigh": "{{theme}} comes up frequently in reviews ({{percentage}}% of mentions). This is a recurring point to analyze.",
+        "serviceMedium": "Waiting comes up regularly in reviews ({{percentage}}% of mentions). This is a trend worth watching.",
+        "otherMedium": "{{theme}} is mentioned in {{percentage}}% of reviews. This is a point to consider in your reflection."
+      },
+      "mainStrength": {
+        "ambianceHigh": "Ambience is a recurring strength ({{percentage}}% of positive reviews). This is an asset to keep according to your customers.",
+        "qualityHigh": "The quality of your food comes up often in positive reviews ({{percentage}}% of mentions). This is a strength worth highlighting.",
+        "welcomeHigh": "Welcome and reception are often mentioned positively ({{percentage}}% of reviews). This is an asset according to your customers.",
+        "otherHigh": "{{theme}} appears in {{percentage}}% of positive reviews. This is a strength to keep in mind."
+      },
+      "overall": {
+        "lowRating": "Your average rating is {{rating}}/5, below the sector average. This is a trend to analyze in customer feedback.",
+        "goodRating": "Your average rating is {{rating}}/5. The points that come up often in reviews could be areas for improvement.",
+        "excellentRating": "Your average rating is excellent ({{rating}}/5). The strengths mentioned in reviews are assets to preserve."
+      },
+      "ratio": {
+        "negativeHigh": "{{percentage}}% negative reviews in your feedback. This is a trend to analyze, as the main issue often comes back.",
+        "positiveHigh": "{{percentage}}% positive reviews in your feedback. The strengths mentioned are assets to highlight."
+      },
+      "response": {
+        "low": "You respond to less than {{percentage}}% of reviews. This is a trend to analyze in how you manage customer feedback.",
+        "high": "You respond to {{percentage}}% of reviews. This is a good practice in managing customer feedback."
+      },
+      "secondaryIssue": "In addition to the main issue, {{theme}} also comes up often ({{percentage}}% of reviews). This is a secondary point to analyze.",
+      "secondaryStrength": "{{theme}} comes up often in positive reviews ({{percentage}}%). This is a strength to keep in mind.",
+      "retention": {
+        "recentPositive": "You have {{count}} recent positive reviews. This is a positive trend in customer feedback."
+      },
+      "continuousImprovement": {
+        "thirdIssue": "{{theme}} comes up again ({{percentage}}% of reviews). This is a secondary point to watch."
+      },
+      "differentiation": {
+        "ambiance": "Ambience is a recurring strength according to your customers. This is an asset to keep.",
+        "quality": "Your food is often appreciated in reviews. This is a strength to highlight."
+      },
+      "proactive": {
+        "recentNegative": "You have {{count}} recent negative reviews. This is a trend to monitor in customer feedback."
+      },
+      "globalExperience": {
+        "veryPositive": "{{percentage}}% of your customers give 5 stars. This is a very positive trend in feedback."
+      }
+    },
     "objective": "Objective",
     "defineProgressionGoals": "Define your progression goals",
     "mainObjective": "Main objective",
