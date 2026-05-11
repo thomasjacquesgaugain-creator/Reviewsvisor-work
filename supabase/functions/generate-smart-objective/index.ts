@@ -1,6 +1,8 @@
 // supabase/functions/generate-smart-objective/index.ts
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+type OutputLanguage = 'fr' | 'en';
+
 
 /* ─────────────────────────────────────────────
    HELPERS
@@ -18,6 +20,24 @@ function json(body: unknown, status = 200) {
     headers: { "content-type": "application/json", ...cors },
   });
 }
+
+function getOutputLanguageName(language: OutputLanguage): string {
+  return language === 'fr' ? 'French' : 'English';
+}
+
+function normalizeLanguage(code: string | null | undefined): OutputLanguage {
+  const normalized = String(code || '').trim().toLowerCase();
+
+  if (normalized.startsWith('en')) return 'en';
+  if (normalized.startsWith('fr')) return 'fr';
+
+  return 'fr';
+}
+
+function getLanguageInstruction(language: OutputLanguage): string {
+  return `All output text values in the JSON must be in ${getOutputLanguageName(language)}. Keep JSON keys exactly as requested and do not translate the field names.`;
+}
+
 
 // Spec §7.2 — effort → deadline months lookup table
 const DEADLINE_BY_EFFORT: Record<string, number> = {
@@ -86,7 +106,8 @@ Deno.serve(async (req) => {
       // Questionnaire data
       ishikawa_top_category,
       effort_source,            // "user_questionnaire" | "auto_detected"
-      questionnaire_scores,     // raw 5M scores object or null
+      questionnaire_scores, 
+      language    // raw 5M scores object or null
     } = body;
     const establishmentId = establishment_id ?? body.establishmentId;
     if (!establishmentId || !pareto_cause) {
@@ -151,6 +172,9 @@ Deno.serve(async (req) => {
       .slice(0, 5)
       .join("\n") || "General dissatisfaction mentioned in reviews";
 
+      // language extractions
+    const outputLanguage = normalizeLanguage(language);
+    const languageInstruction = getLanguageInstruction(outputLanguage);
     /* ── Build deadline from effort ── */
     const deadlineMonths = computed_deadline_months
       ?? DEADLINE_BY_EFFORT[computed_effort]
@@ -187,7 +211,8 @@ Effort level (user-validated): ${computed_effort}
        This solves the "inconsistent prioritization" critique from the other AI
     ── */
     const prompt = `
-You are a business improvement consultant writing a SMART objective for a ${insight.business_type}.
+You are a business improvement consultant writing a SMART objective for a ${insight.business_type}${languageInstruction}.
+
 
 FIXED VALUES — do not change these numbers, they are computed from real review data:
 - Problem area: "${pareto_cause}"
@@ -207,7 +232,7 @@ Related improvement actions already identified:
 ${relatedActions.map((a: any) => `- ${a.title}: ${a.details}`).join("\n") || "None identified yet"}
 
 YOUR JOB: Write only the descriptive text fields. Do not suggest different numbers.
-Return ONLY valid JSON, no markdown:
+Return ONLY valid JSON, no markdown,7. ${languageInstruction}:
 {
   "problem": "one clear sentence — what specifically needs to improve for this ${insight.business_type}",
   "kpi_label": "metric name to track (4 words max)",

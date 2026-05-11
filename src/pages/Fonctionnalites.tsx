@@ -8,10 +8,11 @@ import {
 import { HelpCircle, Sparkles, TrendingUp, Bell, BarChart3, Target, Eye, Globe, FileText, Users } from "lucide-react";
 import BackArrow from "@/components/BackArrow";
 import { Badge } from "@/components/ui/badge";
-import { useTranslation } from "react-i18next";
+import { useTranslation , Trans } from "react-i18next";
 
 const Fonctionnalites = () => {
   const { t } = useTranslation();
+  const highlight = <span className="text-green-500 font-medium" />;
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
       {/* Background with organic shapes */}
@@ -210,7 +211,7 @@ const Fonctionnalites = () => {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-5 pl-8 text-muted-foreground leading-relaxed">
-                    <>Reviewsvisor utilise une intelligence artificielle avancée pour analyser vos avis clients. L'outil lit chaque commentaire, identifie le ton et l'émotion, <span className="text-green-500 font-medium">extrait les mots-clés importants</span> et détecte automatiquement les points forts et les points faibles. Vous obtenez ensuite une <span className="text-green-500 font-medium">synthèse claire avec des axes d'amélioration prioritaires</span>.</>
+                    <Trans i18nKey="features.faq1Answer" components={{ highlight }} />
                   </AccordionContent>
                 </AccordionItem>
 
@@ -222,7 +223,7 @@ const Fonctionnalites = () => {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-5 pl-8 text-muted-foreground leading-relaxed">
-                    <>Reviewsvisor ne se limite pas aux chiffres. L'IA analyse le ton, le vocabulaire et les émotions dans chaque avis afin de révéler les véritables ressentis des clients. L'outil identifie les tendances, les points forts et les axes d'amélioration, pour offrir <span className="text-green-500 font-medium">une vision stratégique plutôt qu'un simple tableau de données</span>.</>
+                    <Trans i18nKey="features.faq2Answer" components={{ highlight }} />
                   </AccordionContent>
                 </AccordionItem>
 
@@ -234,7 +235,7 @@ const Fonctionnalites = () => {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-5 pl-8 text-muted-foreground leading-relaxed">
-                    <>L'IA regroupe les retours clients par thématiques récurrentes (accueil, qualité, prix, service, ambiance, etc.). Elle mesure la fréquence et la tonalité de chaque sujet pour établir une <span className="text-green-500 font-medium">liste claire des priorités d'amélioration à fort impact</span>.</>
+                    <Trans i18nKey="features.faq3Answer" components={{ highlight }} />
                   </AccordionContent>
                 </AccordionItem>
 
@@ -246,7 +247,7 @@ const Fonctionnalites = () => {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-5 pl-8 text-muted-foreground leading-relaxed">
-                    <>Reviewsvisor utilise des modèles d'intelligence artificielle entraînés sur des millions de commentaires clients réels. <span className="text-green-500 font-medium">Le taux de précision moyen dépasse 90 %</span>, avec une amélioration continue grâce à l'apprentissage automatique des nouveaux avis analysés.</>
+                    <Trans i18nKey="features.faq4Answer" components={{ highlight }} />
                   </AccordionContent>
                 </AccordionItem>
 
@@ -270,7 +271,7 @@ const Fonctionnalites = () => {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-5 pl-8 text-muted-foreground leading-relaxed">
-                    <>Cette fonctionnalité arrive très bientôt ! Reviewsvisor intégrera prochainement une <span className="text-green-500 font-medium">analyse concurrentielle avancée</span>, permettant de comparer vos indicateurs clés à ceux de vos concurrents directs. <span className="text-green-500 font-medium">Un véritable benchmarkeur intelligent</span> pour suivre votre position sur le marché.</>
+                  <Trans i18nKey="features.faq6Answer" components={{ highlight }} />
                   </AccordionContent>
                 </AccordionItem>
 
@@ -282,7 +283,7 @@ const Fonctionnalites = () => {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-5 pl-8 text-muted-foreground leading-relaxed">
-                    <>Oui. Reviewsvisor permet de <span className="text-green-500 font-medium">centraliser la gestion de plusieurs établissements</span> depuis un tableau de bord unique. <span className="text-green-500 font-medium">Chaque lieu dispose de ses propres rapports, filtres et analyses</span>, tout en conservant une vision globale de la performance du groupe.</>
+                    <Trans i18nKey="features.faq7Answer" components={{ highlight }} />
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>

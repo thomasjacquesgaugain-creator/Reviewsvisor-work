@@ -1769,6 +1769,7 @@
     },
     "ishikawa": {
       "title": "Root Cause Analysis (Ishikawa/AI)",
+      "content":"Root Cause Analysis (Ishikawa): A tool for identifying the underlying causes of a recurring problem. Benefit: You understand why a problem occurs and can address it at the source.",
       "problemAnalyzed": "Problem Analyzed",
       "dataSrc":"Data from the Pareto chart of negative reviews.",
       "probableCausesIdentified": "Probable Causes Identified by AI",
@@ -1958,7 +1959,8 @@
   },
   "errors": {
     "saveFailed": "Failed to save. Please try again."
-  }
+  },
+  "success":"Questionare filled successfully"
 },
 "recommendations":{
   "actionPlan": {
@@ -2001,6 +2003,82 @@
     }
   }
 }
+},
+"smartCard": {
+  "header": {
+    "title":     "SMART objective — {{cause}}",
+    "pareto":    "From Pareto: \"{{cause}}{{percentage, select, null{} other{ – {{percentage}}% of negative reviews}}}\"",
+    "ishikawa":  "Ishikawa: {{category}}",
+    "validated": "(validated)"
+  },
+  "priority": {
+    "high":   "High priority",
+    "medium": "Medium priority",
+    "low":    "Low priority"
+  },
+  "status": {
+    "todo":        "To do",
+    "in_progress": "In progress",
+    "completed":   "Completed",
+    "overdue":     "Overdue"
+  },
+  "aiGenerated": "AI generated",
+  "smart": {
+    "specific":   "Specific",
+    "measurable": "Measurable",
+    "achievable": "Achievable",
+    "relevant":   "Relevant",
+    "temporal":   "Temporal"
+  },
+  "temporal": {
+    "deadline": "Deadline: {{date}}",
+    "duration": "Duration: {{months}}mo · Review: 6 weeks"
+  },
+  "achievable": {
+    "noActions": "No actions defined",
+    "more":      "+ {{count}} more"
+  },
+  "progress": {
+    "label":           "Progress toward target",
+    "mentionsNow":     "{{value}} mentions now",
+    "start":           "Start: {{value}}",
+    "target":          "Target: {{value}}",
+    "daysLeft":        "{{days}} days left",
+    "overdue":         "{{days}}d overdue",
+    "updateBtn":       "Update progress",
+    "currentMentions": "Current mentions:",
+    "saveBtn":         "Save"
+  },
+  "pdca": {
+    "title": "PDCA — Monitoring, execution, continuous improvement",
+    "plan": {
+      "label":  "PLAN",
+      "target": "Target: {{current}} → {{target}} · {{months}} months"
+    },
+    "do": {
+      "label": "DO",
+      "tasks": "Tasks ({{completed}}/{{total}})"
+    },
+    "check": {
+      "label":       "CHECK",
+      "kpiTracking": "KPI tracking",
+      "target":      "target {{value}}"
+    },
+    "act": {
+      "label":    "ACT",
+      "decision": "Decision",
+      "options": {
+        "effective":   "Effective → standardize",
+        "partial":     "Partial → adjust",
+        "ineffective": "Ineffective → new action"
+      },
+      "trend": {
+        "improvement": "Improvement",
+        "degradation": "Degradation",
+        "stable":      "Stable"
+      }
+    }
+  }
 },
 "objective":{
   "aiPrediction":"AI PREDICTION",

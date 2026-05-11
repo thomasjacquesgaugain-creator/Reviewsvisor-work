@@ -187,7 +187,9 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
   const reversedIssues = [...safeIssues]
   .sort((a, b) => a.count - b.count) // sort ascending by count
   
-  const reversedStrengths = [...safeStrengths].reverse();
+  const reversedStrengths =  [...safeStrengths].sort(
+  (a, b) => a.count - b.count
+);
 
   // Préparer l'analyse des causes racines pour le problème principal
   const mainIssue = safeIssues.length > 0 ? safeIssues[0] : null;
