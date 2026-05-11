@@ -13,7 +13,7 @@ import {
   EVT_LIST_UPDATED,
 } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
-import { Building2, Home, LogOut, X, AlertTriangle, Building } from "lucide-react";
+import { Building2, Home, LogOut, X, AlertTriangle, Building, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -566,7 +566,7 @@ export default function EtablissementPage() {
           <div className="space-y-6">
             {/* Section de recherche d'établissement - toujours montée, masquée via CSS */}
             <div className={showSearch ? "space-y-4" : "hidden"}>
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-xl font-semibold text-white">
                 {t("establishment.search")}
               </h2>
 
@@ -590,12 +590,13 @@ export default function EtablissementPage() {
                   <div className="text-sm text-destructive">{placesError}</div>
                 )}
 
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-muted-foreground text-slate-100">
                   {t("establishment.poweredByGoogle")}
                 </div>
 
                 {selected && (
                   <div className="inline-flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
+                    <CheckCircle className="h-4 w-4" />
                     <span>{t("establishment.selected")}</span>
                     <strong>{selected.name}</strong>
                   </div>

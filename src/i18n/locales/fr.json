@@ -647,7 +647,7 @@
     "basedOnCurrentRating": "Basée sur la note actuelle",
     "frequencyInNegativeReviews": "et la fréquence des mentions dans les avis négatifs.",
      "keyTakeaways": {
-       "title":"Essentiel à retenir",
+       "title":"Essentiel à Retenir",
        "quickRead":"Lecture rapide pour les décideurs",
        "overallScore": {
          "overallScore": "Note globale",
@@ -1236,7 +1236,7 @@
     "addFirst": "Ajoutez votre premier établissement",
     "add": "Ajouter",
     "cancel": "Annuler",
-    "selected": "✅ Sélectionné :",
+    "selected": "Sélectionné :",
     "poweredByGoogle": "Powered by Google",
     "importReviews": "Importer vos avis",
     "importAllReviews": "Importer tous les avis",

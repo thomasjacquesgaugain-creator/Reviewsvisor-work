@@ -237,10 +237,10 @@ const Dashboard = () => {
   const metrics = useMemo(() => {
     if (allReviews.length === 0) {
       return {
-        globalPerformance: { label: t("noData") || "—", color: "gray", icon: Award },
+        globalPerformance: { label: t("common.noData") || "—", color: "gray", icon: Award },
         satisfactionIndex: { percentage: 0 },
-        perceivedValue: { label: t("noData") || "—", color: "gray" },
-        deliveredExperience: { label: t("noData") || "—", color: "gray" }
+        perceivedValue: { label: t("common.noData") || "—", color: "gray" },
+        deliveredExperience: { label: t("common.noData") || "—", color: "gray" }
       };
     }
 

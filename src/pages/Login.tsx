@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle, User, UserCircle, Lock } from "lucide-react";
+import { AlertTriangle, User, UserCircle, Lock, LockKeyholeOpen } from "lucide-react";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -281,9 +281,9 @@ const Login = () => {
                 <div className="text-center">
                   <Link 
                     to="/mot-de-passe-oublie" 
-                    className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                    className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 hover:underline"
                   >
-                    🔒 {t("auth.forgotPassword")}
+                    <LockKeyholeOpen className="h-4 w-4" /> {t("auth.forgotPassword")}
                   </Link>
                 </div>
               )}

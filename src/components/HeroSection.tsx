@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Brain, Target, TrendingUp, CheckCircle, Menu, Globe, Check } from "lucide-react";
+import { Brain, Target, TrendingUp, CheckCircle, Menu, Globe, Check, User, BookmarkCheck, Rocket } from "lucide-react";
 import logoHeader from "@/assets/reviewsvisor-logo-header.png";
 import { WhyReviewsvisor } from "@/components/WhyReviewsvisor";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +20,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
+import { Lock, Languages } from "lucide-react";
 
 export const HeroSection = () => {
   const { t } = useTranslation();
@@ -60,7 +61,7 @@ export const HeroSection = () => {
                     onClick={() => navigate("/login")}
                     className="cursor-pointer"
                   >
-                    <span className="mr-2">🔐</span>
+                    <span className="mr-2"><Lock className="h-4 w-4 text-gray-500" /></span>
                     {t("auth.login")}
                   </DropdownMenuItem>
 
@@ -69,7 +70,7 @@ export const HeroSection = () => {
                   {/* Langue - Submenu */}
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger className="cursor-pointer">
-                      <Globe className="w-4 h-4 mr-2 text-gray-500" />
+                      <Languages className="w-4 h-4 mr-2 text-gray-500" />
                       {t("common.language")}
                       <span className="ml-auto text-xs text-gray-500">{lang.toUpperCase()}</span>
                     </DropdownMenuSubTrigger>
@@ -101,7 +102,7 @@ export const HeroSection = () => {
           <img 
             src={logoHeader} 
             alt={`${APP_NAME} Logo`}
-            className="h-[90px] w-auto -mr-2 mt-4"
+            className="h-[70px] w-auto -mr-2 mt-4"
           />
         </div>
 
@@ -123,7 +124,7 @@ export const HeroSection = () => {
                   className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-full font-medium"
                   onClick={() => navigate('/inscription')}
                 >
-                  <span>✨</span>
+                  <span><Rocket className="h-5 w-5" /></span>
                   {t("hero.startNow")}
                 </Button>
                 <Button 
@@ -131,7 +132,7 @@ export const HeroSection = () => {
                   className="border-border text-foreground px-8 py-3 rounded-full font-medium"
                   onClick={() => navigate('/login')}
                 >
-                  <span>👤</span>
+                  <span><User className="h-5 w-5" /></span>
                   {t("hero.haveAccount")}
                 </Button>
               </div>

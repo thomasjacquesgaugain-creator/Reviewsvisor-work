@@ -576,7 +576,7 @@
     "frequencyInNegativeReviews": "and frequency of mentions in negative reviews.",
     "noReviewsForEstablishment": "No reviews recorded for this establishment. Import reviews to see statistics.",
     "keyTakeaways": {
-      "title": "Key takeaways",
+      "title": "Key Takeaways",
       "quickRead": "Quick read for decision makers",
       "overallScore": {
         "overallScore": "Overall Score",
@@ -1108,7 +1108,7 @@
     "addFirst": "Add your first establishment",
     "add": "Add",
     "cancel": "Cancel",
-    "selected": "✅ Selected:",
+    "selected": "Selected:",
     "poweredByGoogle": "Powered by Google",
     "importReviews": "Import your reviews",
     "importAllReviews": "Import all reviews",

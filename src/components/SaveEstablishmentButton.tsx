@@ -6,7 +6,7 @@ import { checkSubscription } from "@/lib/stripe";
 import { syncEstablishmentBilling } from "@/lib/establishmentBilling";
 import { useCreatorBypass, PRODUCT_KEYS } from "@/hooks/useCreatorBypass";
 import { establishmentAddon } from "@/config/subscriptionPlans";
-import { Check, Loader2 } from "lucide-react";
+import { BookmarkCheck, Check, Loader2, Save } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -426,13 +426,27 @@ export default function SaveEstablishmentButton({
             : t("subscription.saveEstablishment")
         }
       >
-        {checkingSubscription
-          ? `⏳ ${t("common.checking")}`
-          : saving
-            ? `⏳ ${t("common.saving")}`
-            : isAlreadySaved
-              ? `✅ ${t("subscription.alreadySaved")}`
-              : `💾 ${t("subscription.saveEstablishment")}`}
+        {checkingSubscription ? (
+          <span className="flex items-center justify-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            {t("common.checking")}
+          </span>
+        ) : saving ? (
+          <span className="flex items-center justify-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            {t("common.saving")}
+          </span>
+        ) : isAlreadySaved ? (
+          <span className="flex items-center justify-center gap-2">
+            <BookmarkCheck className="h-5 w-5" />
+            {t("subscription.alreadySaved")}
+          </span>
+        ) : (
+          <span className="flex items-center justify-center gap-2">
+            <Save className="h-5 w-5" />
+            {t("subscription.saveEstablishment")}
+          </span>
+        )}
       </button>
 
       {/* Modal Abonnement Requis */}
