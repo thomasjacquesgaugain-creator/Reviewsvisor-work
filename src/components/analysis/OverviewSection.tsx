@@ -180,13 +180,13 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-1 flex items-center gap-2">
+        <h2 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
           1. {t("analysis.overview.title", "Vue d'ensemble")} – {t("analysis.overview.kpiTitle", "Key KPIs")}
           <InfoTooltip 
             content={t("analysis.overview.kpiTooltip", "KPI (indicateur clé) : mesure utilisée pour suivre rapidement la performance globale. Bénéfice : vous identifiez en un coup d'œil les tendances principales de votre établissement.")}
           />
         </h2>
-        <p className="text-sm text-gray-500 italic">
+        <p className="text-sm text-gray-100 italic">
           {periodLabel}
         </p>
       </div>

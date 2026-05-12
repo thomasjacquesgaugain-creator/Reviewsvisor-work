@@ -54,7 +54,7 @@ export function LegalDocViewer({
 
   return (
     <div className="min-h-0 flex-1 bg-white">
-      <BackArrow />
+      {/* <BackArrow /> */}
       <div className="w-full bg-white px-6 py-10 [&_.footer]:hidden">
         {loading && (
           <p className="text-muted-foreground py-8">Chargement du document…</p>

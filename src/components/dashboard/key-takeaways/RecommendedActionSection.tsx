@@ -18,9 +18,7 @@ export function RecommendedActionSection({
 
   if (!recommendedPoint) {
     return (
-      <div className="relative overflow-hidden rounded-[8px] border border-[#c6f3e8] bg-gradient-to-br from-white via-[#f6fffd] to-[#defbf4] p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(109,189,250,0.14),_transparent_40%),radial-gradient(circle_at_bottom_right,_rgba(161,250,232,0.24),_transparent_30%)]" />
-
+      <div className="relative overflow-hidden rounded-[8px] border border-slate-200 bg-white p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
         <div className="relative flex min-h-[236px] flex-col">
           <div className="flex items-center gap-2">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] bg-[#a1fae8]/70">
@@ -42,9 +40,7 @@ export function RecommendedActionSection({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-[8px] border border-[#c6f3e8] bg-gradient-to-br from-white via-[#f6fffd] to-[#defbf4] p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(109,189,250,0.14),_transparent_40%),radial-gradient(circle_at_bottom_right,_rgba(161,250,232,0.24),_transparent_30%)]" />
-
+    <div className="relative overflow-hidden rounded-[8px] border border-slate-200 bg-white p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
       <div className="relative flex min-h-[236px] flex-col">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] bg-[#a1fae8]/70">

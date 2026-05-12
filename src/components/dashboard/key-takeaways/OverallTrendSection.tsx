@@ -123,7 +123,7 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
   const xHeight     = granularity === 'day' ? 60 : 34;
 
   return (
-    <div className="flex-1 rounded-[8px] border border-[#c6f3e8] bg-gradient-to-br from-white via-[#f6fffd] to-[#defbf4] p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
+    <div className="flex-1 rounded-[8px] border border-slate-200 bg-white p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
 
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-[#e9fbf6]">
