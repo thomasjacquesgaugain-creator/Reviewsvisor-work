@@ -383,7 +383,7 @@ const currentSmartObjective = useMemo(() => {
         />
 
         {/* Step indicator */}
-        <span className="ml-auto text-sm font-normal text-gray-500">
+        <span className="ml-auto text-sm font-normal text-slate-500 dark:text-slate-400">
           {currentStep + 1} / {paretoIssues.length}
         </span>
       </CardTitle>
@@ -501,12 +501,12 @@ const currentSmartObjective = useMemo(() => {
           <h3 className="text-lg font-semibold mb-3">
             6.1 {t("analysis.ishikawa.problemAnalyzed")}
           </h3>
-          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-            <p className="text-lg font-semibold text-gray-900">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+            <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
               {currentIssue.name} –{" "}
               {`${currentIssue.percentage.toFixed(0)} % ${t("dashboard.negativeMentions")}`}
             </p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               {t("analysis.ishikawa.dataSrc")}
             </p>
           </div>
@@ -523,9 +523,9 @@ const currentSmartObjective = useMemo(() => {
               {rootCauseAnalysis.categories.map((category, catIndex) => (
                 <div
                   key={catIndex}
-                  className="border border-gray-200 rounded-lg p-4 bg-white"
+                  className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
                 >
-                  <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <h4 className="mb-3 flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-100">
                     <span className="w-2 h-2 rounded-full bg-gray-400" />
                     {category.name}
                   </h4>
@@ -539,7 +539,7 @@ const currentSmartObjective = useMemo(() => {
                           key={causeIndex}
                           className="flex items-start justify-between gap-3 pl-2"
                         >
-                          <span className="text-gray-700 flex-1">
+                          <span className="flex-1 text-slate-700 dark:text-slate-300">
                             {cause.description}
                           </span>
                           <Badge
@@ -557,7 +557,7 @@ const currentSmartObjective = useMemo(() => {
               ))}
             </div>
           ) : (
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center text-gray-500">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400">
               <p>
                {t("analysis.rootCause.noCause")}
               </p>
@@ -573,7 +573,7 @@ const currentSmartObjective = useMemo(() => {
           <h3 className="text-lg font-semibold mb-3">
             6.3 {t("analysis.ishikawa.probabilityLevel")}
           </h3>
-          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/40">
             <div className="flex flex-wrap gap-4">
               <div className="flex items-center gap-2">
                 <Badge
@@ -583,7 +583,7 @@ const currentSmartObjective = useMemo(() => {
                   <AlertCircle className="w-3 h-3" />
                   {t("analysis.pareto.rootCause.probability.probable")}
                 </Badge>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-slate-600 dark:text-slate-300">
                   {t("analysis.ishikawa.causeMentioned")}
                 </span>
               </div>
@@ -595,7 +595,7 @@ const currentSmartObjective = useMemo(() => {
                   <Clock className="w-3 h-3" />
                   {t("analysis.pareto.rootCause.probability.possible")}
                 </Badge>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-slate-600 dark:text-slate-300">
                   {t("analysis.ishikawa.causeSuggested")}
 
                 </span>
@@ -608,7 +608,7 @@ const currentSmartObjective = useMemo(() => {
                   <HelpCircle className="w-3 h-3" />
                    {t("analysis.pareto.rootCause.probability.occasional")}
                 </Badge>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-slate-600 dark:text-slate-300">
                   {t("analysis.ishikawa.causeRare")}
                 </span>
               </div>
@@ -618,11 +618,11 @@ const currentSmartObjective = useMemo(() => {
 
         {/* 6.4 Synthèse automatique — unchanged from original */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
+          <h3 className="mb-3 text-lg font-semibold text-slate-800 dark:text-slate-100">
             6.4 {t("analysis.ishikawa.automatedSummary")}
           </h3>
           <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-gray-700 leading-relaxed">
+            <p className="leading-relaxed text-slate-700 dark:text-slate-300">
               {rootCauseAnalysis.summary}
             </p>
           </div>

@@ -102,11 +102,11 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
 
   if (isAnyFilterActive && effectiveReviews.length === 0) {
     return (
-      <div className="mb-8 rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
-        <p className="text-sm font-semibold text-slate-900">
+      <div className="mb-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 text-center shadow-sm">
+        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           {t("dashboard.noReviewsForSelectedPeriod")}
         </p>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
          {t("dashboard.tryWiderPeriod")}
         </p>
       </div>

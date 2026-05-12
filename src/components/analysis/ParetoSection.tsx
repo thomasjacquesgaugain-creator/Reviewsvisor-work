@@ -85,7 +85,7 @@ function generateIssuesAnalysis(items: ParetoItem[],t: (key: string, opts?: any)
       <Trans
       i18nKey="analysis.pareto.issuesParetoPrinciple"
       values={{ percentage: topItemsPercentage, count: topItems.length }}
-      components={{ bold: <strong className="text-gray-900" /> }}
+      components={{ bold: <strong className="text-slate-900 dark:text-slate-100" /> }}
     />    </p>
   );
 
@@ -97,7 +97,7 @@ function generateIssuesAnalysis(items: ParetoItem[],t: (key: string, opts?: any)
         <Trans
         i18nKey="analysis.pareto.issuesItem"
         values={{ rank: index + 1, name: item.name, percentage, count: item.count }}
-        components={{ bold: <strong className="text-gray-900" /> }}
+        components={{ bold: <strong className="text-slate-900 dark:text-slate-100" /> }}
       />      
       </p>
     );
@@ -112,7 +112,7 @@ function generateIssuesAnalysis(items: ParetoItem[],t: (key: string, opts?: any)
       <Trans
       i18nKey="analysis.pareto.issuesRecommendation"
       values={{ name: mainIssue.name }}
-      components={{ bold: <strong className="text-gray-900" /> }}
+      components={{ bold: <strong className="text-slate-900 dark:text-slate-100" /> }}
     />      
     </p>
     );
@@ -137,7 +137,7 @@ function generateStrengthsAnalysis(items: ParetoItem[],t: (key: string, opts?: a
     <p key="intro">
     <Trans
       i18nKey="analysis.pareto.strengthsIntro"
-      components={{ bold: <strong className="text-gray-900" /> }}
+      components={{ bold: <strong className="text-slate-900 dark:text-slate-100" /> }}
     />   
     </p>
   );
@@ -150,7 +150,7 @@ function generateStrengthsAnalysis(items: ParetoItem[],t: (key: string, opts?: a
       <Trans
         i18nKey="analysis.pareto.strengthsItem"
         values={{ rank: index + 1, name: item.name, percentage, count: item.count }}
-        components={{ bold: <strong className="text-gray-900" /> }}
+        components={{ bold: <strong className="text-slate-900 dark:text-slate-100" /> }}
       />      
       </p>
     );
@@ -162,7 +162,7 @@ function generateStrengthsAnalysis(items: ParetoItem[],t: (key: string, opts?: a
     <p key="recommendation" className="mt-2">
     <Trans
       i18nKey="analysis.pareto.strengthsRecommendation"
-      components={{ bold: <strong className="text-gray-900" /> }}
+      components={{ bold: <strong className="text-slate-900 dark:text-slate-100" /> }}
     />    
     </p>
   );
@@ -256,7 +256,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
     <div className="space-y-6">
 
       {/* Irritants */}
-      <Card>
+      <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -317,7 +317,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                           wrapperStyle={{ paddingTop: '20px' }}
                           payload={[
                             { value: t("analysis.pareto.mentions"), type: 'square', color: '#3B82F6' },
-                            { value: t("analysis.pareto.cumulativePercent"), type: 'line', color: '#000000' }
+                            { value: t("analysis.pareto.cumulativePercent"), type: 'line', color: 'hsl(var(--foreground))' }
                           ]}
                         />
                         <Bar yAxisId="left" dataKey="count" fill="#3B82F6" radius={[4, 4, 0, 0]}>
@@ -335,16 +335,16 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                           yAxisId="cumule"
                           type="monotone"
                           dataKey="cumulativePercentage"
-                          stroke="#000000"
+                          stroke="hsl(var(--foreground))"
                           strokeWidth={2}
-                          dot={{ r: 5, fill: '#000000' }}
+                          dot={{ r: 5, fill: 'hsl(var(--foreground))' }}
                           activeDot={{ r: 7 }}
                         >
                           <LabelList 
                             dataKey="cumulativePercentage" 
                             position="top" 
                             formatter={(value: number) => `${value}%`}
-                            style={{ fontSize: '12px', fill: '#000' }}
+                            style={{ fontSize: '12px', fill: 'hsl(var(--foreground))' }}
                           />
                         </Line>
                         <ReferenceLine 
@@ -358,11 +358,11 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-gray-700">
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/30 dark:border-blue-900/50">
+                    <p className="text-sm text-slate-700 dark:text-slate-300">
                       <Trans
                         i18nKey="analysis.pareto.issuesParetoInfo"
-                        components={{ bold: <strong className="text-gray-900" /> }}
+                        components={{ bold: <strong className="text-slate-900 dark:text-slate-100" /> }}
                       />                   
                     </p>
                   </div>
@@ -375,11 +375,11 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
           {safeIssues.length > 0 ? (
             <>
               {/* Phrase explicative courte */}
-              <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                <p className="text-sm text-gray-700">
+              <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg dark:bg-slate-800/40 dark:border-slate-700">
+                <p className="text-sm text-slate-700 dark:text-slate-300">
                   <Trans
                     i18nKey="analysis.pareto.frequencyNote"
-                    components={{ bold: <strong className="text-gray-900" /> }}
+                    components={{ bold: <strong className="text-slate-900 dark:text-slate-100" /> }}
                   />
                 </p>
               </div>
@@ -393,12 +393,12 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                       margin={{ top: 5, right: 100, left: 100, bottom: 5 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" tick={{ fill: '#000000' }} />
+                      <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                       <YAxis
                         dataKey="name"
                         type="category"
                         width={100}
-                        tick={{ fontSize: 12, fill: '#000000' }}
+                        tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                         dx={-10}
                       />
                       <Tooltip
@@ -434,32 +434,32 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                 </div>
                 {/* Légende axe X - centrée par rapport à l'axe X du graphique */}
                 <div className="pl-[100px] flex justify-center" style={{ marginTop: '4px' }}>
-                  <p className="text-sm text-black text-center">{t("analysis.pareto.xAxisLabel")}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 text-center">{t("analysis.pareto.xAxisLabel")}</p>
                 </div>
               </div>
 
               {/* Séparation entre graphique et analyse */}
               <div className="pt-6 mt-6">
                 {/* Petite ligne décorative centrée */}
-                <div className="w-16 h-0.5 bg-gray-200 mx-auto my-4"></div>
+                <div className="w-16 h-0.5 bg-slate-200 dark:bg-slate-700 mx-auto my-4"></div>
                 
                 {/* Section Analyse */}
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingDown className="w-5 h-5 text-red-600" />
-                  <h3 className="text-lg font-semibold text-gray-800 border-b-2 border-red-400 pb-1">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 border-b-2 border-red-400 pb-1">
                     {t("analysis.pareto.analysis")}
                   </h3>
                 </div>
-                <div className="text-gray-700 leading-relaxed space-y-3">
+                <div className="text-slate-700 dark:text-slate-300 leading-relaxed space-y-3">
                   {generateIssuesAnalysis(safeIssues,t)}
                   
                   {/* CTA discret sur la cause principale */}
                   {safeIssues.length > 0 && rootCauseAnalysis && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="gap-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                        className="gap-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800"
                         onClick={() => setOpenRootCauseModal(true)}
                       >
                         <ArrowRight className="w-4 h-4" />
@@ -479,7 +479,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
       </Card>
 
       {/* Points forts */}
-      <Card>
+      <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -540,7 +540,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                           wrapperStyle={{ paddingTop: '20px' }}
                           payload={[
                             { value: t("analysis.pareto.mentions"), type: 'square', color: '#3B82F6' },
-                            { value: t("analysis.pareto.cumulativePercent"), type: 'line', color: '#000000' }
+                            { value: t("analysis.pareto.cumulativePercent"), type: 'line', color: 'hsl(var(--foreground))' }
                           ]}
                         />
                         <Bar yAxisId="left" dataKey="count" fill="#3B82F6" radius={[4, 4, 0, 0]}>
@@ -552,16 +552,16 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                           yAxisId="cumule"
                           type="monotone"
                           dataKey="cumulativePercentage"
-                          stroke="#000000"
+                          stroke="hsl(var(--foreground))"
                           strokeWidth={2}
-                          dot={{ r: 5, fill: '#000000' }}
+                          dot={{ r: 5, fill: 'hsl(var(--foreground))' }}
                           activeDot={{ r: 7 }}
                         >
                           <LabelList 
                             dataKey="cumulativePercentage" 
                             position="top" 
                             formatter={(value: number) => `${value}%`}
-                            style={{ fontSize: '12px', fill: '#000' }}
+                            style={{ fontSize: '12px', fill: 'hsl(var(--foreground))' }}
                           />
                         </Line>
                         <ReferenceLine 
@@ -575,11 +575,11 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-sm text-gray-700">
+                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg dark:bg-green-950/30 dark:border-green-900/50">
+                    <p className="text-sm text-slate-700 dark:text-slate-300">
                       <Trans
                         i18nKey="analysis.pareto.strengthsParetoInfo"
-                        components={{ bold: <strong className="text-gray-900" /> }}
+                        components={{ bold: <strong className="text-slate-900 dark:text-slate-100" /> }}
                       />
                     </p>
                   </div>
@@ -592,11 +592,11 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
           {safeStrengths.length > 0 ? (
             <>
               {/* Phrase explicative courte */}
-              <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                <p className="text-sm text-gray-700">
+              <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg dark:bg-slate-800/40 dark:border-slate-700">
+                <p className="text-sm text-slate-700 dark:text-slate-300">
                   <Trans
                     i18nKey="analysis.pareto.strengthsFrequencyNote"
-                    components={{ bold: <strong className="text-gray-900" /> }}
+                    components={{ bold: <strong className="text-slate-900 dark:text-slate-100" /> }}
                   />                
                   </p>
               </div>
@@ -610,12 +610,12 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                       margin={{ top: 5, right: 100, left: 100, bottom: 5 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" tick={{ fill: '#000000' }} />
+                      <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                       <YAxis
                         dataKey="name"
                         type="category"
                         width={100}
-                        tick={{ fontSize: 12, fill: '#000000' }}
+                        tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                         dx={-10}
                       />
                       <Tooltip
@@ -651,32 +651,32 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                 </div>
                 {/* Légende axe X - centrée par rapport à l'axe X du graphique */}
                 <div className="pl-[100px] flex justify-center" style={{ marginTop: '4px' }}>
-                  <p className="text-sm text-black text-center">{t("analysis.pareto.xAxisLabel")}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 text-center">{t("analysis.pareto.xAxisLabel")}</p>
                 </div>
               </div>
 
               {/* Séparation entre graphique et analyse */}
               <div className="pt-6 mt-6">
                 {/* Petite ligne décorative centrée */}
-                <div className="w-16 h-0.5 bg-gray-200 mx-auto my-4"></div>
+                <div className="w-16 h-0.5 bg-slate-200 dark:bg-slate-700 mx-auto my-4"></div>
                 
                 {/* Section Analyse */}
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp className="w-5 h-5 text-green-600" />
-                  <h3 className="text-lg font-semibold text-gray-800 border-b-2 border-green-400 pb-1">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 border-b-2 border-green-400 pb-1">
                     {t("analysis.pareto.analysis")}
                   </h3>
                 </div>
-                <div className="text-gray-700 leading-relaxed space-y-3">
+                <div className="text-slate-700 dark:text-slate-300 leading-relaxed space-y-3">
                   {generateStrengthsAnalysis(safeStrengths,t)}
                   
                   {/* CTA discret sur le point fort principal */}
                   {safeStrengths.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="gap-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                        className="gap-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800"
                         onClick={() => {
                           // Placeholder pour future action d'analyse approfondie
                           console.log('Analyser le point fort:', safeStrengths[0]?.name);

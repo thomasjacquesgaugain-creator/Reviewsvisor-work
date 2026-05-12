@@ -107,7 +107,7 @@ export function DeleteEstablishmentButton({
           onClick={() => setOpen(true)}
           className={
             className ??
-            "shrink-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+            "shrink-0 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40"
           }
           aria-label="Supprimer cet établissement"
         >

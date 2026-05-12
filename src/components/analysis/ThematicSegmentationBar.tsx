@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -218,19 +218,19 @@ export function ThematicSegmentationBar() {
   const sourceLabel = currentSourceOption ? currentSourceOption.label : t("dashboard.sourceFilter");
 
   return (
-    <div className="mb-6 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm md:sticky md:top-0 md:z-20">
+    <div className="mb-6 rounded-lg border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 shadow-sm md:sticky md:top-0 md:z-20">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-gray-800">{t("dashboard.analysisContext")}</h3>
-          <p className="mt-1 text-xs text-gray-500">
+          <h3 className="text-sm font-semibold text-gray-800 dark:text-slate-100">{t("dashboard.analysisContext")}</h3>
+          <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
             {t("dashboard.analysisBasedOn")}{" "}
-            <span className="font-semibold text-gray-800">
+            <span className="font-semibold text-gray-800 dark:text-slate-100">
               {filteredReviews.length}
             </span>{" "}
             {t("dashboard.reviews")}
           </p>
           {minReviewDate && (
-            <p className="mt-0.5 text-[11px] text-gray-400">
+            <p className="mt-0.5 text-[11px] text-gray-400 dark:text-slate-500">
               {t("dashboard.sinceDate")}{" "}
               {minReviewDate.toLocaleDateString("fr-FR", {
                 day: "2-digit",
@@ -243,7 +243,7 @@ export function ThematicSegmentationBar() {
 
         <div className="flex flex-wrap items-center gap-3 md:flex-1 md:justify-center">
           {/* Filtres de note */}
-          <div className="flex items-center gap-1 rounded-full bg-gray-100 px-1 py-1">
+          <div className="flex items-center gap-1 rounded-full bg-gray-100 dark:bg-slate-800 px-1 py-1">
             {[
               { key: "ALL", label: t("dashboard.allFilter") },
              { key: "POS", label: "4–5⭐" },
@@ -257,7 +257,7 @@ export function ThematicSegmentationBar() {
                 className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors duration-200 ease-in-out ${
                   pendingRatingFilter === opt.key
                     ? "bg-blue-600 text-white border-blue-600/30 shadow-sm hover:bg-[#1e4fc9]"
-                    : "bg-white text-slate-700 border-slate-200 hover:bg-blue-50 hover:text-slate-900 hover:border-blue-200"
+                    : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-slate-900 dark:hover:text-slate-100 hover:border-blue-200 dark:hover:border-blue-900/60"
                 }`}
               >
                 {opt.label}
@@ -267,11 +267,11 @@ export function ThematicSegmentationBar() {
 
           {/* Filtre période */}
           <div className="flex items-center gap-1 text-xs">
-            <span className="text-gray-500">{t("dashboard.periodFilter")} :</span>
+            <span className="text-gray-500 dark:text-slate-400">{t("dashboard.periodFilter")} :</span>
             <select
               value={pendingPeriodFilter.preset}
               onChange={(e) => handlePeriodChange(e.target.value)}
-              className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 shadow-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
+              className="rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-xs text-gray-700 dark:text-slate-300 shadow-sm focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-slate-500"
             >
               <option value="all">{t("dashboard.allTime")}</option>
               <option value="30d">{t("dashboard.days30")}</option>
@@ -283,13 +283,13 @@ export function ThematicSegmentationBar() {
 
           {/* Filtre source */}
           <div className="flex items-center gap-1 text-xs">
-            <span className="text-gray-500">{t("dashboard.sourceFilter")} :</span>
+            <span className="text-gray-500 dark:text-slate-400">{t("dashboard.sourceFilter")} :</span>
             <Select value={pendingSourceFilter} onValueChange={handleSourceChange}>
               <SelectTrigger
                 className={`h-8 w-[140px] rounded-md border px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-offset-0 transition-colors duration-200 ease-in-out flex items-center gap-2 ${
                   pendingSourceFilter === "google"
                     ? "bg-blue-600 text-white border-blue-600/30 hover:bg-[#1e4fc9]"
-                    : "bg-white text-blue-950 border-slate-200 hover:bg-blue-50 hover:border-blue-200"
+                    : "bg-white dark:bg-slate-900 text-blue-950 dark:text-blue-300 border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-900/60"
                 }`}
               >
                 {pendingSourceFilter === "google" && (
@@ -297,7 +297,7 @@ export function ThematicSegmentationBar() {
                 )}
                 <SelectValue placeholder={t("dashboard.sourceFilter")} />
               </SelectTrigger>
-              <SelectContent className="bg-white text-slate-900 border border-slate-200 shadow-md">
+              <SelectContent className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 shadow-md">
                 {SOURCE_OPTIONS.map((opt) => (
                   <SelectItem
                     key={opt.value}
@@ -332,7 +332,7 @@ export function ThematicSegmentationBar() {
           <button
             type="button"
             onClick={handleReset}
-            className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-white px-3 py-1 text-xs font-medium text-blue-600 shadow-sm transition-colors duration-200 ease-in-out hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
+            className="inline-flex items-center gap-1 rounded-full border border-blue-200 dark:border-blue-900/60 bg-white dark:bg-slate-900 px-3 py-1 text-xs font-medium text-blue-600 dark:text-blue-300 shadow-sm transition-colors duration-200 ease-in-out hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-700 dark:hover:text-blue-200 hover:border-blue-300 dark:hover:border-blue-900/70"
           >
             <RotateCcw className="h-3 w-3" />
             {t("dashboard.reset")}
@@ -341,17 +341,17 @@ export function ThematicSegmentationBar() {
       </div>
 
       {/* RÃ©sumÃ© compact */}
-      <div className="mt-2 text-[11px] font-semibold text-slate-700">
+      <div className="mt-2 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
         {t("dashboard.selection")} : {ratingLabel} · {periodLabel} · {sourceLabel}
       </div>
 
       {/* Date range picker (PersonnalisÃ©â€¦) */}
       {isCustomOpen && (
-        <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="mt-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 shadow-sm">
           <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-800">{t("dashboard.customPeriodTitle")}</p>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">{t("dashboard.customPeriodTitle")}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 {t("dashboard.customPeriodDescription")}
               </p>
             </div>
@@ -366,7 +366,7 @@ export function ThematicSegmentationBar() {
                     setPeriodBeforeCustom(null);
                   }
                 }}
-                className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition-colors duration-200 ease-in-out hover:bg-blue-50 hover:text-blue-950 hover:border-blue-200"
+                className="inline-flex items-center rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors duration-200 ease-in-out hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-950 dark:hover:text-blue-300 hover:border-blue-200 dark:hover:border-blue-900/60"
               >
                 {t("common.cancel")}
               </button>
@@ -411,7 +411,7 @@ export function ThematicSegmentationBar() {
       )}
 
       {filteredReviews.length === 0 && periodFilter.preset !== "all" && (
-        <div className="mt-3 inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600">
+        <div className="mt-3 inline-flex items-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300">
           {t("dashboard.noReviewsForSelectedPeriod")}
         </div>
       )}

@@ -44,7 +44,7 @@ console.log("analysis---->",analysis);
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-gray-900">
+          <DialogTitle className="text-xl font-bold text-slate-900 dark:text-slate-100">
             {t("analysis.pareto.rootCause.title", { problem: analysis.problem })}
           </DialogTitle>
         </DialogHeader>
@@ -55,8 +55,8 @@ console.log("analysis---->",analysis);
             <div className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">{t("analysis.pareto.rootCause.summary")}</h3>
-                <p className="text-gray-700 leading-relaxed">{analysis.summary}</p>
+                <h3 className="mb-2 font-semibold text-slate-900 dark:text-slate-100">{t("analysis.pareto.rootCause.summary")}</h3>
+                <p className="leading-relaxed text-slate-700 dark:text-slate-300">{analysis.summary}</p>
               </div>
             </div>
           </div>
@@ -64,11 +64,11 @@ console.log("analysis---->",analysis);
           {/* Catégories de causes */}
           {analysis.categories.length > 0 ? (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">{t("analysis.pareto.rootCause.categoriesHeading")}</h3>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t("analysis.pareto.rootCause.categoriesHeading")}</h3>
               
               {analysis.categories.map((category, catIndex) => (
-                <div key={catIndex} className="border border-gray-200 rounded-lg p-4 bg-white">
-                  <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <div key={catIndex} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                  <h4 className="mb-3 flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-100">
                     <span className="w-2 h-2 rounded-full bg-gray-400"></span>
                     {category.name}
                   </h4>
@@ -79,9 +79,9 @@ console.log("analysis---->",analysis);
                       const Icon = config.icon;
                       
                       return (
-                        <div key={causeIndex} className="pl-4 border-l-2 border-gray-200">
+                        <div key={causeIndex} className="pl-4 border-l-2 border-slate-200 dark:border-slate-700">
                           <div className="flex items-start justify-between gap-3 mb-1">
-                            <p className="text-gray-700 flex-1">{cause.description}</p>
+                            <p className="flex-1 text-slate-700 dark:text-slate-300">{cause.description}</p>
                             <Badge 
                               variant="outline" 
                               className={`${config.color} border flex items-center gap-1`}
@@ -97,7 +97,7 @@ console.log("analysis---->",analysis);
                               {cause.evidence.map((evidence, evIndex) => (
                                 <p 
                                   key={evIndex} 
-                                  className="text-xs text-gray-500 italic pl-2 border-l border-gray-100"
+                                  className="border-l border-slate-200 pl-2 text-xs italic text-slate-500 dark:border-slate-700 dark:text-slate-400"
                                 >
                                   "{evidence.length > 100 ? evidence.substring(0, 100) + '...' : evidence}"
                                 </p>
@@ -112,15 +112,15 @@ console.log("analysis---->",analysis);
               ))}
             </div>
           ) : (
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center text-gray-500">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400">
               <p>{t("analysis.pareto.rootCause.noCauses")}</p>
               <p className="text-sm mt-2">{t("analysis.pareto.rootCause.fieldAnalysisRecommended")}</p>
             </div>
           )}
 
           {/* Note méthodologique */}
-          <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-            <p className="text-xs text-gray-600">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/40">
+            <p className="text-xs text-slate-600 dark:text-slate-300">
               <strong>{t("analysis.pareto.rootCause.methodNote.title")}</strong>{" "}
               {t("analysis.pareto.rootCause.methodNote.body")}
             </p>

@@ -99,7 +99,7 @@ const Section = ({
 }) => (
   <div className="border-b border-gray-300 p-3">
     <div className="font-semibold">{title}</div>
-    <div className="mb-2 text-sm text-gray-700">{subtitle}</div>
+    <div className="mb-2 text-sm text-slate-700 dark:text-slate-300">{subtitle}</div>
 
     <div className="flex justify-between gap-3 border rounded-full px-3 py-2 w-full">
       {options.map((opt) => {
@@ -333,7 +333,7 @@ const hasStrongSignal = (scores: IshikawaScores) => {
             style={{ width: `${(answeredCount / 5) * 100}%` }}
           />
         </div>
-        <span className="text-xs text-gray-400 shrink-0">
+        <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
           {answeredCount}/5
         </span>
       </div>
@@ -379,7 +379,7 @@ const hasStrongSignal = (scores: IshikawaScores) => {
         {onSkip && (
           <button
             onClick={onSkip}
-            className="text-xs text-gray-400 underline hover:text-gray-600"
+            className="text-xs text-slate-400 underline hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
           >
             {t("questionnaire.button.skip")}
           </button>

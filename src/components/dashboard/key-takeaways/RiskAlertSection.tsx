@@ -82,12 +82,12 @@ export function RiskAlertSection({ reviews }: RiskAlertSectionProps) {
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-100">
               <AlertTriangle className="h-4 w-4 text-slate-400" />
             </span>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
               {t("dashboard.keyTakeaways.riskAlert.title")}
             </p>
           </div>
-          <div className="mt-3 h-px w-full bg-slate-200/70" />
-          <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
+          <div className="mt-3 h-px w-full bg-slate-200/70 dark:bg-slate-700/70" />
+          <div className="flex flex-1 items-center justify-center text-sm text-slate-500 dark:text-slate-400">
             {t("dashboard.keyTakeaways.riskAlert.noData")}
           </div>
         </div>
@@ -134,7 +134,7 @@ export function RiskAlertSection({ reviews }: RiskAlertSectionProps) {
               }`}
             />
           </span>
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
             {t("dashboard.keyTakeaways.riskAlert.title")}
           </p>
           <span
@@ -154,7 +154,7 @@ export function RiskAlertSection({ reviews }: RiskAlertSectionProps) {
           </span>
         </div>
 
-        <div className="mt-3 h-px w-full bg-slate-200/70" />
+        <div className="mt-3 h-px w-full bg-slate-200/70 dark:bg-slate-700/70" />
 
         <div className="mt-4 rounded-[8px] bg-white/70 px-4 py-3">
           <div className="flex items-center gap-2">
@@ -174,7 +174,7 @@ export function RiskAlertSection({ reviews }: RiskAlertSectionProps) {
             )}
           </div>
 
-          <p className="mt-2 text-[15px] leading-6 text-slate-700">
+          <p className="mt-2 text-[15px] leading-6 text-slate-700 dark:text-slate-200">
             {t(driftMessageKey, {
               count: data.currentMonthNegativeCount,
               month: data.currentMonthLabel,
@@ -182,7 +182,7 @@ export function RiskAlertSection({ reviews }: RiskAlertSectionProps) {
             })}
           </p>
 
-          <p className="mt-2 text-[13px] font-medium text-slate-500">
+          <p className="mt-2 text-[13px] font-medium text-slate-500 dark:text-slate-400">
             {t("dashboard.keyTakeaways.riskAlert.comparison", {
               current: data.currentMonthNegativeCount,
               previous: data.previousMonthNegativeCount,
@@ -210,7 +210,7 @@ export function RiskAlertSection({ reviews }: RiskAlertSectionProps) {
           </div>
         </div>
 
-        <div className="mt-auto pt-4 text-[13px] leading-5 text-slate-500">
+        <div className="mt-auto pt-4 text-[13px] leading-5 text-slate-500 dark:text-slate-400">
           {t("dashboard.keyTakeaways.riskAlert.footer")}
         </div>
       </div>

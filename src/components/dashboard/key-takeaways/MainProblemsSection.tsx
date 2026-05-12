@@ -28,14 +28,14 @@ export function MainProblemsSection({ problems,setMainIssue }: MainProblemsSecti
           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#ffe7f2]">
             <ShieldAlert className="h-3.5 w-3.5 text-[#fe53b3]" />
           </span>
-          <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
             {t("dashboard.keyTakeaways.mainIssues.majorIssue")}
           </div>
         </div>
 
-        <div className="mt-2 h-px w-full bg-slate-200/70" />
+        <div className="mt-2 h-px w-full bg-slate-200/70 dark:bg-slate-700/70" />
 
-        <div className="mt-4 text-sm text-slate-500 text-center">
+        <div className="mt-4 text-sm text-slate-500 dark:text-slate-400 text-center">
           {t("dashboard.keyTakeaways.mainIssues.noData")}
         </div>
       </div>
@@ -52,12 +52,12 @@ export function MainProblemsSection({ problems,setMainIssue }: MainProblemsSecti
           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#ffe7f2]">
             <ShieldAlert className="h-3.5 w-3.5 text-[#fe53b3]" />
           </span>
-          <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
             {t("dashboard.keyTakeaways.mainIssues.majorIssue")}
           </div>
         </div>
 
-        <div className="mt-2 h-px w-full bg-slate-200/70" />
+        <div className="mt-2 h-px w-full bg-slate-200/70 dark:bg-slate-700/70" />
 
         <div className="mt-3">
           <div className="flex items-start gap-2">
@@ -66,15 +66,15 @@ export function MainProblemsSection({ problems,setMainIssue }: MainProblemsSecti
             </span>
 
             <div className="min-w-0">
-              <div className="text-[16px] font-semibold leading-tight text-slate-800">
+              <div className="text-[16px] font-semibold leading-tight text-slate-800 dark:text-slate-100">
                 {mainProblem.theme}
               </div>
 
-              <div className="mt-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+              <div className="mt-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
                 {t("dashboard.keyTakeaways.mainIssues.impactHigh")}
               </div>
 
-              <div className="mt-1 text-[13px] leading-5 text-slate-600">
+              <div className="mt-1 text-[13px] leading-5 text-slate-600 dark:text-slate-300">
                  {t("dashboard.keyTakeaways.mainIssues.mentionedIn", { percentage: Math.round(mainProblem.percentage) })}
               </div>
             </div>

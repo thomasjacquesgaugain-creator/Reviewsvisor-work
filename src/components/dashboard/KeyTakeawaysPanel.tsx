@@ -50,7 +50,7 @@ export function KeyTakeawaysPanel({
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
                 {t("dashboard.keyTakeaways.title")}
               </p>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-950">
+              <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-slate-100">
                 {t("dashboard.keyTakeaways.quickRead")}
               </h2>
             </div>

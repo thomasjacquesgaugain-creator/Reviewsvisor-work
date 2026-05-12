@@ -397,7 +397,7 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
             return (
               <span
                 key={index}
-                className="bg-yellow-100 text-gray-900 font-semibold px-0.5 rounded-sm"
+                className="rounded-sm bg-yellow-100 px-0.5 font-semibold text-slate-900 dark:bg-yellow-900/40 dark:text-yellow-100"
               >
                 {token}
               </span>
@@ -555,6 +555,15 @@ const wordsByFrequency = useMemo(() => {
     return grouped;
   }, [classifiedWords, THEME_GROUPS, dynamicThemes]);
 
+  const sortedThemeGroups = useMemo(() => {
+    return Object.entries(THEME_GROUPS).sort(([themeKeyA], [themeKeyB]) => {
+      const totalA = (wordsByTheme[themeKeyA] || []).reduce((sum, word) => sum + word.count, 0);
+      const totalB = (wordsByTheme[themeKeyB] || []).reduce((sum, word) => sum + word.count, 0);
+
+      return totalB - totalA;
+    });
+  }, [THEME_GROUPS, wordsByTheme]);
+
   // Trouver les verbatims contenant un mot
   const getVerbatimsForWord = (word: string) => {
     return keyVerbatims.filter(v => 
@@ -563,18 +572,18 @@ const wordsByFrequency = useMemo(() => {
   };
 
   return (
-    <Card>
+    <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
       <CardHeader>
         <CardTitle>{t("analysis.qualitative.title", "Analyse qualitative")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
           {/* Synthèse rapide */}
-          <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-            <h3 className="text-sm font-semibold text-gray-800 mb-1">
+          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">
               {t("analysis.qualitative.quickSummary", "Synthèse rapide")}
             </h3>
-            <p className="text-xs text-gray-600 leading-5">
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-5">
               {classifiedWords.length > 0
                 ? t("analysis.qualitative.quickSummaryText", {
                   strong: wordsByCategory.produit[0]?.word || wordsByCategory.experience[0]?.word || t("analysis.qualitative.defaultStrong"),
@@ -586,21 +595,21 @@ const wordsByFrequency = useMemo(() => {
 
           {/* Carte des mots-clés récurrents */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">
+            <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-100">
               {t("analysis.qualitative.keywordsMap", "Carte des mots-clés récurrents")}
             </h3>
             
             {/* Tri et filtres */}
             <div className="flex flex-col gap-1 mb-4">
               <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600">{t("analysis.qualitative.sortBy")} :</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{t("analysis.qualitative.sortBy")} :</span>
                 <div className="flex gap-2">
                 <button
                   onClick={() => setSortMode('frequency')}
                   className={`px-3 py-1 text-sm rounded-md border transition-colors duration-200 ease-in-out ${
                     sortMode === 'frequency'
                       ? 'bg-blue-900 text-white border-blue-900/30 shadow-sm'
-                      : 'bg-white text-blue-950 border-slate-200 hover:bg-blue-50 hover:text-blue-950 hover:border-blue-200'
+                      : 'bg-white dark:bg-slate-900 text-blue-950 dark:text-blue-300 border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-950 dark:hover:text-blue-200 hover:border-blue-200 dark:hover:border-blue-900/60'
                   }`}
                 >
                 {t("analysis.qualitative.sortFrequency")}
@@ -610,7 +619,7 @@ const wordsByFrequency = useMemo(() => {
                   className={`px-3 py-1 text-sm rounded-md border transition-colors duration-200 ease-in-out ${
                     sortMode === 'sentiment'
                       ? 'bg-blue-900 text-white border-blue-900/30 shadow-sm'
-                      : 'bg-white text-blue-950 border-slate-200 hover:bg-blue-50 hover:text-blue-950 hover:border-blue-200'
+                      : 'bg-white dark:bg-slate-900 text-blue-950 dark:text-blue-300 border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-950 dark:hover:text-blue-200 hover:border-blue-200 dark:hover:border-blue-900/60'
                   }`}
                 >
                   {t("analysis.qualitative.sortSentiment")}
@@ -620,26 +629,26 @@ const wordsByFrequency = useMemo(() => {
                   className={`px-3 py-1 text-sm rounded-md border transition-colors duration-200 ease-in-out ${
                     sortMode === 'theme'
                       ? 'bg-blue-900 text-white border-blue-900/30 shadow-sm'
-                      : 'bg-white text-blue-950 border-slate-200 hover:bg-blue-50 hover:text-blue-950 hover:border-blue-200'
+                      : 'bg-white dark:bg-slate-900 text-blue-950 dark:text-blue-300 border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-950 dark:hover:text-blue-200 hover:border-blue-200 dark:hover:border-blue-900/60'
                   }`}
                 >
                   {t("analysis.qualitative.sortTheme")}
                 </button>
                 </div>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
               {t("analysis.qualitative.sortDescription")}             
                </p>
             </div>
 
             {/* Vue analytique par barres horizontales */}
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 md:p-6">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 md:p-6 dark:border-slate-700 dark:bg-slate-800/40">
               {/* Mode Fréquence */}
               {sortMode === 'frequency' && (
                 <div className="transition-opacity duration-200">
                   {wordsByFrequency.length === 0 ? (
                     <div className="text-center py-8">
-                      <p className="text-sm text-gray-500">Aucune donnée disponible pour ce mode.</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Aucune donnée disponible pour ce mode.</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -649,9 +658,9 @@ const wordsByFrequency = useMemo(() => {
 
                         // Color the bar based on the word's dominant sentiment
                         const barBg =
-                          word.sentiment === 'positive' ? "bg-emerald-50"
-                            : word.sentiment === 'negative' ? "bg-red-50"
-                              : "bg-amber-50";
+                          word.sentiment === 'positive' ? "bg-emerald-100 dark:bg-emerald-900/35"
+                            : word.sentiment === 'negative' ? "bg-red-100 dark:bg-red-900/35"
+                              : "bg-amber-100 dark:bg-amber-900/35";
                         const barFill =
                           word.sentiment === 'positive' ? "bg-emerald-500"
                             : word.sentiment === 'negative' ? "bg-red-500"
@@ -660,9 +669,9 @@ const wordsByFrequency = useMemo(() => {
                         return (
                           <div
                             key={`frequency-${word.word}`}
-                            className="flex items-center gap-3 group"
+                            className="group flex items-center gap-3 rounded-md bg-slate-100 px-2 py-1.5 dark:bg-slate-800/70"
                           >
-                            <div className="w-36 text-xs text-slate-700 truncate">
+                            <div className="w-36 truncate text-xs text-slate-700 dark:text-slate-200">
                               {word.word}
                             </div>
                             <div className="flex-1">
@@ -673,7 +682,7 @@ const wordsByFrequency = useMemo(() => {
                                 />
                               </div>
                             </div>
-                            <div className="w-8 text-right text-xs font-medium text-slate-500">
+                            <div className="w-8 text-right text-xs font-medium text-slate-500 dark:text-slate-300">
                               {word.count}
                             </div>
                           </div>
@@ -696,12 +705,12 @@ const wordsByFrequency = useMemo(() => {
                         <div key={sentimentKey} className="space-y-3">
                           <div className="flex items-center gap-2">
                             <Icon className="w-4 h-4" style={{ color: theme.textColor }} />
-                            <span className="text-[13px] font-semibold tracking-tight text-slate-800">
+                            <span className="text-[13px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
                               {/* {theme.label} */}
                               {SENTIMENT_LABELS[sentimentKey]}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-500">{t("analysis.qualitative.noDataForSentiment")}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{t("analysis.qualitative.noDataForSentiment")}</p>
                         </div>
                       );
                     }
@@ -712,9 +721,9 @@ const wordsByFrequency = useMemo(() => {
 
                     // Couleurs selon le sentiment
                     const barBg =
-                      sentimentKey === 'positive' ? "bg-emerald-50" 
-                      : sentimentKey === 'negative' ? "bg-red-50" 
-                      : "bg-amber-50"; // Orange pastel pour neutre
+                      sentimentKey === 'positive' ? "bg-emerald-100 dark:bg-emerald-900/35" 
+                      : sentimentKey === 'negative' ? "bg-red-100 dark:bg-red-900/35" 
+                      : "bg-amber-100 dark:bg-amber-900/35"; // Orange pastel pour neutre
                     const barFill =
                       sentimentKey === 'positive' ? "bg-emerald-500" 
                       : sentimentKey === 'negative' ? "bg-red-500" 
@@ -724,7 +733,7 @@ const wordsByFrequency = useMemo(() => {
                       <div key={sentimentKey} className="space-y-3">
                         <div className="flex items-center gap-2">
                           <Icon className="w-4 h-4" style={{ color: theme.textColor }} />
-                          <span className="text-[13px] font-semibold tracking-tight text-slate-800">
+                          <span className="text-[13px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
                             {/* {theme.label} */}
                             {SENTIMENT_LABELS[sentimentKey]}
                           </span>
@@ -739,9 +748,9 @@ const wordsByFrequency = useMemo(() => {
                             return (
                               <div
                                 key={`sentiment-${sentimentKey}-${word.word}-${word.sentiment}`}
-                                className="flex items-center gap-3 group"
+                                className="group flex items-center gap-3 rounded-md bg-slate-100 px-2 py-1.5 dark:bg-slate-800/70"
                               >
-                                <div className="w-32 text-xs text-slate-700 truncate">
+                                <div className="w-32 truncate text-xs text-slate-700 dark:text-slate-200">
                                   {word.word}
                                 </div>
                                 <div className="flex-1">
@@ -752,7 +761,7 @@ const wordsByFrequency = useMemo(() => {
                                     />
                                   </div>
                                 </div>
-                                <div className="w-8 text-right text-xs font-medium text-slate-500">
+                                <div className="w-8 text-right text-xs font-medium text-slate-500 dark:text-slate-300">
                                   {word.count}
                                 </div>
                               </div>
@@ -768,7 +777,7 @@ const wordsByFrequency = useMemo(() => {
               {/* Mode Thème */}
               {sortMode === 'theme' && (
                 <div className="grid gap-y-6 md:grid-cols-2 md:gap-x-12 lg:gap-x-16 transition-opacity duration-200">
-                  {Object.entries(THEME_GROUPS).map(([themeKey, theme]) => {
+                  {sortedThemeGroups.map(([themeKey, theme]) => {
                     const words = [...(wordsByTheme[themeKey] || [])];
                     const Icon = theme.icon;
 
@@ -777,11 +786,11 @@ const wordsByFrequency = useMemo(() => {
                         <div key={themeKey} className="space-y-3">
                           <div className="flex items-center gap-2">
                             <Icon className="w-4 h-4" style={{ color: theme.textColor }} />
-                            <span className="text-[13px] font-semibold tracking-tight text-slate-800">
+                            <span className="text-[13px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
                               {theme.label}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-500">{t("analysis.qualitative.noDataForTheme")}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{t("analysis.qualitative.noDataForTheme")}</p>
                         </div>
                       );
                     }
@@ -796,24 +805,24 @@ const wordsByFrequency = useMemo(() => {
                     // Déterminer l'icône et les couleurs selon le sentiment global du thème
                     let IconComponent = Icon;
                     let iconColor = theme.textColor;
-                    let barBg = "bg-amber-50"; // Orange pastel par défaut pour neutre
+                    let barBg = "bg-amber-100 dark:bg-amber-900/35"; // Orange pastel par défaut pour neutre
                     let barFill = "bg-amber-500"; // Orange par défaut pour neutre
                     
                     if (themeSentiment === 'positive') {
                       IconComponent = TrendingUp;
                       iconColor = '#10B981'; // Vert
-                      barBg = "bg-emerald-50";
+                      barBg = "bg-emerald-100 dark:bg-emerald-900/35";
                       barFill = "bg-emerald-500";
                     } else if (themeSentiment === 'negative') {
                       IconComponent = TrendingDown;
                       iconColor = '#EF4444'; // Rouge
-                      barBg = "bg-red-50";
+                      barBg = "bg-red-100 dark:bg-red-900/35";
                       barFill = "bg-red-500";
                     } else {
                       // Neutre
                       IconComponent = Icon;
                       iconColor = '#F59E0B'; // Orange (cohérent avec Répartition des avis)
-                      barBg = "bg-amber-50";
+                      barBg = "bg-amber-100 dark:bg-amber-900/35";
                       barFill = "bg-amber-500";
                     }
 
@@ -821,7 +830,10 @@ const wordsByFrequency = useMemo(() => {
                       <div key={themeKey} className="space-y-3">
                         <div className="flex items-center gap-2">
                           <IconComponent className="w-4 h-4" style={{ color: iconColor }} />
-                          <span className="text-[13px] font-semibold tracking-tight text-slate-800">
+                          <span
+                            className="text-[13px] font-semibold tracking-tight text-slate-800 dark:text-slate-100"
+                            style={{ color: iconColor }}
+                          >
                             {theme.label}
                           </span>
                         </div>
@@ -834,9 +846,9 @@ const wordsByFrequency = useMemo(() => {
                             // Couleur selon le sentiment INDIVIDUEL du mot-clé (pas du thème)
                             const wordSentiment = word.sentiment || 'neutral';
                             const wordBarBg =
-                              wordSentiment === 'positive' ? "bg-emerald-50" 
-                              : wordSentiment === 'negative' ? "bg-red-50" 
-                              : "bg-amber-50"; // Orange pastel pour neutre
+                              wordSentiment === 'positive' ? "bg-emerald-100 dark:bg-emerald-900/35" 
+                              : wordSentiment === 'negative' ? "bg-red-100 dark:bg-red-900/35" 
+                              : "bg-amber-100 dark:bg-amber-900/35"; // Orange pastel pour neutre
                             const wordBarFill =
                               wordSentiment === 'positive' ? "bg-emerald-500" 
                               : wordSentiment === 'negative' ? "bg-red-500" 
@@ -846,9 +858,9 @@ const wordsByFrequency = useMemo(() => {
                             return (
                               <div
                                 key={`theme-${themeKey}-${word.word}-${word.sentiment}`}
-                                className="flex items-center gap-3 group"
+                                className="group flex items-center gap-3 rounded-md bg-slate-100 px-2 py-1.5 dark:bg-slate-800/70"
                               >
-                                <div className="w-32 text-xs text-slate-700 truncate">
+                                <div className="w-32 truncate text-xs text-slate-700 dark:text-slate-200">
                                   {word.word}
                                 </div>
                                 <div className="flex-1">
@@ -859,7 +871,7 @@ const wordsByFrequency = useMemo(() => {
                                     />
                                   </div>
                                 </div>
-                                <div className="w-8 text-right text-xs font-medium text-slate-500">
+                                <div className="w-8 text-right text-xs font-medium text-slate-500 dark:text-slate-300">
                                   {word.count}
                                 </div>
                               </div>
@@ -875,29 +887,29 @@ const wordsByFrequency = useMemo(() => {
               {/* État vide global si aucun mode n'a de données */}
               {sortMode === 'frequency' && wordsByFrequency.length === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-sm text-gray-500">Aucune donnée disponible pour ce mode.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Aucune donnée disponible pour ce mode.</p>
                 </div>
               )}
               {sortMode === 'sentiment' && Object.values(wordsBySentiment).every(arr => arr.length === 0) && (
                 <div className="text-center py-8">
-                  <p className="text-sm text-gray-500">Aucune donnée disponible pour ce mode.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Aucune donnée disponible pour ce mode.</p>
                 </div>
               )}
               {sortMode === 'theme' && Object.values(wordsByTheme).every(arr => arr.length === 0) && (
                 <div className="text-center py-8">
-                  <p className="text-sm text-gray-500">Aucune donnée disponible pour ce mode.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Aucune donnée disponible pour ce mode.</p>
                 </div>
               )}
             </div>
             
             {/* Affichage des verbatims du mot sélectionné */}
             {selectedWord && (
-              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/50 dark:bg-blue-950/30">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-gray-900">Extraits d'avis pour "{selectedWord}"</h4>
+                  <h4 className="font-semibold text-slate-900 dark:text-slate-100">Extraits d'avis pour "{selectedWord}"</h4>
                   <button
                     onClick={() => setSelectedWord(null)}
-                    className="text-gray-400 hover:text-gray-600 text-lg leading-none"
+                    className="text-lg leading-none text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
                   >
                     ✕
                   </button>
@@ -905,18 +917,18 @@ const wordsByFrequency = useMemo(() => {
                 <div className="space-y-2">
                   {getVerbatimsForWord(selectedWord).length > 0 ? (
                     getVerbatimsForWord(selectedWord).map((v, vIndex) => (
-                      <div key={vIndex} className="p-3 bg-white rounded border border-gray-200">
+                      <div key={vIndex} className="rounded border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
                         <div className="flex items-center gap-2 mb-1">
                           <Star
                             className={`w-4 h-4 ${
                               v.rating >= 4
                                 ? 'text-yellow-500 fill-yellow-500'
                                 : v.rating >= 3
-                                ? 'text-gray-400'
+                                ? 'text-gray-400 dark:text-slate-500'
                                 : 'text-red-500'
                             }`}
                           />
-                          <span className="text-xs font-medium text-gray-600">
+                          <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
                             {v.rating}/5
                   </span>
                         <Badge
@@ -936,13 +948,13 @@ const wordsByFrequency = useMemo(() => {
                           {v.sentiment === 'positive' ? t("analysis.qualitative.positive") : v.sentiment === 'negative' ? t("analysis.qualitative.negative") : t("analysis.qualitative.neutral")}
                         </Badge>
                         </div>
-                       <p className="text-sm text-gray-700 italic leading-relaxed">
+                       <p className="text-sm italic leading-relaxed text-slate-700 dark:text-slate-300">
                          “{highlightText(v.text, selectedWord ? [selectedWord] : [])}”
                        </p>
               </div>
                     ))
             ) : (
-                    <p className="text-sm text-gray-500">{t("analysis.qualitative.noVerbatimsForWord")}.</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{t("analysis.qualitative.noVerbatimsForWord")}.</p>
                   )}
                 </div>
               </div>
@@ -960,7 +972,7 @@ const wordsByFrequency = useMemo(() => {
                 {keyVerbatims.map((verbatim, index) => (
                   <div
                     key={index}
-                    className="p-4 border rounded-lg bg-white"
+                    className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
@@ -969,7 +981,7 @@ const wordsByFrequency = useMemo(() => {
                             verbatim.rating >= 4
                               ? 'text-yellow-500 fill-yellow-500'
                               : verbatim.rating >= 3
-                              ? 'text-gray-400'
+                              ? 'text-gray-400 dark:text-slate-500'
                               : 'text-red-500'
                           }`}
                         />

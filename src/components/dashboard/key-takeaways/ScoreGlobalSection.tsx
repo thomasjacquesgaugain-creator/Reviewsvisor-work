@@ -48,11 +48,11 @@ function ScoreRing({ score, label, t }: { score: number; label: string; t: (key:
   return (
     <div className="relative mx-auto h-40 w-40 shrink-0">
       <div className="absolute inset-0 rounded-full" style={ringStyle} />
-      <div className="absolute inset-[10px] rounded-full bg-white shadow-inner" />
-      <div className="absolute inset-[18px] flex flex-col items-center justify-center rounded-full bg-white">
+      <div className="absolute inset-[10px] rounded-full bg-white dark:bg-slate-900 shadow-inner" />
+      <div className="absolute inset-[18px] flex flex-col items-center justify-center rounded-full bg-white dark:bg-slate-950">
         <div className="flex items-end gap-1">
-          <span className="text-4xl font-extrabold tracking-tight text-slate-950">{normalizedScore}</span>
-          <span className="pb-1 text-sm font-semibold text-slate-400">/100</span>
+          <span className="text-4xl font-extrabold tracking-tight text-slate-950 dark:text-slate-100">{normalizedScore}</span>
+          <span className="pb-1 text-sm font-semibold text-slate-400 dark:text-slate-500">/100</span>
         </div>
         <div className="mt-2 rounded-full px-3 py-1 text-sm font-semibold"
           style={{ color: status.accent, backgroundColor: `${status.accent}14` }}>
@@ -65,9 +65,9 @@ function ScoreRing({ score, label, t }: { score: number; label: string; t: (key:
 
 function ScoreStat({ label, value, accentClassName }: { label: string; value: string; accentClassName: string }) {
   return (
-    <div className="rounded-[8px] border border-slate-100 bg-white/70 p-3 shadow-sm">
+    <div className="rounded-[8px] border border-slate-100 dark:border-slate-800 bg-white/70 dark:bg-slate-900 p-3 shadow-sm">
       <div className={`text-[11px] font-semibold uppercase tracking-[0.12em] ${accentClassName}`}>{label}</div>
-      <div className="mt-1 text-lg font-semibold text-slate-950">{value}</div>
+      <div className="mt-1 text-lg font-semibold text-slate-950 dark:text-slate-100">{value}</div>
     </div>
   );
 }
@@ -85,7 +85,7 @@ function RatingChangeStat({ ratingChange, t }: { ratingChange: number; t: (key: 
     : "text-rose-600";
 
   const valueColor = isNeutral
-    ? "text-slate-950"
+    ? "text-slate-950 dark:text-slate-100"
     : isPositive
     ? "text-emerald-700"
     : "text-rose-600";
@@ -95,13 +95,13 @@ function RatingChangeStat({ ratingChange, t }: { ratingChange: number; t: (key: 
     : `${isPositive ? "+" : ""}${ratingChange.toFixed(2)} ★`;
 
   return (
-    <div className="rounded-[8px] border border-slate-100 bg-slate-50 p-3 shadow-sm">
+    <div className="rounded-[8px] border border-slate-100 dark:border-slate-800 bg-white/70 dark:bg-slate-900 p-3 shadow-sm">
       <div className={`font-semibold uppercase tracking-[0.12em] flex items-center gap-1 text-[11px] ${accentClassName}`}>
         <Icon className="h-3 w-3" />
         <span>{t("dashboard.keyTakeaways.overallScore.statRecentTrend")}</span>
       </div>
       <div className={`mt-1 text-lg font-bold ${valueColor}`}>{formattedValue}</div>
-      <div className="mt-0.5 text-[10px] text-slate-400">
+      <div className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
         {t("dashboard.keyTakeaways.overallScore.statRecentTrendHint")}
       </div>
     </div>
@@ -165,7 +165,7 @@ export function ScoreGlobalSection({
                                  t("dashboard.keyTakeaways.overallScore.narrativePositive");
 
   return (
-    <div className="h-full self-start rounded-[8px] border border-white/70 bg-gradient-to-br from-white via-[#fbfaff] to-[#f4fbff] p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)]">
+    <div className="h-full self-start rounded-[8px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)] dark:shadow-[0_18px_45px_rgba(2,6,23,0.5)]">
 
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export function ScoreGlobalSection({
             style={{ backgroundColor: isDataAvailable ? `${status.accent}14` : '#f1f5f9' }}>
             <Sparkles className="h-4 w-4" style={{ color: isDataAvailable ? status.accent : '#94a3b8' }} />
           </span>
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
             {t("dashboard.keyTakeaways.overallScore.overallScore")}
           </p>
         </div>
@@ -192,7 +192,7 @@ export function ScoreGlobalSection({
           </div>
 
           <div className="mx-auto max-w-xl text-center">
-            <div className="mt-3 flex items-start gap-2 text-sm text-slate-500">
+            <div className="mt-3 flex items-start gap-2 text-sm text-slate-500 dark:text-slate-400">
               <Star className="h-4 w-4 text-amber-400 mt-0.5" />
               <span>{scoreNarrative}</span>
             </div>
@@ -218,14 +218,14 @@ export function ScoreGlobalSection({
           </div>
         </div>
       ) : (
-        <div className="mt-6 flex flex-col items-center justify-center gap-3 rounded-[8px] border border-slate-100 bg-white/70 py-10 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+        <div className="mt-6 flex flex-col items-center justify-center gap-3 rounded-[8px] border border-slate-100 dark:border-slate-800 bg-white/70 dark:bg-slate-900 py-10 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
             <AlertCircle className="h-6 w-6 text-slate-400" />
           </div>
-          <p className="text-sm font-medium text-slate-600">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
             {t("dashboard.keyTakeaways.overallScore.noData")}
           </p>
-          <p className="max-w-[200px] text-xs text-slate-400">
+          <p className="max-w-[200px] text-xs text-slate-400 dark:text-slate-500">
             {t("dashboard.keyTakeaways.overallScore.noDataHint")}
           </p>
         </div>
