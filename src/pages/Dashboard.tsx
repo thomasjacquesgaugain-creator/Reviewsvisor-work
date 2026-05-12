@@ -464,18 +464,20 @@ const Dashboard = () => {
     }, 0);
     const reviewsPerMonth = last90DaysCount / 3;
 
-    if (delta < 0.3) return "D'ici 1 mois";
-    if (delta < 0.5) return "D'ici 2 mois";
+    if (delta < 0.3) return t("dashboard.targetDateText.oneMonth");
+    if (delta < 0.5) return t("dashboard.targetDateText.twoMonths");
 
     if (delta < 0.8) {
       // Si peu d'avis/mois, viser plutôt le haut de la fourchette
-      if (reviewsPerMonth > 0 && reviewsPerMonth < 5) return "D'ici 4 mois";
-      return "D'ici 3-4 mois";
+      if (reviewsPerMonth > 0 && reviewsPerMonth < 5) {
+        return t("dashboard.targetDateText.fourMonths");
+      }
+      return t("dashboard.targetDateText.threeToFourMonths");
     }
 
     // Ambitieux
-    return "D'ici 6 mois ou plus";
-  }, [currentAvgRatingForTarget, targetRating, allReviewsForChart]);
+    return t("dashboard.targetDateText.sixMonthsOrMore");
+  }, [currentAvgRatingForTarget, targetRating, allReviewsForChart, t]);
 
   useEffect(() => {
     const minTarget = Math.min(5, Math.max(1, currentAvgRatingForTarget));
@@ -7329,7 +7331,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        className="border-purple-600 text-purple-600 hover:bg-purple-50"
+                                        className="border-purple-600 text-purple-600"
                                         disabled={isGenerating}
                                         onClick={() =>
                                           generateAiResponse(reviewId)

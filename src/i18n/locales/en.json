@@ -429,6 +429,13 @@
     "remainingToReach": "{{remaining}} point(s) remaining to reach the objective",
     "objectiveReached": "Objective reached! 🎉",
     "targetDate": "Target date",
+    "targetDateText": {
+      "oneMonth": "Within 1 month",
+      "twoMonths": "Within 2 months",
+      "threeToFourMonths": "Within 3-4 months",
+      "fourMonths": "Within 4 months",
+      "sixMonthsOrMore": "Within 6 months or more"
+    },
     "withinMonths": "Within {{months}} months",
     "actionPlan": "Action plan",
     "followImprovementActions": "Follow your improvement actions",
