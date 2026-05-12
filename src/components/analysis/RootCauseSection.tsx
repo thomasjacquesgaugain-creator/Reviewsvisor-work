@@ -10,7 +10,7 @@ import { useState } from "react";
 import Questionnaire, { QuestionnaireResult,IshikawaScores,} from "./Questionare";
 import { useSmartStore } from "@/store/smartStore";
 import { useEffect , useRef } from "react";
-import { getCurrentEstablishment } from "@/services/establishments";
+import { useEstablishmentStore } from "@/store/establishmentStore";
 
 import { useTranslation } from "react-i18next";
 
@@ -235,6 +235,9 @@ export function RootCauseSection({
   const [questionnaireSkipped, setQuestionnaireSkipped] = useState(false);
   const [showQuestionare, setShowQuestionare] = useState(false);
   const { t } = useTranslation();
+  const selectedEstablishmentId = useEstablishmentStore(
+    (s) => s.selectedEstablishment?.id ?? null
+  );
 
 
 const establishmentIdRef = useRef<string | null>(null);
@@ -246,16 +249,9 @@ const currentIssue =
 
 /* ── Load establishment ── */
 useEffect(() => {
-  async function loadEst() {
-    const est = await getCurrentEstablishment();
-    const id = est?.id ?? null;
-
-    setEstablishmentId(id);
-    establishmentIdRef.current = id;
-  }
-
-  loadEst();
-}, []);
+  setEstablishmentId(selectedEstablishmentId);
+  establishmentIdRef.current = selectedEstablishmentId;
+}, [selectedEstablishmentId]);
 
 /* ── Fetch SMART objectives when ID is ready ── */
 useEffect(() => {

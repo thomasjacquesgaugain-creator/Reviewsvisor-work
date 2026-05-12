@@ -849,6 +849,15 @@
         "retail": "Commerce de détail",
         "other": "Autre"
       },
+      "informationNotProvided": "Information non fournie",
+      "noEstablishmentMessage": "Aucun Ã©tablissement. Ajoutez un Ã©tablissement depuis la page <0>Ã‰tablissements & accÃ¨s</0> pour afficher ses informations ici.",
+      "validation": {
+        "nameUpdated": "Nom de l'Ã©tablissement mis Ã  jour",
+        "addressUpdated": "Adresse mise Ã  jour",
+        "phoneNumberUpdated": "NumÃ©ro de tÃ©lÃ©phone mis Ã  jour",
+        "websiteUpdated": "Site web mis Ã  jour",
+        "invalidPhoneNumber": "Format du numéro de téléphone invalide. Le numéro doit être au format international (par ex. : +33123456789)."
+      },
       "placeholder": {
         "establishmentName": "Le nom de votre établissement",
         "address": "1 Cr de la Bôve, 56100 Lorient",

@@ -256,7 +256,7 @@ const Dashboard = () => {
       if (id) fetchObjectives(id);
     }
     loadEst();
-  }, []);
+  }, [activePlaceId]);
   const safeObjectives = Array.isArray(objectives) ? objectives : [];
 
   function handleClickActionPlan(){
