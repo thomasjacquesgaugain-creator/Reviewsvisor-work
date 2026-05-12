@@ -2039,6 +2039,10 @@
         "tooltipFull": "{{title}}\n\n{{text}}\n\nConfiance IA : niveau de fiabilité des résultats selon le volume et la cohérence des avis analysés. Bénéfice : vous savez dans quelle mesure vous pouvez vous appuyer sur les analyses pour prendre des décisions.{{secondary}}"
       }
     },
+    "tocSidebar": {
+      "title": "Dans cette analyse",
+      "description": "Cliquez sur une section pour afficher cette partie."
+    },
     "lexique": {
       "title": "Lexique et définitions",
       "kpiDescription": "Un KPI (Key Performance Indicator) est une mesure quantitative utilisée pour évaluer le niveau d’atteinte d’un objectif défini. Il sert à suivre l’évolution de la performance dans le temps et à appuyer les décisions de pilotage. ",

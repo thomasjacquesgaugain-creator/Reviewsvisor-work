@@ -1831,6 +1831,10 @@
         "tooltipFull": "{{title}}\n\n{{text}}\n\nAI Confidence: reliability level of results based on the volume and consistency of analyzed reviews. Benefit: you know to what extent you can rely on the analyses to make decisions.{{secondary}}"
       }
     },
+    "tocSidebar": {
+      "title": "On this analysis",
+      "description": "Click on a section to jump to it."
+    },
     "lexique": {
       "title": "Lexicon and Definitions",
       "kpiDescription": "A KPI (Key Performance Indicator) is a quantitative measure used to assess the extent to which a defined objective has been achieved. It serves to track performance trends over time and to support management decision-making.",
