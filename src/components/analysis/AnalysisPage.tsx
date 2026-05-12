@@ -12,7 +12,10 @@ import { AnalysisFiltersProvider, useAnalysisFilters } from "./AnalysisFiltersCo
 import { ThematicSegmentationBar } from "./ThematicSegmentationBar";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { APP_NAME, APP_TAGLINE } from "@/config/brand";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { ListOrdered } from "lucide-react";
+import { t } from "i18next";
 
 interface AnalysisPageProps {
   data: CompleteAnalysisData;
@@ -22,8 +25,29 @@ interface AnalysisPageProps {
   dynamicThemes?: Array<{ theme: string; count?: number; importance?: number }>; // Thèmes dynamiques depuis insight
 }
 
+const ANALYSIS_TOC_SECTIONS = [
+  { id: "overview-section", label: `1. ${t("analysis.overview.title", "Vue d'ensemble")} – ${t("analysis.overview.kpiTitle", "Key KPIs")}` },
+  { id: "history-section", label: `2. ${t("analysis.history.title", "Review History and Dynamics")}` },
+  { id: "sentiment-section", label: `3. ${t("analysis.sentiment.heading", "Distribution of Reviews")}` },
+  { id: "themes-section", label: `4. ${t("analysis.themes.heading", "Thematic Analysis")}` },
+  { id: "pareto-section", label: `5. ${t("analysis.pareto.title", "Pareto Chart")}` },
+  { id: "root-cause-section", label: `6. ${t("analysis.ishikawa.title", "Root Cause Analysis")}` },
+  { id: "diagnostic-section", label: `7. ${t("analysis.syntheseAndDiagnostic.title", "Synthesis and Diagnostic")}` },
+] as const;
+
 export function AnalysisPage({ data, establishmentName,insight,  reviews, dynamicThemes = [] }: AnalysisPageProps) {
   const { t } = useTranslation();
+
+  const analysisSections = useMemo(
+    () => [
+      ...ANALYSIS_TOC_SECTIONS.map((s) => ({ id: s.id, label: s.label })),
+      {
+        id: "lexique-section",
+        label: `8. ${t("analysis.lexique.title")}`,
+      },
+    ],
+    [t],
+  );
 
   console.log('[AnalysisPage] Reviews reçus:', reviews);
   console.log('[AnalysisPage] Rendu avec données:', { 
@@ -63,10 +87,63 @@ export function AnalysisPage({ data, establishmentName,insight,  reviews, dynami
             </p>
           </div>
 
-          {/* Contexte global d'analyse */}
           <ThematicSegmentationBar />
 
-          <AnalysisContent data={data} reviews={reviews} dynamicThemes={dynamicThemes} insight={insight} />
+          <div className="flex items-stretch gap-8 lg:gap-10">
+            <aside className="hidden lg:block w-72 shrink-0 pt-1">
+              <div className="sticky top-24 z-10 flex max-h-[calc(100vh-6rem)] flex-col rounded-2xl border border-white/10 bg-white/[0.07] backdrop-blur-md shadow-2xl shadow-black/50 ring-1 ring-white/5">
+                <div className="shrink-0 border-b border-white/10 px-4 pb-3 pt-4">
+                  <div className="flex gap-3">
+                    <ListOrdered
+                      className="mt-0.5 h-5 w-5 shrink-0 text-white"
+                      aria-hidden
+                    />
+                    <div className="min-w-0">
+                      <h2
+                        id="analysis-toc-heading"
+                        className="text-sm font-semibold leading-snug text-white"
+                      >
+                        {t("analysis.tocSidebar.title")}
+                      </h2>
+                      <p className="mt-1 text-xs leading-relaxed text-white">
+                        {t("analysis.tocSidebar.description")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <nav
+                  className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain p-3"
+                  aria-labelledby="analysis-toc-heading"
+                >
+                  {analysisSections.map((section) => (
+                    <button
+                      key={section.id}
+                      type="button"
+                      onClick={() => {
+                        document.getElementById(section.id)?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                      }}
+                      className="w-full text-left px-4 py-3 rounded-xl text-sm text-white hover:bg-white/10 transition"
+                    >
+                      {section.label}
+                    </button>
+                  ))}
+                </nav>
+              </div>
+            </aside>
+
+            {/* Contenu analyse */}
+            <div className="flex-1 min-w-0">
+              <AnalysisContent
+                data={data}
+                reviews={reviews}
+                dynamicThemes={dynamicThemes}
+                insight={insight}
+              />
+            </div>
+          </div>
         </AnalysisFiltersProvider>
       </div>
     );
@@ -116,9 +193,20 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
   return (
     <>
       {/* Section 1: Vue d'ensemble */}
-      {data.overview && <OverviewSection data={data.overview} reviews={effectiveReviews} insight={insight} themes={data.themes} />}
+      {/* {data.overview && <OverviewSection data={data.overview} reviews={effectiveReviews} insight={insight} themes={data.themes} />} */}
+      <section id="overview-section" className="scroll-mt-[6.5rem]">
+        {data.overview && (
+          <OverviewSection
+            data={data.overview}
+            reviews={effectiveReviews}
+            insight={insight}
+            themes={data.themes}
+          />
+        )}
+      </section>
 
       {/* Titre de section 2 */}
+      <section id="history-section" className="scroll-mt-[6.5rem]">
       <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-12 mb-6">
         2. {t("analysis.history.title")}
       </h2>
@@ -127,8 +215,10 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
       {(data.history || effectiveReviews) && (
         <HistorySection data={data.history} reviews={effectiveReviews} />
       )}
+      </section>
 
       {/* Titre de section 3 */}
+      <section id="sentiment-section" className="scroll-mt-[6.5rem]">
       <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-12 mb-6">
         3. {t("analysis.sentiment.heading")}
       </h2>
@@ -137,8 +227,10 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
       {(data.sentiment || effectiveReviews) && (
         <SentimentDistributionSection data={data.sentiment} reviews={effectiveReviews} />
       )}
+      </section>
 
       {/* Titre de section 4 */}
+      <section id="themes-section" className="scroll-mt-[6.5rem]">
       <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-12 mb-6">
         4. {t("analysis.themes.heading")}
       </h2>
@@ -152,8 +244,10 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
 
       {/* Section 4b: Analyse qualitative */}
       {data.qualitative && <QualitativeSection data={data.qualitative} reviews={effectiveReviews} dynamicThemes={dynamicThemes} />}
+      </section>
 
       {/* Titre de section 5 */}
+      <section id="pareto-section" className="scroll-mt-[6.5rem]">
       <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-12 mb-6 flex items-center gap-2">
         5. {t("analysis.pareto.title")}
         <InfoTooltip 
@@ -170,10 +264,12 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
             qualitative={data.qualitative}
           />
         )}
+        </section>
 
       {/* Titre de section 6 */}
+      <section id="root-cause-section" className="scroll-mt-[6.5rem]">
       <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-12 mb-6">
-        6. {t("analysis.ishikawa.title")}
+       6. {t("analysis.ishikawa.title")}
       </h2>
 
       {/* Section 6: Analyse des causes racines */}
@@ -185,9 +281,11 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
           reviews={effectiveReviews}
         />
       )}
+      </section>
 
       {/* Titre de section 7 */}
-      <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-12 mb-6" id="diagnostic-section">
+      <section id="diagnostic-section" className="scroll-mt-[6.5rem]">
+      <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-12 mb-6">
         7. {t("analysis.syntheseAndDiagnostic.title")}
       </h2>
 
@@ -200,9 +298,12 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
           totalReviews={effectiveReviews?.length || data.overview?.totalReviews || 0}
         />
       )}
+      </section>
 
       {/* Section Lexique (repliable) */}
-      <LexiqueSection />
+      <section id="lexique-section" className="scroll-mt-[6.5rem]">
+        <LexiqueSection />
+      </section>
     </>
   );
 }

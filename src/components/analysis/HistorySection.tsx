@@ -681,7 +681,7 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="w-32 rounded-lg border-border bg-background hover:bg-accent"
+                  className="w-32 bg-gray-50 border-gray-200 rounded-lg"
                 >
                   <Filter className="w-4 h-4 mr-2" />
                   {t("analysis.history.filters")}

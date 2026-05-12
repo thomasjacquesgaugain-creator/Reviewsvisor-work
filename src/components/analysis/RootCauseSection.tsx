@@ -7,11 +7,10 @@ import { AlertCircle, Clock, HelpCircle } from "lucide-react";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { Button } from "../ui/button";
 import { useState } from "react";
-import { buildImpactEffortMatrix } from "./recommendation/EffortMatrix";
 import Questionnaire, { QuestionnaireResult,IshikawaScores,} from "./Questionare";
 import { useSmartStore } from "@/store/smartStore";
 import { useEffect , useRef } from "react";
-import { getCurrentEstablishment } from "@/services/establishments";
+import { useEstablishmentStore } from "@/store/establishmentStore";
 
 import { useTranslation } from "react-i18next";
 
@@ -236,6 +235,9 @@ export function RootCauseSection({
   const [questionnaireSkipped, setQuestionnaireSkipped] = useState(false);
   const [showQuestionare, setShowQuestionare] = useState(false);
   const { t } = useTranslation();
+  const selectedEstablishmentId = useEstablishmentStore(
+    (s) => s.selectedEstablishment?.id ?? null
+  );
 
 
 const establishmentIdRef = useRef<string | null>(null);
@@ -247,16 +249,9 @@ const currentIssue =
 
 /* ── Load establishment ── */
 useEffect(() => {
-  async function loadEst() {
-    const est = await getCurrentEstablishment();
-    const id = est?.id ?? null;
-
-    setEstablishmentId(id);
-    establishmentIdRef.current = id;
-  }
-
-  loadEst();
-}, []);
+  setEstablishmentId(selectedEstablishmentId);
+  establishmentIdRef.current = selectedEstablishmentId;
+}, [selectedEstablishmentId]);
 
 /* ── Fetch SMART objectives when ID is ready ── */
 useEffect(() => {
@@ -455,13 +450,13 @@ const currentSmartObjective = useMemo(() => {
           <div className="mt-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-xs text-green-700 flex items-center gap-2">
             <span>✅</span>
             <span>
-              Effort overridden to{" "}
+              {t("questionnaire.effortOverridden", {
+                effort: currentQuestionnaire?.dominantEffort,
+              })}{" "}
               <strong>
-                {currentQuestionnaire?.dominantEffort}
-              </strong>{" "}
-              — dominant cause:{" "}
-              <strong>
-                {t(`questionnaire.sections.${currentQuestionnaire?.dominantCategory}.title`)}
+                {t(
+                  `questionnaire.sections.${currentQuestionnaire?.dominantCategory}.title`
+                )}
               </strong>
             </span>
           </div>
