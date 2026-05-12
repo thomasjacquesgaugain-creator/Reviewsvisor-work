@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EditableField } from "@/components/settings/EditableField";
 import { Loader2, Building2, ChevronDown } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { useTranslation,Trans } from "react-i18next";
 import { toast } from "sonner";
 import { validatePhoneNumber, formatPhoneNumber } from "@/utils/phoneValidation";
 import {
@@ -91,9 +91,9 @@ export function EstablishmentInfoSettings() {
       if (!displayedEstablishment?.id) return;
       await updateEstablishment(displayedEstablishment.id, { name: value.trim() });
       await loadEstablishments(false);
-      toast.success("Nom de l'établissement mis à jour");
+      toast.success(t("settings.establishmentInformation.validation.nameUpdated"));
     },
-    [displayedEstablishment?.id, loadEstablishments]
+    [displayedEstablishment?.id, loadEstablishments, t]
   );
 
   const handleSaveAddress = useCallback(
@@ -101,9 +101,9 @@ export function EstablishmentInfoSettings() {
       if (!displayedEstablishment?.id) return;
       await updateEstablishment(displayedEstablishment.id, { formatted_address: value.trim() || undefined });
       await loadEstablishments(false);
-      toast.success("Adresse mise à jour");
+      toast.success(t("settings.establishmentInformation.validation.addressUpdated"));
     },
-    [displayedEstablishment?.id, loadEstablishments]
+    [displayedEstablishment?.id, loadEstablishments, t]
   );
 
   const handleSavePhone = useCallback(
@@ -111,14 +111,14 @@ export function EstablishmentInfoSettings() {
       if (!displayedEstablishment?.id) return;
       const validation = validatePhoneNumber(value);
       if (!validation.valid) {
-        toast.error(validation.error ?? "Format de numéro invalide");
+        toast.error(t("settings.establishmentInformation.validation.invalidPhoneNumber"));
         throw new Error(validation.error);
       }
       await updateEstablishment(displayedEstablishment.id, { phone: value.trim() || undefined });
       await loadEstablishments(false);
-      toast.success("Numéro de téléphone mis à jour");
+      toast.success(t("settings.establishmentInformation.validation.phoneNumberUpdated"));
     },
-    [displayedEstablishment?.id, loadEstablishments]
+    [displayedEstablishment?.id, loadEstablishments, t]
   );
 
   const handleSaveWebsite = useCallback(
@@ -126,9 +126,9 @@ export function EstablishmentInfoSettings() {
       if (!displayedEstablishment?.id) return;
       await updateEstablishment(displayedEstablishment.id, { website: value.trim() || undefined });
       await loadEstablishments(false);
-      toast.success("Site web mis à jour");
+      toast.success(t("settings.establishmentInformation.validation.websiteUpdated"));
     },
-    [displayedEstablishment?.id, loadEstablishments]
+    [displayedEstablishment?.id, loadEstablishments, t]
   );
 
   const handleSaveTypeEtablissement = useCallback(
@@ -138,7 +138,7 @@ export function EstablishmentInfoSettings() {
       await loadEstablishments(false);
       toast.success(t("settings.establishmentInformation.updatedEstablishmentType"));
     },
-    [displayedEstablishment?.id, loadEstablishments]
+    [displayedEstablishment?.id, loadEstablishments, t]
   );
 
   if (loading) {
@@ -146,7 +146,7 @@ export function EstablishmentInfoSettings() {
       <div className="p-8">
         <div className="flex items-center gap-3 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
-          <span>Chargement...</span>
+          <span>{t("common.loading")}</span>
         </div>
       </div>
     );
@@ -246,9 +246,9 @@ export function EstablishmentInfoSettings() {
             label={t("settings.establishmentInformation.address")}
             value={displayedEstablishment.formatted_address ?? ""}
             onSave={handleSaveAddress}
-            placeholder="1 Cr de la Bôve, 56100 Lorient"
+            placeholder={t("settings.establishmentInformation.placeholder.address")}
             type="textarea"
-            emptyLabel="Information non fournie"
+            emptyLabel={t("settings.establishmentInformation.informationNotProvided")}
           />
           <div className="flex items-start justify-between py-4 border-b border-gray-100">
             <div className="flex-1 min-w-0">
@@ -272,14 +272,14 @@ export function EstablishmentInfoSettings() {
             onSave={handleSavePhone}
             placeholder={t("settings.establishmentInformation.placeholder.phoneNumber")}
             type="tel"
-            emptyLabel="Information non fournie"
+            emptyLabel={t("settings.establishmentInformation.informationNotProvided")}
           />
           <EditableField
             label={t("settings.establishmentInformation.website")}
             value={displayedEstablishment.website ?? ""}
             onSave={handleSaveWebsite}
-            placeholder="https://example.com"
-            emptyLabel="Information non fournie"
+            placeholder={t("settings.establishmentInformation.placeholder.website")}
+            emptyLabel={t("settings.establishmentInformation.informationNotProvided")}
           />
           {/* Type d'établissement : éditable via Select */}
           {editingTypeEtablissement ? (
@@ -342,7 +342,7 @@ export function EstablishmentInfoSettings() {
                 <div className="text-sm text-gray-900">
                   {displayedEstablishment.types
                     ? getTranslatedEstablishmentType(displayedEstablishment.types)
-                    : "Information non fournie"}
+                    : t("settings.establishmentInformation.informationNotProvided")}
                 </div>
               </div>
               <Button
@@ -355,18 +355,23 @@ export function EstablishmentInfoSettings() {
                 className="ml-4 flex-shrink-0"
               >
                 <Pencil className="h-4 w-4" />
-                <span className="sr-only">Modifier</span>
+                <span className="sr-only">{t("common.edit")}</span>
               </Button>
             </div>
           )}
         </div>
       ) : (
         <p className="text-gray-500">
-          Aucun établissement. Ajoutez un établissement depuis la page{" "}
-          <Link to="/settings/establishments" className="text-primary hover:underline">
-            Établissements & accès
-          </Link>{" "}
-          pour afficher ses informations ici.
+          <Trans
+            i18nKey="settings.establishmentInformation.noEstablishmentMessage"
+            components={[
+              <Link
+                key="establishments-link"
+                to="/settings/establishments"
+                className="text-primary hover:underline"
+              />,
+            ]}
+          />
         </p>
       )}
     </div>

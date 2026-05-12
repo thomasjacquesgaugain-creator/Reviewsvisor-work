@@ -768,6 +768,15 @@
       "website": "Website",
       "establishmentType": "Type of Establishment",
       "updatedEstablishmentType": "Updated establishment type",
+      "informationNotProvided": "Information not provided",
+      "noEstablishmentMessage": "No establishment. Add an establishment from the <0>Establishment & Access</0> page to display its information here.",
+      "validation": {
+        "nameUpdated": "Establishment name updated",
+        "addressUpdated": "Address updated",
+        "phoneNumberUpdated": "Phone number updated",
+        "websiteUpdated": "Website updated",
+        "invalidPhoneNumber": "Invalid phone number format.The number must be in international format (e.g., +33123456789)."
+      },
       "establishmentTypesOptions": {
         "restaurant": "Restaurant",
         "bar": "Bar",

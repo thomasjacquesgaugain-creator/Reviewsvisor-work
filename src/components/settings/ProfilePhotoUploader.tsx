@@ -175,7 +175,7 @@ export function ProfilePhotoUploader({
       // Callback
       onAvatarUpdated?.(null);
 
-      toast.success("Photo de profil supprimée");
+      toast.success(t("settings.personalInformation.profilePictureDeleted"));
     } catch (err: any) {
       console.error("Error removing avatar:", err);
       toast.error("Erreur lors de la suppression de la photo");
