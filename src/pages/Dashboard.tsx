@@ -141,6 +141,7 @@ import { useSmartProgress } from "@/hooks/useSmartProgress";
 import { useSmartStore } from "@/store/smartStore";
 import { DeleteEstablishmentButton } from "@/components/DeleteEstablishmentButton";
 import { getEstablishmentTypeTranslationKey } from "@/utils/establishmentTypeMapping";
+import { AppPageBackground } from "@/components/AppPageBackground";
 
 const GRANULARITY_LABEL_KEYS: Record<Granularity, string> = {
   jour: "dashboard.day",
@@ -3252,8 +3253,9 @@ const getLatestDate = (reviews: any[]): Date | null =>
   // If we have an etablissementId in URL, show analysis dashboard
   if (etablissementId) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
+      <div className="app-page-shell">
+        <AppPageBackground />
+        <div className="relative z-10 container mx-auto px-4 py-8">
           <AnalyseDashboard />
         </div>
       </div>
@@ -3265,14 +3267,10 @@ const getLatestDate = (reviews: any[]): Date | null =>
 ) ?? null;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <main className="flex-1 relative overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
-        {/* Background with organic shapes - absolute so they scroll with content and don't overlap footer */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-violet-200 rounded-full blur-3xl opacity-30"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-200 to-yellow-200 rounded-full blur-3xl opacity-30"></div>
-          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-full blur-3xl opacity-30"></div>
-        </div>
+    <div className="app-page-shell">
+      <AppPageBackground />
+
+      <main className="relative flex-1">
 
         {/* Main content */}
         <div className="relative z-10">

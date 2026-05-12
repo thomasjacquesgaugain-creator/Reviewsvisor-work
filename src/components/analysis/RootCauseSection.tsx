@@ -377,9 +377,9 @@ const currentSmartObjective = useMemo(() => {
   <Card>
     <CardHeader className="space-y-4">
       <CardTitle className="flex items-center gap-2">
-        6. {t("analysis.ishikawa.title")}
+         {t("analysis.ishikawa.title")}
         <InfoTooltip
-          content="Analyse des causes racines (Ishikawa) : outil pour identifier les causes profondes d'un problème récurrent. Bénéfice : vous comprenez pourquoi un problème survient et pouvez agir à la source."
+          content={t("analysis.ishikawa.content")}
         />
 
         {/* Step indicator */}

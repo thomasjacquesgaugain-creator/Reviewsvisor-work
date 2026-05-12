@@ -13,12 +13,12 @@ export function MainStrengthsSection({ strengths }: MainStrengthsSectionProps) {
 
  if (!mainStrength) {
   return (
-    <div className="relative flex  overflow-hidden rounded-[8px] border border-[#c6f3e8] bg-gradient-to-br from-white via-[#f6fffd] to-[#defbf4] p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(109,189,250,0.14),_transparent_40%),radial-gradient(circle_at_bottom_right,_rgba(161,250,232,0.24),_transparent_30%)]" />
+    <div className="relative flex  overflow-hidden rounded-[8px] border border-slate-200 bg-white p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
+      <div className="absolute inset-0" />
 
       <div className="relative flex w-full flex-col">
         <div className="flex items-center gap-2">
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#defbf4]">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full">
             <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
           </span>
           <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
@@ -40,8 +40,8 @@ export function MainStrengthsSection({ strengths }: MainStrengthsSectionProps) {
 }
 
   return (
-    <div className="relative flex  overflow-hidden rounded-[8px] border border-[#c6f3e8] bg-gradient-to-br from-white via-[#f6fffd] to-[#defbf4] p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(109,189,250,0.14),_transparent_40%),radial-gradient(circle_at_bottom_right,_rgba(161,250,232,0.24),_transparent_30%)]" />
+    <div className="relative h-fit overflow-hidden rounded-[8px] border border-slate-200 bg-white p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
+      <div className="absolute inset-0" />
 
       <div className="relative flex w-full flex-col">
         <div className="flex items-center gap-2">

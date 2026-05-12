@@ -700,7 +700,7 @@
     "basedOnCurrentRating": "Basée sur la note actuelle",
     "frequencyInNegativeReviews": "et la fréquence des mentions dans les avis négatifs.",
      "keyTakeaways": {
-       "title":"Essentiel à retenir",
+       "title":"Essentiel à Retenir",
        "quickRead":"Lecture rapide pour les décideurs",
        "overallScore": {
          "overallScore": "Note globale",
@@ -948,16 +948,12 @@
       },
       "background": "Fond",
       "backgroundDescription": "Choisissez la teinte de fond de l'interface",
+      "backgroundBrightness": "Luminosité du fond",
+      "backgroundBrightnessDescription": "Ajustez la luminosité du fond selectionne",
       "backgroundColor": {
-        "neutral": "Neutre",
-        "warm": "Gris Chaud",
-        "cool": "Froid",
-        "paleBlue": "Bleu doux",
-        "paleGreen": "Vert doux",
-        "palePink": "Rose doux",
-        "palePurple": "Violet doux",
-        "cream": "Crème",
-        "stone": "Pierre"
+        "cottonCandy": "Barbe à papa",
+        "dusk": "Crépuscule",
+        "lavender": "Lavande"
       },
       "validation": {
         "settingsReset": "Paramètres réinitialisés",
@@ -1268,8 +1264,8 @@
   }
   },
   "establishment": {
-    "title": "Mon établissement",
-    "myEstablishment": "🏢 Mon Établissement",
+    "title": "Mon Établissements",
+    "myEstablishment": "Mon Établissement",
     "search": "Rechercher un établissement",
     "searchPlaceholder": "Rechercher un établissement…",
     "name": "Nom de l'établissement",
@@ -1294,7 +1290,7 @@
     "addFirst": "Ajoutez votre premier établissement",
     "add": "Ajouter",
     "cancel": "Annuler",
-    "selected": "✅ Sélectionné :",
+    "selected": "Sélectionné :",
     "poweredByGoogle": "Powered by Google",
     "importReviews": "Importer vos avis",
     "importAllReviews": "Importer tous les avis",
@@ -1977,6 +1973,7 @@
     },
     "ishikawa": {
       "title": "Analyse des causes racines (Ishikawa IA)",
+      "content":"Analyse des causes racines (Ishikawa) : outil pour identifier les causes profondes d'un problème récurrent. Bénéfice : vous comprenez pourquoi un problème survient et pouvez agir à la source.",
       "problemAnalyzed": "Problème analysé",
       "dataSrc":"Données issues du diagramme de Pareto des avis négatifs.",
       "probableCausesIdentified": "Causes probables identifiées par l'IA",
@@ -2034,6 +2031,9 @@
       "aiTrust": "Confiance IA",
       "aiTrustDescription": "La confiance IA désigne un indicateur du degré de fiabilité des résultats produits par un modèle au regard de la quantité, de la qualité et de la cohérence des données utilisées. Elle reflète le niveau d’incertitude associé aux analyses et doit être interprétée comme un niveau de confiance plutôt que comme une vérité absolue."
     }
+  },
+  "messages": {
+    "featureAvailableSoon": "Cette fonctionnalite sera bientot disponible."
   },
   "rootCause":{
   "probability": {
@@ -2165,7 +2165,8 @@
   },
   "errors": {
     "saveFailed": "Échec de l'enregistrement. Veuillez réessayer."
-  }
+  },
+  "success":"Questionnaire rempli avec succès"
 },
 "recommendations":{
   
@@ -2209,6 +2210,82 @@
     }
   }
 }
+},
+"smartCard": {
+  "header": {
+    "title":     "Objectif SMART — {{cause}}",
+    "pareto":    "Depuis Pareto : \"{{cause}}{{percentage, select, null{} other{ – {{percentage}}% des avis négatifs}}}\"",
+    "ishikawa":  "Ishikawa : {{category}}",
+    "validated": "(validé)"
+  },
+  "priority": {
+    "high":   "Priorité haute",
+    "medium": "Priorité moyenne",
+    "low":    "Priorité basse"
+  },
+  "status": {
+    "todo":        "À faire",
+    "in_progress": "En cours",
+    "completed":   "Terminé",
+    "overdue":     "En retard"
+  },
+  "aiGenerated": "Généré par IA",
+  "smart": {
+    "specific":   "Spécifique",
+    "measurable": "Mesurable",
+    "achievable": "Atteignable",
+    "relevant":   "Pertinent",
+    "temporal":   "Temporel"
+  },
+  "temporal": {
+    "deadline": "Échéance : {{date}}",
+    "duration": "Durée : {{months}} mois · Révision : 6 semaines"
+  },
+  "achievable": {
+    "noActions": "Aucune action définie",
+    "more":      "+ {{count}} de plus"
+  },
+  "progress": {
+    "label":           "Progression vers l'objectif",
+    "mentionsNow":     "{{value}} mentions actuellement",
+    "start":           "Départ : {{value}}",
+    "target":          "Cible : {{value}}",
+    "daysLeft":        "{{days}} jours restants",
+    "overdue":         "{{days}}j de retard",
+    "updateBtn":       "Mettre à jour la progression",
+    "currentMentions": "Mentions actuelles :",
+    "saveBtn":         "Enregistrer"
+  },
+  "pdca": {
+    "title": "PDCA — Suivi, exécution, amélioration continue",
+    "plan": {
+      "label":  "PLAN",
+      "target": "Cible : {{current}} → {{target}} · {{months}} mois"
+    },
+    "do": {
+      "label": "DO",
+      "tasks": "Tâches ({{completed}}/{{total}})"
+    },
+    "check": {
+      "label":       "CHECK",
+      "kpiTracking": "Suivi KPI",
+      "target":      "cible {{value}}"
+    },
+    "act": {
+      "label":    "ACT",
+      "decision": "Décision",
+      "options": {
+        "effective":   "Efficace → standardiser",
+        "partial":     "Partiel → ajuster",
+        "ineffective": "Inefficace → nouvelle action"
+      },
+      "trend": {
+        "improvement": "Amélioration",
+        "degradation": "Dégradation",
+        "stable":      "Stable"
+      }
+    }
+  }
 },
 "objective":{
   "aiPrediction":"Prédiction IA",

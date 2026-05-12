@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessType } from "@/config/industry";
 import { ThemesDisplay } from "@/components/ThemesDisplay";
+import i18n from "@/i18n/config"; // ✅ only this — no t, no bind at module level
 
 interface OverviewSectionProps {
   data: OverviewMetrics;
@@ -114,7 +115,10 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
   const formatTrendValue = (value: number | null | undefined, isPositive: boolean): string => {
     if (value === null || value === undefined || isNaN(value)) return '';
     // Format FR : virgule + 1 décimale + espace insécable avant %
-    const formatted = Math.abs(value).toFixed(1).replace('.', ',');
+    const formatted = Math.abs(value).toFixed(1).replace(
+    '.',
+    i18n.language === 'fr' ? ',' : '.'
+    );
     const sign = isPositive ? '+' : '-';
     // Espace insécable (\u00A0) avant le % pour un meilleur rendu typographique
     return `(${sign}${formatted}\u00A0%)`;
@@ -124,7 +128,10 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
   const formatDeltaPoints = (delta: number | null | undefined): string => {
     if (delta === null || delta === undefined || isNaN(delta)) return '';
     // Format FR : virgule + 1 décimale
-    const formatted = Math.abs(delta).toFixed(1).replace('.', ',');
+    const formatted = Math.abs(delta).toFixed(1).replace(
+    '.',
+    i18n.language === 'fr' ? ',' : '.'
+    );
     return delta >= 0 ? `+${formatted}` : `-${formatted}`;
   };
 
@@ -173,13 +180,13 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="mb-1 flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
+        <h2 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
           1. {t("analysis.overview.title", "Vue d'ensemble")} – {t("analysis.overview.kpiTitle", "Key KPIs")}
           <InfoTooltip 
             content={t("analysis.overview.kpiTooltip", "KPI (indicateur clé) : mesure utilisée pour suivre rapidement la performance globale. Bénéfice : vous identifiez en un coup d'œil les tendances principales de votre établissement.")}
           />
         </h2>
-        <p className="text-sm italic text-slate-600 dark:text-slate-300">
+        <p className="text-sm text-gray-100 italic">
           {periodLabel}
         </p>
       </div>

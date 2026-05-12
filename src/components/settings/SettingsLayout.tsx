@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, User, Building2, Shield, Bell, Globe, CreditCard, FileText, Palette, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { AppPageBackground } from "@/components/AppPageBackground";
 
 interface SettingsNavItem {
   id: string;
@@ -107,8 +108,10 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
   );
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'hsl(var(--app-bg, var(--background)))' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="app-page-shell">
+      <AppPageBackground />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {/* Mobile: Sheet menu */}
         <div className="lg:hidden mb-6">
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>

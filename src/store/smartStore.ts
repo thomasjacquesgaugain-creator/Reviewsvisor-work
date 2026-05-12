@@ -13,6 +13,8 @@ import type {
 } from "@/types/smart";
 import type { ParetoItem } from "@/types/analysis";
 import type { RootCauseAnalysis } from "@/utils/rootCauseAnalysis";
+import i18n from "@/i18n/config";
+import { toast } from "sonner";
 
 /* ─────────────────────────────────────────────
    DETERMINISTIC HELPERS
@@ -50,6 +52,7 @@ export function buildSmartPayload(
   questionnaireScores?: IshikawaScores | null,
   paretoPercentage? :    number,
 ): GenerateSmartPayload {
+  const t = i18n.t.bind(i18n);
   const totalNegative = paretoIssue.count ?? 1;
 
   const allCauses = rca.categories.flatMap((c) =>
@@ -85,7 +88,8 @@ export function buildSmartPayload(
     ishikawa_top_category:    ishikawaTopCategory ?? topCause?.categoryName,
     effort_source:            effortSource ?? "auto_detected",
     questionnaire_scores:     questionnaireScores ?? null,
-    pareto_percentage:        paretoPercentage
+    pareto_percentage:        paretoPercentage,
+    language:                 i18n.language,
   };
 }
 // TYPES
@@ -230,7 +234,7 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
       paretoIssue,
       rcaCategories: rca?.categories?.length,
     });
-
+    const t = i18n.t.bind(i18n);
     try {
       // ✅ FIX 1: pass establishmentId directly, not wrapped in paretoIssue
       const payload = buildSmartPayload(
@@ -253,8 +257,27 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
 
       console.log("edge function response:", { data, error });
 
-      if (error) throw error;
-      if (!data?.ok) throw new Error(data?.error ?? "Generation failed");
+        if (error) {
+        console.error("Erreur:", error);
+        toast.error(t("toasts.error"),{
+          description: t("questionnaire.error"),
+        });
+        return;
+      }
+       if (data.ok) {
+        toast.success(t("toasts.saved"), {
+        description: t("questionnaire.success"),
+      });
+      }
+
+
+
+
+
+
+
+
+
 
       set({ currentDraft: data.smart_objective, isGenerating: false });
     } catch (err: any) {
