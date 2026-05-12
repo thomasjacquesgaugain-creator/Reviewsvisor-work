@@ -13,7 +13,7 @@ export function MainStrengthsSection({ strengths }: MainStrengthsSectionProps) {
 
  if (!mainStrength) {
   return (
-    <div className="relative flex  overflow-hidden rounded-[8px] border border-slate-200 bg-white p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
+    <div className="relative flex  overflow-hidden rounded-[8px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
       <div className="absolute inset-0" />
 
       <div className="relative flex w-full flex-col">
@@ -40,7 +40,7 @@ export function MainStrengthsSection({ strengths }: MainStrengthsSectionProps) {
 }
 
   return (
-    <div className="relative h-fit overflow-hidden rounded-[8px] border border-slate-200 bg-white p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
+    <div className="relative h-fit overflow-hidden rounded-[8px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
       <div className="absolute inset-0" />
 
       <div className="relative flex w-full flex-col">

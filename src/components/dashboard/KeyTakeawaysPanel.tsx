@@ -31,7 +31,7 @@ export function KeyTakeawaysPanel({
   return (
     <section
       className={cn(
-        "relative overflow-hidden rounded-[8px]",
+        "relative overflow-hidden",
         className,
       )}
     >
@@ -45,9 +45,9 @@ export function KeyTakeawaysPanel({
                 alt="Reviewsvisor"
                 className="h-8 w-8 object-contain"
               />
-            </div> */}
-            <div className="p-4 px-5 rounded-lg bg-white w-full">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+            </div>
+            <div className="p-4 px-5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
                 {t("dashboard.keyTakeaways.title")}
               </p>
               <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-slate-100">

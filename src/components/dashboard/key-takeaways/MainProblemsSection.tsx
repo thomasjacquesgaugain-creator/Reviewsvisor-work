@@ -20,7 +20,7 @@ export function MainProblemsSection({ problems,setMainIssue }: MainProblemsSecti
 
  if (!mainProblem) {
   return (
-    <div className="relative h-fit overflow-hidden rounded-[8px] border border-slate-200 bg-white p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
+    <div className="relative h-fit overflow-hidden rounded-[8px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
       <div className="relative">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#ffe7f2]">
@@ -42,12 +42,12 @@ export function MainProblemsSection({ problems,setMainIssue }: MainProblemsSecti
 }
 
   return (
-    <div className="relative overflow-hidden rounded-[8px] border bg-white p-4">
+    <div className="relative overflow-hidden rounded-[8px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
       <div className="absolute inset-0" />
       
       <div className="relative">
         <div className="flex items-center gap-2">
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#ffffff] border-none">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#ffffff] dark:bg-slate-800 border-none">
             <ShieldAlert className="h-3.5 w-3.5 text-[#fe53b3]" />
           </span>
           <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
