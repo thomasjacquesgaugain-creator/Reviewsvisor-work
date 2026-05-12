@@ -1894,7 +1894,9 @@
         "strengths": "Vos points forts sont <bold>{{list}}</bold>.",
         "improvements": "Le thème <bold>{{theme}}</bold> apparaît moins fréquemment ({{count}} mention(s), {{score}}% de score), ce qui peut indiquer un axe d'amélioration.",
         "leastMentioned": "Le thème <bold>{{theme}}</bold> apparaît moins fréquemment dans les retours clients ({{count}} mention(s), {{score}}% de score), ce qui peut indiquer un axe d'amélioration ou simplement un sujet moins discuté."
-      }
+      },
+      "probableType": "Type probable : {{type}}",
+      "correctType": "Corriger le type"
     },
     "qualitative": {
       "title": "Analyse qualitative",
@@ -2029,7 +2031,7 @@
       }
     },
     "lexique": {
-      "title": "Lexicon and Definitions",
+      "title": "Lexique et définitions",
       "kpiDescription": "Un KPI (Key Performance Indicator) est une mesure quantitative utilisée pour évaluer le niveau d’atteinte d’un objectif défini. Il sert à suivre l’évolution de la performance dans le temps et à appuyer les décisions de pilotage. ",
       "paretoAnalysis": "Analyse de Pareto",
       "paretoAnalysisDescription": "L’analyse de Pareto est une méthode de priorisation fondée sur le principe selon lequel une part limitée des causes produit la majorité des effets. Elle permet d’identifier les quelques facteurs qui contribuent le plus à un résultat, par exemple des problèmes, des défauts ou de l’insatisfaction.",
@@ -2173,9 +2175,32 @@
   "errors": {
     "saveFailed": "Échec de l'enregistrement. Veuillez réessayer."
   },
-  "success":"Questionnaire rempli avec succès"
+  "success":"Questionnaire rempli avec succès",
+  "effortOverridden": "Effort remplacé par {{effort}} — cause dominante :"
 },
 "recommendations":{
+   "smart":{
+    "smartObjectives":"Objectifs SMART",
+    "aiGeneratedGoals": "Objectifs générés par l’IA et validés par l’utilisateur",
+    "mainIssue": "Problème principal : \"{{issue}}\"",
+    "negativeReviews": "{{percentage}}% des avis négatifs",
+    "updating": "Mise à jour...",
+    "updateSmart": "Mettre à jour SMART",
+    "questionnaireMissing": "⚠️ Questionnaire manquant pour le prochain problème Pareto",
+    "completeQuestionnaireFor": "Veuillez compléter le questionnaire pour : {{issue}}",
+    "noIssuesLeft": "🎉 Aucun problème restant à résoudre",
+    "allObjectivesCompleted": "Tous les objectifs Pareto ont été complétés.",
+    "nextObjectives": "Objectifs suivants",
+    "todo": "À faire",
+    "completedObjectives": "Objectifs complétés",
+    "paretoAnalysis": "Analyse Pareto",
+    "ishikawaRootCauses": "Causes racines Ishikawa",
+    "smartObjectiveGenerated": "Objectif SMART généré",
+    "pdcaTracking": "Suivi PDCA",
+    "noParetoIssues": "Aucun problème Pareto disponible",
+    "analyzeReviewsMessage": "Analysez les avis de votre établissement pour générer des objectifs SMART et un suivi PDCA",
+     "noSmartActions": "Aucune action SMART disponible pour le moment"
+  },
   
 "actionPlan": {
   "themes": {
@@ -2311,7 +2336,20 @@
       "improvement": "{{value}} d'amélioration attendue",
       "decline":     "Risque de baisse de {{value}}",
       "noChange":    "Aucun changement significatif attendu"
-    }
+    },
+    "actionsProgress": "Progression des actions",
+    "actionsCompleted": "{{completed}}/{{total}} actions complétées",
+    "focus": "Focus : {{cause}}",
+    "actionTracking": "Suivi des actions",
+    "completed": "Terminé",
+    "inProgress": "En cours",
+    "started": "Commencé",
+    "yetToStart": "Pas encore commencé",
+    "objectivesProgress": "Progression des objectifs",
+     "accessible": "Accessible",
+    "realistic": "Réaliste",
+    "achievable": "Atteignable",
+    "ambitious": "Ambitieux"
   }
 }
 

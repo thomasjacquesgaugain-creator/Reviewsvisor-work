@@ -3,26 +3,27 @@ import { ParetoItem } from "@/types/analysis";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { RootCauseCategory } from "@/utils/rootCauseAnalysis";
+import { useSmartStore } from "@/store/smartStore";
 
 /* ── Impact: spec §7.2 — % of negative reviews mentioning this cause
    < 10% → Low | 10–25% → Medium | > 25% → High              */
-function getImpact(count: number, total: number): "High" | "Medium" | "Low" {
+function getImpact(count: number, total: number): "high" | "medium" | "low" {
   const pct = (count / Math.max(total, 1)) * 100;
-  if (pct > 25) return "High";
-  if (pct >= 10) return "Medium";
-  return "Low";
+  if (pct > 25) return "high";
+  if (pct >= 10) return "medium";
+  return "low";
 }
 
 /* ── Effort: spec §7.2 5M table mapped from Ishikawa category name
    Méthodes / Environnement     → Low
    Main-d'œuvre / Processus     → Medium
    Outils & systèmes / Produit  → High                        */
-function getEffortFromCause(cause: string): "High" | "Medium" | "Low" {
+function getEffortFromCause(cause: string): "high" | "medium" | "low" {
   const c = cause.toLowerCase();
-  if (c.includes("système") || c.includes("outil") || c.includes("produit")) return "High";
-  if (c.includes("processus") || c.includes("gestion") || c.includes("main") || c.includes("uvre")) return "Medium";
-  if (c.includes("méthode") || c.includes("environnement") || c.includes("personnel") || c.includes("formation")) return "Low";
-  return "Medium";
+  if (c.includes("système") || c.includes("outil") || c.includes("produit")) return "high";
+  if (c.includes("processus") || c.includes("gestion") || c.includes("main") || c.includes("uvre")) return "medium";
+  if (c.includes("méthode") || c.includes("environnement") || c.includes("personnel") || c.includes("formation")) return "low";
+  return "medium";
 }
 
 /* ---------------- ACTION MAP — uses cause descriptions directly ---------------- */
@@ -35,7 +36,7 @@ function getGenericActions(cause: string): string[] {
   ];
 }
 
-export function generateActionsFromCauses(
+ function generateActionsFromCauses(
   categories: RootCauseCategory[]
 ): { action: string; cause: string }[] {
   const actions: { action: string; cause: string }[] = [];
@@ -60,10 +61,10 @@ export function generateActionsFromCauses(
 
 /* ---------------- buildImpactEffortMatrix ---------------- */
 
-export function buildImpactEffortMatrix(
+ function buildImpactEffortMatrix(
   rca: RootCauseAnalysis,
   paretoIssues: ParetoItem[],
-  effortOverride?: "Low" | "Medium" | "High" 
+  effortOverride?: "low" | "medium" | "high" 
 ) {
   if (!rca || !rca.categories?.length) return [];
 
@@ -75,8 +76,8 @@ export function buildImpactEffortMatrix(
 
   const rows: {
     action: string;
-    impact: "High" | "Medium" | "Low";
-    effort: "High" | "Medium" | "Low";
+    impact: "high" | "medium" | "low";
+    effort: "high" | "medium" | "low";
   }[] = [];
 
   const usedActions = new Set<string>();
@@ -101,8 +102,8 @@ export function buildImpactEffortMatrix(
 
   // Ranking
   const score = (r: typeof rows[number]) => {
-    const impactScore = r.impact === "High" ? 3 : r.impact === "Medium" ? 2 : 1;
-    const effortScore = r.effort === "Low" ? 3 : r.effort === "Medium" ? 2 : 1;
+    const impactScore = r.impact === "high" ? 3 : r.impact === "medium" ? 2 : 1;
+    const effortScore = r.effort === "low" ? 3 : r.effort === "medium" ? 2 : 1;
     return impactScore + effortScore;
   };
 
@@ -115,16 +116,32 @@ export function buildImpactEffortMatrix(
 
 export const EffortMatrix = ({ analysisData }) => {
   const { t } = useTranslation();
+  const { objectives } = useSmartStore();
+
+  const activeObjective = objectives.find(
+  o => o.status === "in_progress"
+);
 
   const rcaByIssue = analysisData?.rcaByIssue || {};
-  const paretoIssues = (analysisData?.paretoIssues || []).slice(0, 1);
+  const paretoIssues = activeObjective
+  ? (analysisData?.paretoIssues || []).filter(
+      p =>
+        p.name.toLowerCase() ===
+        activeObjective.pareto_cause?.toLowerCase()
+    )
+  : (() => {
+      const topIssue = [...(analysisData?.paretoIssues || [])]
+        .sort((a, b) => b.count - a.count)[0];
+
+      return topIssue ? [topIssue] : [];
+    })();
 
   console.log("RCA BY ISSUE:", rcaByIssue);
 
   if (!paretoIssues.length) {
     return (
       <p className="text-sm text-gray-500">
-        No issues available
+        {t("recommendations.smart.noParetoIssues")}
       </p>
     );
   }
@@ -175,13 +192,13 @@ export const EffortMatrix = ({ analysisData }) => {
 
                       <td className="text-center">
                         <Badge className="bg-red-100 text-red-700">
-                          {row.impact}
+                          {t(`dashboard.${row.impact}`)}
                         </Badge>
                       </td>
 
                       <td className="text-center">
                         <Badge className="bg-yellow-100 text-yellow-700">
-                          {row.effort}
+                          {t(`dashboard.${row.effort}`)}
                         </Badge>
                       </td>
                     </tr>

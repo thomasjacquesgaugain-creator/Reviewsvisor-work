@@ -6,6 +6,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Info } from "lucide-react";
 import { BusinessType, BUSINESS_TYPE_LABELS } from "@/config/industry";
+import { useTranslation } from "react-i18next";
 
 interface BusinessTypeIndicatorProps {
   businessType: BusinessType | null | undefined;
@@ -20,6 +21,8 @@ export function BusinessTypeIndicator({
   candidates = [],
   onOverrideClick
 }: BusinessTypeIndicatorProps) {
+
+  const {t} = useTranslation();
   if (!businessType || confidence === null || confidence === undefined) {
     return null;
   }
@@ -36,7 +39,9 @@ export function BusinessTypeIndicator({
         <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
         <div className="flex-1">
           <p className="text-sm text-blue-900 font-medium mb-1">
-            Type probable : {BUSINESS_TYPE_LABELS[businessType]}
+             {t("analysis.themes.probableType", {
+                type: BUSINESS_TYPE_LABELS[businessType],
+              })}
           </p>
           {candidates.length > 1 && (
             <div className="flex flex-wrap gap-2 mt-2">
@@ -56,7 +61,7 @@ export function BusinessTypeIndicator({
               onClick={onOverrideClick}
               className="text-xs text-blue-600 hover:text-blue-800 underline mt-2"
             >
-              Corriger le type
+             {t("analysis.themes.correctType")}
             </button>
           )}
         </div>
