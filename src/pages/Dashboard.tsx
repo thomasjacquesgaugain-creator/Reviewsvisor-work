@@ -415,7 +415,7 @@ const Dashboard = () => {
 
     if (delta < 0.3) {
       return {
-        label: "Accessible",
+        label: "accessible",
         badgeClassName: "text-green-700 bg-green-50 border-green-200",
         cardClassName: "bg-green-50 border-green-200",
         labelClassName: "text-green-800",
@@ -423,7 +423,7 @@ const Dashboard = () => {
     }
     if (delta < 0.5) {
       return {
-        label: "Réaliste",
+        label: "realistic",
         badgeClassName: "text-blue-700 bg-blue-50 border-blue-200",
         cardClassName: "bg-blue-50 border-blue-200",
         labelClassName: "text-blue-800",
@@ -431,14 +431,14 @@ const Dashboard = () => {
     }
     if (delta < 0.8) {
       return {
-        label: "Atteignable",
+        label: "achievable",
         badgeClassName: "text-orange-700 bg-orange-50 border-orange-200",
         cardClassName: "bg-orange-50 border-orange-200",
         labelClassName: "text-orange-800",
       };
     }
     return {
-      label: "Ambitieux",
+      label: "ambitious",
       badgeClassName: "text-red-700 bg-red-50 border-red-200",
       cardClassName: "bg-red-50 border-red-200",
       labelClassName: "text-red-800",
@@ -5978,14 +5978,11 @@ const getLatestDate = (reviews: any[]): Date | null =>
                       <div className="flex flex-col items-center mb-2">
                         <Target className="w-5 h-5 text-blue-500 mb-2" />
                         <span className="text-lg font-semibold">
-                          SMART objectives
+                          {t("recommendations.smart.smartObjectives")}
                         </span>
-                        <Badge className="mt-1 bg-blue-100 text-blue-700 text-xs">
-                          new
-                        </Badge>
                       </div>
                       <p className="text-sm text-gray-600">
-                        AI-generated, user-validated goals
+                        {t("recommendations.smart.aiGeneratedGoals")}
                       </p>
                       <Button
                         variant="ghost"
@@ -6015,29 +6012,28 @@ const getLatestDate = (reviews: any[]): Date | null =>
                 <CardHeader>
                   <div className="flex items-center gap-2 mb-2">
                     <Target className="w-5 h-5 text-blue-500" />
-                    <span className="text-lg font-semibold">SMART objectives</span>
-                    <Badge className="bg-blue-100 text-blue-700 text-xs">new</Badge>
+                    <span className="text-lg font-semibold"> {t("recommendations.smart.smartObjectives")}</span>
                   </div>
                   <p className="text-sm text-gray-600">
-                    AI-generated, user-validated goals
+                    {t("recommendations.smart.aiGeneratedGoals")}
                   </p>
 
                   {/* Flow breadcrumb — matches image 2 from earlier */}
                   <div className="flex items-center gap-2 mt-3 flex-wrap">
                     <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
-                      Pareto analysis
+                      {t("recommendations.smart.paretoAnalysis")}
                     </span>
                     <span className="text-xs text-gray-400">→</span>
                     <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
-                      Ishikawa root causes
+                      {t("recommendations.smart.ishikawaRootCauses")}
                     </span>
                     <span className="text-xs text-gray-400">→</span>
                     <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
-                      SMART objective generated
+                       {t("recommendations.smart.smartObjectiveGenerated")}
                     </span>
                     <span className="text-xs text-gray-400">→</span>
                     <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                      PDCA tracking
+                     {t("recommendations.smart.pdcaTracking")}
                     </span>
                   </div>
                 </CardHeader>
@@ -6056,12 +6052,11 @@ const getLatestDate = (reviews: any[]): Date | null =>
                   <Card className="mb-8">
                     <CardContent className="py-10 text-center text-gray-500">
                       <p className="text-sm font-medium">
-                        No Pareto issues available
+                        {t("recommendations.smart.noParetoIssues")}
                       </p>
 
                       <p className="text-xs mt-1">
-                        Analyze your establishment reviews to
-                        generate SMART objectives and PDCA tracking
+                         {t("recommendations.smart.analyzeReviewsMessage")}
                       </p>
                     </CardContent>
                   </Card>
@@ -6447,7 +6442,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                         {!activeObjective ? (
                           <div className="text-center py-8 text-gray-500">
                             <p className="text-sm">
-                              No SMART actions available yet
+                             {t("recommendations.smart.noSmartActions")}
                             </p>
                           </div>
                         ) : (
@@ -10744,7 +10739,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                         <div
                           className={`mt-4 text-center text-lg font-semibold ${targetDifficulty.labelClassName}`}
                         >
-                          {targetDifficulty.label}
+                          {t( `objective.${targetDifficulty.label}`)}
                         </div>
                       </div>
 
@@ -10962,7 +10957,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                   <Card className="mb-8">
                     <CardHeader className="pb-1">
                       <CardTitle className="text-xl">
-                        Actions Progress
+                          {t("objective.actionsProgress")}
                       </CardTitle>
                     </CardHeader>
                    <CardContent className="pt-0">
@@ -10988,7 +10983,10 @@ const getLatestDate = (reviews: any[]): Date | null =>
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="text-xs text-gray-500 mt-1">
-                                  {completedActions}/{totalActions} actions completed
+                                 {t("objective.actionsCompleted", {
+                                    completed: completedActions,
+                                    total: totalActions,
+                                  })}
                                 </p>
                               </div>
 
@@ -11011,25 +11009,27 @@ const getLatestDate = (reviews: any[]): Date | null =>
                             <div className="flex items-center justify-between text-xs text-gray-500">
                               <span>
                                 {activeObjective?.pareto_cause
-                                  ? `Focus: ${activeObjective.pareto_cause}`
-                                  : "Action tracking"}
+                                  ? t("objective.focus", {
+                                      cause: activeObjective.pareto_cause,
+                                    })
+                                  : t("objective.actionTracking")}
                               </span>
 
                               {percentage === 100 ? (
                                 <span className="text-green-600 font-medium">
-                                  Completed
+                                   {t("objective.completed")}
                                 </span>
                               ) : percentage >= 60 ? (
                                 <span className="text-blue-600 font-medium">
-                                  In Progress
+                                 {t("objective.inProgress")}
                                 </span>
                               ) :percentage >= 1 ? (
                                 <span className="text-orange-500 font-medium">
-                                  Started
+                                  {t("objective.started")}
                                 </span>
                               ): (
                                 <span className="text-orange-500 font-medium">
-                                  Yet to start
+                                  {t("objective.yetToStart")}
                                 </span>
                               )}
                             </div>
@@ -11042,7 +11042,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                   <Card className="mb-8">
                     <CardHeader className="pb-1">
                       <CardTitle className="text-xl">
-                        Objectives Progress
+                        {t("objective.objectivesProgress")}
                       </CardTitle>
                       <p className="text-sm text-gray-600">
                         {t("dashboard.trackYourActionsProgress")}

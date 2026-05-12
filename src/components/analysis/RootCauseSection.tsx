@@ -7,7 +7,6 @@ import { AlertCircle, Clock, HelpCircle } from "lucide-react";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { Button } from "../ui/button";
 import { useState } from "react";
-import { buildImpactEffortMatrix } from "./recommendation/EffortMatrix";
 import Questionnaire, { QuestionnaireResult,IshikawaScores,} from "./Questionare";
 import { useSmartStore } from "@/store/smartStore";
 import { useEffect , useRef } from "react";
@@ -455,13 +454,13 @@ const currentSmartObjective = useMemo(() => {
           <div className="mt-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-xs text-green-700 flex items-center gap-2">
             <span>✅</span>
             <span>
-              Effort overridden to{" "}
+              {t("questionnaire.effortOverridden", {
+                effort: currentQuestionnaire?.dominantEffort,
+              })}{" "}
               <strong>
-                {currentQuestionnaire?.dominantEffort}
-              </strong>{" "}
-              — dominant cause:{" "}
-              <strong>
-                {t(`questionnaire.sections.${currentQuestionnaire?.dominantCategory}.title`)}
+                {t(
+                  `questionnaire.sections.${currentQuestionnaire?.dominantCategory}.title`
+                )}
               </strong>
             </span>
           </div>

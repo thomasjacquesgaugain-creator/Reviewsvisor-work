@@ -9,6 +9,7 @@ import { useSmartStore } from "@/store/smartStore";
 import type { ParetoItem } from "@/types/analysis";
 import type { RootCauseAnalysis } from "@/utils/rootCauseAnalysis";
 import { getCurrentEstablishment } from "@/services/establishments";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   paretoCauses: ParetoItem[];
@@ -37,6 +38,7 @@ export function RecommendationsSection({ paretoCauses, rcaByIssue = {} }: Props)
    const [isUpdating, setIsUpdating] = useState(false);
 
   const establishmentIdRef = useRef<string | null>(null);
+  const {t}=useTranslation();
 
 useEffect(() => {
   async function loadEstablishment() {
@@ -150,7 +152,7 @@ useEffect(() => {
   };
 
   if (!sortedPareto.length) {
-    return <p className="text-sm text-gray-500">No Pareto issues available .</p>;
+    return <p className="text-sm text-gray-500">{t("recommendations.smart.noParetoIssues")}</p>;
   }
 
 
@@ -162,12 +164,15 @@ useEffect(() => {
             <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl p-4">
               <div>
                 <p className="text-sm font-semibold text-orange-800">
-                  Main issue: "{activeObjective.pareto_cause}"
+                 {t("recommendations.smart.mainIssue", {
+                    issue: activeObjective.pareto_cause,
+                  })}
                 </p>
 
                 <p className="text-xs text-orange-600 mt-0.5">
-                  {Math.round(activeObjective.pareto_percentage ?? 0)}%
-                  {" "}of negative reviews
+                  {t("recommendations.smart.negativeReviews", {
+                    percentage: Math.round(activeObjective.pareto_percentage ?? 0),
+                  })}
                 </p>
               </div>
 
@@ -180,12 +185,12 @@ useEffect(() => {
                 {isUpdating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                    updating...
+                    {t("recommendations.smart.updating")}
                   </>
                 ) : (
                   <>
                     <Sparkles className="h-4 w-4 mr-1.5" />
-                    update SMART
+                    {t("recommendations.smart.updateSmart")}
                   </>
                 )}
               </Button>
@@ -198,15 +203,13 @@ useEffect(() => {
           <div className="flex items-start justify-between bg-red-50 border border-red-200 rounded-xl p-4">
             <div>
               <p className="text-sm font-semibold text-red-800">
-                ⚠️ Questionnaire missing for next Pareto issue
+                {t("recommendations.smart.questionnaireMissing")}
               </p>
 
               <p className="text-sm text-red-700 mt-1">
-                Please complete the questionnaire for:
-                <span className="font-semibold">
-                  {" "}
-                  {nextIssue.name}
-                </span>
+                {t("recommendations.smart.completeQuestionnaireFor", {
+                issue: nextIssue.name,
+              })}
               </p>
             </div>
           </div>
@@ -217,11 +220,11 @@ useEffect(() => {
           <div className="flex items-start justify-between bg-green-50 border border-green-200 rounded-xl p-4">
             <div>
               <p className="text-sm font-semibold text-green-800">
-                🎉 No issues left to resolve
+                {t("recommendations.smart.noIssuesLeft")}
               </p>
 
               <p className="text-sm text-green-700 mt-1">
-                All Pareto objectives have been completed.
+                 {t("recommendations.smart.allObjectivesCompleted")}
               </p>
             </div>
           </div>
@@ -241,7 +244,7 @@ useEffect(() => {
       {pendingObjectives.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-gray-500 mb-2">
-            Next Objectives
+            {t("recommendations.smart.nextObjectives")}
           </h3>
 
           <div className="space-y-2">
@@ -254,7 +257,7 @@ useEffect(() => {
                   {o.pareto_cause}
                 </p>
                 <span className="text-xs bg-gray-200 px-2 py-1 rounded">
-                  To do
+                  {t("recommendations.smart.todo")}
                 </span>
               </div>
             ))}
@@ -262,11 +265,11 @@ useEffect(() => {
         </div>
       )}
 
-      {/* ✅ COMPLETED */}
+      {/*  COMPLETED */}
       {completedObjectives.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-green-600 mb-2">
-            Completed Objectives
+              {t("recommendations.smart.completedObjectives")}
           </h3>
 
           <div className="space-y-2">

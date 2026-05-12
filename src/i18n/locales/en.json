@@ -1686,7 +1686,9 @@
         "strengths": "Your strengths are <bold>{{list}}</bold>.",
         "improvements": "The theme <bold>{{theme}}</bold> appears less frequently ({{count}} mention(s), {{score}}% score), which may indicate an area for improvement.",
         "leastMentioned": "The theme <bold>{{theme}}</bold> appears less frequently in customer feedback ({{count}} mention(s), {{score}}% score), which may indicate an area for improvement or simply a less discussed topic."
-      }
+      },
+      "probableType": "Probable type: {{type}}",
+      "correctType": "Correct type"
     },
     "qualitative": {
       "title": "Qualitative Analysis",
@@ -1823,9 +1825,9 @@
     "lexique": {
       "title": "Lexicon and Definitions",
       "kpiDescription": "A KPI (Key Performance Indicator) is a quantitative measure used to assess the extent to which a defined objective has been achieved. It serves to track performance trends over time and to support management decision-making.",
-      "paretoAnalysis": "Analyse de Pareto",
+      "paretoAnalysis": "Pareto Analysis",
       "paretoAnalysisDescription": "Pareto analysis is a prioritization method based on the principle that a limited number of causes produce the majority of effects. It enables the identification of the few factors that contribute most to a result—for example, problems, defects, or dissatisfaction.",
-      "rootCauseAnalysis": "Analyse des causes racines (Ishikawa)",
+      "rootCauseAnalysis": "Root Cause Analysis (Ishikawa)",
       "rootCauseAnalysisDescription": "Ishikawa root cause analysis (or fishbone diagram) is a visual cause-and-effect tool that structures the potential causes of a problem. The causes are grouped into broad categories, which may vary depending on the context (for example, processes, methods, resources, or environment).",
       "aiTrust": "AI Trust",
       "aiTrustDescription": "AI confidence refers to an indicator of the degree of reliability of the results produced by a model, based on the quantity, quality, and consistency of the data used. It reflects the level of uncertainty associated with the analyses and should be interpreted as a confidence level rather than as an absolute truth."
@@ -1965,9 +1967,33 @@
   "errors": {
     "saveFailed": "Failed to save. Please try again."
   },
-  "success":"Questionare filled successfully"
+  "success":"Questionare filled successfully",
+  "effortOverridden": "Effort overridden to {{effort}} — dominant cause:"
 },
 "recommendations":{
+  "smart":{
+    "smartObjectives":"SMART objectives",
+    "aiGeneratedGoals": "AI-generated, user-validated goals",
+    "mainIssue": "Main issue: \"{{issue}}\"",
+    "negativeReviews": "{{percentage}}% of negative reviews",
+    "updating": "Updating...",
+    "updateSmart": "Update SMART",
+    "questionnaireMissing": "⚠️ Questionnaire missing for next Pareto issue",
+    "completeQuestionnaireFor": "Please complete the questionnaire for: {{issue}}",
+    "noIssuesLeft": "🎉 No issues left to resolve",
+    "allObjectivesCompleted": "All Pareto objectives have been completed.",
+    "nextObjectives": "Next Objectives",
+    "todo": "To do",
+    "completedObjectives": "Completed Objectives",
+    "paretoAnalysis": "Pareto analysis",
+    "ishikawaRootCauses": "Ishikawa root causes",
+    "smartObjectiveGenerated": "SMART objective generated",
+    "pdcaTracking": "PDCA tracking",
+    "noParetoIssues": "No Pareto issues available",
+    "analyzeReviewsMessage": "Analyze your establishment reviews to generate SMART objectives and PDCA tracking",
+     "noSmartActions": "No SMART actions available yet"
+  },
+
   "actionPlan": {
     "themes": {
       "service":     "service & wait times",
@@ -2102,6 +2128,19 @@
         "improvement": "{{value}} improvement expected",
         "decline":     "{{value}} decline risk",
         "noChange":    "No significant change expected"
-      }
+      },
+    "actionsProgress": "Actions Progress",
+    "actionsCompleted": "{{completed}}/{{total}} actions completed",
+    "focus": "Focus: {{cause}}",
+    "actionTracking": "Action tracking",
+    "completed": "Completed",
+    "inProgress": "In Progress",
+    "started": "Started",
+    "yetToStart": "Yet to start",
+    "objectivesProgress": "Objectives Progress",
+    "accessible": "Accessible",
+    "realistic": "Realistic",
+    "achievable": "Achievable",
+    "ambitious": "Ambitious"
     }
 }
