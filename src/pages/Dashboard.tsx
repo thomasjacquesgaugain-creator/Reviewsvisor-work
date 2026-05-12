@@ -1604,10 +1604,15 @@ const Dashboard = () => {
     }
 
     const advice: string[] = [];
+    const advise = (
+      key: string,
+      options?: Record<string, string | number>,
+    ) => t(`dashboard.consultantAdvice.${key}`, options);
 
     const isHRRelated = (text: string): boolean => {
       const s = (text || "").toLowerCase();
       return [
+        // French
         "licenc",
         "sanction",
         "recrut",
@@ -1622,6 +1627,25 @@ const Dashboard = () => {
         "renvoyer",
         "virer",
         "formation",
+        // English
+        "dismiss",
+        "dismissal",
+        "hire",
+        "hiring",
+        "recruit",
+        "recruitment",
+        "salary",
+        "pay rise",
+        "raise salary",
+        "bonus",
+        "hr",
+        "human resources",
+        "disciplin",
+        "fire",
+        "firing",
+        "terminate",
+        "termination",
+        "training",
       ].some((k) => s.includes(k));
     };
 
@@ -1694,32 +1718,38 @@ const Dashboard = () => {
       if (issuePercentage >= 30) {
         if (issueTheme.includes("service") || issueTheme.includes("attente")) {
           advice.push(
-            `Le temps d'attente est très souvent mentionné négativement (${issuePercentage}% des avis). C'est le premier point qui ressort dans les retours clients.`,
+            advise("mainIssue.serviceHigh", { percentage: issuePercentage }),
           );
         } else if (
           issueTheme.includes("qualité") ||
           issueTheme.includes("plat")
         ) {
           advice.push(
-            `La qualité des plats revient souvent dans les avis négatifs (${issuePercentage}% des mentions). C'est un point qui impacte la perception de tes clients.`,
+            advise("mainIssue.qualityHigh", { percentage: issuePercentage }),
           );
         } else if (issueTheme.includes("prix")) {
           advice.push(
-            `Les prix sont souvent perçus comme élevés (${issuePercentage}% des avis). C'est une tendance à surveiller dans les retours clients.`,
+            advise("mainIssue.priceHigh", { percentage: issuePercentage }),
           );
         } else {
           advice.push(
-            `${translateTheme(issueTheme)} revient fréquemment dans les avis (${issuePercentage}% des mentions). C'est un point récurrent à analyser.`,
+            advise("mainIssue.otherHigh", {
+              theme: translateTheme(issueTheme),
+              percentage: issuePercentage,
+            }),
           );
         }
       } else if (issuePercentage >= 15) {
         if (issueTheme.includes("service") || issueTheme.includes("attente")) {
           advice.push(
-            `L'attente revient régulièrement dans les avis (${issuePercentage}% des mentions). C'est une tendance à surveiller.`,
+            advise("mainIssue.serviceMedium", { percentage: issuePercentage }),
           );
         } else {
           advice.push(
-            `${translateTheme(issueTheme)} est mentionné dans ${issuePercentage}% des avis. C'est un point à prendre en compte dans tes réflexions.`,
+            advise("mainIssue.otherMedium", {
+              theme: translateTheme(issueTheme),
+              percentage: issuePercentage,
+            }),
           );
         }
       }
@@ -1743,7 +1773,9 @@ const Dashboard = () => {
           strengthTheme.includes("agréable")
         ) {
           advice.push(
-            `L'ambiance est un point fort récurrent (${strengthPercentage}% des avis positifs). C'est un atout à conserver selon tes clients.`,
+            advise("mainStrength.ambianceHigh", {
+              percentage: strengthPercentage,
+            }),
           );
         } else if (
           strengthTheme.includes("qualité") ||
@@ -1751,18 +1783,25 @@ const Dashboard = () => {
           strengthTheme.includes("délicieux")
         ) {
           advice.push(
-            `La qualité de ta cuisine revient souvent dans les avis positifs (${strengthPercentage}% des mentions). C'est un point fort à valoriser.`,
+            advise("mainStrength.qualityHigh", {
+              percentage: strengthPercentage,
+            }),
           );
         } else if (
           strengthTheme.includes("accueil") ||
           strengthTheme.includes("sympathie")
         ) {
           advice.push(
-            `L'accueil est souvent mentionné positivement (${strengthPercentage}% des avis). C'est un atout selon tes clients.`,
+            advise("mainStrength.welcomeHigh", {
+              percentage: strengthPercentage,
+            }),
           );
         } else {
           advice.push(
-            `${translateTheme(strengthTheme)} revient dans ${strengthPercentage}% des avis positifs. C'est un point fort à prendre en compte.`,
+            advise("mainStrength.otherHigh", {
+              theme: translateTheme(strengthTheme),
+              percentage: strengthPercentage,
+            }),
           );
         }
       }
@@ -1771,15 +1810,15 @@ const Dashboard = () => {
     // 3. Constats sur la note globale
     if (avgRating < 3.5 && totalReviews >= 10) {
       advice.push(
-        `Ta note moyenne est à ${avgRating.toFixed(1)}/5, en dessous de la moyenne du secteur. C'est une tendance à analyser dans les retours clients.`,
+        advise("overall.lowRating", { rating: avgRating.toFixed(1) }),
       );
     } else if (avgRating >= 4.0 && avgRating < 4.5) {
       advice.push(
-        `Ta note moyenne est de ${avgRating.toFixed(1)}/5. Les points qui reviennent souvent dans les avis pourraient être des pistes d'amélioration.`,
+        advise("overall.goodRating", { rating: avgRating.toFixed(1) }),
       );
     } else if (avgRating >= 4.5) {
       advice.push(
-        `Ta note moyenne est excellente (${avgRating.toFixed(1)}/5). Les points forts mentionnés dans les avis sont des atouts à conserver.`,
+        advise("overall.excellentRating", { rating: avgRating.toFixed(1) }),
       );
     }
 
@@ -1787,11 +1826,13 @@ const Dashboard = () => {
     const negativePercentage = Math.round((1 - positiveRatio) * 100);
     if (negativePercentage >= 40 && totalReviews >= 10) {
       advice.push(
-        `${negativePercentage}% d'avis négatifs dans tes retours clients. C'est une tendance à analyser, le problème principal revient souvent.`,
+        advise("ratio.negativeHigh", { percentage: negativePercentage }),
       );
     } else if (positiveRatio >= 0.7) {
       advice.push(
-        `${Math.round(positiveRatio * 100)}% d'avis positifs dans tes retours. Les points forts mentionnés sont des atouts à valoriser.`,
+        advise("ratio.positiveHigh", {
+          percentage: Math.round(positiveRatio * 100),
+        }),
       );
     }
 
@@ -1800,11 +1841,15 @@ const Dashboard = () => {
       const responseRate = validatedReviewsSet.size / totalReviews;
       if (responseRate < 0.3) {
         advice.push(
-          `Tu réponds à moins de ${Math.round(responseRate * 100)}% des avis. C'est une tendance à analyser dans ta gestion des retours clients.`,
+          advise("response.low", {
+            percentage: Math.round(responseRate * 100),
+          }),
         );
       } else if (responseRate >= 0.7) {
         advice.push(
-          `Tu réponds à ${Math.round(responseRate * 100)}% des avis. C'est une bonne pratique dans la gestion de tes retours clients.`,
+          advise("response.high", {
+            percentage: Math.round(responseRate * 100),
+          }),
         );
       }
     }
@@ -1947,8 +1992,82 @@ const Dashboard = () => {
       }
     }
 
+    const translateAdviceText = (text: string): string => {
+      const raw = (text || "").trim();
+      if (!raw) return raw;
+
+      if (i18n.language?.startsWith("fr")) {
+        return softenAdvice(raw);
+      }
+
+      const matchers: Array<[RegExp, (match: RegExpMatchArray) => string]> = [
+        [
+          /^Le temps d'attente est très souvent mentionné négativement \((\d+)% des avis\)\./i,
+          (match) => advise("mainIssue.serviceHigh", { percentage: Number(match[1]) }),
+        ],
+        [
+          /^La qualité des plats revient souvent dans les avis négatifs \((\d+)% des mentions\)\./i,
+          (match) => advise("mainIssue.qualityHigh", { percentage: Number(match[1]) }),
+        ],
+        [
+          /^Les prix sont souvent perçus comme élevés \((\d+)% des avis\)\./i,
+          (match) => advise("mainIssue.priceHigh", { percentage: Number(match[1]) }),
+        ],
+        [
+          /^(.+) revient fréquemment dans les avis \((\d+)% des mentions\)\./i,
+          (match) => advise("mainIssue.otherHigh", { theme: match[1], percentage: Number(match[2]) }),
+        ],
+        [
+          /^L'attente revient régulièrement dans les avis \((\d+)% des mentions\)\./i,
+          (match) => advise("mainIssue.serviceMedium", { percentage: Number(match[1]) }),
+        ],
+        [
+          /^(.+) est mentionné dans (\d+)% des avis\./i,
+          (match) => advise("mainIssue.otherMedium", { theme: match[1], percentage: Number(match[2]) }),
+        ],
+        [
+          /^L'ambiance est un point fort récurrent \((\d+)% des avis positifs\)\./i,
+          (match) => advise("mainStrength.ambianceHigh", { percentage: Number(match[1]) }),
+        ],
+        [
+          /^La qualité de ta cuisine revient souvent dans les avis positifs \((\d+)% des mentions\)\./i,
+          (match) => advise("mainStrength.qualityHigh", { percentage: Number(match[1]) }),
+        ],
+        [
+          /^L'accueil est souvent mentionné positivement \((\d+)% des avis\)\./i,
+          (match) => advise("mainStrength.welcomeHigh", { percentage: Number(match[1]) }),
+        ],
+        [
+          /^(.+) revient dans (\d+)% des avis positifs\./i,
+          (match) => advise("mainStrength.otherHigh", { theme: match[1], percentage: Number(match[2]) }),
+        ],
+        [/^Ta note moyenne est à ([\d.]+)\/5,/i, (match) => advise("overall.lowRating", { rating: match[1] })],
+        [/^Ta note moyenne est de ([\d.]+)\/5\./i, (match) => advise("overall.goodRating", { rating: match[1] })],
+        [/^Ta note moyenne est excellente \(([\d.]+)\/5\)\./i, (match) => advise("overall.excellentRating", { rating: match[1] })],
+        [/^(\d+)% d'avis négatifs dans tes retours clients\./i, (match) => advise("ratio.negativeHigh", { percentage: Number(match[1]) })],
+        [/^(\d+)% d'avis positifs dans tes retours\./i, (match) => advise("ratio.positiveHigh", { percentage: Number(match[1]) })],
+        [/^Tu réponds à moins de (\d+)% des avis\./i, (match) => advise("response.low", { percentage: Number(match[1]) })],
+        [/^Tu réponds à (\d+)% des avis\./i, (match) => advise("response.high", { percentage: Number(match[1]) })],
+        [/^En plus du problème principal, (.+) revient aussi souvent \((\d+)% des avis\)\./i, (match) => advise("secondaryIssue", { theme: match[1], percentage: Number(match[2]) })],
+        [/^(.+) revient souvent dans les avis positifs \((\d+)%\)\./i, (match) => advise("secondaryStrength", { theme: match[1], percentage: Number(match[2]) })],
+        [/^Tu as (\d+) avis positifs récents\./i, (match) => advise("retention.recentPositive", { count: Number(match[1]) })],
+        [/^(.+) revient aussi \((\d+)% des avis\)\./i, (match) => advise("continuousImprovement.thirdIssue", { theme: match[1], percentage: Number(match[2]) })],
+        [/^L'ambiance est un point fort récurrent selon tes clients\./i, () => advise("differentiation.ambiance")],
+        [/^Ta cuisine est souvent appréciée dans les avis\./i, () => advise("differentiation.quality")],
+        [/^Tu as (\d+) avis négatifs récents\./i, (match) => advise("proactive.recentNegative", { count: Number(match[1]) })],
+        [/^(\d+)% de tes clients donnent 5 étoiles\./i, (match) => advise("globalExperience.veryPositive", { percentage: Number(match[1]) })],
+      ];
+
+      for (const [pattern, build] of matchers) {
+        const match = raw.match(pattern);
+        if (match) return build(match);
+      }
+
+      return raw;
+    };
+
     const filtered = advice
-      .map(softenAdvice)
+      .map(translateAdviceText)
       .filter((a) => a && a.trim().length > 0)
       .filter((a) => !isHRRelated(a));
 

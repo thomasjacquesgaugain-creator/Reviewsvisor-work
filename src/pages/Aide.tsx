@@ -5,25 +5,45 @@ import { HelpCircle, MessageCircle, LifeBuoy } from "lucide-react";
 import AiAssistance from "@/components/AiAssistance";
 import BackArrow from "@/components/BackArrow";
 import { Badge } from "@/components/ui/badge";
-import { useTranslation } from "react-i18next";
+import { useTranslation , Trans } from "react-i18next";
 const Aide = () => {
   const { t } = useTranslation();
   
   const faqItems = [{
     question: t("help.faq1Question"),
-    answer: <>Vous pouvez importer vos avis Google de deux façons :<br />- en important un fichier via Google Takeout,<br />- ou via la récupération automatique si votre établissement est connecté.<br /><br />Chaque méthode est expliquée étape par étape directement dans la section "<span className="text-green-500 font-medium">Instructions</span>".</>
+    answer: (<Trans i18nKey="help.faq1Answer"components={{br:<br />,highlight: <span className="text-green-500 font-medium" />,}}/>),
   }, {
     question: t("help.faq2Question"),
-    answer: <>Reviewsvisor utilise une intelligence artificielle avancée pour analyser vos avis clients. L'outil lit chaque commentaire, identifie le ton et l'émotion, extrait les mots-clés importants et détecte automatiquement les points forts et les points faibles. Vous obtenez ensuite une synthèse claire avec des axes d'amélioration prioritaires.</>
+    answer:<Trans i18nKey="help.faq2Answer" />,
   }, {
     question: t("help.faq3Question"),
-    answer: <>Oui. Reviewsvisor permet d'analyser plusieurs établissements depuis un seul compte.<br /><br />Chaque établissement <span className="text-green-500 font-medium">dispose de ses propres analyses, recommandations et historiques d'avis</span>.</>
+    answer: (
+      <Trans i18nKey="help.faq3Answer"
+        components={{
+          br:        <br />,
+          highlight: <span className="text-green-500 font-medium" />,}}/>),
   }, {
     question: t("help.faq4Question"),
-    answer: <>Oui. Les analyses peuvent être partagées avec votre équipe afin <span className="text-green-500 font-medium">d'aligner tout le monde sur les priorités à améliorer</span> (service, prix, qualité, organisation).<br /><br />Cela permet de transformer les avis clients en <span className="text-green-500 font-medium">actions concrètes</span>.</>
+    answer: (
+      <Trans
+        i18nKey="help.faq4Answer"
+        components={{
+          br:        <br />,
+          highlight: <span className="text-green-500 font-medium" />,
+        }}
+      />
+    ),
   }, {
     question: t("help.faq5Question"),
-    answer: <>Oui. Reviewsvisor propose un système de réponses automatiques assistées par IA.<br /><br />Vous pouvez générer des <span className="text-green-500 font-medium">réponses adaptées au ton des avis</span> (positifs ou négatifs), tout en <span className="text-green-500 font-medium">gardant le contrôle</span> avant publication.</>
+    answer: (
+      <Trans
+        i18nKey="help.faq5Answer"
+        components={{
+          br:        <br />,
+          highlight: <span className="text-green-500 font-medium" />,
+        }}
+      />
+    ),
   }];
   
   return <div className="app-page-shell">
