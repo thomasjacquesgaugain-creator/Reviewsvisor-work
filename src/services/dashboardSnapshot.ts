@@ -70,3 +70,11 @@ export function setDashboardSnapshot(
   };
   setStorage(all);
 }
+
+export function clearDashboardSnapshot(establishmentId: string): void {
+  if (!establishmentId) return;
+  const all = getStorage();
+  if (!all[establishmentId]) return;
+  delete all[establishmentId];
+  setStorage(all);
+}

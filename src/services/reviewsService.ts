@@ -511,6 +511,43 @@ export async function deleteAllReviews(establishmentId: string): Promise<number>
     throw error;
   }
 
+  // Supprimer les insights dérivés liés à cet établissement
+  const { error: insightDeleteError, count: insightCount } = await supabase
+    .from("review_insights")
+    .delete({ count: "exact" })
+    .eq("user_id", user.user.id)
+    .eq("place_id", establishmentId);
+
+  if (insightDeleteError) {
+    console.error(
+      "[PROTECTION DONNÉES] ❌ Erreur lors de la suppression review_insights:",
+      insightDeleteError,
+    );
+    throw insightDeleteError;
+  }
+
+  // Supprimer les objectifs SMART liés à cet établissement
+  // NOTE: smart_objectives is present in the database but not in the generated
+  // Supabase TS types in this workspace, so we use the untyped client here.
+  const db = supabase as any;
+  const { error: objectivesDeleteError, count: objectivesCount } = await db
+    .from("smart_objectives")
+    .delete({ count: "exact" })
+    .eq("user_id", user.user.id)
+    .eq("place_id", establishmentId);
+
+  if (objectivesDeleteError) {
+    console.error(
+      "[PROTECTION DONNÉES] ❌ Erreur lors de la suppression smart_objectives:",
+      objectivesDeleteError,
+    );
+    throw objectivesDeleteError;
+  }
+
+  console.warn(
+    `[PROTECTION DONNÉES] 🧹 ${insightCount || 0} review_insights et ${objectivesCount || 0} smart_objectives supprimés pour l'établissement ${establishmentId}`,
+  );
+
   const { error: resetError } =await supabase
   .from("establishments")
   .update({ last_reviews_import: null } as any)

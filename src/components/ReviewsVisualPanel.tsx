@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2, ThumbsUp, ThumbsDown, ShieldAlert, List, LineChart, PieChart, ChevronDown } from "lucide-react";
+import { X, Star, TrendingUp, BarChart3, Building2, MessageSquareText, Trash2, ThumbsUp, ThumbsDown, ShieldAlert, List, LineChart, PieChart, ChevronDown, AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
-import { getReviewsSummary, listAllReviews, listAll, deleteAllReviews, verifyAndRestoreCreateTimes } from "@/services/reviewsService";
+import { getReviewsSummary, listAll, deleteAllReviews, verifyAndRestoreCreateTimes } from "@/services/reviewsService";
+import { clearDashboardSnapshot } from "@/services/dashboardSnapshot";
+import { clearKpiCache } from "@/services/dashboardKpiCache";
 import { STORAGE_KEY } from "@/types/etablissement";
 import { ReviewsTable, ReviewsTableRow } from "@/components/reviews/ReviewsTable";
 import { toast as sonnerToast } from "sonner";
@@ -16,6 +18,7 @@ import { RatingDistributionModal } from "@/components/RatingDistributionModal";
 import { extractOriginalText } from "@/utils/extractOriginalText";
 import { formatReviewDate } from "@/utils/formatReviewDate";
 import { useTranslation } from "react-i18next";
+import { useSmartStore } from "@/store/smartStore";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,6 +94,7 @@ export function ReviewsVisualPanel({
   const [showTrendModal, setShowTrendModal] = useState(false);
   const [showRatingDistributionModal, setShowRatingDistributionModal] = useState(false);
   const [displayCount, setDisplayCount] = useState(10);
+  const resetSmartData = useSmartStore((state) => state.resetAllData);
   const { establishment: currentEstablishment } = useCurrentEstablishment();
   const { t } = useTranslation();
 
@@ -290,6 +294,18 @@ export function ReviewsVisualPanel({
       console.warn('[PROTECTION DONNÉES] ⚠️ Suppression confirmée - début de la suppression...');
       
       await deleteAllReviews(effectiveId);
+
+      // Reset des caches et de l'état local lié aux analyses
+      clearDashboardSnapshot(effectiveId);
+      clearKpiCache(effectiveId);
+      resetSmartData();
+      window.dispatchEvent(new CustomEvent("reviews:imported", {
+        detail: { establishmentId: effectiveId, source: "delete" },
+      }));
+      setSummary(null);
+      setReviewsList([]);
+      setActiveFilter("all");
+      setDisplayCount(10);
       
       // Toast rouge en bas à droite (même système que import CSV/JSON)
       sonnerToast.error(t("dashboard.allReviewsDeleted"), {
@@ -664,20 +680,26 @@ export function ReviewsVisualPanel({
       </CardContent>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border-2 border-red-500/40 bg-gradient-to-b from-white to-red-50/70 shadow-2xl shadow-red-950/20 sm:max-w-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("modals.confirmDelete")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("modals.confirmDeleteDesc")}
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100 text-red-700 ring-8 ring-red-100/60">
+              <AlertTriangle className="h-7 w-7" />
+            </div>
+            <AlertDialogTitle className="text-center text-2xl font-bold text-red-800">
+              {t("modals.confirmDelete")}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-base text-red-900/80">
+              {t("modals.confirmDeleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
+
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAllReviews}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="border border-red-700 bg-red-600 text-white shadow-lg shadow-red-950/20 hover:bg-red-700 focus:ring-red-500"
             >
-              {t("common.delete")}
+              {t("modals.deleteButton")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

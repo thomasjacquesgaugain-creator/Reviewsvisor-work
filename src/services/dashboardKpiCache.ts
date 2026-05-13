@@ -62,3 +62,10 @@ export function setKpiCache(placeId: string, payload: { insight: any | null; rev
   };
   setStorage(all);
 }
+
+export function clearKpiCache(placeId: string): void {
+  const all = getStorage();
+  if (!all[placeId]) return;
+  delete all[placeId];
+  setStorage(all);
+}
