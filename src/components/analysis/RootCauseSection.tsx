@@ -10,6 +10,7 @@ import { useState } from "react";
 import Questionnaire, { QuestionnaireResult,IshikawaScores,} from "./Questionare";
 import { useSmartStore } from "@/store/smartStore";
 import { useEffect , useRef } from "react";
+import { getCurrentEstablishment } from "@/services/establishments";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 
 import { useTranslation } from "react-i18next";
@@ -235,10 +236,9 @@ export function RootCauseSection({
   const [questionnaireSkipped, setQuestionnaireSkipped] = useState(false);
   const [showQuestionare, setShowQuestionare] = useState(false);
   const { t } = useTranslation();
-  const selectedEstablishmentId = useEstablishmentStore(
-    (s) => s.selectedEstablishment?.id ?? null
-  );
-
+  const activeEstablishmentId = useEstablishmentStore(
+  s => s.activeEstablishmentId
+);
 
 const establishmentIdRef = useRef<string | null>(null);
 /* ── Current issue ── */
@@ -247,20 +247,11 @@ const currentIssue =
     ? paretoIssues[currentStep]
     : null;
 
-/* ── Load establishment ── */
 useEffect(() => {
-  setEstablishmentId(selectedEstablishmentId);
-  establishmentIdRef.current = selectedEstablishmentId;
-}, [selectedEstablishmentId]);
+  if (!activeEstablishmentId) return;
 
-/* ── Fetch SMART objectives when ID is ready ── */
-useEffect(() => {
-  if (!establishmentId) return;
-
-  fetchObjectives(establishmentId);
-}, [establishmentId]);
-
-
+  fetchObjectives(activeEstablishmentId);
+}, [activeEstablishmentId, fetchObjectives]);
 
 useEffect(() => {
   if (!smartObjectives?.length) return;
@@ -340,7 +331,7 @@ const currentSmartObjective = useMemo(() => {
     const handleQuestionnaireSuccess = async (result: QuestionnaireResult) => {
       if (!currentIssue || !rootCauseAnalysis) return;
 
-      const estId = establishmentIdRef.current;
+      const estId = activeEstablishmentId;
       if (!estId) return;
 
       //  store update

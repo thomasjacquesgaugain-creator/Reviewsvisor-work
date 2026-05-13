@@ -173,7 +173,7 @@ const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const etablissementId = searchParams.get("etablissementId");
   const { user, displayName, loading, signOut } = useAuth();
-  const { selectedEstablishment, setActivePlace, activePlaceId } =
+  const { selectedEstablishment,activeEstablishmentId, setActivePlace, activePlaceId } =
     useEstablishmentStore();
   const { toast: toastHook } = useToast(); // Pour l'Agent IA (comme Assistance IA)
 
@@ -238,25 +238,14 @@ const Dashboard = () => {
   const [establishmentCreatedAt, setEstablishmentCreatedAt] = useState<
     string | null
   >(null);
-  const [establishmentId, setEstablishmentId] = useState<string | null>(null);
-
-  const establishmentIdRef = useRef<string | null>(null);
-    const {
-      objectives,
-      fetchObjectives,
-      toggleAction
-    } = useSmartStore();
+   const { objectives, fetchObjectives, toggleAction } = useSmartStore();
 
   useEffect(() => {
-    async function loadEst() {
-      const est = await getCurrentEstablishment();
-      const id = est?.id ?? null;
-      setEstablishmentId(id);
-      establishmentIdRef.current = id;
-      if (id) fetchObjectives(id);
-    }
-    loadEst();
-  }, [activePlaceId]);
+  if (!activeEstablishmentId) return;
+
+  fetchObjectives(activeEstablishmentId);
+}, [fetchObjectives, activeEstablishmentId]);
+
   const safeObjectives = Array.isArray(objectives) ? objectives : [];
 
   function handleClickActionPlan(){

@@ -2255,7 +2255,8 @@
 "smartCard": {
   "header": {
     "title":     "Objectif SMART — {{cause}}",
-    "pareto":    "Depuis Pareto : \"{{cause}}{{percentage, select, null{} other{ – {{percentage}}% des avis négatifs}}}\"",
+    "pareto": "Depuis Pareto : \"{{cause}}{{percentageText}}\"",
+    "negativeReviewsPercentage": " – {{percentage}}% des avis négatifs",
     "ishikawa":  "Ishikawa : {{category}}",
     "validated": "(validé)"
   },

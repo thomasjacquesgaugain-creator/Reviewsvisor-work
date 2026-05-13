@@ -260,7 +260,7 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
         if (error) {
         console.error("Erreur:", error);
         toast.error(t("toasts.error"),{
-          description: t("questionnaire.error"),
+          description: t("questionnaire.errors.saveFailed"),
         });
         return;
       }
