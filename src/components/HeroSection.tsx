@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Brain, Target, TrendingUp, CheckCircle, Menu, Globe, Check, User, BookmarkCheck, Rocket } from "lucide-react";
+import { Brain, Target, TrendingUp, CheckCircle, Menu, Globe, Check, User, BookmarkCheck, Rocket, Lock, Languages } from "lucide-react";
 import logoHeader from "@/assets/reviewsvisor-logo-header.png";
 import { WhyReviewsvisor } from "@/components/WhyReviewsvisor";
 import { useNavigate } from "react-router-dom";
@@ -20,7 +20,6 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
-import { Lock, Languages } from "lucide-react";
 
 export const HeroSection = () => {
   const { t } = useTranslation();
@@ -34,58 +33,85 @@ export const HeroSection = () => {
   };
 
   return (
-    <div className="app-page-shell">
+    <div className="relative z-0 flex min-h-screen flex-col overflow-x-clip bg-background text-foreground">
+      <div className="pointer-events-none absolute inset-0 hidden dark:block bg-[radial-gradient(circle_at_top,hsl(var(--primary)/0.14),transparent_40%)]" />
+      <div className="pointer-events-none absolute inset-0 hidden dark:block bg-[radial-gradient(circle_at_bottom_right,hsl(var(--ring)/0.14),transparent_38%)]" />
       <div className="relative z-10">
-        {/* Header : uniquement le menu hamburger à droite */}
-        <div className="flex items-center justify-end mx-4 mt-6 pr-2">
-          {/* Hamburger menu - using Radix Portal for true overlay */}
+        {/* Header */}
+        <div className="mx-4 mt-6 flex items-center justify-end pr-2">
           <div>
             <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  className="
+                    rounded-full
+                    p-2
+                    transition-colors
+                    hover:bg-muted
+
+                    dark:border
+                    dark:border-border
+                    dark:bg-white/[0.04]
+                    dark:hover:bg-white/[0.08]
+                  "
                   aria-label={t("common.menu")}
                 >
-                  <Menu className="w-5 h-5 text-gray-700" />
+                  <Menu className="h-5 w-5 text-foreground" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuPortal>
-                <DropdownMenuContent 
-                  side="bottom" 
-                  align="end" 
+                <DropdownMenuContent
+                  side="bottom"
+                  align="end"
                   sideOffset={8}
-                  className="z-[99999] w-[200px] bg-white"
+                  className="z-[99999] w-[200px] border border-border bg-popover text-popover-foreground"
                 >
-                  {/* Se connecter */}
-                  <DropdownMenuItem 
+                  {/* Login */}
+                  <DropdownMenuItem
                     onClick={() => navigate("/login")}
-                    className="cursor-pointer"
+                    className="cursor-pointer focus:bg-accent"
                   >
-                    <span className="mr-2"><Lock className="h-4 w-4 text-gray-500" /></span>
+                    <span className="mr-2">
+                      <Lock className="h-4 w-4 text-muted-foreground" />
+                    </span>
+
                     {t("auth.login")}
                   </DropdownMenuItem>
 
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="bg-border" />
 
-                  {/* Langue - Submenu */}
+                  {/* Language */}
                   <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="cursor-pointer">
-                      <Languages className="w-4 h-4 mr-2 text-gray-500" />
+                    <DropdownMenuSubTrigger className="cursor-pointer focus:bg-accent">
+                      <Languages className="mr-2 h-4 w-4 text-muted-foreground" />
+
                       {t("common.language")}
-                      <span className="ml-auto text-xs text-gray-500">{lang.toUpperCase()}</span>
+
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {lang.toUpperCase()}
+                      </span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
-                      <DropdownMenuSubContent className="z-[99999] bg-white">
+                      <DropdownMenuSubContent
+                        className="z-[99999] border border-border bg-popover text-popover-foreground"
+                      >
                         {SUPPORTED_LANGUAGES.map((code) => (
                           <DropdownMenuItem
                             key={code}
                             onClick={() => handleLanguageChange(code)}
-                            className={`cursor-pointer ${lang === code ? "text-blue-600 font-medium bg-blue-50" : ""}`}
+                            className={`cursor-pointer focus:bg-accent ${
+                              lang === code
+                                ? "bg-primary/10 font-medium text-primary"
+                                : ""
+                            }`}
                           >
-                            <span className="flex items-center gap-2 flex-1">
+                            <span className="flex flex-1 items-center gap-2">
                               {LANGUAGE_FLAGS[code]} {LANGUAGE_LABELS[code]}
                             </span>
-                            {lang === code && <Check className="w-4 h-4 ml-2" />}
+
+                            {lang === code && (
+                              <Check className="ml-2 h-4 w-4" />
+                            )}
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuSubContent>
@@ -97,111 +123,305 @@ export const HeroSection = () => {
           </div>
         </div>
 
-        {/* Brand header - Large version */}
-        <div className="flex items-center justify-center pt-2 pb-0">
-          <img 
-            src={logoHeader} 
+        {/* Logo */}
+        <div className="flex items-center justify-center pb-0 pt-2">
+          <img
+            src={logoHeader}
             alt={`${APP_NAME} Logo`}
-            className="h-[70px] w-auto -mr-2 mt-4"
+            className="
+              mt-4
+              h-[70px]
+              w-auto
+              -mr-2
+
+              dark:drop-shadow-[0_0_22px_hsl(var(--primary)/0.35)]
+            "
           />
         </div>
 
+        {/* Main Hero Card */}
+        <div className="container mx-auto px-4 pb-16 pt-2">
+          <Card
+            className="
+              mx-auto
+              mb-12
+              max-w-3xl
+              overflow-hidden
+              rounded-3xl
+              border
+              border-transparent
+              bg-white/90
+              shadow-xl
+              backdrop-blur-sm
 
-        {/* Main hero card */}
-        <div className="container mx-auto px-4 pt-2 pb-16">
-          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-12">
-            <CardContent className="p-8 text-center space-y-6">
-              <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
+              dark:border-border
+              dark:bg-white/[0.04]
+              dark:shadow-2xl
+              dark:backdrop-blur-xl
+            "
+          >
+            <CardContent className="space-y-6 p-8 text-center">
+              <h1 className="text-3xl font-bold text-foreground lg:text-4xl">
                 {t("hero.title")}
               </h1>
-              
-              <p className="text-lg text-gray-600 leading-relaxed">
-                {t("hero.desc1")} <span className="font-semibold" style={{ color: '#2ECC71' }}>{t("hero.highlight1")}</span> {t("hero.desc2")} <span className="font-semibold" style={{ color: '#2ECC71' }}>{t("hero.highlight2")}</span>.
+
+              <p className="text-lg leading-relaxed text-muted-foreground">
+                {t("hero.desc1")}{" "}
+                <span className="font-semibold text-primary">
+                  {t("hero.highlight1")}
+                </span>{" "}
+                {t("hero.desc2")}{" "}
+                <span className="font-semibold text-primary">
+                  {t("hero.highlight2")}
+                </span>
+                .
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
-                <Button 
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-full font-medium"
-                  onClick={() => navigate('/inscription')}
+              {/* Buttons */}
+              <div className="flex flex-col justify-center gap-4 pt-2 sm:flex-row">
+                <Button
+                  className="
+                    rounded-full
+                    bg-primary
+                    px-8
+                    py-3
+                    font-medium
+                    text-primary-foreground
+                    hover:bg-primary/90
+                    dark:shadow-[0_0_24px_hsl(var(--primary)/0.35)]
+                  "
+                  onClick={() => navigate("/inscription")}
                 >
-                  <span><Rocket className="h-5 w-5" /></span>
+                  <span>
+                    <Rocket className="h-5 w-5" />
+                  </span>
+
                   {t("hero.startNow")}
                 </Button>
-                <Button 
-                  variant="outline" 
-                  className="border-border text-foreground px-8 py-3 rounded-full font-medium"
-                  onClick={() => navigate('/login')}
+
+                <Button
+                  variant="outline"
+                  className="
+                    rounded-full
+                    border-border
+                    bg-background/90
+                    px-8
+                    py-3
+                    font-medium
+                    text-foreground
+                    hover:bg-muted
+
+                    dark:bg-white/[0.04]
+                    dark:hover:bg-white/[0.08]
+                  "
+                  onClick={() => navigate("/login")}
                 >
-                  <span><User className="h-5 w-5" /></span>
+                  <span>
+                    <User className="h-5 w-5" />
+                  </span>
+
                   {t("hero.haveAccount")}
                 </Button>
               </div>
 
-              {/* Trust indicators bottom - une seule ligne, bordure grise arrondie comme le header */}
-              <div className="border border-gray-200 rounded-full px-6 py-4 mt-4">
-                <div className="flex flex-nowrap items-center justify-center gap-6 sm:gap-8 text-sm text-gray-500">
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="whitespace-nowrap">{t("hero.trust1")}</span>
+              {/* Trust indicators */}
+              <div
+                className="
+                  mt-4
+                  rounded-full
+                  border
+                  border-border
+                  px-6
+                  py-4
+
+                  dark:bg-white/[0.03]
+                "
+              >
+                <div
+                  className="
+                    flex
+                    flex-nowrap
+                    items-center
+                    justify-center
+                    gap-6
+                    text-sm
+                    text-muted-foreground
+                    sm:gap-8
+                  "
+                >
+                  <div className="flex flex-shrink-0 items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-primary" />
+
+                    <span className="whitespace-nowrap">
+                      {t("hero.trust1")}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="whitespace-nowrap">{t("hero.trust2")}</span>
+
+                  <div className="flex flex-shrink-0 items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-primary" />
+
+                    <span className="whitespace-nowrap">
+                      {t("hero.trust2")}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="whitespace-nowrap">{t("hero.trust3")}</span>
+
+                  <div className="flex flex-shrink-0 items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-primary" />
+
+                    <span className="whitespace-nowrap">
+                      {t("hero.trust3")}
+                    </span>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Feature cards */}
-          <div className="grid md:grid-cols-3 gap-6 mb-12 max-w-5xl mx-auto">
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
-              <CardContent className="p-0 space-y-4">
-                <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center">
-                  <Brain className="w-6 h-6 text-pink-600" />
+          {/* Feature Cards */}
+          <div className="mx-auto mb-12 grid max-w-5xl gap-6 md:grid-cols-3">
+            {/* Card 1 */}
+            <Card
+              className="
+                rounded-2xl
+                border
+                border-transparent
+                bg-white/80
+                p-6
+                shadow-lg
+                backdrop-blur-sm
+
+                dark:border-border
+                dark:bg-white/[0.04]
+                dark:shadow-xl
+                dark:backdrop-blur-xl
+                dark:transition-all
+                dark:hover:bg-white/[0.06]
+              "
+            >
+              <CardContent className="space-y-4 p-0">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-pink-100 dark:border dark:border-pink-500/20 dark:bg-pink-500/10">
+                  <Brain className="h-6 w-6 text-pink-600 dark:text-pink-400" />
                 </div>
-            <h3 className="text-xl font-bold text-gray-900">{t("hero.card1Title")}</h3>
-            <p className="text-gray-600 text-sm leading-relaxed">
-              <span style={{ color: '#23C55E' }}>{t("hero.card1Desc1")}</span>, <span style={{ color: '#23C55E' }}>{t("hero.card1Desc2")}</span> {t("hero.card1Desc3")} <span style={{ color: '#23C55E' }}>{t("hero.card1Desc4")}</span>.
-              {t("hero.card1Desc5")} <span style={{ color: '#23C55E' }}>{t("hero.card1Desc6")}</span>.
-            </p>
+
+                <h3 className="text-xl font-bold text-foreground">
+                  {t("hero.card1Title")}
+                </h3>
+
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  <span className="text-primary">
+                    {t("hero.card1Desc1")}
+                  </span>
+                  ,{" "}
+                  <span className="text-primary">
+                    {t("hero.card1Desc2")}
+                  </span>{" "}
+                  {t("hero.card1Desc3")}{" "}
+                  <span className="text-primary">
+                    {t("hero.card1Desc4")}
+                  </span>
+                  . {t("hero.card1Desc5")}{" "}
+                  <span className="text-primary">
+                    {t("hero.card1Desc6")}
+                  </span>
+                  .
+                </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
-              <CardContent className="p-0 space-y-4">
-                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                  <Target className="w-6 h-6 text-red-600" />
+            {/* Card 2 */}
+            <Card
+              className="
+                rounded-2xl
+                border
+                border-transparent
+                bg-white/80
+                p-6
+                shadow-lg
+                backdrop-blur-sm
+
+                dark:border-border
+                dark:bg-white/[0.04]
+                dark:shadow-xl
+                dark:backdrop-blur-xl
+                dark:transition-all
+                dark:hover:bg-white/[0.06]
+              "
+            >
+              <CardContent className="space-y-4 p-0">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 dark:border dark:border-red-500/20 dark:bg-red-500/10">
+                  <Target className="h-6 w-6 text-red-600 dark:text-red-400" />
                 </div>
-            <h3 className="text-xl font-bold text-gray-900">{t("hero.card2Title")}</h3>
-            <p className="text-gray-600 text-sm leading-relaxed">
-              <span style={{ color: '#23C55E' }}>{t("hero.card2Desc1")}</span> :<br />
-              ➡️ <span style={{ color: '#2563EB' }}>94%</span> {t("hero.card2Stat1")}<br />
-              ➡️ <span style={{ color: '#2563EB' }}>86%</span> {t("hero.card2Stat2")}
-            </p>
+
+                <h3 className="text-xl font-bold text-foreground">
+                  {t("hero.card2Title")}
+                </h3>
+
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  <span className="text-primary">
+                    {t("hero.card2Desc1")}
+                  </span>{" "}
+                  :
+                  <br />
+                  ➡️ <span className="text-primary">94%</span>{" "}
+                  {t("hero.card2Stat1")}
+                  <br />
+                  ➡️ <span className="text-primary">86%</span>{" "}
+                  {t("hero.card2Stat2")}
+                </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
-              <CardContent className="p-0 space-y-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-purple-600" />
+            {/* Card 3 */}
+            <Card
+              className="
+                rounded-2xl
+                border
+                border-transparent
+                bg-white/80
+                p-6
+                shadow-lg
+                backdrop-blur-sm
+
+                dark:border-border
+                dark:bg-white/[0.04]
+                dark:shadow-xl
+                dark:backdrop-blur-xl
+                dark:transition-all
+                dark:hover:bg-white/[0.06]
+              "
+            >
+              <CardContent className="space-y-4 p-0">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 dark:border dark:border-purple-500/20 dark:bg-purple-500/10">
+                  <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
-            <h3 className="text-xl font-bold text-gray-900">{t("hero.card3Title")}</h3>
-            <p className="text-gray-600 text-sm leading-relaxed">
-              {t("hero.card3Desc1")} <span style={{ color: '#23C55E' }}>{t("hero.card3Desc2")}</span> {t("hero.card3Desc3")} <span style={{ color: '#23C55E' }}>{t("hero.card3Desc4")}</span>.<br /><br />
-              {t("hero.card3Desc5")} <span style={{ color: '#23C55E' }}>{t("hero.card3Desc6")}</span>.
-            </p>
+
+                <h3 className="text-xl font-bold text-foreground">
+                  {t("hero.card3Title")}
+                </h3>
+
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {t("hero.card3Desc1")}{" "}
+                  <span className="text-primary">
+                    {t("hero.card3Desc2")}
+                  </span>{" "}
+                  {t("hero.card3Desc3")}{" "}
+                  <span className="text-primary">
+                    {t("hero.card3Desc4")}
+                  </span>
+                  .
+                  <br />
+                  <br />
+                  {t("hero.card3Desc5")}{" "}
+                  <span className="text-primary">
+                    {t("hero.card3Desc6")}
+                  </span>
+                  .
+                </p>
               </CardContent>
             </Card>
           </div>
-
         </div>
-        
+
         {/* Why section */}
         <WhyReviewsvisor />
       </div>

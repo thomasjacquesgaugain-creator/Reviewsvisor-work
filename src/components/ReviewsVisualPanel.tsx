@@ -345,7 +345,7 @@ export function ReviewsVisualPanel({
   if (!effectiveId && !displayName) {
     return <Card className="relative z-20 max-w-7xl mx-auto" data-testid="reviews-visual-panel">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-foreground">
             <BarChart3 className="w-5 h-5" />
             {t("dashboard.reviewsOverview")}
           </CardTitle>
@@ -382,7 +382,7 @@ export function ReviewsVisualPanel({
           <div>
             <div className="flex items-center gap-2">
               <Building2 className="h-5 w-5" aria-hidden="true" />
-              <h3 className="text-xl font-semibold" data-testid="establishment-title">
+              <h3 className="text-xl font-semibold text-foreground" data-testid="establishment-title">
                 {displayName ? `${t("dashboard.reviewsOverview")} - ${displayName}` : t("dashboard.reviewsOverview")}
               </h3>
             </div>
@@ -409,7 +409,7 @@ export function ReviewsVisualPanel({
             <Skeleton className="h-64" />
           </div> : !summary || summary.total === 0 ? <div className="text-center py-8">
             <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">{displayName ? `${displayName}, ${t("dashboard.reviewsCount", { count: 0 })}` : t("dashboard.reviewsCount", { count: 0 })}</h3>
+              <h3 className="text-lg font-medium mb-2 text-foreground">{displayName ? `${displayName}, ${t("dashboard.reviewsCount", { count: 0 })}` : t("dashboard.reviewsCount", { count: 0 })}</h3>
             <p className="text-muted-foreground">
               {t("dashboard.noReviewsForEstablishment")}
             </p>
@@ -421,7 +421,7 @@ export function ReviewsVisualPanel({
                   <Star className="w-8 h-8 text-yellow-500 mr-3" />
                   <div>
                     <p className="text-sm text-muted-foreground">{t("dashboard.averageRating")}</p>
-                    <p className="text-2xl font-bold">{summary.avgRating.toFixed(1)}/5</p>
+                    <p className="text-2xl font-bold text-foreground">{summary.avgRating.toFixed(1)}/5</p>
                   </div>
                 </CardContent>
               </Card>
@@ -429,10 +429,10 @@ export function ReviewsVisualPanel({
               <Card>
                 <CardContent className="flex items-center justify-between p-4" data-testid="metric-total-reviews">
                   <div className="flex items-center">
-                    <BarChart3 className="w-8 h-8 text-blue-600 mr-3" />
+                    <BarChart3 className="mr-3 h-8 w-8 text-primary" />
                     <div>
                       <p className="text-sm text-muted-foreground">{t("dashboard.totalReviews")}</p>
-                      <p className="text-2xl font-bold">{summary.total}</p>
+                      <p className="text-2xl font-bold text-foreground">{summary.total}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -477,7 +477,7 @@ export function ReviewsVisualPanel({
                       <List className="w-8 h-8 text-primary mr-3" />
                       <div>
                         <p className="text-sm text-muted-foreground">{t("dashboard.allReviews")}</p>
-                        <p className="text-2xl font-bold">{totalCount}</p>
+                        <p className="text-2xl font-bold text-foreground">{totalCount}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -491,7 +491,7 @@ export function ReviewsVisualPanel({
                       <ThumbsUp className="w-8 h-8 text-green-500 mr-3" />
                       <div>
                         <p className="text-sm text-muted-foreground">{t("dashboard.positiveReviews")}</p>
-                        <p className="text-2xl font-bold">{positiveCount}</p>
+                        <p className="text-2xl font-bold text-foreground">{positiveCount}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -505,7 +505,7 @@ export function ReviewsVisualPanel({
                       <ThumbsDown className="w-8 h-8 text-red-500 mr-3" />
                       <div>
                         <p className="text-sm text-muted-foreground">{t("dashboard.negativeReviews")}</p>
-                        <p className="text-2xl font-bold">{negativeCount}</p>
+                        <p className="text-2xl font-bold text-foreground">{negativeCount}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -519,7 +519,7 @@ export function ReviewsVisualPanel({
                       <ShieldAlert className="w-8 h-8 text-orange-500 mr-3" />
                       <div>
                         <p className="text-sm text-muted-foreground">{t("dashboard.suspectReviewsTitle")}</p>
-                        <p className="text-2xl font-bold">{suspectCount}</p>
+                        <p className="text-2xl font-bold text-foreground">{suspectCount}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -632,7 +632,7 @@ export function ReviewsVisualPanel({
                       <div className="flex justify-center py-4">
                         <button 
                           onClick={() => setDisplayCount(prev => prev + 10)}
-                          className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                          className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
                         >
                           {t("establishment.showMore")}
                           <ChevronDown className="w-4 h-4" />

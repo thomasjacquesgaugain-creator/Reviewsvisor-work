@@ -80,8 +80,8 @@ export function AnalysisPage({ data, establishmentName,insight,  reviews, dynami
         <AnalysisFiltersProvider reviews={reviews}>
           {/* En-tête */}
           <div className="mb-4 mt-4">
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 normal-case">{APP_NAME}</h1>
-            <p className="mt-1 text-lg md:text-xl font-normal text-slate-600 dark:text-slate-300 normal-case">
+            <h1 className="text-3xl font-bold text-white normal-case">{APP_NAME}</h1>
+            <p className="mt-1 text-lg md:text-xl font-normal text-white normal-case">
               {/* {APP_TAGLINE} */}
               {t("dashboard.appTagline")}
             </p>
@@ -207,7 +207,7 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
 
       {/* Titre de section 2 */}
       <section id="history-section" className="scroll-mt-[6.5rem]">
-      <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-12 mb-6">
+      <h2 className="text-2xl font-bold text-white mt-12 mb-6">
         2. {t("analysis.history.title")}
       </h2>
 
@@ -219,7 +219,7 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
 
       {/* Titre de section 3 */}
       <section id="sentiment-section" className="scroll-mt-[6.5rem]">
-      <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-12 mb-6">
+      <h2 className="text-2xl font-bold text-white mt-12 mb-6">
         3. {t("analysis.sentiment.heading")}
       </h2>
 
@@ -231,7 +231,7 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
 
       {/* Titre de section 4 */}
       <section id="themes-section" className="scroll-mt-[6.5rem]">
-      <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-12 mb-6">
+      <h2 className="text-2xl font-bold text-white mt-12 mb-6">
         4. {t("analysis.themes.heading")}
       </h2>
 
@@ -248,7 +248,7 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
 
       {/* Titre de section 5 */}
       <section id="pareto-section" className="scroll-mt-[6.5rem]">
-      <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-12 mb-6 flex items-center gap-2">
+      <h2 className="text-2xl font-bold text-white mt-12 mb-6 flex items-center gap-2">
         5. {t("analysis.pareto.title")}
         <InfoTooltip 
           content={t("analysis.pareto.tooltipInfo")}
@@ -268,7 +268,7 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
 
       {/* Titre de section 6 */}
       <section id="root-cause-section" className="scroll-mt-[6.5rem]">
-      <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-12 mb-6">
+      <h2 className="text-2xl font-bold text-white mt-12 mb-6">
        6. {t("analysis.ishikawa.title")}
       </h2>
 
@@ -285,7 +285,7 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
 
       {/* Titre de section 7 */}
       <section id="diagnostic-section" className="scroll-mt-[6.5rem]">
-      <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-12 mb-6">
+      <h2 className="text-2xl font-bold text-white mt-12 mb-6">
         7. {t("analysis.syntheseAndDiagnostic.title")}
       </h2>
 
@@ -307,4 +307,3 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
     </>
   );
 }
-

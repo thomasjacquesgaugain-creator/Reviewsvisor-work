@@ -46,7 +46,7 @@ const ThresholdTag = ({ offset, fill = "#ef4444", label = "Seuil 80%" }: any) =>
         width={w}
         height={h}
         rx={6}
-        fill="#fff"
+        fill="hsl(var(--background))"
         stroke={fill}
         strokeWidth={1}
       />
@@ -66,6 +66,16 @@ const ThresholdTag = ({ offset, fill = "#ef4444", label = "Seuil 80%" }: any) =>
 
 const ISSUE_COLORS = ['#ef4444', '#f97316', '#eab308']; // red, orange, yellow
 const STRENGTH_COLORS = ['#22c55e', '#3b82f6', '#8b5cf6']; // green, blue, purple
+const CHART_GRID = "hsl(var(--border))";
+const CHART_TEXT = "hsl(var(--muted-foreground))";
+const CHART_FOREGROUND = "hsl(var(--foreground))";
+const TOOLTIP_STYLE = {
+  backgroundColor: "hsl(var(--background))",
+  borderColor: "hsl(var(--border))",
+  borderRadius: "0.75rem",
+  color: "hsl(var(--foreground))",
+  boxShadow: "0 10px 30px rgba(15, 23, 42, 0.18)",
+};
 
 // Fonction pour générer l'analyse des irritants
 function generateIssuesAnalysis(items: ParetoItem[],t: (key: string, opts?: any) => string): JSX.Element {
@@ -280,31 +290,34 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                   <div className="h-96 mt-4 relative">
                     <ResponsiveContainer width="100%" height="100%">
                       <ComposedChart data={detailedIssuesData} margin={{ top: 20, right: 140, bottom: 50, left: 50 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
+                        <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
                         <XAxis 
                           dataKey="name" 
                           angle={-45} 
                           textAnchor="end" 
                           height={100}
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 12, fill: CHART_TEXT }}
                         />
                         <YAxis 
                           yAxisId="left"
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 12, fill: CHART_TEXT }}
                         >
-                          <Label value={t("analysis.pareto.mentionsCount")} angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: 14 }} />
+                          <Label value={t("analysis.pareto.mentionsCount")} angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: 14, fill: CHART_TEXT }} />
                         </YAxis>
                         <YAxis 
                           yAxisId="cumule" 
                           orientation="right"
                           domain={[0, 100]}
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 12, fill: CHART_TEXT }}
                           tickFormatter={(value) => `${value}%`}
                           width={50}
                         >
-                          <Label value={t("analysis.pareto.cumulativePercent")} angle={90} position="insideRight" style={{ textAnchor: 'middle', fontSize: 14 }} />
+                          <Label value={t("analysis.pareto.cumulativePercent")} angle={90} position="insideRight" style={{ textAnchor: 'middle', fontSize: 14, fill: CHART_TEXT }} />
                         </YAxis>
                         <Tooltip
+                          contentStyle={TOOLTIP_STYLE}
+                          labelStyle={{ color: CHART_FOREGROUND }}
+                          itemStyle={{ color: CHART_FOREGROUND }}
                           formatter={(value: number, name: string, props: any) => {
                             if (name === 'count') {
                               // Utiliser le percentage calculé dans detailedIssuesData (basé sur total des mentions d'irritants)
@@ -316,10 +329,10 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                           }}
                         />
                         <Legend 
-                          wrapperStyle={{ paddingTop: '20px' }}
+                          wrapperStyle={{ paddingTop: '20px', color: CHART_FOREGROUND }}
                           payload={[
                             { value: t("analysis.pareto.mentions"), type: 'square', color: '#3B82F6' },
-                            { value: t("analysis.pareto.cumulativePercent"), type: 'line', color: 'hsl(var(--foreground))' }
+                            { value: t("analysis.pareto.cumulativePercent"), type: 'line', color: CHART_FOREGROUND }
                           ]}
                         />
                         <Bar yAxisId="left" dataKey="count" fill="#3B82F6" radius={[4, 4, 0, 0]}>
@@ -330,7 +343,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                             dataKey="percentage" 
                             position="top" 
                             formatter={(value: number) => `${value}%`}
-                            style={{ fontSize: '12px', fill: '#1f2937' }}
+                            style={{ fontSize: '12px', fill: CHART_FOREGROUND }}
                           />
                         </Bar>
                         <Line
@@ -346,7 +359,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                             dataKey="cumulativePercentage" 
                             position="top" 
                             formatter={(value: number) => `${value}%`}
-                            style={{ fontSize: '12px', fill: 'hsl(var(--foreground))' }}
+                            style={{ fontSize: '12px', fill: CHART_FOREGROUND }}
                           />
                         </Line>
                         <ReferenceLine 
@@ -394,7 +407,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                       layout="vertical"
                       margin={{ top: 5, right: 100, left: 100, bottom: 5 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" />
+                      <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
                       <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                       <YAxis
                         dataKey="name"
@@ -404,6 +417,9 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                         dx={-10}
                       />
                       <Tooltip
+                        contentStyle={TOOLTIP_STYLE}
+                        labelStyle={{ color: CHART_FOREGROUND }}
+                        itemStyle={{ color: CHART_FOREGROUND }}
                         formatter={(value: number, name: string, props: any) => {
                           // Recalculer le percentage basé sur le total des mentions d'irritants (cohérent avec detailedIssuesData)
                           const totalMentions = safeIssues.reduce((sum, item) => sum + item.count, 0);
@@ -503,31 +519,34 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                   <div className="h-96 mt-4">
                     <ResponsiveContainer width="100%" height="100%">
                       <ComposedChart data={detailedStrengthsData} margin={{ top: 20, right: 140, bottom: 50, left: 50 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
+                        <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
                         <XAxis 
                           dataKey="name" 
                           angle={-45} 
                           textAnchor="end" 
                           height={100}
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 12, fill: CHART_TEXT }}
                         />
                         <YAxis 
                           yAxisId="left"
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 12, fill: CHART_TEXT }}
                         >
-                          <Label value={t("analysis.pareto.mentionsCount")} angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: 14 }} />
+                          <Label value={t("analysis.pareto.mentionsCount")} angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fontSize: 14, fill: CHART_TEXT }} />
                         </YAxis>
                         <YAxis 
                           yAxisId="cumule" 
                           orientation="right"
                           domain={[0, 100]}
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 12, fill: CHART_TEXT }}
                           tickFormatter={(value) => `${value}%`}
                           width={50}
                         >
-                          <Label value={t("analysis.pareto.cumulativePercent")} angle={90} position="insideRight" style={{ textAnchor: 'middle', fontSize: 14 }} />
+                          <Label value={t("analysis.pareto.cumulativePercent")} angle={90} position="insideRight" style={{ textAnchor: 'middle', fontSize: 14, fill: CHART_TEXT }} />
                         </YAxis>
                         <Tooltip
+                          contentStyle={TOOLTIP_STYLE}
+                          labelStyle={{ color: CHART_FOREGROUND }}
+                          itemStyle={{ color: CHART_FOREGROUND }}
                           formatter={(value: number, name: string, props: any) => {
                             if (name === 'count') {
                               // Utiliser le percentage calculé dans detailedStrengthsData (basé sur total des mentions de satisfactions)
@@ -539,10 +558,10 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                           }}
                         />
                         <Legend 
-                          wrapperStyle={{ paddingTop: '20px' }}
+                          wrapperStyle={{ paddingTop: '20px', color: CHART_FOREGROUND }}
                           payload={[
                             { value: t("analysis.pareto.mentions"), type: 'square', color: '#3B82F6' },
-                            { value: t("analysis.pareto.cumulativePercent"), type: 'line', color: 'hsl(var(--foreground))' }
+                            { value: t("analysis.pareto.cumulativePercent"), type: 'line', color: CHART_FOREGROUND }
                           ]}
                         />
                         <Bar yAxisId="left" dataKey="count" fill="#3B82F6" radius={[4, 4, 0, 0]}>
@@ -563,7 +582,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                             dataKey="cumulativePercentage" 
                             position="top" 
                             formatter={(value: number) => `${value}%`}
-                            style={{ fontSize: '12px', fill: 'hsl(var(--foreground))' }}
+                            style={{ fontSize: '12px', fill: CHART_FOREGROUND }}
                           />
                         </Line>
                         <ReferenceLine 
@@ -611,7 +630,7 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                       layout="vertical"
                       margin={{ top: 5, right: 100, left: 100, bottom: 5 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" />
+                      <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
                       <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                       <YAxis
                         dataKey="name"
@@ -621,6 +640,9 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                         dx={-10}
                       />
                       <Tooltip
+                        contentStyle={TOOLTIP_STYLE}
+                        labelStyle={{ color: CHART_FOREGROUND }}
+                        itemStyle={{ color: CHART_FOREGROUND }}
                         formatter={(value: number, name: string, props: any) => {
                           // Recalculer le percentage basé sur le total des mentions de satisfactions (cohérent avec detailedStrengthsData)
                           const totalMentions = safeStrengths.reduce((sum, item) => sum + item.count, 0);

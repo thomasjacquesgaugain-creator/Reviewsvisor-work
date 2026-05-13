@@ -319,8 +319,8 @@ export default function MonEtablissementCard({
             {t("establishment.googleRating")}
           </p>
           {etab.rating ? (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 font-medium text-sm w-fit">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-amber-500/35 bg-amber-500/15 px-2.5 py-0.5 text-sm font-medium text-amber-950 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-100">
+              <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-600 dark:fill-amber-400 dark:text-amber-300" />
               {etab.rating}
             </span>
           ) : (
@@ -456,7 +456,7 @@ export default function MonEtablissementCard({
               type="button"
               // onClick={() => handleImportReviews()}
               disabled={isImportingReviews}
-              className="inline-flex px-4 py-2 h-auto items-center justify-center gap-1 rounded-lg border border-blue-600 bg-blue-600 text-white shadow-sm disabled:opacity-70 disabled:cursor-not-allowed text-xs font-medium"
+              className="inline-flex h-auto items-center justify-center gap-1 rounded-lg border border-primary bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
               title={t("establishment.importFromPlatform", {
                 platform: t(`platforms.${importSource}`),
               })}
@@ -498,7 +498,7 @@ export default function MonEtablissementCard({
         <div className="flex flex-col md:flex-row md:w-1/3 md:justify-end gap-2">
           <button
             type="button"
-            className="inline-flex px-4 py-3 h-auto w-full md:w-44 flex-col items-center justify-center gap-1 rounded-lg border border-blue-600 bg-blue-600 text-white shadow-sm"
+            className="inline-flex h-auto w-full flex-col items-center justify-center gap-1 rounded-lg border border-primary bg-primary px-4 py-3 text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 md:w-44"
             title={t("establishment.visualReviews")}
             data-testid="btn-analyser-etablissement"
             data-place-id={etab.place_id}

@@ -97,11 +97,11 @@ const Section = ({
   onChange: (val: number) => void;
   options: { label: string; value: number }[];
 }) => (
-  <div className="border-b border-gray-300 p-3">
-    <div className="font-semibold">{title}</div>
+  <div className="border-b border-slate-200 p-3 dark:border-slate-700">
+    <div className="font-semibold text-slate-900 dark:text-slate-100">{title}</div>
     <div className="mb-2 text-sm text-slate-700 dark:text-slate-300">{subtitle}</div>
 
-    <div className="flex justify-between gap-3 border rounded-full px-3 py-2 w-full">
+    <div className="flex w-full justify-between gap-3 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/60">
       {options.map((opt) => {
         const selected = value === opt.value;
         return (
@@ -110,8 +110,8 @@ const Section = ({
             onClick={() => onChange(opt.value)}
             className={`flex items-center gap-1 px-2 py-1 rounded-full transition
               ${selected
-                ? "bg-blue-100 border border-blue-400"
-                : "hover:bg-gray-100"
+                ? "border border-blue-400 bg-blue-100 text-blue-900 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-100"
+                : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700/70"
               }`}
           >
             <span className="text-sm">{opt.label}</span>
@@ -319,15 +319,15 @@ const hasStrongSignal = (scores: IshikawaScores) => {
   /* ── Render ── */
 
   return (
-    <div className="border border-gray-400 rounded w-full font-sans">
+    <div className="w-full rounded-lg border border-slate-200 bg-white font-sans dark:border-slate-700 dark:bg-slate-900">
       {/* Header — same as your original */}
-      <div className="text-center font-bold p-3 border-b bg-gray-100">
+      <div className="border-b border-slate-200 bg-slate-100 p-3 text-center font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
         {problemTitle}
       </div>
 
       {/* Progress bar */}
       <div className="px-3 pt-2 pb-1 flex items-center gap-2">
-        <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+        <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
           <div
             className="h-full bg-blue-500 rounded-full transition-all duration-300"
             style={{ width: `${(answeredCount / 5) * 100}%` }}

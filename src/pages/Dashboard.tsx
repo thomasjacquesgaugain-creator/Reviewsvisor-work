@@ -167,7 +167,7 @@ const getTranslatedEstablishmentType = (
 };
 
 const DASH_TAB_NAV_BTN_CLASS =
-  "inline-flex items-center gap-2 rounded-xl border border-slate-200/90 bg-white px-5 py-3 text-sm font-semibold text-slate-800 shadow-[0_2px_12px_rgba(15,23,42,0.08)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-900 hover:shadow-[0_8px_28px_rgba(37,99,235,0.14)] active:translate-y-0 active:scale-[0.98] active:shadow-[0_2px_10px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer";
+  "inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 shadow-[0_2px_12px_rgba(15,23,42,0.08)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-900 hover:shadow-[0_8px_28px_rgba(37,99,235,0.14)] active:translate-y-0 active:scale-[0.98] active:shadow-[0_2px_10px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:shadow-slate-950/40 dark:hover:border-blue-500 dark:hover:bg-blue-950/40 dark:hover:text-blue-300 dark:focus-visible:ring-offset-slate-950";
 
 const Dashboard = () => {
   // ============================================
@@ -374,7 +374,9 @@ const Dashboard = () => {
   >("pending");
   const [selectedReviewForReply, setSelectedReviewForReply] =
     useState<any>(null);
-  const [expandedReplyId, setExpandedReplyId] = useState<string | null>(null);
+  const [expandedReplyId, setExpandedReplyId] = useState<
+    string | number | null
+  >(null);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState<
     Record<string, boolean>
   >({});
@@ -420,32 +422,32 @@ const Dashboard = () => {
     if (delta < 0.3) {
       return {
         label: "accessible",
-        badgeClassName: "text-green-700 bg-green-50 border-green-200",
-        cardClassName: "bg-green-50 border-green-200",
-        labelClassName: "text-green-800",
+        badgeClassName: "text-green-700 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-950/30 dark:border-green-900/50",
+        cardClassName: "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-900/50",
+        labelClassName: "text-green-800 dark:text-green-300",
       };
     }
     if (delta < 0.5) {
       return {
         label: "realistic",
-        badgeClassName: "text-blue-700 bg-blue-50 border-blue-200",
-        cardClassName: "bg-blue-50 border-blue-200",
-        labelClassName: "text-blue-800",
+        badgeClassName: "text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-300 dark:bg-blue-950/30 dark:border-blue-900/50",
+        cardClassName: "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900/50",
+        labelClassName: "text-blue-800 dark:text-blue-300",
       };
     }
     if (delta < 0.8) {
       return {
         label: "achievable",
-        badgeClassName: "text-orange-700 bg-orange-50 border-orange-200",
-        cardClassName: "bg-orange-50 border-orange-200",
-        labelClassName: "text-orange-800",
+        badgeClassName: "text-orange-700 bg-orange-50 border-orange-200 dark:text-orange-300 dark:bg-orange-950/30 dark:border-orange-900/50",
+        cardClassName: "bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-900/50",
+        labelClassName: "text-orange-800 dark:text-orange-300",
       };
     }
     return {
       label: "ambitious",
-      badgeClassName: "text-red-700 bg-red-50 border-red-200",
-      cardClassName: "bg-red-50 border-red-200",
-      labelClassName: "text-red-800",
+      badgeClassName: "text-red-700 bg-red-50 border-red-200 dark:text-red-300 dark:bg-red-950/30 dark:border-red-900/50",
+      cardClassName: "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900/50",
+      labelClassName: "text-red-800 dark:text-red-300",
     };
   }, [currentAvgRatingForTarget, targetRating]);
 
@@ -482,6 +484,114 @@ const Dashboard = () => {
     // Ambitieux
     return t("dashboard.targetDateText.sixMonthsOrMore");
   }, [currentAvgRatingForTarget, targetRating, allReviewsForChart, t]);
+
+  const renderGroupedReviewRow = (
+    review: any,
+    index: number,
+    hoverClassName: string,
+  ) => {
+    const hasResponse = validatedReviews.has(review.id);
+    const isUrgent =
+      (review.rating === 1 || review.rating === 2) && !hasResponse;
+
+    return (
+      <React.Fragment key={review.id || index}>
+        <tr className={hoverClassName}>
+          <td className="px-4 py-3 text-sm">
+            {review.author || review.author_name || t("dashboard.anonymous")}
+          </td>
+          <td className="px-4 py-3">
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                />
+              ))}
+            </div>
+          </td>
+          <td className="px-4 py-3 text-sm text-gray-700 dark:text-slate-200 max-w-xs truncate">
+            {extractOriginalText(review.text) ||
+              review.text ||
+              t("dashboard.noComment")}
+          </td>
+          <td className="px-4 py-3">
+            <Badge className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-900/60">
+              {review.source || "Google"}
+            </Badge>
+          </td>
+          <td className="px-4 py-3 text-sm text-gray-500 dark:text-slate-400">
+            {(() => {
+              const { dateStr, isImportDate } = getReviewDisplayDate(review);
+              return (
+                <span title={isImportDate ? "Date d'importation" : undefined}>
+                  {dateStr ? formatReviewDate(dateStr) : "-"}
+                </span>
+              );
+            })()}
+          </td>
+          <td className="px-4 py-3">
+            <Badge
+              className={
+                hasResponse
+                  ? "bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300"
+                  : isUrgent
+                    ? "bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-300"
+                    : "bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300"
+              }
+            >
+              {hasResponse ? t("dashboard.replied") : t("dashboard.pending")}
+            </Badge>
+          </td>
+          <td className="px-4 py-3">
+            {hasResponse ? (
+              <Badge
+                className="bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300 text-xs cursor-pointer hover:bg-green-200 dark:hover:bg-green-900/40"
+                onClick={() =>
+                  setExpandedReplyId(
+                    expandedReplyId === review.id ? null : review.id,
+                  )
+                }
+              >
+                {t("dashboard.viewResponse")}
+              </Badge>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs"
+                onClick={() => {
+                  setSelectedReviewForReply(review);
+                  reponseAutomatiqueRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                  });
+                }}
+              >
+                <Reply className="w-3 h-3 mr-1" />
+                {t("dashboard.reply")}
+              </Button>
+            )}
+          </td>
+        </tr>
+        {expandedReplyId === review.id && hasResponse && (
+          <tr>
+            <td colSpan={7} className="p-4 bg-green-50 dark:bg-green-950/20">
+              <div className="border-l-4 border-green-500 pl-4">
+                <p className="font-semibold text-green-700 mb-2">
+                  {t("dashboard.responsePublished")} :
+                </p>
+                <p className="text-gray-700 dark:text-slate-200">
+                  {review.owner_reply_text ||
+                    validatedResponsesText.get(review.id) ||
+                    "Merci pour votre avis, nous sommes ravis que vous ayez apprécié votre expérience !"}
+                </p>
+              </div>
+            </td>
+          </tr>
+        )}
+      </React.Fragment>
+    );
+  };
 
   useEffect(() => {
     const minTarget = Math.min(5, Math.max(1, currentAvgRatingForTarget));
@@ -3931,7 +4041,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                 {/* Contenus dépliés des cartes de statistiques */}
                 {/* Courbe de progression de la note */}
                 {openCard === "courbeNote" && (
-                  <Card className="mb-8">
+                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <div>
@@ -4043,7 +4153,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                         <AlertTriangle className="w-5 h-5 text-red-500" />
                         {t("dashboard.top5WorstReviews")}
                       </CardTitle>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-slate-300">
                         {t("dashboard.worstReviewsDescription")}
                       </p>
                     </CardHeader>
@@ -7029,12 +7139,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
               <>
                 {/* Réponse automatique */}
                 <div ref={reponseAutomatiqueRef}>
-                  <Card className="mb-8">
+                  <Card className="mb-8 rounded-xl border border-transparent bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40">
                     <CardHeader>
                       <CardTitle className="text-xl">
                         {t("dashboard.autoResponse")}
                       </CardTitle>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-slate-300">
                         {t("dashboard.automatedSystemForReviews")}
                       </p>
                     </CardHeader>
@@ -7051,7 +7161,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                           if (!reviewToDisplay) {
                             return (
                               <div className="text-center py-8">
-                                <p className="text-gray-500">
+                                <p className="text-gray-500 dark:text-slate-400">
                                   {t("dashboard.noPendingReviews")}
                                 </p>
                               </div>
@@ -7245,12 +7355,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                           return (
                             <div
                               key={reviewId}
-                              className="border rounded-lg p-4 bg-gray-50 transition-all duration-300"
+                              className="rounded-lg border border-slate-200 bg-slate-50 p-4 transition-all duration-300 dark:border-slate-700 dark:bg-slate-800/50"
                             >
                               <div className="flex items-start justify-between mb-3">
                                 <div className="flex items-center gap-2">
-                                  <User className="w-4 h-4 text-gray-500" />
-                                  <span className="font-medium">
+                                  <User className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                                  <span className="font-medium text-slate-900 dark:text-slate-100">
                                     {authorName}
                                   </span>
                                   <div className="flex items-center ml-2">
@@ -7266,19 +7376,19 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                   variant="outline"
                                   className={
                                     isPositive
-                                      ? "text-green-600 border-green-600"
-                                      : "text-orange-600 border-orange-600"
+                                      ? "border-green-600 text-green-600 dark:border-green-500 dark:text-green-300"
+                                      : "border-orange-600 text-orange-600 dark:border-orange-500 dark:text-orange-300"
                                   }
                                 >
                                   {t("dashboard.toValidate")}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-gray-700 mb-3">
+                              <p className="mb-3 text-sm text-gray-700 dark:text-slate-200">
                                 "{reviewText.substring(0, 150)}
                                 {reviewText.length > 150 ? "..." : ""}"
                               </p>
-                              <div className="bg-white border-l-4 border-purple-500 p-3 rounded">
-                                <p className="text-sm text-gray-600 font-medium mb-1">
+                              <div className="rounded border-l-4 border-purple-500 bg-white p-3 dark:bg-slate-900 dark:border-purple-500">
+                                <p className="mb-1 text-sm font-medium text-gray-600 dark:text-slate-300">
                                   {t("dashboard.proposedAutomaticResponse")}:
                                 </p>
                                 {isEditing ? (
@@ -7290,10 +7400,10 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                         [reviewId]: e.target.value,
                                       }))
                                     }
-                                    className="w-full text-sm text-gray-700 border rounded p-2 min-h-[80px] focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    className="min-h-[80px] w-full rounded border border-slate-200 bg-white p-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
                                   />
                                 ) : (
-                                  <p className="text-sm text-gray-700">
+                                  <p className="text-sm text-gray-700 dark:text-slate-200">
                                     {currentResponse}
                                   </p>
                                 )}
@@ -7329,7 +7439,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        className="border-purple-600 text-purple-600"
+                                        className="border-purple-600 text-purple-600 dark:border-purple-500 dark:text-purple-300"
                                         disabled={isGenerating}
                                         onClick={() =>
                                           generateAiResponse(reviewId)
@@ -7634,7 +7744,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                 </Button>
                               </div>
                               {hasAiResponse && (
-                                <div className="mt-3 text-green-600 text-sm flex items-center gap-1">
+                                <div className="mt-3 flex items-center gap-1 text-sm text-green-600 dark:text-green-300">
                                   ✅ {t("dashboard.responseGenerated")} —{" "}
                                   {t("dashboard.canModifyBeforeValidate")}
                                 </div>
@@ -7648,15 +7758,15 @@ const getLatestDate = (reviews: any[]): Date | null =>
                 </div>
 
                 {/* Centre de réponse */}
-                <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+                <div className="mb-8 rounded-xl border border-transparent bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40">
                   {/* En-tête */}
                   <div className="flex items-center gap-3 mb-6">
                     <MessageSquare className="w-6 h-6 text-blue-600" />
                     <div className="flex-1">
-                      <h2 className="text-xl font-semibold">
+                      <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                         {t("dashboard.responseCenter")}
                       </h2>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-slate-300">
                         {t("dashboard.manageCustomerReviewResponses")}
                       </p>
                     </div>
@@ -7666,7 +7776,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                   <div className="flex gap-4 mb-6">
                     {/* Carte En attente */}
                     <Card
-                      className={`cursor-pointer transition-all hover:shadow-md flex-1 ${statusFilter === "pending" ? "border-2 border-orange-500 bg-orange-50" : ""}`}
+                      className={`flex-1 cursor-pointer transition-all hover:shadow-md dark:bg-slate-900 dark:border-slate-800 ${statusFilter === "pending" ? "border-2 border-orange-500 bg-orange-50 dark:bg-orange-950/30" : ""}`}
                       onClick={() =>
                         setStatusFilter(
                           statusFilter === "pending" ? "all" : "pending",
@@ -7676,7 +7786,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                       <CardContent className="flex items-center px-4 py-3">
                         <Clock className="w-8 h-8 text-orange-500 mr-3" />
                         <div>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-gray-600 dark:text-slate-300">
                             {t("dashboard.pending")}
                           </p>
                           <p className="text-2xl font-bold">
@@ -7711,7 +7821,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
 
                     {/* Carte Répondu */}
                     <Card
-                      className={`cursor-pointer transition-all hover:shadow-md flex-1 ${statusFilter === "replied" ? "border-2 border-green-500 bg-green-50" : ""}`}
+                      className={`flex-1 cursor-pointer transition-all hover:shadow-md dark:bg-slate-900 dark:border-slate-800 ${statusFilter === "replied" ? "border-2 border-green-500 bg-green-50 dark:bg-green-950/30" : ""}`}
                       onClick={() =>
                         setStatusFilter(
                           statusFilter === "replied" ? "all" : "replied",
@@ -7723,7 +7833,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                           <CheckCircle className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-gray-600 dark:text-slate-300">
                             {t("dashboard.reply")}
                           </p>
                           <p className="text-2xl font-bold">
@@ -7749,7 +7859,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                     </Card>
 
                     {/* Carte récapitulative */}
-                    <Card className="cursor-pointer transition-all hover:shadow-md flex-1">
+                    <Card className="flex-1 cursor-pointer transition-all hover:shadow-md dark:bg-slate-900 dark:border-slate-800">
                       <CardContent className="flex items-center px-4 py-3">
                         <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center mr-3">
                           <CheckCircle className="w-5 h-5 text-white" />
@@ -7766,7 +7876,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                               return `${reponsesStats.validated}/${total} ${t("dashboard.responses")}`;
                             })()}
                           </p>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 dark:text-slate-400">
                             {t("dashboard.validated")}
                           </p>
                         </div>
@@ -7778,7 +7888,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                   <div className="flex gap-4 mb-6">
                     {/* Carte Contenu */}
                     <Card
-                      className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 flex-1"
+                      className="relative flex-1 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg dark:bg-slate-900 dark:border-slate-800"
                       onClick={() =>
                         setOpenCard(openCard === "contenu" ? null : "contenu")
                       }
@@ -7791,7 +7901,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                             <h3 className="text-lg font-semibold">
                               {t("dashboard.contentAnalysis")}
                             </h3>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-slate-300">
                               {t("dashboard.aiReviewClassification")}
                             </p>
                           </div>
@@ -7804,7 +7914,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                 openCard === "contenu" ? null : "contenu",
                               );
                             }}
-                            className="h-6 w-6 p-0 hover:bg-purple-50"
+                            className="h-6 w-6 p-0 hover:bg-purple-50 dark:hover:bg-purple-950/40"
                           >
                             {openCard === "contenu" ? (
                               <ChevronUp className="w-4 h-4 text-purple-600" />
@@ -7818,7 +7928,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
 
                     {/* Carte Note */}
                     <Card
-                      className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 flex-1"
+                      className="relative flex-1 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg dark:bg-slate-900 dark:border-slate-800"
                       onClick={() =>
                         setOpenCard(openCard === "note" ? null : "note")
                       }
@@ -7831,7 +7941,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                             <h3 className="text-lg font-semibold">
                               {t("dashboard.filterByRating")}
                             </h3>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-slate-300">
                               {t("dashboard.reviewsSortedByStars")}
                             </p>
                           </div>
@@ -7842,7 +7952,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                               e.stopPropagation();
                               setOpenCard(openCard === "note" ? null : "note");
                             }}
-                            className="h-6 w-6 p-0 hover:bg-yellow-50"
+                            className="h-6 w-6 p-0 hover:bg-yellow-50 dark:hover:bg-yellow-950/40"
                           >
                             {openCard === "note" ? (
                               <ChevronUp className="w-4 h-4 text-yellow-600" />
@@ -7856,7 +7966,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
 
                     {/* Carte Priorité */}
                     <Card
-                      className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 flex-1"
+                      className="relative flex-1 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg dark:bg-slate-900 dark:border-slate-800"
                       onClick={() =>
                         setOpenCard(openCard === "priorite" ? null : "priorite")
                       }
@@ -7869,7 +7979,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                             <h3 className="text-lg font-semibold">
                               {t("dashboard.priority")}
                             </h3>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-slate-300">
                               {t("dashboard.reviewsSortedByUrgency")}
                             </p>
                           </div>
@@ -7882,7 +7992,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                 openCard === "priorite" ? null : "priorite",
                               );
                             }}
-                            className="h-6 w-6 p-0 hover:bg-red-50"
+                            className="h-6 w-6 p-0 hover:bg-red-50 dark:hover:bg-red-950/40"
                           >
                             {openCard === "priorite" ? (
                               <ChevronUp className="w-4 h-4 text-red-600" />
@@ -7896,7 +8006,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
 
                     {/* Carte Plateforme */}
                     <Card
-                      className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 flex-1"
+                      className="relative flex-1 cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg dark:bg-slate-900 dark:border-slate-800"
                       onClick={() =>
                         setOpenCard(
                           openCard === "plateforme" ? null : "plateforme",
@@ -7911,7 +8021,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                             <h3 className="text-lg font-semibold">
                               {t("dashboard.platform")}
                             </h3>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-slate-300">
                               {t("dashboard.reviewsSortedBySource")}
                             </p>
                           </div>
@@ -7924,7 +8034,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                 openCard === "plateforme" ? null : "plateforme",
                               );
                             }}
-                            className="h-6 w-6 p-0 hover:bg-blue-50"
+                            className="h-6 w-6 p-0 hover:bg-blue-50 dark:hover:bg-blue-950/40"
                           >
                             {openCard === "plateforme" ? (
                               <ChevronUp className="w-4 h-4 text-blue-600" />
@@ -7994,12 +8104,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     if (plainteReviews.length === 0)
                                       return null;
                                     return (
-                                      <div className="bg-red-50 rounded-lg border border-red-200 overflow-hidden">
-                                        <div className="bg-red-100 px-4 py-3 border-b border-red-200">
+                                      <div className="bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900/50 overflow-hidden">
+                                        <div className="bg-red-100 dark:bg-red-950/40 px-4 py-3 border-b border-red-200 dark:border-red-900/50">
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                               <AlertCircle className="w-5 h-5 text-red-600" />
-                                              <h3 className="font-semibold text-red-900">
+                                              <h3 className="font-semibold text-red-900 dark:text-red-100">
                                                 {t("dashboard.containsComplaint")}
                                               </h3>
                                             </div>
@@ -8010,7 +8120,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                         </div>
                                         <div className="overflow-x-auto">
                                           <table className="w-full">
-                                            <thead className="bg-red-50">
+                                            <thead className="bg-red-50 dark:bg-red-950/20">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
                                                   {t(
@@ -8037,7 +8147,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                 </th>
                                               </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-red-100">
+                                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-red-100 dark:divide-red-900/40">
                                               {plainteReviews
                                                 .slice(0, 10)
                                                 .map((review, index) => {
@@ -8053,7 +8163,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                     <React.Fragment
                                                       key={review.id || index}
                                                     >
-                                                      <tr className="hover:bg-red-50">
+                                                      <tr className="hover:bg-red-50 dark:hover:bg-red-950/20">
                                                         <td className="px-4 py-3 text-sm">
                                                           {review.author ||
                                                             review.author_name ||
@@ -8073,7 +8183,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                             ))}
                                                           </div>
                                                         </td>
-                                                        <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
+                                                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-slate-200 max-w-xs truncate">
                                                           {extractOriginalText(
                                                             review.text,
                                                           ) ||
@@ -8083,12 +8193,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                             )}
                                                         </td>
                                                         <td className="px-4 py-3">
-                                                          <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
+                                                          <Badge className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-900/60">
                                                             {review.source ||
                                                               "Google"}
                                                           </Badge>
                                                         </td>
-                                                        <td className="px-4 py-3 text-sm text-gray-500">
+                                                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-slate-400">
                                                           {(() => {
                                                             const {
                                                               dateStr,
@@ -8118,10 +8228,10 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                           <Badge
                                                             className={
                                                               hasResponse
-                                                                ? "bg-green-100 text-green-800"
+                                                                ? "bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300"
                                                                 : isUrgent
-                                                                  ? "bg-red-100 text-red-800"
-                                                                  : "bg-orange-100 text-orange-800"
+                                                                  ? "bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-300"
+                                                                  : "bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300"
                                                             }
                                                           >
                                                             {hasResponse
@@ -8132,7 +8242,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                         <td className="px-4 py-3">
                                                           {hasResponse ? (
                                                             <Badge
-                                                              className="bg-green-100 text-green-800 text-xs cursor-pointer hover:bg-green-200"
+                                                              className="bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300 text-xs cursor-pointer hover:bg-green-200 dark:hover:bg-green-900/40"
                                                               onClick={() =>
                                                                 setExpandedReplyId(
                                                                   expandedReplyId ===
@@ -8173,14 +8283,14 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                           <tr>
                                                             <td
                                                               colSpan={7}
-                                                              className="p-4 bg-green-50"
+                                                              className="p-4 bg-green-50 dark:bg-green-950/20"
                                                             >
                                                               <div className="border-l-4 border-green-500 pl-4">
                                                                 <p className="font-semibold text-green-700 mb-2">
                                                                   Réponse
                                                                   publiée :
                                                                 </p>
-                                                                <p className="text-gray-700">
+                                                                <p className="text-gray-700 dark:text-slate-200">
                                                                   {review.owner_reply_text ||
                                                                     validatedResponsesText.get(
                                                                       review.id,
@@ -8210,12 +8320,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     if (suggestionReviews.length === 0)
                                       return null;
                                     return (
-                                      <div className="bg-yellow-50 rounded-lg border border-yellow-200 overflow-hidden">
-                                        <div className="bg-yellow-100 px-4 py-3 border-b border-yellow-200">
+                                      <div className="bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-900/50 overflow-hidden">
+                                        <div className="bg-yellow-100 dark:bg-yellow-950/40 px-4 py-3 border-b border-yellow-200 dark:border-yellow-900/50">
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                               <Lightbulb className="w-5 h-5 text-yellow-600" />
-                                              <h3 className="font-semibold text-yellow-900">
+                                              <h3 className="font-semibold text-yellow-900 dark:text-yellow-100">
                                                 {t("dashboard.containsSuggestion")}
                                               </h3>
                                             </div>
@@ -8226,7 +8336,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                         </div>
                                         <div className="overflow-x-auto">
                                           <table className="w-full">
-                                            <thead className="bg-yellow-50">
+                                            <thead className="bg-yellow-50 dark:bg-yellow-950/20">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
                                                   {t("dashboard.dashResponseTableHeading.author")}
@@ -8251,7 +8361,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                 </th>
                                               </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-yellow-100">
+                                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-yellow-100 dark:divide-yellow-900/40">
                                               {suggestionReviews
                                                 .slice(0, 10)
                                                 .map((review, index) => {
@@ -8264,123 +8374,149 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                       review.rating === 2) &&
                                                     !hasResponse;
                                                   return (
-                                                    <tr
+                                                    <React.Fragment
                                                       key={review.id || index}
-                                                      className="hover:bg-yellow-50"
                                                     >
-                                                      <td className="px-4 py-3 text-sm">
-                                                        {review.author ||
-                                                          review.author_name ||
-                                                          t(
-                                                            "dashboard.anonymous",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-1">
-                                                          {[1, 2, 3, 4, 5].map(
-                                                            (star) => (
-                                                              <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                              />
-                                                            ),
-                                                          )}
-                                                        </div>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
-                                                        {extractOriginalText(
-                                                          review.text,
-                                                        ) ||
-                                                          review.text ||
-                                                          t(
-                                                            "dashboard.noComment",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                                          {review.source ||
-                                                            "Google"}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-500">
-                                                        {(() => {
-                                                          const {
-                                                            dateStr,
-                                                            isImportDate,
-                                                          } =
-                                                            getReviewDisplayDate(
-                                                              review,
-                                                            );
-                                                          return (
-                                                            <span
-                                                              title={
-                                                                isImportDate
-                                                                  ? "Date d'importation"
-                                                                  : undefined
-                                                              }
-                                                            >
-                                                              {dateStr
-                                                                ? formatReviewDate(
-                                                                    dateStr,
-                                                                  )
-                                                                : "-"}
-                                                            </span>
-                                                          );
-                                                        })()}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge
-                                                          className={
-                                                            hasResponse
-                                                              ? "bg-green-100 text-green-800"
-                                                              : isUrgent
-                                                                ? "bg-red-100 text-red-800"
-                                                                : "bg-orange-100 text-orange-800"
-                                                          }
-                                                        >
-                                                          {hasResponse
-                                                            ? t("dashboard.replied")
-                                                            : t("dashboard.pending")}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        {hasResponse ? (
-                                                          <Badge
-                                                            className="bg-green-100 text-green-800 text-xs cursor-pointer hover:bg-green-200"
-                                                            onClick={() =>
-                                                              setExpandedReplyId(
-                                                                expandedReplyId ===
-                                                                  review.id
-                                                                  ? null
-                                                                  : review.id,
-                                                              )
-                                                            }
-                                                          >
-                                                            {t("dashboard.viewResponse")}
+                                                      <tr
+                                                        className="hover:bg-yellow-50 dark:hover:bg-yellow-950/20"
+                                                      >
+                                                        <td className="px-4 py-3 text-sm">
+                                                          {review.author ||
+                                                            review.author_name ||
+                                                            t(
+                                                              "dashboard.anonymous",
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <div className="flex items-center gap-1">
+                                                            {[1, 2, 3, 4, 5].map(
+                                                              (star) => (
+                                                                <Star
+                                                                  key={star}
+                                                                  className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                                                />
+                                                              ),
+                                                            )}
+                                                          </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-slate-200 max-w-xs truncate">
+                                                          {extractOriginalText(
+                                                            review.text,
+                                                          ) ||
+                                                            review.text ||
+                                                            t(
+                                                              "dashboard.noComment",
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <Badge className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-900/60">
+                                                            {review.source ||
+                                                              "Google"}
                                                           </Badge>
-                                                        ) : (
-                                                          <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-xs"
-                                                            onClick={() => {
-                                                              setSelectedReviewForReply(
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-slate-400">
+                                                          {(() => {
+                                                            const {
+                                                              dateStr,
+                                                              isImportDate,
+                                                            } =
+                                                              getReviewDisplayDate(
                                                                 review,
                                                               );
-                                                              reponseAutomatiqueRef.current?.scrollIntoView(
-                                                                {
-                                                                  behavior:
-                                                                    "smooth",
-                                                                },
-                                                              );
-                                                            }}
+                                                            return (
+                                                              <span
+                                                                title={
+                                                                  isImportDate
+                                                                    ? "Date d'importation"
+                                                                    : undefined
+                                                                }
+                                                              >
+                                                                {dateStr
+                                                                  ? formatReviewDate(
+                                                                      dateStr,
+                                                                    )
+                                                                  : "-"}
+                                                              </span>
+                                                            );
+                                                          })()}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <Badge
+                                                            className={
+                                                              hasResponse
+                                                                ? "bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300"
+                                                                : isUrgent
+                                                                  ? "bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-300"
+                                                                  : "bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300"
+                                                            }
                                                           >
-                                                            <Reply className="w-3 h-3 mr-1" />
-                                                            {t("dashboard.reply")}
-                                                          </Button>
+                                                            {hasResponse
+                                                              ? t("dashboard.replied")
+                                                              : t("dashboard.pending")}
+                                                          </Badge>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          {hasResponse ? (
+                                                            <Badge
+                                                              className="bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300 text-xs cursor-pointer hover:bg-green-200 dark:hover:bg-green-900/40"
+                                                              onClick={() =>
+                                                                setExpandedReplyId(
+                                                                  expandedReplyId ===
+                                                                    review.id
+                                                                    ? null
+                                                                    : review.id,
+                                                                )
+                                                              }
+                                                            >
+                                                              {t("dashboard.viewResponse")}
+                                                            </Badge>
+                                                          ) : (
+                                                            <Button
+                                                              size="sm"
+                                                              variant="outline"
+                                                              className="text-xs"
+                                                              onClick={() => {
+                                                                setSelectedReviewForReply(
+                                                                  review,
+                                                                );
+                                                                reponseAutomatiqueRef.current?.scrollIntoView(
+                                                                  {
+                                                                    behavior:
+                                                                      "smooth",
+                                                                  },
+                                                                );
+                                                              }}
+                                                            >
+                                                              <Reply className="w-3 h-3 mr-1" />
+                                                              {t("dashboard.reply")}
+                                                            </Button>
+                                                          )}
+                                                        </td>
+                                                      </tr>
+                                                      {expandedReplyId ===
+                                                        review.id &&
+                                                        hasResponse && (
+                                                          <tr>
+                                                            <td
+                                                              colSpan={7}
+                                                              className="p-4 bg-green-50 dark:bg-green-950/20"
+                                                            >
+                                                              <div className="border-l-4 border-green-500 pl-4">
+                                                                <p className="font-semibold text-green-700 mb-2">
+                                                                  {t("dashboard.responsePublished")} :
+                                                                </p>
+                                                                <p className="text-gray-700 dark:text-slate-200">
+                                                                  {review.owner_reply_text ||
+                                                                    validatedResponsesText.get(
+                                                                      review.id,
+                                                                    ) ||
+                                                                    "Merci pour votre avis, nous sommes ravis que vous ayez apprécié votre expérience !"}
+                                                                </p>
+                                                              </div>
+                                                            </td>
+                                                          </tr>
                                                         )}
-                                                      </td>
-                                                    </tr>
+                                                    </React.Fragment>
                                                   );
                                                 })}
                                             </tbody>
@@ -8399,12 +8535,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     if (negatifReviews.length === 0)
                                       return null;
                                     return (
-                                      <div className="bg-orange-50 rounded-lg border border-orange-200 overflow-hidden">
-                                        <div className="bg-orange-100 px-4 py-3 border-b border-orange-200">
+                                      <div className="bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-900/50 overflow-hidden">
+                                        <div className="bg-orange-100 dark:bg-orange-950/40 px-4 py-3 border-b border-orange-200 dark:border-orange-900/50">
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                               <Frown className="w-5 h-5 text-orange-600" />
-                                              <h3 className="font-semibold text-orange-900">
+                                              <h3 className="font-semibold text-orange-900 dark:text-orange-100">
                                                 {t("dashboard.negativeToneDetected")}
                                               </h3>
                                             </div>
@@ -8415,7 +8551,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                         </div>
                                         <div className="overflow-x-auto">
                                           <table className="w-full">
-                                            <thead className="bg-orange-50">
+                                            <thead className="bg-orange-50 dark:bg-orange-950/20">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
                                                   {t("dashboard.dashResponseTableHeading.author")}
@@ -8440,7 +8576,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                 </th>
                                               </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-orange-100">
+                                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-orange-100 dark:divide-orange-900/40">
                                               {negatifReviews
                                                 .slice(0, 10)
                                                 .map((review, index) => {
@@ -8453,123 +8589,149 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                       review.rating === 2) &&
                                                     !hasResponse;
                                                   return (
-                                                    <tr
+                                                    <React.Fragment
                                                       key={review.id || index}
-                                                      className="hover:bg-orange-50"
                                                     >
-                                                      <td className="px-4 py-3 text-sm">
-                                                        {review.author ||
-                                                          review.author_name ||
-                                                          t(
-                                                            "dashboard.anonymous",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-1">
-                                                          {[1, 2, 3, 4, 5].map(
-                                                            (star) => (
-                                                              <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                              />
-                                                            ),
-                                                          )}
-                                                        </div>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
-                                                        {extractOriginalText(
-                                                          review.text,
-                                                        ) ||
-                                                          review.text ||
-                                                          t(
-                                                            "dashboard.noComment",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                                          {review.source ||
-                                                            "Google"}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-500">
-                                                        {(() => {
-                                                          const {
-                                                            dateStr,
-                                                            isImportDate,
-                                                          } =
-                                                            getReviewDisplayDate(
-                                                              review,
-                                                            );
-                                                          return (
-                                                            <span
-                                                              title={
-                                                                isImportDate
-                                                                  ? "Date d'importation"
-                                                                  : undefined
-                                                              }
-                                                            >
-                                                              {dateStr
-                                                                ? formatReviewDate(
-                                                                    dateStr,
-                                                                  )
-                                                                : "-"}
-                                                            </span>
-                                                          );
-                                                        })()}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge
-                                                          className={
-                                                            hasResponse
-                                                              ? "bg-green-100 text-green-800"
-                                                              : isUrgent
-                                                                ? "bg-red-100 text-red-800"
-                                                                : "bg-orange-100 text-orange-800"
-                                                          }
-                                                        >
-                                                          {hasResponse
-                                                            ? t("dashboard.replied")
-                                                            : t("dashboard.pending")}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        {hasResponse ? (
-                                                          <Badge
-                                                            className="bg-green-100 text-green-800 text-xs cursor-pointer hover:bg-green-200"
-                                                            onClick={() =>
-                                                              setExpandedReplyId(
-                                                                expandedReplyId ===
-                                                                  review.id
-                                                                  ? null
-                                                                  : review.id,
-                                                              )
-                                                            }
-                                                          >
-                                                            {t("dashboard.viewResponse")}
+                                                      <tr
+                                                        className="hover:bg-orange-50 dark:hover:bg-orange-950/20"
+                                                      >
+                                                        <td className="px-4 py-3 text-sm">
+                                                          {review.author ||
+                                                            review.author_name ||
+                                                            t(
+                                                              "dashboard.anonymous",
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <div className="flex items-center gap-1">
+                                                            {[1, 2, 3, 4, 5].map(
+                                                              (star) => (
+                                                                <Star
+                                                                  key={star}
+                                                                  className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                                                />
+                                                              ),
+                                                            )}
+                                                          </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-slate-200 max-w-xs truncate">
+                                                          {extractOriginalText(
+                                                            review.text,
+                                                          ) ||
+                                                            review.text ||
+                                                            t(
+                                                              "dashboard.noComment",
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <Badge className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-900/60">
+                                                            {review.source ||
+                                                              "Google"}
                                                           </Badge>
-                                                        ) : (
-                                                          <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-xs"
-                                                            onClick={() => {
-                                                              setSelectedReviewForReply(
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-slate-400">
+                                                          {(() => {
+                                                            const {
+                                                              dateStr,
+                                                              isImportDate,
+                                                            } =
+                                                              getReviewDisplayDate(
                                                                 review,
                                                               );
-                                                              reponseAutomatiqueRef.current?.scrollIntoView(
-                                                                {
-                                                                  behavior:
-                                                                    "smooth",
-                                                                },
-                                                              );
-                                                            }}
+                                                            return (
+                                                              <span
+                                                                title={
+                                                                  isImportDate
+                                                                    ? "Date d'importation"
+                                                                    : undefined
+                                                                }
+                                                              >
+                                                                {dateStr
+                                                                  ? formatReviewDate(
+                                                                      dateStr,
+                                                                    )
+                                                                  : "-"}
+                                                              </span>
+                                                            );
+                                                          })()}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <Badge
+                                                            className={
+                                                              hasResponse
+                                                                ? "bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300"
+                                                                : isUrgent
+                                                                  ? "bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-300"
+                                                                  : "bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300"
+                                                            }
                                                           >
-                                                            <Reply className="w-3 h-3 mr-1" />
-                                                            {t("dashboard.reply")}
-                                                          </Button>
+                                                            {hasResponse
+                                                              ? t("dashboard.replied")
+                                                              : t("dashboard.pending")}
+                                                          </Badge>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          {hasResponse ? (
+                                                            <Badge
+                                                              className="bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300 text-xs cursor-pointer hover:bg-green-200 dark:hover:bg-green-900/40"
+                                                              onClick={() =>
+                                                                setExpandedReplyId(
+                                                                  expandedReplyId ===
+                                                                    review.id
+                                                                    ? null
+                                                                    : review.id,
+                                                                )
+                                                              }
+                                                            >
+                                                              {t("dashboard.viewResponse")}
+                                                            </Badge>
+                                                          ) : (
+                                                            <Button
+                                                              size="sm"
+                                                              variant="outline"
+                                                              className="text-xs"
+                                                              onClick={() => {
+                                                                setSelectedReviewForReply(
+                                                                  review,
+                                                                );
+                                                                reponseAutomatiqueRef.current?.scrollIntoView(
+                                                                  {
+                                                                    behavior:
+                                                                      "smooth",
+                                                                  },
+                                                                );
+                                                              }}
+                                                            >
+                                                              <Reply className="w-3 h-3 mr-1" />
+                                                              {t("dashboard.reply")}
+                                                            </Button>
+                                                          )}
+                                                        </td>
+                                                      </tr>
+                                                      {expandedReplyId ===
+                                                        review.id &&
+                                                        hasResponse && (
+                                                          <tr>
+                                                            <td
+                                                              colSpan={7}
+                                                              className="p-4 bg-green-50 dark:bg-green-950/20"
+                                                            >
+                                                              <div className="border-l-4 border-green-500 pl-4">
+                                                                <p className="font-semibold text-green-700 mb-2">
+                                                                  {t("dashboard.responsePublished")} :
+                                                                </p>
+                                                                <p className="text-gray-700 dark:text-slate-200">
+                                                                  {review.owner_reply_text ||
+                                                                    validatedResponsesText.get(
+                                                                      review.id,
+                                                                    ) ||
+                                                                    "Merci pour votre avis, nous sommes ravis que vous ayez apprécié votre expérience !"}
+                                                                </p>
+                                                              </div>
+                                                            </td>
+                                                          </tr>
                                                         )}
-                                                      </td>
-                                                    </tr>
+                                                    </React.Fragment>
                                                   );
                                                 })}
                                             </tbody>
@@ -8588,12 +8750,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     if (positifReviews.length === 0)
                                       return null;
                                     return (
-                                      <div className="bg-green-50 rounded-lg border border-green-200 overflow-hidden">
-                                        <div className="bg-green-100 px-4 py-3 border-b border-green-200">
+                                      <div className="bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900/50 overflow-hidden">
+                                        <div className="bg-green-100 dark:bg-green-950/40 px-4 py-3 border-b border-green-200 dark:border-green-900/50">
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                               <ThumbsUp className="w-5 h-5 text-green-600" />
-                                              <h3 className="font-semibold text-green-900">
+                                              <h3 className="font-semibold text-green-900 dark:text-green-100">
                                                 {t("dashboard.positiveReview")}
                                               </h3>
                                             </div>
@@ -8604,7 +8766,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                         </div>
                                         <div className="overflow-x-auto">
                                           <table className="w-full">
-                                            <thead className="bg-green-50">
+                                            <thead className="bg-green-50 dark:bg-green-950/20">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
                                                   {t("dashboard.dashResponseTableHeading.author")}
@@ -8629,7 +8791,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                 </th>
                                               </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-green-100">
+                                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-green-100 dark:divide-green-900/40">
                                               {positifReviews
                                                 .slice(0, 10)
                                                 .map((review, index) => {
@@ -8642,96 +8804,148 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                       review.rating === 2) &&
                                                     !hasResponse;
                                                   return (
-                                                    <tr
+                                                    <React.Fragment
                                                       key={review.id || index}
-                                                      className="hover:bg-green-50"
                                                     >
-                                                      <td className="px-4 py-3 text-sm">
-                                                        {review.author ||
-                                                          review.author_name ||
-                                                          t(
-                                                            "dashboard.anonymous",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-1">
-                                                          {[1, 2, 3, 4, 5].map(
-                                                            (star) => (
-                                                              <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                              />
-                                                            ),
-                                                          )}
-                                                        </div>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
-                                                        {extractOriginalText(
-                                                          review.text,
-                                                        ) ||
-                                                          review.text ||
-                                                          t(
-                                                            "dashboard.noComment",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                                          {review.source ||
-                                                            "Google"}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-500">
-                                                        {(() => {
-                                                          const {
-                                                            dateStr,
-                                                            isImportDate,
-                                                          } =
-                                                            getReviewDisplayDate(
-                                                              review,
+                                                      <tr className="hover:bg-green-50 dark:hover:bg-green-950/20">
+                                                        <td className="px-4 py-3 text-sm">
+                                                          {review.author ||
+                                                            review.author_name ||
+                                                            t(
+                                                              "dashboard.anonymous",
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <div className="flex items-center gap-1">
+                                                            {[1, 2, 3, 4, 5].map(
+                                                              (star) => (
+                                                                <Star
+                                                                  key={star}
+                                                                  className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                                                />
+                                                              ),
+                                                            )}
+                                                          </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-slate-200 max-w-xs truncate">
+                                                          {extractOriginalText(
+                                                            review.text,
+                                                          ) ||
+                                                            review.text ||
+                                                            t(
+                                                              "dashboard.noComment",
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <Badge className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-900/60">
+                                                            {review.source ||
+                                                              "Google"}
+                                                          </Badge>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-slate-400">
+                                                          {(() => {
+                                                            const {
+                                                              dateStr,
+                                                              isImportDate,
+                                                            } =
+                                                              getReviewDisplayDate(
+                                                                review,
+                                                              );
+                                                            return (
+                                                              <span
+                                                                title={
+                                                                  isImportDate
+                                                                    ? "Date d'importation"
+                                                                    : undefined
+                                                                }
+                                                              >
+                                                                {dateStr
+                                                                  ? formatReviewDate(
+                                                                      dateStr,
+                                                                    )
+                                                                  : "-"}
+                                                              </span>
                                                             );
-                                                          return (
-                                                            <span
-                                                              title={
-                                                                isImportDate
-                                                                  ? "Date d'importation"
-                                                                  : undefined
+                                                          })()}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <Badge
+                                                            className={
+                                                              hasResponse
+                                                                ? "bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300"
+                                                                : isUrgent
+                                                                  ? "bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-300"
+                                                                  : "bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300"
+                                                            }
+                                                          >
+                                                            {hasResponse
+                                                              ? t("dashboard.replied")
+                                                              : t("dashboard.pending")}
+                                                          </Badge>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          {hasResponse ? (
+                                                            <Badge
+                                                              className="bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300 text-xs cursor-pointer hover:bg-green-200 dark:hover:bg-green-900/40"
+                                                              onClick={() =>
+                                                                setExpandedReplyId(
+                                                                  expandedReplyId ===
+                                                                    review.id
+                                                                    ? null
+                                                                    : review.id,
+                                                                )
                                                               }
                                                             >
-                                                              {dateStr
-                                                                ? formatReviewDate(
-                                                                    dateStr,
-                                                                  )
-                                                                : "-"}
-                                                            </span>
-                                                          );
-                                                        })()}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge
-                                                          className={
-                                                            hasResponse
-                                                              ? "bg-green-100 text-green-800"
-                                                              : isUrgent
-                                                                ? "bg-red-100 text-red-800"
-                                                                : "bg-orange-100 text-orange-800"
-                                                          }
-                                                        >
-                                                          {hasResponse
-                                                            ? t("dashboard.replied")
-                                                            : t("dashboard.pending")}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Button
-                                                          size="sm"
-                                                          variant="outline"
-                                                          className="text-xs"
-                                                        >
-                                                          <Reply className="w-3 h-3 mr-1" />
-                                                          {t("dashboard.replied")}
-                                                        </Button>
-                                                      </td>
-                                                    </tr>
+                                                              {t("dashboard.viewResponse")}
+                                                            </Badge>
+                                                          ) : (
+                                                            <Button
+                                                              size="sm"
+                                                              variant="outline"
+                                                              className="text-xs"
+                                                              onClick={() => {
+                                                                setSelectedReviewForReply(
+                                                                  review,
+                                                                );
+                                                                reponseAutomatiqueRef.current?.scrollIntoView(
+                                                                  {
+                                                                    behavior:
+                                                                      "smooth",
+                                                                  },
+                                                                );
+                                                              }}
+                                                            >
+                                                              <Reply className="w-3 h-3 mr-1" />
+                                                              {t("dashboard.reply")}
+                                                            </Button>
+                                                          )}
+                                                        </td>
+                                                      </tr>
+                                                      {expandedReplyId ===
+                                                        review.id &&
+                                                        hasResponse && (
+                                                          <tr>
+                                                            <td
+                                                              colSpan={7}
+                                                              className="p-4 bg-green-50 dark:bg-green-950/20"
+                                                            >
+                                                              <div className="border-l-4 border-green-500 pl-4">
+                                                                <p className="font-semibold text-green-700 mb-2">
+                                                                  {t("dashboard.responsePublished")}{" "}
+                                                                  :
+                                                                </p>
+                                                                <p className="text-gray-700 dark:text-slate-200">
+                                                                  {review.owner_reply_text ||
+                                                                    validatedResponsesText.get(
+                                                                      review.id,
+                                                                    ) ||
+                                                                    "Merci pour votre avis, nous sommes ravis que vous ayez apprécié votre expérience !"}
+                                                                </p>
+                                                              </div>
+                                                            </td>
+                                                          </tr>
+                                                        )}
+                                                    </React.Fragment>
                                                   );
                                                 })}
                                             </tbody>
@@ -8755,12 +8969,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     if (lowRatingReviews.length === 0)
                                       return null;
                                     return (
-                                      <div className="bg-red-50 rounded-lg border border-red-200 overflow-hidden">
-                                        <div className="bg-red-100 px-4 py-3 border-b border-red-200">
+                                      <div className="bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900/50 overflow-hidden">
+                                        <div className="bg-red-100 dark:bg-red-950/40 px-4 py-3 border-b border-red-200 dark:border-red-900/50">
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                               <Star className="w-5 h-5 fill-red-500 text-red-500" />
-                                              <h3 className="font-semibold text-red-900">
+                                              <h3 className="font-semibold text-red-900 dark:text-red-100">
                                                 {t("analysis.overview.stars.1to2")}
                                               </h3>
                                             </div>
@@ -8771,7 +8985,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                         </div>
                                         <div className="overflow-x-auto">
                                           <table className="w-full">
-                                            <thead className="bg-red-50">
+                                            <thead className="bg-red-50 dark:bg-red-950/20">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
                                                   {t("dashboard.dashResponseTableHeading.author")}
@@ -8796,117 +9010,16 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                 </th>
                                               </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-red-100">
+                                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-red-100 dark:divide-red-900/40">
                                               {lowRatingReviews
                                                 .slice(0, 10)
-                                                .map((review, index) => {
-                                                  const hasResponse =
-                                                    validatedReviews.has(
-                                                      review.id,
-                                                    );
-                                                  const isUrgent =
-                                                    (review.rating === 1 ||
-                                                      review.rating === 2) &&
-                                                    !hasResponse;
-                                                  return (
-                                                    <tr
-                                                      key={review.id || index}
-                                                      className="hover:bg-red-50"
-                                                    >
-                                                      <td className="px-4 py-3 text-sm">
-                                                        {review.author ||
-                                                          review.author_name ||
-                                                          t(
-                                                            "dashboard.anonymous",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-1">
-                                                          {[1, 2, 3, 4, 5].map(
-                                                            (star) => (
-                                                              <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                              />
-                                                            ),
-                                                          )}
-                                                        </div>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
-                                                        {extractOriginalText(
-                                                          review.text,
-                                                        ) ||
-                                                          review.text ||
-                                                          t(
-                                                            "dashboard.noComment",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                                          {review.source ||
-                                                            "Google"}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-500">
-                                                        {(() => {
-                                                          const {
-                                                            dateStr,
-                                                            isImportDate,
-                                                          } =
-                                                            getReviewDisplayDate(
-                                                              review,
-                                                            );
-                                                          return (
-                                                            <span
-                                                              title={
-                                                                isImportDate
-                                                                  ? "Date d'importation"
-                                                                  : undefined
-                                                              }
-                                                            >
-                                                              {dateStr
-                                                                ? formatReviewDate(
-                                                                    dateStr,
-                                                                  )
-                                                                : "-"}
-                                                            </span>
-                                                          );
-                                                        })()}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge
-                                                          className={
-                                                            hasResponse
-                                                              ? "bg-green-100 text-green-800"
-                                                              : isUrgent
-                                                                ? "bg-red-100 text-red-800"
-                                                                : "bg-orange-100 text-orange-800"
-                                                          }
-                                                        >
-                                                          {hasResponse
-                                                            ? t("dashboard.replied")
-                                                            : t("dashboard.pending")}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        {hasResponse ? (
-                                                          <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            {t("dashboard.viewResponse")}
-                                                          </Badge>
-                                                        ) : (
-                                                          <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-xs"
-                                                          >
-                                                            <Reply className="w-3 h-3 mr-1" />
-                                                            {t("dashboard.reply")}
-                                                          </Button>
-                                                        )}
-                                                      </td>
-                                                    </tr>
-                                                  );
-                                                })}
+                                                .map((review, index) =>
+                                                  renderGroupedReviewRow(
+                                                    review,
+                                                    index,
+                                                    "hover:bg-red-50 dark:hover:bg-red-950/20",
+                                                  ),
+                                                )}
                                             </tbody>
                                           </table>
                                         </div>
@@ -8923,12 +9036,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     if (midRatingReviews.length === 0)
                                       return null;
                                     return (
-                                      <div className="bg-yellow-50 rounded-lg border border-yellow-200 overflow-hidden">
-                                        <div className="bg-yellow-100 px-4 py-3 border-b border-yellow-200">
+                                      <div className="bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-900/50 overflow-hidden">
+                                        <div className="bg-yellow-100 dark:bg-yellow-950/40 px-4 py-3 border-b border-yellow-200 dark:border-yellow-900/50">
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                               <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" />
-                                              <h3 className="font-semibold text-yellow-900">
+                                              <h3 className="font-semibold text-yellow-900 dark:text-yellow-100">
                                                 {t("analysis.overview.stars.3")}
                                               </h3>
                                             </div>
@@ -8939,7 +9052,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                         </div>
                                         <div className="overflow-x-auto">
                                           <table className="w-full">
-                                            <thead className="bg-yellow-50">
+                                            <thead className="bg-yellow-50 dark:bg-yellow-950/20">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase">
                                                   {t("dashboard.dashResponseTableHeading.author")}
@@ -8964,101 +9077,16 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                 </th>
                                               </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-yellow-100">
+                                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-yellow-100 dark:divide-yellow-900/40">
                                               {midRatingReviews
                                                 .slice(0, 10)
-                                                .map((review, index) => {
-                                                  const hasResponse =
-                                                    validatedReviews.has(
-                                                      review.id,
-                                                    );
-                                                  const isUrgent =
-                                                    (review.rating === 1 ||
-                                                      review.rating === 2) &&
-                                                    !hasResponse;
-                                                  return (
-                                                    <tr
-                                                      key={review.id || index}
-                                                      className="hover:bg-yellow-50"
-                                                    >
-                                                      <td className="px-4 py-3 text-sm">
-                                                        {review.author ||
-                                                          review.author_name ||
-                                                          t(
-                                                            "dashboard.anonymous",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-1">
-                                                          {[1, 2, 3, 4, 5].map(
-                                                            (star) => (
-                                                              <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                              />
-                                                            ),
-                                                          )}
-                                                        </div>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
-                                                        {extractOriginalText(
-                                                          review.text,
-                                                        ) ||
-                                                          review.text ||
-                                                          t(
-                                                            "dashboard.noComment",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                                          {review.source ||
-                                                            "Google"}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-500">
-                                                        {review.published_at
-                                                          ? format(
-                                                              new Date(
-                                                                review.published_at,
-                                                              ),
-                                                              "dd/MM/yyyy",
-                                                            )
-                                                          : "-"}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge
-                                                          className={
-                                                            hasResponse
-                                                              ? "bg-green-100 text-green-800"
-                                                              : isUrgent
-                                                                ? "bg-red-100 text-red-800"
-                                                                : "bg-orange-100 text-orange-800"
-                                                          }
-                                                        >
-                                                          {hasResponse
-                                                            ? t("dashboard.replied")
-                                                            : t("dashboard.pending")}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        {hasResponse ? (
-                                                          <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            {t("dashboard.viewResponse")}
-                                                          </Badge>
-                                                        ) : (
-                                                          <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-xs"
-                                                          >
-                                                            <Reply className="w-3 h-3 mr-1" />
-                                                            {t("dashboard.reply")}
-                                                          </Button>
-                                                        )}
-                                                      </td>
-                                                    </tr>
-                                                  );
-                                                })}
+                                                .map((review, index) =>
+                                                  renderGroupedReviewRow(
+                                                    review,
+                                                    index,
+                                                    "hover:bg-yellow-50 dark:hover:bg-yellow-950/20",
+                                                  ),
+                                                )}
                                             </tbody>
                                           </table>
                                         </div>
@@ -9075,12 +9103,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     if (highRatingReviews.length === 0)
                                       return null;
                                     return (
-                                      <div className="bg-green-50 rounded-lg border border-green-200 overflow-hidden">
-                                        <div className="bg-green-100 px-4 py-3 border-b border-green-200">
+                                      <div className="bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900/50 overflow-hidden">
+                                        <div className="bg-green-100 dark:bg-green-950/40 px-4 py-3 border-b border-green-200 dark:border-green-900/50">
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                               <Star className="w-5 h-5 fill-green-500 text-green-500" />
-                                              <h3 className="font-semibold text-green-900">
+                                              <h3 className="font-semibold text-green-900 dark:text-green-100">
                                                 {t("analysis.overview.stars.4to5")}
                                               </h3>
                                             </div>
@@ -9091,7 +9119,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                         </div>
                                         <div className="overflow-x-auto">
                                           <table className="w-full">
-                                            <thead className="bg-green-50">
+                                            <thead className="bg-green-50 dark:bg-green-950/20">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
                                                   {t("dashboard.dashResponseTableHeading.author")}
@@ -9116,101 +9144,16 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                 </th>
                                               </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-green-100">
+                                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-green-100 dark:divide-green-900/40">
                                               {highRatingReviews
                                                 .slice(0, 10)
-                                                .map((review, index) => {
-                                                  const hasResponse =
-                                                    validatedReviews.has(
-                                                      review.id,
-                                                    );
-                                                  const isUrgent =
-                                                    (review.rating === 1 ||
-                                                      review.rating === 2) &&
-                                                    !hasResponse;
-                                                  return (
-                                                    <tr
-                                                      key={review.id || index}
-                                                      className="hover:bg-green-50"
-                                                    >
-                                                      <td className="px-4 py-3 text-sm">
-                                                        {review.author ||
-                                                          review.author_name ||
-                                                          t(
-                                                            "dashboard.anonymous",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-1">
-                                                          {[1, 2, 3, 4, 5].map(
-                                                            (star) => (
-                                                              <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                              />
-                                                            ),
-                                                          )}
-                                                        </div>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
-                                                        {extractOriginalText(
-                                                          review.text,
-                                                        ) ||
-                                                          review.text ||
-                                                          t(
-                                                            "dashboard.noComment",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                                          {review.source ||
-                                                            "Google"}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-500">
-                                                        {review.published_at
-                                                          ? format(
-                                                              new Date(
-                                                                review.published_at,
-                                                              ),
-                                                              "dd/MM/yyyy",
-                                                            )
-                                                          : "-"}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge
-                                                          className={
-                                                            hasResponse
-                                                              ? "bg-green-100 text-green-800"
-                                                              : isUrgent
-                                                                ? "bg-red-100 text-red-800"
-                                                                : "bg-orange-100 text-orange-800"
-                                                          }
-                                                        >
-                                                          {hasResponse
-                                                            ? t("dashboard.replied")
-                                                            : t("dashboard.pending")}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        {hasResponse ? (
-                                                          <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            {t("dashboard.viewResponse")}
-                                                          </Badge>
-                                                        ) : (
-                                                          <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-xs"
-                                                          >
-                                                            <Reply className="w-3 h-3 mr-1" />
-                                                            {t("dashboard.reply")}
-                                                          </Button>
-                                                        )}
-                                                      </td>
-                                                    </tr>
-                                                  );
-                                                })}
+                                                .map((review, index) =>
+                                                  renderGroupedReviewRow(
+                                                    review,
+                                                    index,
+                                                    "hover:bg-green-50 dark:hover:bg-green-950/20",
+                                                  ),
+                                                )}
                                             </tbody>
                                           </table>
                                         </div>
@@ -9240,12 +9183,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     if (highPriorityReviews.length === 0)
                                       return null;
                                     return (
-                                      <div className="bg-red-50 rounded-lg border border-red-200 overflow-hidden">
-                                        <div className="bg-red-100 px-4 py-3 border-b border-red-200">
+                                      <div className="bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900/50 overflow-hidden">
+                                        <div className="bg-red-100 dark:bg-red-950/40 px-4 py-3 border-b border-red-200 dark:border-red-900/50">
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                               <Flame className="w-5 h-5 text-red-600" />
-                                              <h3 className="font-semibold text-red-900">
+                                              <h3 className="font-semibold text-red-900 dark:text-red-100">
                                                 🔥 Priorité haute
                                               </h3>
                                             </div>
@@ -9256,7 +9199,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                         </div>
                                         <div className="overflow-x-auto">
                                           <table className="w-full">
-                                            <thead className="bg-red-50">
+                                            <thead className="bg-red-50 dark:bg-red-950/20">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-red-700 uppercase">
                                                   {t(
@@ -9283,101 +9226,16 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                 </th>
                                               </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-red-100">
+                                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-red-100 dark:divide-red-900/40">
                                               {highPriorityReviews
                                                 .slice(0, 10)
-                                                .map((review, index) => {
-                                                  const hasResponse =
-                                                    validatedReviews.has(
-                                                      review.id,
-                                                    );
-                                                  const isUrgent =
-                                                    (review.rating === 1 ||
-                                                      review.rating === 2) &&
-                                                    !hasResponse;
-                                                  return (
-                                                    <tr
-                                                      key={review.id || index}
-                                                      className="hover:bg-red-50"
-                                                    >
-                                                      <td className="px-4 py-3 text-sm">
-                                                        {review.author ||
-                                                          review.author_name ||
-                                                          t(
-                                                            "dashboard.anonymous",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-1">
-                                                          {[1, 2, 3, 4, 5].map(
-                                                            (star) => (
-                                                              <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                              />
-                                                            ),
-                                                          )}
-                                                        </div>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
-                                                        {extractOriginalText(
-                                                          review.text,
-                                                        ) ||
-                                                          review.text ||
-                                                          t(
-                                                            "dashboard.noComment",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                                          {review.source ||
-                                                            "Google"}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-500">
-                                                        {review.published_at
-                                                          ? format(
-                                                              new Date(
-                                                                review.published_at,
-                                                              ),
-                                                              "dd/MM/yyyy",
-                                                            )
-                                                          : "-"}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge
-                                                          className={
-                                                            hasResponse
-                                                              ? "bg-green-100 text-green-800"
-                                                              : isUrgent
-                                                                ? "bg-red-100 text-red-800"
-                                                                : "bg-orange-100 text-orange-800"
-                                                          }
-                                                        >
-                                                          {hasResponse
-                                                            ? t("dashboard.replied")
-                                                            : t("dashboard.pending")}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        {hasResponse ? (
-                                                          <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            {t("dashboard.viewResponse")}
-                                                          </Badge>
-                                                        ) : (
-                                                          <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-xs"
-                                                          >
-                                                            <Reply className="w-3 h-3 mr-1" />
-                                                            {t("dashboard.reply")}
-                                                          </Button>
-                                                        )}
-                                                      </td>
-                                                    </tr>
-                                                  );
-                                                })}
+                                                .map((review, index) =>
+                                                  renderGroupedReviewRow(
+                                                    review,
+                                                    index,
+                                                    "hover:bg-red-50 dark:hover:bg-red-950/20",
+                                                  ),
+                                                )}
                                             </tbody>
                                           </table>
                                         </div>
@@ -9392,12 +9250,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     );
                                     if (watchReviews.length === 0) return null;
                                     return (
-                                      <div className="bg-orange-50 rounded-lg border border-orange-200 overflow-hidden">
-                                        <div className="bg-orange-100 px-4 py-3 border-b border-orange-200">
+                                      <div className="bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-900/50 overflow-hidden">
+                                        <div className="bg-orange-100 dark:bg-orange-950/40 px-4 py-3 border-b border-orange-200 dark:border-orange-900/50">
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                               <AlertTriangle className="w-5 h-5 text-orange-600" />
-                                              <h3 className="font-semibold text-orange-900">
+                                              <h3 className="font-semibold text-orange-900 dark:text-orange-100">
                                                 {t("dashboard.needsAttention")}
                                               </h3>
                                             </div>
@@ -9408,7 +9266,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                         </div>
                                         <div className="overflow-x-auto">
                                           <table className="w-full">
-                                            <thead className="bg-orange-50">
+                                            <thead className="bg-orange-50 dark:bg-orange-950/20">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-orange-700 uppercase">
                                                   {t("dashboard.dashResponseTableHeading.author")}
@@ -9433,101 +9291,16 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                 </th>
                                               </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-orange-100">
+                                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-orange-100 dark:divide-orange-900/40">
                                               {watchReviews
                                                 .slice(0, 10)
-                                                .map((review, index) => {
-                                                  const hasResponse =
-                                                    validatedReviews.has(
-                                                      review.id,
-                                                    );
-                                                  const isUrgent =
-                                                    (review.rating === 1 ||
-                                                      review.rating === 2) &&
-                                                    !hasResponse;
-                                                  return (
-                                                    <tr
-                                                      key={review.id || index}
-                                                      className="hover:bg-orange-50"
-                                                    >
-                                                      <td className="px-4 py-3 text-sm">
-                                                        {review.author ||
-                                                          review.author_name ||
-                                                          t(
-                                                            "dashboard.anonymous",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-1">
-                                                          {[1, 2, 3, 4, 5].map(
-                                                            (star) => (
-                                                              <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                              />
-                                                            ),
-                                                          )}
-                                                        </div>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
-                                                        {extractOriginalText(
-                                                          review.text,
-                                                        ) ||
-                                                          review.text ||
-                                                          t(
-                                                            "dashboard.noComment",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                                          {review.source ||
-                                                            "Google"}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-500">
-                                                        {review.published_at
-                                                          ? format(
-                                                              new Date(
-                                                                review.published_at,
-                                                              ),
-                                                              "dd/MM/yyyy",
-                                                            )
-                                                          : "-"}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge
-                                                          className={
-                                                            hasResponse
-                                                              ? "bg-green-100 text-green-800"
-                                                              : isUrgent
-                                                                ? "bg-red-100 text-red-800"
-                                                                : "bg-orange-100 text-orange-800"
-                                                          }
-                                                        >
-                                                          {hasResponse
-                                                            ? t("dashboard.replied")
-                                                            : t("dashboard.pending")}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        {hasResponse ? (
-                                                          <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            {t("dashboard.viewResponse")}
-                                                          </Badge>
-                                                        ) : (
-                                                          <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-xs"
-                                                          >
-                                                            <Reply className="w-3 h-3 mr-1" />
-                                                            {t("dashboard.reply")}
-                                                          </Button>
-                                                        )}
-                                                      </td>
-                                                    </tr>
-                                                  );
-                                                })}
+                                                .map((review, index) =>
+                                                  renderGroupedReviewRow(
+                                                    review,
+                                                    index,
+                                                    "hover:bg-orange-50 dark:hover:bg-orange-950/20",
+                                                  ),
+                                                )}
                                             </tbody>
                                           </table>
                                         </div>
@@ -9544,12 +9317,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     if (quickResponseReviews.length === 0)
                                       return null;
                                     return (
-                                      <div className="bg-green-50 rounded-lg border border-green-200 overflow-hidden">
-                                        <div className="bg-green-100 px-4 py-3 border-b border-green-200">
+                                      <div className="bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900/50 overflow-hidden">
+                                        <div className="bg-green-100 dark:bg-green-950/40 px-4 py-3 border-b border-green-200 dark:border-green-900/50">
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                               <CheckCircle className="w-5 h-5 text-green-600" />
-                                              <h3 className="font-semibold text-green-900">
+                                              <h3 className="font-semibold text-green-900 dark:text-green-100">
                                                 {t("dashboard.quickResponses")}
                                               </h3>
                                             </div>
@@ -9560,7 +9333,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                         </div>
                                         <div className="overflow-x-auto">
                                           <table className="w-full">
-                                            <thead className="bg-green-50">
+                                            <thead className="bg-green-50 dark:bg-green-950/20">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
                                                   {t("dashboard.dashResponseTableHeading.author")}
@@ -9585,101 +9358,16 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                 </th>
                                               </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-green-100">
+                                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-green-100 dark:divide-green-900/40">
                                               {quickResponseReviews
                                                 .slice(0, 10)
-                                                .map((review, index) => {
-                                                  const hasResponse =
-                                                    validatedReviews.has(
-                                                      review.id,
-                                                    );
-                                                  const isUrgent =
-                                                    (review.rating === 1 ||
-                                                      review.rating === 2) &&
-                                                    !hasResponse;
-                                                  return (
-                                                    <tr
-                                                      key={review.id || index}
-                                                      className="hover:bg-green-50"
-                                                    >
-                                                      <td className="px-4 py-3 text-sm">
-                                                        {review.author ||
-                                                          review.author_name ||
-                                                          t(
-                                                            "dashboard.anonymous",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-1">
-                                                          {[1, 2, 3, 4, 5].map(
-                                                            (star) => (
-                                                              <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                              />
-                                                            ),
-                                                          )}
-                                                        </div>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
-                                                        {extractOriginalText(
-                                                          review.text,
-                                                        ) ||
-                                                          review.text ||
-                                                          t(
-                                                            "dashboard.noComment",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                                          {review.source ||
-                                                            "Google"}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-500">
-                                                        {review.published_at
-                                                          ? format(
-                                                              new Date(
-                                                                review.published_at,
-                                                              ),
-                                                              "dd/MM/yyyy",
-                                                            )
-                                                          : "-"}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge
-                                                          className={
-                                                            hasResponse
-                                                              ? "bg-green-100 text-green-800"
-                                                              : isUrgent
-                                                                ? "bg-red-100 text-red-800"
-                                                                : "bg-orange-100 text-orange-800"
-                                                          }
-                                                        >
-                                                          {hasResponse
-                                                            ? t("dashboard.replied")
-                                                            : t("dashboard.pending")}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        {hasResponse ? (
-                                                          <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            {t("dashboard.viewResponse")}
-                                                          </Badge>
-                                                        ) : (
-                                                          <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-xs"
-                                                          >
-                                                            <Reply className="w-3 h-3 mr-1" />
-                                                            {t("dashboard.reply")}
-                                                          </Button>
-                                                        )}
-                                                      </td>
-                                                    </tr>
-                                                  );
-                                                })}
+                                                .map((review, index) =>
+                                                  renderGroupedReviewRow(
+                                                    review,
+                                                    index,
+                                                    "hover:bg-green-50 dark:hover:bg-green-950/20",
+                                                  ),
+                                                )}
                                             </tbody>
                                           </table>
                                         </div>
@@ -9701,12 +9389,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                       );
                                     if (googleReviews.length === 0) return null;
                                     return (
-                                      <div className="bg-blue-50 rounded-lg border border-blue-200 overflow-hidden">
-                                        <div className="bg-blue-100 px-4 py-3 border-b border-blue-200">
+                                      <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900/50 overflow-hidden">
+                                        <div className="bg-blue-100 dark:bg-blue-950/40 px-4 py-3 border-b border-blue-200 dark:border-blue-900/50">
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                               <Globe className="w-5 h-5 text-blue-600" />
-                                              <h3 className="font-semibold text-blue-900">
+                                              <h3 className="font-semibold text-blue-900 dark:text-blue-100">
                                                 Google
                                               </h3>
                                             </div>
@@ -9717,7 +9405,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                         </div>
                                         <div className="overflow-x-auto">
                                           <table className="w-full">
-                                            <thead className="bg-blue-50">
+                                            <thead className="bg-blue-50 dark:bg-blue-950/20">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
                                                   {t("dashboard.dashResponseTableHeading.author")}
@@ -9742,7 +9430,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                 </th>
                                               </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-blue-100">
+                                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-blue-100 dark:divide-blue-900/40">
                                               {googleReviews
                                                 .slice(0, 10)
                                                 .map((review, index) => {
@@ -9755,86 +9443,132 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                       review.rating === 2) &&
                                                     !hasResponse;
                                                   return (
-                                                    <tr
+                                                    <React.Fragment
                                                       key={review.id || index}
-                                                      className="hover:bg-blue-50"
                                                     >
-                                                      <td className="px-4 py-3 text-sm">
-                                                        {review.author ||
-                                                          review.author_name ||
-                                                          t(
-                                                            "dashboard.anonymous",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-1">
-                                                          {[1, 2, 3, 4, 5].map(
-                                                            (star) => (
-                                                              <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                              />
-                                                            ),
-                                                          )}
-                                                        </div>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
-                                                        {extractOriginalText(
-                                                          review.text,
-                                                        ) ||
-                                                          review.text ||
-                                                          t(
-                                                            "dashboard.noComment",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                                          {review.source ||
-                                                            "Google"}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-500">
-                                                        {review.published_at
-                                                          ? format(
-                                                              new Date(
-                                                                review.published_at,
+                                                      <tr className="hover:bg-blue-50 dark:hover:bg-blue-950/20">
+                                                        <td className="px-4 py-3 text-sm">
+                                                          {review.author ||
+                                                            review.author_name ||
+                                                            t(
+                                                              "dashboard.anonymous",
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <div className="flex items-center gap-1">
+                                                            {[1, 2, 3, 4, 5].map(
+                                                              (star) => (
+                                                                <Star
+                                                                  key={star}
+                                                                  className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                                                />
                                                               ),
-                                                              "dd/MM/yyyy",
-                                                            )
-                                                          : "-"}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge
-                                                          className={
-                                                            hasResponse
-                                                              ? "bg-green-100 text-green-800"
-                                                              : isUrgent
-                                                                ? "bg-red-100 text-red-800"
-                                                                : "bg-orange-100 text-orange-800"
-                                                          }
-                                                        >
-                                                          {hasResponse
-                                                            ? t("dashboard.replied")
-                                                            : t("dashboard.pending")}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        {hasResponse ? (
-                                                          <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            {t("dashboard.viewResponse")}
+                                                            )}
+                                                          </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-slate-200 max-w-xs truncate">
+                                                          {extractOriginalText(
+                                                            review.text,
+                                                          ) ||
+                                                            review.text ||
+                                                            t(
+                                                              "dashboard.noComment",
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <Badge className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-900/60">
+                                                            {review.source ||
+                                                              "Google"}
                                                           </Badge>
-                                                        ) : (
-                                                          <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-xs"
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-slate-400">
+                                                          {review.published_at
+                                                            ? format(
+                                                                new Date(
+                                                                  review.published_at,
+                                                                ),
+                                                                "dd/MM/yyyy",
+                                                              )
+                                                            : "-"}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <Badge
+                                                            className={
+                                                              hasResponse
+                                                                ? "bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300"
+                                                                : isUrgent
+                                                                  ? "bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-300"
+                                                                  : "bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300"
+                                                            }
                                                           >
-                                                            <Reply className="w-3 h-3 mr-1" />
-                                                            {t("dashboard.reply")}
-                                                          </Button>
+                                                            {hasResponse
+                                                              ? t("dashboard.replied")
+                                                              : t("dashboard.pending")}
+                                                          </Badge>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          {hasResponse ? (
+                                                            <Badge
+                                                              className="bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300 text-xs cursor-pointer hover:bg-green-200 dark:hover:bg-green-900/40"
+                                                              onClick={() =>
+                                                                setExpandedReplyId(
+                                                                  expandedReplyId ===
+                                                                    review.id
+                                                                    ? null
+                                                                    : review.id,
+                                                                )
+                                                              }
+                                                            >
+                                                              {t("dashboard.viewResponse")}
+                                                            </Badge>
+                                                          ) : (
+                                                            <Button
+                                                              size="sm"
+                                                              variant="outline"
+                                                              className="text-xs"
+                                                              onClick={() => {
+                                                                setSelectedReviewForReply(
+                                                                  review,
+                                                                );
+                                                                reponseAutomatiqueRef.current?.scrollIntoView(
+                                                                  {
+                                                                    behavior:
+                                                                      "smooth",
+                                                                  },
+                                                                );
+                                                              }}
+                                                            >
+                                                              <Reply className="w-3 h-3 mr-1" />
+                                                              {t("dashboard.reply")}
+                                                            </Button>
+                                                          )}
+                                                        </td>
+                                                      </tr>
+                                                      {expandedReplyId ===
+                                                        review.id &&
+                                                        hasResponse && (
+                                                          <tr>
+                                                            <td
+                                                              colSpan={7}
+                                                              className="p-4 bg-green-50 dark:bg-green-950/20"
+                                                            >
+                                                              <div className="border-l-4 border-green-500 pl-4">
+                                                                <p className="font-semibold text-green-700 mb-2">
+                                                                  {t("dashboard.responsePublished")}{" "}
+                                                                  :
+                                                                </p>
+                                                                <p className="text-gray-700 dark:text-slate-200">
+                                                                  {review.owner_reply_text ||
+                                                                    validatedResponsesText.get(
+                                                                      review.id,
+                                                                    ) ||
+                                                                    "Merci pour votre avis, nous sommes ravis que vous ayez apprécié votre expérience !"}
+                                                                </p>
+                                                              </div>
+                                                            </td>
+                                                          </tr>
                                                         )}
-                                                      </td>
-                                                    </tr>
+                                                    </React.Fragment>
                                                   );
                                                 })}
                                             </tbody>
@@ -9854,12 +9588,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     if (facebookReviews.length === 0)
                                       return null;
                                     return (
-                                      <div className="bg-blue-50 rounded-lg border border-blue-300 overflow-hidden">
+                                      <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-300 dark:border-blue-900/50 overflow-hidden">
                                         <div className="bg-blue-200 px-4 py-3 border-b border-blue-300">
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                               <Globe className="w-5 h-5 text-blue-700" />
-                                              <h3 className="font-semibold text-blue-900">
+                                              <h3 className="font-semibold text-blue-900 dark:text-blue-100">
                                                 Facebook
                                               </h3>
                                             </div>
@@ -9870,7 +9604,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                         </div>
                                         <div className="overflow-x-auto">
                                           <table className="w-full">
-                                            <thead className="bg-blue-50">
+                                            <thead className="bg-blue-50 dark:bg-blue-950/20">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase">
                                                   {t("dashboard.dashResponseTableHeading.author")}
@@ -9895,7 +9629,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                 </th>
                                               </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-blue-100">
+                                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-blue-100 dark:divide-blue-900/40">
                                               {facebookReviews
                                                 .slice(0, 10)
                                                 .map((review, index) => {
@@ -9908,86 +9642,132 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                       review.rating === 2) &&
                                                     !hasResponse;
                                                   return (
-                                                    <tr
+                                                    <React.Fragment
                                                       key={review.id || index}
-                                                      className="hover:bg-blue-50"
                                                     >
-                                                      <td className="px-4 py-3 text-sm">
-                                                        {review.author ||
-                                                          review.author_name ||
-                                                          t(
-                                                            "dashboard.anonymous",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-1">
-                                                          {[1, 2, 3, 4, 5].map(
-                                                            (star) => (
-                                                              <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                              />
-                                                            ),
-                                                          )}
-                                                        </div>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
-                                                        {extractOriginalText(
-                                                          review.text,
-                                                        ) ||
-                                                          review.text ||
-                                                          t(
-                                                            "dashboard.noComment",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                                          {review.source ||
-                                                            "Google"}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-500">
-                                                        {review.published_at
-                                                          ? format(
-                                                              new Date(
-                                                                review.published_at,
+                                                      <tr className="hover:bg-blue-50 dark:hover:bg-blue-950/20">
+                                                        <td className="px-4 py-3 text-sm">
+                                                          {review.author ||
+                                                            review.author_name ||
+                                                            t(
+                                                              "dashboard.anonymous",
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <div className="flex items-center gap-1">
+                                                            {[1, 2, 3, 4, 5].map(
+                                                              (star) => (
+                                                                <Star
+                                                                  key={star}
+                                                                  className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                                                />
                                                               ),
-                                                              "dd/MM/yyyy",
-                                                            )
-                                                          : "-"}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge
-                                                          className={
-                                                            hasResponse
-                                                              ? "bg-green-100 text-green-800"
-                                                              : isUrgent
-                                                                ? "bg-red-100 text-red-800"
-                                                                : "bg-orange-100 text-orange-800"
-                                                          }
-                                                        >
-                                                          {hasResponse
-                                                            ? t("dashboard.replied")
-                                                            : t("dashboard.pending")}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        {hasResponse ? (
-                                                          <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            {t("dashboard.viewResponse")}
+                                                            )}
+                                                          </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-slate-200 max-w-xs truncate">
+                                                          {extractOriginalText(
+                                                            review.text,
+                                                          ) ||
+                                                            review.text ||
+                                                            t(
+                                                              "dashboard.noComment",
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <Badge className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-900/60">
+                                                            {review.source ||
+                                                              "Google"}
                                                           </Badge>
-                                                        ) : (
-                                                          <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-xs"
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-slate-400">
+                                                          {review.published_at
+                                                            ? format(
+                                                                new Date(
+                                                                  review.published_at,
+                                                                ),
+                                                                "dd/MM/yyyy",
+                                                              )
+                                                            : "-"}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <Badge
+                                                            className={
+                                                              hasResponse
+                                                                ? "bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300"
+                                                                : isUrgent
+                                                                  ? "bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-300"
+                                                                  : "bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300"
+                                                            }
                                                           >
-                                                            <Reply className="w-3 h-3 mr-1" />
-                                                            {t("dashboard.reply")}
-                                                          </Button>
+                                                            {hasResponse
+                                                              ? t("dashboard.replied")
+                                                              : t("dashboard.pending")}
+                                                          </Badge>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          {hasResponse ? (
+                                                            <Badge
+                                                              className="bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300 text-xs cursor-pointer hover:bg-green-200 dark:hover:bg-green-900/40"
+                                                              onClick={() =>
+                                                                setExpandedReplyId(
+                                                                  expandedReplyId ===
+                                                                    review.id
+                                                                    ? null
+                                                                    : review.id,
+                                                                )
+                                                              }
+                                                            >
+                                                              {t("dashboard.viewResponse")}
+                                                            </Badge>
+                                                          ) : (
+                                                            <Button
+                                                              size="sm"
+                                                              variant="outline"
+                                                              className="text-xs"
+                                                              onClick={() => {
+                                                                setSelectedReviewForReply(
+                                                                  review,
+                                                                );
+                                                                reponseAutomatiqueRef.current?.scrollIntoView(
+                                                                  {
+                                                                    behavior:
+                                                                      "smooth",
+                                                                  },
+                                                                );
+                                                              }}
+                                                            >
+                                                              <Reply className="w-3 h-3 mr-1" />
+                                                              {t("dashboard.reply")}
+                                                            </Button>
+                                                          )}
+                                                        </td>
+                                                      </tr>
+                                                      {expandedReplyId ===
+                                                        review.id &&
+                                                        hasResponse && (
+                                                          <tr>
+                                                            <td
+                                                              colSpan={7}
+                                                              className="p-4 bg-green-50 dark:bg-green-950/20"
+                                                            >
+                                                              <div className="border-l-4 border-green-500 pl-4">
+                                                                <p className="font-semibold text-green-700 mb-2">
+                                                                  {t("dashboard.responsePublished")}{" "}
+                                                                  :
+                                                                </p>
+                                                                <p className="text-gray-700 dark:text-slate-200">
+                                                                  {review.owner_reply_text ||
+                                                                    validatedResponsesText.get(
+                                                                      review.id,
+                                                                    ) ||
+                                                                    "Merci pour votre avis, nous sommes ravis que vous ayez apprécié votre expérience !"}
+                                                                </p>
+                                                              </div>
+                                                            </td>
+                                                          </tr>
                                                         )}
-                                                      </td>
-                                                    </tr>
+                                                    </React.Fragment>
                                                   );
                                                 })}
                                             </tbody>
@@ -10008,12 +9788,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     if (tripadvisorReviews.length === 0)
                                       return null;
                                     return (
-                                      <div className="bg-green-50 rounded-lg border border-green-200 overflow-hidden">
-                                        <div className="bg-green-100 px-4 py-3 border-b border-green-200">
+                                      <div className="bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900/50 overflow-hidden">
+                                        <div className="bg-green-100 dark:bg-green-950/40 px-4 py-3 border-b border-green-200 dark:border-green-900/50">
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                               <Globe className="w-5 h-5 text-green-600" />
-                                              <h3 className="font-semibold text-green-900">
+                                              <h3 className="font-semibold text-green-900 dark:text-green-100">
                                                 TripAdvisor
                                               </h3>
                                             </div>
@@ -10024,7 +9804,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                         </div>
                                         <div className="overflow-x-auto">
                                           <table className="w-full">
-                                            <thead className="bg-green-50">
+                                            <thead className="bg-green-50 dark:bg-green-950/20">
                                               <tr>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-green-700 uppercase">
                                                   {t("dashboard.dashResponseTableHeading.author")}
@@ -10049,7 +9829,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                 </th>
                                               </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-green-100">
+                                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-green-100 dark:divide-green-900/40">
                                               {tripadvisorReviews
                                                 .slice(0, 10)
                                                 .map((review, index) => {
@@ -10062,86 +9842,132 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                       review.rating === 2) &&
                                                     !hasResponse;
                                                   return (
-                                                    <tr
+                                                    <React.Fragment
                                                       key={review.id || index}
-                                                      className="hover:bg-green-50"
                                                     >
-                                                      <td className="px-4 py-3 text-sm">
-                                                        {review.author ||
-                                                          review.author_name ||
-                                                          t(
-                                                            "dashboard.anonymous",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-1">
-                                                          {[1, 2, 3, 4, 5].map(
-                                                            (star) => (
-                                                              <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                              />
-                                                            ),
-                                                          )}
-                                                        </div>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
-                                                        {extractOriginalText(
-                                                          review.text,
-                                                        ) ||
-                                                          review.text ||
-                                                          t(
-                                                            "dashboard.noComment",
-                                                          )}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                                          {review.source ||
-                                                            "Google"}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3 text-sm text-gray-500">
-                                                        {review.published_at
-                                                          ? format(
-                                                              new Date(
-                                                                review.published_at,
+                                                      <tr className="hover:bg-green-50 dark:hover:bg-green-950/20">
+                                                        <td className="px-4 py-3 text-sm">
+                                                          {review.author ||
+                                                            review.author_name ||
+                                                            t(
+                                                              "dashboard.anonymous",
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <div className="flex items-center gap-1">
+                                                            {[1, 2, 3, 4, 5].map(
+                                                              (star) => (
+                                                                <Star
+                                                                  key={star}
+                                                                  className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                                                />
                                                               ),
-                                                              "dd/MM/yyyy",
-                                                            )
-                                                          : "-"}
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        <Badge
-                                                          className={
-                                                            hasResponse
-                                                              ? "bg-green-100 text-green-800"
-                                                              : isUrgent
-                                                                ? "bg-red-100 text-red-800"
-                                                                : "bg-orange-100 text-orange-800"
-                                                          }
-                                                        >
-                                                          {hasResponse
-                                                            ? t("dashboard.replied")
-                                                            : t("dashboard.pending")}
-                                                        </Badge>
-                                                      </td>
-                                                      <td className="px-4 py-3">
-                                                        {hasResponse ? (
-                                                          <Badge className="bg-green-100 text-green-800 text-xs">
-                                                            {t("dashboard.viewResponse")}
+                                                            )}
+                                                          </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-slate-200 max-w-xs truncate">
+                                                          {extractOriginalText(
+                                                            review.text,
+                                                          ) ||
+                                                            review.text ||
+                                                            t(
+                                                              "dashboard.noComment",
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <Badge className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-900/60">
+                                                            {review.source ||
+                                                              "Google"}
                                                           </Badge>
-                                                        ) : (
-                                                          <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-xs"
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-slate-400">
+                                                          {review.published_at
+                                                            ? format(
+                                                                new Date(
+                                                                  review.published_at,
+                                                                ),
+                                                                "dd/MM/yyyy",
+                                                              )
+                                                            : "-"}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          <Badge
+                                                            className={
+                                                              hasResponse
+                                                                ? "bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300"
+                                                                : isUrgent
+                                                                  ? "bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-300"
+                                                                  : "bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300"
+                                                            }
                                                           >
-                                                            <Reply className="w-3 h-3 mr-1" />
-                                                            {t("dashboard.reply")}
-                                                          </Button>
+                                                            {hasResponse
+                                                              ? t("dashboard.replied")
+                                                              : t("dashboard.pending")}
+                                                          </Badge>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                          {hasResponse ? (
+                                                            <Badge
+                                                              className="bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300 text-xs cursor-pointer hover:bg-green-200 dark:hover:bg-green-900/40"
+                                                              onClick={() =>
+                                                                setExpandedReplyId(
+                                                                  expandedReplyId ===
+                                                                    review.id
+                                                                    ? null
+                                                                    : review.id,
+                                                                )
+                                                              }
+                                                            >
+                                                              {t("dashboard.viewResponse")}
+                                                            </Badge>
+                                                          ) : (
+                                                            <Button
+                                                              size="sm"
+                                                              variant="outline"
+                                                              className="text-xs"
+                                                              onClick={() => {
+                                                                setSelectedReviewForReply(
+                                                                  review,
+                                                                );
+                                                                reponseAutomatiqueRef.current?.scrollIntoView(
+                                                                  {
+                                                                    behavior:
+                                                                      "smooth",
+                                                                  },
+                                                                );
+                                                              }}
+                                                            >
+                                                              <Reply className="w-3 h-3 mr-1" />
+                                                              {t("dashboard.reply")}
+                                                            </Button>
+                                                          )}
+                                                        </td>
+                                                      </tr>
+                                                      {expandedReplyId ===
+                                                        review.id &&
+                                                        hasResponse && (
+                                                          <tr>
+                                                            <td
+                                                              colSpan={7}
+                                                              className="p-4 bg-green-50 dark:bg-green-950/20"
+                                                            >
+                                                              <div className="border-l-4 border-green-500 pl-4">
+                                                                <p className="font-semibold text-green-700 mb-2">
+                                                                  {t("dashboard.responsePublished")}{" "}
+                                                                  :
+                                                                </p>
+                                                                <p className="text-gray-700 dark:text-slate-200">
+                                                                  {review.owner_reply_text ||
+                                                                    validatedResponsesText.get(
+                                                                      review.id,
+                                                                    ) ||
+                                                                    "Merci pour votre avis, nous sommes ravis que vous ayez apprécié votre expérience !"}
+                                                                </p>
+                                                              </div>
+                                                            </td>
+                                                          </tr>
                                                         )}
-                                                      </td>
-                                                    </tr>
+                                                    </React.Fragment>
                                                   );
                                                 })}
                                             </tbody>
@@ -10222,7 +10048,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                       </th>
                                                     </tr>
                                                   </thead>
-                                                  <tbody className="bg-white divide-y divide-gray-100">
+                                                  <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-100 dark:divide-slate-800">
                                                     {sourceReviews
                                                       .slice(0, 10)
                                                       .map((review, index) => {
@@ -10237,84 +10063,137 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                               2) &&
                                                           !hasResponse;
                                                         return (
-                                                          <tr
+                                                          <React.Fragment
                                                             key={
                                                               review.id || index
                                                             }
-                                                            className="hover:bg-gray-50"
                                                           >
-                                                            <td className="px-4 py-3 text-sm">
-                                                              {review.author ||
-                                                                review.author_name ||
-                                                                t(
-                                                                  "dashboard.anonymous",
-                                                                )}
-                                                            </td>
-                                                            <td className="px-4 py-3">
-                                                              <div className="flex items-center gap-1">
-                                                                {[
-                                                                  1, 2, 3, 4, 5,
-                                                                ].map(
-                                                                  (star) => (
-                                                                    <Star
-                                                                      key={star}
-                                                                      className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                                    />
-                                                                  ),
-                                                                )}
-                                                              </div>
-                                                            </td>
-                                                            <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
-                                                              {extractOriginalText(
-                                                                review.text,
-                                                              ) ||
-                                                                review.text ||
-                                                                t(
-                                                                  "dashboard.noComment",
-                                                                )}
-                                                            </td>
-                                                            <td className="px-4 py-3">
-                                                              <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                                                {review.source ||
-                                                                  "Google"}
-                                                              </Badge>
-                                                            </td>
-                                                            <td className="px-4 py-3 text-sm text-gray-500">
-                                                              {review.published_at
-                                                                ? format(
-                                                                    new Date(
-                                                                      review.published_at,
+                                                            <tr className="hover:bg-gray-50 dark:hover:bg-slate-800/70">
+                                                              <td className="px-4 py-3 text-sm">
+                                                                {review.author ||
+                                                                  review.author_name ||
+                                                                  t(
+                                                                    "dashboard.anonymous",
+                                                                  )}
+                                                              </td>
+                                                              <td className="px-4 py-3">
+                                                                <div className="flex items-center gap-1">
+                                                                  {[
+                                                                    1, 2, 3, 4,
+                                                                    5,
+                                                                  ].map(
+                                                                    (star) => (
+                                                                      <Star
+                                                                        key={star}
+                                                                        className={`w-4 h-4 ${star <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                                                      />
                                                                     ),
-                                                                    "dd/MM/yyyy",
-                                                                  )
-                                                                : "-"}
-                                                            </td>
-                                                            <td className="px-4 py-3">
-                                                              <Badge
-                                                                className={
-                                                                  hasResponse
-                                                                    ? "bg-green-100 text-green-800"
-                                                                    : isUrgent
-                                                                      ? "bg-red-100 text-red-800"
-                                                                      : "bg-orange-100 text-orange-800"
-                                                                }
-                                                              >
-                                                                {hasResponse
-                                                                  ? t("dashboard.replied")
-                                                                  : t("dashboard.pending")}
-                                                              </Badge>
-                                                            </td>
-                                                            <td className="px-4 py-3">
-                                                              <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                className="text-xs"
-                                                              >
-                                                                <Reply className="w-3 h-3 mr-1" />
-                                                                {t("dashboard.reply")}
-                                                              </Button>
-                                                            </td>
-                                                          </tr>
+                                                                  )}
+                                                                </div>
+                                                              </td>
+                                                              <td className="px-4 py-3 text-sm text-gray-700 dark:text-slate-200 max-w-xs truncate">
+                                                                {extractOriginalText(
+                                                                  review.text,
+                                                                ) ||
+                                                                  review.text ||
+                                                                  t(
+                                                                    "dashboard.noComment",
+                                                                  )}
+                                                              </td>
+                                                              <td className="px-4 py-3">
+                                                                <Badge className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-900/60">
+                                                                  {review.source ||
+                                                                    "Google"}
+                                                                </Badge>
+                                                              </td>
+                                                              <td className="px-4 py-3 text-sm text-gray-500 dark:text-slate-400">
+                                                                {review.published_at
+                                                                  ? format(
+                                                                      new Date(
+                                                                        review.published_at,
+                                                                      ),
+                                                                      "dd/MM/yyyy",
+                                                                    )
+                                                                  : "-"}
+                                                              </td>
+                                                              <td className="px-4 py-3">
+                                                                <Badge
+                                                                  className={
+                                                                    hasResponse
+                                                                      ? "bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300"
+                                                                      : isUrgent
+                                                                        ? "bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-300"
+                                                                        : "bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300"
+                                                                  }
+                                                                >
+                                                                  {hasResponse
+                                                                    ? t("dashboard.replied")
+                                                                    : t("dashboard.pending")}
+                                                                </Badge>
+                                                              </td>
+                                                              <td className="px-4 py-3">
+                                                                {hasResponse ? (
+                                                                  <Badge
+                                                                    className="bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300 text-xs cursor-pointer hover:bg-green-200 dark:hover:bg-green-900/40"
+                                                                    onClick={() =>
+                                                                      setExpandedReplyId(
+                                                                        expandedReplyId ===
+                                                                          review.id
+                                                                          ? null
+                                                                          : review.id,
+                                                                      )
+                                                                    }
+                                                                  >
+                                                                    {t("dashboard.viewResponse")}
+                                                                  </Badge>
+                                                                ) : (
+                                                                  <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    className="text-xs"
+                                                                    onClick={() => {
+                                                                      setSelectedReviewForReply(
+                                                                        review,
+                                                                      );
+                                                                      reponseAutomatiqueRef.current?.scrollIntoView(
+                                                                        {
+                                                                          behavior:
+                                                                            "smooth",
+                                                                        },
+                                                                      );
+                                                                    }}
+                                                                  >
+                                                                    <Reply className="w-3 h-3 mr-1" />
+                                                                    {t("dashboard.reply")}
+                                                                  </Button>
+                                                                )}
+                                                              </td>
+                                                            </tr>
+                                                            {expandedReplyId ===
+                                                              review.id &&
+                                                              hasResponse && (
+                                                                <tr>
+                                                                  <td
+                                                                    colSpan={7}
+                                                                    className="p-4 bg-green-50 dark:bg-green-950/20"
+                                                                  >
+                                                                    <div className="border-l-4 border-green-500 pl-4">
+                                                                      <p className="font-semibold text-green-700 mb-2">
+                                                                        {t("dashboard.responsePublished")}{" "}
+                                                                        :
+                                                                      </p>
+                                                                      <p className="text-gray-700 dark:text-slate-200">
+                                                                        {review.owner_reply_text ||
+                                                                          validatedResponsesText.get(
+                                                                            review.id,
+                                                                          ) ||
+                                                                          "Merci pour votre avis, nous sommes ravis que vous ayez apprécié votre expérience !"}
+                                                                      </p>
+                                                                    </div>
+                                                                  </td>
+                                                                </tr>
+                                                              )}
+                                                          </React.Fragment>
                                                         );
                                                       })}
                                                   </tbody>
@@ -10330,49 +10209,49 @@ const getLatestDate = (reviews: any[]): Date | null =>
                             </>
                           ) : (
                             /* Tableau par défaut - toujours visible quand aucune carte de groupement n'est ouverte */
-                            <div className="border rounded-lg overflow-hidden">
+                            <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
                               <div className="overflow-x-auto">
                                 <table className="w-full">
-                                  <thead className="bg-gray-50">
+                                  <thead className="bg-gray-50 dark:bg-slate-800/70">
                                     <tr>
-                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">
                                         {t(
                                           "dashboard.dashResponseTableHeading.author",
                                         )}
                                       </th>
-                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">
                                         {t(
                                           "dashboard.dashResponseTableHeading.rating",
                                         )}
                                       </th>
-                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">
                                         {t(
                                           "dashboard.dashResponseTableHeading.comment",
                                         )}
                                       </th>
-                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">
                                         {t(
                                           "dashboard.dashResponseTableHeading.source",
                                         )}
                                       </th>
-                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">
                                         {t(
                                           "dashboard.dashResponseTableHeading.date",
                                         )}
                                       </th>
-                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">
                                         {t(
                                           "dashboard.dashResponseTableHeading.status",
                                         )}
                                       </th>
-                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase">
                                         {t(
                                           "dashboard.dashResponseTableHeading.action",
                                         )}
                                       </th>
                                     </tr>
                                   </thead>
-                                  <tbody className="bg-white divide-y divide-gray-200">
+                                  <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200 dark:divide-slate-800">
                                     {filteredReviews.length > 0 ? (
                                       filteredReviews
                                         .slice(0, displayCount)
@@ -10387,7 +10266,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                             <React.Fragment
                                               key={review.id || index}
                                             >
-                                              <tr className="hover:bg-gray-50">
+                                              <tr className="hover:bg-gray-50 dark:hover:bg-slate-800/70">
                                                 <td className="px-4 py-3 text-sm">
                                                   {review.author ||
                                                     review.author_name ||
@@ -10405,7 +10284,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                     )}
                                                   </div>
                                                 </td>
-                                                <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
+                                                <td className="px-4 py-3 text-sm text-gray-700 dark:text-slate-200 max-w-xs truncate">
                                                   {extractOriginalText(
                                                     review.text,
                                                   ) ||
@@ -10413,11 +10292,11 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                     t("dashboard.noComment")}
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                  <Badge className="text-xs bg-blue-50 text-blue-600 border-blue-200">
+                                                  <Badge className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-900/60">
                                                     {review.source || "Google"}
                                                   </Badge>
                                                 </td>
-                                                <td className="px-4 py-3 text-sm text-gray-500">
+                                                <td className="px-4 py-3 text-sm text-gray-500 dark:text-slate-400">
                                                   {review.published_at
                                                     ? format(
                                                         new Date(
@@ -10431,10 +10310,10 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                   <Badge
                                                     className={
                                                       hasResponse
-                                                        ? "bg-green-100 text-green-800"
+                                                        ? "bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300"
                                                         : isUrgent
-                                                          ? "bg-red-100 text-red-800"
-                                                          : "bg-orange-100 text-orange-800"
+                                                          ? "bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-300"
+                                                          : "bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300"
                                                     }
                                                   >
                                                     {hasResponse
@@ -10445,7 +10324,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                 <td className="px-4 py-3">
                                                   {hasResponse ? (
                                                     <Badge
-                                                      className="bg-green-100 text-green-800 text-xs cursor-pointer hover:bg-green-200"
+                                                      className="bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300 text-xs cursor-pointer hover:bg-green-200 dark:hover:bg-green-900/40"
                                                       onClick={() =>
                                                         setExpandedReplyId(
                                                           expandedReplyId ===
@@ -10484,13 +10363,13 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                                   <tr>
                                                     <td
                                                       colSpan={7}
-                                                      className="p-4 bg-green-50"
+                                                      className="p-4 bg-green-50 dark:bg-green-950/20"
                                                     >
                                                       <div className="border-l-4 border-green-500 pl-4">
                                                         <p className="font-semibold text-green-700 mb-2">
                                                           {t("dashboard.responsePublished")} :
                                                         </p>
-                                                        <p className="text-gray-700">
+                                                        <p className="text-gray-700 dark:text-slate-200">
                                                           {review.owner_reply_text ||
                                                             validatedResponsesText.get(
                                                               review.id,
@@ -10508,7 +10387,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                       <tr>
                                         <td
                                           colSpan={7}
-                                          className="px-4 py-8 text-center text-gray-500"
+                                          className="px-4 py-8 text-center text-gray-500 dark:text-slate-400"
                                         >
                                           {statusFilter === "pending"
                                             ? t("dashboard.noPendingReviews")
@@ -10550,7 +10429,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
             {activeTab === "objectif" && (
               <>
                 {/* Objectif */}
-                <Card className="mb-8">
+                <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
                   <CardHeader>
                     <CardTitle className="text-xl">
                       {t("dashboard.objective")}
@@ -10852,7 +10731,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
 
                 <div className="grid md:grid-cols-3 gap-6 mb-6">
                   <Card
-                    className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+                    className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
                     onClick={() =>
                       setOpenCard(
                         openCard === "progression" ? null : "progression",
@@ -10890,7 +10769,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                   </Card>
 
                   <Card
-                    className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+                    className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
                     onClick={() =>
                       setOpenCard(openCard === "avisLies" ? null : "avisLies")
                     }
@@ -10926,7 +10805,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                   </Card>
 
                   <Card
-                    className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+                    className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
                     onClick={() =>
                       setOpenCard(openCard === "impact" ? null : "impact")
                     }
@@ -10963,7 +10842,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                 {openCard === "progression" && (
                   <>
                   {/* Actionable progress */}
-                  <Card className="mb-8">
+                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="pb-1">
                       <CardTitle className="text-xl">
                           {t("objective.actionsProgress")}
@@ -11048,7 +10927,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                     </CardContent>
                   </Card>
                    {/* objectives progress */}
-                  <Card className="mb-8">
+                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="pb-1">
                       <CardTitle className="text-xl">
                         {t("objective.objectivesProgress")}
@@ -11081,7 +10960,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                 )}
 
                 {openCard === "avisLies" && (
-                  <Card className="mb-8">
+                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader>
                       <CardTitle className="text-xl">
                         {t("dashboard.relatedReviews")}
@@ -11136,7 +11015,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                 )}
 
                 {openCard === "impact" && (
-                  <Card className="mb-8">
+                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="pb-1">
                       <CardTitle className="text-xl">
                         {t("dashboard.impact")}
@@ -11203,7 +11082,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
               activeTab === "reponses" ||
               activeTab === "objectif") && (
               <nav
-                className="mt-10 border-t border-gray-200/80 pt-6"
+                className="mt-10 border-t border-slate-200/80 pt-6 dark:border-slate-800"
                 aria-label={t("dashboard.title")}
               >
                 {activeTab === "key-takeaways" && (

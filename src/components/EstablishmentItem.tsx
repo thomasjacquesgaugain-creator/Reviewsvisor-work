@@ -34,24 +34,24 @@ export default function EstablishmentItem({ etab, onSelect, isActive = false }: 
     <TooltipProvider>
       <div
         onClick={() => onSelect(etab)}
-        className={`cursor-pointer bg-card border-2 rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm relative ${ESTABLISHMENT_CARD_HOVER} ${
+        className={`cursor-pointer bg-card text-card-foreground border-2 rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm relative ${ESTABLISHMENT_CARD_HOVER} ${
           isActive
-            ? `border-blue-500 bg-blue-50/50 ${ESTABLISHMENT_CARD_HOVER_ACTIVE}`
+            ? `border-primary bg-primary/10 ${ESTABLISHMENT_CARD_HOVER_ACTIVE}`
             : `border-border ${ESTABLISHMENT_CARD_HOVER_NEUTRAL}`
         }`}
       >
         {isActive && (
-          <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-            <Check className="w-3 h-3 text-white" />
+          <div className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <Check className="h-3 w-3" />
           </div>
         )}
         <div className="flex items-start gap-2">
-          <div className={`mt-0.5 ${isActive ? 'text-blue-600' : 'text-primary'}`}>
+          <div className="mt-0.5 text-primary">
             <Building2 className="w-4 h-4" />
           </div>
           
           <div className="flex-1 min-w-0">
-            <h4 className={`font-medium text-sm truncate ${isActive ? 'text-blue-900' : 'text-foreground'}`} title={etab.name}>
+            <h4 className="truncate text-sm font-medium text-foreground" title={etab.name}>
               {etab.name}
             </h4>
             <p className="text-xs text-muted-foreground truncate" title={etab.address}>

@@ -113,24 +113,10 @@ export function ThemesSection({ data }: ThemesSectionProps) {
 
   const totalThemeMentions = effectiveThemes.reduce((sum, t) => sum + (t.count || 0), 0);
 
-  const getScoreTone = (score: number) => {
-    if (score >= 70) {
-      return {
-        labelClassName: "text-slate-700 dark:text-slate-300",
-        valueClassName: "text-emerald-700 dark:text-emerald-300",
-      };
-    }
-
-    if (score < 40) {
-      return {
-        labelClassName: "text-slate-700 dark:text-slate-300",
-        valueClassName: "text-red-700 dark:text-red-300",
-      };
-    }
-
+  const getScoreTone = () => {
     return {
       labelClassName: "text-slate-700 dark:text-slate-300",
-      valueClassName: "text-amber-700 dark:text-amber-300",
+      valueClassName: "text-primary",
     };
   };
 
@@ -167,7 +153,7 @@ export function ThemesSection({ data }: ThemesSectionProps) {
                       const themeName = payload[0]?.payload?.theme || "";
                       const theme = effectiveThemes.find((item) => item.theme === themeName);
                       const mentions = theme?.count ?? 0;
-                      const tone = getScoreTone(score);
+                      const tone = getScoreTone();
 
                       return (
                         <div className="min-w-[180px] rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-lg dark:border-slate-700 dark:bg-slate-900">

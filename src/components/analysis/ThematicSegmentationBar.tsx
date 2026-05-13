@@ -218,19 +218,19 @@ export function ThematicSegmentationBar() {
   const sourceLabel = currentSourceOption ? currentSourceOption.label : t("dashboard.sourceFilter");
 
   return (
-    <div className="mb-6 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
+    <div className="mb-6 rounded-lg border border-transparent dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 shadow-sm dark:shadow-slate-950/40">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-gray-800 dark:text-slate-100">{t("dashboard.analysisContext")}</h3>
-          <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{t("dashboard.analysisContext")}</h3>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             {t("dashboard.analysisBasedOn")}{" "}
-            <span className="font-semibold text-gray-800 dark:text-slate-100">
+            <span className="font-semibold text-slate-800 dark:text-slate-100">
               {filteredReviews.length}
             </span>{" "}
             {t("dashboard.reviews")}
           </p>
           {minReviewDate && (
-            <p className="mt-0.5 text-[11px] text-gray-400 dark:text-slate-500">
+            <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
               {t("dashboard.sinceDate")}{" "}
               {minReviewDate.toLocaleDateString("fr-FR", {
                 day: "2-digit",
@@ -243,7 +243,7 @@ export function ThematicSegmentationBar() {
 
         <div className="flex flex-wrap items-center gap-3 md:flex-1 md:justify-center">
           {/* Filtres de note */}
-          <div className="flex items-center gap-1 rounded-full bg-gray-100 dark:bg-slate-800 px-1 py-1">
+          <div className="flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 px-1 py-1">
             {[
               { key: "ALL", label: t("dashboard.allFilter") },
              { key: "POS", label: "4–5⭐" },
@@ -267,11 +267,11 @@ export function ThematicSegmentationBar() {
 
           {/* Filtre période */}
           <div className="flex items-center gap-1 text-xs">
-            <span className="text-gray-500 dark:text-slate-400">{t("dashboard.periodFilter")} :</span>
+            <span className="text-slate-500 dark:text-slate-400">{t("dashboard.periodFilter")} :</span>
             <select
               value={pendingPeriodFilter.preset}
               onChange={(e) => handlePeriodChange(e.target.value)}
-              className="rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-xs text-gray-700 dark:text-slate-300 shadow-sm focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-slate-500"
+              className="rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-xs text-slate-700 dark:text-slate-300 shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-500"
             >
               <option value="all">{t("dashboard.allTime")}</option>
               <option value="30d">{t("dashboard.days30")}</option>
@@ -283,7 +283,7 @@ export function ThematicSegmentationBar() {
 
           {/* Filtre source */}
           <div className="flex items-center gap-1 text-xs">
-            <span className="text-gray-500 dark:text-slate-400">{t("dashboard.sourceFilter")} :</span>
+            <span className="text-slate-500 dark:text-slate-400">{t("dashboard.sourceFilter")} :</span>
             <Select value={pendingSourceFilter} onValueChange={handleSourceChange}>
               <SelectTrigger
                 className={`h-8 w-[140px] rounded-md border px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-offset-0 transition-colors duration-200 ease-in-out flex items-center gap-2 ${
@@ -347,7 +347,7 @@ export function ThematicSegmentationBar() {
 
       {/* Date range picker (PersonnalisÃ©â€¦) */}
       {isCustomOpen && (
-        <div className="mt-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 shadow-sm">
+        <div className="mt-3 rounded-lg border border-transparent dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-sm dark:shadow-slate-950/40">
           <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">{t("dashboard.customPeriodTitle")}</p>
@@ -418,4 +418,3 @@ export function ThematicSegmentationBar() {
     </div>
   );
 }
-
