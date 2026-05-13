@@ -39,6 +39,7 @@ import {
   Target,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
   ChevronRight,
   Building2,
   Star,
@@ -164,6 +165,9 @@ const getTranslatedEstablishmentType = (
     { defaultValue: value },
   );
 };
+
+const DASH_TAB_NAV_BTN_CLASS =
+  "inline-flex items-center gap-2 rounded-xl border border-slate-200/90 bg-white px-5 py-3 text-sm font-semibold text-slate-800 shadow-[0_2px_12px_rgba(15,23,42,0.08)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-900 hover:shadow-[0_8px_28px_rgba(37,99,235,0.14)] active:translate-y-0 active:scale-[0.98] active:shadow-[0_2px_10px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer";
 
 const Dashboard = () => {
   // ============================================
@@ -11187,6 +11191,103 @@ const getLatestDate = (reviews: any[]): Date | null =>
                 )}
               </>
             )}
+
+            {(activeTab === "key-takeaways" ||
+              activeTab === "analyse" ||
+              activeTab === "recommandations" ||
+              activeTab === "reponses" ||
+              activeTab === "objectif") && (
+              <nav
+                className="mt-10 border-t border-gray-200/80 pt-6"
+                aria-label={t("dashboard.title")}
+              >
+                {activeTab === "key-takeaways" && (
+                  <div className="flex w-full justify-end">
+                    <button
+                      type="button"
+                      className={DASH_TAB_NAV_BTN_CLASS}
+                      onClick={() => setActiveTab("analyse")}
+                    >
+                      {t("dashboard.analyse")}
+                      <ChevronRight className="h-4 w-4 shrink-0" />
+                    </button>
+                  </div>
+                )}
+                {activeTab === "analyse" && (
+                  <div className="flex w-full items-center justify-between gap-4">
+                    <button
+                      type="button"
+                      className={DASH_TAB_NAV_BTN_CLASS}
+                      onClick={() => setActiveTab("key-takeaways")}
+                    >
+                      <ChevronLeft className="h-4 w-4 shrink-0" />
+                      {t("dashboard.keyTakeaways.title")}
+                    </button>
+                    <button
+                      type="button"
+                      className={DASH_TAB_NAV_BTN_CLASS}
+                      onClick={() => setActiveTab("recommandations")}
+                    >
+                      {t("dashboard.recommendations")}
+                      <ChevronRight className="h-4 w-4 shrink-0" />
+                    </button>
+                  </div>
+                )}
+                {activeTab === "recommandations" && (
+                  <div className="flex w-full items-center justify-between gap-4">
+                    <button
+                      type="button"
+                      className={DASH_TAB_NAV_BTN_CLASS}
+                      onClick={() => setActiveTab("analyse")}
+                    >
+                      <ChevronLeft className="h-4 w-4 shrink-0" />
+                      {t("dashboard.analyse")}
+                    </button>
+                    <button
+                      type="button"
+                      className={DASH_TAB_NAV_BTN_CLASS}
+                      onClick={() => setActiveTab("reponses")}
+                    >
+                      {t("dashboard.response")}
+                      <ChevronRight className="h-4 w-4 shrink-0" />
+                    </button>
+                  </div>
+                )}
+                {activeTab === "reponses" && (
+                  <div className="flex w-full items-center justify-between gap-4">
+                    <button
+                      type="button"
+                      className={DASH_TAB_NAV_BTN_CLASS}
+                      onClick={() => setActiveTab("recommandations")}
+                    >
+                      <ChevronLeft className="h-4 w-4 shrink-0" />
+                      {t("dashboard.recommendations")}
+                    </button>
+                    <button
+                      type="button"
+                      className={DASH_TAB_NAV_BTN_CLASS}
+                      onClick={() => setActiveTab("objectif")}
+                    >
+                      {t("dashboard.objective")}
+                      <ChevronRight className="h-4 w-4 shrink-0" />
+                    </button>
+                  </div>
+                )}
+                {activeTab === "objectif" && (
+                  <div className="flex w-full justify-start">
+                    <button
+                      type="button"
+                      className={DASH_TAB_NAV_BTN_CLASS}
+                      onClick={() => setActiveTab("reponses")}
+                    >
+                      <ChevronLeft className="h-4 w-4 shrink-0" />
+                      {t("dashboard.response")}
+                    </button>
+                  </div>
+                )}
+              </nav>
+            )}
+
           </div>
         </div>
 
