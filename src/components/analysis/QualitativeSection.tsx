@@ -639,7 +639,7 @@ const wordsByFrequency = useMemo(() => {
                 <div className="transition-opacity duration-200">
                   {wordsByFrequency.length === 0 ? (
                     <div className="text-center py-8">
-                      <p className="text-sm text-gray-500">Aucune donnée disponible pour ce mode.</p>
+                      <p className="text-sm text-gray-500">{t("analysis.qualitative.noDataForMode")}</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -875,17 +875,17 @@ const wordsByFrequency = useMemo(() => {
               {/* État vide global si aucun mode n'a de données */}
               {sortMode === 'frequency' && wordsByFrequency.length === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-sm text-gray-500">Aucune donnée disponible pour ce mode.</p>
+                  <p className="text-sm text-gray-500">{t("analysis.qualitative.noDataForMode")}</p>
                 </div>
               )}
               {sortMode === 'sentiment' && Object.values(wordsBySentiment).every(arr => arr.length === 0) && (
                 <div className="text-center py-8">
-                  <p className="text-sm text-gray-500">Aucune donnée disponible pour ce mode.</p>
+                  <p className="text-sm text-gray-500">{t("analysis.qualitative.noDataForMode")}</p>
                 </div>
               )}
               {sortMode === 'theme' && Object.values(wordsByTheme).every(arr => arr.length === 0) && (
                 <div className="text-center py-8">
-                  <p className="text-sm text-gray-500">Aucune donnée disponible pour ce mode.</p>
+                  <p className="text-sm text-gray-500">{t("analysis.qualitative.noDataForMode")}</p>
                 </div>
               )}
             </div>
