@@ -1307,7 +1307,9 @@
     "confirmDelete": "Confirm deletion",
     "confirmDeleteDesc": "This action cannot be undone.",
     "confirmAction": "Confirm action",
-    "areYouSure": "Are you sure?"
+    "areYouSure": "Are you sure?",
+    "confirmDeleteDescription":"This action is permanent. Deleting all reviews will also delete the linked review insights and SMART objectives for this establishment.",
+    "deleteButton":"Permanently delete everything"
   },
   "dates": {
     "today": "Today",
