@@ -761,7 +761,7 @@ const checkPopupClosed = setInterval(() => {
         onClick={handleImportClick}
         className={cn(
           buttonVariants({ variant: 'accent', size: 'default' }),
-          'w-full pointer-events-auto cursor-pointer relative z-50',
+          'w-full pointer-events-auto cursor-pointer relative z-50 h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm border border-primary/20',
         )}
       >
         {loading ? (

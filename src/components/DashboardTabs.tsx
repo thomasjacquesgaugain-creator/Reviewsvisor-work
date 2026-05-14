@@ -24,8 +24,8 @@ export const DashboardTabs = ({ activeTab, onTabChange }: DashboardTabsProps) =>
           onClick={() => onTabChange(tab.id)}
           className={`flex-1 px-4 py-3 text-sm font-medium border border-transparent rounded-lg transition-colors ${
             activeTab === tab.id
-              ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40'
-              : 'text-gray-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white hover:border-blue-600 dark:hover:bg-blue-700 dark:hover:border-blue-500'
+              ? 'text-primary bg-primary/10 dark:bg-primary/5 border-primary/20'
+              : 'text-gray-600 dark:text-slate-300 hover:bg-primary hover:text-primary-foreground hover:border-primary'
           }`}
         >
           <span className="mr-2">{tab.icon}</span>

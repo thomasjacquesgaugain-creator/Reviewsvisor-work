@@ -94,7 +94,7 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
 
   return (
     <Card 
-      className="w-full max-w-4xl mx-auto relative z-40 pointer-events-auto"
+      className="w-full max-w-4xl mx-auto relative z-40 pointer-events-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-[0_18px_45px_rgba(37,99,235,0.08)] dark:shadow-[0_18px_45px_rgba(2,6,23,0.5)] rounded-xl"
       data-testid="import-avis-toolbar"
     >
       <CardContent className="p-6">
@@ -119,7 +119,7 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
 
         {/* Onglets */}
         <div 
-          className="flex space-x-1 bg-muted/30 p-1 rounded-lg mb-6"
+          className="flex space-x-1 rounded-xl bg-slate-100 dark:bg-slate-800/70 p-1.5 mb-6 border border-slate-200 dark:border-slate-700"
           role="tablist"
         >
           {tabs.map((tab) => {
@@ -137,10 +137,10 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
                 data-testid={tab.testId}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all",
+                  "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                   isActive
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                    ? "bg-primary text-primary-foreground shadow-sm border border-primary/20"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white dark:hover:bg-slate-800"
                 )}
               >
                 <Icon className="w-4 h-4" />
