@@ -1,6 +1,7 @@
 // src/store/smartStore.ts
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { supabase } from "@/integrations/supabase/client";
 import type {
   SmartObjective,
@@ -50,9 +51,8 @@ export function buildSmartPayload(
   ishikawaTopCategory?: string,
   effortSource?:        "auto_detected" | "user_questionnaire",
   questionnaireScores?: IshikawaScores | null,
-  paretoPercentage? :    number,
+  paretoPercentage?:    number,
 ): GenerateSmartPayload {
-  const t = i18n.t.bind(i18n);
   const totalNegative = paretoIssue.count ?? 1;
 
   const allCauses = rca.categories.flatMap((c) =>
@@ -110,11 +110,13 @@ interface SmartStore {
   isSaving:             boolean;
   error:                string | null;
   questionnaireByIssue: Record<string, QuestionnaireResult>;
+  loadedEstablishmentId: string | null;
 
   setQuestionnaireResult: (
     issueName: string,
     result: QuestionnaireResult
   ) => void;
+  resetSmartState: () => void;
 
   generateSmart: ( 
     establishmentId:      string,
@@ -124,7 +126,7 @@ interface SmartStore {
     ishikawaTopCategory?: string,
     effortSource?:        "auto_detected" | "user_questionnaire",
     questionnaireScores?: IshikawaScores | null,
-    paretoPercetage? :     number,
+    paretoPercentage?:    number,
   ) => Promise<void>;
 
   updateDraft:     (updates: Partial<SmartObjective>) => void;
@@ -149,14 +151,16 @@ interface SmartStore {
    STORE IMPLEMENTATION
 ───────────────────────────────────────────── */
 
-export const useSmartStore = create<SmartStore>((set, get) => ({
-  objectives:           [],
-  currentDraft:         null,
-  isGenerating:         false,
-  isSaving:             false,
-  error:                null,
-  questionnaireByIssue: {},
-  
+export const useSmartStore = create<SmartStore>()(
+  persist(
+    (set, get) => ({
+      objectives:            [],
+      currentDraft:          null,
+      isGenerating:          false,
+      isSaving:              false,
+      error:                 null,
+      questionnaireByIssue:  {},
+      loadedEstablishmentId: null,
 
   setQuestionnaireResult: (issueName, result) =>
     set((state) => ({
@@ -166,16 +170,24 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
       },
     })),
 
+      resetSmartState: () =>
+        set({
+          objectives:            [],
+          currentDraft:          null,
+          questionnaireByIssue:  {},
+          loadedEstablishmentId: null,
+          error:                 null,
+          isGenerating:          false,
+          isSaving:              false,
+        }),
 
   saveQuestionnaireOnly: async (
   establishmentId: string,
   paretoIssue: ParetoItem,
   result: QuestionnaireResult
   ) => {
-    const db = supabase as any;
-    const {
-    data: { user }
-  } = await supabase.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
+
   const { data: existing } = await db
     .from("smart_objectives")
     .select("id")
@@ -228,15 +240,8 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
     paretoPercentage,
   ) => {
     set({ isGenerating: true, error: null });
-
-    console.log("generateSmart called with:", {
-      establishmentId,
-      paretoIssue,
-      rcaCategories: rca?.categories?.length,
-    });
     const t = i18n.t.bind(i18n);
     try {
-      // ✅ FIX 1: pass establishmentId directly, not wrapped in paretoIssue
       const payload = buildSmartPayload(
         establishmentId,
         paretoIssue,
@@ -248,20 +253,17 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
         paretoPercentage,
       );
 
-      console.log("payload:", payload);
-
       const { data, error } = await supabase.functions.invoke(
         "generate-smart-objective",
         { body: payload }
       );
 
-      console.log("edge function response:", { data, error });
-
         if (error) {
-        console.error("Erreur:", error);
-        toast.error(t("toasts.error"),{
+        console.error("Edge function error:", error);
+        toast.error(t("toasts.error"), {
           description: t("questionnaire.errors.saveFailed"),
         });
+            set({ isGenerating: false });
         return;
       }
        if (data.ok) {
@@ -269,15 +271,6 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
         description: t("questionnaire.success"),
       });
       }
-
-
-
-
-
-
-
-
-
 
       set({ currentDraft: data.smart_objective, isGenerating: false });
     } catch (err: any) {
@@ -303,7 +296,6 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
     let error;
 
     if (currentDraft.id) {
-      // Edge function already saved it — just update with user edits
       const result = await db
         .from("smart_objectives")
         .update(currentDraft)
@@ -313,7 +305,6 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
       data  = result.data;
       error = result.error;
     } else {
-      // No id yet — insert (fallback, shouldn't happen normally)
       const result = await db
         .from("smart_objectives")
         .insert(currentDraft)
@@ -326,7 +317,7 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
     if (error) throw error;
 
     set((state) => ({
-      objectives:   [data, ...state.objectives.filter(o => o.id !== data.id)],
+      objectives:   [data, ...state.objectives.filter((o) => o.id !== data.id)],
       currentDraft: null,
       isSaving:     false,
     }));
@@ -337,107 +328,98 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
 
   discardDraft: () => set({ currentDraft: null }),
 
-
   fetchObjectives: async (establishmentId) => {
+        const { loadedEstablishmentId } = get();
+
+        if (loadedEstablishmentId !== establishmentId) {
+          set({
+            objectives:           [],
+            currentDraft:         null,
+            questionnaireByIssue: {},
+            error:                null,
+          });
+        }
+
     const { data, error } = await db
       .from("smart_objectives")
       .select("*")
       .eq("establishment_id", establishmentId)
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: false });
 
-    if (!error && data) set({ objectives: data });
-  },
+        if (!error && data) {
+          set({
+            objectives:            data,
+            loadedEstablishmentId: establishmentId,
+          });
+        }
+      },
 
-  updateObjective: async (id, updates) => {
+      updateObjective: async (id, updates) => {
+        const { error } = await db
+          .from("smart_objectives")
+          .update({ ...updates, updated_at: new Date().toISOString() })
+          .eq("id", id);
 
-    const { error } = await db
-      .from("smart_objectives")
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq("id", id);
+        if (!error) {
+          set((state) => ({
+            objectives: state.objectives.map((obj) =>
+              obj.id === id ? { ...obj, ...updates } : obj
+            ),
+          }));
+        }
+      },
 
-    if (!error) {
-      set((state) => ({
-        objectives: state.objectives.map((obj) =>
-          obj.id === id ? { ...obj, ...updates } : obj
-        ),
-      }));
-    }
-  },
-  toggleAction: async (id: string, actionIndex: number) => {
-  const { objectives } = get();
-  const obj = objectives.find(o => o.id === id);
-  if (!obj) return;
+      toggleAction: async (id: string, actionIndex: number) => {
+        const { objectives } = get();
+        const obj = objectives.find((o) => o.id === id);
+        if (!obj) return;
 
-  const updatedActions = obj.actions.map((a, i) =>
-    i === actionIndex ? { ...a, completed: !a.completed } : a
-  );
-  await get().updateObjective(id, { actions: updatedActions });
-},
-  updateProgress: async (id, current_progress) => {
-  const { objectives, updateObjectiveStatus } = get();
+        const updatedActions = obj.actions.map((a, i) =>
+          i === actionIndex ? { ...a, completed: !a.completed } : a
+        );
+        await get().updateObjective(id, { actions: updatedActions });
+      },
 
-  const objective = objectives.find(o => o.id === id);
+      updateProgress: async (id, current_progress) => {
+        const { objectives, updateObjectiveStatus } = get();
+        const objective = objectives.find((o) => o.id === id);
 
-  if (!objective) return;
+        if (!objective) return;
 
-  // only active objective can progress
-  if (objective.status !== "in_progress") {
-    return;
-  }
+        if (objective.status !== "in_progress") return;
 
-  await get().updateObjective(id, {
-    current_progress
-  });
+        await get().updateObjective(id, { current_progress });
 
-  const targetReached =
-    current_progress <= objective.target_value;
+        if (current_progress <= objective.target_value) {
+          await updateObjectiveStatus(id, "completed");
+        }
+      },
 
-  if (targetReached) {
-    await updateObjectiveStatus(
-      id,
-      "completed"
-    );
-  }
-},
+      updateObjectiveStatus: async (objectiveId, status) => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
 
-  updateObjectiveStatus: async (
-  objectiveId: string,
-  status: "todo" | "in_progress" | "completed"|"overdue"
-) => {
-  try {
-    const {
-      data: { session }
-    } = await supabase.auth.getSession();
+          if (!session?.user) {
+            throw new Error("User not authenticated");
+          }
 
-    if (!session?.user) {
-      throw new Error("User not authenticated");
-    }
+          const { data, error } = await db
+            .from("smart_objectives")
+            .update({
+              status,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", objectiveId)
+            .eq("user_id", session.user.id)
+            .select()
+            .single();
 
-    const { data, error } = await db
-      .from("smart_objectives")
-      .update({
-        status,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", objectiveId)
-      .eq("user_id", session.user.id)
-      .select()
-      .single();
+          if (error) throw error;
 
-    if (error) {
-      throw error;
-    }
-
-    // Zustand local sync
-    set(state => ({
-      objectives: state.objectives.map(obj =>
-        obj.id === objectiveId
-          ? {
-              ...obj,
-              status
-            }
-          : obj
-      )
+          set((state) => ({
+      objectives: state.objectives.map((obj) =>
+        obj.id === objectiveId ? { ...obj, status } : obj
+      ),
     }));
 
     return data;
@@ -446,6 +428,14 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
     throw err;
   }
 },
-
-
-}));
+    }),
+    {
+      name: "smart-store",
+      partialize: (state) => ({
+        objectives:            state.objectives,
+        questionnaireByIssue:  state.questionnaireByIssue,
+        loadedEstablishmentId: state.loadedEstablishmentId,
+      }),
+    }
+  )
+);

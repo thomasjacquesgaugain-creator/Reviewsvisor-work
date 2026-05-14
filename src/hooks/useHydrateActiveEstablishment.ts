@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEstablishmentStore } from "@/store/establishmentStore";
+import { useSmartStore } from "@/store/smartStore";
 import type { EstablishmentData } from "@/services/establishments";
 
 /**
@@ -82,6 +83,7 @@ export function useHydrateActiveEstablishment(userId: string | undefined) {
             types: row.types ?? undefined,
           };
           useEstablishmentStore.getState().setSelectedEstablishment(estab);
+          await useSmartStore.getState().fetchObjectives(establishmentId);
         }
         return;
       }
@@ -98,6 +100,7 @@ export function useHydrateActiveEstablishment(userId: string | undefined) {
         types: data.types ?? undefined,
       };
       useEstablishmentStore.getState().setSelectedEstablishment(estab);
+      await useSmartStore.getState().fetchObjectives(establishmentId);
     })();
   }, [userId]);
 }

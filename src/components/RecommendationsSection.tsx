@@ -38,11 +38,9 @@ export function RecommendationsSection({ paretoCauses, rcaByIssue = {} }: Props)
 );
 
 
-  const [establishmentId, setEstablishmentId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
    const [isUpdating, setIsUpdating] = useState(false);
 
-  const establishmentIdRef = useRef<string | null>(null);
   const {t}=useTranslation();
 
 useEffect(() => {
@@ -175,7 +173,7 @@ useEffect(() => {
 
               <Button
                 onClick={handleUpdate}
-                disabled={isUpdating || !establishmentId}
+                disabled={isUpdating || !activeEstablishmentId}
                 size="sm"
                 className="bg-orange-500 hover:bg-orange-600 text-white"
               >
