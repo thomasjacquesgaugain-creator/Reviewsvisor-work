@@ -298,17 +298,25 @@ All colors MUST be HSL.
 
   /* Background themes in dark mode */
   .dark[data-bg="cottonCandy"] {
-    --app-bg: 254 30% 10%;
+    --app-bg: 322 43% 15%;
+
     --app-page-gradient: linear-gradient(
-      135deg,
-      rgb(91, 33, 63) 0%,
-      rgb(88, 28, 135) 40%,
-      rgb(30, 64, 175) 75%,
-      rgb(6, 95, 70) 100%
+        135deg,
+        rgb(155, 55, 105) 0%,
+        rgb(122, 48, 185) 40%,
+        rgb(55, 98, 218) 75%,
+        rgb(12, 135, 100) 100%
     );
-    --app-page-orb-1: linear-gradient(135deg, rgb(59, 130, 246), rgb(139, 92, 246));
-    --app-page-orb-2: linear-gradient(135deg, rgb(249, 115, 22), rgb(250, 204, 21));
-    --app-page-orb-3: linear-gradient(135deg, rgb(59, 130, 246), rgb(34, 211, 238));
+
+    --footer-gradient: linear-gradient(
+        135deg,
+        rgba(50, 12, 48, 0.89),
+        rgba(12, 18, 62, 0.92)
+    );
+
+    --app-page-orb-1: linear-gradient(135deg, rgb(70, 112, 200), rgb(108, 42, 188));
+    --app-page-orb-2: linear-gradient(135deg, rgb(198, 105, 38), rgb(182, 122, 25));
+    --app-page-orb-3: linear-gradient(135deg, rgb(70, 112, 200), rgb(38, 162, 188));
   }
   .dark[data-bg="dusk"] {
   --app-page-gradient: linear-gradient(
