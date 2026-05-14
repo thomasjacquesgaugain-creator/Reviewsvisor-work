@@ -237,6 +237,10 @@ export function RootCauseSection({
   const activeEstablishmentId = useEstablishmentStore(
   s => s.activeEstablishmentId
 );
+const selectedEstablishment = useEstablishmentStore(
+  s => s.selectedEstablishment
+);
+const resolvedEstablishmentId = activeEstablishmentId ?? selectedEstablishment?.id ?? null;
 
 /* ── Current issue ── */
 const currentIssue =
@@ -251,10 +255,10 @@ useEffect(() => {
 }, [activeEstablishmentId]);
 
 useEffect(() => {
-  if (!activeEstablishmentId) return;
+  if (!resolvedEstablishmentId) return;
 
-  fetchObjectives(activeEstablishmentId);
-}, [activeEstablishmentId, fetchObjectives]);
+  fetchObjectives(resolvedEstablishmentId);
+}, [resolvedEstablishmentId, fetchObjectives]);
 
 useEffect(() => {
   if (!smartObjectives?.length) return;
@@ -333,8 +337,7 @@ const currentSmartObjective = useMemo(() => {
 
     const handleQuestionnaireSuccess = async (result: QuestionnaireResult) => {
       if (!currentIssue || !rootCauseAnalysis) return;
-
-      const estId = activeEstablishmentId;
+      const estId = resolvedEstablishmentId;
       if (!estId) return;
 
       //  store update
@@ -470,9 +473,9 @@ const currentSmartObjective = useMemo(() => {
         {showQuestionnaire && (
           <>
             <Questionnaire
-                key={`${activeEstablishmentId ?? "no-establishment"}-${currentIssue.name}`}
+                key={`${resolvedEstablishmentId ?? "no-establishment"}-${currentIssue.name}`}
                 problemTitle={currentIssue.name}
-                establishmentId={activeEstablishmentId ?? ""}
+                establishmentId={resolvedEstablishmentId ?? ""}
                 smartObjectiveId={currentSmartObjective?.id ?? ""}
                 initialScores={
                   currentQuestionnaire?.scores ??

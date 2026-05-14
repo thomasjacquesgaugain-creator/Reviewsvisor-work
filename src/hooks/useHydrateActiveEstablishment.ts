@@ -55,7 +55,7 @@ export function useHydrateActiveEstablishment(userId: string | undefined) {
       const { data, error } = await supabase
         .from("establishments")
         .select(
-          "place_id, name, formatted_address, lat, lng, website, phone, rating, types",
+          "id, place_id, name, formatted_address, lat, lng, website, phone, rating, types",
         )
         .eq("id", establishmentId)
         .maybeSingle();
@@ -64,7 +64,7 @@ export function useHydrateActiveEstablishment(userId: string | undefined) {
         const { data: list } = await supabase
           .from("establishments")
           .select(
-            "place_id, name, formatted_address, lat, lng, website, phone, rating, types",
+            "id, place_id, name, formatted_address, lat, lng, website, phone, rating, types",
           )
           .eq("user_id", userId)
           .order("updated_at", { ascending: false })
@@ -72,6 +72,7 @@ export function useHydrateActiveEstablishment(userId: string | undefined) {
         const row = list?.[0];
         if (row) {
           const estab: EstablishmentData = {
+            id: row.id,
             place_id: row.place_id,
             name: row.name ?? "",
             formatted_address: row.formatted_address ?? "",
@@ -89,6 +90,7 @@ export function useHydrateActiveEstablishment(userId: string | undefined) {
       }
 
       const estab: EstablishmentData = {
+        id: data.id,
         place_id: data.place_id,
         name: data.name ?? "",
         formatted_address: data.formatted_address ?? "",
