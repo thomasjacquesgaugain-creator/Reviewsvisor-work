@@ -143,6 +143,7 @@ interface SmartStore {
     objectiveId: string,
     status: ObjectiveStatus
   ) => Promise<SmartObjective | null>;
+  resetAllData: () => void;
 }
 
 /* ─────────────────────────────────────────────
@@ -446,6 +447,16 @@ export const useSmartStore = create<SmartStore>((set, get) => ({
     throw err;
   }
 },
+
+  resetAllData: () =>
+    set({
+      objectives: [],
+      currentDraft: null,
+      questionnaireByIssue: {},
+      error: null,
+      isGenerating: false,
+      isSaving: false,
+    }),
 
 
 }));

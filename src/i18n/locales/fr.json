@@ -1442,7 +1442,9 @@
     "confirmDelete": "Confirmer la suppression",
     "confirmDeleteDesc": "Cette action est irréversible.",
     "confirmAction": "Confirmer l'action",
-    "areYouSure": "Êtes-vous sûr ?"
+    "areYouSure": "Êtes-vous sûr ?",
+    "confirmDeleteDescription":"Cette action est irréversible. La suppression de tous les avis entraînera également la suppression des analyses d'avis et des objectifs SMART associés à cet établissement.",
+    "deleteButton":"Tout supprimer définitivement"
   },
   "dates": {
     "today": "Aujourd'hui",

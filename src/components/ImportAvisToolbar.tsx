@@ -68,22 +68,23 @@ export default function ImportAvisToolbar({ onClose, onFileAnalyzed, onImportSuc
       case "auto":
         return (
           <div className="space-y-4">
-            
-            <div className="py-6">
-              <p className="text-sm text-gray-600 mb-4">
-                {placeId 
-                  ? t("import.autoImportForEstablishment", { name: establishmentName || t("establishment.thisEstablishment") })
-                  : t("import.selectEstablishmentToImport")}
-              </p>
-              <GoogleImportButton
-                onSuccess={onImportSuccess}
-                placeId={placeId}
-                onOpenVisualPanel={onOpenVisualPanel}
-                onClose={onClose}
-                establishmentName={establishmentName}
-                establishmentAddress={establishmentAddress}
-              />
-            </div>
+            <CollapsibleInstructionsHeader>
+              <div className="py-6">
+                <p className="text-sm text-gray-600 mb-4">
+                  {placeId 
+                    ? t("import.autoImportForEstablishment", { name: establishmentName || t("establishment.thisEstablishment") })
+                    : t("import.selectEstablishmentToImport")}
+                </p>
+              </div>
+            </CollapsibleInstructionsHeader>
+            <GoogleImportButton
+              onSuccess={onImportSuccess}
+              placeId={placeId}
+              onOpenVisualPanel={onOpenVisualPanel}
+              onClose={onClose}
+              establishmentName={establishmentName}
+              establishmentAddress={establishmentAddress}
+            />
           </div>
         );
       default:
