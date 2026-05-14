@@ -2968,7 +2968,7 @@ const Dashboard = () => {
     ? allReviewsForChart.length
     : (insight?.total_count ?? 0);
   const totalAnalyzed = totalReviews;
-  const avgRating =  allReviewsForChart?allReviewsForChart.reduce((sum, r) => sum + (r.rating || 0), 0) /allReviewsForChart.length:0;
+  const avgRating =allReviewsForChart?.length > 0 ? allReviewsForChart.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / allReviewsForChart.length: 0;
 
   const positivePct =
     // hasAnalysisData && insight?.positive_ratio != null
