@@ -201,7 +201,7 @@ async function onSubmit(formData: InscriptionFormData) {
           </div>
         </div> */}
 
-        <Card className="w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden">
+        <Card className="w-full bg-white/90 dark:bg-white/[0.05] backdrop-blur-sm dark:backdrop-blur-xl border-0 dark:border dark:border-white/[0.08] shadow-xl dark:shadow-2xl rounded-3xl overflow-hidden">
           <CardHeader className="space-y-2 text-center pb-2">
             <CardTitle className="text-3xl font-bold text-gray-900 dark:text-white">{t("auth.signup") || "Inscription"}</CardTitle>
               <p className="text-gray-600 dark:text-gray-400">{t("auth.startAnalyzing")}</p>
@@ -355,7 +355,7 @@ async function onSubmit(formData: InscriptionFormData) {
                 <button
                   type="button"
                   onClick={() => navigate("/connexion")}
-                  className="text-blue-600 dark:text-blue-400 font-medium hover:underline"
+                  className="text-primary font-medium hover:underline"
                 >
                   {t("auth.login", "Login")}
                 </button>

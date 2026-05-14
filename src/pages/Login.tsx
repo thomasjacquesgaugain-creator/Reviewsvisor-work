@@ -148,7 +148,7 @@ const Login = () => {
 
         {/* Login Card */}
         <div className="container mx-auto px-4 max-w-md mb-8 pb-4">
-          <Card className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden">
+          <Card className="bg-white/90 dark:bg-white/[0.05] backdrop-blur-sm dark:backdrop-blur-xl border-0 dark:border dark:border-white/[0.08] shadow-xl dark:shadow-2xl rounded-3xl overflow-hidden">
             <CardContent className="p-8 space-y-6">
               <div className="text-center space-y-2">
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -281,7 +281,7 @@ const Login = () => {
                 <div className="text-center">
                   <Link 
                     to="/mot-de-passe-oublie" 
-                    className="inline-flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:underline"
+                    className="inline-flex items-center gap-2 text-sm text-primary hover:text-blue-700 hover:underline"
                   >
                     <LockKeyholeOpen className="h-4 w-4" /> {t("auth.forgotPassword")}
                   </Link>
@@ -301,7 +301,7 @@ const Login = () => {
                   ) : (
                     <Link 
                       to="/inscription" 
-                      className="text-blue-600 dark:text-blue-400 font-medium hover:underline"
+                      className="text-primary font-medium hover:underline"
                     >
                       {t("auth.signup")}
                     </Link>

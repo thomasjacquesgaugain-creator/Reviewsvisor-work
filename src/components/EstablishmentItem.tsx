@@ -34,10 +34,10 @@ export default function EstablishmentItem({ etab, onSelect, isActive = false }: 
     <TooltipProvider>
       <div
         onClick={() => onSelect(etab)}
-        className={`cursor-pointer bg-card text-card-foreground border-2 rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm relative ${ESTABLISHMENT_CARD_HOVER} ${
+        className={`cursor-pointer bg-white dark:bg-slate-900/80 text-card-foreground border-2 rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm relative ${ESTABLISHMENT_CARD_HOVER} ${
           isActive
             ? `border-primary bg-primary/10 ${ESTABLISHMENT_CARD_HOVER_ACTIVE}`
-            : `border-border ${ESTABLISHMENT_CARD_HOVER_NEUTRAL}`
+            : `border-slate-200 dark:border-slate-700 ${ESTABLISHMENT_CARD_HOVER_NEUTRAL}`
         }`}
       >
         {isActive && (

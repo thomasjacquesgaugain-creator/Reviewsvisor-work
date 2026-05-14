@@ -343,7 +343,7 @@ export function ReviewsVisualPanel({
   })();
 
   if (!effectiveId && !displayName) {
-    return <Card className="relative z-20 max-w-7xl mx-auto" data-testid="reviews-visual-panel">
+    return <Card className="relative z-20 max-w-7xl mx-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)] dark:shadow-[0_18px_45px_rgba(2,6,23,0.5)]" data-testid="reviews-visual-panel">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-foreground">
             <BarChart3 className="w-5 h-5" />
@@ -376,7 +376,7 @@ export function ReviewsVisualPanel({
     stars: t("dashboard.stars1"),
     count: summary.byStars[1]
   }] : [];
-  return <Card className="relative z-20 max-w-7xl mx-auto" data-testid="reviews-visual-panel">
+  return <Card className="relative z-20 max-w-7xl mx-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)] dark:shadow-[0_18px_45px_rgba(2,6,23,0.5)]" data-testid="reviews-visual-panel">
       <CardHeader>
         <div className="flex items-start justify-between mb-2">
           <div>
@@ -416,7 +416,7 @@ export function ReviewsVisualPanel({
           </div> : <>
             {/* Header Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
+              <Card className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 shadow-sm">
                 <CardContent className="flex items-center p-4" data-testid="metric-avg-rating">
                   <Star className="w-8 h-8 text-yellow-500 mr-3" />
                   <div>
@@ -426,7 +426,7 @@ export function ReviewsVisualPanel({
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 shadow-sm">
                 <CardContent className="flex items-center justify-between p-4" data-testid="metric-total-reviews">
                   <div className="flex items-center">
                     <BarChart3 className="mr-3 h-8 w-8 text-primary" />
@@ -470,7 +470,7 @@ export function ReviewsVisualPanel({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {/* Tous les avis */}
                   <Card 
-                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'all' ? 'ring-2 ring-primary bg-primary/5' : ''}`}
+                    className={`cursor-pointer bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 transition-all hover:shadow-md dark:hover:bg-slate-800/80 ${activeFilter === 'all' ? 'ring-2 ring-primary bg-primary/5' : ''}`}
                     onClick={() => setActiveFilter('all')}
                   >
                     <CardContent className="flex items-center px-4 py-2">
@@ -484,7 +484,7 @@ export function ReviewsVisualPanel({
 
                   {/* Avis positifs */}
                   <Card 
-                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'positive' ? 'ring-2 ring-green-500 bg-green-500/5' : ''}`}
+                    className={`cursor-pointer bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 transition-all hover:shadow-md dark:hover:bg-slate-800/80 ${activeFilter === 'positive' ? 'ring-2 ring-green-500 bg-green-500/5' : ''}`}
                     onClick={() => setActiveFilter('positive')}
                   >
                     <CardContent className="flex items-center px-4 py-2">
@@ -498,7 +498,7 @@ export function ReviewsVisualPanel({
                   
                   {/* Avis négatifs */}
                   <Card 
-                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'negative' ? 'ring-2 ring-red-500 bg-red-500/5' : ''}`}
+                    className={`cursor-pointer bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 transition-all hover:shadow-md dark:hover:bg-slate-800/80 ${activeFilter === 'negative' ? 'ring-2 ring-red-500 bg-red-500/5' : ''}`}
                     onClick={() => setActiveFilter('negative')}
                   >
                     <CardContent className="flex items-center px-4 py-2">
@@ -512,7 +512,7 @@ export function ReviewsVisualPanel({
                   
                   {/* Suspicion faux avis */}
                   <Card 
-                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'suspect' ? 'ring-2 ring-orange-500 bg-orange-500/5' : ''}`}
+                    className={`cursor-pointer bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 transition-all hover:shadow-md dark:hover:bg-slate-800/80 ${activeFilter === 'suspect' ? 'ring-2 ring-orange-500 bg-orange-500/5' : ''}`}
                     onClick={() => setActiveFilter('suspect')}
                   >
                     <CardContent className="flex items-center px-4 py-2">

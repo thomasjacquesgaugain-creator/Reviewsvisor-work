@@ -96,7 +96,7 @@ const ForgotPassword = () => {
 
         {/* Forgot Password Card */}
         <div className="container mx-auto px-4 max-w-md mb-8 pb-4">
-          <Card className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden">
+          <Card className="bg-white/90 dark:bg-white/[0.05] backdrop-blur-sm dark:backdrop-blur-xl border-0 dark:border dark:border-white/[0.08] shadow-xl dark:shadow-2xl rounded-3xl overflow-hidden">
             <CardContent className="p-8 space-y-6">
               <div className="text-center space-y-2">
                 <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-950/30 rounded-full flex items-center justify-center mb-4">

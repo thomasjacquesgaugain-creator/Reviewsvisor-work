@@ -438,20 +438,34 @@ export default function MonEtablissementCard({
             >
               Plateforme
             </label>
-            <select
-              id="import-source"
-              value={importSource}
-              onChange={(e) =>
-                setImportSource(e.target.value as ImportReviewSource)
-              }
-              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-              data-testid="select-import-source"
-            >
-              <option value="google">{t("platforms.google")}</option>
-              {/* Commented the below code for now as will integrate the below sources in phase 2 */}
-              {/* <option value="tripadvisor">{t("platforms.tripadvisor")}</option> */} 
-              {/* <option value="trustpilot">{t("platforms.trustpilot")}</option> */}
-            </select>
+            <div className="relative">
+              <select
+                id="import-source"
+                value={importSource}
+                onChange={(e) =>
+                  setImportSource(e.target.value as ImportReviewSource)
+                }
+                className="appearance-none rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/80 text-foreground pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                data-testid="select-import-source"
+              >
+                <option value="google">{t("platforms.google")}</option>
+              </select>
+
+              <svg
+                className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m6 9 6 6 6-6"
+                />
+              </svg>
+            </div>
             <button
               type="button"
               // onClick={() => handleImportReviews()}
