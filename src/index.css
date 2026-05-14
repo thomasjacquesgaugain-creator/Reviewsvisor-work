@@ -377,7 +377,8 @@ All colors MUST be HSL.
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  /* clip avoids horizontal scroll without breaking `position: sticky` (overflow-x: hidden breaks sticky in Chromium/WebKit) */
+  overflow-x: clip;
 }
 
 .app-page-background {

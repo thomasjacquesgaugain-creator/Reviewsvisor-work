@@ -218,7 +218,7 @@ export function ThematicSegmentationBar() {
   const sourceLabel = currentSourceOption ? currentSourceOption.label : t("dashboard.sourceFilter");
 
   return (
-    <div className="mb-6 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm md:sticky md:top-0 md:z-20">
+    <div className="mb-6 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h3 className="text-sm font-semibold text-gray-800">{t("dashboard.analysisContext")}</h3>
