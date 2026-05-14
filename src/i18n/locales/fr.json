@@ -102,6 +102,7 @@
     "signingUp": "Inscription...",
     "forgotPasswordTitle": "Mot de passe oublié",
     "forgotPasswordSubtitle": "Entrez votre adresse email pour recevoir un lien de réinitialisation",
+    "rememberPassword": "Vous souvenez-vous de votre mot de passe?",
     "emailSent": "Email envoyé !",
     "emailSentMessage": "Un email vous a été envoyé avec un lien pour réinitialiser votre mot de passe",
     "checkInbox": "Vérifiez votre boîte de réception (et vos spams) pour le lien de réinitialisation.",

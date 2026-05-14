@@ -102,6 +102,7 @@
     "signingUp": "Signing up...",
     "forgotPasswordTitle": "Forgot password",
     "forgotPasswordSubtitle": "Enter your email address to receive a reset link",
+    "rememberPassword": "Remember your password?",
     "emailSent": "Email sent!",
     "emailSentMessage": "An email has been sent to you with a link to reset your password",
     "checkInbox": "Check your inbox (and spam) for the reset link.",

@@ -7,12 +7,12 @@ import { useTranslation } from "react-i18next";
 const APropos = () => {
   const { t } = useTranslation();
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Background with organic shapes */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-violet-200 rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-200 to-yellow-200 rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-violet-200 dark:from-blue-900/30 dark:to-violet-900/30 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-200 to-yellow-200 dark:from-orange-900/20 dark:to-yellow-900/20 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-200 to-cyan-200 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-full blur-3xl opacity-30"></div>
       </div>
       
       <div className="relative z-10">
@@ -48,15 +48,15 @@ const APropos = () => {
             
             {/* Vision cards */}
             <div className="grid grid-cols-3 gap-4 md:gap-6 max-w-xl mx-auto">
-              <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div className="bg-card/80 dark:bg-white/[0.04] backdrop-blur-sm border border-border/50 dark:backdrop-blur-xl rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
                 <Eye className="w-5 h-5 text-primary mx-auto mb-2" />
                 <p className="text-sm font-medium text-foreground">{t("about.vision")}</p>
               </div>
-              <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div className="bg-card/80 dark:bg-white/[0.04] backdrop-blur-sm border border-border/50 dark:backdrop-blur-xl rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
                 <Target className="w-5 h-5 text-success mx-auto mb-2" />
                 <p className="text-sm font-medium text-foreground">{t("about.mission")}</p>
               </div>
-              <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div className="bg-card/80 dark:bg-white/[0.04] backdrop-blur-sm border border-border/50 dark:backdrop-blur-xl rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
                 <Cpu className="w-5 h-5 text-accent mx-auto mb-2" />
                 <p className="text-sm font-medium text-foreground">{t("about.technology")}</p>
               </div>
@@ -67,7 +67,7 @@ const APropos = () => {
         {/* INTRO SECTION */}
         <section className="py-6 md:py-8 px-4 md:px-8">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm">
+            <div className="bg-card dark:bg-white/[0.04] border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm dark:backdrop-blur-xl">
               <div className="flex gap-4">
                 <div className="hidden sm:block w-1 bg-gradient-to-b from-success to-success/30 rounded-full shrink-0" />
                 <div className="flex-1 space-y-4 text-base md:text-lg text-muted-foreground leading-relaxed">
@@ -87,7 +87,7 @@ const APropos = () => {
         {/* MISSION SECTION */}
         <section className="py-6 md:py-8 px-4 md:px-8 bg-gradient-to-b from-transparent via-secondary/30 to-transparent">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-10 shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div className="bg-card dark:bg-white/[0.04] border border-border/60 rounded-2xl p-6 md:p-10 shadow-sm dark:backdrop-blur-xl hover:shadow-md transition-shadow duration-300">
               <div className="flex gap-4">
                 <div className="hidden sm:block w-1.5 bg-gradient-to-b from-primary to-primary/30 rounded-full shrink-0" />
                 <div className="flex-1">
@@ -119,33 +119,33 @@ const APropos = () => {
             </div>
             
             {/* Intro card */}
-            <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm mb-6">
+            <div className="bg-card dark:bg-white/[0.04] border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm dark:backdrop-blur-xl mb-6">
               <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
                 {t("about.problemDescription")}
               </p>
             </div>
             
             {/* Principles intro */}
-            <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm">
+            <div className="bg-card dark:bg-white/[0.04] border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm dark:backdrop-blur-xl">
               <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-6">
                 {t("about.solutionIntro")} <span className="text-blue">Reviewsvisor</span> {t("about.solutionIntro2")} :
               </p>
               
               {/* Principles list */}
               <div className="grid gap-3">
-                <div className="flex items-center gap-4 p-4 bg-secondary/40 rounded-xl border border-border/40 hover:bg-secondary/60 transition-colors duration-200">
+                <div className="flex items-center gap-4 p-4 bg-secondary/40 dark:bg-white/[0.03] rounded-xl border border-border/40 hover:bg-secondary/60 dark:hover:bg-white/[0.06] transition-colors duration-200">
                   <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
                   <span className="text-foreground font-medium">👉 {t("about.principle1")}</span>
                 </div>
-                <div className="flex items-center gap-4 p-4 bg-secondary/40 rounded-xl border border-border/40 hover:bg-secondary/60 transition-colors duration-200">
+                <div className="flex items-center gap-4 p-4 bg-secondary/40 dark:bg-white/[0.03] rounded-xl border border-border/40 hover:bg-secondary/60 dark:hover:bg-white/[0.06] transition-colors duration-200">
                   <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
                   <span className="text-foreground font-medium">👉 {t("about.principle2")}</span>
                 </div>
-                <div className="flex items-center gap-4 p-4 bg-secondary/40 rounded-xl border border-border/40 hover:bg-secondary/60 transition-colors duration-200">
+                <div className="flex items-center gap-4 p-4 bg-secondary/40 dark:bg-white/[0.03] rounded-xl border border-border/40 hover:bg-secondary/60 dark:hover:bg-white/[0.06] transition-colors duration-200">
                   <CheckCircle2 className="w-5 h-5 text-accent shrink-0" />
                   <span className="text-foreground font-medium">👉 {t("about.principle3")}</span>
                 </div>
-                <div className="flex items-center gap-4 p-4 bg-secondary/40 rounded-xl border border-border/40 hover:bg-secondary/60 transition-colors duration-200">
+                <div className="flex items-center gap-4 p-4 bg-secondary/40 dark:bg-white/[0.03] rounded-xl border border-border/40 hover:bg-secondary/60 dark:hover:bg-white/[0.06] transition-colors duration-200">
                   <CheckCircle2 className="w-5 h-5 text-warning shrink-0" />
                   <span className="text-foreground font-medium">👉 {t("about.principle4")}</span>
                 </div>
@@ -157,7 +157,7 @@ const APropos = () => {
         {/* TECHNOLOGY SECTION */}
         <section className="py-6 md:py-8 px-4 md:px-8 bg-gradient-to-b from-transparent via-primary/5 to-transparent">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-card border border-primary/20 rounded-2xl p-6 md:p-10 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
+            <div className="bg-card dark:bg-white/[0.04] border border-primary/20 rounded-2xl p-6 md:p-10 shadow-sm dark:backdrop-blur-xl hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
               {/* Subtle tech pattern */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl" />
               
@@ -195,16 +195,16 @@ const APropos = () => {
             
             <div className="grid md:grid-cols-2 gap-6">
               {/* Text card */}
-              <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+              <div className="bg-card dark:bg-white/[0.04] border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm dark:backdrop-blur-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
                 <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
                   {t("about.platformDescription")} <span className="text-blue">Reviewsvisor</span> {t("about.adaptsToDaily")}. {t("about.interfaceDesigned")}
                 </p>
               </div>
               
               {/* Visual placeholder card */}
-              <div className="bg-gradient-to-br from-primary/10 via-accent/5 to-success/10 border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center">
+              <div className="bg-gradient-to-br from-primary/10 via-accent/5 to-success/10 dark:from-white/[0.05] dark:via-white/[0.03] dark:to-white/[0.04] border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-card/80 border border-border/50 flex items-center justify-center shadow-sm">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-card/80 dark:bg-white/[0.06] border border-border/50 dark:backdrop-blur-xl flex items-center justify-center shadow-sm">
                     <Sparkles className="w-8 h-8 text-primary" />
                   </div>
                   <p className="text-sm text-muted-foreground font-medium">{t("about.intuitiveInterface")}</p>

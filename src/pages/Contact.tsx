@@ -6,12 +6,12 @@ import { useTranslation } from "react-i18next";
 export default function Contact() {
   const { t } = useTranslation();
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Background with organic shapes */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-violet-200 rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-200 to-yellow-200 rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-violet-200 dark:from-blue-900/30 dark:to-violet-900/30 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-200 to-yellow-200 dark:from-orange-900/20 dark:to-yellow-900/20 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-200 to-cyan-200 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-full blur-3xl opacity-30"></div>
       </div>
 
       <div className="relative z-10">
@@ -41,7 +41,7 @@ export default function Contact() {
       <section className="py-4 md:py-5">
         <div className="container mx-auto px-4">
           <div className="max-w-xl mx-auto">
-            <Card className="border border-border/50 shadow-md hover:shadow-lg transition-shadow duration-300 bg-card">
+            <Card className="border border-border/50 shadow-md hover:shadow-lg transition-shadow duration-300 bg-card dark:bg-white/[0.04] dark:backdrop-blur-xl">
               <CardContent className="p-5 md:p-6 text-center">
                 <div className="mb-3 inline-flex items-center justify-center w-32 h-16 rounded-full bg-primary/10">
                   <Mail className="w-12 h-10 text-primary" />
@@ -75,7 +75,7 @@ export default function Contact() {
           <div className="max-w-3xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 md:gap-3">
               {/* Support Card */}
-              <Card className="border border-border/40 bg-card hover:bg-muted/30 hover:border-primary/30 transition-all duration-300 group">
+              <Card className="border border-border/40 bg-card dark:bg-white/[0.04] hover:bg-muted/30 dark:hover:bg-white/[0.06] hover:border-primary/30 transition-all duration-300 group dark:backdrop-blur-xl">
                 <CardContent className="p-4 text-center">
                   <div className="mb-2.5 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
                     <Headphones className="w-5 h-5 text-primary" />
@@ -88,7 +88,7 @@ export default function Contact() {
               </Card>
 
               {/* Questions Card */}
-              <Card className="border border-border/40 bg-card hover:bg-muted/30 hover:border-primary/30 transition-all duration-300 group">
+              <Card className="border border-border/40 bg-card dark:bg-white/[0.04] hover:bg-muted/30 dark:hover:bg-white/[0.06] hover:border-primary/30 transition-all duration-300 group dark:backdrop-blur-xl">
                 <CardContent className="p-4 text-center">
                   <div className="mb-2.5 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
                     <HelpCircle className="w-5 h-5 text-primary" />
@@ -101,7 +101,7 @@ export default function Contact() {
               </Card>
 
               {/* Partnerships Card */}
-              <Card className="border border-border/40 bg-card hover:bg-muted/30 hover:border-primary/30 transition-all duration-300 group">
+              <Card className="border border-border/40 bg-card dark:bg-white/[0.04] hover:bg-muted/30 dark:hover:bg-white/[0.06] hover:border-primary/30 transition-all duration-300 group dark:backdrop-blur-xl">
                 <CardContent className="p-4 text-center">
                   <div className="mb-2.5 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
                     <Handshake className="w-5 h-5 text-primary" />
