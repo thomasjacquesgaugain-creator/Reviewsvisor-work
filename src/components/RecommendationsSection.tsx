@@ -10,6 +10,7 @@ import type { ParetoItem } from "@/types/analysis";
 import type { RootCauseAnalysis } from "@/utils/rootCauseAnalysis";
 import { getCurrentEstablishment } from "@/services/establishments";
 import { useTranslation } from "react-i18next";
+import { useEstablishmentStore } from "@/store/establishmentStore";
 
 interface Props {
   paretoCauses: ParetoItem[];
@@ -32,27 +33,21 @@ export function RecommendationsSection({ paretoCauses, rcaByIssue = {} }: Props)
     toggleAction,
     updateObjectiveStatus
   } = useSmartStore();
+  const activeEstablishmentId = useEstablishmentStore(
+  s => s.activeEstablishmentId
+);
 
-  const [establishmentId, setEstablishmentId] = useState<string | null>(null);
+
   const [modalOpen, setModalOpen] = useState(false);
    const [isUpdating, setIsUpdating] = useState(false);
 
-  const establishmentIdRef = useRef<string | null>(null);
   const {t}=useTranslation();
 
 useEffect(() => {
-  async function loadEstablishment() {
-    const est = await getCurrentEstablishment();
-    const id = est?.id ?? null;
-    setEstablishmentId(id);
-    establishmentIdRef.current = id;
-    if (!id) return;
-    // only fetch
-    await fetchObjectives(id);
-  }
-  loadEstablishment();
-}, []);
+  if (!activeEstablishmentId) return;
 
+  fetchObjectives(activeEstablishmentId);
+}, [activeEstablishmentId, fetchObjectives]);
 useEffect(() => {
   async function syncActiveObjective() {
     if (!objectives.length) return;
@@ -178,7 +173,7 @@ useEffect(() => {
 
               <Button
                 onClick={handleUpdate}
-                disabled={isUpdating || !establishmentId}
+                disabled={isUpdating || !activeEstablishmentId}
                 size="sm"
                 className="bg-orange-500 hover:bg-orange-600 text-white"
               >

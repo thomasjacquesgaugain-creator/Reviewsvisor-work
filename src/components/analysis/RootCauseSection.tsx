@@ -9,7 +9,7 @@ import { Button } from "../ui/button";
 import { useState } from "react";
 import Questionnaire, { QuestionnaireResult,IshikawaScores,} from "./Questionare";
 import { useSmartStore } from "@/store/smartStore";
-import { useEffect , useRef } from "react";
+import { useEffect } from "react";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 
 import { useTranslation } from "react-i18next";
@@ -231,36 +231,34 @@ export function RootCauseSection({
   /* ── Step navigation (one issue at a time) ── */
   const [currentStep, setCurrentStep] = useState(0);
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
-  const [establishmentId, setEstablishmentId] = useState<string | null>(null);
   const [questionnaireSkipped, setQuestionnaireSkipped] = useState(false);
   const [showQuestionare, setShowQuestionare] = useState(false);
   const { t } = useTranslation();
-  const selectedEstablishmentId = useEstablishmentStore(
-    (s) => s.selectedEstablishment?.id ?? null
-  );
+  const activeEstablishmentId = useEstablishmentStore(
+  s => s.activeEstablishmentId
+);
+const selectedEstablishment = useEstablishmentStore(
+  s => s.selectedEstablishment
+);
+const resolvedEstablishmentId = activeEstablishmentId ?? selectedEstablishment?.id ?? null;
 
-
-const establishmentIdRef = useRef<string | null>(null);
 /* ── Current issue ── */
 const currentIssue =
   paretoIssues && paretoIssues.length > 0
     ? paretoIssues[currentStep]
     : null;
 
-/* ── Load establishment ── */
 useEffect(() => {
-  setEstablishmentId(selectedEstablishmentId);
-  establishmentIdRef.current = selectedEstablishmentId;
-}, [selectedEstablishmentId]);
+  setCurrentStep(0);
+  setShowQuestionnaire(false);
+  setQuestionnaireSkipped(false);
+}, [activeEstablishmentId]);
 
-/* ── Fetch SMART objectives when ID is ready ── */
 useEffect(() => {
-  if (!establishmentId) return;
+  if (!resolvedEstablishmentId) return;
 
-  fetchObjectives(establishmentId);
-}, [establishmentId]);
-
-
+  fetchObjectives(resolvedEstablishmentId);
+}, [resolvedEstablishmentId, fetchObjectives]);
 
 useEffect(() => {
   if (!smartObjectives?.length) return;
@@ -339,8 +337,7 @@ const currentSmartObjective = useMemo(() => {
 
     const handleQuestionnaireSuccess = async (result: QuestionnaireResult) => {
       if (!currentIssue || !rootCauseAnalysis) return;
-
-      const estId = establishmentIdRef.current;
+      const estId = resolvedEstablishmentId;
       if (!estId) return;
 
       //  store update
@@ -476,9 +473,9 @@ const currentSmartObjective = useMemo(() => {
         {showQuestionnaire && (
           <>
             <Questionnaire
-                key={currentIssue.name}
+                key={`${resolvedEstablishmentId ?? "no-establishment"}-${currentIssue.name}`}
                 problemTitle={currentIssue.name}
-                establishmentId={establishmentId}
+                establishmentId={resolvedEstablishmentId ?? ""}
                 smartObjectiveId={currentSmartObjective?.id ?? ""}
                 initialScores={
                   currentQuestionnaire?.scores ??

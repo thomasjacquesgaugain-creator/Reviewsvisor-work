@@ -75,17 +75,16 @@ Deno.serve(async (req) => {
     const { error: updateError1 } = await supabaseAdmin
       .from('establishments')
       .update({
-        business_type,
+        types:business_type,
         business_type_confidence: 100, // Override manuel = 100%
         business_type_source: 'manual',
-        analysis_version: 'v2-auto-universal'
       })
       .eq('place_id', place_id)
       .eq('user_id', userId);
 
     // Mettre à jour dans établissements aussi
     const { error: updateError2 } = await supabaseAdmin
-      .from('établissements')
+      .from('review_insights')
       .update({
         business_type,
         business_type_confidence: 100,

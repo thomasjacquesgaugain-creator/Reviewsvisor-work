@@ -89,10 +89,13 @@ export function SmartObjectiveCard({
               </p>
               <p className="text-xs text-gray-400 mt-0.5">
                 {t("smartCard.header.pareto", {
-                  cause:      objective.pareto_cause,
-                  percentage: objective.pareto_percentage
-                    ? Math.round(objective.pareto_percentage ?? 0)
-                  : null,})}
+                  cause: objective.pareto_cause,
+                  percentageText: objective.pareto_percentage != null
+                    ? t("smartCard.header.negativeReviewsPercentage", {
+                        percentage: Math.round(objective.pareto_percentage),
+                      })
+                    : "",
+                })}
                 {objective.ishikawa_top_category && (
                   <span>
                     {" · "}{t("smartCard.header.ishikawa", {category: objective.ishikawa_top_category,})}

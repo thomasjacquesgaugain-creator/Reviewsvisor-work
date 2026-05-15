@@ -11,6 +11,8 @@ interface EstablishmentStore {
   setIsLoading: (loading: boolean) => void;
   /** place_id de l'établissement actif (source unique pour badge / sync). */
   activePlaceId: string | null;
+  activeEstablishmentId: string | null;
+  
   /**
    * Définit l'établissement actif : update optimiste store, persist Supabase (établissements.is_active), rollback + toast si erreur.
    * Toute l'app lit activePlaceId / selectedEstablishment depuis ce store.
@@ -24,15 +26,18 @@ interface EstablishmentStore {
 export const useEstablishmentStore = create<EstablishmentStore>((set, get) => ({
   selectedEstablishment: null,
   activePlaceId: null,
+  activeEstablishmentId: null,
   setSelectedEstablishment: (establishment) =>
     set({
       selectedEstablishment: establishment,
       activePlaceId: establishment?.place_id ?? null,
+      activeEstablishmentId: establishment?.id ?? null,
     }),
   clearSelectedEstablishment: () =>
     set({
       selectedEstablishment: null,
       activePlaceId: null,
+      activeEstablishmentId: null,
     }),
   isLoading: false,
   setIsLoading: (loading) => set({ isLoading: loading }),
@@ -50,6 +55,7 @@ export const useEstablishmentStore = create<EstablishmentStore>((set, get) => ({
     set({
       selectedEstablishment: payload,
       activePlaceId: placeId,
+      activeEstablishmentId: payload.id ?? null,
     });
     if (import.meta.env.DEV) {
       console.log("[establishmentStore] activePlaceId changed", {
@@ -97,6 +103,7 @@ export const useEstablishmentStore = create<EstablishmentStore>((set, get) => ({
           updated_at: estab.updated_at ?? payload.updated_at,
         },
         activePlaceId: placeId,
+        activeEstablishmentId: estab.id,
       });
 
       // update profile current establishment
@@ -114,6 +121,7 @@ export const useEstablishmentStore = create<EstablishmentStore>((set, get) => ({
       set({
         selectedEstablishment: prev,
         activePlaceId: prev?.place_id ?? null,
+        activeEstablishmentId: prev?.id ?? null,
       });
       toast.error("Impossible de définir l'établissement actif");
       if (import.meta.env.DEV)
