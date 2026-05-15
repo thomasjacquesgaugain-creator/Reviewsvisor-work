@@ -123,7 +123,7 @@ export function AnalysisPage({ data, establishmentName,insight,  reviews, dynami
 
           <div className="flex items-stretch gap-8 lg:gap-6">
             <aside className="hidden lg:block w-72 shrink-0 pt-1">
-              <div className="sticky top-24 z-10 flex max-h-[calc(100vh-6rem)] flex-col rounded-2xl border border-border bg-background backdrop-blur-md shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div className="sticky top-24 z-10 flex max-h-[calc(100vh-6rem)] flex-col rounded-lg border border-border bg-background backdrop-blur-md shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <div className="shrink-0 border-b border-border px-4 pb-3 pt-4">
                   <div className="flex gap-3">
                     <ListOrdered
@@ -161,7 +161,7 @@ export function AnalysisPage({ data, establishmentName,insight,  reviews, dynami
                         "w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-150 border-l-2",
                         activeSection === section.id
                           ? "bg-primary/50 text-slate-900 dark:text-primary-foreground font-medium border-primary border-l-2 rounded-l"
-                          : "text-slate-600 dark:text-slate-100 hover:bg-accent/50 hover:text-slate-900 dark:hover:text-foreground border-transparent"
+                          : "text-slate-600 dark:text-slate-100 hover:bg-primary/10 hover:text-slate-900 dark:hover:text-foreground border-transparent rounded-l"
                       )}
                     >
                       {section.label}
