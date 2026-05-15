@@ -12,10 +12,11 @@ import { AnalysisFiltersProvider, useAnalysisFilters } from "./AnalysisFiltersCo
 import { ThematicSegmentationBar } from "./ThematicSegmentationBar";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { APP_NAME, APP_TAGLINE } from "@/config/brand";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ListOrdered } from "lucide-react";
 import { t } from "i18next";
+import { cn } from "@/lib/utils";
 
 interface AnalysisPageProps {
   data: CompleteAnalysisData;
@@ -38,6 +39,7 @@ const ANALYSIS_TOC_SECTIONS = [
 export function AnalysisPage({ data, establishmentName,insight,  reviews, dynamicThemes = [] }: AnalysisPageProps) {
   const { t } = useTranslation();
 
+  const [activeSection, setActiveSection] = useState("overview-section");
   const analysisSections = useMemo(
     () => [
       ...ANALYSIS_TOC_SECTIONS.map((s) => ({ id: s.id, label: s.label })),
@@ -48,6 +50,36 @@ export function AnalysisPage({ data, establishmentName,insight,  reviews, dynami
     ],
     [t],
   );
+
+  useEffect(() => {
+  const handleScroll = () => {
+    const sectionIds = analysisSections.map((s) => s.id);
+
+    let currentSection = sectionIds[0];
+
+    for (const id of sectionIds) {
+      const element = document.getElementById(id);
+
+      if (element) {
+        const rect = element.getBoundingClientRect();
+
+        if (rect.top <= 140) {
+          currentSection = id;
+        }
+      }
+    }
+
+    setActiveSection(currentSection);
+  };
+
+  window.addEventListener("scroll", handleScroll, { passive: true });
+
+  handleScroll();
+
+  return () => {
+    window.removeEventListener("scroll", handleScroll);
+  };
+}, [analysisSections]);
 
   console.log('[AnalysisPage] Reviews reçus:', reviews);
   console.log('[AnalysisPage] Rendu avec données:', { 
@@ -89,30 +121,30 @@ export function AnalysisPage({ data, establishmentName,insight,  reviews, dynami
 
           <ThematicSegmentationBar />
 
-          <div className="flex items-stretch gap-8 lg:gap-10">
+          <div className="flex items-stretch gap-8 lg:gap-6">
             <aside className="hidden lg:block w-72 shrink-0 pt-1">
-              <div className="sticky top-24 z-10 flex max-h-[calc(100vh-6rem)] flex-col rounded-2xl border border-white/10 bg-white/[0.07] backdrop-blur-md shadow-2xl shadow-black/50 ring-1 ring-white/5">
-                <div className="shrink-0 border-b border-white/10 px-4 pb-3 pt-4">
+              <div className="sticky top-24 z-10 flex max-h-[calc(100vh-6rem)] flex-col rounded-2xl border border-border bg-background backdrop-blur-md shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div className="shrink-0 border-b border-border px-4 pb-3 pt-4">
                   <div className="flex gap-3">
                     <ListOrdered
-                      className="mt-0.5 h-5 w-5 shrink-0 text-white"
+                      className="mt-0.5 h-5 w-5 shrink-0 text-foreground"
                       aria-hidden
                     />
                     <div className="min-w-0">
                       <h2
                         id="analysis-toc-heading"
-                        className="text-sm font-semibold leading-snug text-white"
+                        className="text-sm font-semibold leading-snug text-foreground"
                       >
                         {t("analysis.tocSidebar.title")}
                       </h2>
-                      <p className="mt-1 text-xs leading-relaxed text-white">
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                         {t("analysis.tocSidebar.description")}
                       </p>
                     </div>
                   </div>
                 </div>
                 <nav
-                  className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain p-3"
+                  className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain p-2"
                   aria-labelledby="analysis-toc-heading"
                 >
                   {analysisSections.map((section) => (
@@ -125,7 +157,12 @@ export function AnalysisPage({ data, establishmentName,insight,  reviews, dynami
                           block: "start",
                         });
                       }}
-                      className="w-full text-left px-4 py-3 rounded-xl text-sm text-white hover:bg-white/10 transition"
+                      className={cn(
+                        "w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-150 border-l-2",
+                        activeSection === section.id
+                          ? "bg-primary/50 text-slate-900 dark:text-primary-foreground font-medium border-primary border-l-2 rounded-l"
+                          : "text-slate-600 dark:text-slate-100 hover:bg-accent/50 hover:text-slate-900 dark:hover:text-foreground border-transparent"
+                      )}
                     >
                       {section.label}
                     </button>
