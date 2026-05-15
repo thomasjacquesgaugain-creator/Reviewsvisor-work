@@ -347,8 +347,8 @@
     "startingAnalysis": "Démarrage de l'analyse pour:",
     "analysisComplete": "Analyse terminée:",
     "insightsReloaded": "Insights rechargés:",
-    "analysisError": "Erreur d'analyse:",
-    "analysisErrorDuring": "Erreur lors de l'analyse:",
+    "analysisError": "Erreur d'analyse",
+    "analysisErrorDuring": "Erreur lors de l'analyse",
     "analysisHistory": "Historique des analyses",
     "previousAnalysesDescription": "Les analyses précédentes et terminées. Les résultats",
     "basedOnReviews": "Basée sur {{count}} avis",
@@ -2258,7 +2258,32 @@
   }
 }
 },
-"smartCard": {
+  "businessTypeOverrideModal": {
+    "title": "Corriger le type de commerce",
+    "description": "Sélectionnez le type de commerce correct pour améliorer la précision de l'analyse.",
+    "fieldLabel": "Type de commerce",
+    "selectPlaceholder": "Sélectionnez un type",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "success": {
+      "updated": "Type de commerce mis à jour"
+    },
+    "errors": {
+      "authRequired": "Vous devez être connecté",
+      "updateFailed": "Erreur lors de la mise à jour"
+    },
+    "types": {
+      "restaurant": "Restaurant",
+      "salon_coiffure": "Salon de coiffure",
+      "salle_sport": "Salle de sport",
+      "serrurier": "Serrurier",
+      "retail_chaussures": "Magasin de chaussures",
+      "institut_beaute": "Institut de beauté",
+      "autre": "Autre"
+    }
+  },
+  "smartCard": {
   "header": {
     "title":     "Objectif SMART — {{cause}}",
     "pareto": "Depuis Pareto : \"{{cause}}{{percentageText}}\"",

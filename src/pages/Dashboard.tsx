@@ -3475,6 +3475,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     t("dashboard.analysisComplete"),
                                     result,
                                   );
+                                toast.success(t("establishment.establishmentAnalysed"))
                                   // Recharger les insights au lieu de recharger toute la page
                                   const { data: insightData } = await supabase
                                     .from("review_insights")
@@ -3568,15 +3569,16 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     t("dashboard.analysisError"),
                                     result.error,
                                   );
+                                  toast.error(t("dashboard.analysisError"))
                                 }
                               } catch (error) {
                                 console.error(
                                   t("dashboard.analysisErrorDuring"),
                                   error,
                                 );
+                                toast.error(t("dashboard.analysisErrorDuring"))
                               } finally {
                                 setIsAnalyzing(false);
-                                toast.success(t("establishment.establishmentAnalysed"))
                               }
                             }}
                             disabled={isAnalyzing}
