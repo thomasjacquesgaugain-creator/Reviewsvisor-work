@@ -203,19 +203,7 @@ export const HeroSection = () => {
 
                 <Button
                   variant="outline"
-                  className="
-                    rounded-full
-                    border-border
-                    bg-background/90
-                    px-8
-                    py-3
-                    font-medium
-                    text-foreground
-                    hover:bg-muted
-
-                    dark:bg-white/[0.04]
-                    dark:hover:bg-white/[0.08]
-                  "
+                  className="h-10 rounded-full border-gray-300 bg-background px-8 py-3 font-medium text-gray-700 hover:bg-accent hover:text-accent-foreground dark:border-slate-700 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.08]"
                   onClick={() => navigate("/login")}
                 >
                   <span>
