@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessType } from "@/config/industry";
 import { ThemesDisplay } from "@/components/ThemesDisplay";
+import { BusinessTypeOverrideModal } from "../BusinessTypeOverrideModal";
+import { useEstablishmentStore } from "@/store/establishmentStore";
 import i18n from "@/i18n/config"; // ✅ only this — no t, no bind at module level
 
 interface OverviewSectionProps {
@@ -30,6 +32,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
   const [showBusinessTypeOverrideModal, setShowBusinessTypeOverrideModal] =useState(false);
   const [byRating, setByRating] = useState<Record<string, number>>({});
   const [totalThemeMentionsPercentage, setTotalThemeMentionPercentage]=useState(0)
+  const {  activePlaceId } =useEstablishmentStore();
   if (!data) {
     return (
       <div className="space-y-4">
@@ -999,6 +1002,19 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
           </CardContent>
         </Card>
       )}
+      {showBusinessTypeOverrideModal && (
+                <BusinessTypeOverrideModal
+                  open={showBusinessTypeOverrideModal}
+                  onOpenChange={setShowBusinessTypeOverrideModal}
+                  placeId={activePlaceId}
+                  currentType={insight?.business_type as BusinessType | null}
+                  onSuccess={() => {
+                    // Recharger les données après override
+                    window.location.reload();
+                  }}
+                />
+              )}
     </div>
+    
   );
 }
