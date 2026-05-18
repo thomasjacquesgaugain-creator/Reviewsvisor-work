@@ -256,6 +256,8 @@
     "cumulativePercent": "Cumulative %",
     "checklist": "Improvement checklist",
     "detailedAnalysis": "Detailed analysis",
+    "analysisError": "Analysis error",
+    "analysisErrorDuring": "Error during analysis",
     "registeredSince": "Registered since",
     "lastUpdate": "Last update",
     "granularity": "Granularity",
@@ -2051,10 +2053,36 @@
   }
 }
 },
-"smartCard": {
+  "businessTypeOverrideModal": {
+    "title": "Correct business type",
+    "description": "Select the correct business type to improve analysis accuracy.",
+    "fieldLabel": "Business type",
+    "selectPlaceholder": "Select a type",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "success": {
+      "updated": "Business type updated"
+    },
+    "errors": {
+      "authRequired": "You must be signed in",
+      "updateFailed": "Error while updating"
+    },
+    "types": {
+      "restaurant": "Restaurant",
+      "salon_coiffure": "Hair salon",
+      "salle_sport": "Gym",
+      "serrurier": "Locksmith",
+      "retail_chaussures": "Shoe store",
+      "institut_beaute": "Beauty salon",
+      "autre": "Other"
+    }
+  },
+  "smartCard": {
   "header": {
     "title":     "SMART objective — {{cause}}",
-    "pareto":    "From Pareto: \"{{cause}}{{percentage, select, null{} other{ – {{percentage}}% of negative reviews}}}\"",
+    "pareto": "From Pareto: \"{{cause}}{{percentageText}}\"",
+    "negativeReviewsPercentage": " – {{percentage}}% of negative reviews",
     "ishikawa":  "Ishikawa: {{category}}",
     "validated": "(validated)"
   },

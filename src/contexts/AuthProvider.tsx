@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
 import { capitalizeName } from "@/utils/capitalizeName";
 import { useEstablishmentStore } from "@/store/establishmentStore";
+import { useSmartStore } from "@/store/smartStore";
 
 type Profile = {
   id: string;
@@ -155,6 +156,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Nettoyer les données d'établissement pour éviter qu'un autre utilisateur les voie
       localStorage.removeItem('mon-etablissement');
       localStorage.removeItem('mes-etablissements');
+      useSmartStore.persist.clearStorage();
+      useSmartStore.getState().resetSmartState();
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     } finally {

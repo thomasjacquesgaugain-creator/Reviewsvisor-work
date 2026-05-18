@@ -177,7 +177,7 @@ const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const etablissementId = searchParams.get("etablissementId");
   const { user, displayName, loading, signOut } = useAuth();
-  const { selectedEstablishment, setActivePlace, activePlaceId } =
+  const { selectedEstablishment,activeEstablishmentId, setActivePlace, activePlaceId } =
     useEstablishmentStore();
   const { toast: toastHook } = useToast(); // Pour l'Agent IA (comme Assistance IA)
 
@@ -242,25 +242,14 @@ const Dashboard = () => {
   const [establishmentCreatedAt, setEstablishmentCreatedAt] = useState<
     string | null
   >(null);
-  const [establishmentId, setEstablishmentId] = useState<string | null>(null);
-
-  const establishmentIdRef = useRef<string | null>(null);
-    const {
-      objectives,
-      fetchObjectives,
-      toggleAction
-    } = useSmartStore();
+   const { objectives, fetchObjectives, toggleAction } = useSmartStore();
 
   useEffect(() => {
-    async function loadEst() {
-      const est = await getCurrentEstablishment();
-      const id = est?.id ?? null;
-      setEstablishmentId(id);
-      establishmentIdRef.current = id;
-      if (id) fetchObjectives(id);
-    }
-    loadEst();
-  }, [activePlaceId]);
+  if (!activeEstablishmentId) return;
+
+  fetchObjectives(activeEstablishmentId);
+}, [fetchObjectives, activeEstablishmentId]);
+
   const safeObjectives = Array.isArray(objectives) ? objectives : [];
 
   function handleClickActionPlan(){
@@ -3595,6 +3584,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     t("dashboard.analysisComplete"),
                                     result,
                                   );
+                                toast.success(t("establishment.establishmentAnalysed"))
                                   // Recharger les insights au lieu de recharger toute la page
                                   const { data: insightData } = await supabase
                                     .from("review_insights")
@@ -3688,15 +3678,16 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                     t("dashboard.analysisError"),
                                     result.error,
                                   );
+                                  toast.error(t("dashboard.analysisError"))
                                 }
                               } catch (error) {
                                 console.error(
                                   t("dashboard.analysisErrorDuring"),
                                   error,
                                 );
+                                toast.error(t("dashboard.analysisErrorDuring"))
                               } finally {
                                 setIsAnalyzing(false);
-                                toast.success(t("establishment.establishmentAnalysed"))
                               }
                             }}
                             disabled={isAnalyzing}
