@@ -551,10 +551,10 @@ const currentSmartObjective = useMemo(() => {
           ) : (
             <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center text-gray-500">
               <p>
-               {t("analysis.rootCause.noCause")}
+               {t("analysis.pareto.rootCause.noCause")}
               </p>
               <p className="text-sm mt-2">
-               {t("analysis.rootCause.fieldAnalysisRecommended")}
+               {t("analysis.pareto.rootCause.fieldAnalysisRecommended")}
               </p>
             </div>
           )}
