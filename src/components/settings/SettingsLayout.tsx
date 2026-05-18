@@ -93,12 +93,12 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
             setMobileMenuOpen(false);
           }}
           className={cn(
-            "w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors",
-            "hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-            isActive(item.path)
-              ? "bg-primary/10 text-primary font-medium"
-              : "text-gray-700 hover:text-gray-900"
-          )}
+  "w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors",
+  "hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-950",
+  isActive(item.path)
+    ? "bg-primary/10 dark:bg-primary/15 text-primary font-medium"
+    : "text-gray-700 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white"
+)}
         >
           {item.icon}
           <span className="text-sm">{item.label}</span>
@@ -116,26 +116,33 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
         <div className="lg:hidden mb-6">
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button
+  variant="outline"
+  size="sm"
+  className="gap-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+>
                 <Menu className="h-4 w-4" />
                 <span>Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-80 p-0">
-              <div className="p-6 border-b">
+            <SheetContent
+  side="left"
+  className="w-80 p-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800"
+>
+              <div className="p-6 border-b border-slate-200 dark:border-slate-800">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">{t("settings.title")}</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{t("settings.title")}</h2>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="h-8 w-8"
+                    className="h-8 w-8 text-gray-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
-              <div className="p-4">
+              <div className="p-4 bg-white dark:bg-slate-900">
                 <NavContent />
               </div>
             </SheetContent>
@@ -143,18 +150,18 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
         </div>
 
         {/* Desktop: 2-column layout */}
-        <div className="flex gap-8">
+        <div className="flex gap-8 text-gray-900 dark:text-slate-100">
           {/* Sidebar (desktop) */}
           <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="sticky top-8 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">{t("settings.title")}</h2>
+            <div className="sticky top-8 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">{t("settings.title")}</h2>
               <NavContent />
             </div>
           </aside>
 
           {/* Main content */}
           <main className="flex-1 min-w-0">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800">
               {children}
             </div>
           </main>

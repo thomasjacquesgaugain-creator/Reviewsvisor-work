@@ -98,12 +98,12 @@ export function LanguageSettings() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-8">{t("settings.LanguageRegionAndCurrency.title")}</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-8">{t("settings.LanguageRegionAndCurrency.title")}</h1>
 
       <div className="space-y-6">
         <div className="flex items-center gap-3 mb-6">
-          <Globe className="h-5 w-5 text-gray-400" />
-          <h2 className="text-lg font-medium text-gray-900">{t("settings.LanguageRegionAndCurrency.languagePreferences")}</h2>
+          <Globe className="h-5 w-5 text-slate-400 dark:text-slate-500" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-slate-100">{t("settings.LanguageRegionAndCurrency.languagePreferences")}</h2>
         </div>
 
         <div className="space-y-6 max-w-md">
@@ -111,7 +111,7 @@ export function LanguageSettings() {
           <div className="space-y-2">
             <Label htmlFor="language">{t("settings.LanguageRegionAndCurrency.interfaceLanguage")}</Label>
             <Select value={language} onValueChange={handleLanguageChange}>
-              <SelectTrigger id="language" className="w-full">
+              <SelectTrigger id="language" className="w-full bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-gray-900 dark:text-slate-100">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -122,7 +122,7 @@ export function LanguageSettings() {
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {t("settings.LanguageRegionAndCurrency.interfaceLanguageDescription")}
             </p>
           </div>
@@ -131,7 +131,7 @@ export function LanguageSettings() {
           <div className="space-y-2">
             <Label htmlFor="region">{t("settings.LanguageRegionAndCurrency.region")}</Label>
             <Select value={region} onValueChange={handleRegionChange}>
-              <SelectTrigger id="region" className="w-full">
+              <SelectTrigger id="region" className="w-full bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-gray-900 dark:text-slate-100">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -142,7 +142,7 @@ export function LanguageSettings() {
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {t("settings.LanguageRegionAndCurrency.regionDescription")}
             </p>
           </div>
@@ -151,7 +151,7 @@ export function LanguageSettings() {
           <div className="space-y-2">
             <Label htmlFor="currency">{t("settings.LanguageRegionAndCurrency.currency")}</Label>
             <Select value={currency} onValueChange={handleCurrencyChange}>
-              <SelectTrigger id="currency" className="w-full">
+              <SelectTrigger id="currency" className="w-full bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-gray-900 dark:text-slate-100">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -162,7 +162,7 @@ export function LanguageSettings() {
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {t("settings.LanguageRegionAndCurrency.currencyDescription")}
             </p>
           </div>

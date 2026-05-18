@@ -75,7 +75,7 @@ export function EstablishmentsSettings() {
   if (loading) {
     return (
       <div className="p-8">
-        <div className="flex items-center gap-3 text-muted-foreground">
+        <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
           <Loader2 className="h-5 w-5 animate-spin" />
           <span>{t("settings.establishmentAndAccess.loadingEstablishments")}</span>
         </div>
@@ -86,7 +86,7 @@ export function EstablishmentsSettings() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
           {t("settings.establishmentAndAccess.title")}
         </h1>
         <Button onClick={() => navigate("/etablissement")} className="gap-2">
@@ -97,8 +97,8 @@ export function EstablishmentsSettings() {
 
       {sortedEstablishments.length === 0 ? (
         <div className="text-center py-12">
-          <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 mb-4">
+          <Building2 className="h-12 w-12 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+          <p className="text-slate-500 dark:text-slate-400 mb-4">
             {t("settings.establishmentAndAccess.noEstablishment")}
           </p>
           <Button onClick={() => navigate("/etablissement")} className="gap-2">
@@ -123,7 +123,9 @@ export function EstablishmentsSettings() {
                 className={cn(
                   "border rounded-lg p-4 shadow-sm",
                   ESTABLISHMENT_CARD_HOVER,
-                  isActive ? "border-blue-200 bg-blue-50" : "border-gray-200 bg-white",
+                  isActive
+                    ? "border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/20"
+                    : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900",
                   isActive ? ESTABLISHMENT_CARD_HOVER_ACTIVE : ESTABLISHMENT_CARD_HOVER_NEUTRAL,
                 )}
               >
@@ -133,29 +135,33 @@ export function EstablishmentsSettings() {
                       <Building2
                         className={cn(
                           "h-5 w-5 shrink-0",
-                          isActive ? "text-blue-600" : "text-gray-400",
+                          isActive
+                            ? "text-blue-600 dark:text-blue-400"
+                            : "text-slate-400 dark:text-slate-500",
                         )}
                       />
                       <h3
                         className={cn(
                           "text-lg font-medium",
-                          isActive ? "text-blue-900" : "text-gray-900",
+                          isActive
+                            ? "text-blue-900 dark:text-blue-100"
+                            : "text-gray-900 dark:text-slate-100",
                         )}
                       >
                         {est.name}
                       </h3>
                       {isActive && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300">
                           <Check className="h-3 w-3" />
                           Actif
                         </span>
                       )}
                     </div>
                     {est.formatted_address && (
-                      <p className="text-sm text-gray-500 ml-7">{est.formatted_address}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 ml-7">{est.formatted_address}</p>
                     )}
                     {est.rating != null && (
-                      <p className="flex items-center gap-1 text-sm text-gray-500 ml-7 mt-1">
+                      <p className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 ml-7 mt-1">
                         <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                         <span>{Number(est.rating).toFixed(1)}</span>
                       </p>

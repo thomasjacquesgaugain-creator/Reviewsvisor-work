@@ -144,7 +144,7 @@ export function EstablishmentInfoSettings() {
   if (loading) {
     return (
       <div className="p-8">
-        <div className="flex items-center gap-3 text-muted-foreground">
+        <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
           <Loader2 className="h-5 w-5 animate-spin" />
           <span>{t("common.loading")}</span>
         </div>
@@ -156,14 +156,14 @@ export function EstablishmentInfoSettings() {
     <div className="p-8">
       {/* Titre et sélecteur sur la même ligne (comme profil : titre à gauche, rien à droite ; ici sélecteur à droite) */}
       <div className="flex items-center justify-between gap-4 mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">{t("settings.establishmentInformation.title")}</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-100">{t("settings.establishmentInformation.title")}</h1>
         {establishments.length > 0 && (
-          <Card className="min-w-[350px] w-[420px] max-w-full border-blue-200 flex-shrink-0">
+          <Card className="min-w-[350px] w-[420px] max-w-full border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0">
             <CardContent className="p-4">
               <div className="relative">
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-950/40 rounded-lg flex items-center justify-center">
                       <Building2 className="w-5 h-5 text-blue-600" />
                     </div>
                     <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
@@ -171,15 +171,18 @@ export function EstablishmentInfoSettings() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 p-0.5 h-auto w-auto bg-white border border-gray-200 rounded-full shadow-sm"
+                          className="absolute -top-1 -right-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 h-auto w-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm"
                           title={t("establishment.chooseAnotherEstablishment")}
                         >
                           <ChevronDown className="w-3 h-3" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-[420px] min-w-[400px] p-2 bg-white z-50 shadow-lg border" align="start">
+                      <PopoverContent
+                        className="w-[420px] min-w-[400px] p-2 bg-white dark:bg-slate-900 z-50 shadow-lg border border-slate-200 dark:border-slate-800"
+                        align="start"
+                      >
                         <div className="space-y-1">
-                          <div className="text-sm font-medium text-gray-700 px-3 py-2">
+                          <div className="text-sm font-medium text-gray-700 dark:text-slate-300 px-3 py-2">
                             {t("establishment.myEstablishments")}
                           </div>
                           {establishments.map((est) => {
@@ -189,27 +192,27 @@ export function EstablishmentInfoSettings() {
                               <button
                                 key={est.id ?? est.place_id}
                                 type="button"
-                                className={`w-full flex items-center gap-3 p-3 text-left rounded-lg cursor-pointer transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                  isSelected ? "bg-blue-50" : ""
+                                className={`w-full flex items-center gap-3 p-3 text-left rounded-lg cursor-pointer transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                  isSelected ? "bg-blue-50 dark:bg-blue-950/20" : ""
                                 }`}
                                 onClick={() => {
                                   setSelectedPlaceId(est.place_id);
                                   setPopoverOpen(false);
                                 }}
                               >
-                                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-950/40 rounded-lg flex items-center justify-center flex-shrink-0">
                                   <Building2 className="w-4 h-4 text-blue-600" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
-                                    <span className="font-medium text-gray-900 truncate">{est.name}</span>
+                                    <span className="font-medium text-gray-900 dark:text-slate-100 truncate">{est.name}</span>
                                     {isActive && (
-                                      <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                                      <span className="text-xs bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">
                                         {t("establishment.active")}
                                       </span>
                                     )}
                                   </div>
-                                  <div className="text-sm text-gray-500 truncate">{est.formatted_address ?? ""}</div>
+                                  <div className="text-sm text-slate-500 dark:text-slate-400 truncate">{est.formatted_address ?? ""}</div>
                                 </div>
                               </button>
                             );
@@ -219,10 +222,10 @@ export function EstablishmentInfoSettings() {
                     </Popover>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900 truncate">
+                    <div className="font-medium text-gray-900 dark:text-slate-100 truncate">
                       {displayedEstablishment?.name ?? t("establishment.select")}
                     </div>
-                    <div className="text-sm text-gray-500 truncate">
+                    <div className="text-sm text-slate-500 dark:text-slate-400 truncate">
                       {displayedEstablishment?.formatted_address ?? ""}
                     </div>
                   </div>
@@ -250,20 +253,20 @@ export function EstablishmentInfoSettings() {
             type="textarea"
             emptyLabel={t("settings.establishmentInformation.informationNotProvided")}
           />
-          <div className="flex items-start justify-between py-4 border-b border-gray-100">
+          <div className="flex items-start justify-between py-4 border-b border-slate-200 dark:border-slate-800">
             <div className="flex-1 min-w-0">
-              <label className="block text-sm font-medium text-gray-500 mb-1">{t("settings.establishmentInformation.googleRating")}</label>
-              <div className="text-sm text-gray-900">
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{t("settings.establishmentInformation.googleRating")}</label>
+              <div className="text-sm text-gray-900 dark:text-slate-100">
                 {displayedEstablishment.rating != null
                   ? `${Number(displayedEstablishment.rating).toFixed(1)} (Google)`
                   : "—"}
               </div>
             </div>
           </div>
-          <div className="flex items-start justify-between py-4 border-b border-gray-100">
+          <div className="flex items-start justify-between py-4 border-b border-slate-200 dark:border-slate-800">
             <div className="flex-1 min-w-0">
-              <label className="block text-sm font-medium text-gray-500 mb-1">{t("settings.establishmentInformation.placeID")}</label>
-              <div className="text-sm text-gray-900 font-mono break-all">{displayedEstablishment.place_id}</div>
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{t("settings.establishmentInformation.placeID")}</label>
+              <div className="text-sm text-gray-900 dark:text-slate-100 font-mono break-all">{displayedEstablishment.place_id}</div>
             </div>
           </div>
           <EditableField
@@ -283,7 +286,7 @@ export function EstablishmentInfoSettings() {
           />
           {/* Type d'établissement : éditable via Select */}
           {editingTypeEtablissement ? (
-            <div className="space-y-2 py-4 border-b border-gray-100">
+            <div className="space-y-2 py-4 border-b border-slate-200 dark:border-slate-800">
               <label className="block text-sm font-medium text-gray-700">{t("settings.establishmentInformation.establishmentType")}</label>
               <Select
                 value={typeEtablissementEditValue || ""}
@@ -336,10 +339,10 @@ export function EstablishmentInfoSettings() {
               </div>
             </div>
           ) : (
-            <div className="flex items-start justify-between py-4 border-b border-gray-100">
+            <div className="flex items-start justify-between py-4 border-b border-slate-200 dark:border-slate-800">
               <div className="flex-1 min-w-0">
-                <label className="block text-sm font-medium text-gray-500 mb-1">{t("settings.establishmentInformation.establishmentType")}</label>
-                <div className="text-sm text-gray-900">
+                <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{t("settings.establishmentInformation.establishmentType")}</label>
+                <div className="text-sm text-gray-900 dark:text-slate-100">
                   {displayedEstablishment.types
                     ? getTranslatedEstablishmentType(displayedEstablishment.types)
                     : t("settings.establishmentInformation.informationNotProvided")}
@@ -361,7 +364,7 @@ export function EstablishmentInfoSettings() {
           )}
         </div>
       ) : (
-        <p className="text-gray-500">
+        <p className="text-slate-500 dark:text-slate-400">
           <Trans
             i18nKey="settings.establishmentInformation.noEstablishmentMessage"
             components={[

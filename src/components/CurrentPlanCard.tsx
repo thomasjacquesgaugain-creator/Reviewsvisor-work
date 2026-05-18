@@ -8,11 +8,20 @@ import { useTranslation } from "react-i18next";
 
 
 const STATUS_VARIANTS: Record<BillingSummary["status"], string> = {
-  active: "bg-green-100 text-green-800 border-green-200",
-  trialing: "bg-blue-100 text-blue-800 border-blue-200",
-  canceled: "bg-gray-100 text-gray-700 border-gray-200",
-  past_due: "bg-amber-100 text-amber-800 border-amber-200",
-  inactive: "bg-gray-100 text-gray-600 border-gray-200",
+  active:
+    "bg-green-100 dark:bg-green-950/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800",
+
+  trialing:
+    "bg-blue-100 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+
+  canceled:
+    "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700",
+
+  past_due:
+    "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+
+  inactive:
+    "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700",
 };
 
 interface CurrentPlanCardProps {
@@ -42,12 +51,17 @@ export function CurrentPlanCard({ summary, activePlan, className }: CurrentPlanC
   // ── Free / inactive ────────────────────────────────────────────────────────
   if (!isPaid || summary.activeSubscriptions.length === 0) {
     return (
-      <div className={cn("rounded-lg border p-6 border-gray-200 bg-gray-50", className)}>
-        <h3 className="text-base font-semibold text-gray-900 mb-3">
+      <div
+        className={cn(
+          "rounded-2xl border p-6 border-slate-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900",
+          className
+        )}
+      >
+        <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100 mb-3">
           {t("subscription.currentPlan")}
         </h3>
         <div className="flex items-center gap-2">
-          <span className="text-lg font-medium text-gray-900">
+          <span className="text-lg font-medium text-gray-900 dark:text-slate-100">
             {t("settings.BillingAndSubscription.freePlan")}
           </span>
           <Badge variant="outline" className={STATUS_VARIANTS["inactive"]}>
@@ -80,7 +94,7 @@ export function CurrentPlanCard({ summary, activePlan, className }: CurrentPlanC
           <Card
             key={sub.subscriptionId}
             className={cn(
-              "relative overflow-hidden bg-white rounded-2xl shadow-md border-2",
+              "relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl shadow-md dark:shadow-black/20 border-2",
               tierColor.border
             )}
           >
@@ -88,18 +102,18 @@ export function CurrentPlanCard({ summary, activePlan, className }: CurrentPlanC
               {t("subscription.status.active")}
             </div>
 
-            <div className="absolute top-0 right-0 bg-gray-100 text-gray-600 px-3 py-1 text-xs font-semibold rounded-bl-lg">
+            <div className="absolute top-0 right-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-1 text-xs font-semibold rounded-bl-lg">
               {sub.planBilling === "annual" ? t("subscription.annualBadge") : t("subscription.monthlyBadge")}
             </div>
 
             <CardHeader className="pb-3 pt-8 px-5">
-              <CardTitle className="text-xl font-bold text-foreground">
+              <CardTitle className="text-xl font-bold text-gray-900 dark:text-slate-100">
                 {sub.planName} 
               </CardTitle>
 
               {sub.establishmentName && (
-                <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted">
+                <div className="flex items-center gap-2 mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">
                     <Building2 className="w-3 h-3" />
                     {sub.establishmentName}
                   </div>
@@ -110,11 +124,11 @@ export function CurrentPlanCard({ summary, activePlan, className }: CurrentPlanC
                 <div className="mt-3">
                   <span className={cn("text-3xl font-bold", tierColor.price)}>
                     {plan.priceTTC.toFixed(2).replace(".", ",")} € TTC
-                    <span className="text-base font-normal text-muted-foreground">
+                    <span className="text-base font-normal text-slate-500 dark:text-slate-400">
                       {t("subscription.perMonth")}
                     </span>
                   </span>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {plan.priceHT.toFixed(2).replace(".", ",")} € {t("subscription.exclTax")}{t("subscription.perMonth")}
                   </p>
                   {plan.billing === "annual" && plan.annualTotalTTC && (
@@ -143,7 +157,7 @@ export function CurrentPlanCard({ summary, activePlan, className }: CurrentPlanC
                   {plan.benefitKeys.map((benefit, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <Check className={cn("w-4 h-4 mt-0.5 flex-shrink-0", tierColor.check)} />
-                      <span className="text-sm text-muted-foreground">{t(benefit)}</span>
+                      <span className="text-sm text-slate-600 dark:text-slate-300">{t(benefit)}</span>
                     </li>
                   ))}
                 </ul>

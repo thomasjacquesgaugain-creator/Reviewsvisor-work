@@ -56,13 +56,13 @@ export function EditableField({
   if (isEditing) {
     return (
       <div className={cn("space-y-2", className)}>
-        <label className="block text-sm font-medium text-gray-700">{label}</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">{label}</label>
         {type === "textarea" ? (
           <textarea
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
             placeholder={placeholder}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-transparent resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
             rows={3}
             disabled={saving}
           />
@@ -72,11 +72,11 @@ export function EditableField({
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
             placeholder={placeholder}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500"
             disabled={saving}
           />
         )}
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <div className="flex items-center gap-2">
           <Button
             size="sm"
@@ -103,11 +103,11 @@ export function EditableField({
   }
 
   return (
-    <div className={cn("flex items-start justify-between py-4 border-b border-gray-100 last:border-0", className)}>
+    <div className={cn("flex items-start justify-between py-4 border-b border-slate-200 dark:border-slate-800 last:border-0", className)}>
       <div className="flex-1 min-w-0">
-        <label className="block text-sm font-medium text-gray-500 mb-1">{label}</label>
-        <div className="text-sm text-gray-900">
-          {value || <span className="text-gray-400">{emptyLabel}</span>}
+        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{label}</label>
+        <div className="text-sm text-gray-900 dark:text-slate-100">
+          {value || <span className="text-slate-400 dark:text-slate-500">{emptyLabel}</span>}
         </div>
       </div>
       {onSave && (
@@ -115,7 +115,7 @@ export function EditableField({
           variant="ghost"
           size="sm"
           onClick={() => setIsEditing(true)}
-          className="ml-4 flex-shrink-0"
+          className="ml-4 flex-shrink-0 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary"
         >
           <Pencil className="h-4 w-4" />
           <span className="sr-only">Modifier</span>

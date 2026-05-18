@@ -68,18 +68,18 @@ const activePlan = useMemo(
   const formatEuro = (n: number) => n.toFixed(2).replace(".", ",");
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-8">{t("settings.BillingAndSubscription.title")}</h1>
+    <div className="p-8 text-gray-900 dark:text-slate-100">
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-8">{t("settings.BillingAndSubscription.title")}</h1>
 
       {/* Plan actuel - carte style /abonnement si plan Pro, sinon bloc simple */}
-      <div className="mb-8 pb-8 border-b border-gray-200">
+      <div className="mb-8 pb-8 border-b border-slate-200 dark:border-slate-800">
         {/* <div className="flex items-center gap-3 mb-6">
           <CreditCard className="h-5 w-5 text-gray-400" />
           <h2 className="text-lg font-medium text-gray-900">{t("settings.BillingAndSubscription.currentPlan")}</h2>
         </div> */}
 
         {loading ? (
-          <div className="flex items-center gap-3 text-muted-foreground py-6">
+          <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400 py-6">
             <Loader2 className="h-5 w-5 animate-spin" />
             <span>{t("settings.BillingAndSubscription.loadingPlan")}</span>
           </div>
@@ -90,33 +90,36 @@ const activePlan = useMemo(
            {summary.activeSubscriptions.length > 0 && (
   <div className="mt-8">
     <div className="flex items-center gap-3 mb-4">
-      <CreditCard className="h-5 w-5 text-gray-400" />
-      <h2 className="text-lg font-medium text-gray-900">
+      <CreditCard className="h-5 w-5 text-slate-400 dark:text-slate-500" />
+      <h2 className="text-lg font-medium text-gray-900 dark:text-slate-100">
        {t("subscription.activeSubscriptions")} ({summary.activeSubscriptions.length})
       </h2>
     </div>
-    <div className="space-y-3 max-w-3xl">
+    <div className="space-y-3 max-w-3xl rounded-2xl bg-slate-100 dark:bg-slate-900 p-3 border border-slate-200 dark:border-slate-800">
       {summary.activeSubscriptions.map((sub, i) => (
-        <Card key={sub.subscriptionId} className="bg-white border border-border rounded-xl">
-          <CardContent className="p-4 flex items-center justify-between gap-4">
+        <Card
+          key={sub.subscriptionId}
+          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm transition-colors"
+        >
+          <CardContent className="p-5 flex items-center justify-between gap-4 bg-transparent">
             <div>
-              <p className="font-semibold text-foreground">
+              <p className="font-semibold text-gray-900 dark:text-slate-100">
                 {sub.planName}
                 {sub.planBilling && (
-                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
                     · {sub.planBilling === "annual" ? t("subscription.yearly") : t("subscription.monthly")}
                   </span>
                 )}
               </p>
               {sub.periodEnd && (
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   {sub.cancelAtPeriodEnd ? t("subscription.endsOn") :t("subscription.renewsOn")}{" "}
                   {new Date(sub.periodEnd).toLocaleDateString("fr-FR")}
                 </p>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
                 {t("subscription.active")}
               </span>
               {/* {(sub.latestInvoicePdfUrl || sub.latestInvoiceHostedUrl) ? (
@@ -148,7 +151,7 @@ const activePlan = useMemo(
               </div>
             )}
             {summary.activeSubscriptions.length === 0 && !isFree && (
-              <p className="mt-6 text-sm text-muted-foreground">
+              <p className="mt-6 text-sm text-slate-500 dark:text-slate-400">
                 {t("settings.BillingAndSubscription.noAdditionalEstablishments")}
               </p>
             )}
@@ -158,7 +161,7 @@ const activePlan = useMemo(
 
       {/* Gestion de la facturation */}
       <div>
-        <h2 className="text-lg font-medium text-gray-900 mb-4">{t("settings.BillingAndSubscription.billingManagement")}</h2>
+        <h2 className="text-lg font-medium text-gray-900 dark:text-slate-100 mb-4">{t("settings.BillingAndSubscription.billingManagement")}</h2>
         <div className="flex flex-wrap gap-3">
             <Button
               onClick={async () => {
@@ -191,7 +194,7 @@ const activePlan = useMemo(
           <Button
             variant="outline"
             onClick={() => navigate("/settings/billing/reports")}
-            className="ml-0 sm:ml-0"
+            className="border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             {t("settings.BillingAndSubscription.invoiceHistory")}
           </Button>
