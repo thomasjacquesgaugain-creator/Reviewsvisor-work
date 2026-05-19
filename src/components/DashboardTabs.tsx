@@ -1,4 +1,4 @@
-import { BadgeCheck, Lightbulb, MessagesSquare, ScanSearch, Target } from "lucide-react";
+import { BookOpenText, Lightbulb, MessagesSquare, ScanSearch, Target } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface DashboardTabsProps {
@@ -9,12 +9,12 @@ interface DashboardTabsProps {
 export const DashboardTabs = ({ activeTab, onTabChange }: DashboardTabsProps) => {
   const { t } = useTranslation();
   const tabs = [
-    { id: 'key-takeaways', label:t("dashboard.keyTakeaways.title"), icon: <Lightbulb className="h-5 w-5" /> },
+    { id: 'key-takeaways', label:t("dashboard.keyTakeaways.title"), icon: <BookOpenText className="h-5 w-5" />, color: "text-purple-500" },
     // { id: 'indicateurs', label: t("dashboard.keyIndicators"), icon: '📊' },
-    { id: 'analyse', label: t("dashboard.analyse"), icon: <ScanSearch className="h-5 w-5" />},
-    { id: 'recommandations', label: t("dashboard.recommendations"), icon: <BadgeCheck className="h-5 w-5" /> },
-    { id: 'reponses', label: t("dashboard.response"), icon: <MessagesSquare className="h-5 w-5" />},
-    { id: 'objectif', label: t("dashboard.objective"), icon: <Target className="h-5 w-5" />},
+    { id: 'analyse', label: t("dashboard.analyse"), icon: <ScanSearch className="h-5 w-5" />, color: "text-blue-500"},
+    { id: 'recommandations', label: t("dashboard.recommendations"), icon: <Lightbulb className="h-5 w-5" />, color: "text-yellow-500" },
+    { id: 'reponses', label: t("dashboard.response"), icon: <MessagesSquare className="h-5 w-5" />, color: "text-green-500"},
+    { id: 'objectif', label: t("dashboard.objective"), icon: <Target className="h-5 w-5" />, color: "text-red-500"},
   ];
 
   return (
@@ -29,7 +29,11 @@ export const DashboardTabs = ({ activeTab, onTabChange }: DashboardTabsProps) =>
               : 'text-gray-600 dark:text-slate-300 hover:bg-primary hover:text-primary-foreground hover:border-primary'
           }`}
         >
-          <span className={`transition-all duration-200 ${activeTab === tab.id ? 'scale-110' : 'scale-100'}`}>
+          <span
+            className={`transition-all duration-200 ${
+              activeTab === tab.id ? 'scale-110' : 'scale-100'
+            } ${tab.color}`}
+          >
             {tab.icon}
           </span>
           

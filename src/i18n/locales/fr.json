@@ -187,7 +187,11 @@
     "legalNotice": "Mentions légales",
     "termsOfUse": "Conditions d'utilisation",
     "privacyPolicy": "Politique de confidentialité",
-    "cookies": "Cookies"
+    "cookies": "Cookies",
+    "legalHeader": "Informations légales",
+    "legalHeaderMessage": "Veuillez lire attentivement ce document avant d’utiliser la plateforme.",
+    "profile": "Profil",
+    "changePassword": "Changer le mot de passe"
   },
   "hero": {
     "trust1": "Transformer retour en conception",

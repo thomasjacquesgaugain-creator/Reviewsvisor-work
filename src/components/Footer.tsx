@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Shield, Cookie, FileText, HelpCircle, Scale, Info, Layers } from "lucide-react";
+import { Mail, Shield, Cookie, FileText, HelpCircle, Scale, Info, Layers, User, KeyRound, CircleUser, LogIn, UserPlus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useTranslation } from "react-i18next";
 import { APP_NAME } from "@/config/brand";
@@ -11,24 +11,26 @@ export function Footer() {
   
   return (
     <footer
-      className="relative overflow-hidden text-white mt-auto shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
+      className="relative overflow-hidden bg-blue-600 dark:bg-transparent text-white mt-auto shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
     >
       <div
         aria-hidden="true"
-        className="absolute inset-0"
+        className="absolute inset-0 hidden dark:block"
         style={{
           background: "var(--footer-gradient)",
           filter: "contrast(var(--app-bg-contrast-factor, 1))",
         }}
       />
       <div className="relative container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <div
+          className={`grid grid-cols-1 gap-10 mb-8 items-start md:grid-cols-[1fr_auto_1fr] max-w-6xl mx-auto`}
+        >
           {/* Colonne 1 - Reviewsvisor */}
-          <div>
+          <div className="justify-self-start">
+            <ul className="space-y-3">
             <Link to={reviewsvisorLink}>
               <h3 className="text-white font-bold text-lg mb-4 hover:opacity-80 transition-opacity cursor-pointer normal-case" translate="no">{APP_NAME}</h3>
             </Link>
-            <ul className="space-y-3">
               <li>
                 <Link to="/aide" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
                   <HelpCircle className="h-4 w-4" />
@@ -57,26 +59,48 @@ export function Footer() {
           </div>
 
           {/* Colonne 2 - Compte */}
-          <div>
-            <h3 className="text-white font-bold text-lg mb-4">{t("nav.account")}</h3>
+          {!user ? (
+          <div className="justify-self-center text-left">
             <ul className="space-y-3">
+            <h3 className="text-white font-bold text-lg mb-4">{t("nav.account")}</h3>
               <li>
                 <Link to="/login" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
+                  <LogIn className="h-4 w-4" />
                   {t("auth.login")}
                 </Link>
               </li>
               <li>
                 <Link to="/inscription" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" />
                   {t("auth.signup")}
                 </Link>
               </li>
             </ul>
           </div>
+          ) : (
+            <div className="justify-self-center text-left">
+            <ul className="space-y-3">
+            <h3 className="text-white font-bold text-lg mb-4">{t("nav.account")}</h3>
+              <li>
+                <Link to="/settings/profile" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
+                  <CircleUser className="h-4 w-4" />
+                  {t("footer.profile")}
+                </Link>
+              </li>
+              <li>
+                <Link to="/settings/security" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
+                  <KeyRound className="h-4 w-4" />
+                  {t("footer.changePassword")}
+                </Link>
+              </li>
+            </ul>
+          </div>
+          )}
 
           {/* Colonne 3 - Légal */}
-          <div>
-            <h3 className="text-white font-bold text-lg mb-4">{t("footer.legal")}</h3>
+          <div className="justify-self-start md:justify-self-end">
             <ul className="space-y-3">
+            <h3 className="text-white font-bold text-lg mb-4">{t("footer.legal")}</h3>
               <li>
                 <Link to="/mentions-legales" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
                   <Scale className="h-4 w-4" />
@@ -108,7 +132,7 @@ export function Footer() {
         {/* Séparateur */}
         <div className="border-t border-white/20 pt-8">
           <p className="text-center text-sm text-white">
-            © 2025 <span translate="no" className="normal-case">{APP_NAME}</span>. {t("common.allRightsReserved")}.
+            © 2026 <span translate="no" className="normal-case">{APP_NAME}</span>. {t("common.allRightsReserved")}.
           </p>
         </div>
       </div>

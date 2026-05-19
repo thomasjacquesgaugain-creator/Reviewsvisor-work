@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, CheckCircle, ArrowDownRight, Minus, Award, Plus } from "lucide-react";
+import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, CheckCircle, ArrowDownRight, Minus, Award, Plus, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -339,7 +339,10 @@ const Dashboard = () => {
       <div className="app-page-shell">
         <AppPageBackground />
         <div className="relative z-10 min-h-screen flex items-center justify-center">
-          <div className="text-lg text-gray-900 dark:text-slate-100">{t("common.loading")}</div>
+          <div className="text-sm text-white dark:text-slate-400 px-3 py-2 flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" /> 
+            {t("common.loading")}
+          </div>
         </div>
       </div>
     );

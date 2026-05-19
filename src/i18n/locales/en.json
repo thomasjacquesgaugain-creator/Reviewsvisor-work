@@ -167,7 +167,11 @@
     "legalNotice": "Legal notice",
     "termsOfUse": "Terms of use",
     "privacyPolicy": "Privacy policy",
-    "cookies": "Cookies"
+    "cookies": "Cookies",
+    "legalHeader": "Legal Information",
+    "legalHeaderMessage": "Please read this document carefully before using the platform.",
+    "profile": "Profile",
+    "changePassword": "Change password"
   },
   "hero": {
     "trust1": "Turn feedback into design",
