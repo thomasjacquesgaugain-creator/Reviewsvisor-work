@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Brain, Target, TrendingUp, CheckCircle, Menu, Globe, Check, User, BookmarkCheck, Rocket } from "lucide-react";
 import logoHeader from "@/assets/reviewsvisor-logo-header.png";
+import logoHeaderLight from "@/assets/reviewsvisor-logo-header-light.png";
 import { WhyReviewsvisor } from "@/components/WhyReviewsvisor";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -102,9 +103,17 @@ export const HeroSection = () => {
           <img 
             src={logoHeader} 
             alt={`${APP_NAME} Logo`}
-            className="h-[70px] w-auto -mr-2 mt-4"
+            className="mt-4 h-[50px] w-auto -mr-2 dark:hidden"
+          />
+
+          {/* Dark mode logo */}
+          <img
+            src={logoHeaderLight}
+            alt={`${APP_NAME} Logo`}
+            className="mt-4 hidden h-[50px] w-auto -mr-2 dark:block dark:drop-shadow-[0_0_22px_hsl(var(--primary)/0.35)]"
           />
         </div>
+        <br/>
 
 
         {/* Main hero card */}
