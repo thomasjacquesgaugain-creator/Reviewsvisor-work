@@ -88,11 +88,11 @@ export function CustomizationSettings() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-8 text-gray-900 dark:text-slate-100">
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">{t("settings.personalization.title")}</h1>
-          <p className="text-sm text-gray-500 mt-2">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-100">{t("settings.personalization.title")}</h1>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
             {t("settings.personalization.personalizationDescription")}
           </p>
         </div>
@@ -100,7 +100,7 @@ export function CustomizationSettings() {
           variant="ghost"
           size="sm"
           onClick={handleReset}
-          className="gap-2 text-gray-600 hover:text-gray-900"
+          className="gap-2 text-slate-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
           aria-label="Réinitialiser les paramètres de personnalisation"
           title="Revenir à l'apparence par défaut"
         >
@@ -111,10 +111,10 @@ export function CustomizationSettings() {
 
       <div className="space-y-8">
         {/* Card Apparence */}
-        <div className="border border-gray-200 rounded-lg p-6 bg-white">
+        <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-6 bg-white dark:bg-slate-900">
           <div className="mb-4">
-            <h2 className="text-lg font-medium text-gray-900">{t("settings.personalization.appearance")}</h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <h2 className="text-lg font-medium text-gray-900 dark:text-slate-100">{t("settings.personalization.appearance")}</h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               {t("settings.personalization.appearanceDescription")}
             </p>
           </div>
@@ -124,10 +124,10 @@ export function CustomizationSettings() {
               onClick={() => handleThemeChange("light")}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border transition-all",
-                  "hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                  "hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-950",
                   theme === "light"
-                    ? "border-primary bg-primary/10 text-primary font-medium"
-                    : "border-gray-200 text-gray-700"
+                    ? "border-primary bg-primary/10 dark:bg-primary/15 text-primary font-medium"
+                    : "border-slate-200 dark:border-slate-700 text-gray-700 dark:text-slate-300",
                 )}
             >
               <Sun className="h-4 w-4" />
@@ -137,10 +137,10 @@ export function CustomizationSettings() {
               onClick={() => handleThemeChange("dark")}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border transition-all",
-                  "hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                  "hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-950",
                   theme === "dark"
-                    ? "border-primary bg-primary/10 text-primary font-medium"
-                    : "border-gray-200 text-gray-700"
+                    ? "border-primary bg-primary/10 dark:bg-primary/15 text-primary font-medium"
+                    : "border-slate-200 dark:border-slate-700 text-gray-700 dark:text-slate-300",
                 )}
             >
               <Moon className="h-4 w-4" />
@@ -150,10 +150,10 @@ export function CustomizationSettings() {
               onClick={() => handleThemeChange("system")}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border transition-all",
-                  "hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                  "hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-950",
                   theme === "system"
-                    ? "border-primary bg-primary/10 text-primary font-medium"
-                    : "border-gray-200 text-gray-700"
+                    ? "border-primary bg-primary/10 dark:bg-primary/15 text-primary font-medium"
+                    : "border-slate-200 dark:border-slate-700 text-gray-700 dark:text-slate-300",
                 )}
             >
               <Monitor className="h-4 w-4" />
@@ -163,10 +163,10 @@ export function CustomizationSettings() {
         </div>
 
         {/* Card Couleur principale */}
-        <div className="border border-gray-200 rounded-lg p-6 bg-white">
+        <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-6 bg-white dark:bg-slate-900">
           <div className="mb-4">
-            <h2 className="text-lg font-medium text-gray-900">{t("settings.personalization.mainColour")}</h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <h2 className="text-lg font-medium text-gray-900 dark:text-slate-100">{t("settings.personalization.mainColour")}</h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               {t("settings.personalization.mainColourDescription")}
             </p>
           </div>
@@ -178,10 +178,10 @@ export function CustomizationSettings() {
                 onClick={() => handleAccentChange(color.value)}
                 className={cn(
                   "relative flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all",
-                  "hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                  "hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-950",
                   accent === color.value
-                    ? "border-primary bg-primary/10"
-                    : "border-gray-200"
+                    ? "border-primary bg-primary/10 dark:bg-primary/15"
+                    : "border-slate-200 dark:border-slate-700",
                 )}
                 aria-label={t(`settings.personalization.colors.${color.value}`)}
               >
@@ -189,7 +189,7 @@ export function CustomizationSettings() {
                   className="w-10 h-10 rounded-full border-2 border-white shadow-sm"
                   style={{ backgroundColor: color.color }}
                 />
-                <span className="text-xs font-medium text-gray-700">
+                <span className="text-xs font-medium text-gray-700 dark:text-slate-300">
                   {t(`settings.personalization.colors.${color.value}`)}
                 </span>
                 {accent === color.value && (
@@ -205,16 +205,16 @@ export function CustomizationSettings() {
         </div>
 
         {/* Card Fond */}
-        <div className="border border-gray-200 rounded-lg p-6 bg-white">
+        <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-6 bg-white dark:bg-slate-900">
           <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <h2 className="text-lg font-medium text-gray-900">{t("settings.personalization.background")}</h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-slate-100">{t("settings.personalization.background")}</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {t("settings.personalization.backgroundDescription")}
               </p>
             </div>
 
-            <div className="w-full max-w-[250px] rounded-full border border-gray-200 bg-white px-2.5 py-1.5 shadow-sm">
+            <div className="w-full max-w-[250px] rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 shadow-sm">
               <div className="flex items-center gap-2">
                 <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(147,197,253,0.42),rgba(30,41,59,0.95))] text-white/85 shadow-[0_0_8px_rgba(96,165,250,0.16)]">
                   <Moon className="h-2.5 w-2.5" />
@@ -237,7 +237,7 @@ export function CustomizationSettings() {
                   <Sun className="h-2.5 w-2.5" />
                 </div>
 
-                <div className="min-w-8 text-right text-[11px] font-semibold text-gray-700">
+                <div className="min-w-8 text-right text-[11px] font-semibold text-gray-700 dark:text-slate-300">
                   {brightness > 0 ? `+${brightness}` : brightness}
                 </div>
               </div>
@@ -251,10 +251,10 @@ export function CustomizationSettings() {
                 onClick={() => handleBackgroundChange(tint.value)}
                 className={cn(
                   "relative flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all",
-                  "hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                  "hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-950",
                   bg === tint.value
-                    ? "border-primary bg-primary/5"
-                    : "border-gray-200"
+                    ? "border-primary bg-primary/5 dark:bg-primary/10"
+                    : "border-slate-200 dark:border-slate-700",
                 )}
                 aria-label={t(`settings.personalization.backgroundColor.${tint.value}`)}
               >
@@ -263,7 +263,7 @@ export function CustomizationSettings() {
                   className="w-12 h-12 rounded-lg border-2 border-white shadow-sm"
                   style={{ background: tint.preview }}
                 />
-                <span className="text-xs font-medium text-gray-700">
+                <span className="text-xs font-medium text-gray-700 dark:text-slate-300">
                   {t(`settings.personalization.backgroundColor.${tint.value}`)}
                 </span>
                 {bg === tint.value && (

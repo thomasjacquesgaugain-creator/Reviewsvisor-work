@@ -219,9 +219,9 @@ export function ProfileSettings() {
     return (
       <div className="p-8">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-20 bg-gray-200 rounded"></div>
-          <div className="h-20 bg-gray-200 rounded"></div>
+          <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
+          <div className="h-20 bg-slate-200 dark:bg-slate-800 rounded"></div>
+          <div className="h-20 bg-slate-200 dark:bg-slate-800 rounded"></div>
         </div>
       </div>
     );
@@ -229,17 +229,17 @@ export function ProfileSettings() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-2">{t("settings.personalInformation.title")}</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-2">{t("settings.personalInformation.title")}</h1>
       {loadError && (
-        <p className="text-sm text-amber-600 mb-6" role="alert">
+        <p className="text-sm text-amber-600 dark:text-amber-400 mb-6" role="alert">
           {loadError}
         </p>
       )}
       {!loadError && <div className="mb-8" />}
 
       {/* Photo de profil */}
-      <div className="mb-8 pb-8 border-b border-gray-200">
-        <label className="block text-sm font-medium text-gray-700 mb-4">{t("settings.personalInformation.profilePicture")}</label>
+      <div className="mb-8 pb-8 border-b border-slate-200 dark:border-slate-800">
+        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-4">{t("settings.personalInformation.profilePicture")}</label>
         {user && (
           <ProfilePhotoUploader
             userId={user.id}
@@ -286,11 +286,11 @@ export function ProfileSettings() {
           type="textarea"
           emptyLabel={t("settings.personalInformation.placeholder.informationNotProvided")}
         />
-        <div className="flex items-start justify-between py-4 border-b border-gray-100">
+        <div className="flex items-start justify-between py-4 border-b border-slate-200 dark:border-slate-800">
           <div className="flex-1 min-w-0">
-            <label className="block text-sm font-medium text-gray-500 mb-1">{t("settings.personalInformation.email")}</label>
-            <div className="text-sm text-gray-900">{user?.email}</div>
-            <p className="text-xs text-gray-500 mt-1">{t("settings.personalInformation.placeholder.emailNotChanged")}</p>
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{t("settings.personalInformation.email")}</label>
+            <div className="text-sm text-gray-900 dark:text-slate-100">{user?.email}</div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t("settings.personalInformation.placeholder.emailNotChanged")}</p>
           </div>
         </div>
       </div>

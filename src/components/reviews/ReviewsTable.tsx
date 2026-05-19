@@ -26,7 +26,7 @@ const renderStars = (rating: number) => {
         <Star
           key={star}
           className={`w-4 h-4 ${
-            star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+            star <= rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/35"
           }`}
         />
       ))}
@@ -71,35 +71,35 @@ export function ReviewsTable({
           <tr className="bg-muted/50">
             <th 
               scope="col" 
-              className="border border-border px-3 py-2 text-left text-sm font-medium"
+              className="border border-border px-3 py-2 text-left text-sm font-medium text-foreground"
               data-testid="col-author"
             >
               {t("subscription.author")}
             </th>
             <th 
               scope="col" 
-              className="border border-border px-3 py-2 text-left text-sm font-medium"
+              className="border border-border px-3 py-2 text-left text-sm font-medium text-foreground"
               data-testid="col-rating"
             >
               {t("dashboard.rating")}
             </th>
             <th 
               scope="col" 
-              className="border border-border px-3 py-2 text-left text-sm font-medium"
+              className="border border-border px-3 py-2 text-left text-sm font-medium text-foreground"
               data-testid="col-comment"
             >
               {t("import.comment")}
             </th>
             <th 
               scope="col" 
-              className="border border-border px-3 py-2 text-left text-sm font-medium"
+              className="border border-border px-3 py-2 text-left text-sm font-medium text-foreground"
               data-testid="col-platform"
             >
               {t("subscription.source")}
             </th>
             <th 
               scope="col" 
-              className="border border-border px-3 py-2 text-left text-sm font-medium"
+              className="border border-border px-3 py-2 text-left text-sm font-medium text-foreground"
               data-testid="col-date"
             >
               {t("dashboard.date")}
@@ -109,13 +109,13 @@ export function ReviewsTable({
         <tbody>
           {rows.map((review, index) => (
             <tr key={index} data-testid="review-row">
-              <td className="border border-border px-3 py-2 text-sm">
+              <td className="border border-border px-3 py-2 text-sm text-foreground">
                 {review.authorName}
               </td>
               <td className="border border-border px-3 py-2">
                 {renderStars(review.rating)}
               </td>
-              <td className="border border-border px-3 py-2 text-sm max-w-md">
+              <td className="border border-border px-3 py-2 text-sm max-w-md text-foreground">
                 <div className="truncate" title={extractOriginalText(review.comment) || t("dashboard.noComment")}>
                   {review.comment ? (
                     extractOriginalText(review.comment)

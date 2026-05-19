@@ -559,14 +559,14 @@ export default function EtablissementPage() {
       {/* Main content */}
       <div className="relative z-10">
         <div className="container mx-auto px-4 py-8 pb-16">
-          <h1 className="text-3xl font-bold mb-8 text-white">
+          <h1 className="mb-8 text-3xl text-white font-bold text-foreground">
             {t("establishment.title")}
           </h1>
 
           <div className="space-y-6">
             {/* Section de recherche d'établissement - toujours montée, masquée via CSS */}
             <div className={showSearch ? "space-y-4" : "hidden"}>
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-xl font-semibold text-foreground">
                 {t("establishment.search")}
               </h2>
 
@@ -574,7 +574,7 @@ export default function EtablissementPage() {
                 <div className="relative">
                   <input
                     id="places-input"
-                    className="w-full bg-white border border-border rounded-lg px-3 py-2 pr-24 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 pr-24 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder={t("establishment.searchPlaceholder")}
                   />
                   <button
@@ -590,15 +590,15 @@ export default function EtablissementPage() {
                   <div className="text-sm text-destructive">{placesError}</div>
                 )}
 
-                <div className="text-xs text-muted-foreground text-slate-100">
+                <div className="text-xs text-muted-foreground">
                   {t("establishment.poweredByGoogle")}
                 </div>
 
                 {selected && (
-                  <div className="inline-flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
-                    <CheckCircle className="h-4 w-4" />
+                  <div className="inline-flex items-center gap-2 rounded border border-primary/25 bg-primary/10 px-2 py-1 text-primary">
+                    <CheckCircle className="h-4 w-4 shrink-0" />
                     <span>{t("establishment.selected")}</span>
-                    <strong>{selected.name}</strong>
+                    <strong className="text-foreground">{selected.name}</strong>
                   </div>
                 )}
               </div>
@@ -613,10 +613,10 @@ export default function EtablissementPage() {
             {/* Section Mon Établissement */}
             <section
               data-testid="card-mon-etablissement"
-              className="border border-border rounded-lg p-4 bg-primary-foreground"
+              className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)] dark:shadow-[0_18px_45px_rgba(2,6,23,0.5)]"
             >
-              <h2 className="mb-3 flex items-center gap-2 text-xl font-semibold">
-                <Building className="h-6 w-6 text-[#2663eb]" />
+              <h2 className="mb-3 flex items-center gap-2 text-xl font-semibold text-foreground">
+                <Building className="h-6 w-6 text-primary" />
                 {t("establishment.myEstablishment")}
               </h2>
               <MonEtablissementCard onAddClick={openSearch} />
@@ -663,15 +663,15 @@ export default function EtablissementPage() {
                 }
               />
             ) : showImportBar ? (
-              <div className="border border-yellow-200 rounded-lg p-6 bg-yellow-50">
+              <div className="rounded-lg border border-warning/35 bg-warning/10 p-6">
                 <div className="flex items-center gap-3">
-                  <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                  <AlertTriangle className="h-5 w-5 shrink-0 text-warning" />
                   <div>
-                    <h3 className="font-semibold text-yellow-900">
+                    <h3 className="font-semibold text-foreground">
                       {t("establishment.noEstablishmentSelected") ||
                         "Aucun établissement sélectionné"}
                     </h3>
-                    <p className="text-sm text-yellow-700 mt-1">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {t("establishment.pleaseAddEstablishmentFirst") ||
                         "Veuillez d'abord ajouter un établissement pour pouvoir importer des avis."}
                     </p>

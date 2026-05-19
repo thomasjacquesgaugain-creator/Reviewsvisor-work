@@ -12,8 +12,8 @@ export function WhyReviewsvisor() {
         -mt-10 lg:-mt-12
       "
     >
-      <div className="w-[98%] lg:w-[96%] rounded-[40px] bg-[#2555FF] text-white px-8 py-12 lg:px-16 lg:py-16 shadow-xl mx-auto transition-all duration-300">
-        <h2 className="text-2xl lg:text-3xl font-bold mb-10 text-center">
+      <div className="w-[98%] lg:w-[96%] rounded-[40px] bg-[#2555FF] dark:bg-[#0F1F4A] text-white px-8 py-12 lg:px-16 lg:py-16 shadow-xl dark:border dark:border-border dark:shadow-2xl dark:backdrop-blur-xl mx-auto transition-all duration-300">
+        <h2 className="text-2xl lg:text-3xl font-bold mb-10 text-center text-white dark:text-foreground">
           💡 {t("whyWorks.title")}
         </h2>
 
@@ -22,11 +22,11 @@ export function WhyReviewsvisor() {
           <div className="flex flex-col h-full justify-start">
             <div className="flex items-start gap-2 mb-3">
               <span className="text-2xl lg:text-3xl leading-none">⚡</span>
-              <h3 className="font-semibold text-lg lg:text-xl">
+              <h3 className="font-semibold text-lg lg:text-xl text-white dark:text-foreground">
                 {t("whyWorks.lightningAnalysis")}
               </h3>
             </div>
-            <p className="text-sm lg:text-base leading-relaxed flex-1">
+            <p className="text-sm lg:text-base leading-relaxed flex-1 text-blue-50 dark:text-muted-foreground">
               {t("whyWorks.lightningAnalysisDesc")}
             </p>
           </div>
@@ -35,11 +35,11 @@ export function WhyReviewsvisor() {
           <div className="flex flex-col h-full justify-start">
             <div className="flex items-start gap-2 mb-3">
               <span className="text-2xl lg:text-3xl leading-none">🎯</span>
-              <h3 className="font-semibold text-lg lg:text-xl">
+              <h3 className="font-semibold text-lg lg:text-xl text-white dark:text-foreground">
                 {t("whyWorks.immediatelyActionable")}
               </h3>
             </div>
-            <p className="text-sm lg:text-base leading-relaxed flex-1">
+            <p className="text-sm lg:text-base leading-relaxed flex-1 text-blue-50 dark:text-muted-foreground">
               {t("whyWorks.immediatelyActionableDesc")}
             </p>
           </div>
@@ -48,11 +48,11 @@ export function WhyReviewsvisor() {
           <div className="flex flex-col h-full justify-start">
             <div className="flex items-start gap-2 mb-3">
               <span className="text-2xl lg:text-3xl leading-none">🧠</span>
-              <h3 className="font-semibold text-lg lg:text-xl">
+              <h3 className="font-semibold text-lg lg:text-xl text-white dark:text-foreground">
                 {t("whyWorks.ultraPreciseAnalysis")}
               </h3>
             </div>
-            <p className="text-sm lg:text-base leading-relaxed flex-1">
+            <p className="text-sm lg:text-base leading-relaxed flex-1 text-blue-50 dark:text-muted-foreground">
               {t("whyWorks.ultraPreciseAnalysisDesc")}
             </p>
           </div>
@@ -63,15 +63,15 @@ export function WhyReviewsvisor() {
               <span className="text-2xl lg:text-3xl leading-none w-8 text-center">
                 📈
               </span>
-              <h3 className="font-semibold text-lg lg:text-xl">
+              <h3 className="font-semibold text-lg lg:text-xl text-white dark:text-foreground">
                 {t("whyWorks.measurableGrowth")}
               </h3>
             </div>
 
-            <p className="text-sm lg:text-base leading-tight">
+            <p className="text-sm lg:text-base leading-tight text-blue-50 dark:text-muted-foreground">
               {t("whyWorks.measurableGrowthDesc")}
             </p>
-            <ul className="mt-2 text-sm lg:text-base leading-tight list-disc list-inside space-y-0.5">
+            <ul className="mt-2 text-sm lg:text-base leading-tight text-blue-50 dark:text-muted-foreground list-disc list-inside space-y-0.5">
               <li>
                 ✅ <Trans i18nKey="whyWorks.growthStat1" components={{ strong: <strong /> }} />
               </li>

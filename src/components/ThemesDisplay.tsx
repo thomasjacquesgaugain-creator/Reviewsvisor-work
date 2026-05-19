@@ -126,10 +126,10 @@ export function ThemesDisplay({
 
   const SentimentBadges = ({ p, n }: any) => (
     <div className="flex gap-2">
-      <span className="px-3 py-1 bg-green-50 text-green-600 rounded-xl text-sm font-semibold">
+      <span className="rounded-xl bg-green-50 px-3 py-1 text-sm font-semibold text-green-600 dark:bg-green-950/40 dark:text-green-300">
         {p}%
       </span>
-      <span className="px-3 py-1 bg-red-50 text-red-600 rounded-xl text-sm font-semibold">
+      <span className="rounded-xl bg-red-50 px-3 py-1 text-sm font-semibold text-red-600 dark:bg-red-950/40 dark:text-red-300">
         {n}%
       </span>
     </div>
@@ -138,21 +138,21 @@ export function ThemesDisplay({
   const renderThemes = (themes: any[]) => {
     if (!themes?.length) {
       return (
-        <div className="text-center py-4 text-gray-500">
+        <div className="py-4 text-center text-slate-500 dark:text-slate-400">
           {t("dashboard.noThemesIdentified")}
         </div>
       );
     }
 
     return processThemes(themes).map((theme, i) => (
-      <div key={i} className="p-3 bg-purple-50 rounded-lg">
+      <div key={i} className="rounded-lg bg-purple-50 p-3 dark:bg-slate-950/30">
         <div className="flex items-center gap-3">
           {getThemeIcon(theme.theme)}
           <div className="flex-1">
-            <div className="font-medium">
+            <div className="font-medium text-slate-900 dark:text-slate-100">
               {translateTheme(theme.theme)}
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-slate-500 dark:text-slate-400">
               {t("dashboard.percentageOfReviews", {
                 percentage: theme.percentage,
               })}
@@ -174,7 +174,7 @@ export function ThemesDisplay({
       {/* Universal */}
       {hasUniversalThemes && (
         <div>
-          <h4 className="font-semibold text-lg mb-4">{t("analysis.overview.universalThemes")}</h4>
+          <h4 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">{t("analysis.overview.universalThemes")}</h4>
           <div className="space-y-2">
             {renderThemes(insight?.themes_universal || [])}
           </div>
@@ -184,7 +184,7 @@ export function ThemesDisplay({
       {/* Industry */}
       {showIndustryThemes && hasIndustryThemes && (
         <div>
-          <h4 className="font-semibold text-lg mb-4">
+          <h4 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
             {t("analysis.overview.industryThemes")}
           </h4>
           <div className="space-y-2">

@@ -105,19 +105,19 @@ export function NotificationsSettings() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-8">{t("settings.notifications.title")}</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-8">{t("settings.notifications.title")}</h1>
 
       {/* Notifications email */}
-      <div className="mb-8 pb-8 border-b border-gray-200">
+      <div className="mb-8 pb-8 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3 mb-6">
-          <Mail className="h-5 w-5 text-gray-400" />
-          <h2 className="text-lg font-medium text-gray-900">{t("settings.notifications.notificationsParEmail")}</h2>
+          <Mail className="h-5 w-5 text-slate-400 dark:text-slate-500" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-slate-100">{t("settings.notifications.notificationsParEmail")}</h2>
         </div>
         
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <Label htmlFor="new-reviews" className="text-base font-medium text-gray-900">
+              <Label htmlFor="new-reviews" className="text-base font-medium text-gray-900 dark:text-slate-100">
                 {t("settings.notifications.newReviews")}
               </Label>
               <p className="text-sm text-gray-500 mt-1">
@@ -136,7 +136,7 @@ export function NotificationsSettings() {
 
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <Label htmlFor="weekly-report" className="text-base font-medium text-gray-900">
+              <Label htmlFor="weekly-report" className="text-base font-medium text-gray-900 dark:text-slate-100">
                 {t("settings.notifications.weeklyReport")}
               </Label>
               <p className="text-sm text-gray-500 mt-1">
@@ -155,7 +155,7 @@ export function NotificationsSettings() {
 
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <Label htmlFor="important-updates" className="text-base font-medium text-gray-900">
+              <Label htmlFor="important-updates" className="text-base font-medium text-gray-900 dark:text-slate-100">
                 {t("settings.notifications.importantUpdates")}
               </Label>
               <p className="text-sm text-gray-500 mt-1">
@@ -177,17 +177,17 @@ export function NotificationsSettings() {
       {/* Notifications in-app */}
       <div>
         <div className="flex items-center gap-3 mb-6">
-          <MessageSquare className="h-5 w-5 text-gray-400" />
-          <h2 className="text-lg font-medium text-gray-900">{t("settings.notifications.inAppNotifications")}</h2>
+          <MessageSquare className="h-5 w-5 text-slate-400 dark:text-slate-500" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-slate-100">{t("settings.notifications.inAppNotifications")}</h2>
         </div>
         
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <Label htmlFor="in-app" className="text-base font-medium text-gray-900">
+              <Label htmlFor="in-app" className="text-base font-medium text-gray-900 dark:text-slate-100">
                 {t("settings.notifications.enableInAppNotifications")}
               </Label>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 {t("settings.notifications.inAppNotificationsDescription")}
               </p>
             </div>

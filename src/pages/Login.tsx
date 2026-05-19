@@ -132,29 +132,29 @@ const Login = () => {
       <BackArrow />
 
       {/* Background with organic shapes */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-purple-100">
-        <div className="absolute top-20 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-orange-200 to-yellow-200 rounded-full blur-3xl opacity-40"></div>
-        <div className="absolute bottom-20 right-20 w-60 h-60 bg-gradient-to-bl from-blue-300 to-cyan-300 rounded-full blur-2xl opacity-25"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-purple-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+        <div className="absolute top-20 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-purple-200 dark:from-blue-900/30 dark:to-purple-900/30 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-orange-200 to-yellow-200 dark:from-orange-900/20 dark:to-yellow-900/20 rounded-full blur-3xl opacity-40"></div>
+        <div className="absolute bottom-20 right-20 w-60 h-60 bg-gradient-to-bl from-blue-300 to-cyan-300 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-full blur-2xl opacity-25"></div>
       </div>
 
       <div className="relative z-10">
         {/* Header */}
         <div className="text-center py-8">
-          <h1 className="text-2xl font-medium text-gray-600">
+          <h1 className="text-2xl font-medium text-gray-600 dark:text-gray-300">
             {isSignUp ? t("auth.createAnalysisSpace") : t("auth.connectToAnalysisSpace")}
           </h1>
         </div>
 
         {/* Login Card */}
         <div className="container mx-auto px-4 max-w-md mb-8 pb-4">
-          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden">
+          <Card className="bg-white/90 dark:bg-white/[0.05] backdrop-blur-sm dark:backdrop-blur-xl border-0 dark:border dark:border-white/[0.08] shadow-xl dark:shadow-2xl rounded-3xl overflow-hidden">
             <CardContent className="p-8 space-y-6">
               <div className="text-center space-y-2">
-                <h2 className="text-3xl font-bold text-gray-900">
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
                   {isSignUp ? t("auth.signup") : t("auth.login")}
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   {isSignUp 
                     ? t("auth.startAnalyzing")
                     : t("auth.accessAnalytics")
@@ -166,18 +166,18 @@ const Login = () => {
                 {isSignUp && (
                   <>
                     <div className="space-y-2">
-                      <label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="firstName" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {t("auth.firstName")}
                       </label>
                       <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
                         <Input
                           id="firstName"
                           type="text"
                           placeholder={t("auth.firstNamePlaceholder")}
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
-                          className="h-12 pl-12 pr-4 bg-gray-50 border-gray-200 rounded-xl"
+                          className="h-12 pl-12 pr-4 bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 rounded-xl dark:text-white"
                           autoComplete="given-name"
                           required
                         />
@@ -185,18 +185,18 @@ const Login = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="lastName" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {t("auth.lastName")}
                       </label>
                       <div className="relative">
-                        <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
                         <Input
                           id="lastName"
                           type="text"
                           placeholder={t("auth.lastNamePlaceholder")}
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
-                          className="h-12 pl-12 pr-4 bg-gray-50 border-gray-200 rounded-xl"
+                          className="h-12 pl-12 pr-4 bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 rounded-xl dark:text-white"
                           autoComplete="family-name"
                           required
                         />
@@ -206,7 +206,7 @@ const Login = () => {
                 )}
 
                 <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     {t("auth.email")}
                   </label>
                   <Input
@@ -215,24 +215,24 @@ const Login = () => {
                     placeholder={t("auth.emailPlaceholder")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="h-12 px-4 bg-gray-50 border-gray-200 rounded-xl"
+                    className="h-12 px-4 bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 rounded-xl dark:text-white"
                     required
                   />
                 </div>
 
 
                 <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     {t("auth.password")}
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" aria-hidden />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-gray-500 z-10 pointer-events-none" aria-hidden />
                     <PasswordField
                       id="password"
                       placeholder={t("auth.passwordPlaceholder")}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 pl-10 pr-10 bg-gray-50 border-gray-200 rounded-xl"
+                      className="h-12 pl-10 pr-10 bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 rounded-xl dark:text-white"
                       required
                     />
                   </div>
@@ -240,17 +240,17 @@ const Login = () => {
 
                 {isSignUp && (
                   <div className="space-y-2">
-                    <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+                    <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {t("auth.confirmPassword")}
                     </label>
                     <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" aria-hidden />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" aria-hidden />
                       <PasswordField
                         id="confirmPassword"
                         placeholder={t("auth.confirmPasswordPlaceholder")}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="h-12 pl-12 pr-12 bg-gray-50 border-gray-200 rounded-xl"
+                        className="h-12 pl-12 pr-12 bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 rounded-xl dark:text-white"
                         required
                       />
                     </div>
@@ -259,7 +259,7 @@ const Login = () => {
 
                 <Button 
                   type="submit" 
-                  className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium"
+                  className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-medium"
                   disabled={loading}
                 >
                   {loading 
@@ -270,7 +270,7 @@ const Login = () => {
 
                 {!isSignUp && loginError && (
                   <div className="text-center">
-                    <p className="text-sm text-red-600 font-medium">
+                    <p className="text-sm text-red-600 dark:text-red-400 font-medium">
                       {loginError}
                     </p>
                   </div>
@@ -281,7 +281,7 @@ const Login = () => {
                 <div className="text-center">
                   <Link 
                     to="/mot-de-passe-oublie" 
-                    className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                    className="inline-flex items-center gap-2 text-sm text-primary hover:text-blue-700 hover:underline"
                   >
                     <LockKeyholeOpen className="h-4 w-4" /> {t("auth.forgotPassword")}
                   </Link>
@@ -289,28 +289,28 @@ const Login = () => {
               )}
 
               <div className="text-center space-y-4">
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   {isSignUp ? t("auth.hasAccount") : t("auth.noAccount")}{" "}
                   {isSignUp ? (
                     <button 
                       onClick={() => setIsSignUp(false)}
-                      className="text-blue-600 font-medium hover:underline"
+                      className="text-blue-600 dark:text-blue-400 font-medium hover:underline"
                     >
                       {t("auth.login")}
                     </button>
                   ) : (
-                    <a 
-                      href="/inscription"
-                      className="text-blue-600 font-medium hover:underline"
+                    <Link 
+                      to="/inscription" 
+                      className="text-primary font-medium hover:underline"
                     >
                       {t("auth.signup")}
-                    </a>
+                    </Link>
                   )}
                 </p>
 
-                <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-                  <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-yellow-800">
+                <div className="flex items-start gap-3 p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-xl border border-yellow-200 dark:border-yellow-900">
+                  <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
                     {t("auth.accountRequired")}
                   </p>
                 </div>

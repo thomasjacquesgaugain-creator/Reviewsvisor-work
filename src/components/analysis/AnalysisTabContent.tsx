@@ -1,7 +1,7 @@
 import { AnalysisPage } from "./AnalysisPage";
 import { transformAnalysisData } from "@/utils/transformAnalysisData";
 import { CompleteAnalysisData, Review } from "@/types/analysis";
-import { Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { format, parseISO } from "date-fns";
@@ -110,9 +110,28 @@ export function AnalysisTabContent({
   }
 
   return (
-    <div className="text-center py-12 text-muted-foreground">
-      <p className="text-sm">{t("dashboard.noAnalysisAvailable", "Aucune analyse disponible pour cet établissement.")}</p>
-      <p className="text-xs mt-2">{t("dashboard.importAndAnalyzeToSeeResults", "Importez des avis et lancez une analyse pour voir les résultats.")}</p>
-    </div>
+    <div className="flex items-center justify-center py-0">
+      <div className="w-full max-w-full rounded-xl bg-white p-8 text-center">
+        <div className="flex flex-col items-center gap-3">
+          <AlertTriangle className="h-8 w-8 text-muted-foreground" />
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">
+              {t(
+                "dashboard.noAnalysisAvailable",
+                'No analysis available for this establishment. Click "Analyze" in the location map to get started.',
+              )}
+            </p>
+
+            <p className="text-xs text-muted-foreground">
+              {t(
+                "dashboard.importAndAnalyzeToSeeResults",
+                "Report reviews and run an analysis to see the results",
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
+  </div>
   );
 }

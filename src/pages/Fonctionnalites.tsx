@@ -14,12 +14,12 @@ const Fonctionnalites = () => {
   const { t } = useTranslation();
   const highlight = <span className="text-green-500 font-medium" />;
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-100 via-blue-50 to-violet-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Background with organic shapes */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-violet-200 rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-200 to-yellow-200 rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-violet-200 dark:from-blue-900/30 dark:to-violet-900/30 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-200 to-yellow-200 dark:from-orange-900/20 dark:to-yellow-900/20 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-200 to-cyan-200 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-full blur-3xl opacity-30"></div>
       </div>
       
       <div className="relative z-10">
@@ -49,17 +49,17 @@ const Fonctionnalites = () => {
             
             {/* Stats cards */}
             <div className="grid grid-cols-3 gap-4 md:gap-6 mt-10 max-w-xl mx-auto">
-              <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-4 shadow-sm">
+              <div className="bg-card/80 dark:bg-white/[0.04] backdrop-blur-sm border border-border/50 dark:backdrop-blur-xl rounded-xl p-4 shadow-sm">
                 <BarChart3 className="w-5 h-5 text-primary mx-auto mb-2" />
                 <p className="text-xs text-muted-foreground">{t("features.reviewsAnalyzed")}</p>
                 <p className="text-lg font-bold text-foreground">—</p>
               </div>
-              <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-4 shadow-sm">
+              <div className="bg-card/80 dark:bg-white/[0.04] backdrop-blur-sm border border-border/50 dark:backdrop-blur-xl rounded-xl p-4 shadow-sm">
                 <Target className="w-5 h-5 text-success mx-auto mb-2" />
                 <p className="text-xs text-muted-foreground">{t("features.themesDetected")}</p>
                 <p className="text-lg font-bold text-foreground">—</p>
               </div>
-              <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-4 shadow-sm">
+              <div className="bg-card/80 dark:bg-white/[0.04] backdrop-blur-sm border border-border/50 dark:backdrop-blur-xl rounded-xl p-4 shadow-sm">
                 <Bell className="w-5 h-5 text-warning mx-auto mb-2" />
                 <p className="text-xs text-muted-foreground">{t("features.alerts")}</p>
                 <p className="text-lg font-bold text-foreground">—</p>
@@ -72,7 +72,7 @@ const Fonctionnalites = () => {
         <section className="pt-8 pb-6 md:pt-10 md:pb-8 px-4 md:px-8">
           <div className="max-w-4xl mx-auto space-y-6">
             {/* Feature Card 1 */}
-            <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div className="bg-card dark:bg-white/[0.04] border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm dark:backdrop-blur-xl hover:shadow-md transition-shadow duration-300">
               <div className="flex gap-4">
                 <div className="hidden sm:block w-1 bg-gradient-to-b from-primary to-primary/30 rounded-full shrink-0" />
                 <div className="flex-1">
@@ -90,7 +90,7 @@ const Fonctionnalites = () => {
             </div>
 
             {/* Feature Card 2 */}
-            <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div className="bg-card dark:bg-white/[0.04] border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm dark:backdrop-blur-xl hover:shadow-md transition-shadow duration-300">
               <div className="flex gap-4">
                 <div className="hidden sm:block w-1 bg-gradient-to-b from-success to-success/30 rounded-full shrink-0" />
                 <div className="flex-1">
@@ -108,7 +108,7 @@ const Fonctionnalites = () => {
             </div>
 
             {/* Feature Card 3 */}
-            <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div className="bg-card dark:bg-white/[0.04] border border-border/60 rounded-2xl p-6 md:p-8 shadow-sm dark:backdrop-blur-xl hover:shadow-md transition-shadow duration-300">
               <div className="flex gap-4">
                 <div className="hidden sm:block w-1 bg-gradient-to-b from-primary to-primary/30 rounded-full shrink-0" />
                 <div className="flex-1">
@@ -128,11 +128,11 @@ const Fonctionnalites = () => {
         </section>
 
         {/* GRID FEATURES SECTION */}
-        <section className="py-8 md:py-10 px-4 md:px-8 bg-gradient-to-b from-transparent via-secondary/30 to-transparent">
+        <section className="py-8 md:py-10 px-4 md:px-8 bg-gradient-to-b from-transparent via-secondary/30 dark:via-white/[0.02] to-transparent">
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-2 gap-6">
               {/* Grid Card 1 */}
-              <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+              <div className="bg-card dark:bg-white/[0.04] border border-border/60 rounded-2xl p-6 shadow-sm dark:backdrop-blur-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                     <TrendingUp className="w-5 h-5 text-primary" />
@@ -147,7 +147,7 @@ const Fonctionnalites = () => {
               </div>
 
               {/* Grid Card 2 */}
-              <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+              <div className="bg-card dark:bg-white/[0.04] border border-border/60 rounded-2xl p-6 shadow-sm dark:backdrop-blur-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
                     <Globe className="w-5 h-5 text-success" />
@@ -162,7 +162,7 @@ const Fonctionnalites = () => {
               </div>
 
               {/* Grid Card 3 */}
-              <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+              <div className="bg-card dark:bg-white/[0.04] border border-border/60 rounded-2xl p-6 shadow-sm dark:backdrop-blur-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
                     <FileText className="w-5 h-5 text-warning" />
@@ -177,7 +177,7 @@ const Fonctionnalites = () => {
               </div>
 
               {/* Grid Card 4 */}
-              <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+              <div className="bg-card dark:bg-white/[0.04] border border-border/60 rounded-2xl p-6 shadow-sm dark:backdrop-blur-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
                     <Users className="w-5 h-5 text-accent" />
@@ -197,13 +197,13 @@ const Fonctionnalites = () => {
         {/* FAQ SECTION */}
         <section className="pt-8 pb-16 md:pt-10 md:pb-20 px-4 md:px-8">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-card border border-border/60 rounded-2xl p-6 md:p-10 shadow-sm">
+            <div className="bg-card dark:bg-white/[0.04] border border-border/60 rounded-2xl p-6 md:p-10 shadow-sm dark:backdrop-blur-xl">
               <h2 className="text-2xl md:text-3xl font-bold mb-6 text-foreground text-center">
                 {t("features.questionsAboutFeatures")}
               </h2>
               
               <Accordion type="single" collapsible className="w-full space-y-3">
-                <AccordionItem value="item-1" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 hover:bg-secondary/50 transition-colors duration-200 data-[state=open]:bg-secondary/50">
+                <AccordionItem value="item-1" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 dark:bg-white/[0.03] hover:bg-secondary/50 dark:hover:bg-white/[0.06] transition-colors duration-200 data-[state=open]:bg-secondary/50">
                   <AccordionTrigger className="hover:no-underline py-5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg">
                     <div className="flex items-center gap-3 text-left">
                       <HelpCircle className="h-5 w-5 text-blue shrink-0" />
@@ -215,7 +215,7 @@ const Fonctionnalites = () => {
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="item-2" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 hover:bg-secondary/50 transition-colors duration-200 data-[state=open]:bg-secondary/50">
+                <AccordionItem value="item-2" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 dark:bg-white/[0.03] hover:bg-secondary/50 dark:hover:bg-white/[0.06] transition-colors duration-200 data-[state=open]:bg-secondary/50">
                   <AccordionTrigger className="hover:no-underline py-5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg">
                     <div className="flex items-center gap-3 text-left">
                       <HelpCircle className="h-5 w-5 text-blue shrink-0" />
@@ -227,7 +227,7 @@ const Fonctionnalites = () => {
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="item-3" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 hover:bg-secondary/50 transition-colors duration-200 data-[state=open]:bg-secondary/50">
+                <AccordionItem value="item-3" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 dark:bg-white/[0.03] hover:bg-secondary/50 dark:hover:bg-white/[0.06] transition-colors duration-200 data-[state=open]:bg-secondary/50">
                   <AccordionTrigger className="hover:no-underline py-5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg">
                     <div className="flex items-center gap-3 text-left">
                       <HelpCircle className="h-5 w-5 text-blue shrink-0" />
@@ -239,7 +239,7 @@ const Fonctionnalites = () => {
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="item-4" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 hover:bg-secondary/50 transition-colors duration-200 data-[state=open]:bg-secondary/50">
+                <AccordionItem value="item-4" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 dark:bg-white/[0.03] hover:bg-secondary/50 dark:hover:bg-white/[0.06] transition-colors duration-200 data-[state=open]:bg-secondary/50">
                   <AccordionTrigger className="hover:no-underline py-5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg">
                     <div className="flex items-center gap-3 text-left">
                       <HelpCircle className="h-5 w-5 text-blue shrink-0" />
@@ -251,7 +251,7 @@ const Fonctionnalites = () => {
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="item-5" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 hover:bg-secondary/50 transition-colors duration-200 data-[state=open]:bg-secondary/50">
+                <AccordionItem value="item-5" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 dark:bg-white/[0.03] hover:bg-secondary/50 dark:hover:bg-white/[0.06] transition-colors duration-200 data-[state=open]:bg-secondary/50">
                   <AccordionTrigger className="hover:no-underline py-5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg">
                     <div className="flex items-center gap-3 text-left">
                       <HelpCircle className="h-5 w-5 text-blue shrink-0" />
@@ -263,7 +263,7 @@ const Fonctionnalites = () => {
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="item-6" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 hover:bg-secondary/50 transition-colors duration-200 data-[state=open]:bg-secondary/50">
+                <AccordionItem value="item-6" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 dark:bg-white/[0.03] hover:bg-secondary/50 dark:hover:bg-white/[0.06] transition-colors duration-200 data-[state=open]:bg-secondary/50">
                   <AccordionTrigger className="hover:no-underline py-5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg">
                     <div className="flex items-center gap-3 text-left">
                       <HelpCircle className="h-5 w-5 text-blue shrink-0" />
@@ -275,7 +275,7 @@ const Fonctionnalites = () => {
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="item-7" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 hover:bg-secondary/50 transition-colors duration-200 data-[state=open]:bg-secondary/50">
+                <AccordionItem value="item-7" className="border border-border/60 rounded-xl px-4 md:px-6 bg-secondary/30 dark:bg-white/[0.03] hover:bg-secondary/50 dark:hover:bg-white/[0.06] transition-colors duration-200 data-[state=open]:bg-secondary/50">
                   <AccordionTrigger className="hover:no-underline py-5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg">
                     <div className="flex items-center gap-3 text-left">
                       <HelpCircle className="h-5 w-5 text-blue shrink-0" />

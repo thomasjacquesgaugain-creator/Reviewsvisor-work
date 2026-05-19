@@ -8,6 +8,7 @@ import { APP_NAME } from "@/config/brand";
 import { AccountMenu } from "@/components/AccountMenu";
 import { Building, House, LayoutDashboard } from 'lucide-react';
 import logoHeader from "@/assets/reviewsvisor-logo-header.png";
+import logoHeaderLight from "@/assets/reviewsvisor-logo-header-light.png";
 
 export default function NavBar() {
   const { t } = useTranslation();
@@ -48,12 +49,12 @@ export default function NavBar() {
   const getLinkClass = (path: string) =>
     `px-4 py-2 rounded-md font-medium transition-all duration-200 ${
       location.pathname === path
-        ? "text-blue-600"
-        : "text-gray-700 hover:bg-blue-600 hover:text-white"
+        ? "text-primary"
+        : "text-gray-700 dark:text-slate-300 hover:bg-primary hover:text-primary-foreground"
     }`;
 
   const logoutStyle =
-    "px-4 py-2 rounded-md font-medium !bg-[#dc2626] !text-white !border !border-[#dc2626] hover:!bg-[#b91c1c] active:!bg-[#991b1b] transition-all duration-200";
+  "inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium leading-none !bg-[#dc2626] !text-white !border !border-[#dc2626] hover:!bg-[#b91c1c] active:!bg-[#991b1b] transition-all duration-200";
 
   // Pour le créateur : toujours afficher la NavBar une fois vérifié
   if (isCreator && isCreatorChecked) {
@@ -78,7 +79,7 @@ export default function NavBar() {
   return (
     <div>
     {user?.email && (
-    <nav className="relative z-50 w-full flex items-center justify-between px-8 py-3 bg-white shadow-sm">
+    <nav className="relative z-50 w-full flex items-center justify-between px-8 py-3 bg-white dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-black/20">
       {/* Gauche : Logo + barre */}
       <div className="flex items-center gap-4">
         <div 
@@ -94,14 +95,24 @@ export default function NavBar() {
             }
           } : undefined}
         >
-          <img 
-            src={logoHeader} 
-            alt={`${APP_NAME} Logo`}
-            className="h-10 w-auto object-contain"
-          />
+          <>
+            {/* Light mode logo */}
+            <img
+              src={logoHeader}
+              alt={`${APP_NAME} Logo`}
+              className="h-10 w-auto object-contain dark:hidden"
+            />
+
+            {/* Dark mode logo */}
+            <img
+              src={logoHeaderLight}
+              alt={`${APP_NAME} Logo`}
+              className="hidden h-10 w-auto object-contain dark:block"
+            />
+          </>
         </div>
         {/* Barre de séparation bleue */}
-        <div className="h-10 w-px bg-gradient-to-b from-transparent via-blue-500 to-transparent opacity-70"></div>
+        <div className="h-10 w-px bg-gradient-to-b from-transparent via-primary to-transparent opacity-70"></div>
       </div>
 
       {/* Centre : Navigation */}

@@ -132,15 +132,15 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
   };
 
   return (
-    <Card className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)' }}>
+    <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <CardHeader className="p-6">
-        <CardTitle className="text-lg font-semibold text-gray-800">{t("analysis.sentiment.title", "Répartition des sentiments")}</CardTitle>
+        <CardTitle className="text-lg font-semibold text-foreground">{t("analysis.sentiment.title", "Répartition des sentiments")}</CardTitle>
       </CardHeader>
       <CardContent className="p-6 pt-0">
         {total > 0 ? (
           <>
             <div className="mb-4 space-y-1">
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-muted-foreground">
                 <Trans
                   i18nKey={
                     nonPositive > 0
@@ -153,7 +153,7 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
                     nonPositive: nonPositive,
                   }}
                   components={{
-                    bold: <span className="font-semibold text-gray-900" />,
+                    bold: <span className="font-semibold text-foreground" />,
                   }}
                 />
               </p>
@@ -175,7 +175,7 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
                     innerRadius={60}
                     outerRadius={100}
                     dataKey="value"
-                    stroke="#fff"
+                    stroke="hsl(var(--background))"
                     strokeWidth={3}
                     label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                     labelLine={false}
@@ -228,8 +228,8 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
                           data.percentage ||
                           ((data.value / total) * 100).toFixed(1);
                         return (
-                          <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-100">
-                            <p className="font-semibold text-gray-800">
+                          <div className="rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg">
+                            <p className="font-semibold text-foreground">
                               {data.name}
                             </p>
                             <p
@@ -255,18 +255,18 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
                 // onClick={() => handleClickSentiment("positive")}
                 className={`w-full text-left p-4 rounded-xl border flex justify-between items-center transition-colors cursor-default ${
                   ratingFilter === "POS"
-                    ? "bg-green-100 border-green-400"
-                    : "bg-green-50 border-green-100 hover:bg-green-100"
+                    ? "bg-green-100 border-green-400 dark:bg-green-950/40 dark:border-green-900/50"
+                    : "bg-green-50 border-green-100 hover:bg-green-100 dark:bg-green-950/20 dark:border-green-900/40 dark:hover:bg-green-950/40"
                 }`}
               >
                 <div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {t("analysis.sentiment.positive", "Positifs")}
                   </p>
                   <p className="text-2xl font-bold text-green-600">
                     {positiveCount}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {((positiveCount / total) * 100).toFixed(1)}% {t("analysis.sentiment.ofTotal", "du total")}
                   </p>
                 </div>
@@ -281,18 +281,18 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
                 // onClick={() => handleClickSentiment("neutral")}
                 className={`w-full text-left p-4 rounded-xl border flex justify-between items-center transition-colors cursor-default ${
                   ratingFilter === "NEU"
-                    ? "bg-orange-100 border-orange-400"
-                    : "bg-orange-50 border-orange-100 hover:bg-orange-100"
+                    ? "bg-orange-100 border-orange-400 dark:bg-orange-950/40 dark:border-orange-900/50"
+                    : "bg-orange-50 border-orange-100 hover:bg-orange-100 dark:bg-orange-950/20 dark:border-orange-900/40 dark:hover:bg-orange-950/40"
                 }`}
               >
                 <div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {t("analysis.sentiment.neutral", "Neutres")}
                   </p>
                   <p className="text-2xl font-bold text-orange-500">
                     {neutralCount}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {((neutralCount / total) * 100).toFixed(1)}% {t("analysis.sentiment.ofTotal", "du total")}
                   </p>
                 </div>
@@ -307,18 +307,18 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
                 // onClick={() => handleClickSentiment("negative")}
                 className={`w-full text-left p-4 rounded-xl border flex justify-between items-center transition-colors cursor-default ${
                   ratingFilter === "NEG"
-                    ? "bg-red-100 border-red-400"
-                    : "bg-red-50 border-red-100 hover:bg-red-100"
+                    ? "bg-red-100 border-red-400 dark:bg-red-950/40 dark:border-red-900/50"
+                    : "bg-red-50 border-red-100 hover:bg-red-100 dark:bg-red-950/20 dark:border-red-900/40 dark:hover:bg-red-950/40"
                 }`}
               >
                 <div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {t("analysis.sentiment.negative", "Négatifs")}
                   </p>
                   <p className="text-2xl font-bold text-red-500">
                     {negativeCount}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {((negativeCount / total) * 100).toFixed(1)}% {t("analysis.sentiment.ofTotal", "du total")}
                   </p>
                 </div>
@@ -330,15 +330,15 @@ export function SentimentDistributionSection({ data, reviews }: SentimentDistrib
           </div>
           </>
         ) : (
-          <div className="h-64 flex items-center justify-center text-gray-500">
+          <div className="h-64 flex items-center justify-center text-muted-foreground">
             <p>{t("analysis.sentiment.noData", "Aucune donnée disponible")}</p>
           </div>
         )}
         
         {total > 0 && (
-          <div className="mt-6 pt-4 border-t border-gray-100 text-center">
-            <p className="text-gray-500">
-              {t("analysis.sentiment.total", "Total:")} <span className="font-bold text-gray-800">{total} {t("analysis.sentiment.reviews", "avis")}</span>
+          <div className="mt-6 pt-4 border-t border-border text-center">
+            <p className="text-muted-foreground">
+              {t("analysis.sentiment.total", "Total:")} <span className="font-bold text-foreground">{total} {t("analysis.sentiment.reviews", "avis")}</span>
             </p>
           </div>
         )}

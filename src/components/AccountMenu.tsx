@@ -41,11 +41,11 @@ export function AccountMenu() {
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "group flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-150 ease-in-out cursor-pointer",
-            "bg-transparent text-gray-700",
-            "hover:bg-blue-600 hover:text-white",
-            "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-            isActive("/settings") || isActive("/compte") ? "bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white" : ""
+            "group inline-flex h-10 items-center gap-2 px-4 rounded-lg transition-colors duration-150 ease-in-out cursor-pointer",
+            "bg-transparent text-gray-700 dark:text-slate-300",
+            "hover:bg-primary hover:text-primary-foreground",
+            "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-950",
+            isActive("/settings") || isActive("/compte") ? "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground" : ""
           )}
           aria-label="Menu compte"
         >
@@ -56,19 +56,19 @@ export function AccountMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-80 p-0"
+        className="w-80 p-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-foreground shadow-xl dark:shadow-black/40"
         sideOffset={8}
       >
         {/* Header avec avatar + nom + email */}
-        <div className="px-4 pt-4 pb-3 border-b">
+        <div className="px-4 pt-4 pb-3 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-3 mb-3">
-            <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-              <User className="h-6 w-6 text-gray-600" />
+            <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+              <User className="h-6 w-6 text-slate-600 dark:text-slate-300" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-slate-100 truncate">{displayName}</p>
               {user.email && (
-                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 truncate">{user.email}</p>
               )}
             </div>
           </div>
@@ -80,7 +80,7 @@ export function AccountMenu() {
             onClick={() => navigate("/settings/establishments")}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer",
-              isActive("/settings/establishments") && "bg-blue-50 text-blue-600"
+              isActive("/settings/establishments") && "bg-primary/10 text-primary"
             )}
           >
             <Building2 className="h-4 w-4" />
@@ -91,7 +91,7 @@ export function AccountMenu() {
             onClick={() => navigate("/messages")}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer",
-              isActive("/messages") && "bg-blue-50 text-blue-600"
+              isActive("/messages") && "bg-primary/10 text-primary"
             )}
           >
             <MessageSquare className="h-4 w-4" />
@@ -102,7 +102,7 @@ export function AccountMenu() {
             onClick={() => navigate("/settings/billing")}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer",
-              isActive("/settings/billing") && "bg-blue-50 text-blue-600"
+              isActive("/settings/billing") && "bg-primary/10 text-primary"
             )}
           >
             <CreditCard className="h-4 w-4" />
@@ -115,7 +115,7 @@ export function AccountMenu() {
             onClick={() => navigate("/settings/profile")}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer",
-              isActive("/settings/profile") && "bg-blue-50 text-blue-600"
+              isActive("/settings/profile") && "bg-primary/10 text-primary"
             )}
           >
             <Settings className="h-4 w-4" />
@@ -134,7 +134,7 @@ export function AccountMenu() {
 
           <DropdownMenuItem
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer text-red-600 hover:bg-red-50 hover:text-red-700"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-700 dark:hover:text-red-400"
           >
             <LogOut className="h-4 w-4" />
             <span className="text-sm">{t("headerAccountMenu.logout")}</span>

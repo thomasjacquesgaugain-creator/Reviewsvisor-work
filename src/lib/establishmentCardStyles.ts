@@ -11,5 +11,5 @@ export const ESTABLISHMENT_CARD_HOVER =
 export const ESTABLISHMENT_CARD_HOVER_NEUTRAL =
   "hover:bg-accent/5 hover:border-primary/20";
 
-/** Classes hover pour une carte active (conserve le bleu, bordure un peu plus marquée au survol). */
-export const ESTABLISHMENT_CARD_HOVER_ACTIVE = "hover:border-blue-300";
+/** Classes hover pour une carte active (accent thème, bordure un peu plus marquée au survol). */
+export const ESTABLISHMENT_CARD_HOVER_ACTIVE = "hover:border-primary/40";

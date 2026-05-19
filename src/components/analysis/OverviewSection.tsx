@@ -37,11 +37,11 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
     return (
       <div className="space-y-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-1">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100 mb-1">
             1. {t("analysis.overview.title", "Vue d'ensemble")} – KPI principaux
           </h2>
         </div>
-        <div className="p-4 bg-gray-50 rounded-lg text-center text-muted-foreground">
+        <div className="p-4 bg-gray-50 dark:bg-slate-900 rounded-lg text-center text-muted-foreground">
           <p>Aucune donnée disponible</p>
         </div>
       </div>
@@ -195,7 +195,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Note moyenne */}
-        <Card>
+        <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {t("analysis.overview.averageRating", "Note moyenne")}
@@ -211,7 +211,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
         </Card>
 
         {/* Total avis */}
-        <Card>
+        <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {t("analysis.overview.totalReviews", "Total avis")}
@@ -228,7 +228,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
         </Card>
 
         {/* Tendance */}
-        <Card>
+        <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
           <CardHeader className="pb-3 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {t("analysis.overview.trend", "Tendance")} {data.trend !== 'insufficient' && t("analysis.overview.trendAverage")}
@@ -241,7 +241,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                     : data.trend === 'partial'
                     ? t("analysis.overview.trendTooltip.partial")
                     : (
-                      <div className="space-y-2 text-xs font-normal text-gray-600 leading-5">
+                      <div className="space-y-2 text-xs font-normal text-gray-600 dark:text-slate-300 leading-5">
                         <p className="font-medium mb-2">
                           {t("analysis.overview.trendTooltip.description")}
                         </p>
@@ -250,7 +250,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                           <span>{t("analysis.overview.trendTooltip.up")}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <ArrowRight className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" aria-hidden="true" />
+                          <ArrowRight className="w-3.5 h-3.5 text-gray-500 dark:text-slate-400 flex-shrink-0" aria-hidden="true" />
                           <span>{t("analysis.overview.trendTooltip.stable")}</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -351,7 +351,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                   )}
                 </div>
                 {data.trendValue !== null && data.trendValue !== undefined && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                     {data.trend === 'partial' ? t("analysis.overview.trendComparison.partial") : t("analysis.overview.trendComparison.previous3Months")}
                   </p>
                 )}
@@ -362,12 +362,12 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
       </div>
 
       {/* Répartition positive/neutre/négative - Une seule carte */}
-      <Card>
+      <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Avis positifs */}
             <div>
-              <p className="text-gray-500 text-sm mb-2">{t("analysis.overview.positiveReviews", "Avis positifs")}</p>
+              <p className="text-gray-500 dark:text-slate-400 text-sm mb-2">{t("analysis.overview.positiveReviews", "Avis positifs")}</p>
               <p 
                 className={`text-3xl font-bold text-green-500 mb-2 transition-all ${
                   onSentimentFilter ? 'cursor-pointer hover:text-green-600 hover:scale-105' : ''
@@ -378,18 +378,18 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
               >
                 {positivePercentage.toFixed(1)}%
               </p>
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+              <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mb-2">
                 <div 
                   className="bg-green-500 h-2 rounded-full transition-all" 
                   style={{ width: `${positivePercentage}%` }}
                 />
               </div>
-              <p className="text-gray-400 text-xs">({t("analysis.overview.stars.4to5", "4-5 étoiles")})</p>
+              <p className="text-gray-400 dark:text-slate-500 text-xs">({t("analysis.overview.stars.4to5", "4-5 étoiles")})</p>
             </div>
 
             {/* Avis neutres */}
             <div>
-              <p className="text-gray-500 text-sm mb-2">{t("analysis.overview.neutralReviews", "Avis neutres")}</p>
+              <p className="text-gray-500 dark:text-slate-400 text-sm mb-2">{t("analysis.overview.neutralReviews", "Avis neutres")}</p>
               <p 
                 className={`text-3xl font-bold mb-2 transition-all ${
                   onSentimentFilter ? 'cursor-pointer hover:opacity-80 hover:scale-105' : ''
@@ -401,18 +401,18 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
               >
                 {neutralPercentage.toFixed(1)}%
               </p>
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+              <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mb-2">
                 <div 
                   className="h-2 rounded-full transition-all" 
                   style={{ width: `${neutralPercentage}%`, backgroundColor: '#f59e0b' }}
                 />
               </div>
-              <p className="text-gray-400 text-xs">({t("analysis.overview.stars.3", "3 étoiles")})</p>
+              <p className="text-gray-400 dark:text-slate-500 text-xs">({t("analysis.overview.stars.3", "3 étoiles")})</p>
             </div>
 
             {/* Avis négatifs */}
             <div>
-              <p className="text-gray-500 text-sm mb-2">{t("analysis.overview.negativeReviews", "Avis négatifs")}</p>
+              <p className="text-gray-500 dark:text-slate-400 text-sm mb-2">{t("analysis.overview.negativeReviews", "Avis négatifs")}</p>
               <p 
                 className={`text-3xl font-bold text-red-500 mb-2 transition-all ${
                   onSentimentFilter ? 'cursor-pointer hover:text-red-600 hover:scale-105' : ''
@@ -423,13 +423,13 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
               >
                 {negativePercentage.toFixed(1)}%
               </p>
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+              <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mb-2">
                 <div 
                   className="bg-red-500 h-2 rounded-full transition-all" 
                   style={{ width: `${negativePercentage}%` }}
                 />
               </div>
-              <p className="text-gray-400 text-xs">({t("analysis.overview.stars.1to2", "1-2 étoiles")})</p>
+              <p className="text-gray-400 dark:text-slate-500 text-xs">({t("analysis.overview.stars.1to2", "1-2 étoiles")})</p>
             </div>
           </div>
         </CardContent>
@@ -438,7 +438,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
     {/* Analyse par thématiques et Décryptage des avis */}
       <div className="grid md:grid-cols-2 gap-6 mb-8">
         <Card
-          className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+          className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
           onClick={() =>
             setOpenCard(
               openCard === "thematiques" ? null : "thematiques",
@@ -458,10 +458,10 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                 {totalThemeMentionsPercentage}%
               </p>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-slate-300">
               {t("dashboard.themesAnalysis")}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-slate-400">
               {t("dashboard.reviewsDistributionByCategories")}
             </p>
             <Button
@@ -473,7 +473,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                   openCard === "thematiques" ? null : "thematiques",
                 );
               }}
-              className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-violet-50"
+              className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-violet-50 dark:hover:bg-violet-950/40"
             >
               {openCard === "thematiques" ? (
                 <ChevronUp className="w-3 h-3 text-violet-700" />
@@ -486,7 +486,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
 
         {/* Décryptage des avis */}
         <Card
-          className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+          className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
           onClick={() =>
             setOpenCard(
               openCard === "analyseDetaillee"
@@ -506,10 +506,10 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                 </p>
               )}
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-slate-300">
               {t("dashboard.reviewsDecryption")}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-slate-400">
               {t("dashboard.completeDetailsRatingsThemes")}
             </p>
             <Button
@@ -523,7 +523,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                     : "analyseDetaillee",
                 );
               }}
-              className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-blue-50"
+              className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-blue-50 dark:hover:bg-blue-950/40"
             >
               {openCard === "analyseDetaillee" ? (
                 <ChevronUp className="w-3 h-3 text-blue-600" />
@@ -537,7 +537,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
 
       {/* Contenu Analyse par thématiques - EN DESSOUS, pleine largeur */}
       {openCard === "thematiques" && (
-        <Card className="mt-4 mb-8" id="thematiques-content">
+        <Card className="mt-4 mb-8 dark:bg-slate-900 dark:border-slate-800" id="thematiques-content">
           <CardContent className="pt-6">
             <div className="space-y-4">
               {/* Utiliser le nouveau format v2 si disponible, sinon fallback v1 */}
@@ -717,7 +717,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                     (theme: any, index: number) => (
                       <div
                         key={index}
-                        className="p-3 bg-purple-50 rounded-lg"
+                        className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg"
                       >
                         <div className="flex items-center gap-3">
                           {getThemeIcon(theme.theme)}
@@ -725,7 +725,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                             <div className="font-medium">
                               {translateTheme(theme.theme)}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-500 dark:text-slate-400">
                               {t("dashboard.percentageOfReviews", {
                                 percentage: theme.percentage,
                               })}
@@ -743,7 +743,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                   );
                 })()
               ) : (
-                <div className="text-center py-4 text-gray-500">
+                <div className="text-center py-4 text-gray-500 dark:text-slate-400">
                   <p className="text-sm">
                     {t("dashboard.noThemesIdentified")}
                   </p>
@@ -760,7 +760,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
       {/* Contenu Décryptage des avis - EN DESSOUS, pleine largeur */}
       {
       openCard === "analyseDetaillee" && (
-        <Card className="mt-4 mb-8">
+        <Card className="mt-4 mb-8 dark:bg-slate-900 dark:border-slate-800">
           <CardContent>
             <div className="mt-6 space-y-8">
               {/* Répartition des avis par note */}
@@ -789,16 +789,16 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                           key={star}
                           className="flex items-center gap-4"
                         >
-                          <span className="w-20 text-sm text-gray-600 font-medium">
+                          <span className="w-20 text-sm text-gray-600 dark:text-slate-300 font-medium">
                             {star} {t("dashboard.stars")}{star > 1 ? "s" : ""}
                           </span>
-                          <div className="flex-1 bg-gray-100 rounded-full h-3">
+                          <div className="flex-1 bg-gray-100 dark:bg-slate-700 rounded-full h-3">
                             <div
                               className={`${color} h-3 rounded-full`}
                               style={{ width: `${percentage}%` }}
                             ></div>
                           </div>
-                          <span className="text-sm text-gray-600 w-20 text-right">
+                          <span className="text-sm text-gray-600 dark:text-slate-300 w-20 text-right">
                             {count} ({percentage}%)
                           </span>
                         </div>
@@ -806,7 +806,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-gray-500 dark:text-slate-400">
                     <p>{t("dashboard.uploadReviewToSeeBreakdown")}</p>
                   </div>
                 )}
@@ -814,7 +814,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
 
               {/* Thématiques récurrentes */}
               <div>
-                <h4 className="font-semibold text-lg mb-4">
+                <h4 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
                   {t("dashboard.recurringThemes")}
                 </h4>
                 {(() => {
@@ -948,7 +948,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                     themesIndustry.length === 0
                   ) {
                     return (
-                      <div className="text-center py-8 text-gray-500">
+                      <div className="py-8 text-center text-slate-500 dark:text-slate-400">
                         <p>
                           {t("dashboard.importReviewsToSeeTheThemes")}
                         </p>
@@ -963,11 +963,11 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                     themesIndustry.length === 0
                   ) {
                     return (
-                      <div className="text-center py-8 text-gray-500">
+                      <div className="py-8 text-center text-slate-500 dark:text-slate-400">
                         <p>
                           Aucune thématique identifiée pour le moment
                         </p>
-                        <p className="text-xs mt-2">
+                        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                           Les thématiques apparaîtront après l'analyse
                           de vos avis
                         </p>

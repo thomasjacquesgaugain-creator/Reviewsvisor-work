@@ -58,31 +58,31 @@ export function PotentialGainSection({
   }, [reviews, recommendedActions, mainIssue]);
 
   return (
-    <div className="relative overflow-hidden rounded-[8px] border border-slate-200 bg-white p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
+    <div className="relative overflow-hidden rounded-[8px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-[0_16px_35px_rgba(15,23,42,0.05)]">
       <div className="relative flex min-h-[236px] flex-col">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] bg-[#e9fbf6]">
             <Sparkles className="h-4 w-4 text-[#2563eb]" />
           </span>
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
             {t("dashboard.keyTakeaways.potentialGain.title", {
               defaultValue: "Potential Gain",
             })}
           </p>
         </div>
 
-        <div className="mt-3 h-px w-full bg-slate-200/70" />
+        <div className="mt-3 h-px w-full bg-slate-200/70 dark:bg-slate-700/70" />
 
           {potentialGain ? (
             <>
-        <div className="mt-4 rounded-[8px] border border-slate-100 bg-white/70 p-4">
+        <div className="mt-4 rounded-[8px] border border-slate-100 dark:border-slate-800 bg-white/70 dark:bg-slate-900 p-4">
             <div className="flex items-start gap-3">
               <span className="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#e9fbf6]">
                 <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
               </span>
 
               <div className="min-w-0">
-                <div className="text-[26px] font-semibold leading-none tracking-tight text-slate-900">
+                <div className="text-[26px] font-semibold leading-none tracking-tight text-slate-900 dark:text-slate-100">
                   +{potentialGain.toFixed(2)}
                 </div>
                 <div className="mt-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#2563eb]">
@@ -90,7 +90,7 @@ export function PotentialGainSection({
                     defaultValue: "Estimated lift",
                   })}
                 </div>
-                <div className="mt-2 text-sm leading-6 text-slate-600">
+                <div className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
                   {t("dashboard.keyTakeaways.potentialGain.estimatedGain", {
                     gain: potentialGain.toFixed(2),
                     defaultValue: `+${potentialGain.toFixed(2)} estimated if action applied.`,
@@ -109,7 +109,7 @@ export function PotentialGainSection({
               </div>
             </>
           ) : (
-            <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
+            <div className="flex flex-1 items-center justify-center text-sm text-slate-500 dark:text-slate-400">
               {t("dashboard.keyTakeaways.potentialGain.noData", {
                 defaultValue: "No data available",
               })}

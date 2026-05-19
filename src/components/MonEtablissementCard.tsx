@@ -271,7 +271,7 @@ export default function MonEtablissementCard({
   if (isLoading) {
     return (
       <div className="p-6 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <Loader2 className="w-6 h-6 animate-spin text-slate-600 dark:text-slate-400" />
       </div>
     );
   }
@@ -288,12 +288,12 @@ export default function MonEtablissementCard({
       <div className="p-6 flex items-center justify-center min-h-[180px]">
         <button
           onClick={handleAddClick}
-          className="cursor-pointer bg-card border border-dashed border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/10 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-2 min-h-[80px]"
+          className="cursor-pointer rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-primary/5 dark:hover:bg-slate-800 hover:border-primary/50 transition-all duration-200 flex flex-col items-center justify-center gap-2 min-h-[80px]"
         >
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
             <Plus className="w-5 h-5 text-primary" />
           </div>
-          <span className="text-xs text-muted-foreground font-medium">
+          <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
             {t("establishment.add")}
           </span>
         </button>
@@ -302,35 +302,35 @@ export default function MonEtablissementCard({
   }
 
   return (
-    <div className="pt-6 px-6 pb-2">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm pt-6 px-6 pb-4">
       {/* Grille 3 colonnes : L1 Nom | Note | Site web ; L2 Adresse | (vide) | Google Maps ; L3 Téléphone */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-x-10 gap-y-6">
         {/* Ligne 1 - Col 1 : Nom */}
         <div className="flex flex-col gap-1 md:col-start-1 md:row-start-1">
-          <p className="text-sm text-muted-foreground font-medium">
+          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
             {t("establishment.nameLabel")}
           </p>
-          <p className="text-base font-medium text-foreground">{etab.name}</p>
+          <p className="text-base font-medium text-gray-900 dark:text-slate-100">{etab.name}</p>
         </div>
 
         {/* Ligne 1 - Col 2 : Note Google */}
         <div className="flex flex-col gap-1 md:col-start-2 md:row-start-1">
-          <p className="text-sm text-muted-foreground font-medium">
+          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
             {t("establishment.googleRating")}
           </p>
           {etab.rating ? (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 font-medium text-sm w-fit">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-amber-500/35 bg-amber-500/15 px-2.5 py-0.5 text-sm font-medium text-amber-950 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-100">
+              <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-600 dark:fill-amber-400 dark:text-amber-300" />
               {etab.rating}
             </span>
           ) : (
-            <p className="text-base text-muted-foreground">—</p>
+            <p className="text-base text-slate-600 dark:text-slate-400">—</p>
           )}
         </div>
 
         {/* Ligne 1 - Col 3 : Site web */}
         <div className="flex flex-col gap-1 md:col-start-3 md:row-start-1">
-          <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium flex items-center gap-1.5">
             <Globe className="w-3.5 h-3.5" />
             {t("establishment.website")}
           </p>
@@ -345,24 +345,24 @@ export default function MonEtablissementCard({
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           ) : (
-            <p className="text-base text-muted-foreground">—</p>
+            <p className="text-base text-slate-600 dark:text-slate-400">—</p>
           )}
         </div>
 
         {/* Ligne 2 - Col 1 : Adresse */}
         <div className="flex flex-col gap-1 md:col-start-1 md:row-start-2">
-          <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5" />
             {t("establishment.address")}
           </p>
-          <p className="text-base font-medium text-foreground">
+          <p className="text-base font-medium text-gray-900 dark:text-slate-100">
             {etab.address}
           </p>
         </div>
 
         {/* Ligne 2 - Col 3 : Google Maps (sous Site web ; col 2 vide) */}
         <div className="flex flex-col gap-1 md:col-start-3 md:row-start-2">
-          <p className="text-sm text-muted-foreground font-medium">
+          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
             {t("establishment.googleMaps")}
           </p>
           {etab.place_id ? (
@@ -386,35 +386,35 @@ export default function MonEtablissementCard({
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           ) : (
-            <p className="text-base text-muted-foreground">—</p>
+            <p className="text-base text-slate-600 dark:text-slate-400">—</p>
           )}
         </div>
 
         {/* Ligne 3 - Col 1 : Téléphone */}
         <div className="flex flex-col gap-1 md:col-start-1 md:row-start-3">
-          <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium flex items-center gap-1.5">
             <Phone className="w-3.5 h-3.5" />
             {t("establishment.phone")}
           </p>
-          <p className="text-base font-medium text-foreground">
+          <p className="text-base font-medium text-gray-900 dark:text-slate-100">
             {etab.phone || "—"}
           </p>
         </div>
       </div>
 
       {/* Ligne du bas: place_id | Importer | Visuel | Supprimer */}
-      <div className="border-t border-border mt-4 pt-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div className="border-t border-slate-200 dark:border-slate-800 mt-4 pt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         {/* place_id à gauche */}
         <div className="flex items-center gap-2 md:w-1/3 md:max-w-[320px]">
           <Building2 className="w-4 h-4 text-primary flex-shrink-0" />
-          <p className="text-xs text-muted-foreground font-mono truncate">
+          <p className="text-xs text-slate-600 dark:text-slate-400 font-mono truncate">
             {t("establishment.placeId")}: {etab.place_id}
           </p>
         </div>
 
         {/* Importer au centre : dernière MAJ + sélecteur + boutons + forcer import complet */}
         <div className="flex flex-col md:flex-1 md:justify-center gap-2 items-center">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-slate-600 dark:text-slate-400">
             {etab.last_reviews_import
               ? t(
                   "establishment.lastReviewsImport",
@@ -434,29 +434,43 @@ export default function MonEtablissementCard({
           <div className="flex flex-wrap items-center justify-center gap-2">
             <label
               htmlFor="import-source"
-              className="text-xs text-muted-foreground font-medium sr-only"
+              className="text-xs text-slate-600 dark:text-slate-400 font-medium sr-only"
             >
               Plateforme
             </label>
-            <select
-              id="import-source"
-              value={importSource}
-              onChange={(e) =>
-                setImportSource(e.target.value as ImportReviewSource)
-              }
-              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-              data-testid="select-import-source"
-            >
-              <option value="google">{t("platforms.google")}</option>
-              {/* Commented the below code for now as will integrate the below sources in phase 2 */}
-              {/* <option value="tripadvisor">{t("platforms.tripadvisor")}</option> */} 
-              {/* <option value="trustpilot">{t("platforms.trustpilot")}</option> */}
-            </select>
+            <div className="relative">
+              <select
+                id="import-source"
+                value={importSource}
+                onChange={(e) =>
+                  setImportSource(e.target.value as ImportReviewSource)
+                }
+                className="appearance-none rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/80 text-gray-900 dark:text-slate-100 pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                data-testid="select-import-source"
+              >
+                <option value="google">{t("platforms.google")}</option>
+              </select>
+
+              <svg
+                className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600 dark:text-slate-400"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m6 9 6 6 6-6"
+                />
+              </svg>
+            </div>
             <button
               type="button"
               // onClick={() => handleImportReviews()}
               disabled={isImportingReviews}
-              className="inline-flex px-4 py-2 h-auto items-center justify-center gap-1 rounded-lg border border-blue-600 bg-blue-600 text-white shadow-sm disabled:opacity-70 disabled:cursor-not-allowed text-xs font-medium"
+              className="inline-flex h-auto items-center justify-center gap-1 rounded-lg border border-primary bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
               title={t("establishment.importFromPlatform", {
                 platform: t(`platforms.${importSource}`),
               })}
@@ -482,7 +496,7 @@ export default function MonEtablissementCard({
           >
             {t("establishment.importAllReviews")}
           </button> */}
-          {/* <label className="inline-flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+          {/* <label className="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
             <input
               type="checkbox"
               checked={forceFullImport}
@@ -498,7 +512,7 @@ export default function MonEtablissementCard({
         <div className="flex flex-col md:flex-row md:w-1/3 md:justify-end gap-2">
           <button
             type="button"
-            className="inline-flex px-4 py-3 h-auto w-full md:w-44 flex-col items-center justify-center gap-1 rounded-lg border border-blue-600 bg-blue-600 text-white shadow-sm"
+            className="inline-flex h-auto w-full flex-col items-center justify-center gap-1 rounded-lg border border-primary bg-primary px-4 py-3 text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 md:w-44"
             title={t("establishment.visualReviews")}
             data-testid="btn-analyser-etablissement"
             data-place-id={etab.place_id}

@@ -587,8 +587,8 @@ export default function SavedEstablishmentsList({
   }
   return (
     <>
-      <section className="p-4 border border-border rounded-lg bg-white shadow-sm">
-        <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-2">
+      <section className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)] dark:shadow-[0_18px_45px_rgba(2,6,23,0.5)]">
+        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
           <Building2 className="h-5 w-5 text-primary" />
           {t("establishment.savedEstablishments")}
         </h3>
@@ -607,14 +607,14 @@ export default function SavedEstablishmentsList({
           <button
             onClick={handleAddClick}
             disabled={checkingSubscription}
-            className="cursor-pointer bg-card border border-dashed border-border rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-accent/10 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-2 min-h-[80px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="cursor-pointer bg-white dark:bg-slate-900/80 border border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-3 min-w-[200px] max-w-[250px] shadow-sm hover:shadow-md hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-2 min-h-[80px] disabled:opacity-50 disabled:cursor-not-allowed"
             title={t("establishment.add")}
           >
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-primary/10 dark:bg-primary/15 flex items-center justify-center">
               {checkingSubscription ? (
                 <Loader2 className="w-5 h-5 text-primary animate-spin" />
               ) : (
-                <Plus className="w-5 h-5 text-primary" />
+                <Plus className="w-5 h-5 text-primary/80 dark:text-primary" />
               )}
             </div>
             <span className="text-xs text-muted-foreground font-medium">

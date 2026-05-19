@@ -102,6 +102,7 @@
     "signingUp": "Inscription...",
     "forgotPasswordTitle": "Mot de passe oublié",
     "forgotPasswordSubtitle": "Entrez votre adresse email pour recevoir un lien de réinitialisation",
+    "rememberPassword": "Vous souvenez-vous de votre mot de passe?",
     "emailSent": "Email envoyé !",
     "emailSentMessage": "Un email vous a été envoyé avec un lien pour réinitialiser votre mot de passe",
     "checkInbox": "Vérifiez votre boîte de réception (et vos spams) pour le lien de réinitialisation.",
@@ -186,7 +187,11 @@
     "legalNotice": "Mentions légales",
     "termsOfUse": "Conditions d'utilisation",
     "privacyPolicy": "Politique de confidentialité",
-    "cookies": "Cookies"
+    "cookies": "Cookies",
+    "legalHeader": "Informations légales",
+    "legalHeaderMessage": "Veuillez lire attentivement ce document avant d’utiliser la plateforme.",
+    "profile": "Profil",
+    "changePassword": "Changer le mot de passe"
   },
   "hero": {
     "trust1": "Transformer retour en conception",

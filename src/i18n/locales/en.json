@@ -102,6 +102,7 @@
     "signingUp": "Signing up...",
     "forgotPasswordTitle": "Forgot password",
     "forgotPasswordSubtitle": "Enter your email address to receive a reset link",
+    "rememberPassword": "Remember your password?",
     "emailSent": "Email sent!",
     "emailSentMessage": "An email has been sent to you with a link to reset your password",
     "checkInbox": "Check your inbox (and spam) for the reset link.",
@@ -166,7 +167,11 @@
     "legalNotice": "Legal notice",
     "termsOfUse": "Terms of use",
     "privacyPolicy": "Privacy policy",
-    "cookies": "Cookies"
+    "cookies": "Cookies",
+    "legalHeader": "Legal Information",
+    "legalHeaderMessage": "Please read this document carefully before using the platform.",
+    "profile": "Profile",
+    "changePassword": "Change password"
   },
   "hero": {
     "trust1": "Turn feedback into design",

@@ -113,8 +113,15 @@ export function ThemesSection({ data }: ThemesSectionProps) {
 
   const totalThemeMentions = effectiveThemes.reduce((sum, t) => sum + (t.count || 0), 0);
 
+  const getScoreTone = () => {
+    return {
+      labelClassName: "text-slate-700 dark:text-slate-300",
+      valueClassName: "text-primary",
+    };
+  };
+
   return (
-    <Card>
+    <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
       <CardHeader>
         <CardTitle>{t("analysis.themes.title", "Analyse par thèmes")}</CardTitle>
       </CardHeader>
@@ -126,8 +133,8 @@ export function ThemesSection({ data }: ThemesSectionProps) {
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart data={radarData}>
                   <PolarGrid />
-                  <PolarAngleAxis dataKey="theme" tick={{ fontSize: 12, fill: '#000000' }} />
-                  <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 10, fill: '#000000' }} />
+                  <PolarAngleAxis dataKey="theme" tick={{ fontSize: 12, fill: "hsl(var(--foreground))" }} />
+                  <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
                   <Radar
                     name={t("analysis.themes.score", "Score des thèmes récurrents")}
                     dataKey="score"
@@ -138,15 +145,34 @@ export function ThemesSection({ data }: ThemesSectionProps) {
                   <Legend />
                   <Tooltip
                     cursor={false}
-                    formatter={(value: any, _name: any, payload: any) => {
-                      const themeName = payload?.payload?.theme;
-                      const theme = effectiveThemes.find(t => t.theme === themeName);
-                      const score = typeof value === "number" ? value : 0;
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+
+                      const rawScore = payload[0]?.value;
+                      const score = typeof rawScore === "number" ? rawScore : 0;
+                      const themeName = payload[0]?.payload?.theme || "";
+                      const theme = effectiveThemes.find((item) => item.theme === themeName);
                       const mentions = theme?.count ?? 0;
-                      return [
-                        t("analysis.themes.scoreTooltipValue", { score: score.toFixed(0), mentions }),
-                        t("analysis.themes.scoreTooltipLabel"),
-                      ];
+                      const tone = getScoreTone();
+
+                      return (
+                        <div className="min-w-[180px] rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                          <p className="text-xs font-semibold tracking-wide text-slate-500 dark:text-slate-400">
+                            {themeName}
+                          </p>
+                          <div className="mt-1 flex items-baseline justify-between gap-3">
+                            <span className={`text-xs font-medium ${tone.labelClassName}`}>
+                              {t("analysis.themes.scoreTooltipLabel")}
+                            </span>
+                            <span className={`text-sm font-bold ${tone.valueClassName}`}>
+                              {t("analysis.themes.scoreTooltipValue", {
+                                score: score.toFixed(0),
+                                mentions,
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      );
                     }}
                   />
                 </RadarChart>
@@ -154,14 +180,14 @@ export function ThemesSection({ data }: ThemesSectionProps) {
             </div>
 
             {/* Micro-légende sous le radar */}
-            <div className="flex flex-col gap-1 text-xs text-gray-500">
+            <div className="flex flex-col gap-1 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
-                <Info className="w-3 h-3 text-gray-400" />
+                <Info className="w-3 h-3 text-muted-foreground" />
                 <span>
                  {t("analysis.themes.scoreExplanation")}
                 </span>
               </div>
-              <p className="text-[11px] text-gray-400">
+              <p className="text-[11px] text-muted-foreground">
                   {t("analysis.themes.basedOnMentions", { count: totalThemeMentions })}
               </p>
             </div>
@@ -171,14 +197,14 @@ export function ThemesSection({ data }: ThemesSectionProps) {
               {effectiveThemes.map((theme, index) => {
                 const scorePercent = Math.round((theme.score || 0) * 100);
                 let polarityLabel = t("analysis.themes.polarity.mixed");
-                let polarityClass = "bg-amber-50 text-amber-700 border-amber-200";
+                let polarityClass = "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/50";
 
                 if (scorePercent >= 70) {
                   polarityLabel = t("analysis.themes.polarity.positive");
-                  polarityClass = "bg-green-50 text-green-700 border-green-200";
+                  polarityClass = "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-900/50";
                 } else if (scorePercent < 40) {
                   polarityLabel = t("analysis.themes.polarity.toWatch");
-                  polarityClass = "bg-red-50 text-red-700 border-red-200";
+                  polarityClass = "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/50";
                 }
 
                 return (
@@ -193,17 +219,17 @@ export function ThemesSection({ data }: ThemesSectionProps) {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-gray-600">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5">
                           <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                          <span className="font-medium text-gray-800">
+                          <span className="font-medium text-slate-900 dark:text-slate-100">
                             {t("analysis.themes.score")}: {scorePercent}%
                           </span>
                         </span>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5">
                           <span className="h-1.5 w-1.5 rounded-full bg-gray-500" />
-                          <span className="text-gray-700">
+                          <span className="text-slate-700 dark:text-slate-300">
                             {t("analysis.themes.frequency")}: {theme.count}{" "}
                             {t("analysis.themes.mentions", "mentions")}
                           </span>
@@ -234,16 +260,16 @@ export function ThemesSection({ data }: ThemesSectionProps) {
             {/* Séparation entre graphique et commentaires */}
             <div className="pt-6 mt-6">
               {/* Petite ligne décorative centrée */}
-              <div className="w-24 h-0.5 bg-gray-300 mx-auto my-4"></div>
+              <div className="w-24 h-0.5 bg-slate-300 dark:bg-slate-700 mx-auto my-4"></div>
               
               {/* Section Commentaires */}
               <div className="flex items-center gap-2 mb-4">
                 <MessageSquare className="w-5 h-5 text-blue-600" />
-                <h3 className="text-lg font-semibold text-gray-800 border-b-2 border-yellow-400 pb-1">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 border-b-2 border-yellow-400 pb-1">
                   {t("analysis.themes.comments")}
                 </h3>
               </div>
-              <div className="text-gray-700 leading-relaxed space-y-3">
+              <div className="text-slate-700 dark:text-slate-300 leading-relaxed space-y-3">
                 {generateThematicComment(effectiveThemes,t)}
               </div>
             </div>
@@ -293,7 +319,7 @@ function generateThematicComment(themes: ThemeAnalysis[],t: (key: string, opts?:
             count: mostMentioned.count,
             score: Math.round(mostMentioned.score * 100),
           }}
-          components={{ bold: <strong className="text-gray-900" /> }}
+          components={{ bold: <strong className="text-slate-900 dark:text-slate-100" /> }}
         />      
       </p>
     );
@@ -311,7 +337,7 @@ function generateThematicComment(themes: ThemeAnalysis[],t: (key: string, opts?:
         <Trans
           i18nKey="analysis.themes.comment.strengths"
           values={{ list: strengthsList }}
-          components={{ bold: <strong className="text-gray-900" /> }}
+          components={{ bold: <strong className="text-slate-900 dark:text-slate-100" /> }}
         />    
       </p>
     );
@@ -333,7 +359,7 @@ function generateThematicComment(themes: ThemeAnalysis[],t: (key: string, opts?:
             count: improvements[0].count,
             score: Math.round(improvements[0].score * 100),
           }}
-          components={{ bold: <strong className="text-gray-900" /> }}
+          components={{ bold: <strong className="text-slate-900 dark:text-slate-100" /> }}
         />      
       </p>
     );
@@ -350,7 +376,7 @@ function generateThematicComment(themes: ThemeAnalysis[],t: (key: string, opts?:
               count: leastMentioned.count,
               score: Math.round(leastMentioned.score * 100),
             }}
-            components={{ bold: <strong className="text-gray-900" /> }}
+            components={{ bold: <strong className="text-slate-900 dark:text-slate-100" /> }}
           />        
         </p>
       );

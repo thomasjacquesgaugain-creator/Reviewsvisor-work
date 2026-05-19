@@ -140,7 +140,7 @@ export const EffortMatrix = ({ analysisData }) => {
 
   if (!paretoIssues.length) {
     return (
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-gray-500 dark:text-slate-400">
         {t("recommendations.smart.noParetoIssues")}
       </p>
     );
@@ -148,7 +148,7 @@ export const EffortMatrix = ({ analysisData }) => {
 
   return (
     <div>
-      <h4 className="font-semibold text-gray-800 mb-4">
+      <h4 className="mb-4 font-semibold text-slate-800 dark:text-slate-100">
         {t("dashboard.actionPrioritization")}
       </h4>
 
@@ -163,14 +163,14 @@ export const EffortMatrix = ({ analysisData }) => {
 
         return (
           <div key={idx} className="mb-6">
-            <h5 className="font-medium text-gray-700 mb-2">
+            <h5 className="mb-2 font-medium text-slate-700 dark:text-slate-300">
               {issue.name}
             </h5>
 
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200">
+                  <tr className="border-b border-slate-200 dark:border-slate-700">
                     <th className="text-left py-2 px-3">
                       {t("dashboard.action")}
                     </th>
@@ -210,7 +210,7 @@ export const EffortMatrix = ({ analysisData }) => {
         );
       })}
 
-      <p className="text-sm text-gray-500 mt-4 italic">
+      <p className="mt-4 text-sm italic text-slate-500 dark:text-slate-400">
         {t("dashboard.recommendedStartHighImpactLowEffort")}
       </p>
     </div>

@@ -113,7 +113,7 @@ export function DiagnosticSection({
   };
 
   return (
-    <Card>
+    <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>{t("analysis.syntheseAndDiagnostic.title")}</CardTitle>
@@ -139,12 +139,12 @@ export function DiagnosticSection({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Note moyenne */}
             {overview && (
-              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg dark:bg-slate-800/40 dark:border-slate-700">
                 <div className="flex items-center gap-2 mb-2">
                   <Star className="w-4 h-4 text-amber-500" />
-                  <span className="text-sm font-medium text-gray-600">{t("analysis.syntheseAndDiagnostic.averageRating")}</span>
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("analysis.syntheseAndDiagnostic.averageRating")}</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                   {overview.averageRating.toFixed(1)}/5
                 </p>
               </div>
@@ -152,12 +152,12 @@ export function DiagnosticSection({
 
             {/* % d'avis positifs */}
             {overview && (
-              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg dark:bg-slate-800/40 dark:border-slate-700">
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingUp className="w-4 h-4 text-green-500" />
-                  <span className="text-sm font-medium text-gray-600">{t("analysis.syntheseAndDiagnostic.positiveReviews")}</span>
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("analysis.syntheseAndDiagnostic.positiveReviews")}</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                   {overview.positivePercentage.toFixed(0)}%
                 </p>
               </div>
@@ -165,15 +165,15 @@ export function DiagnosticSection({
 
             {/* Irritant #1 */}
             {topIssue && (
-              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg dark:bg-slate-800/40 dark:border-slate-700">
                 <div className="flex items-center gap-2 mb-2">
                   <Target className="w-4 h-4 text-red-500" />
-                  <span className="text-sm font-medium text-gray-600">{t("analysis.syntheseAndDiagnostic.topIrritant")}</span>
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("analysis.syntheseAndDiagnostic.topIrritant")}</span>
                 </div>
-                <p className="text-lg font-semibold text-gray-900 truncate" title={topIssue.name}>
+                <p className="text-lg font-semibold text-slate-900 dark:text-slate-100 truncate" title={topIssue.name}>
                   {topIssue.name}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
                   {topIssue.percentage.toFixed(0)}% • {t("analysis.syntheseAndDiagnostic.mentions", { count: topIssue.count })}
                 </p>
               </div>
@@ -186,17 +186,17 @@ export function DiagnosticSection({
               <Lightbulb className="w-5 h-5" />
               {t("analysis.syntheseAndDiagnostic.overview")}
             </h3>
-            <p className="text-gray-700 leading-relaxed">{summaryText}</p>
+            <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{summaryText}</p>
 
             <div className="mt-4">
               {recommendations.length > 0 ? (
-                <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700">
+                <ul className="list-disc pl-5 space-y-1 text-sm text-slate-700 dark:text-slate-300">
                   {recommendations.slice(0, 8).map((rec: string, idx: number) => (
                     <li key={idx}>{rec}</li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
                   {t("analysis.syntheseAndDiagnostic.noRecommendations")}
                 </p>
               )}
@@ -205,8 +205,8 @@ export function DiagnosticSection({
 
           {/* Phrase de décision automatique */}
           {decisionPhrase && (
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-gray-800 font-medium leading-relaxed">
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/30 dark:border-blue-900/50">
+              <p className="text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
                 {decisionPhrase}
               </p>
             </div>
@@ -226,7 +226,7 @@ export function DiagnosticSection({
                     <div
                       key={index}
                       onClick={() => handleThemeClick(weakness.theme)}
-                      className={`flex items-center justify-between p-3 bg-red-50 rounded-lg border-2 transition-all cursor-pointer ${
+                      className={`flex items-center justify-between p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border-2 transition-all cursor-pointer ${
                         selectedTheme === weakness.theme 
                           ? 'border-red-400 shadow-md' 
                           : 'border-transparent hover:border-red-200 hover:shadow-sm'
@@ -234,14 +234,14 @@ export function DiagnosticSection({
                     >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                        <span className="font-medium text-gray-900 truncate">{weakness.theme}</span>
+                        <span className="font-medium text-slate-900 dark:text-slate-100 truncate">{weakness.theme}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                         <Badge variant="destructive" className="text-xs">
                           {weakness.count}
                         </Badge>
                         <span 
-                          className="text-xs text-gray-600"
+                          className="text-xs text-slate-600 dark:text-slate-300"
                           title= {t("analysis.syntheseAndDiagnostic.themePresencePercentage")}
                         >
                           ({weakness.percentage.toFixed(1)}%)
@@ -249,7 +249,7 @@ export function DiagnosticSection({
                       </div>
                     </div>
                   ))}
-                  <p className="text-xs text-gray-500 mt-2 italic">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 italic">
                     {t("analysis.syntheseAndDiagnostic.themePresencePercentage")}
                   </p>
                 </div>
@@ -272,7 +272,7 @@ export function DiagnosticSection({
                     <div
                       key={index}
                       onClick={() => handleThemeClick(strength.theme)}
-                      className={`flex items-center justify-between p-3 bg-green-50 rounded-lg border-2 transition-all cursor-pointer ${
+                      className={`flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border-2 transition-all cursor-pointer ${
                         selectedTheme === strength.theme 
                           ? 'border-green-400 shadow-md' 
                           : 'border-transparent hover:border-green-200 hover:shadow-sm'
@@ -280,14 +280,14 @@ export function DiagnosticSection({
                     >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                        <span className="font-medium text-gray-900 truncate">{strength.theme}</span>
+                        <span className="font-medium text-slate-900 dark:text-slate-100 truncate">{strength.theme}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                         <Badge className="bg-green-500 text-white text-xs">
                           {strength.count}
                         </Badge>
                         <span 
-                          className="text-xs text-gray-600"
+                          className="text-xs text-slate-600 dark:text-slate-300"
                           title= {t("analysis.syntheseAndDiagnostic.themePresencePercentage")}
                         >
                           ({strength.percentage.toFixed(1)}%)
@@ -295,7 +295,7 @@ export function DiagnosticSection({
                       </div>
                     </div>
                   ))}
-                  <p className="text-xs text-gray-500 mt-2 italic">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 italic">
                     {t("analysis.syntheseAndDiagnostic.themePresencePercentage")}
                   </p>
                 </div>

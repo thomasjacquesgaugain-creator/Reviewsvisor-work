@@ -199,6 +199,11 @@ export function TrendModal({
                     domain={[0, maxCount]}
                   />
                   <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
                     formatter={(value: any, name: string) => {
                       if (name === "avgRating" || name === t("dashboard.averageRating")) {
                         return [`${value}/5`, t("dashboard.averageRating")];

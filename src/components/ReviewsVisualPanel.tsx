@@ -359,9 +359,9 @@ export function ReviewsVisualPanel({
   })();
 
   if (!effectiveId && !displayName) {
-    return <Card className="relative z-20 max-w-7xl mx-auto" data-testid="reviews-visual-panel">
+    return <Card className="relative z-20 max-w-7xl mx-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)] dark:shadow-[0_18px_45px_rgba(2,6,23,0.5)]" data-testid="reviews-visual-panel">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-foreground">
             <BarChart3 className="w-5 h-5" />
             {t("dashboard.reviewsOverview")}
           </CardTitle>
@@ -392,13 +392,13 @@ export function ReviewsVisualPanel({
     stars: t("dashboard.stars1"),
     count: summary.byStars[1]
   }] : [];
-  return <Card className="relative z-20 max-w-7xl mx-auto" data-testid="reviews-visual-panel">
+  return <Card className="relative z-20 max-w-7xl mx-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)] dark:shadow-[0_18px_45px_rgba(2,6,23,0.5)]" data-testid="reviews-visual-panel">
       <CardHeader>
         <div className="flex items-start justify-between mb-2">
           <div>
             <div className="flex items-center gap-2">
               <Building2 className="h-5 w-5" aria-hidden="true" />
-              <h3 className="text-xl font-semibold" data-testid="establishment-title">
+              <h3 className="text-xl font-semibold text-foreground" data-testid="establishment-title">
                 {displayName ? `${t("dashboard.reviewsOverview")} - ${displayName}` : t("dashboard.reviewsOverview")}
               </h3>
             </div>
@@ -425,30 +425,30 @@ export function ReviewsVisualPanel({
             <Skeleton className="h-64" />
           </div> : !summary || summary.total === 0 ? <div className="text-center py-8">
             <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">{displayName ? `${displayName}, ${t("dashboard.reviewsCount", { count: 0 })}` : t("dashboard.reviewsCount", { count: 0 })}</h3>
+              <h3 className="text-lg font-medium mb-2 text-foreground">{displayName ? `${displayName}, ${t("dashboard.reviewsCount", { count: 0 })}` : t("dashboard.reviewsCount", { count: 0 })}</h3>
             <p className="text-muted-foreground">
               {t("dashboard.noReviewsForEstablishment")}
             </p>
           </div> : <>
             {/* Header Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
+              <Card className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 shadow-sm">
                 <CardContent className="flex items-center p-4" data-testid="metric-avg-rating">
                   <Star className="w-8 h-8 text-yellow-500 mr-3" />
                   <div>
                     <p className="text-sm text-muted-foreground">{t("dashboard.averageRating")}</p>
-                    <p className="text-2xl font-bold">{summary.avgRating.toFixed(1)}/5</p>
+                    <p className="text-2xl font-bold text-foreground">{summary.avgRating.toFixed(1)}/5</p>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 shadow-sm">
                 <CardContent className="flex items-center justify-between p-4" data-testid="metric-total-reviews">
                   <div className="flex items-center">
-                    <BarChart3 className="w-8 h-8 text-blue-600 mr-3" />
+                    <BarChart3 className="mr-3 h-8 w-8 text-primary" />
                     <div>
                       <p className="text-sm text-muted-foreground">{t("dashboard.totalReviews")}</p>
-                      <p className="text-2xl font-bold">{summary.total}</p>
+                      <p className="text-2xl font-bold text-foreground">{summary.total}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -486,56 +486,56 @@ export function ReviewsVisualPanel({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {/* Tous les avis */}
                   <Card 
-                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'all' ? 'ring-2 ring-primary bg-primary/5' : ''}`}
+                    className={`cursor-pointer bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 transition-all hover:shadow-md dark:hover:bg-slate-800/80 ${activeFilter === 'all' ? 'ring-2 ring-primary bg-primary/5' : ''}`}
                     onClick={() => setActiveFilter('all')}
                   >
                     <CardContent className="flex items-center px-4 py-2">
                       <List className="w-8 h-8 text-primary mr-3" />
                       <div>
                         <p className="text-sm text-muted-foreground">{t("dashboard.allReviews")}</p>
-                        <p className="text-2xl font-bold">{totalCount}</p>
+                        <p className="text-2xl font-bold text-foreground">{totalCount}</p>
                       </div>
                     </CardContent>
                   </Card>
 
                   {/* Avis positifs */}
                   <Card 
-                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'positive' ? 'ring-2 ring-green-500 bg-green-500/5' : ''}`}
+                    className={`cursor-pointer bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 transition-all hover:shadow-md dark:hover:bg-slate-800/80 ${activeFilter === 'positive' ? 'ring-2 ring-green-500 bg-green-500/5' : ''}`}
                     onClick={() => setActiveFilter('positive')}
                   >
                     <CardContent className="flex items-center px-4 py-2">
                       <ThumbsUp className="w-8 h-8 text-green-500 mr-3" />
                       <div>
                         <p className="text-sm text-muted-foreground">{t("dashboard.positiveReviews")}</p>
-                        <p className="text-2xl font-bold">{positiveCount}</p>
+                        <p className="text-2xl font-bold text-foreground">{positiveCount}</p>
                       </div>
                     </CardContent>
                   </Card>
                   
                   {/* Avis négatifs */}
                   <Card 
-                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'negative' ? 'ring-2 ring-red-500 bg-red-500/5' : ''}`}
+                    className={`cursor-pointer bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 transition-all hover:shadow-md dark:hover:bg-slate-800/80 ${activeFilter === 'negative' ? 'ring-2 ring-red-500 bg-red-500/5' : ''}`}
                     onClick={() => setActiveFilter('negative')}
                   >
                     <CardContent className="flex items-center px-4 py-2">
                       <ThumbsDown className="w-8 h-8 text-red-500 mr-3" />
                       <div>
                         <p className="text-sm text-muted-foreground">{t("dashboard.negativeReviews")}</p>
-                        <p className="text-2xl font-bold">{negativeCount}</p>
+                        <p className="text-2xl font-bold text-foreground">{negativeCount}</p>
                       </div>
                     </CardContent>
                   </Card>
                   
                   {/* Suspicion faux avis */}
                   <Card 
-                    className={`cursor-pointer transition-all hover:shadow-md ${activeFilter === 'suspect' ? 'ring-2 ring-orange-500 bg-orange-500/5' : ''}`}
+                    className={`cursor-pointer bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 transition-all hover:shadow-md dark:hover:bg-slate-800/80 ${activeFilter === 'suspect' ? 'ring-2 ring-orange-500 bg-orange-500/5' : ''}`}
                     onClick={() => setActiveFilter('suspect')}
                   >
                     <CardContent className="flex items-center px-4 py-2">
                       <ShieldAlert className="w-8 h-8 text-orange-500 mr-3" />
                       <div>
                         <p className="text-sm text-muted-foreground">{t("dashboard.suspectReviewsTitle")}</p>
-                        <p className="text-2xl font-bold">{suspectCount}</p>
+                        <p className="text-2xl font-bold text-foreground">{suspectCount}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -648,7 +648,7 @@ export function ReviewsVisualPanel({
                       <div className="flex justify-center py-4">
                         <button 
                           onClick={() => setDisplayCount(prev => prev + 10)}
-                          className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                          className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
                         >
                           {t("establishment.showMore")}
                           <ChevronDown className="w-4 h-4" />

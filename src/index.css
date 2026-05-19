@@ -309,9 +309,9 @@ All colors MUST be HSL.
     );
 
     --footer-gradient: linear-gradient(
-        135deg,
-        rgba(50, 12, 48, 0.89),
-        rgba(12, 18, 62, 0.92)
+      135deg,
+      #1e3a8a,
+      #1e3a8a
     );
 
     --app-page-orb-1: linear-gradient(135deg, rgb(70, 112, 200), rgb(108, 42, 188));
@@ -338,10 +338,10 @@ All colors MUST be HSL.
     rgba(14,165,233,0.12)
   );
 
-  --app-page-orb-3: linear-gradient(
+  --footer-gradient: linear-gradient(
     135deg,
-    rgba(56,189,248,0.14),
-    rgba(79,70,229,0.14)
+    #1e3a8a,
+    #1e3a8a
   );
 }
   .dark[data-bg="lavender"] {
@@ -356,8 +356,8 @@ All colors MUST be HSL.
 
   --footer-gradient: linear-gradient(
     135deg,
-    #4c1d95,
-    #1d4ed8
+    #1e3a8a,
+    #1e3a8a
   );
 
   --app-page-orb-1: linear-gradient(

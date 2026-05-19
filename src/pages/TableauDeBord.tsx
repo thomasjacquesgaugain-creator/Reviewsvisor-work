@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, CheckCircle, ArrowDownRight, Minus, Award, Plus } from "lucide-react";
+import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, CheckCircle, ArrowDownRight, Minus, Award, Plus, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -339,7 +339,10 @@ const Dashboard = () => {
       <div className="app-page-shell">
         <AppPageBackground />
         <div className="relative z-10 min-h-screen flex items-center justify-center">
-          <div className="text-lg">{t("common.loading")}</div>
+          <div className="text-sm text-white dark:text-slate-400 px-3 py-2 flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" /> 
+            {t("common.loading")}
+          </div>
         </div>
       </div>
     );
@@ -355,17 +358,17 @@ const Dashboard = () => {
         {/* Main content */}
         <div className="container mx-auto px-4 pt-8 pb-10">
           {/* Welcome card */}
-          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-6">
+          <Card className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-xl rounded-3xl overflow-hidden max-w-3xl mx-auto mb-6">
             <CardContent className="p-8 text-center space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900">{t("dashboard.welcomeWithName", { name: displayName })}</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">{t("dashboard.welcomeWithName", { name: displayName })}</h2>
               {!isLoading && currentEstablishment?.name ? (
                 <>
-                  <div className="flex items-center justify-center gap-2 text-center text-blue-600 font-semibold max-w-2xl mx-auto">
+                  <div className="flex items-center justify-center gap-2 text-center text-primary font-semibold max-w-2xl mx-auto">
                     <Building className="w-5 h-5 flex-shrink-0" />
                     <span className="break-words leading-snug">
                       {currentEstablishment.name}
                       {currentEstablishmentTypes ? (
-                        <span className="ml-2 text-sm font-medium text-slate-500">
+                        <span className="ml-2 text-sm font-medium text-slate-500 dark:text-slate-400">
                           • (<span className="italic">{currentEstablishmentTypes}</span>)
                         </span>
                       ) : null}
@@ -374,13 +377,16 @@ const Dashboard = () => {
 
                   <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                     <Link to="/etablissement">
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
+                      <Button className="bg-primary hover:bg-primary/90 text-primary-foreground text-white px-8 py-3 rounded-full font-medium">
                         <Building className="w-5 h-5 mr-2" />
                         {t("nav.establishment")}
                       </Button>
                     </Link>
                     <Link to="/dashboard">
-                      <Button variant="outline" className="border-gray-300 text-gray-700 px-8 py-3 rounded-full font-medium">
+                      <Button
+                        variant="outline"
+                        className="h-10 rounded-full border-gray-300 bg-background px-8 py-3 font-medium text-gray-700 hover:bg-accent hover:text-accent-foreground dark:border-slate-700 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.08]"
+                      >
                         <BarChart3 className="w-5 h-5 mr-2" />
                         {t("dashboard.viewDashboard")}
                       </Button>
@@ -390,7 +396,7 @@ const Dashboard = () => {
               ) : !isLoading && !currentEstablishment ? (
                 <div className="flex flex-col items-center gap-4 pt-4">
                   <Link to="/etablissement">
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium">
+                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground text-white px-8 py-3 rounded-full font-medium">
                       <Plus className="w-5 h-5 mr-2" />
                       {t("dashboard.addEstablishment")}
                     </Button>
@@ -401,24 +407,24 @@ const Dashboard = () => {
           </Card>
 
             {/* Notifications section */}
-            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-3xl overflow-hidden max-w-5xl mx-auto mb-4">
+            <Card className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-xl rounded-3xl overflow-hidden max-w-5xl mx-auto mb-4">
               <CardContent className="p-8">
                 <div className="flex items-center gap-2 mb-6">
-                  <Bell className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-xl font-bold text-gray-900">{t("dashboard.notifications")}</h3>
+                  <Bell className="w-5 h-5 text-primary" />
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t("dashboard.notifications")}</h3>
                 </div>
                 
                 <div className="grid md:grid-cols-2 gap-4">
-                  <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 border rounded-xl">
+                  <Card className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-slate-900 border border-blue-100 dark:border-blue-900/40 rounded-xl">
                     <CardContent className="p-4 flex items-center gap-3">
                       <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center border-2 border-blue-300 shadow-md">
                         <MessageCircle className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-gray-900 dark:text-slate-100">
                           {recentReviewsCount} {t("dashboard.reviews")}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-slate-400">
                           {lastReviewDate 
                             ? t("dashboard.reviewsReceived", { 
                                 time: formatDistanceToNow(lastReviewDate, { 
@@ -437,49 +443,49 @@ const Dashboard = () => {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200 border rounded-xl">
+                  <Card className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/40 dark:to-slate-900 border-green-200 dark:border-green-900/50 border rounded-xl">
                     <CardContent className="p-4 flex items-center gap-3">
                       <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center border-2 border-green-300 shadow-md">
-                        <Star className="w-5 h-5 text-white" />
+                        <Star className="w-5 h-5 text-primary-foreground" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-gray-900 dark:text-slate-100">
                           {avgRating > 0 ? `${avgRating.toFixed(1)}/5` : t("dashboard.rating")}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-slate-400">
                           {avgRating > 0 ? t("dashboard.averageRating") : t("dashboard.waitingForData")}
                         </p>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-200 border rounded-xl">
+                  <Card className="bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-950/40 dark:to-slate-900 border-yellow-200 dark:border-yellow-900/50 border rounded-xl">
                     <CardContent className="p-4 flex items-center gap-3">
                       <div className="w-12 h-12 bg-yellow-600 rounded-full flex items-center justify-center border-2 border-yellow-300 shadow-md">
                         <CheckCircle className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-gray-900 dark:text-slate-100">
                           {validatedResponsesCount}/{totalReviewsForEstablishment} {t("dashboard.responses")} {t("dashboard.validated")}
                         </p>
-                        <p className="text-sm text-gray-600">{t("dashboard.responses")}</p>
+                        <p className="text-sm text-gray-600 dark:text-slate-400">{t("dashboard.responses")}</p>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 border rounded-xl">
+                  <Card className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950/40 dark:to-slate-900 border-purple-200 dark:border-purple-900/50 border rounded-xl">
                     <CardContent className="p-4 flex items-center gap-3">
                       <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center border-2 border-purple-300 shadow-md">
                         <TrendingUp className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-gray-900 dark:text-slate-100">
                           {allReviews.length > 0 
                             ? `${Math.round(computeSatisfactionPct(allReviews))}%`
                             : t("dashboard.satisfaction")
                           }
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-slate-400">
                           {allReviews.length > 0 ? t("dashboard.satisfactionIndex") : t("dashboard.waitingForReviews")}
                         </p>
                       </div>
@@ -491,12 +497,12 @@ const Dashboard = () => {
 
           <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto pt-6 pb-0">
             {/* Performance globale */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
+            <Card className="bg-white/80 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-lg dark:shadow-black/30 rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-950/40 rounded-xl flex items-center justify-center">
                   <Award className="w-6 h-6 text-purple-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">{t("dashboard.globalPerformance")}</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t("dashboard.globalPerformance")}</h3>
                 
                 {/* Badge central */}
                 <div className="flex justify-center">
@@ -512,19 +518,19 @@ const Dashboard = () => {
                   </div>
                 </div>
                 
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p className="text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
                   {t("dashboard.basedOnRating")}
                 </p>
               </CardContent>
             </Card>
 
             {/* Indice de satisfaction */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
+            <Card className="bg-white/80 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-lg dark:shadow-black/30 rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Star className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-primary/15 dark:bg-primary/20 rounded-xl flex items-center justify-center">
+                  <Star className="w-6 h-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">{t("dashboard.satisfactionIndex")}</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t("dashboard.satisfactionIndex")}</h3>
                 
                 {/* Badge central */}
                 <div className="flex justify-center">
@@ -536,19 +542,19 @@ const Dashboard = () => {
                   </div>
                 </div>
                 
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p className="text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
                   {t("dashboard.identifyProblems")}
                 </p>
               </CardContent>
             </Card>
 
             {/* Valeur ressentie */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
+            <Card className="bg-white/80 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-lg dark:shadow-black/30 rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
-                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-amber-100 dark:bg-amber-950/40 rounded-xl flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-amber-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">{t("dashboard.perceivedValue")}</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t("dashboard.perceivedValue")}</h3>
                 
                 {/* Badge central */}
                 <div className="flex justify-center">
@@ -563,19 +569,19 @@ const Dashboard = () => {
                   </div>
                 </div>
                 
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p className="text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
                   {t("dashboard.calculateScore")}
                 </p>
               </CardContent>
             </Card>
 
             {/* Expérience délivrée */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
+            <Card className="bg-white/80 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-lg dark:shadow-black/30 rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
-                <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-violet-100 dark:bg-violet-950/40 rounded-xl flex items-center justify-center">
                   <Clock className="w-6 h-6 text-violet-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">{t("dashboard.deliveredExperience")}</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t("dashboard.deliveredExperience")}</h3>
                 
                 {/* Badge central */}
                 <div className="flex justify-center">
@@ -590,7 +596,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p className="text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
                   {t("dashboard.summaryRecommendations")}
                 </p>
               </CardContent>

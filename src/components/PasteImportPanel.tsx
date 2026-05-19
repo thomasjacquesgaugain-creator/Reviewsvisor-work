@@ -218,14 +218,15 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
       </div>
 
       {/* Action buttons */}
-      <div data-testid="paste-actions" className="relative z-50 pointer-events-auto bg-background">
-        <div className="flex gap-3">
+      <div data-testid="paste-actions" className="relative z-50 pointer-events-auto pt-2">
+        <div className="flex items-center gap-3">
           <Button
             data-testid="btn-paste-preview"
             type="button"
             variant="outline"
             onClick={handlePreview}
             disabled={!pastedText.trim()}
+            className="h-10 rounded-md border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/80 px-5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             {t("import.preview")}
           </Button>
@@ -233,7 +234,7 @@ export default function PasteImportPanel({ onImportBulk, onClose, onImportSucces
           <Button
             data-testid="btn-paste-import"
             type="button"
-            className="relative z-50"
+            className="relative z-50 h-10 rounded-md px-5"
             disabled={!canImport}
             onClick={() => handlePasteImport(validReviews)}
           >

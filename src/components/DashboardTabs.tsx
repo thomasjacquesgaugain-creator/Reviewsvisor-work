@@ -1,3 +1,4 @@
+import { BookOpenText, Lightbulb, MessagesSquare, ScanSearch, Target } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface DashboardTabsProps {
@@ -8,28 +9,37 @@ interface DashboardTabsProps {
 export const DashboardTabs = ({ activeTab, onTabChange }: DashboardTabsProps) => {
   const { t } = useTranslation();
   const tabs = [
-    { id: 'key-takeaways', label:t("dashboard.keyTakeaways.title"), icon: '✅' },
+    { id: 'key-takeaways', label:t("dashboard.keyTakeaways.title"), icon: <BookOpenText className="h-5 w-5" />, color: "text-purple-500" },
     // { id: 'indicateurs', label: t("dashboard.keyIndicators"), icon: '📊' },
-    { id: 'analyse', label: t("dashboard.analyse"), icon: '🔍' },
-    { id: 'recommandations', label: t("dashboard.recommendations"), icon: '⚡' },
-    { id: 'reponses', label: t("dashboard.response"), icon: '💬' },
-    { id: 'objectif', label: t("dashboard.objective"), icon: '🎯' },
+    { id: 'analyse', label: t("dashboard.analyse"), icon: <ScanSearch className="h-5 w-5" />, color: "text-blue-500"},
+    { id: 'recommandations', label: t("dashboard.recommendations"), icon: <Lightbulb className="h-5 w-5" />, color: "text-yellow-500" },
+    { id: 'reponses', label: t("dashboard.response"), icon: <MessagesSquare className="h-5 w-5" />, color: "text-green-500"},
+    { id: 'objectif', label: t("dashboard.objective"), icon: <Target className="h-5 w-5" />, color: "text-red-500"},
   ];
 
   return (
-    <div className="flex justify-evenly w-full mb-6 bg-white shadow-sm rounded-lg p-2">
+    <div className="flex justify-evenly w-full mb-6 bg-white dark:bg-slate-900 shadow-sm dark:shadow-slate-950/40 rounded-lg p-2 border border-transparent dark:border-slate-800">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`flex-1 px-4 py-3 text-sm font-medium border border-transparent rounded-lg transition-colors ${
+          className={`flex items-center justify-center gap-2 flex-1 px-4 py-3 border border-transparent rounded-lg transition-all duration-200 ${
             activeTab === tab.id
-              ? 'text-blue-600'
-              : 'text-gray-600 hover:bg-blue-600 hover:text-white hover:border-blue-600'
+              ? 'text-primary bg-primary/10 dark:bg-primary/5 border-primary/20 font-semibold'
+              : 'text-gray-600 dark:text-slate-300 hover:bg-primary hover:text-primary-foreground hover:border-primary'
           }`}
         >
-          <span className="mr-2">{tab.icon}</span>
-          {tab.label}
+          <span
+            className={`transition-all duration-200 ${
+              activeTab === tab.id ? 'scale-110' : 'scale-100'
+            } ${tab.color}`}
+          >
+            {tab.icon}
+          </span>
+          
+          <span className={`transition-all duration-200 ${activeTab === tab.id ? 'text-[15px]' : 'text-sm'}`}>
+            {tab.label}
+          </span>
         </button>
       ))}
     </div>
