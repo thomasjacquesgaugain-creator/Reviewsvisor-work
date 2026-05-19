@@ -153,7 +153,7 @@ export function EstablishmentsSettings() {
                       {isActive && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300">
                           <Check className="h-3 w-3" />
-                          Actif
+                          {t("establishment.active")}
                         </span>
                       )}
                     </div>

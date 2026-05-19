@@ -363,6 +363,7 @@ export interface RootCauseAnalysis {
 ───────────────────────────────────────────── */
 
 const STOPWORDS = new Set([
+  // English
   "the","a","an","and","or","but","in","on","at","to","for","of","with",
   "by","from","is","are","was","were","be","been","have","has","had",
   "do","did","will","would","could","should","not","no","very","too",
@@ -371,7 +372,22 @@ const STOPWORDS = new Set([
   "up","out","about","than","then","also","even","all","any","more",
   "much","never","ever","only","still","same","such","over","after",
   "again","back","there","here","when","what","which","who","how",
-  "why","where","if","as","us","one","two","been","into","during"
+  "why","where","if","as","us","one","two","into","during",
+
+  // French
+  "le","la","les","un","une","des","et","ou","mais","dans","sur","à",
+  "au","aux","de","du","pour","par","avec","sans","sous","entre",
+  "depuis","vers","chez","est","sont","était","étaient","être","été",
+  "avoir","a","ont","avait","avaient","fait","faire","fera","serait",
+  "pourrait","devrait","ne","pas","non","très","trop","si","juste",
+  "obtenir","eu","ce","cet","cette","ces","cela","ça","ils","elles",
+  "leur","leurs","nous","notre","nos","vous","votre","vos","mon","ma",
+  "mes","moi","toi","ton","ta","tes","il","elle","son","sa","ses",
+  "je","tu","suis","es","sommes","êtes","sont","plus","moins","jamais",
+  "toujours","encore","même","tout","tous","toute","toutes","aucun",
+  "aucune","quelque","quelques","après","avant","pendant","encore",
+  "ici","là","quand","quoi","quel","quelle","quelles","qui","comment",
+  "pourquoi","où","si","comme","nous","un","deux","dans","pendant"
 ]);
 
 function tokenize(text: string): string[] {
@@ -401,64 +417,223 @@ function normalize(text: string): string {
 
 const PROBLEM_SYNONYMS: Record<string, string[]> = {
   // Hygiene & cleanliness
-  hygiene:      ["dirty","filthy","unclean","disgusting","gross","grimy",
-                 "unhygienic","contaminated","stain","stained","sticky",
-                 "smell","smells","smelly","odor","odour","stench",
-                 "cockroach","rat","mice","insect","pest","hair","mold",
-                 "mould","trash","garbage","waste","bathroom","toilet",
-                 "restroom","washroom","floor","table","plate","glass",
-                 "utensil","kitchen","grease","greasy","residue"],
-  cleanliness:  ["dirty","filthy","unclean","disgusting","gross","stain",
-                 "sticky","smell","smelly","trash","messy","grimy"],
+    hygiene: [
+    // English
+    "dirty","filthy","unclean","disgusting","gross","grimy",
+    "unhygienic","contaminated","stain","stained","sticky",
+    "smell","smells","smelly","odor","odour","stench",
+    "cockroach","rat","mice","insect","pest","hair","mold",
+    "mould","trash","garbage","waste","bathroom","toilet",
+    "restroom","washroom","floor","table","plate","glass",
+    "utensil","kitchen","grease","greasy","residue",
+
+    // French
+    "sale","saleté","salee","salees","dégueulasse","dégoûtant",
+    "malpropre","insalubre","contaminé","contamine","tache",
+    "taché","tachée","collant","collante","odeur","mauvaise odeur",
+    "puanteur","cafard","blatte","rat","souris","insecte","parasite",
+    "cheveu","moisissure","poubelle","déchet","toilettes","wc",
+    "lavabo","sol","table","assiette","verre","ustensile",
+    "cuisine","graisse","gras","résidu","residu"
+  ],
+
+  cleanliness: [
+    "dirty","filthy","unclean","disgusting","gross","stain",
+    "sticky","smell","smelly","trash","messy","grimy",
+
+    "sale","malpropre","dégueulasse","dégoûtant","taché",
+    "collant","odeur","puant","poubelle","désordre","gras"
+  ],
 
   // Service & wait
-  service:      ["wait","waiting","slow","staff","rude","unhelpful",
-                 "ignored","attitude","unprofessional","server","waiter",
-                 "attentive","inattentive","helpless","useless"],
-  wait:         ["slow","long","waiting","delay","delayed","forever",
-                 "hours","queue","line","took","minutes","ages","eternity"],
-  speed:        ["slow","fast","quick","delay","delayed","wait","long","sluggish"],
-  attente:      ["slow","long","waiting","delay","queue","line","took","minutes"],
+  service: [
+    "wait","waiting","slow","staff","rude","unhelpful",
+    "ignored","attitude","unprofessional","server","waiter",
+    "attentive","inattentive","helpless","useless",
+
+    "attente","lent","lente","personnel","impoli","désagréable",
+    "ignoré","ignore","attitude","professionnel","serveur",
+    "serveuse","inattentif","inutile","aucune aide",
+    "service","accueil","médiocre","horrible"
+  ],
+
+  wait: [
+    "slow","long","waiting","delay","delayed","forever",
+    "hours","queue","line","took","minutes","ages","eternity",
+
+    "lent","long","attente","retard","retardé","retarde",
+    "heures","file","queue","minutes","éternité","beaucoup trop long"
+  ],
+
+  speed: [
+    "slow","fast","quick","delay","delayed","wait","long","sluggish",
+
+    "lent","rapide","vite","retard","attente","long","lenteur"
+  ],
+
+  attente: [
+    "slow","long","waiting","delay","queue","line","took","minutes",
+
+    "lent","attente","retard","queue","minutes","heures"
+  ],
 
   // Food & product quality
-  food:         ["taste","flavor","bland","cold","raw","overcooked",
-                 "undercooked","stale","expired","fresh","quality",
-                 "portion","small","wrong","missing","soggy","hard",
-                 "burnt","chewy","dry","greasy","spicy","salty"],
-  quality:      ["poor","bad","terrible","awful","mediocre","cheap",
-                 "fake","defective","broken","damaged","wrong","inferior",
-                 "substandard","disappointing","unacceptable"],
+  food: [
+    "taste","flavor","bland","cold","raw","overcooked",
+    "undercooked","stale","expired","fresh","quality",
+    "portion","small","wrong","missing","soggy","hard",
+    "burnt","chewy","dry","greasy","spicy","salty",
+
+    "goût","gout","saveur","fade","froid","cru","trop cuit",
+    "pas assez cuit","rassis","expiré","frais","qualité",
+    "portion","petit","mauvais","manquant","mou","dur",
+    "brûlé","sec","gras","épicé","salé"
+  ],
+
+  quality: [
+    "poor","bad","terrible","awful","mediocre","cheap",
+    "fake","defective","broken","damaged","wrong","inferior",
+    "substandard","disappointing","unacceptable",
+
+    "mauvais","terrible","horrible","médiocre","bon marché",
+    "faux","défectueux","cassé","endommagé","inférieur",
+    "décevant","inacceptable","qualité médiocre"
+  ],
 
   // Pricing
-  price:        ["expensive","overpriced","costly","cheap","value","worth",
-                 "rip","ripoff","charged","billing","refund","fee","cost"],
-  pricing:      ["expensive","overpriced","costly","value","worth",
-                 "rip","ripoff","charged","billing","refund"],
+  price: [
+    "expensive","overpriced","costly","cheap","value","worth",
+    "rip","ripoff","charged","billing","refund","fee","cost",
+
+    "cher","trop cher","hors de prix","coûteux","pas cher",
+    "valeur","prix","arnaque","facturé","facturation",
+    "remboursement","frais","coût","surfacturé"
+  ],
+
+  pricing: [
+    "expensive","overpriced","costly","value","worth",
+    "rip","ripoff","charged","billing","refund",
+
+    "cher","trop cher","coûteux","valeur","arnaque",
+    "facturé","facturation","remboursement"
+  ],
 
   // Delivery & logistics
-  delivery:     ["late","delayed","missing","wrong","damaged","lost",
-                 "driver","courier","tracking","package","shipping",
-                 "undelivered","returned","address"],
+  delivery: [
+    "late","delayed","missing","wrong","damaged","lost",
+    "driver","courier","tracking","package","shipping",
+    "undelivered","returned","address",
+
+    "retard","retardé","manquant","mauvais","endommagé",
+    "perdu","livreur","courrier","suivi","colis",
+    "livraison","non livré","retourné","adresse"
+  ],
 
   // Staff & personnel
-  staff:        ["rude","unprofessional","unhelpful","ignorant","arrogant",
-                 "impolite","dismissive","lazy","incompetent","attitude",
-                 "untrained","disrespectful","offensive","hostile"],
-  personnel:    ["rude","unprofessional","unhelpful","attitude","untrained",
-                 "dismissive","incompetent","disrespectful"],
+  staff: [
+    "rude","unprofessional","unhelpful","ignorant","arrogant",
+    "impolite","dismissive","lazy","incompetent","attitude",
+    "untrained","disrespectful","offensive","hostile",
+
+    "impoli","non professionnel","désagréable","ignorant",
+    "arrogant","paresseux","incompétent","attitude",
+    "mal formé","irrespectueux","offensant","hostile"
+  ],
+
+  personnel: [
+    "rude","unprofessional","unhelpful","attitude","untrained",
+    "dismissive","incompetent","disrespectful",
+
+    "impoli","non professionnel","désagréable","attitude",
+    "mal formé","incompétent","irrespectueux"
+  ],
 
   // Noise & environment
-  noise:        ["loud","noisy","crowded","music","sound","quiet","disturbing"],
-  environment:  ["dirty","crowded","noisy","dark","cold","hot","uncomfortable",
-                 "small","parking","access","cramped","stuffy","unkempt"],
+  noise: [
+    "loud","noisy","crowded","music","sound","quiet","disturbing",
+
+    "bruyant","bruyante","bruit","bondé","musique",
+    "son","calme","dérangeant"
+  ],
+
+  environment: [
+    "dirty","crowded","noisy","dark","cold","hot","uncomfortable",
+    "small","parking","access","cramped","stuffy","unkempt",
+
+    "sale","bondé","bruyant","sombre","froid","chaud",
+    "inconfortable","petit","parking","accès","étouffant",
+    "mal entretenu"
+  ],
 
   // Technical / digital
-  app:          ["crash","bug","error","slow","loading","freeze","broken",
-                 "login","payment","update","glitch","down","unavailable"],
-  website:      ["crash","bug","error","slow","loading","freeze","broken",
-                 "login","payment","update","glitch","down","unavailable"],
-  system:       ["crash","bug","error","slow","freeze","broken","down",
-                 "unavailable","glitch","malfunction","offline"],
+  app: [
+    "crash","bug","error","slow","loading","freeze","broken",
+    "login","payment","update","glitch","down","unavailable",
+
+    "plantage","bug","erreur","lent","chargement","figé",
+    "cassé","connexion","paiement","mise à jour",
+    "panne","indisponible"
+  ],
+
+  website: [
+    "crash","bug","error","slow","loading","freeze","broken",
+    "login","payment","update","glitch","down","unavailable",
+
+    "plantage","bug","erreur","lent","chargement","figé",
+    "cassé","connexion","paiement","mise à jour",
+    "panne","indisponible"
+  ],
+
+  system: [
+    "crash","bug","error","slow","freeze","broken","down",
+    "unavailable","glitch","malfunction","offline",
+
+    "plantage","bug","erreur","lent","figé","cassé",
+    "panne","indisponible","dysfonctionnement","hors ligne"
+  ],
+
+  // Added categories
+
+  communication: [
+    "no response","ignored","unclear","confusing","misleading",
+    "lied","rude response","support","email","call",
+
+    "aucune réponse","ignoré","pas clair","confus",
+    "trompeur","mensonge","support","email","appel"
+  ],
+
+  payment: [
+    "charged twice","double charge","refund","payment failed",
+    "billing issue","overcharged","transaction","card declined",
+
+    "double facturation","paiement refusé","remboursement",
+    "problème de paiement","surfacturé","transaction",
+    "carte refusée"
+  ],
+
+  booking: [
+    "reservation","booking","cancelled","unavailable","full",
+    "reschedule","confirmation","no show",
+
+    "réservation","booking","annulé","indisponible",
+    "complet","replanifier","confirmation","absence"
+  ],
+
+  maintenance: [
+    "broken","damaged","leak","repair","maintenance","dirty",
+    "air conditioning","heating","light","wifi",
+
+    "cassé","endommagé","fuite","réparation","maintenance",
+    "climatisation","chauffage","lumière","wifi"
+  ],
+
+  security: [
+    "unsafe","dangerous","theft","stolen","security","fraud",
+    "scam","suspicious",
+
+    "dangereux","pas sûr","vol","volé","sécurité",
+    "fraude","arnaque","suspect"
+  ]
 };
 
 /**
@@ -510,29 +685,72 @@ const ISHIKAWA_CATEGORIES: CategoryDefinition[] = [
   {
     nameKey: "rootCause.categories.workforce.name",
     seeds: [
+    // English
       "staff","employee","employees","worker","workers","team","agent","manager",
       "supervisor","representative","associate","cashier","waiter","waitress",
       "server","driver","technician","consultant","crew","attendant",
       "rude","unprofessional","unhelpful","incompetent","unfriendly","impolite",
       "ignorant","arrogant","dismissive","lazy","untrained","inexperienced",
       "careless","indifferent","disrespectful","hostile","offensive",
-      "ignored","refused","yelled","lied","forgot","attitude","behavior","training"
+      "ignored","refused","yelled","lied","forgot","attitude","behavior","training",
+
+      // French
+      "personnel","employé","employée","employés","travailleur","travailleurs",
+      "équipe","agent","gérant","manager","superviseur","représentant",
+      "associé","caissier","caissière","serveur","serveuse","chauffeur",
+      "technicien","consultant","équipage","préposé","assistant",
+
+      "impoli","désagréable","non professionnel","inutile","incompétent",
+      "pas aimable","malpoli","ignorant","arrogant","méprisant",
+      "paresseux","mal formé","inexpérimenté","négligent","indifférent",
+      "irrespectueux","hostile","offensant",
+
+      "ignoré","refusé","crié","menti","oublié",
+      "attitude","comportement","formation","accueil","service client"
     ],
     rules: [
-      {
-        match: ["rude","impolite","arrogant","disrespectful","hostile","offensive","yelled"],
+  {
+        match: [
+      // English
+      "rude","impolite","arrogant","disrespectful","hostile","offensive","yelled",
+
+      // French
+      "impoli","malpoli","arrogant","irrespectueux","hostile",
+      "offensant","crié","désagréable","méprisant"
+    ],
         descriptionKey: "rootCause.categories.workforce.causes.disrespectful"
       },
       {
-        match: ["unprofessional","untrained","inexperienced","incompetent","useless"],
+       match: [
+      // English
+      "unprofessional","untrained","inexperienced","incompetent","useless",
+
+      // French
+      "non professionnel","mal formé","inexpérimenté",
+      "incompétent","inutile","pas qualifié"
+    ],
         descriptionKey: "rootCause.categories.workforce.causes.untrained"
       },
       {
-        match: ["ignored","unhelpful","dismissive","indifferent","careless","forgot"],
-        descriptionKey: "rootCause:categories.workforce.causes.inattentive"
+        match: [
+      // English
+      "ignored","unhelpful","dismissive","indifferent","careless","forgot",
+
+      // French
+      "ignoré","sans aide","méprisant","indifférent",
+      "négligent","oublié","pas attentif","aucune assistance"
+    ],
+        descriptionKey: "rootCause.categories.workforce.causes.inattentive"
       },
       {
-        match: ["shortage","few staff","understaffed","not enough staff","one person"],
+        match: [
+      // English
+      "shortage","few staff","understaffed","not enough staff","one person",
+
+      // French
+      "manque de personnel","pas assez de personnel",
+      "sous-effectif","une seule personne","effectif réduit"
+      ],
         descriptionKey: "rootCause.categories.workforce.causes.understaffed"
       },
     ],
@@ -541,98 +759,233 @@ const ISHIKAWA_CATEGORIES: CategoryDefinition[] = [
   {
     nameKey: "rootCause.categories.process.name",
     seeds: [
+      // English
       "process","procedure","queue","line","wait","waiting","delay","delayed",
       "slow","booking","reservation","appointment","scheduling","dispatch",
       "tracking","confirmation","approval","verification","checkout","checkin",
       "onboarding","registration","stuck","pending","unresolved","backlog",
       "bottleneck","inefficient","disorganized","chaotic","complicated","order",
-      "refund","return","exchange","complaint"
+      "refund","return","exchange","complaint",
+
+      // French
+      "processus","procédure","procedure","file","queue","attente","retard",
+      "retardé","lent","réservation","booking","rendez-vous","planification",
+      "expédition","suivi","confirmation","approbation","vérification",
+      "paiement","enregistrement","inscription","bloqué","en attente",
+      "non résolu","retard accumulé","goulot","inefficace","désorganisé",
+      "chaotique","compliqué","commande","remboursement","retour",
+      "échange","plainte","réclamation"
     ],
+
     rules: [
       {
-        match: ["wait","waiting","queue","line","long time","ages","forever","hours","minutes"],
+        match: [
+          // English
+          "wait","waiting","queue","line","long time","ages","forever","hours","minutes",
+
+          // French
+          "attente","longue attente","file","queue","des heures",
+          "minutes","éternité","trop long","beaucoup trop long"
+        ],
         descriptionKey: "rootCause.categories.process.causes.waitTime"
       },
+
       {
-        match: ["reservation","booking","appointment","overbooked","surbooking"],
+        match: [
+          // English
+          "reservation","booking","appointment","overbooked","surbooking",
+
+          // French
+          "réservation","booking","rendez-vous",
+          "surréservation","surbooké","complet"
+        ],
         descriptionKey: "rootCause.categories.process.causes.booking"
       },
+
       {
-        match: ["delay","delayed","late","slow","took long","pending","unresolved"],
+        match: [
+          // English
+          "delay","delayed","late","slow","took long","pending","unresolved",
+
+          // French
+          "retard","retardé","en retard","lent",
+          "a pris longtemps","en attente","non résolu"
+        ],
         descriptionKey: "rootCause.categories.process.causes.delays"
       },
+
       {
-        match: ["refund","return","exchange","complaint","unresolved","ignored"],
+        match: [
+          // English
+          "refund","return","exchange","complaint","unresolved","ignored",
+
+          // French
+          "remboursement","retour","échange",
+          "plainte","réclamation","non résolu","ignoré"
+        ],
         descriptionKey: "rootCause.categories.process.causes.complaints"
       },
+
       {
-        match: ["disorganized","chaotic","complicated","confusing","no system"],
+        match: [
+          // English
+          "disorganized","chaotic","complicated","confusing","no system",
+
+          // French
+          "désorganisé","chaotique","compliqué",
+          "confus","pas de système","mal organisé"
+        ],
         descriptionKey: "rootCause.categories.process.causes.disorganized"
-      },
+      }
     ],
     fallbackKey: "rootCause.categories.process.fallback"
   },
   {
     nameKey: "rootCause.categories.methods.name",
-    seeds: [
+   seeds: [
+      // English
       "method","approach","policy","protocol","standard","practice","guideline",
       "rule","instruction","communication","coordination","response","followup",
       "escalation","handling","priority","workflow","inconsistent","unclear",
       "confusing","misleading","wrong","incorrect","outdated","inadequate","poor",
-      "lack","missing","no response","unacknowledged","priority","forgot"
+      "lack","missing","no response","unacknowledged","priority","forgot",
+
+      // French
+      "méthode","approche","politique","protocole","standard","pratique",
+      "directive","règle","instruction","communication","coordination",
+      "réponse","suivi","escalade","gestion","priorité","flux de travail",
+      "incohérent","pas clair","confus","trompeur","mauvais","incorrect",
+      "obsolète","inadéquat","faible","manque","manquant","aucune réponse",
+      "ignoré","non reconnu","oublié"
     ],
+
     rules: [
       {
-        match: ["coordination","communication","team","internal","between"],
+        match: [
+          // English
+          "coordination","communication","team","internal","between",
+
+          // French
+          "coordination","communication","équipe",
+          "interne","entre","manque de communication"
+        ],
         descriptionKey: "rootCause.categories.methods.causes.coordination"
       },
+
       {
-        match: ["inconsistent","different","every time","sometimes","depends"],
+        match: [
+          // English
+          "inconsistent","different","every time","sometimes","depends",
+
+          // French
+          "incohérent","différent","à chaque fois",
+          "parfois","ça dépend","pas constant"
+        ],
         descriptionKey: "rootCause.categories.methods.causes.inconsistent"
       },
+
       {
-        match: ["no response","ignored","unacknowledged","followup","never heard"],
+        match: [
+          // English
+          "no response","ignored","unacknowledged","followup","never heard",
+
+          // French
+          "aucune réponse","ignoré","sans réponse",
+          "non reconnu","suivi","jamais eu de réponse"
+        ],
         descriptionKey: "rootCause.categories.methods.causes.noFollowUp"
       },
+
       {
-        match: ["priority","forgot","skipped","missed","overlooked"],
+        match: [
+          // English
+          "priority","forgot","skipped","missed","overlooked",
+
+          // French
+          "priorité","oublié","ignoré","manqué",
+          "négligé","passé à côté"
+        ],
         descriptionKey: "rootCause.categories.methods.causes.badPriority"
-      },
+      }
     ],
     fallbackKey: "rootCause.categories.methods.fallback"
   },
   {
     nameKey: "rootCause.categories.tools.name",
     seeds: [
+      // English
       "app","application","website","site","platform","software","system","tool",
       "machine","device","terminal","kiosk","payment","checkout","interface",
       "portal","dashboard","bug","crash","error","glitch","broken","not working",
       "down","unavailable","offline","loading","freeze","failed","malfunction",
-      "outdated","update","pos","register","scanner","printer"
+      "outdated","update","pos","register","scanner","printer",
+
+      // French
+      "application","appli","site","site web","plateforme","logiciel","système",
+      "outil","machine","appareil","terminal","borne","paiement","caisse",
+      "interface","portail","tableau de bord","bug","plantage","erreur",
+      "problème","cassé","ne fonctionne pas","en panne","indisponible",
+      "hors ligne","chargement","figé","échec","dysfonctionnement",
+      "obsolète","mise à jour","scanner","imprimante","logiciel ancien"
     ],
+
     rules: [
       {
-        match: ["bug","crash","error","glitch","freeze","not working","broken","malfunction"],
+        match: [
+          // English
+          "bug","crash","error","glitch","freeze","not working","broken","malfunction",
+
+          // French
+          "bug","plantage","erreur","problème","figé",
+          "ne fonctionne pas","cassé","dysfonctionnement",
+          "bloqué","panne"
+        ],
         descriptionKey: "rootCause.categories.tools.causes.crashes"
       },
+
       {
-        match: ["payment","billing","checkout","transaction","charged","refund"],
+        match: [
+          // English
+          "payment","billing","checkout","transaction","charged","refund",
+
+          // French
+          "paiement","facturation","caisse","transaction",
+          "facturé","remboursement","double facturation",
+          "paiement refusé"
+        ],
         descriptionKey: "rootCause.categories.tools.causes.payment"
       },
+
       {
-        match: ["slow","loading","down","unavailable","offline","lag"],
+        match: [
+          // English
+          "slow","loading","down","unavailable","offline","lag",
+
+          // French
+          "lent","chargement","en panne","indisponible",
+          "hors ligne","latence","ralenti"
+        ],
         descriptionKey: "rootCause.categories.tools.causes.performance"
       },
+
       {
-        match: ["outdated","old","update","obsolete","legacy"],
+        match: [
+          // English
+          "outdated","old","update","obsolete","legacy",
+
+          // French
+          "obsolète","ancien","vieille version",
+          "mise à jour","dépassé","logiciel ancien"
+        ],
         descriptionKey: "rootCause.categories.tools.causes.outdated"
-      },
+      }
     ],
     fallbackKey: "rootCause.categories.tools.fallback"
   },
   {
     nameKey: "rootCause.categories.environment.name",
     seeds: [
+      // English
       "place","location","store","shop","restaurant","branch","outlet","facility",
       "parking","access","entrance","space","area","room","table","seat","seating",
       "floor","dirty","unclean","filthy","disgusting","gross","grimy","unhygienic",
@@ -640,80 +993,215 @@ const ISHIKAWA_CATEGORIES: CategoryDefinition[] = [
       "cockroach","rat","mice","insect","pest","hair","mold","trash","garbage",
       "noisy","crowded","packed","small","dark","hot","cold","uncomfortable",
       "broken","maintenance","hygiene","cleanliness","hours","busy","rush",
-      "bathroom","toilet","restroom","washroom","grease","greasy"
+      "bathroom","toilet","restroom","washroom","grease","greasy",
+
+      // French
+      "endroit","lieu","magasin","boutique","restaurant","succursale",
+      "point de vente","établissement","parking","accès","entrée",
+      "espace","zone","salle","table","siège","place assise","sol",
+      "sale","malpropre","dégueulasse","dégoûtant","gras","insalubre",
+      "contaminé","tache","collant","odeur","mauvaise odeur","puanteur",
+      "cafard","rat","souris","insecte","parasite","cheveu",
+      "moisissure","poubelle","déchet","bruyant","bondé","plein",
+      "petit","sombre","chaud","froid","inconfortable","cassé",
+      "maintenance","hygiène","propreté","heures","occupé","rush",
+      "toilettes","wc","lavabo","graisse","graisseux","étouffant"
     ],
+
     rules: [
       {
-        match: ["dirty","filthy","unclean","disgusting","gross","grimy","unhygienic",
-                "stain","sticky","mold","grease","greasy","residue"],
+        match: [
+          // English
+          "dirty","filthy","unclean","disgusting","gross","grimy","unhygienic",
+          "stain","sticky","mold","grease","greasy","residue",
+
+          // French
+          "sale","malpropre","dégueulasse","dégoûtant","gras",
+          "insalubre","tache","collant","moisissure","graisse",
+          "graisseux","résidu"
+        ],
         descriptionKey: "rootCause.categories.environment.causes.cleanliness"
       },
+
       {
-        match: ["smell","smells","smelly","odor","odour","stench"],
+        match: [
+          // English
+          "smell","smells","smelly","odor","odour","stench",
+
+          // French
+          "odeur","mauvaise odeur","puanteur","ça sent mauvais",
+          "odorant","malodorant"
+        ],
         descriptionKey: "rootCause.categories.environment.causes.odor"
       },
+
       {
-        match: ["cockroach","rat","mice","insect","pest","hair","contaminated","bacteria"],
+        match: [
+          // English
+          "cockroach","rat","mice","insect","pest","hair","contaminated","bacteria",
+
+          // French
+          "cafard","blatte","rat","souris","insecte",
+          "parasite","cheveu","contaminé","bactérie"
+        ],
         descriptionKey: "rootCause.categories.environment.causes.pests"
       },
+
       {
-        match: ["noisy","loud","noise","music","disturbing"],
+        match: [
+          // English
+          "noisy","loud","noise","music","disturbing",
+
+          // French
+          "bruyant","bruyante","bruit","musique","dérangeant",
+          "trop de bruit"
+        ],
         descriptionKey: "rootCause.categories.environment.causes.noise"
       },
+
       {
-        match: ["crowded","packed","full","busy","rush","small","cramped"],
+        match: [
+          // English
+          "crowded","packed","full","busy","rush","small","cramped",
+
+          // French
+          "bondé","plein","occupé","rush","petit",
+          "serré","étroit","surpeuplé"
+        ],
         descriptionKey: "rootCause.categories.environment.causes.overcrowded"
       },
+
       {
-        match: ["cold","hot","temperature","stuffy","ventilation","air"],
+        match: [
+          // English
+          "cold","hot","temperature","stuffy","ventilation","air",
+
+          // French
+          "froid","chaud","température","étouffant",
+          "ventilation","air","climatisation"
+        ],
         descriptionKey: "rootCause.categories.environment.causes.temperature"
       },
+
       {
-        match: ["parking","access","location","entrance","find","hard to"],
+        match: [
+          // English
+          "parking","access","location","entrance","find","hard to",
+
+          // French
+          "parking","accès","emplacement","entrée",
+          "difficile à trouver","introuvable","mal situé"
+        ],
         descriptionKey: "rootCause.categories.environment.causes.access"
-      },
+      }
     ],
     fallbackKey: "rootCause.categories.environment.fallback"
   },
   {
     nameKey: "rootCause.categories.product.name",
     seeds: [
+      // English
       "product","item","order","food","meal","dish","drink","service","quality",
       "taste","flavor","portion","size","quantity","packaging","delivery",
       "shipping","wrong","missing","damaged","expired","stale","cold","overpriced",
       "expensive","cheap","value","waste","defective","fake","inaccurate",
       "description","expectation","bland","raw","overcooked","undercooked",
-      "soggy","hard","burnt","chewy","dry","spicy","salty"
+      "soggy","hard","burnt","chewy","dry","spicy","salty",
+
+      // French
+      "produit","article","commande","nourriture","repas","plat","boisson",
+      "service","qualité","goût","saveur","portion","taille","quantité",
+      "emballage","livraison","expédition","mauvais","manquant","endommagé",
+      "expiré","rassis","froid","trop cher","cher","bon marché","valeur",
+      "gaspillage","défectueux","faux","inexact","description","attente",
+      "fade","cru","trop cuit","pas assez cuit","mou","dur","brûlé",
+      "caoutchouteux","sec","épicé","salé"
     ],
+
     rules: [
       {
-        match: ["cold","warm","temperature","not hot","lukewarm","reheated"],
+        match: [
+          // English
+          "cold","warm","temperature","not hot","lukewarm","reheated",
+
+          // French
+          "froid","tiède","température","pas chaud",
+          "réchauffé","chauffé"
+        ],
         descriptionKey: "rootCause.categories.product.causes.temperature"
       },
+
       {
-        match: ["bland","tasteless","flavor","taste","bad taste","awful","terrible"],
+        match: [
+          // English
+          "bland","tasteless","flavor","taste","bad taste","awful","terrible",
+
+          // French
+          "fade","sans goût","goût","saveur",
+          "mauvais goût","horrible","immangeable","dégoûtant"
+        ],
         descriptionKey: "rootCause.categories.product.causes.taste"
       },
+
       {
-        match: ["wrong","missing","incorrect","not what","different","expected"],
+        match: [
+          // English
+          "wrong","missing","incorrect","not what","different","expected",
+
+          // French
+          "mauvais","manquant","incorrect","différent",
+          "pas ce que j'ai commandé","pas attendu","erreur"
+        ],
         descriptionKey: "rootCause.categories.product.causes.wrongOrder"
       },
+
       {
-        match: ["small","portion","tiny","not enough","quantity","size"],
+        match: [
+          // English
+          "small","portion","tiny","not enough","quantity","size",
+
+          // French
+          "petit","portion","minuscule","pas assez",
+          "quantité","taille","trop petit"
+        ],
         descriptionKey: "rootCause.categories.product.causes.portions"
       },
+
       {
-        match: ["overpriced","expensive","costly","not worth","value","rip"],
+        match: [
+          // English
+          "overpriced","expensive","costly","not worth","value","rip",
+
+          // French
+          "trop cher","cher","coûteux","pas rentable",
+          "pas la peine","valeur","arnaque"
+        ],
         descriptionKey: "rootCause.categories.product.causes.pricing"
       },
+
       {
-        match: ["stale","expired","old","fresh","freshness","raw","undercooked"],
+        match: [
+          // English
+          "stale","expired","old","fresh","freshness","raw","undercooked",
+
+          // French
+          "rassis","expiré","vieux","frais","fraîcheur",
+          "cru","pas assez cuit"
+        ],
         descriptionKey: "rootCause.categories.product.causes.freshness"
       },
+
       {
-        match: ["damaged","broken","defective","leaking","packaging"],
+        match: [
+          // English
+          "damaged","broken","defective","leaking","packaging",
+
+          // French
+          "endommagé","cassé","défectueux","fuite",
+          "emballage","abîmé"
+        ],
         descriptionKey: "rootCause.categories.product.causes.damaged"
-      },
+      }
     ],
     fallbackKey: "rootCause.categories.product.fallback"
   },

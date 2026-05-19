@@ -26,7 +26,9 @@ interface AnalysisPageProps {
   dynamicThemes?: Array<{ theme: string; count?: number; importance?: number }>; // Thèmes dynamiques depuis insight
 }
 
-const ANALYSIS_TOC_SECTIONS = [
+export function AnalysisPage({ data, establishmentName,insight,  reviews, dynamicThemes = [] }: AnalysisPageProps) {
+  const { t } = useTranslation();
+  const ANALYSIS_TOC_SECTIONS = [
   { id: "overview-section", label: `1. ${t("analysis.overview.title", "Vue d'ensemble")} – ${t("analysis.overview.kpiTitle", "Key KPIs")}` },
   { id: "history-section", label: `2. ${t("analysis.history.title", "Review History and Dynamics")}` },
   { id: "sentiment-section", label: `3. ${t("analysis.sentiment.heading", "Distribution of Reviews")}` },
@@ -35,9 +37,6 @@ const ANALYSIS_TOC_SECTIONS = [
   { id: "root-cause-section", label: `6. ${t("analysis.ishikawa.title", "Root Cause Analysis")}` },
   { id: "diagnostic-section", label: `7. ${t("analysis.syntheseAndDiagnostic.title", "Synthesis and Diagnostic")}` },
 ] as const;
-
-export function AnalysisPage({ data, establishmentName,insight,  reviews, dynamicThemes = [] }: AnalysisPageProps) {
-  const { t } = useTranslation();
 
   const [activeSection, setActiveSection] = useState("overview-section");
   const analysisSections = useMemo(

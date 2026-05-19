@@ -130,16 +130,17 @@ export const HeroSection = () => {
           <img
             src={logoHeader}
             alt={`${APP_NAME} Logo`}
-            className="mt-4 h-[70px] w-auto -mr-2 dark:hidden"
+            className="mt-4 h-[50px] w-auto -mr-2 dark:hidden"
           />
 
           {/* Dark mode logo */}
           <img
             src={logoHeaderLight}
             alt={`${APP_NAME} Logo`}
-            className="mt-4 hidden h-[70px] w-auto -mr-2 dark:block dark:drop-shadow-[0_0_22px_hsl(var(--primary)/0.35)]"
+            className="mt-4 hidden h-[50px] w-auto -mr-2 dark:block dark:drop-shadow-[0_0_22px_hsl(var(--primary)/0.35)]"
           />
         </div>
+        <br/>
 
         {/* Main Hero Card */}
         <div className="container mx-auto px-4 pb-16 pt-2">
