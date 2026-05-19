@@ -82,20 +82,20 @@ export function PotentialGainSection({
               </span>
 
               <div className="min-w-0">
-                <div className="text-[26px] font-semibold leading-none tracking-tight text-slate-900 dark:text-slate-100">
+                <div className="mt-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#2563eb]">
+                <div className="text-[26px] font-semibold leading-none tracking-tight text-slate-900">
                   +{potentialGain.toFixed(2)}
                 </div>
-                <div className="mt-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#2563eb]">
                   {t("dashboard.keyTakeaways.potentialGain.label", {
                     defaultValue: "Estimated lift",
                   })}
                 </div>
-                <div className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                {/* <div className="mt-2 text-sm leading-6 text-slate-600">
                   {t("dashboard.keyTakeaways.potentialGain.estimatedGain", {
                     gain: potentialGain.toFixed(2),
                     defaultValue: `+${potentialGain.toFixed(2)} estimated if action applied.`,
                   })}
-                </div>
+                </div> */}
               </div>
             </div>
               <button

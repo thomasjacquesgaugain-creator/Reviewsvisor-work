@@ -1,8 +1,17 @@
 import { AlertTriangle, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
-import { format, parseISO, subMonths } from "date-fns";
+import { format, parseISO, subMonths, type Locale } from "date-fns";
+import { fr, enUS, it, es, ptBR } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import type { RiskAlertSectionProps, Review } from "./types";
+
+const localeMap: Record<string, Locale> = {
+  fr,
+  en: enUS,
+  it,
+  es,
+  pt: ptBR,
+};
 
 const getDateStr = (review: Review): string =>
   review?.published_at || review?.inserted_at || review?.created_at || review?.date || "";
@@ -31,17 +40,22 @@ const getLatestDate = (reviews: Review[]): Date | null =>
   }, null);
 
 export function RiskAlertSection({ reviews }: RiskAlertSectionProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const negativeReviewsLabel = (count: number) =>
+    t("dashboard.keyTakeaways.riskAlert.negativeReviews", { count });
 
   const riskData = useMemo(() => {
     if (!reviews?.length) return null;
 
     const anchorDate = getLatestDate(reviews) ?? new Date();
+    const language = (i18n.language || "fr").split("-")[0].toLowerCase();
+    const locale = localeMap[language] || fr;
     const currentMonthKey = format(anchorDate, "yyyy-MM");
     const previousMonthDate = subMonths(anchorDate, 1);
     const previousMonthKey = format(previousMonthDate, "yyyy-MM");
-    const currentMonthLabel = format(anchorDate, "MMMM yyyy");
-    const previousMonthLabel = format(previousMonthDate, "MMMM yyyy");
+    const currentMonthLabel = format(anchorDate, "MMM yyyy", { locale });
+    const previousMonthLabel = format(previousMonthDate, "MMM yyyy", { locale });
 
     const monthlyNegativeCounts = new Map<string, number>();
 
@@ -72,7 +86,7 @@ export function RiskAlertSection({ reviews }: RiskAlertSectionProps) {
       isRising: diff > 0,
       isStable: diff === 0,
     };
-  }, [reviews]);
+  }, [reviews, i18n.language]);
 
   if (!reviews?.length) {
     return (
@@ -174,7 +188,7 @@ export function RiskAlertSection({ reviews }: RiskAlertSectionProps) {
 
           <p className="mt-2 text-[15px] leading-6 text-slate-700 dark:text-slate-200">
             {t(driftMessageKey, {
-              count: data.currentMonthNegativeCount,
+              countLabel: negativeReviewsLabel(data.currentMonthNegativeCount),
               month: data.currentMonthLabel,
               pct: data.changePct.toFixed(1),
             })}
@@ -182,8 +196,8 @@ export function RiskAlertSection({ reviews }: RiskAlertSectionProps) {
 
           <p className="mt-2 text-[13px] font-medium text-slate-500 dark:text-slate-400">
             {t("dashboard.keyTakeaways.riskAlert.comparison", {
-              current: data.currentMonthNegativeCount,
-              previous: data.previousMonthNegativeCount,
+              currentLabel: negativeReviewsLabel(data.currentMonthNegativeCount),
+              previousLabel: negativeReviewsLabel(data.previousMonthNegativeCount),
               previousMonth: data.previousMonthLabel,
             })}
           </p>

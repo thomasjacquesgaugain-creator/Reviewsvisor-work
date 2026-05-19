@@ -47,6 +47,11 @@ export default function EtablissementPage() {
   const [placesError, setPlacesError] = useState<string | null>(null);
   const { establishment: currentEstablishment } = useCurrentEstablishment();
   const { t } = useTranslation();
+  const autocompleteRef = useRef<any>(null);
+
+  const cleanupGooglePlacesUi = () => {
+    document.querySelectorAll(".pac-container").forEach((node) => node.remove());
+  };
 
   // Synchroniser visualEstablishment avec currentEstablishment quand il change
   // Toujours suivre l'établissement actif pour garder le panneau de reviews synchronisé
@@ -210,6 +215,7 @@ export default function EtablissementPage() {
     if (input) {
       input.value = "";
     }
+    cleanupGooglePlacesUi();
   };
 
   // Ouvrir la barre de recherche
@@ -262,6 +268,7 @@ export default function EtablissementPage() {
           types: ["establishment"],
           fields: ["place_id"], // Only get place_id from autocomplete
         });
+        autocompleteRef.current = autocomplete;
         autocomplete.addListener("place_changed", async () => {
           const autocompletePlace = autocomplete.getPlace();
           if (!autocompletePlace || !autocompletePlace.place_id) return;
@@ -301,6 +308,15 @@ export default function EtablissementPage() {
       }
     };
     initPlaces();
+
+    return () => {
+      const g = (window as any).google;
+      if (autocompleteRef.current && g?.maps?.event) {
+        g.maps.event.clearInstanceListeners(autocompleteRef.current);
+      }
+      autocompleteRef.current = null;
+      cleanupGooglePlacesUi();
+    };
   }, []);
 
   // Vérifier s'il y a des établissements enregistrés dans la DB
