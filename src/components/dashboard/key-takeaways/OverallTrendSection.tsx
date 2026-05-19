@@ -2,12 +2,13 @@ import { Lightbulb, TrendingUp } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Label } from "recharts";
 import { useMemo, useState } from "react";
-import { parseISO, subDays, isAfter, isBefore } from "date-fns";
+import { parseISO, subDays, isAfter } from "date-fns";
 import { getRatingEvolution, Granularity as RatingGranularity } from "@/utils/ratingEvolution";
 import { useTranslation } from "react-i18next";
 import type { OverallTrendSectionProps, Review } from "./types";
 
 type Granularity = 'day' | 'week' | 'month';
+const MIN_REVIEWS_FOR_TREND = 3;
 
 const mapGranularity = (g: Granularity): RatingGranularity =>
   ({ day: 'jour', week: 'semaine', month: 'mois' }[g] as RatingGranularity) ?? 'mois';
@@ -20,12 +21,22 @@ const getDateStr = (r: Review): string =>
 const parseReviewDate = (r: Review): Date | null => {
   const s = getDateStr(r);
   if (!s) return null;
-  try { const d = parseISO(s); return isNaN(d.getTime()) ? null : d; }
-  catch { return null; }
+  try {
+    const d = parseISO(s);
+    return isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
 };
 
+const getValidRatedReviews = (reviews: Review[]): Review[] =>
+  reviews.filter((r) => {
+    const n = getNote(r);
+    return n >= 1 && n <= 5;
+  });
+
 const computeAverage = (reviews: Review[]): number | null => {
-  const valid = reviews.filter(r => { const n = getNote(r); return n >= 1 && n <= 5; });
+  const valid = getValidRatedReviews(reviews);
   if (!valid.length) return null;
   return valid.reduce((acc, r) => acc + getNote(r), 0) / valid.length;
 };
@@ -45,47 +56,76 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
   [reviews]);
 
   const { change, summary, isPositive, isNegative } = useMemo(() => {
-  if (!reviews?.length) return { change: "N/A", summary: "", isPositive: false, isNegative: false };
+    if (!reviews?.length) {
+      return {
+        change: "N/A",
+        summary: "",
+        isPositive: false,
+        isNegative: false,
+      };
+    }
 
-  const start60 = subDays(anchorDate, 60);
+    const today = new Date();
+    const last60Start = subDays(today, 60);
+    const prior60Start = subDays(today, 120);
 
-  const inWindow = (r: Review, from: Date, to: Date) => {
-    const d = parseReviewDate(r);
-    return d && isAfter(d, from) && !isAfter(d, to);
-  };
+    const current = reviews.filter((r) => {
+      const d = parseReviewDate(r);
+      return d && d >= last60Start && d <= today;
+    });
 
-  const current  = reviews.filter(r => inWindow(r, start60, anchorDate));
-  
-  const previous = reviews.filter(r => {
-    const d = parseReviewDate(r);
-    return d && isBefore(d, start60);
-  });
+    const previous = reviews.filter((r) => {
+      const d = parseReviewDate(r);
+      return d && d >= prior60Start && d < last60Start;
+    });
 
-  const currentAvg  = computeAverage(current);
-  const previousAvg = computeAverage(previous);
+    const currentValid = getValidRatedReviews(current);
+    const previousValid = getValidRatedReviews(previous);
 
-  if (currentAvg === null) return { change: "N/A", summary: "", isPositive: false, isNegative: false };
+    const currentAvg = computeAverage(currentValid);
+    const previousAvg = computeAverage(previousValid);
 
-  if (previousAvg === null) {
+    if (currentAvg === null) {
+      return {
+        change: "N/A",
+        summary: "",
+        isPositive: false,
+        isNegative: false,
+      };
+    }
+
+    if (
+      previousAvg === null ||
+      currentValid.length < MIN_REVIEWS_FOR_TREND ||
+      previousValid.length < MIN_REVIEWS_FOR_TREND
+    ) {
+      return {
+        change: t("dashboard.keyTakeaways.overallTrend.changeAvg", {
+          avg: currentAvg.toFixed(1),
+        }),
+        summary: t("dashboard.keyTakeaways.overallTrend.summaryNoPrevious", {
+          current: currentAvg.toFixed(2),
+          count: currentValid.length,
+        }),
+        isPositive: false,
+        isNegative: false,
+      };
+    }
+
+    const diff = currentAvg - previousAvg;
+    const sign = diff >= 0 ? "+" : "-";
+    const summaryKey =
+      diff > 0 ? "summaryUp" : diff < 0 ? "summaryDown" : "summaryFlat";
+
     return {
-      change: t("dashboard.keyTakeaways.overallTrend.changeAvg", { avg: currentAvg.toFixed(1) }),
-      summary: t("dashboard.keyTakeaways.overallTrend.summaryNoPrevious", { current: currentAvg.toFixed(2), count: current.length }),
-      isPositive: false,
-      isNegative: false,
+      change: `${diff >= 0 ? "↑" : "↓"} ${Math.abs(diff).toFixed(1)} pts`,
+      summary: t(`dashboard.keyTakeaways.overallTrend.${summaryKey}`, {
+        diff: `${sign}${Math.abs(diff).toFixed(1)}`,
+      }),
+      isPositive: diff > 0,
+      isNegative: diff < 0,
     };
-  }
-
-  const diff = currentAvg - previousAvg;
-  const sign = diff >= 0 ? "+" : "";
-
-  const summaryKey = diff > 0 ? "summaryUp" : diff < 0 ? "summaryDown" : "summaryFlat";
-  return {
-    change: t("dashboard.keyTakeaways.overallTrend.change", { sign, diff: diff.toFixed(1) }),
-    summary: t(`dashboard.keyTakeaways.overallTrend.${summaryKey}`, { diff: `${sign}${diff.toFixed(2)}` }),
-    isPositive: diff > 0,
-    isNegative: diff < 0,
-  };
-}, [reviews, anchorDate, t]);
+  }, [reviews, t]);
 
   const chartData = useMemo(() => {
     if (!reviews?.length) return [];

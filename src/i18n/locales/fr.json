@@ -727,8 +727,10 @@
          "statReviews": "Total des avis",
          "noData":"Aucune donnée disponible",
          "noDataHint":"Le score apparaîtra une fois les avis recueillis.",
-         "statRecentTrend": "Tendance récente",
-         "statRecentTrendHint": "Les 60 derniers jours"
+        "statRecentTrend": "Tendance récente",
+        "statRecentTrendHint": "Comparée aux 60 jours précédents",
+        "statRecentTrendInsufficient": "Données insuffisantes pour une comparaison sur 60 jours.",
+        "statRecentTrendInvalid": "Tendance exclue car les données d'avis semblent incohérentes."
        },
        "mainIssues": {
          "majorIssue": "Problème majeur",
@@ -737,7 +739,7 @@
          "noData":"Aucune donnée disponible"
        },
        "mainStrengths": {
-         "mainStrength": "Force majeure",
+         "mainStrength": "Point fort",
          "positiveImpact": "Impact positif",
          "mentionedIn": "Mentionné dans {{percentage}}% des avis positifs",
          "noData":"Aucun point fort identifié dans les évaluations récentes."
@@ -749,33 +751,35 @@
        "overallTrend": {
          "title": "Tendance globale",
          "recentTrend": "60 derniers jours",
-         "change": "{{sign}}{{diff}} sur 60 jours",
+        "change": "{{sign}}{{diff}} pts",
          "changeAvg": "{{avg}} moy.",
          "summaryNoPrevious": "Note moyenne actuelle : {{current}}/5 ({{count}} avis). Aucune donnée sur la période précédente.",
-         "summaryUp": "Note moyenne en hausse ({{diff}} sur 60 jours)",
-         "summaryDown": "Note moyenne en baisse ({{diff}} sur 60 jours)",
+        "summaryUp": "Note moyenne en hausse ({{diff}} pts)",
+        "summaryDown": "Note moyenne en baisse ({{diff}} pts)",
          "summaryFlat": "Note moyenne stable sur 60 jours"
        },
-       "riskAlert": {
-          "title": "Risque - Alerte",
-          "noData": "Aucune donnée disponible",
-          "stable": "Écurie",
-          "rising": "En hausse",
-          "falling": "En baisse",
-          "recentDrift": "Évolution récente",
-          "stableMessage": "Les avis négatifs sont stables à {{count}} en {{month}}.",
-          "risingMessage": "Les avis négatifs sont en hausse de {{pct}} % en {{month}}.",
-          "fallingMessage": "Les avis négatifs sont en baisse de {{pct}} % en {{month}}.",
-          "comparison": "Ce mois-ci : {{current}} avis négatifs contre {{previous}} en {{previousMonth}}.",
-          "changeStable": "Variation de 0,0 % par rapport au mois précédent",
-          "changeRising": "+{{pct}} % par rapport au mois précédent",
-          "changeFalling": "-{{pct}} % par rapport au mois précédent",
+      "riskAlert": {
+         "title": "Risque - Alerte",
+         "noData": "Aucune donnée disponible",
+         "stable": "Écurie",
+         "rising": "En hausse",
+         "falling": "En baisse",
+         "recentDrift": "Évolution récente",
+         "negativeReviews_one": "{{count}} avis négatif",
+         "negativeReviews_other": "{{count}} avis négatifs",
+         "stableMessage": "Les avis négatifs sont stables à {{countLabel}} en {{month}}.",
+         "risingMessage": "Les avis négatifs sont en hausse de {{pct}} % en {{month}}.",
+         "fallingMessage": "Les avis négatifs sont en baisse de {{pct}} % en {{month}}.",
+         "comparison": "Ce mois-ci : {{currentLabel}} contre {{previousLabel}} en {{previousMonth}}.",
+         "changeStable": "Variation de 0,0 % par rapport au mois précédent",
+         "changeRising": "+{{pct}} % par rapport au mois précédent",
+         "changeFalling": "-{{pct}} % par rapport au mois précédent",
           "footer": "Les avis négatifs font l'objet d'une surveillance étroite." 
         },
        "potentialGain": {
         "title": "Gain potentiel",
         "estimatedGain": "+{{gain}} estimé si l'action est appliquée.",
-        "label":"Portance estimée",
+        "label":"Gain estimé",
         "viewActionPlan":"Afficher le plan d'action",
         "noData":"Aucune donnée disponible"
       }

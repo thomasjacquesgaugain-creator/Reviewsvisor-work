@@ -660,7 +660,9 @@
         "noData": "No data available",
         "noDataHint": "Score will appear once reviews are collected.",
         "statRecentTrend": "Recent Trend",
-        "statRecentTrendHint": "Last 60 days"
+        "statRecentTrendHint": "Compared to the previous 60 days",
+        "statRecentTrendInsufficient": "Insufficient data for a 60-day comparison.",
+        "statRecentTrendInvalid": "Trend excluded because the review data looks inconsistent."
       },
       "mainIssues": {
         "majorIssue": "Major Issue",
@@ -681,11 +683,11 @@
       "overallTrend": {
         "title": "Overall Trend",
         "recentTrend": "Last 60 days",
-        "change": "{{sign}}{{diff}} over 60 days",
+        "change": "{{sign}}{{diff}} pts",
         "changeAvg": "{{avg}} avg",
         "summaryNoPrevious": "Current average: {{current}}/5 ({{count}} reviews). No previous period data.",
-        "summaryUp": "Average rating up ({{diff}} over 60 days)",
-        "summaryDown": "Average rating down ({{diff}} over 60 days)",
+        "summaryUp": "Average rating up ({{diff}} pts)",
+        "summaryDown": "Average rating down ({{diff}} pts)",
         "summaryFlat": "Average rating stable over 60 days"
       },
       "riskAlert": {
@@ -695,10 +697,12 @@
         "rising": "Rising",
         "falling": "Falling",
         "recentDrift": "Recent drift",
-        "stableMessage": "Negative reviews are stable at {{count}} in {{month}}.",
+        "negativeReviews_one": "{{count}} negative review",
+        "negativeReviews_other": "{{count}} negative reviews",
+        "stableMessage": "Negative reviews are stable at {{countLabel}} in {{month}}.",
         "risingMessage": "Negative reviews are up by {{pct}}% in {{month}}.",
         "fallingMessage": "Negative reviews are down by {{pct}}% in {{month}}.",
-        "comparison": "This month: {{current}} negative reviews vs {{previous}} in {{previousMonth}}.",
+        "comparison": "This month: {{currentLabel}} vs {{previousLabel}} in {{previousMonth}}.",
         "changeStable": "0.0% change vs previous month",
         "changeRising": "+{{pct}}% vs previous month",
         "changeFalling": "{{pct}}% down vs previous month",
