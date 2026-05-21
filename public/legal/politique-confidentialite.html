@@ -6,34 +6,68 @@
   <title>Politique de Confidentialité - Reviewsvisor</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --text: #374151;
+      --heading: #1a1a2e;
+      --muted: #6b7280;
+      --link: #2563eb;
+      --zebra: #f9fafb;
+      --thead: #f3f4f6;
+    }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      color: #1a1a2e;
-      background: #ffffff;
+      color: var(--heading);
+      background: var(--bg);
       line-height: 1.7;
-      padding: 2.5rem 1.5rem;
-      max-width: 900px;
+      padding: 2.5rem 1.25rem;
+    }
+    .container {
+      max-width: 980px;
       margin: 0 auto;
     }
-    h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: #1a1a2e; }
-    .update-date { font-size: 0.875rem; color: #6b7280; margin-bottom: 2.5rem; }
-    h2 { font-size: 1.35rem; font-weight: 600; margin-top: 2.2rem; margin-bottom: 0.75rem; color: #1a1a2e; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.4rem; }
-    h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #374151; }
-    p { margin-bottom: 0.75rem; color: #374151; }
-    ul { margin: 0.5rem 0 1rem 1.5rem; color: #374151; }
-    li { margin-bottom: 0.35rem; }
-    a { color: #2563eb; text-decoration: none; }
+    .content-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 56px;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    }
+    h1 { font-size: 2rem; font-weight: 700; margin-bottom: 2.5rem; color: var(--heading); }
+    h2 { font-size: 1.35rem; font-weight: 600; margin-top: 2.2rem; margin-bottom: 0.75rem; color: var(--heading); border-bottom: 2px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--text); }
+    p { margin-bottom: 0.75rem; color: var(--text); text-align: justify; }
+    main ul { margin: 0.5rem 0 1rem 1.75rem; padding-left: 0.5rem; color: var(--text); list-style-type: disc; }
+    li { margin-bottom: 0.35rem; color: var(--text); text-align: justify; }
+    a { color: var(--link); text-decoration: none; }
     a:hover { text-decoration: underline; }
     table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
-    th, td { border: 1px solid #e5e7eb; padding: 0.65rem 1rem; text-align: left; }
-    th { background: #f3f4f6; font-weight: 600; color: #1a1a2e; }
-    td { color: #374151; }
-    tr:nth-child(even) td { background: #f9fafb; }
+    th, td { border: 1px solid var(--border); padding: 0.65rem 1rem; text-align: left; }
+    th { background: var(--thead); font-weight: 600; color: var(--heading); }
+    td { color: var(--text); }
+    tr:nth-child(even) td { background: var(--zebra); }
+    .footer {
+      margin-top: 4rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    @media (max-width: 768px) {
+      body { padding: 20px 12px; }
+      .content-card { padding: 28px 22px; border-radius: 18px; }
+      h1 { font-size: 1.8rem; margin-bottom: 2rem; }
+      h2 { font-size: 1.2rem; }
+      h3 { font-size: 1rem; }
+    }
   </style>
 </head>
 <body>
+  <main>
   <h1>Politique de Confidentialité</h1>
-  <p class="update-date">Dernière mise à jour : 29 janvier 2026</p>
 
   <h2>Introduction</h2>
   <p>La présente Politique de Confidentialité décrit de manière transparente la manière dont Reviewsvisor collecte, utilise, conserve et protège les données personnelles de ses utilisateurs, conformément au Règlement (UE) 2016/679 du Parlement européen et du Conseil du 27 avril 2016 (RGPD) et aux législations nationales applicables.</p>
@@ -42,8 +76,8 @@
   <h2>1. Responsable du traitement</h2>
   <p>Le responsable du traitement des données personnelles est :</p>
   <p>
-    Reviewsvisor<br>
-    SAS immatriculée sous le N° RCS Paris, dont le siège social est situé<br>
+    <strong>Reviewsvisor</strong><br>
+    Reviewsvisor (HAWKMAN), SAS immatriculée au RCS de Paris sous le numéro 103 010 294, dont le siège social est situé 36 rue Scheffer, 75116 Paris, France.<br>
     Email : <a href="mailto:contact@reviewsvisor.fr">contact@reviewsvisor.fr</a><br>
     Site web : <a href="https://www.reviewsvisor.fr">www.reviewsvisor.fr</a>
   </p>
@@ -52,7 +86,7 @@
   <h2>2. Données personnelles collectées</h2>
   <p>Reviewsvisor collecte uniquement les données strictement nécessaires à la fourniture du Service.</p>
 
-  <h3>Données d'identification</h3>
+  <h3>2.1 Données d'identification</h3>
   <ul>
     <li>Nom et prénom</li>
     <li>Adresse email professionnelle</li>
@@ -60,7 +94,7 @@
     <li>Photo de profil (en cas de connexion via un compte Google)</li>
   </ul>
 
-  <h3>Données professionnelles</h3>
+  <h3>2.2 Données professionnelles</h3>
   <ul>
     <li>Nom de l'entreprise ou de l'établissement</li>
     <li>Adresse professionnelle</li>
@@ -68,7 +102,7 @@
     <li>Informations de facturation</li>
   </ul>
 
-  <h3>Données issues de Google Business Profile</h3>
+  <h3>2.3 Données issues de Google Business Profile</h3>
   <ul>
     <li>Avis clients (contenu, note, date, auteur tel que fourni par Google)</li>
     <li>Réponses aux avis</li>
@@ -76,7 +110,7 @@
     <li>Informations publiques de la fiche Google Business Profile</li>
   </ul>
 
-  <h3>Données techniques et de connexion</h3>
+  <h3>2.4 Données techniques et de connexion</h3>
   <ul>
     <li>Adresse IP</li>
     <li>Type de navigateur, système d'exploitation et appareil</li>
@@ -108,7 +142,7 @@
 
   <h3>4.1 Sous-traitants</h3>
   <ul>
-    <li>Hébergement : Vercel Inc., USA, infrastructures situées au sein de l'Union européenne</li>
+    <li>Hébergement : Vercel Inc., USA.</li>
     <li>Paiement : Stripe (traitement sécurisé des paiements)</li>
     <li>Emailing et notifications</li>
     <li>Outils d'analyse et de mesure d'audience</li>
@@ -126,8 +160,7 @@
 
   <h2>5. Transferts hors Union européenne</h2>
   <p>Les données sont principalement hébergées et traitées au sein de l'Union européenne.</p>
-  <p>Lorsque certains sous-traitants impliquent un transfert de données hors de l'Union européenne, nous nous assurons que le niveau de protection des Données à Caractère Personnel dans le pays concerné est jugé adéquat au regard du droit applicable (ce qui est le cas pour les États-Unis, concernant les entreprises relevant du « Cadre de Protection des Données » (CPD)). Pour les éventuels pays jugés non adéquats, Reviewsvisor met en place des garanties appropriées conformément au RGPD, notamment par l'utilisation de clauses contractuelles types adoptées par la Commission européenne ou par toute autre base légale valide.</p>
-  <p>Vous pouvez obtenir des informations complémentaires sur ces garanties en contactant Reviewsvisor.</p>
+  <p>Lorsque certains sous-traitants impliquent un transfert de données hors de l'Union européenne, nous nous assurons que le niveau de protection des Données à Caractère Personnel dans le pays concerné est jugé adéquat au regard du droit applicable (ce qui est le cas pour les États-Unis, concernant les entreprises relevant du « Cadre de Protection des Données » (CPD)). Pour les éventuels pays jugés non adéquats, Reviewsvisor met en place des garanties appropriées conformément au RGPD, notamment par l'utilisation de clauses contractuelles types adoptées par la Commission européenne ou par toute autre base légale valide. Vous pouvez obtenir des informations complémentaires sur ces garanties en contactant Reviewsvisor.</p>
 
   <h2>6. Caractère obligatoire des données</h2>
   <p>Certaines données personnelles sont nécessaires à la création du compte, à l'accès au Service et à la fourniture de ses fonctionnalités. À défaut de fournir ces données, Reviewsvisor pourra être dans l'impossibilité de fournir tout ou partie du Service.</p>
@@ -191,5 +224,7 @@
     Email : <a href="mailto:contact@reviewsvisor.fr">contact@reviewsvisor.fr</a><br>
     Site web : <a href="https://www.reviewsvisor.fr">www.reviewsvisor.fr</a>
   </p>
+  <div class="footer">© 2026 Reviewsvisor — Tous droits réservés</div>
+  </main>
 </body>
 </html>

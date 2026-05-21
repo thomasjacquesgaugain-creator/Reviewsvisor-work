@@ -6,40 +6,72 @@
   <title>Politique de Cookies - Reviewsvisor</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --text: #374151;
+      --heading: #1a1a2e;
+      --muted: #6b7280;
+      --link: #2563eb;
+    }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      color: #1a1a2e;
-      background: #ffffff;
+      color: var(--heading);
+      background: var(--bg);
       line-height: 1.7;
-      padding: 2.5rem 1.5rem;
-      max-width: 900px;
+      padding: 2.5rem 1.25rem;
+    }
+    .container {
+      max-width: 980px;
       margin: 0 auto;
     }
-    h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: #1a1a2e; }
-    .update-date { font-size: 0.875rem; color: #6b7280; margin-bottom: 2.5rem; }
-    h2 { font-size: 1.35rem; font-weight: 600; margin-top: 2.2rem; margin-bottom: 0.75rem; color: #1a1a2e; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.4rem; }
-    h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #374151; }
-    p { margin-bottom: 0.75rem; color: #374151; }
-    ul { margin: 0.5rem 0 1rem 1.5rem; color: #374151; }
-    li { margin-bottom: 0.35rem; }
-    a { color: #2563eb; text-decoration: none; }
+    .content-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 56px;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    }
+    h1 { font-size: 2rem; font-weight: 700; margin-bottom: 2.5rem; color: var(--heading); }
+    h2 { font-size: 1.35rem; font-weight: 600; margin-top: 2.2rem; margin-bottom: 0.75rem; color: var(--heading); border-bottom: 2px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--text); }
+    p { margin-bottom: 0.75rem; color: var(--text); text-align: justify; }
+    main ul { margin: 0.5rem 0 1rem 1.75rem; padding-left: 0.5rem; color: var(--text); list-style-type: disc; }
+    li { margin-bottom: 0.35rem; color: var(--text); text-align: justify; }
+    a { color: var(--link); text-decoration: none; }
     a:hover { text-decoration: underline; }
+    .footer {
+      margin-top: 4rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    @media (max-width: 768px) {
+      body { padding: 20px 12px; }
+      .content-card { padding: 28px 22px; border-radius: 18px; }
+      h1 { font-size: 1.8rem; margin-bottom: 2rem; }
+      h2 { font-size: 1.2rem; }
+      h3 { font-size: 1rem; }
+    }
   </style>
 </head>
 <body>
+  <main>
   <h1>Politique de Cookies (UE / RGPD)</h1>
-  <p class="update-date">Dernière mise à jour : 29 janvier 2026</p>
 
   <h2>1. Introduction</h2>
   <p>La présente Politique de Cookies explique comment Reviewsvisor utilise des cookies et autres traceurs lors de la navigation sur sa plateforme, conformément au Règlement (UE) 2016/679 (RGPD) et aux recommandations de la CNIL.</p>
-  <p>Les cookies non strictement nécessaires ne sont déposés qu'après recueil de votre consentement préalable, que vous pouvez retirer à tout moment.</p>
+  <p>Les cookies non strictement nécessaires ne sont déposés qu'après recueil de votre <strong>consentement préalable</strong>, que vous pouvez retirer à tout moment.</p>
 
   <h2>2. Qu'est-ce qu'un cookie ?</h2>
   <p>Un cookie est un petit fichier texte déposé sur votre terminal (ordinateur, tablette, smartphone) lors de la consultation d'un site internet. Il permet notamment de reconnaître un utilisateur, de mémoriser ses préférences ou de collecter des informations statistiques.</p>
   <p>Les cookies peuvent être :</p>
   <ul>
-    <li>de session : supprimés à la fermeture du navigateur ;</li>
-    <li>persistants : conservés pour une durée limitée.</li>
+    <li><strong>de session</strong> : supprimés à la fermeture du navigateur ;</li>
+    <li><strong>persistants</strong> : conservés pour une durée limitée.</li>
   </ul>
 
   <h2>3. Catégories de cookies utilisés</h2>
@@ -69,7 +101,7 @@
   </ul>
 
   <h3>3.4 Cookies publicitaires</h3>
-  <p>Reviewsvisor n'utilise pas de cookies publicitaires ou de ciblage à ce jour. Toute évolution future fera l'objet d'une information préalable et d'un nouveau recueil de consentement.</p>
+  <p>Reviewsvisor <strong>n'utilise pas</strong> de cookies publicitaires ou de ciblage à ce jour. Toute évolution future fera l'objet d'une information préalable et d'un nouveau recueil de consentement.</p>
 
   <h2>4. Liste des cookies</h2>
 
@@ -84,7 +116,7 @@
 
   <h3>Cookies tiers</h3>
   <ul>
-    <li><strong>Analytics</strong> : mesure d'audience anonymisée (13 mois maximum)</li>
+    <li><strong>Outil de mesure d'audience</strong> : mesure d'audience anonymisée (13 mois maximum)</li>
   </ul>
 
   <h2>5. Gestion du consentement</h2>
@@ -103,20 +135,22 @@
   <p>Vous pouvez également configurer votre navigateur pour bloquer ou supprimer les cookies.</p>
 
   <h2>6. Durée de conservation</h2>
-  <p>Les cookies sont conservés pour une durée maximale de 13 mois, conformément aux recommandations de la CNIL.</p>
+  <p>Les cookies sont conservés pour une durée maximale de <strong>13 mois</strong>, conformément aux recommandations de la CNIL.</p>
   <p>Les cookies de session sont supprimés à la fermeture du navigateur.</p>
 
   <h2>7. Lien avec la Politique de Confidentialité</h2>
-  <p>Pour plus d'informations sur le traitement des données personnelles, vous pouvez consulter notre <a href="/politique-confidentialite">Politique de Confidentialité</a>.</p>
+  <p>Pour plus d'informations sur le traitement des données personnelles, vous pouvez consulter notre <a href="/politique-confidentialite"><strong>Politique de Confidentialité</strong></a>.</p>
 
   <h2>8. Mise à jour de la politique</h2>
-  <p>La présente politique peut être modifiée à tout moment. La date de dernière mise à jour figure en en-tête. Toute modification substantielle fera l'objet d'une information préalable.</p>
+  <p>La présente politique peut être modifiée à tout moment. Toute modification substantielle fera l'objet d'une information préalable.</p>
 
   <h2>9. Contact</h2>
   <p>Pour toute question relative aux cookies ou à la protection des données personnelles :</p>
   <p>
-    Email : <a href="mailto:contact@reviewsvisor.fr">contact@reviewsvisor.fr</a><br>
-    Site web : <a href="https://www.reviewsvisor.fr">www.reviewsvisor.fr</a>
+    Email : <a href="mailto:contact@reviewsvisor.fr"><strong>contact@reviewsvisor.fr</strong></a><br>
+    Site web : <a href="https://www.reviewsvisor.fr"><strong>www.reviewsvisor.fr</strong></a>
   </p>
+  <div class="footer">© 2026 Reviewsvisor — Tous droits réservés</div>
+  </main>
 </body>
 </html>
