@@ -119,49 +119,50 @@ export function LegalDocViewer({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <BackArrow />
-          <div className="mt-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              {t("footer.legalHeader")}
-            </h1>
-
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              {t("footer.legalHeaderMessage")}
-            </p>
+      <div className="relative z-10">
+        <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mb-6">
+            <BackArrow />
+            <div className="mt-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 !mb-0">
+                {t("footer.legalHeader")}
+              </h1>
+              <p className="!mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {t("footer.legalHeaderMessage")}
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Content */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-          <div className="px-5 py-8 sm:px-8 lg:px-12">
-            {loading && (
-              <div className="flex items-center justify-center py-20">
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Chargement du document…
-                </p>
-              </div>
-            )}
+          {/* Content */}
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+            <div className="px-5 py-8 sm:px-8 lg:px-12">
+              {loading && (
+                <div className="flex items-center justify-center py-20">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Chargement du document…
+                  </p>
+                </div>
+              )}
 
-            {error && !loading && (
-              <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 px-4 py-4">
-                <p className="font-semibold text-red-700 dark:text-red-400">
-                  Le document n&apos;a pas pu être chargé
-                </p>
+              {error && !loading && (
+                <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 px-4 py-4">
+                  <p className="font-semibold text-red-700 dark:text-red-400">
+                    Le document n&apos;a pas pu être chargé
+                  </p>
 
-                <p className="mt-1 text-sm text-red-600 dark:text-red-300">
-                  {error}
-                </p>
-              </div>
-            )}
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-300">
+                    {error}
+                  </p>
+                </div>
+              )}
 
-            {!loading && !error && bodyContent && (
-              <article
-                className="legal-doc-content max-w-none overflow-x-auto"
-                dangerouslySetInnerHTML={{ __html: bodyContent }}
-              />
-            )}
+              {!loading && !error && bodyContent && (
+                <article
+                  className="legal-doc-content max-w-none overflow-x-auto"
+                  dangerouslySetInnerHTML={{ __html: bodyContent }}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
