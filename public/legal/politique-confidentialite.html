@@ -48,20 +48,25 @@
     th { background: var(--thead); font-weight: 600; color: var(--heading); }
     td { color: var(--text); }
     tr:nth-child(even) td { background: var(--zebra); }
-    .footer {
-      margin-top: 4rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid var(--border);
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
     @media (max-width: 768px) {
       body { padding: 20px 12px; }
       .content-card { padding: 28px 22px; border-radius: 18px; }
       h1 { font-size: 1.8rem; margin-bottom: 2rem; }
       h2 { font-size: 1.2rem; }
       h3 { font-size: 1rem; }
+    }
+    main footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 2px solid #e5e7eb;
+      text-align: center;
+      color: #6b7280;
+    }
+
+    .dark footer {
+      background: #0f172a;
+      border-color: #334155;
+      color: #ffffff;
     }
   </style>
 </head>
@@ -224,7 +229,9 @@
     Email : <a href="mailto:contact@reviewsvisor.fr">contact@reviewsvisor.fr</a><br>
     Site web : <a href="https://www.reviewsvisor.fr">www.reviewsvisor.fr</a>
   </p>
-  <div class="footer">© 2026 Reviewsvisor — Tous droits réservés</div>
+  <footer>
+    © 2026 Reviewsvisor - Tous droits réservés
+  </footer>
   </main>
 </body>
 </html>
