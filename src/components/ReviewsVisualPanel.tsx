@@ -404,7 +404,7 @@ export function ReviewsVisualPanel({
             </div>
             <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
               <MessageSquareText className="h-4 w-4" aria-hidden="true" />
-              <span data-testid="establishment-subtitle">{t("establishment.title")}</span>
+              <span data-testid="establishment-subtitle">{t("establishment.reviewsPanelTitle")}</span>
             </div>
           </div>
 

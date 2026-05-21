@@ -254,7 +254,7 @@
     "topReviews": "Meilleurs avis",
     "worstReviews": "Pires avis",
     "ratingEvolution": "Évolution de la note",
-    "platformDistribution": "Répartition par plateforme",
+    "platformDistribution": "Répartition des notes",
     "themesAnalysis": "Analyse thématique",
     "recommendations": "Recommandations",
     "autoResponse": "Réponse automatique",
@@ -661,7 +661,7 @@
     "competitor5": "Pizzeria Bella Vita",
     "benchmarkDescription": "Comparez votre performance à celle d'établissements similaires dans votre secteur géographique pour identifier vos forces et vos axes d'amélioration.",
     "response": "Réponses",
-    "analyse": "Analyser",
+    "analyse": "Analyse",
     "importGeneratePersonalizedActions": "Importez vos avis pour générer des actions personnalisées",
     "responseCenter": "Centre de réponse",
     "manageCustomerReviewResponses": "Gérez vos réponses aux avis clients",
@@ -975,11 +975,6 @@
       "backgroundDescription": "Choisissez la teinte de fond de l'interface",
       "backgroundBrightness": "Luminosité du fond",
       "backgroundBrightnessDescription": "Ajustez la luminosité du fond selectionne",
-      "backgroundColor": {
-        "cottonCandy": "Barbe à papa",
-        "dusk": "Crépuscule",
-        "lavender": "Lavande"
-      },
       "validation": {
         "settingsReset": "Paramètres réinitialisés",
         "updatedAppearance": "Apparence mise à jour",
@@ -1404,7 +1399,8 @@
     "detectType": "Détecter le type",
     "detectTypeTitle": "Détecter le type depuis Google Places",
     "detectTypeSuccess": "Type détecté : {{type}}",
-    "detectTypeError": "Impossible de détecter le type"
+    "detectTypeError": "Impossible de détecter le type",
+    "reviewsPanelTitle": "Mes Établissement"
   },
     "errors": {
     "title": "Erreur",

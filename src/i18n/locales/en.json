@@ -235,7 +235,7 @@
     "topReviews": "Top reviews",
     "worstReviews": "Worst reviews",
     "ratingEvolution": "Rating evolution",
-    "platformDistribution": "Platform distribution",
+    "platformDistribution": "Rating distribution",
     "themesAnalysis": "Theme analysis",
     "recommendations": "Recommendations",
     "autoResponse": "Auto response",
@@ -574,7 +574,7 @@
     "noPositiveReviewsFound": "No positive reviews found",
     "keyIndicators": "Key indicators",
     "response": "Response",
-    "analyse": "Analyse",
+    "analyse": "Analysis",
     "noAnalysisAvailable": "No analysis available for this establishment. Click \"Analyze\" in the location map to get started.",
     "importAndAnalyzeToSeeResults": "Report reviews and run an analysis to see the results",
     "synthesisPriorities": "Summary & priorities",
@@ -907,11 +907,6 @@
       "backgroundDescription": "Choose the background color of the interface",
       "backgroundBrightness": "Background brightness",
       "backgroundBrightnessDescription": "Adjust the brightness of the selected background",
-      "backgroundColor": {
-        "cottonCandy": "Cotton Candy",
-        "dusk": "Dusk",
-        "lavender": "Lavender"
-      },
       "validation": {
         "settingsReset": "Settings reset",
         "updatedAppearance": "Updated appearance",
@@ -1241,7 +1236,8 @@
     "detectType": "Detect type",
     "detectTypeTitle": "Detect type from Google Places",
     "detectTypeSuccess": "Type detected: {{type}}",
-    "detectTypeError": "Unable to detect type"
+    "detectTypeError": "Unable to detect type",
+    "reviewsPanelTitle": "My Establishment"
   },
   "googleImport": {
     "connectionSuccess": "Connection successful",
