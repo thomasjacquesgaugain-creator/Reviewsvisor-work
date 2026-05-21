@@ -48,7 +48,7 @@ Introduction	3
 
 2.2	Données professionnelles	3
 
-2.3	Données issues de Google Business Profile	3
+2.3	Données issues de Google Business Profile	4
 
 2.4	Données techniques et de connexion	4
 
@@ -74,7 +74,7 @@ Introduction	3
 
 10	Décisions automatisées	6
 
-11	Cookies	6
+11	Cookies	7
 
 12	Modification de la politique	7
 
@@ -96,7 +96,7 @@ Responsable du traitement
 
 Le responsable du traitement des données personnelles est :
 
-ReviewsvisorSAS immatriculée sous le N°     RCS Paris, dont le siège social est situé     Email : contact@reviewsvisor.frSite web : www.reviewsvisor.fr
+ReviewsvisorReviewsvisor (HAWKMAN), SAS immatriculée au RCS de Paris sous le numéro 103 010 294,dont le siège social est situé 36 rue Scheffer, 75116 Paris, France.   Email : contact@reviewsvisor.frSite web : www.reviewsvisor.fr
 
 Pour toute question relative à la protection des données personnelles, vous pouvez contacter directement Reviewsvisor à l’adresse ci-dessus.
 
@@ -198,7 +198,7 @@ Les données personnelles peuvent être communiquées aux destinataires suivants
 
 4.1 	Sous-traitants
 
-Hébergement : Versel INc., USA, infrastructures situées au sein de l’Union européenne
+Hébergement : Vercel Inc., USA.
 
 Paiement : Stripe (traitement sécurisé des paiements)
 
@@ -224,7 +224,7 @@ Transferts hors Union européenne
 
 Les données sont principalement hébergées et traitées au sein de l’Union européenne.
 
-Lorsque certains sous-traitants impliquent un transfert de données hors de l’Union européenne, nous nous assurons que le niveau de protection des Données à Caractère Personnel dans le pays concerné est jugé adéquat au regard du droit applicable (ce qui est le cas pour les Etats-Unis, concernant les entreprises relevant du « Cadre de Protection des Données » (CPD) ). Pour les éventuels pays jugés non adéquats, Reviewsvisor met en place des garanties appropriées conformément au RGPD, notamment par l’utilisation de clauses contractuelles types adoptées par la Commission européenne ou par toute autre base légale valide.Vous pouvez obtenir des informations complémentaires sur ces garanties en contactant Reviewsvisor.
+Lorsque certains sous-traitants impliquent un transfert de données hors de l’Union européenne, nous nous assurons que le niveau de protection des Données à Caractère Personnel dans le pays concerné est jugé adéquat au regard du droit applicable(ce qui est le cas pour les Etats-Unis, concernant les entreprises relevant du « Cadre de Protection des Données » (CPD) ). Pour les éventuels pays jugés non adéquats, Reviewsvisor met en place des garanties appropriées conformément au RGPD, notamment par l’utilisation de clauses contractuelles types adoptées par la Commission européenne ou par toute autre base légale valide. Vous pouvez obtenir des informations complémentaires sur ces garanties en contactant Reviewsvisor.
 
 
 

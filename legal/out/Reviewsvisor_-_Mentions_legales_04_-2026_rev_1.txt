@@ -48,21 +48,11 @@ Contents
 
 5	Protection des données personnelles	4
 
-5.1	Responsable du traitement	4
+6	Cookies	4
 
-5.2	Droits des utilisateurs	4
+7	Liens hypertextes	4
 
-6	Cookies	5
-
-7	Limitation de responsabilité	5
-
-8	Liens hypertextes	5
-
-9	Droit applicable et juridiction compétente	5
-
-10	Médiation de la consommation	6
-
-11	Contact	6
+8	Contact	5
 
 
 
@@ -74,27 +64,23 @@ MENTIONS LEGALES
 
 Le site www.reviewsvisor.fr est édité par :
 
-Raison sociale : [Nom de votre entreprise / votre nom si auto-entrepreneur]
+Raison sociale : HAWKMAN
 
-Forme juridique : [SAS]
+Forme juridique : Société par actions simplifiée (SAS)
 
-Capital social : [Montant] € 
+Capital social : 1 000 €
 
-Siège social : [Adresse complète]
+Siège social : 36, rue Scheffer, 75116 Paris, France
 
-SIRET : [Numéro SIRET]
+SIRET : 103 010 294 00017
 
-RCS : [Ville d'immatriculation]
+RCS : Paris 103 010 294
 
-Numéro de TVA intracommunautaire : [Numéro TVA]
+Numéro de TVA intracommunautaire : 
 
-Directeur de la publication : [Prénom Nom] C’est exclusif de la qualité de responsable légal de la société
+Directeur de la publication : Thomas BONDER, Président
 
 Email : contact@reviewsvisor.fr
-
-Téléphone : [Numéro de téléphone]
-
-Les informations relatives à l’éditeur du site sont en cours de finalisation et seront complétées avant la mise en ligne définitive du Service.
 
 Hébergeur du site
 
@@ -104,13 +90,15 @@ Raison sociale : Vercel Inc
 
 Adresse : 340 S Lemon Avenue #4133 Walnut, CA 91789 USA
 
-Site web : https://vercel.com 
+Site web : https://vercel.com
 
-Téléphone et/ou courriel de contact : XX
+Téléphone et/ou courriel de contact : https://vercel.com/contact
 
 Description du service
 
-Reviewsvisor est une plateforme en ligne permettant aux professionnels d'analyser, de gérer et d'optimiser leurs avis clients provenant de Google Business Profile.
+Reviewsvisor est une plateforme SaaS permettant aux professionnels de gérer, suivre et analyser les avis clients associés aux établissements Google Business Profile qu’ils possèdent, administrent ou gèrent valablement.L’accès aux données Google Business Profile s’effectue exclusivement via le protocole sécurisé OAuth 2.0, avec le consentement explicite de l’utilisateur.
+
+
 
 Les principales fonctionnalités du service incluent :
 
@@ -124,8 +112,6 @@ Notifications des nouveaux avis
 
 Gestion multi-établissements
 
-
-
 Propriété intellectuelle
 
 L'ensemble du contenu du site www.reviewsvisor.fr (textes, graphismes, images, logos, icônes, sons, logiciels, base de données, etc.) est la propriété exclusive de Reviewsvisor ou de ses partenaires et est protégé par les lois françaises et internationales relatives à la propriété intellectuelle.
@@ -134,13 +120,19 @@ Toute reproduction, représentation, modification, publication, adaptation, tota
 
 Toute exploitation non autorisée du site ou de l'un quelconque des éléments qu'il contient sera considérée comme constitutive d'une contrefaçon et poursuivie conformément aux dispositions des articles L.335-2 et suivants du Code de la Propriété Intellectuelle.
 
+L’ensemble du contenu du site est protégé par les lois en vigueur relatives à la propriété intellectuelle.
+
 Protection des données personnelles
 
 Reviewsvisor s'engage à protéger les données personnelles de ses utilisateurs conformément au Règlement Général sur la Protection des Données (RGPD) n°2016/679 et à la loi n°78-17 du 6 janvier 1978 relative à l'informatique, aux fichiers et aux libertés.
 
 Pour plus d'informations sur la collecte et le traitement des données personnelles, veuillez consulter notre Politique de Confidentialité.
 
+Les données personnelles sont traitées conformément au RGPD et à la Politique de Confidentialité disponible sur le site.
+
 Cookies
+
+Le site utilise des cookies conformément à la Politique de Cookies.
 
 Le site www.reviewsvisor.fr utilise des cookies pour améliorer l'expérience utilisateur, réaliser des statistiques de visites et assurer le bon fonctionnement des services.
 
@@ -166,17 +158,15 @@ Pour toute question ou demande d'information concernant le site, ou tout signale
 
 Email : contact@reviewsvisor.fr
 
-Adresse : [Adresse postale]
-
-Téléphone : [Numéro de téléphone]
-
-Les informations relatives à l’éditeur du site et à l’hébergeur sont en cours de finalisation et seront complétées avant la mise en ligne définitive du Service.
+Adresse : 36, rue Scheffer, 75116 Paris, France
 
 
 
 ---
 
 © 2026 Reviewsvisor - Tous droits réservés
+
+
 
 
 
