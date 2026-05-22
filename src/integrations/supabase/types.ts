@@ -340,6 +340,7 @@ export type Database = {
           monthly_report_enabled: boolean | null
           new_reviews_enabled: boolean | null
           phone: string | null
+          preferred_language: string
           role: string
           updated_at: string
           user_id: string
@@ -359,6 +360,7 @@ export type Database = {
           monthly_report_enabled?: boolean | null
           new_reviews_enabled?: boolean | null
           phone?: string | null
+          preferred_language?: string
           role?: string
           updated_at?: string
           user_id: string
@@ -378,6 +380,7 @@ export type Database = {
           monthly_report_enabled?: boolean | null
           new_reviews_enabled?: boolean | null
           phone?: string | null
+          preferred_language?: string
           role?: string
           updated_at?: string
           user_id?: string
