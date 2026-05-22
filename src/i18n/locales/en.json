@@ -685,6 +685,7 @@
         "recentTrend": "Last 60 days",
         "change": "{{sign}}{{diff}} pts",
         "changeAvg": "{{avg}} avg",
+        "summaryInsufficientData": "Insufficient data for a 60-day comparison.",
         "summaryNoPrevious": "Current average: {{current}}/5 ({{count}} reviews). No previous period data.",
         "summaryUp": "Average rating up ({{diff}} pts)",
         "summaryDown": "Average rating down ({{diff}} pts)",
@@ -1996,12 +1997,41 @@
   "success":"Questionare filled successfully",
   "effortOverridden": "Effort overridden to {{effort}} — dominant cause:"
 },
-"recommendations":{
+  "recommendations":{
   "smart":{
     "smartObjectives":"SMART objectives",
     "aiGeneratedGoals": "AI-generated, user-validated goals",
     "mainIssue": "Main issue: \"{{issue}}\"",
     "negativeReviews": "{{percentage}}% of negative reviews",
+    "modalTitle": "SMART objective generator",
+    "generating": "Generating SMART objective for \"{{cause}}\"...",
+    "reviewHint": "AI has generated this objective. Review and adjust before saving.",
+    "impact": "Impact",
+    "effort": "Effort",
+    "quadrant": "Quadrant",
+    "impactValues": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "quadrantValues": {
+      "quick_win": "Quick win",
+      "strategic": "Strategic",
+      "minor": "Minor",
+      "avoid": "Avoid"
+    },
+    "problemToSolve": "Problem to solve",
+    "kpiName": "KPI name",
+    "current": "Current",
+    "target": "Target",
+    "auto": "(auto)",
+    "unit": "Unit",
+    "deadline": "Deadline",
+    "durationMonths": "Duration (months)",
+    "whyItMatters": "Why it matters",
+    "cancel": "Cancel",
+    "saveObjective": "Save objective",
+    "saving": "Saving...",
     "updating": "Updating...",
     "updateSmart": "Update SMART",
     "questionnaireMissing": "⚠️ Questionnaire missing for next Pareto issue",
@@ -2111,7 +2141,7 @@
     "measurable": "Measurable",
     "achievable": "Achievable",
     "relevant":   "Relevant",
-    "temporal":   "Temporal"
+    "temporal":   "Time-bound"
   },
   "temporal": {
     "deadline": "Deadline: {{date}}",

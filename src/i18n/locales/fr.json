@@ -40,7 +40,6 @@
     "add": "Ajouter",
     "open": "Ouvrir",
     "noData": "—",
-    "saving": "Enregistrement...",
     "updating": "Mise à jour...",
     "sending": "Envoi en cours...",
     "current": "Actuel",
@@ -751,11 +750,12 @@
        "overallTrend": {
          "title": "Tendance globale",
          "recentTrend": "60 derniers jours",
-        "change": "{{sign}}{{diff}} pts",
-         "changeAvg": "{{avg}} moy.",
-         "summaryNoPrevious": "Note moyenne actuelle : {{current}}/5 ({{count}} avis). Aucune donnée sur la période précédente.",
-        "summaryUp": "Note moyenne en hausse ({{diff}} pts)",
-        "summaryDown": "Note moyenne en baisse ({{diff}} pts)",
+          "change": "{{sign}}{{diff}} pts",
+          "changeAvg": "{{avg}} moy.",
+          "summaryInsufficientData": "Données insuffisantes pour une comparaison sur 60 jours.",
+          "summaryNoPrevious": "Note moyenne actuelle : {{current}}/5 ({{count}} avis). Aucune donnée sur la période précédente.",
+          "summaryUp": "Note moyenne en hausse ({{diff}} pts)",
+          "summaryDown": "Note moyenne en baisse ({{diff}} pts)",
          "summaryFlat": "Note moyenne stable sur 60 jours"
        },
       "riskAlert": {
@@ -2208,6 +2208,35 @@
     "aiGeneratedGoals": "Objectifs générés par l’IA et validés par l’utilisateur",
     "mainIssue": "Problème principal : \"{{issue}}\"",
     "negativeReviews": "{{percentage}}% des avis négatifs",
+    "modalTitle": "Générateur d'objectif SMART",
+    "generating": "Génération de l'objectif SMART pour \"{{cause}}\"...",
+    "reviewHint": "L'IA a généré cet objectif. Relisez-le et ajustez-le avant l'enregistrement.",
+    "impact": "Impact",
+    "effort": "Effort",
+    "quadrant": "Quadrant",
+    "impactValues": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé"
+    },
+    "quadrantValues": {
+      "quick_win": "Gain rapide",
+      "strategic": "Stratégique",
+      "minor": "Mineur",
+      "avoid": "À éviter"
+    },
+    "problemToSolve": "Problème à résoudre",
+    "kpiName": "Nom du KPI",
+    "current": "Actuel",
+    "target": "Cible",
+    "auto": "(auto)",
+    "unit": "Unité",
+    "deadline": "Date limite",
+    "durationMonths": "Durée (mois)",
+    "whyItMatters": "Pourquoi c'est important",
+    "cancel": "Annuler",
+    "saveObjective": "Enregistrer l'objectif",
+    "saving": "Enregistrement...",
     "updating": "Mise à jour...",
     "updateSmart": "Mettre à jour SMART",
     "questionnaireMissing": "⚠️ Questionnaire manquant pour le prochain problème Pareto",
@@ -2316,8 +2345,8 @@
     "specific":   "Spécifique",
     "measurable": "Mesurable",
     "achievable": "Atteignable",
-    "relevant":   "Pertinent",
-    "temporal":   "Temporel"
+    "relevant":   "Réaliste",
+    "temporal":   "Temporellement défini"
   },
   "temporal": {
     "deadline": "Échéance : {{date}}",

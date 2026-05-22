@@ -32,7 +32,7 @@ interface TrendModalProps {
 interface MonthlyData {
   month: string;
   monthLabel: string;
-  avgRating: number;
+  avgRating: number | null;
   totalCount: number;
 }
 
@@ -101,12 +101,12 @@ export function TrendModal({
               data.ratings.length > 0
                 ? data.ratings.reduce((sum, r) => sum + r, 0) /
                   data.ratings.length
-                : 0;
+                : null;
 
             return {
               month: monthKey,
               monthLabel: monthKey, // Format "2025-03"
-              avgRating: Math.round(avgRating * 10) / 10, // Arrondir à 1 décimale
+              avgRating: avgRating === null ? null : Math.round(avgRating * 10) / 10, // Arrondir à 1 décimale
               totalCount: data.count,
             };
           });
@@ -206,7 +206,7 @@ export function TrendModal({
                     }}
                     formatter={(value: any, name: string) => {
                       if (name === "avgRating" || name === t("dashboard.averageRating")) {
-                        return [`${value}/5`, t("dashboard.averageRating")];
+                        return [value === null ? "-" : `${value}/5`, t("dashboard.averageRating")];
                       }
                       return [value, t("dashboard.totalReviews")];
                     }}
@@ -237,10 +237,11 @@ export function TrendModal({
                     dataKey="avgRating"
                     stroke="#8B5CF6"
                     strokeWidth={2}
+                    connectNulls={false}
                     dot={{ fill: "#8B5CF6", r: 5, strokeWidth: 2 }}
                     name={t("dashboard.averageRating")}
                     label={{ 
-                      formatter: (value: number) => value > 0 ? value.toFixed(1) : '',
+                      formatter: (value: number | null) => value !== null && value > 0 ? value.toFixed(1) : '',
                       position: 'top',
                       style: { fontSize: '11px', fill: '#8B5CF6', fontWeight: 'bold' }
                     }}

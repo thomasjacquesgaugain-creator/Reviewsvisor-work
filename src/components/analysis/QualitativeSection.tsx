@@ -656,16 +656,6 @@ const wordsByFrequency = useMemo(() => {
                         const maxCount = wordsByFrequency[0].count; // already sorted, first is max
                         const widthPercent = maxCount > 0 ? Math.max(10, (word.count / maxCount) * 100) : 0;
 
-                        // Color the bar based on the word's dominant sentiment
-                        const barBg =
-                          word.sentiment === 'positive' ? "bg-emerald-100 dark:bg-emerald-900/35"
-                            : word.sentiment === 'negative' ? "bg-red-100 dark:bg-red-900/35"
-                              : "bg-amber-100 dark:bg-amber-900/35";
-                        const barFill =
-                          word.sentiment === 'positive' ? "bg-emerald-500"
-                            : word.sentiment === 'negative' ? "bg-red-500"
-                              : "bg-amber-500";
-
                         return (
                           <div
                             key={`frequency-${word.word}`}
@@ -675,9 +665,9 @@ const wordsByFrequency = useMemo(() => {
                               {word.word}
                             </div>
                             <div className="flex-1">
-                              <div className={`h-2 rounded-full ${barBg}`}>
+                              <div className={`h-2 rounded-full bg-green-100 dark:bg-grey-900/35`}>
                                 <div
-                                  className={`h-2 rounded-full ${barFill} transition-all duration-150 group-hover:opacity-90`}
+                                  className={`h-2 rounded-full bg-neutral-500 transition-all duration-150 group-hover:opacity-90`}
                                   style={{ width: `${widthPercent}%` }}
                                 />
                               </div>

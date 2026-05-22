@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -46,9 +46,9 @@ const GoogleLogo = ({ className }: { className?: string }) => (
 const SOURCE_OPTIONS = [
   { value: "google", label: "Google", enabled: true },
   { value: "trustpilot", label: "Trustpilot", enabled: false },
-  { value: "facebook", label: "Facebook", enabled: false },
-  { value: "yelp", label: "Yelp", enabled: false },
-  { value: "tripadvisor", label: "Tripadvisor", enabled: false },
+  // { value: "facebook", label: "Facebook", enabled: false },
+  // { value: "yelp", label: "Yelp", enabled: false },
+  // { value: "tripadvisor", label: "Tripadvisor", enabled: false },
 ] as const;
 
 export function ThematicSegmentationBar() {

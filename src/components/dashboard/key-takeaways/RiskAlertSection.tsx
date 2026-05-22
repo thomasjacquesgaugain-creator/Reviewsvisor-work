@@ -54,8 +54,8 @@ export function RiskAlertSection({ reviews }: RiskAlertSectionProps) {
     const currentMonthKey = format(anchorDate, "yyyy-MM");
     const previousMonthDate = subMonths(anchorDate, 1);
     const previousMonthKey = format(previousMonthDate, "yyyy-MM");
-    const currentMonthLabel = format(anchorDate, "MMM yyyy", { locale });
-    const previousMonthLabel = format(previousMonthDate, "MMM yyyy", { locale });
+    const currentMonthLabel = format(anchorDate, "MMMM yyyy", { locale });
+    const previousMonthLabel = format(previousMonthDate, "MMMM yyyy", { locale });
 
     const monthlyNegativeCounts = new Map<string, number>();
 
