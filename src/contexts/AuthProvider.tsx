@@ -85,40 +85,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        
-        // Fetch profile when user logs in
-        if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-          }, 0);
-        } else {
-          setProfile(null);
-          useEstablishmentStore.getState().clearSelectedEstablishment();
-        }
-        
-        setLoading(false);
-      }
-    );
+  const applyPreferredLanguage = async (preferredLanguage: SupportedLanguage | null) => {
+    if (!preferredLanguage) return;
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-      
-      setLoading(false);
-    });
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+    if (preferredLanguage !== i18n.language) {
+      await i18n.changeLanguage(preferredLanguage);
+    }
+
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, preferredLanguage);
+  };
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -133,10 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           ? data.preferred_language as SupportedLanguage
           : null;
 
-        if (preferredLanguage && preferredLanguage !== i18n.language) {
-          await i18n.changeLanguage(preferredLanguage);
-          localStorage.setItem(LANGUAGE_STORAGE_KEY, preferredLanguage);
-        }
+        await applyPreferredLanguage(preferredLanguage);
 
         setProfile({
           id: data.id,
@@ -146,7 +118,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           preferred_language: preferredLanguage,
         });
       } else if (!data) {
-        // Pas de profil, on reste avec les métadonnées uniquement
         setProfile(null);
       }
     } catch (err) {
@@ -154,6 +125,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setProfile(null);
     }
   };
+
+  const hydrateSession = async (nextSession: Session | null) => {
+    setSession(nextSession);
+
+    if (nextSession?.user) {
+      setLoading(true);
+      await fetchProfile(nextSession.user.id);
+      setLoading(false);
+      return;
+    }
+
+    setProfile(null);
+    useEstablishmentStore.getState().clearSelectedEstablishment();
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+        void hydrateSession(nextSession);
+      }
+    );
+
+    void supabase.auth.getSession().then(({ data: { session: nextSession } }) => hydrateSession(nextSession));
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const refreshProfile = async () => {
     if (session?.user) {

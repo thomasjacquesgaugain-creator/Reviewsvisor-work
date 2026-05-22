@@ -54,7 +54,7 @@ i18n
       escapeValue: false,
     },
     detection: {
-      order: ['localStorage'],
+      order: ['localStorage', 'navigator'],
       lookupLocalStorage: 'rv_lang',
       caches: ['localStorage'],
       convertDetectedLanguage: (lng: string) => lng.split('-')[0].toLowerCase(), // Convert "en-GB" to "en"
