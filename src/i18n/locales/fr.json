@@ -1580,6 +1580,7 @@
     "subtitle2": "efficacement.",
     "aiAssistance": "Assistance IA",
     "frequentQuestions": "Questions fréquentes",
+    "frequentQuestionsHint": "Cliquez sur une question ci-dessous pour la poser instantanément, ou saisissez tout ce qui concerne vos avis, votre note ou vos problèmes clients.",
     "needHelp": "Besoin d'aide ?",
     "teamHere": "Notre équipe est là pour vous accompagner dans l'utilisation de",
     "contactUs": "Contactez-nous",
@@ -2398,4 +2399,3 @@
     "ambitious": "Ambitieux"
   }
 }
-
