@@ -12,6 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/i18n/config";
 
 type InscriptionFormData = {
   email: string;
@@ -29,6 +30,9 @@ export default function Inscription() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const currentLanguage = (SUPPORTED_LANGUAGES.includes((window.localStorage.getItem("rv_lang") || "fr") as SupportedLanguage)
+    ? (window.localStorage.getItem("rv_lang") as SupportedLanguage)
+    : "fr");
 
   // Create schema with translated messages
   const inscriptionSchemaTranslated = z.object({
@@ -123,6 +127,7 @@ async function onSubmit(formData: InscriptionFormData) {
           full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
           company: "",
           role: "worker",
+          preferred_language: currentLanguage,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "id" }

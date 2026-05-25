@@ -9,7 +9,7 @@ import { WhyReviewsvisor } from "@/components/WhyReviewsvisor";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
 import { APP_NAME } from "@/config/brand";
-import { LANGUAGE_FLAGS, LANGUAGE_LABELS, SupportedLanguage, SUPPORTED_LANGUAGES } from "@/i18n/config";
+import { LANGUAGE_FLAGS, SupportedLanguage, SUPPORTED_LANGUAGES } from "@/i18n/config";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +31,12 @@ export const HeroSection = () => {
   const handleLanguageChange = (newLang: SupportedLanguage) => {
     setLang(newLang);
     setMenuOpen(false);
+  };
+
+  const getLanguageLabel = (code: SupportedLanguage) => {
+    return code === "fr"
+      ? t("languageSwitcher.french")
+      : t("languageSwitcher.english");
   };
 
   return (
@@ -107,7 +113,7 @@ export const HeroSection = () => {
                             }`}
                           >
                             <span className="flex flex-1 items-center gap-2">
-                              {LANGUAGE_FLAGS[code]} {LANGUAGE_LABELS[code]}
+                              {LANGUAGE_FLAGS[code]} {getLanguageLabel(code)}
                             </span>
 
                             {lang === code && (

@@ -56,6 +56,11 @@
     "spanish": "Spanish",
     "portuguese": "Portuguese"
   },
+  "languageSwitcher": {
+    "ariaLabel": "Change language",
+    "french": "French",
+    "english": "English"
+  },
   "auth": {
     "login": "Log in",
     "logout": "Log out",
@@ -355,7 +360,7 @@
     "concreteActions": "Concrete and prioritized actions to implement",
     "noActionsAvailable": "No actions available",
     "analyzeEstablishmentToGetActions": "Analyze your establishment to get improvement actions",
-    "agent": "Agent",
+    "agent": "Advisor",
     "aiRespondReview": "AI assistant to respond to your reviews",
     "askQuestion": "Ask a question about your reviews...",
     "aiAssistantForReviews": "Your AI assistant to manage your reviews",

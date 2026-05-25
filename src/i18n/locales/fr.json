@@ -55,6 +55,11 @@
     "spanish": "Espagnol",
     "portuguese": "Portugais"
   },
+  "languageSwitcher": {
+    "ariaLabel": "Changer de langue",
+    "french": "Français",
+    "english": "Anglais"
+  },
   "auth": {
     "login": "Se connecter",
     "logout": "Déconnexion",
@@ -454,7 +459,7 @@
     "concreteActions": "Actions concrètes et priorisées à mettre en place",
     "noActionsAvailable": "Aucune action disponible",
     "analyzeEstablishmentToGetActions": "Analysez votre établissement pour obtenir des actions d'amélioration",
-    "agent": "agente",
+    "agent": "Conseiller",
     "askQuestion": "Posez une question sur vos avis...",
     "aiRespondReview": "Assistant IA pour répondre à vos avis",
     "aiAssistantForReviews": "Votre assistant IA pour gérer vos avis",
