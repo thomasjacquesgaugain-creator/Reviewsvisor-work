@@ -131,7 +131,7 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
       diff > 0 ? "summaryUp" : diff < 0 ? "summaryDown" : "summaryFlat";
 
     return {
-      change: `${diff >= 0 ? "↑" : "↓"} ${Math.abs(diff).toFixed(1)} pts`,
+      change: `${diff >= 0 ? "↑" : "↓"} ${Math.abs(diff).toFixed(1)}`,
       summary: t(`dashboard.keyTakeaways.overallTrend.${summaryKey}`, {
         diff: `${sign}${Math.abs(diff).toFixed(1)}`,
       }),

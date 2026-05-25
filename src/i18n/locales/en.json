@@ -659,7 +659,7 @@
         "narrativeCritical": "Your establishment is facing critical issues that are significantly impacting customer satisfaction.",
         "narrativeWarning": "Your establishment shows mixed performance with clear areas that need improvement.",
         "narrativePositive": "Your establishment is performing well and delivers a positive overall customer experience.",
-        "statRating": "Average Rating",
+        "statRating": "Google Rating",
         "statPositive": "AI Sentiment (normalized)",
         "statReviews": "Analyzed Reviews",
         "noData": "No data available",
@@ -672,6 +672,9 @@
         "trendRelativePrefix": "That is",
         "trendRelativeSuffix": "compared with the previous period.",
         "trendWindow": "Calculated over the last {{days}} days vs the previous {{days}} days.",
+        "trendCurrentWindow": "Last 60 days",
+        "trendComparisonWindow": "Compared to the previous 60 days",
+        "trendUnavailableMessage": "Not enough reviews in the period to calculate a reliable trend",
         "sourcesAndDetails": "Sources and details"
       },
       "mainIssues": {
@@ -693,12 +696,12 @@
       "overallTrend": {
         "title": "Overall Trend",
         "recentTrend": "Last 60 days",
-        "change": "{{sign}}{{diff}} pts",
+        "change": "{{sign}}{{diff}} rating",
         "changeAvg": "{{avg}} avg",
         "summaryInsufficientData": "Insufficient data for a 60-day comparison.",
         "summaryNoPrevious": "Current average: {{current}}/5 ({{count}} reviews). No previous period data.",
-        "summaryUp": "Average rating up ({{diff}} pts)",
-        "summaryDown": "Average rating down ({{diff}} pts)",
+        "summaryUp": "Average rating up ({{diff}} rating)",
+        "summaryDown": "Average rating down ({{diff}} rating)",
         "summaryFlat": "Average rating stable over 60 days"
       },
       "riskAlert": {
