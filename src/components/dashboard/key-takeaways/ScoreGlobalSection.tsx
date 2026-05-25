@@ -432,7 +432,7 @@ export function ScoreGlobalSection({
 
   if (normalizedScore === null) {
     return (
-      <div className="h-full self-start rounded-[8px] border border-white/70 bg-gradient-to-br from-white via-[#fbfaff] to-[#f4fbff] p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)] dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:shadow-none">
+      <div className="h-full self-start rounded-[8px] border border-slate-200 bg-white p-5 shadow-[0_16px_35px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
@@ -474,7 +474,7 @@ export function ScoreGlobalSection({
     reviewCount == null ? null : formatLocalizedNumber(reviewCount, locale);
 
   return (
-    <div className="h-full self-start rounded-[8px] border border-white/70 bg-gradient-to-br from-white via-[#fbfaff] to-[#f4fbff] p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)] dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:shadow-none">
+    <div className="h-full self-start rounded-[8px] border border-slate-200 bg-white p-5 shadow-[0_16px_35px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span
