@@ -55,13 +55,14 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
     (!reviews?.length ? null : getLatestDate(reviews)) ?? new Date(),
   [reviews]);
 
-  const { change, summary, isPositive, isNegative } = useMemo(() => {
+  const { change, summary, isPositive, isNegative, insufficientData } = useMemo(() => {
     if (!reviews?.length) {
       return {
         change: "N/A",
         summary: "",
         isPositive: false,
         isNegative: false,
+        insufficientData: false,
       };
     }
 
@@ -85,30 +86,42 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
     const currentAvg = computeAverage(currentValid);
     const previousAvg = computeAverage(previousValid);
 
+    if (
+      currentValid.length < MIN_REVIEWS_FOR_TREND ||
+      previousValid.length < MIN_REVIEWS_FOR_TREND
+    ) {
+      return {
+        change: "N/A",
+        summary: t("dashboard.keyTakeaways.overallTrend.summaryInsufficientData"),
+        isPositive: false,
+        isNegative: false,
+        insufficientData: true,
+      };
+    }
     if (currentAvg === null) {
       return {
         change: "N/A",
         summary: "",
         isPositive: false,
         isNegative: false,
+        insufficientData: false,
       };
     }
 
     if (
-      previousAvg === null ||
-      currentValid.length < MIN_REVIEWS_FOR_TREND ||
-      previousValid.length < MIN_REVIEWS_FOR_TREND
+      previousAvg === null
     ) {
       return {
         change: t("dashboard.keyTakeaways.overallTrend.changeAvg", {
           avg: currentAvg.toFixed(1),
         }),
         summary: t("dashboard.keyTakeaways.overallTrend.summaryNoPrevious", {
-          current: currentAvg.toFixed(2),
+          current: currentAvg.toFixed(1),
           count: currentValid.length,
         }),
         isPositive: false,
         isNegative: false,
+        insufficientData: false,
       };
     }
 
@@ -124,6 +137,7 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
       }),
       isPositive: diff > 0,
       isNegative: diff < 0,
+      insufficientData: false,
     };
   }, [reviews, t]);
 
@@ -204,7 +218,7 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
         </Select>
       </div>
 
-      {chartData.length > 0 ? (
+      {chartData.length > 0 || insufficientData ? (
         <>
           <div className="mt-2" style={{ height: 185 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -237,26 +251,29 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
                 </YAxis>
                 <Tooltip
                   content={({ active, payload, label: lbl }) => {
+                    if (insufficientData) return null;
                     if (!active || !payload?.length) return null;
                     const val = payload[0]?.value as number | undefined;
                     return (
                       <div className="rounded-xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 shadow-lg">
                         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{lbl}</p>
                         <p className="mt-0.5 text-sm font-bold text-slate-800 dark:text-slate-100">
-                          {typeof val === "number" ? val.toFixed(2) : "-"} / 5
+                          {typeof val === "number" ? val.toFixed(1) : "-"} / 5
                         </p>
                       </div>
                     );
                   }}
                 />
-                <Line
-                  type="monotone"
-                  dataKey="note"
-                  stroke="#3b82f6"
-                  strokeWidth={2.5}
-                  dot={{ fill: '#fff', stroke: '#3b82f6', strokeWidth: 2, r: 3.5 }}
-                  activeDot={{ r: 5, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
-                />
+                {!insufficientData && (
+                  <Line
+                    type="monotone"
+                    dataKey="note"
+                    stroke="#3b82f6"
+                    strokeWidth={2.5}
+                    dot={{ fill: '#fff', stroke: '#3b82f6', strokeWidth: 2, r: 3.5 }}
+                    activeDot={{ r: 5, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
+                  />
+                )}
               </LineChart>
             </ResponsiveContainer>
           </div>

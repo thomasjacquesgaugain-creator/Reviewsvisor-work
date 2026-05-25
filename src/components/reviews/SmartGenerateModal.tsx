@@ -1,5 +1,6 @@
 // src/components/reviews/SmartGenerateModal.tsx
 
+import { useTranslation } from "react-i18next";
 import {
   Dialog, DialogContent, DialogHeader,
   DialogTitle, DialogFooter,
@@ -30,14 +31,28 @@ export function SmartGenerateModal({
   currentDraft, isGenerating, isSaving,
   updateDraft, paretoCause, updating , activeObjective
 }: Props) {
+  const { t } = useTranslation();
+  const draftData = currentDraft;
+
+  
+  
+  const impactLabel = draftData
+  ? t(`recommendations.smart.impactValues.${draftData.impact.toLowerCase()}`)
+  : "";
+
+  const effortLabel = draftData
+  ? t(`recommendations.smart.impactValues.${draftData.effort.toLowerCase()}`)
+  : "";
+
+  const quadrantLabel = draftData
+    ? t(`recommendations.smart.quadrantValues.${draftData.quadrant}`)
+    : "";
 
   useEffect(() => {
   if (updating && activeObjective) {
     updateDraft(activeObjective);
   }
-}, [updating, activeObjective]);
-
-const draftData = currentDraft;
+}, [updating, activeObjective, updateDraft]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -45,52 +60,48 @@ const draftData = currentDraft;
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-blue-500" />
-            SMART Objective Generator
+            {t("recommendations.smart.modalTitle")}
           </DialogTitle>
         </DialogHeader>
 
-        {/* Generating state */}
         {isGenerating && !updating && (
           <div className="py-8 flex flex-col items-center gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
             <p className="text-sm text-gray-500">
-              Generating SMART objective for "{paretoCause}"...
+              {t("recommendations.smart.generating", { cause: paretoCause })}
             </p>
           </div>
         )}
 
-        {/* Draft ready — review & edit */}
         {!isGenerating && draftData && (
           <div className="space-y-4 py-2">
             <p className="text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
-              ✨ AI has generated this objective. Review and adjust before saving.
+              {t("recommendations.smart.reviewHint")}
             </p>
 
-            {/* Computed values — read only, shown for transparency */}
             <div className="grid grid-cols-3 gap-2 bg-gray-50 rounded-lg p-3 text-xs">
               <div>
-                <p className="text-gray-400">Impact</p>
-                <p className="font-semibold text-gray-700">{draftData.impact}</p>
+                <p className="text-gray-400">{t("recommendations.smart.impact")}</p>
+                <p className="font-semibold text-gray-700">{impactLabel}</p>
               </div>
               <div>
-                <p className="text-gray-400">Effort</p>
+                <p className="text-gray-400">{t("recommendations.smart.effort")}</p>
                 <p className="font-semibold text-gray-700">
-                  {draftData.effort}
+                  {effortLabel}
                   {draftData.effort_source === "user_questionnaire" && (
-                    <span className="ml-1 text-green-600">(validated)</span>
+                    <span className="ml-1 text-green-600">{t("smartCard.header.validated")}</span>
                   )}
                 </p>
               </div>
               <div>
-                <p className="text-gray-400">Quadrant</p>
-                <p className="font-semibold text-gray-700">{draftData.quadrant?.replace("_", " ")}</p>
+                <p className="text-gray-400">{t("recommendations.smart.quadrant")}</p>
+                <p className="font-semibold text-gray-700">{quadrantLabel}</p>
               </div>
             </div>
 
-            {/* S — Specific */}
             <div>
               <Label className="text-xs font-semibold text-gray-700">
-                S — Specific (Problem to solve)
+                S — {t("smartCard.smart.specific")} ({t("recommendations.smart.problemToSolve")})
               </Label>
               <Textarea
                 value={draftData.problem}
@@ -100,20 +111,21 @@ const draftData = currentDraft;
               />
             </div>
 
-            {/* M — Measurable */}
             <div>
               <Label className="text-xs font-semibold text-gray-700">
-                M — Measurable
+                M — {t("smartCard.smart.measurable")}
               </Label>
               <Input
                 value={draftData.kpi_label}
                 onChange={(e) => updateDraft({ kpi_label: e.target.value })}
-                placeholder="KPI name"
+                placeholder={t("recommendations.smart.kpiName")}
                 className="mt-1.5 text-sm mb-2"
               />
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label className="text-xs text-gray-500">Current</Label>
+                  <Label className="text-xs text-gray-500">
+                    {t("recommendations.smart.current")}
+                  </Label>
                   <Input
                     type="number"
                     value={draftData.current_value}
@@ -125,9 +137,11 @@ const draftData = currentDraft;
                 </div>
                 <div>
                   <Label className="text-xs text-gray-500">
-                    Target
+                    {t("recommendations.smart.target")}
                     {draftData.target_source === "computed" && (
-                      <span className="ml-1 text-gray-400">(auto)</span>
+                      <span className="ml-1 text-gray-400">
+                        {t("recommendations.smart.auto")}
+                      </span>
                     )}
                   </Label>
                   <Input
@@ -135,7 +149,7 @@ const draftData = currentDraft;
                     value={draftData.target_value}
                     onChange={(e) =>
                       updateDraft({
-                        target_value:  Number(e.target.value),
+                        target_value: Number(e.target.value),
                         target_source: "user_adjusted",
                       })
                     }
@@ -143,7 +157,7 @@ const draftData = currentDraft;
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500">Unit</Label>
+                  <Label className="text-xs text-gray-500">{t("recommendations.smart.unit")}</Label>
                   <Input
                     value={draftData.unit}
                     onChange={(e) => updateDraft({ unit: e.target.value })}
@@ -157,7 +171,7 @@ const draftData = currentDraft;
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs font-semibold text-gray-700">
-                  T — Deadline
+                  T — {t("recommendations.smart.deadline")}
                 </Label>
                 <Input
                   type="date"
@@ -173,7 +187,7 @@ const draftData = currentDraft;
               </div>
               <div>
                 <Label className="text-xs font-semibold text-gray-700">
-                  Duration (months)
+                  {t("recommendations.smart.durationMonths")}
                 </Label>
                 <Input
                   type="number"
@@ -191,7 +205,7 @@ const draftData = currentDraft;
             {/* R — Relevant */}
             <div>
               <Label className="text-xs font-semibold text-gray-700">
-                R — Why it matters
+                R — {t("recommendations.smart.whyItMatters")}
               </Label>
               <Textarea
                 value={draftData.relevance_note ?? ""}
@@ -203,7 +217,7 @@ const draftData = currentDraft;
 
             <DialogFooter className="gap-2 pt-2">
               <Button variant="outline" onClick={onClose}>
-                Cancel
+                {t("recommendations.smart.cancel")}
               </Button>
               <Button
                 onClick={onSave}
@@ -213,12 +227,12 @@ const draftData = currentDraft;
                 {isSaving ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
+                    {t("recommendations.smart.saving")}
                   </>
                 ) : (
                   <>
                     <Check className="h-4 w-4 mr-2" />
-                    Save Objective
+                    {t("recommendations.smart.saveObjective")}
                   </>
                 )}
               </Button>
