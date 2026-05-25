@@ -111,10 +111,10 @@ function ScoreRing({
       <div className="absolute inset-[10px] rounded-full bg-white shadow-inner dark:bg-slate-900" />
       <div className="absolute inset-[18px] flex flex-col items-center justify-center rounded-full bg-white dark:bg-slate-950">
         <div className="flex items-end gap-1">
-          <span className="text-4xl font-extrabold tracking-tight text-slate-950">
+          <span className="text-4xl font-extrabold tracking-tight text-slate-950 dark:text-slate-50">
             {normalizedScore}
           </span>
-          <span className="pb-1 text-sm font-semibold text-slate-400">/100</span>
+          <span className="pb-1 text-sm font-semibold text-slate-400 dark:text-slate-400">/100</span>
         </div>
         <div
           className="mt-2 rounded-full px-3 py-1 text-sm font-semibold"
@@ -131,7 +131,7 @@ function SourceRow({
   icon,
   label,
   value,
-  valueClassName = "text-slate-700",
+  valueClassName = "text-slate-700 dark:text-slate-200",
 }: {
   icon: ReactNode;
   label: string;
@@ -246,30 +246,30 @@ function TrendDelta({
             </button>
           </PopoverTrigger>
           <PopoverContent
-            className="w-72 border-slate-200 bg-white p-4 text-slate-900 shadow-lg"
+            className="w-72 border-slate-200 bg-white p-4 text-slate-900 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:shadow-none"
             align="center"
             sideOffset={8}
           >
             <div className="space-y-2">
-              <p className="text-sm font-semibold text-slate-950">
+              <p className="text-sm font-semibold text-slate-950 dark:text-slate-50">
                 {t("dashboard.keyTakeaways.overallScore.statRecentTrend")}
               </p>
               {isUnavailable ? (
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-slate-600 dark:text-slate-300">
                   {unavailableMessage}
                 </p>
               ) : (
                 <>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
                     {t("dashboard.keyTakeaways.overallScore.trendExactPrefix")}{" "}
                     <strong>{exactValue ?? "-"}</strong>
                   </p>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
                     {t("dashboard.keyTakeaways.overallScore.trendRelativePrefix")}{" "}
                     <strong>{relativePctLabel ?? "-"}</strong>{" "}
                     {t("dashboard.keyTakeaways.overallScore.trendRelativeSuffix")}
                   </p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
                     {t("dashboard.keyTakeaways.overallScore.trendWindow")
                       .split("{{days}}")
                       .join(String(TREND_WINDOW_DAYS))}
@@ -432,26 +432,26 @@ export function ScoreGlobalSection({
 
   if (normalizedScore === null) {
     return (
-      <div className="h-full self-start rounded-[8px] border border-white/70 bg-gradient-to-br from-white via-[#fbfaff] to-[#f4fbff] p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)]">
+      <div className="h-full self-start rounded-[8px] border border-white/70 bg-gradient-to-br from-white via-[#fbfaff] to-[#f4fbff] p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)] dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:shadow-none">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100">
-              <Sparkles className="h-4 w-4 text-slate-400" />
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+              <Sparkles className="h-4 w-4 text-slate-400 dark:text-slate-400" />
             </span>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
               {t("dashboard.keyTakeaways.overallScore.overallScore")}
             </p>
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col items-center justify-center gap-3 rounded-[8px] border border-slate-100 bg-white/70 py-10 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-            <AlertCircle className="h-6 w-6 text-slate-400" />
+        <div className="mt-6 flex flex-col items-center justify-center gap-3 rounded-[8px] border border-slate-100 bg-white/70 py-10 text-center dark:border-slate-800 dark:bg-slate-900/60">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+            <AlertCircle className="h-6 w-6 text-slate-400 dark:text-slate-500" />
           </div>
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-200">
             {t("dashboard.keyTakeaways.overallScore.noData")}
           </p>
-          <p className="max-w-[240px] text-xs text-slate-400">
+          <p className="max-w-[240px] text-xs text-slate-400 dark:text-slate-400">
             {t("dashboard.keyTakeaways.overallScore.noDataHint")}
           </p>
         </div>
@@ -474,7 +474,7 @@ export function ScoreGlobalSection({
     reviewCount == null ? null : formatLocalizedNumber(reviewCount, locale);
 
   return (
-    <div className="h-full self-start rounded-[8px] border border-white/70 bg-gradient-to-br from-white via-[#fbfaff] to-[#f4fbff] p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)]">
+    <div className="h-full self-start rounded-[8px] border border-white/70 bg-gradient-to-br from-white via-[#fbfaff] to-[#f4fbff] p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)] dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:shadow-none">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span
