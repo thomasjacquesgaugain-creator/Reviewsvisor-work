@@ -289,6 +289,7 @@
     "reviews": "reviews",
     "stars": "stars",
     "star": "star",
+    "reviewsReceivedLast30Days": "Received in the last 30 days",
     "noComment": "No comment",
     "anonymous": "Anonymous",
     "reviewsAndStars": "{{count}} reviews • {{rating}} stars",
