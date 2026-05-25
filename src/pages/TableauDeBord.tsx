@@ -19,6 +19,7 @@ import { AppPageBackground } from "@/components/AppPageBackground";
 import { useAuth } from "@/contexts/AuthProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { MetricInfoPopover } from "@/components/ui/MetricInfoPopover";
+import { subMonths, parseISO } from "date-fns";
 
 
 const Dashboard = () => {
@@ -94,7 +95,6 @@ const Dashboard = () => {
           .order('published_at', { ascending: false });
 
         if (!error && reviews) {
-          setRecentReviewsCount(reviews.length);
           setAllReviews(reviews);
           
           const lastDateStr = reviews.length > 0 ? (reviews[0].published_at || reviews[0].inserted_at) : null;
@@ -183,6 +183,40 @@ const Dashboard = () => {
       window.removeEventListener('response-validated', handleResponseValidated);
     };
   }, [navigate, currentEstablishment?.place_id]);
+
+
+
+useEffect(() => {
+  if (!allReviews?.length) {
+    setRecentReviewsCount(0);
+    return;
+  }
+
+  const oneMonthAgo = subMonths(new Date(), 1);
+
+  const count = allReviews.filter((review) => {
+    try {
+      const dateStr =
+        (review as any).published_at || review.date;
+
+      if (!dateStr) return false;
+
+      const reviewDate = parseISO(dateStr);
+
+      return (
+        !isNaN(reviewDate.getTime()) &&
+        reviewDate >= oneMonthAgo
+      );
+    } catch {
+      return false;
+    }
+  }).length;
+
+  setRecentReviewsCount(count);
+}, [allReviews]);
+
+
+
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -432,24 +466,12 @@ if (recentPositiveRatio >= 0.7) {
                       <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center border-2 border-blue-300 shadow-md">
                         <MessageCircle className="w-5 h-5 text-white" />
                       </div>
-                      <div>
+                   <div>
                         <p className="font-medium text-gray-900 dark:text-slate-100">
                           {recentReviewsCount} {t("dashboard.reviews")}
                         </p>
                         <p className="text-sm text-gray-600 dark:text-slate-400">
-                          {lastReviewDate 
-                            ? t("dashboard.reviewsReceived", { 
-                                time: formatDistanceToNow(lastReviewDate, { 
-                                  addSuffix: true, 
-                                  locale: i18n.language === 'fr' ? fr : 
-                                         i18n.language === 'en' ? enUS :
-                                         i18n.language === 'it' ? it :
-                                         i18n.language === 'es' ? es :
-                                         i18n.language === 'pt' ? ptBR : enUS
-                                }) 
-                              })
-                            : t("dashboard.noReviewsYet")
-                          }
+                          {t("dashboard.reviewsReceivedLast30Days")}
                         </p>
                       </div>
                     </CardContent>
@@ -481,7 +503,7 @@ if (recentPositiveRatio >= 0.7) {
                           {avgRating > 0 ? t("dashboard.averageRating") : t("dashboard.waitingForData")}
                         </p>
                       </div>
-                      <div className="ml-auto self-start">
+                      {/* <div className="ml-auto self-start">
                         <MetricInfoPopover
                           title="Average Rating Calculation"
                           subtitle="Formula used to calculate the rating"
@@ -489,7 +511,7 @@ if (recentPositiveRatio >= 0.7) {
                           description="Only reviews containing a star rating are included in this calculation. Comment-only reviews are excluded."
                           icon={<Star size={16} className="text-primary" />}
                         />
-                      </div>
+                      </div> */}
                     </CardContent>
                   </Card>
 
