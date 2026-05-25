@@ -179,8 +179,8 @@ function formatPeriodLabel(date: Date, granularity: Granularity, locale: Locale 
       return format(date, 'yyyy', { locale });
     case 'mois':
     default:
-      // Format: "avr. 2025" - AVEC année (utile et lisible)
-      return format(date, 'MMM yyyy', { locale });
+      // Format: "avril 2025" - AVEC année (utile et lisible)
+      return format(date, 'MMMM yyyy', { locale });
   }
 }
 

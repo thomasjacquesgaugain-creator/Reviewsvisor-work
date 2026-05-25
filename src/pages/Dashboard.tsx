@@ -6707,7 +6707,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                 )}
 
                 {/* SECTION 3 : Conseiller (pleine largeur, style éditorial/insight) */}
-                <Card
+                {/* <Card
                   className="relative cursor-pointer transition-all duration-200 hover:shadow-md mt-6 mb-6 dark:bg-slate-900 dark:border-slate-800"
                   onClick={() =>
                     setOpenCard(openCard === "advisor" ? null : "advisor")
@@ -6739,7 +6739,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                       )}
                     </Button>
                   </CardHeader>
-                </Card>
+                </Card> */}
 
                 {/* Contenu Conseiller - EN DESSOUS */}
                 {openCard === "advisor" && (
