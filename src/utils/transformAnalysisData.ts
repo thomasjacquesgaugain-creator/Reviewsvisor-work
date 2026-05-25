@@ -271,25 +271,43 @@ export function transformAnalysisData(
    const totalcountcheck = safeInsight.themes_universal.reduce((sum, item) => sum + item.count, 0) +
   safeInsight.themes_industry.reduce((sum, item) => sum + item.count, 0) ;
    const totalcount = totalcountcheck>=totalReviews?totalcountcheck:totalReviews
-    industryThemes = safeInsight.themes_industry.map((theme: any) => {
+ function computeThemeScore(theme: any, totalCount: number) {
   const count = theme.count || 0;
-  const ratio = totalReviews > 0 ? count / totalcount : 0; 
 
-  let sentimentScore;
+  // Frequency ratio
+  const frequency =
+    totalCount > 0
+      ? count / totalCount
+      : 0;
 
-  if (theme.sentiment === 'negative') {               
-    // from 0 → -1
-    sentimentScore = -Math.min(1, ratio);
-  } else if (theme.sentiment === 'positive') {
-    // from 0 → +1
-    sentimentScore = Math.min(1, ratio);  
-  } else {
-    sentimentScore = 0; // neutral
+  // Smooth scaling
+  const frequencyBoost = Math.sqrt(frequency);
+
+  // Normalize importance (10–100 → 0.1–1)
+  const normalizedImportance =
+    Math.max(0, Math.min(1, (theme.importance || 50) / 100));
+
+  // Combined weight
+  const weight =
+    frequencyBoost * 0.5 +
+    normalizedImportance * 0.5;
+
+  // Final polarity score
+  if (theme.sentiment === "positive") {
+    return 0.5 + weight * 0.5;
   }
 
+  if (theme.sentiment === "negative") {
+    return 0.5 - weight * 0.5;
+  }
+
+  return 0.5;
+}
+  industryThemes = safeInsight.themes_industry.map((theme: any) => {
+  const count = theme.count || 0;
   return {
     theme: theme.theme || theme,
-    score: (sentimentScore + 1) / 2,  
+    score: computeThemeScore(theme, totalcount), 
     count,
     verbatims: theme.verbatims || [],
     importance: theme.importance
@@ -297,23 +315,10 @@ export function transformAnalysisData(
 });
   universalThemes = safeInsight.themes_universal.map((theme: any) => {
   const count = theme.count || 0;
-  const ratio = totalReviews > 0 ? count / totalcount : 0;
-
-  let sentimentScore;
-
-  if (theme.sentiment === 'negative') {
-   
-    sentimentScore = -Math.min(1, ratio);
-  } else if (theme.sentiment === 'positive') {
-   
-    sentimentScore = Math.min(1, ratio);
-  } else {
-    sentimentScore = 0; 
-  }
 
   return {
       theme: theme.theme || theme,
-      score: (sentimentScore + 1) / 2, 
+      score: computeThemeScore(theme, totalcount), 
       count,
       verbatims: theme.verbatims || [],
       importance:theme.importance
@@ -353,22 +358,43 @@ export function transformAnalysisData(
       const positive = matched.filter(r => r!.sentiment === 'positive');
       const negative = matched.filter(r => r!.sentiment === 'negative');
       const neutral  = matched.filter(r => r!.sentiment === 'neutral');
-      
-      const selected = [
-        ...negative.slice(0, 2),  
-        ...positive.slice(0, 2),
-        ...neutral.slice(0, 1)  
-      ];
+      let selected: any[] = [];
+      if (theme.score < 0.5) {
+        // Negative themes:
+        // prioritize negative + neutral reviews
+        selected = [
+          ...negative.slice(0, 4),
+          ...neutral.slice(0, 2),
+        ];
+      } else if (theme.score > 0.5) {
+        // Positive themes:
+        // prioritize positive + neutral reviews
+        selected = [
+          ...positive.slice(0, 4),
+          ...neutral.slice(0, 2),
+        ];
+      } else {
+        // Neutral themes
+        selected = [
+          ...neutral.slice(0, 3),
+          ...positive.slice(0, 1),
+          ...negative.slice(0, 1),
+        ];
+      }
 
-      // Step 4: fallback if not enough data
+      // Remove duplicates
+      selected = selected.filter(
+        (v, index, self) =>
+          index === self.findIndex((x) => x.text === v.text)
+      );
       if (selected.length < 5) {
-        const remaining = matched.slice(0, 5 - selected.length);
-        selected.push(...remaining);
+        const remaining = matched.filter((m) => !selected.some((s) => s.text === m!.text));
+        selected.push(...remaining.slice(0, 5 - selected.length));
       }
 
       return {
         ...theme,
-        verbatims: selected.map(v => v!.text)
+        verbatims: selected.slice(0, 5).map((v) => v!.text),
       };
     });
 

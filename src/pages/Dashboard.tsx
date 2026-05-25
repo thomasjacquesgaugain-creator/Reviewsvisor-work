@@ -3101,6 +3101,14 @@ const Dashboard = () => {
   const topIssues = hasAnalysisData ? (insight?.top_issues ?? []) : [];
   const topStrengths = hasAnalysisData ? (insight?.top_praises ?? []) : [];
 
+  const sortedIssue = [...topIssues].sort(
+  (a, b) => b.count - a.count
+);
+
+const sortedStrength = [...topStrengths].sort(
+  (a, b) => b.count - a.count
+);
+
   // Valeurs affichées : null tant que pas hydraté ou pas de données (jamais de 0 par défaut)
   const hasKpiData = hasAnalysisData || hasReviews;
   const showKpiNumbers = isHydrated && hasKpiData;
@@ -3171,6 +3179,8 @@ const Dashboard = () => {
     }
   }, [insight, reviewsForAnalysis]);
 
+  console.log(analysisDataForTab)
+
   // Map top issues to Pareto data format
   const paretoData =
     topIssues.length > 0
@@ -3217,6 +3227,8 @@ const Dashboard = () => {
           };
         })
       : defaultParetoPointsData;
+
+      console.log("pareto data ",paretoPointsData)
 
   // Calculate cumulative percentages for strengths
   let cumulativeStrengths = 0;
@@ -5996,8 +6008,8 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                 {topIssues.length > 0
                                   ? t("dashboard.fixMainFrictionPoint", {
                                       issue: translateTheme(
-                                        topIssues[0]?.theme ||
-                                          topIssues[0]?.issue ||
+                                        sortedIssue[0]?.theme ||
+                                          sortedIssue[0]?.issue ||
                                           t("dashboard.notIdentified"),
                                       ),
                                     })
@@ -6027,12 +6039,12 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                   {topStrengths.length > 0
                                     ? t("dashboard.enhanceStrengths", {
                                         strength: 
-                                            topStrengths[0]?.strength ||
+                                            sortedStrength[0]?.theme ||
                                             t("dashboard.notIdentified"),
                                             
                                       })
                                     : t(
-                                           topStrengths[0]?.theme ||
+                                           sortedStrength[0]?.theme ||
                                  "dashboard.identifyAndEnhanceExistingStrengths",
                                       )}
                                 </li>
