@@ -665,7 +665,7 @@ const wordsByFrequency = useMemo(() => {
                               {word.word}
                             </div>
                             <div className="flex-1">
-                              <div className={`h-2 rounded-full bg-green-100 dark:bg-grey-900/35`}>
+                              <div className={`h-2 rounded-full bg-grey-100 dark:bg-grey-900/35`}>
                                 <div
                                   className={`h-2 rounded-full bg-neutral-500 transition-all duration-150 group-hover:opacity-90`}
                                   style={{ width: `${widthPercent}%` }}

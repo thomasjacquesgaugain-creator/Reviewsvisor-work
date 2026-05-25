@@ -5,6 +5,7 @@ import {
   ArrowUp,
   Info,
   Minus,
+  MessageCircleMore,
   Sparkles,
   Star,
 } from "lucide-react";
@@ -167,6 +168,10 @@ function TrendDelta({
   t: (key: string) => string;
 }) {
   const deltaPoints = trend.ratingChange === null ? null : trend.ratingChange * 20;
+  const isUnavailable = deltaPoints === null;
+  const unavailableMessage = t(
+    "dashboard.keyTakeaways.overallScore.trendUnavailableMessage",
+  );
 
   const isPositive = deltaPoints !== null && deltaPoints > 0;
   const isNeutral = deltaPoints !== null && deltaPoints === 0;
@@ -191,10 +196,13 @@ function TrendDelta({
         ) : (
           <Minus className="h-3.5 w-3.5" />
         )}
-        <span>{`${formatLocalizedNumber(
-          Math.round(Math.abs(deltaPoints)),
-          locale,
-        )} pts`}</span>
+        <span>
+          {`${formatLocalizedNumber(
+            Math.abs(deltaPoints),
+            locale,
+            { minimumFractionDigits: 1, maximumFractionDigits: 1 },
+          )} pts`}
+        </span>
       </span>
     );
 
@@ -223,15 +231,8 @@ function TrendDelta({
           { minimumFractionDigits: 1, maximumFractionDigits: 1 },
         )} %`;
 
-  const hint =
-    trend.reason === "insufficient-data"
-      ? t("dashboard.keyTakeaways.overallScore.statRecentTrendInsufficient")
-      : trend.reason === "invalid-data"
-      ? t("dashboard.keyTakeaways.overallScore.statRecentTrendInvalid")
-      : t("dashboard.keyTakeaways.overallScore.statRecentTrendHint");
-
   return (
-    <div className="flex flex-col items-center gap-1 lg:items-start">
+    <div className="flex w-full max-w-[18rem] flex-col items-center gap-1 lg:w-[18rem] lg:items-start">
       <div className={`flex items-center gap-2 text-sm font-semibold ${trendClassName}`}>
         <span>{formattedValue}</span>
         <Popover>
@@ -253,26 +254,46 @@ function TrendDelta({
               <p className="text-sm font-semibold text-slate-950">
                 {t("dashboard.keyTakeaways.overallScore.statRecentTrend")}
               </p>
-              <p className="text-sm text-slate-600">
-                {t("dashboard.keyTakeaways.overallScore.trendExactPrefix")}{" "}
-                <strong>{exactValue ?? "-"}</strong>
-              </p>
-              <p className="text-sm text-slate-600">
-                {t("dashboard.keyTakeaways.overallScore.trendRelativePrefix")}{" "}
-                <strong>{relativePctLabel ?? "-"}</strong>{" "}
-                {t("dashboard.keyTakeaways.overallScore.trendRelativeSuffix")}
-              </p>
-              <p className="text-xs text-slate-400">
-                {t("dashboard.keyTakeaways.overallScore.trendWindow")
-                  .split("{{days}}")
-                  .join(String(TREND_WINDOW_DAYS))}
-              </p>
+              {isUnavailable ? (
+                <p className="text-sm text-slate-600">
+                  {unavailableMessage}
+                </p>
+              ) : (
+                <>
+                  <p className="text-sm text-slate-600">
+                    {t("dashboard.keyTakeaways.overallScore.trendExactPrefix")}{" "}
+                    <strong>{exactValue ?? "-"}</strong>
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    {t("dashboard.keyTakeaways.overallScore.trendRelativePrefix")}{" "}
+                    <strong>{relativePctLabel ?? "-"}</strong>{" "}
+                    {t("dashboard.keyTakeaways.overallScore.trendRelativeSuffix")}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {t("dashboard.keyTakeaways.overallScore.trendWindow")
+                      .split("{{days}}")
+                      .join(String(TREND_WINDOW_DAYS))}
+                  </p>
+                </>
+              )}
             </div>
           </PopoverContent>
         </Popover>
       </div>
-      <div className="text-[12px] text-slate-400">
-        {t("dashboard.keyTakeaways.overallScore.statRecentTrendHint")}
+      <div className="min-h-[2.5rem] text-[12px] leading-5 text-slate-400">
+        {isUnavailable ? (
+          <div className="space-y-0.5">
+            <div>{unavailableMessage}</div>
+            <div className="invisible">
+              {t("dashboard.keyTakeaways.overallScore.trendComparisonWindow")}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div>{t("dashboard.keyTakeaways.overallScore.trendCurrentWindow")}</div>
+            <div>{t("dashboard.keyTakeaways.overallScore.trendComparisonWindow")}</div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -477,8 +498,7 @@ export function ScoreGlobalSection({
       <div className="mt-5 space-y-5">
         <div className="flex flex-col items-center gap-4 lg:flex-row lg:items-center lg:justify-between">
           <ScoreRing score={normalizedScore} label={status.label} t={t} />
-
-          {trend.reason!=="insufficient-data"&&<TrendDelta trend={trend} locale={locale} t={t} />}
+          <TrendDelta trend={trend} locale={locale} t={t} />
         </div>
 
         <div className="mx-auto max-w-xl text-center">
@@ -498,7 +518,7 @@ export function ScoreGlobalSection({
               label={t("dashboard.keyTakeaways.overallScore.statRating")}
               value={
                 googleRating === null
-                ? "-"
+                  ? "-"
                   : `${formatLocalizedNumber(googleRating, locale, {
                       minimumFractionDigits: 1,
                       maximumFractionDigits: 1,
@@ -510,14 +530,14 @@ export function ScoreGlobalSection({
               label={t("dashboard.keyTakeaways.overallScore.statPositive")}
               value={
                 sentimentScore === null
-                ? "-"
+                  ? "-"
                   : `${formatLocalizedNumber(sentimentScore, locale, {
                       maximumFractionDigits: 0,
                     })} / 100`
               }
             />
             <SourceRow
-              icon={<AlertCircle className="h-3.5 w-3.5 text-slate-400" />}
+              icon={<MessageCircleMore className="h-3.5 w-3.5 text-slate-400" />}
               label={t("dashboard.keyTakeaways.overallScore.statReviews")}
               value={reviewLabel ?? "-"}
             />

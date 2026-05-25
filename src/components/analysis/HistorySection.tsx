@@ -263,8 +263,8 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
           case 'month':
             const monthStart = startOfMonth(date);
             key = format(monthStart, 'yyyy-MM');
-            // Format: "avr. 2025" - AVEC année (utile et lisible)
-            label = format(date, 'MMM yyyy', { locale: dateLocale });
+            // Format: "avril 2025" - AVEC année (utile et lisible)
+            label = format(date, 'MMMM yyyy', { locale: dateLocale });
             break;
           case 'year':
             const yearStart = startOfYear(date);
@@ -308,8 +308,8 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
               label = `S${weekNum}`;
               break;
             case 'month':
-              // Format: "janv. 2025" - AVEC année
-              label = format(date, 'MMM yyyy', { locale: dateLocale });
+              // Format: "janvier 2025" - AVEC année
+              label = format(date, 'MMMM yyyy', { locale: dateLocale });
               break;
             case 'year':
               label = format(date, 'yyyy');
@@ -387,7 +387,7 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
         // month (default)
         sortDate = startOfMonth(d);
         key = format(sortDate, "yyyy-MM");
-        label = format(sortDate, "MMM yyyy", { locale: dateLocale });
+        label = format(sortDate, "MMMM yyyy", { locale: dateLocale });
         tooltipLabel = format(sortDate, "MMMM yyyy", { locale: dateLocale });
       }
 

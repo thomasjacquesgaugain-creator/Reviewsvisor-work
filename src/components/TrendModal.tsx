@@ -237,7 +237,7 @@ export function TrendModal({
                     dataKey="avgRating"
                     stroke="#8B5CF6"
                     strokeWidth={2}
-                    connectNulls={false}
+                    connectNulls
                     dot={{ fill: "#8B5CF6", r: 5, strokeWidth: 2 }}
                     name={t("dashboard.averageRating")}
                     label={{ 
