@@ -290,6 +290,7 @@
     "registeredSince": "Inscrit depuis le",
     "lastUpdate": "Dernière mise à jour",
     "granularity": "Granularité",
+    "reviewsReceivedLast30Days": "Received in the last 30 days",
     "day": "Jour",
     "week": "Semaine",
     "daily":"Quotidien",
