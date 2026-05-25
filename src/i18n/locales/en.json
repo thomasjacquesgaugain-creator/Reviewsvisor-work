@@ -63,7 +63,7 @@
   },
   "auth": {
     "login": "Log in",
-    "logout": "Log out",
+    "logout": "Sign Out",
     "signup": "Create account",
     "signupAction": "Sign up",
     "email": "Email",
@@ -176,7 +176,9 @@
     "legalHeader": "Legal Information",
     "legalHeaderMessage": "Please read this document carefully before using the platform.",
     "profile": "Profile",
-    "changePassword": "Change password"
+    "myAccount": "My account",
+    "logout": "Sign out",
+    "dashboard": "Dashboard"
   },
   "hero": {
     "trust1": "Turn feedback into design",

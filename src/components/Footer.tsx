@@ -1,13 +1,19 @@
-import { Link } from "react-router-dom";
-import { Mail, Shield, Cookie, FileText, HelpCircle, Scale, Info, Layers, User, KeyRound, CircleUser, LogIn, UserPlus } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Mail, Shield, Cookie, FileText, HelpCircle, Scale, Info, Layers, CircleUser, LogIn, UserPlus, LayoutDashboard, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useTranslation } from "react-i18next";
 import { APP_NAME } from "@/config/brand";
 
 export function Footer() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const reviewsvisorLink = user ? "/tableau-de-bord" : "/";
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+  };
   
   return (
     <footer
@@ -84,14 +90,23 @@ export function Footer() {
               <li>
                 <Link to="/settings/profile" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
                   <CircleUser className="h-4 w-4" />
-                  {t("footer.profile")}
+                  {t("footer.myAccount")}
                 </Link>
               </li>
               <li>
-                <Link to="/settings/security" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
-                  <KeyRound className="h-4 w-4" />
-                  {t("footer.changePassword")}
+                <Link to="/dashboard" className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2">
+                  <LayoutDashboard className="h-4 w-4" />
+                  {t("footer.dashboard")}
                 </Link>
+              </li>
+              <li onClick={handleLogout}>
+                <button
+                  type="button"
+                  className="text-white hover:underline hover:opacity-80 transition-all flex items-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  {t("footer.logout")}
+                </button>
               </li>
             </ul>
           </div>

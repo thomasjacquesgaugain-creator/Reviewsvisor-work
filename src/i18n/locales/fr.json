@@ -195,7 +195,9 @@
     "legalHeader": "Informations légales",
     "legalHeaderMessage": "Veuillez lire attentivement ce document avant d’utiliser la plateforme.",
     "profile": "Profil",
-    "changePassword": "Changer le mot de passe"
+    "myAccount": "Mon compte",
+    "logout": "Déconnexion",
+    "dashboard": "Dashboard"
   },
   "hero": {
     "trust1": "Transformer retour en conception",
