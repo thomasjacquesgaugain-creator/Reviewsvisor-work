@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, CheckCircle, ArrowDownRight, Minus, Award, Plus, Loader2 } from "lucide-react";
+import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, CheckCircle, ArrowDownRight, Minus, Award, Plus, Loader2, Info, Smile, HeartHandshake, ClipboardCheckIcon, ClipboardCheck } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +17,8 @@ import { extractOriginalText } from "@/utils/extractOriginalText";
 import { getEstablishmentTypeTranslationKey } from "@/utils/establishmentTypeMapping";
 import { AppPageBackground } from "@/components/AppPageBackground";
 import { useAuth } from "@/contexts/AuthProvider";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { MetricInfoPopover } from "@/components/ui/MetricInfoPopover";
 
 
 const Dashboard = () => {
@@ -237,21 +239,25 @@ const Dashboard = () => {
     }
 
     // 1. Performance globale basée sur la note moyenne
-    let globalPerformanceLabel = t("dashboard.good");
-    let globalPerformanceColor = "emerald";
-    if (avgRating >= 4.5) {
-      globalPerformanceLabel = t("dashboard.excellent") || "Excellent";
-      globalPerformanceColor = "emerald";
-    } else if (avgRating >= 4.0) {
-      globalPerformanceLabel = t("dashboard.good");
-      globalPerformanceColor = "emerald";
-    } else if (avgRating >= 3.0) {
-      globalPerformanceLabel = t("dashboard.average") || "Moyen";
-      globalPerformanceColor = "amber";
-    } else {
-      globalPerformanceLabel = t("dashboard.toImprove") || "À améliorer";
-      globalPerformanceColor = "red";
-    }
+      let globalPerformanceLabel = t("dashboard.good");
+      let globalPerformanceColor = "green";
+
+      if (avgRating >= 4.5) {
+        globalPerformanceLabel =
+          t("dashboard.excellent") || "Excellent";
+        globalPerformanceColor = "green";
+      } else if (avgRating >= 4.0) {
+        globalPerformanceLabel = t("dashboard.good");
+        globalPerformanceColor = "green";
+      } else if (avgRating >= 3.0) {
+        globalPerformanceLabel =
+          t("dashboard.average") || "Average";
+        globalPerformanceColor = "orange";
+      } else {
+        globalPerformanceLabel =
+          t("dashboard.toImprove") || "Needs Improvement";
+        globalPerformanceColor = "red";
+      }
 
     // 2. Indice de satisfaction : pourcentage d'avis positifs (4-5 étoiles)
     const positiveReviews = allReviews.filter(r => r.rating >= 4);
@@ -276,42 +282,48 @@ const Dashboard = () => {
       }
     });
     
-    let perceivedValueLabel = t("dashboard.high");
-    let perceivedValueColor = "amber";
-    const sentimentRatio = positiveSentimentCount + negativeSentimentCount > 0
-      ? positiveSentimentCount / (positiveSentimentCount + negativeSentimentCount)
-      : 0.5;
-    
+   let perceivedValueLabel = t("dashboard.high");
+    let perceivedValueColor = "green";
+
+    const sentimentRatio =
+      positiveSentimentCount + negativeSentimentCount > 0
+        ? positiveSentimentCount /
+          (positiveSentimentCount + negativeSentimentCount)
+        : 0.5;
+
     if (sentimentRatio >= 0.6) {
       perceivedValueLabel = t("dashboard.high");
-      perceivedValueColor = "emerald";
+      perceivedValueColor = "green";
     } else if (sentimentRatio >= 0.4) {
-      perceivedValueLabel = t("dashboard.average") || "Moyenne";
-      perceivedValueColor = "amber";
+      perceivedValueLabel =
+        t("dashboard.average") || "Average";
+      perceivedValueColor = "orange";
     } else {
-      perceivedValueLabel = t("dashboard.low") || "Faible";
+      perceivedValueLabel =
+        t("dashboard.low") || "Low";
       perceivedValueColor = "red";
     }
-
     // 4. Expérience délivrée : basée sur les avis récents (10 derniers)
     const recentReviews = allReviews.slice(0, 10);
     const recentPositive = recentReviews.filter(r => r.rating >= 4).length;
     const recentNegative = recentReviews.filter(r => r.rating <= 2).length;
     const recentPositiveRatio = recentReviews.length > 0 ? recentPositive / recentReviews.length : 0;
     
-    let deliveredExperienceLabel = t("dashboard.smooth");
-    let deliveredExperienceColor = "violet";
-    
-    if (recentPositiveRatio >= 0.7) {
-      deliveredExperienceLabel = t("dashboard.smooth");
-      deliveredExperienceColor = "violet";
-    } else if (recentPositiveRatio >= 0.4) {
-      deliveredExperienceLabel = t("dashboard.variable") || "Variable";
-      deliveredExperienceColor = "amber";
-    } else {
-      deliveredExperienceLabel = t("dashboard.toReview") || "À revoir";
-      deliveredExperienceColor = "red";
-    }
+  let deliveredExperienceLabel = t("dashboard.smooth");
+let deliveredExperienceColor = "green";
+
+if (recentPositiveRatio >= 0.7) {
+  deliveredExperienceLabel = t("dashboard.smooth");
+  deliveredExperienceColor = "green";
+} else if (recentPositiveRatio >= 0.4) {
+  deliveredExperienceLabel =
+    t("dashboard.variable") || "Variable";
+  deliveredExperienceColor = "orange";
+} else {
+  deliveredExperienceLabel =
+    t("dashboard.toReview") || "Needs Review";
+  deliveredExperienceColor = "red";
+}
 
     return {
       globalPerformance: { 
@@ -443,12 +455,25 @@ const Dashboard = () => {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/40 dark:to-slate-900 border-green-200 dark:border-green-900/50 border rounded-xl">
+                  <Card className={`border rounded-xl ${
+                        avgRating >= 4
+                          ? "bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/40 dark:to-slate-900 border-green-200 dark:border-green-900/50"
+                          : avgRating >= 3
+                          ? "bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-950/40 dark:to-slate-900 border-orange-200 dark:border-orange-900/50"
+                          : "bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/40 dark:to-slate-900 border-red-200 dark:border-red-900/50"
+                      }`}>
                     <CardContent className="p-4 flex items-center gap-3">
-                      <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center border-2 border-green-300 shadow-md">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-md ${
+                          avgRating >= 4
+                            ? "bg-green-600 border-green-300"
+                            : avgRating >= 3
+                            ? "bg-orange-500 border-orange-300"
+                            : "bg-red-500 border-red-300"
+                        }`}
+                      >
                         <Star className="w-5 h-5 text-primary-foreground" />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium text-gray-900 dark:text-slate-100">
                           {avgRating > 0 ? `${avgRating.toFixed(1)}/5` : t("dashboard.rating")}
                         </p>
@@ -456,32 +481,79 @@ const Dashboard = () => {
                           {avgRating > 0 ? t("dashboard.averageRating") : t("dashboard.waitingForData")}
                         </p>
                       </div>
+                      <div className="ml-auto self-start">
+                        <MetricInfoPopover
+                          title="Average Rating Calculation"
+                          subtitle="Formula used to calculate the rating"
+                          formula="(Sum of all ratings) ÷ (Total rated reviews)"
+                          description="Only reviews containing a star rating are included in this calculation. Comment-only reviews are excluded."
+                          icon={<Star size={16} className="text-primary" />}
+                        />
+                      </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-950/40 dark:to-slate-900 border-yellow-200 dark:border-yellow-900/50 border rounded-xl">
+                  <Card className={`border rounded-xl ${
+                                  totalReviewsForEstablishment > 0
+                                    ? (validatedResponsesCount / totalReviewsForEstablishment) * 100 >= 80
+                                      ? "bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/40 dark:to-slate-900 border-green-200 dark:border-green-900/50"
+                                      : (validatedResponsesCount / totalReviewsForEstablishment) * 100 >= 60
+                                      ? "bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-950/40 dark:to-slate-900 border-orange-200 dark:border-orange-900/50"
+                                      : "bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/40 dark:to-slate-900 border-red-200 dark:border-red-900/50"
+                                    : "bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-950/40 dark:to-slate-900 border-gray-200 dark:border-gray-900/50"
+                                }`}>
                     <CardContent className="p-4 flex items-center gap-3">
-                      <div className="w-12 h-12 bg-yellow-600 rounded-full flex items-center justify-center border-2 border-yellow-300 shadow-md">
+                      <div
+                        className={`w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-md ${
+                          totalReviewsForEstablishment > 0
+                            ? (validatedResponsesCount / totalReviewsForEstablishment) * 100 >= 80
+                              ? "bg-green-600 border-green-300"
+                              : (validatedResponsesCount / totalReviewsForEstablishment) * 100 >= 60
+                              ? "bg-orange-500 border-orange-300"
+                              : "bg-red-500 border-red-300"
+                            : "bg-gray-500 border-gray-300"
+                        }`}
+                      >
                         <CheckCircle className="w-5 h-5 text-white" />
                       </div>
+
                       <div>
                         <p className="font-medium text-gray-900 dark:text-slate-100">
-                          {validatedResponsesCount}/{totalReviewsForEstablishment} {t("dashboard.responses")} {t("dashboard.validated")}
+                          {validatedResponsesCount}/{totalReviewsForEstablishment}{" "}
+                          {t("dashboard.responses")} {t("dashboard.validated")}
                         </p>
-                        <p className="text-sm text-gray-600 dark:text-slate-400">{t("dashboard.responses")}</p>
+
+                        <p className="text-sm text-gray-600 dark:text-slate-400">
+                          {t("dashboard.responses")}
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950/40 dark:to-slate-900 border-purple-200 dark:border-purple-900/50 border rounded-xl">
+                  <Card   className={`border rounded-xl ${
+                      metrics.satisfactionIndex.percentage >= 80
+                        ? "bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/40 dark:to-slate-900 border-green-200 dark:border-green-900/50"
+                        : metrics.satisfactionIndex.percentage >= 60
+                        ? "bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-950/40 dark:to-slate-900 border-orange-200 dark:border-orange-900/50"
+                        : "bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/40 dark:to-slate-900 border-red-200 dark:border-red-900/50"
+                    }`}
+                  >
                     <CardContent className="p-4 flex items-center gap-3">
-                      <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center border-2 border-purple-300 shadow-md">
-                        <TrendingUp className="w-5 h-5 text-white" />
+                      <div
+                        className={`w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-md ${
+                          metrics.satisfactionIndex.percentage >= 80
+                            ? "bg-green-600 border-green-300"
+                            : metrics.satisfactionIndex.percentage >= 60
+                            ? "bg-orange-500 border-orange-300"
+                            : "bg-red-500 border-red-300"
+                        }`}
+                      >
+                        <Smile className="w-5 h-5 text-white" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900 dark:text-slate-100">
                           {allReviews.length > 0 
-                            ? `${Math.round(computeSatisfactionPct(allReviews))}%`
+                            ? `${Math.round(metrics.satisfactionIndex.percentage)}%`
                             : t("dashboard.satisfaction")
                           }
                         </p>
@@ -498,50 +570,114 @@ const Dashboard = () => {
           <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto pt-6 pb-0">
             {/* Performance globale */}
             <Card className="bg-white/80 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-lg dark:shadow-black/30 rounded-2xl p-6">
-              <CardContent className="p-0 space-y-4">
-                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-950/40 rounded-xl flex items-center justify-center">
-                  <Award className="w-6 h-6 text-purple-600" />
+            <CardContent className="p-0 space-y-4">
+              <div
+                className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                  metrics.globalPerformance.color === "green"
+                    ? "bg-green-100 dark:bg-green-900/30"
+                    : metrics.globalPerformance.color === "orange"
+                    ? "bg-orange-100 dark:bg-orange-900/30"
+                    : metrics.globalPerformance.color === "red"
+                    ? "bg-red-100 dark:bg-red-900/30"
+                    : "bg-gray-100 dark:bg-gray-900/30"
+                }`}
+              >
+                <Award
+                  className={`w-6 h-6 ${
+                    metrics.globalPerformance.color === "green"
+                      ? "text-green-600"
+                      : metrics.globalPerformance.color === "orange"
+                      ? "text-orange-500"
+                      : metrics.globalPerformance.color === "red"
+                      ? "text-red-500"
+                      : "text-gray-500"
+                  }`}
+                />
+              </div>
+
+              <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+                {t("dashboard.globalPerformance")}
+              </h3>
+
+              {/* Badge central */}
+              <div className="flex justify-center">
+                <div
+                  className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
+                    metrics.globalPerformance.color === "green"
+                      ? "bg-green-600"
+                      : metrics.globalPerformance.color === "orange"
+                      ? "bg-orange-500"
+                      : metrics.globalPerformance.color === "red"
+                      ? "bg-red-500"
+                      : "bg-gray-400"
+                  }`}
+                >
+                  <Award className="w-5 h-5 text-white" />
+
+                  {avgRating >= 4.5 && (
+                    <span className="text-yellow-300 text-lg">★</span>
+                  )}
+
+                  <span className="text-white font-semibold text-base">
+                    {metrics.globalPerformance.label}
+                  </span>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t("dashboard.globalPerformance")}</h3>
-                
-                {/* Badge central */}
-                <div className="flex justify-center">
-                  <div className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
-                    metrics.globalPerformance.color === 'gray' ? 'bg-gray-400' :
-                    metrics.globalPerformance.color === 'emerald' ? 'bg-emerald-500' :
-                    metrics.globalPerformance.color === 'amber' ? 'bg-amber-500' :
-                    metrics.globalPerformance.color === 'red' ? 'bg-red-500' : 'bg-emerald-500'
-                  }`}>
-                    <Award className="w-5 h-5 text-white" />
-                    {avgRating >= 4.5 && <span className="text-amber-300 text-lg">★</span>}
-                    <span className="text-white font-semibold text-base">{metrics.globalPerformance.label}</span>
-                  </div>
-                </div>
-                
-                <p className="text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
-                  {t("dashboard.basedOnRating")}
-                </p>
-              </CardContent>
+              </div>
+
+              <p className="text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
+                {t("dashboard.basedOnRating")}
+              </p>
+            </CardContent>
             </Card>
 
             {/* Indice de satisfaction */}
             <Card className="bg-white/80 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-lg dark:shadow-black/30 rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
-                <div className="w-12 h-12 bg-primary/15 dark:bg-primary/20 rounded-xl flex items-center justify-center">
-                  <Star className="w-6 h-6 text-primary" />
+                <div
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    metrics.satisfactionIndex.percentage >= 80
+                      ? "bg-green-100 dark:bg-green-900/30"
+                      : metrics.satisfactionIndex.percentage >= 60
+                      ? "bg-orange-100 dark:bg-orange-900/30"
+                      : "bg-red-100 dark:bg-red-900/30"
+                  }`}
+                >
+                  <Star
+                    className={`w-6 h-6 ${
+                      metrics.satisfactionIndex.percentage >= 80
+                        ? "text-green-600"
+                        : metrics.satisfactionIndex.percentage >= 60
+                        ? "text-orange-500"
+                        : "text-red-500"
+                    }`}
+                  />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t("dashboard.satisfactionIndex")}</h3>
-                
+
+                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+                  {t("dashboard.satisfactionIndex")}
+                </h3>
+
                 {/* Badge central */}
                 <div className="flex justify-center">
-                  <div className="inline-flex items-center gap-2 bg-blue-500 rounded-full px-5 py-3 shadow-md">
+                  <div
+                    className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
+                      metrics.satisfactionIndex.percentage >= 80
+                        ? "bg-green-600"
+                        : metrics.satisfactionIndex.percentage >= 60
+                        ? "bg-orange-500"
+                        : "bg-red-500"
+                    }`}
+                  >
                     <Star className="w-5 h-5 text-white" />
+
                     <span className="text-white font-semibold text-base">
-                      {allReviews.length > 0 ? `${metrics.satisfactionIndex.percentage}%` : '0%'}
+                      {allReviews.length > 0
+                        ? `${metrics.satisfactionIndex.percentage}%`
+                        : "0%"}
                     </span>
                   </div>
                 </div>
-                
+
                 <p className="text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
                   {t("dashboard.identifyProblems")}
                 </p>
@@ -551,24 +687,55 @@ const Dashboard = () => {
             {/* Valeur ressentie */}
             <Card className="bg-white/80 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-lg dark:shadow-black/30 rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
-                <div className="w-12 h-12 bg-amber-100 dark:bg-amber-950/40 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-amber-600" />
+                <div
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    metrics.perceivedValue.color === "green"
+                      ? "bg-green-100 dark:bg-green-900/30"
+                      : metrics.perceivedValue.color === "orange"
+                      ? "bg-orange-100 dark:bg-orange-900/30"
+                      : metrics.perceivedValue.color === "red"
+                      ? "bg-red-100 dark:bg-red-900/30"
+                      : "bg-gray-100 dark:bg-gray-900/30"
+                  }`}
+                >
+                  <HeartHandshake
+                    className={`w-6 h-6 ${
+                      metrics.perceivedValue.color === "green"
+                        ? "text-green-600"
+                        : metrics.perceivedValue.color === "orange"
+                        ? "text-orange-500"
+                        : metrics.perceivedValue.color === "red"
+                        ? "text-red-500"
+                        : "text-gray-500"
+                    }`}
+                  />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t("dashboard.perceivedValue")}</h3>
-                
+
+                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+                  {t("dashboard.perceivedValue")}
+                </h3>
+
                 {/* Badge central */}
                 <div className="flex justify-center">
-                  <div className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
-                    metrics.perceivedValue.color === 'gray' ? 'bg-gray-400' :
-                    metrics.perceivedValue.color === 'emerald' ? 'bg-emerald-500' :
-                    metrics.perceivedValue.color === 'amber' ? 'bg-amber-500' :
-                    metrics.perceivedValue.color === 'red' ? 'bg-red-500' : 'bg-amber-500'
-                  }`}>
-                    <TrendingUp className="w-5 h-5 text-white" />
-                    <span className="text-white font-semibold text-base">{metrics.perceivedValue.label}</span>
+                  <div
+                    className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
+                      metrics.perceivedValue.color === "green"
+                        ? "bg-green-600"
+                        : metrics.perceivedValue.color === "orange"
+                        ? "bg-orange-500"
+                        : metrics.perceivedValue.color === "red"
+                        ? "bg-red-500"
+                        : "bg-gray-400"
+                    }`}
+                  >
+                    <HeartHandshake className="w-5 h-5 text-white" />
+
+                    <span className="text-white font-semibold text-base">
+                      {metrics.perceivedValue.label}
+                    </span>
                   </div>
                 </div>
-                
+
                 <p className="text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
                   {t("dashboard.calculateScore")}
                 </p>
@@ -578,24 +745,55 @@ const Dashboard = () => {
             {/* Expérience délivrée */}
             <Card className="bg-white/80 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-lg dark:shadow-black/30 rounded-2xl p-6">
               <CardContent className="p-0 space-y-4">
-                <div className="w-12 h-12 bg-violet-100 dark:bg-violet-950/40 rounded-xl flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-violet-600" />
+                <div
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    metrics.deliveredExperience.color === "green"
+                      ? "bg-green-100 dark:bg-green-900/30"
+                      : metrics.deliveredExperience.color === "orange"
+                      ? "bg-orange-100 dark:bg-orange-900/30"
+                      : metrics.deliveredExperience.color === "red"
+                      ? "bg-red-100 dark:bg-red-900/30"
+                      : "bg-gray-100 dark:bg-gray-900/30"
+                  }`}
+                >
+                  <ClipboardCheckIcon
+                    className={`w-6 h-6 ${
+                      metrics.deliveredExperience.color === "green"
+                        ? "text-green-600"
+                        : metrics.deliveredExperience.color === "orange"
+                        ? "text-orange-500"
+                        : metrics.deliveredExperience.color === "red"
+                        ? "text-red-500"
+                        : "text-gray-500"
+                    }`}
+                  />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t("dashboard.deliveredExperience")}</h3>
-                
+
+                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+                  {t("dashboard.deliveredExperience")}
+                </h3>
+
                 {/* Badge central */}
                 <div className="flex justify-center">
-                  <div className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
-                    metrics.deliveredExperience.color === 'gray' ? 'bg-gray-400' :
-                    metrics.deliveredExperience.color === 'violet' ? 'bg-violet-500' :
-                    metrics.deliveredExperience.color === 'amber' ? 'bg-amber-500' :
-                    metrics.deliveredExperience.color === 'red' ? 'bg-red-500' : 'bg-violet-500'
-                  }`}>
-                    <Clock className="w-5 h-5 text-white" />
-                    <span className="text-white font-semibold text-base">{metrics.deliveredExperience.label}</span>
+                  <div
+                    className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
+                      metrics.deliveredExperience.color === "green"
+                        ? "bg-green-600"
+                        : metrics.deliveredExperience.color === "orange"
+                        ? "bg-orange-500"
+                        : metrics.deliveredExperience.color === "red"
+                        ? "bg-red-500"
+                        : "bg-gray-400"
+                    }`}
+                  >
+                    <ClipboardCheckIcon className="w-5 h-5 text-white" />
+
+                    <span className="text-white font-semibold text-base">
+                      {metrics.deliveredExperience.label}
+                    </span>
                   </div>
                 </div>
-                
+
                 <p className="text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
                   {t("dashboard.summaryRecommendations")}
                 </p>
