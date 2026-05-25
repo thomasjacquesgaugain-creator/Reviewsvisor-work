@@ -4,14 +4,18 @@ import { useTranslation } from "react-i18next";
 
 interface BackArrowProps {
   to?: string;
+  position?: "fixed" | "absolute";
 }
 
-const BackArrow = ({ to = "/" }: BackArrowProps) => {
+const BackArrow = ({ to = "/", position = "fixed" }: BackArrowProps) => {
   const { t } = useTranslation();
+
   return (
     <Link
       to={to}
-      className="fixed top-[15px] left-[10px] z-50 p-2 rounded-lg hover:bg-white/50 transition-colors"
+      className={`${position} top-[15px] left-[10px] ${
+        position === "fixed" ? "z-50" : "z-40"
+      } p-2 rounded-lg hover:bg-white/50 transition-colors`}
       aria-label={t("common.backToHome")}
     >
       <ArrowLeft 

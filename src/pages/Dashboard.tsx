@@ -376,6 +376,7 @@ const Dashboard = () => {
   const [agentQuestion, setAgentQuestion] = useState("");
   const [agentAnswer, setAgentAnswer] = useState("");
   const [isAgentLoading, setIsAgentLoading] = useState(false);
+  const agentQuestionInputRef = useRef<HTMLInputElement | null>(null);
 
   // Réinitialiser displayCount quand le filtre change
   useEffect(() => {
@@ -6706,7 +6707,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                 )}
 
                 {/* SECTION 3 : Conseiller (pleine largeur, style éditorial/insight) */}
-                <Card
+                {/* <Card
                   className="relative cursor-pointer transition-all duration-200 hover:shadow-md mt-6 mb-6 dark:bg-slate-900 dark:border-slate-800"
                   onClick={() =>
                     setOpenCard(openCard === "advisor" ? null : "advisor")
@@ -6738,7 +6739,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                       )}
                     </Button>
                   </CardHeader>
-                </Card>
+                </Card> */}
 
                 {/* Contenu Conseiller - EN DESSOUS */}
                 {openCard === "advisor" && (
@@ -7029,6 +7030,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                               className="flex-1 flex gap-2"
                             >
                               <Input
+                                ref={agentQuestionInputRef}
                                 type="text"
                                 placeholder={t("dashboard.askQuestion")}
                                 value={agentQuestion}
@@ -7038,6 +7040,20 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                 disabled={isAgentLoading}
                                 className="flex-1 bg-background border-border"
                               />
+                              {agentQuestion.trim() && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  disabled={isAgentLoading}
+                                  onClick={() => {
+                                    setAgentQuestion("");
+                                    agentQuestionInputRef.current?.focus();
+                                  }}
+                                  className="shrink-0"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button
                                 type="submit"
                                 disabled={isAgentLoading}
@@ -7083,41 +7099,81 @@ const getLatestDate = (reviews: any[]): Date | null =>
                           <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
                             <Info className="w-5 h-5 text-blue-500" />
                           </div>
-                          <h2 className="text-xl md:text-2xl font-bold text-foreground">
-                            {t("help.frequentQuestions")}
-                          </h2>
+                          <div>
+                            <h2 className="text-xl md:text-2xl font-bold text-foreground">
+                              {t("help.frequentQuestions")}
+                            </h2>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {t("help.frequentQuestionsHint")}
+                            </p>
+                          </div>
                         </div>
 
                         <div className="w-full space-y-2">
-                          <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAgentQuestion(t("help.faq6Question"));
+                              agentQuestionInputRef.current?.focus();
+                            }}
+                            className="w-full cursor-pointer border border-border/50 rounded-lg px-4 py-4 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                          >
                             <p className="font-medium text-foreground text-left">
                               {t("help.faq6Question")}
                             </p>
-                          </div>
+                          </button>
 
-                          <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAgentQuestion(t("help.faq7Question"));
+                              agentQuestionInputRef.current?.focus();
+                            }}
+                            className="w-full cursor-pointer border border-border/50 rounded-lg px-4 py-4 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                          >
                             <p className="font-medium text-foreground text-left">
                               {t("help.faq7Question")}
                             </p>
-                          </div>
+                          </button>
 
-                          <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAgentQuestion(t("help.faq8Question"));
+                              agentQuestionInputRef.current?.focus();
+                            }}
+                            className="w-full cursor-pointer border border-border/50 rounded-lg px-4 py-4 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                          >
                             <p className="font-medium text-foreground text-left">
                               {t("help.faq8Question")}
                             </p>
-                          </div>
+                          </button>
 
-                          <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAgentQuestion(t("help.faq9Question"));
+                              agentQuestionInputRef.current?.focus();
+                            }}
+                            className="w-full cursor-pointer border border-border/50 rounded-lg px-4 py-4 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                          >
                             <p className="font-medium text-foreground text-left">
                               {t("help.faq9Question")}
                             </p>
-                          </div>
+                          </button>
 
-                          <div className="border border-border/50 rounded-lg px-4 py-4 bg-secondary/20">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAgentQuestion(t("help.faq10Question"));
+                              agentQuestionInputRef.current?.focus();
+                            }}
+                            className="w-full cursor-pointer border border-border/50 rounded-lg px-4 py-4 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                          >
                             <p className="font-medium text-foreground text-left">
                               {t("help.faq10Question")}
                             </p>
-                          </div>
+                          </button>
                         </div>
                       </div>
                     </CardContent>

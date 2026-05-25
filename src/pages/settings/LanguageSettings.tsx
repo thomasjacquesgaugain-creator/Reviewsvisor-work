@@ -7,26 +7,17 @@ import { toast } from "sonner";
 import { COUNTRIES, DEFAULT_COUNTRY, getCountryByCode } from "@/utils/countries";
 import { CURRENCIES, DEFAULT_CURRENCY, getCurrencyByCode } from "@/utils/currencies";
 import { LANGUAGES, DEFAULT_LANGUAGE, getLanguageCode } from "@/utils/languages";
+import { useLanguage } from "@/hooks/useLanguage";
 
-// Clés localStorage
-const STORAGE_KEY_LANGUAGE = "language";
 const STORAGE_KEY_REGION = "rv_region";
 const STORAGE_KEY_CURRENCY = "rv_currency";
 
 export function LanguageSettings() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const { lang, setLang } = useLanguage();
   const [language, setLanguage] = useState(() => {
-    // Récupérer la valeur depuis localStorage ou i18n
-    const stored = localStorage.getItem(STORAGE_KEY_LANGUAGE);
-    if (stored) {
-      // Si c'est un code court (ex: "fr"), le convertir en locale (ex: "fr-FR")
-      const storedLang = LANGUAGES.find(l => l.value === stored || l.value.startsWith(stored + "-"));
-      return storedLang ? storedLang.value : DEFAULT_LANGUAGE;
-    }
-    // Si i18n a un code court, trouver la locale correspondante
-    const currentLang = i18n.language || "fr";
-    const foundLang = LANGUAGES.find(l => l.value === currentLang || l.value.startsWith(currentLang + "-"));
-    return foundLang ? foundLang.value : DEFAULT_LANGUAGE;
+    const currentLang = LANGUAGES.find((item) => item.value.startsWith(`${lang}-`));
+    return currentLang?.value ?? DEFAULT_LANGUAGE;
   });
   const [region, setRegion] = useState(() => {
     return localStorage.getItem(STORAGE_KEY_REGION) || DEFAULT_COUNTRY;
@@ -44,25 +35,20 @@ export function LanguageSettings() {
     if (savedCurrency) setCurrency(savedCurrency);
   }, []);
 
+  useEffect(() => {
+    const currentLang = LANGUAGES.find((item) => item.value.startsWith(`${lang}-`));
+    setLanguage(currentLang?.value ?? DEFAULT_LANGUAGE);
+  }, [lang]);
+
   const handleLanguageChange = async (newLocale: string) => {
     try {
-      // Extraire le code langue principal pour i18n (ex: "fr-FR" -> "fr")
       const languageCode = getLanguageCode(newLocale);
-      
-      // Changer la langue dans i18n (utilise le code court)
-      await i18n.changeLanguage(languageCode);
-      
-      // Sauvegarder la locale complète dans le state et localStorage
+      await setLang(languageCode === "en" ? "en" : "fr");
       setLanguage(newLocale);
-      localStorage.setItem(STORAGE_KEY_LANGUAGE, newLocale);
-      
-      // TODO: Sauvegarder dans Supabase profiles.localeLanguage
-      // await supabase.from("profiles").upsert({ user_id: user.id, locale_language: newLocale });
-      
       toast.success(t("settings.LanguageRegionAndCurrency.validation.languageUpdated"));
     } catch (error) {
       console.error("Error changing language:", error);
-      toast.error("Erreur lors du changement de langue");
+      toast.error(t("settings.LanguageRegionAndCurrency.validation.languageUpdateError"));
     }
   };
 

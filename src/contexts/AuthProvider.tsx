@@ -4,12 +4,15 @@ import type { Session, User } from "@supabase/supabase-js";
 import { capitalizeName } from "@/utils/capitalizeName";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { useSmartStore } from "@/store/smartStore";
+import i18n, { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/i18n/config";
+import { LANGUAGE_STORAGE_KEY } from "@/hooks/useLanguage";
 
 type Profile = {
   id: string;
   first_name: string | null;
   last_name: string | null;
   display_name: string | null;
+  preferred_language: SupportedLanguage | null;
 };
 
 type AuthCtx = {
@@ -82,58 +85,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        
-        // Fetch profile when user logs in
-        if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-          }, 0);
-        } else {
-          setProfile(null);
-          useEstablishmentStore.getState().clearSelectedEstablishment();
-        }
-        
-        setLoading(false);
-      }
-    );
+  const applyPreferredLanguage = async (preferredLanguage: SupportedLanguage | null) => {
+    if (!preferredLanguage) return;
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-      
-      setLoading(false);
-    });
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+    if (preferredLanguage !== i18n.language) {
+      await i18n.changeLanguage(preferredLanguage);
+    }
+
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, preferredLanguage);
+  };
 
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, display_name, full_name')
+        .select('id, first_name, last_name, display_name, full_name, preferred_language')
         .eq('user_id', userId)
         .maybeSingle();
       
       if (!error && data) {
+        const preferredLanguage = SUPPORTED_LANGUAGES.includes(data.preferred_language as SupportedLanguage)
+          ? data.preferred_language as SupportedLanguage
+          : null;
+
+        await applyPreferredLanguage(preferredLanguage);
+
         setProfile({
           id: data.id,
           first_name: data.first_name || null,
           last_name: data.last_name || null,
-          display_name: data.display_name || data.full_name || null
+          display_name: data.display_name || data.full_name || null,
+          preferred_language: preferredLanguage,
         });
       } else if (!data) {
-        // Pas de profil, on reste avec les métadonnées uniquement
         setProfile(null);
       }
     } catch (err) {
@@ -141,6 +125,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setProfile(null);
     }
   };
+
+  const hydrateSession = async (nextSession: Session | null) => {
+    setSession(nextSession);
+
+    if (nextSession?.user) {
+      setLoading(true);
+      await fetchProfile(nextSession.user.id);
+      setLoading(false);
+      return;
+    }
+
+    setProfile(null);
+    useEstablishmentStore.getState().clearSelectedEstablishment();
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+        void hydrateSession(nextSession);
+      }
+    );
+
+    void supabase.auth.getSession().then(({ data: { session: nextSession } }) => hydrateSession(nextSession));
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const refreshProfile = async () => {
     if (session?.user) {

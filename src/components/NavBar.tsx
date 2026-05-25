@@ -9,6 +9,7 @@ import { AccountMenu } from "@/components/AccountMenu";
 import { Building, House, LayoutDashboard } from 'lucide-react';
 import logoHeader from "@/assets/reviewsvisor-logo-header.png";
 import logoHeaderLight from "@/assets/reviewsvisor-logo-header-light.png";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export default function NavBar() {
   const { t } = useTranslation();
@@ -137,6 +138,7 @@ export default function NavBar() {
       <div className="flex items-center gap-4">
         {user ? (
           <>
+            <LanguageSwitcher />
             <AccountMenu />
             <button onClick={handleLogout} className={logoutStyle}>
               {t("auth.logout")}

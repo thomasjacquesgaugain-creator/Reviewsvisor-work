@@ -40,7 +40,6 @@
     "add": "Ajouter",
     "open": "Ouvrir",
     "noData": "—",
-    "saving": "Enregistrement...",
     "updating": "Mise à jour...",
     "sending": "Envoi en cours...",
     "current": "Actuel",
@@ -55,6 +54,11 @@
     "italian": "Italien",
     "spanish": "Espagnol",
     "portuguese": "Portugais"
+  },
+  "languageSwitcher": {
+    "ariaLabel": "Changer de langue",
+    "french": "Français",
+    "english": "Anglais"
   },
   "auth": {
     "login": "Se connecter",
@@ -254,7 +258,7 @@
     "topReviews": "Meilleurs avis",
     "worstReviews": "Pires avis",
     "ratingEvolution": "Évolution de la note",
-    "platformDistribution": "Répartition par plateforme",
+    "platformDistribution": "Répartition des notes",
     "themesAnalysis": "Analyse thématique",
     "recommendations": "Recommandations",
     "autoResponse": "Réponse automatique",
@@ -455,7 +459,7 @@
     "concreteActions": "Actions concrètes et priorisées à mettre en place",
     "noActionsAvailable": "Aucune action disponible",
     "analyzeEstablishmentToGetActions": "Analysez votre établissement pour obtenir des actions d'amélioration",
-    "agent": "agente",
+    "agent": "Conseiller",
     "askQuestion": "Posez une question sur vos avis...",
     "aiRespondReview": "Assistant IA pour répondre à vos avis",
     "aiAssistantForReviews": "Votre assistant IA pour gérer vos avis",
@@ -661,7 +665,7 @@
     "competitor5": "Pizzeria Bella Vita",
     "benchmarkDescription": "Comparez votre performance à celle d'établissements similaires dans votre secteur géographique pour identifier vos forces et vos axes d'amélioration.",
     "response": "Réponses",
-    "analyse": "Analyser",
+    "analyse": "Analyse",
     "importGeneratePersonalizedActions": "Importez vos avis pour générer des actions personnalisées",
     "responseCenter": "Centre de réponse",
     "manageCustomerReviewResponses": "Gérez vos réponses aux avis clients",
@@ -716,21 +720,26 @@
        "quickRead":"Lecture rapide pour les décideurs",
        "overallScore": {
          "overallScore": "Note globale",
-         "critical": "Critique",
+         "critical": "A revoir",
          "toImprove": "À améliorer",
          "good": "Bon",
          "narrativeCritical": "Votre établissement rencontre des problèmes critiques qui impactent significativement la satisfaction client.",
          "narrativeWarning": "Votre établissement présente des performances mitigées avec des axes d'amélioration clairs.",
          "narrativePositive": "Votre établissement performe bien et offre une expérience client globalement positive.",
          "statRating": "Note moyenne",
-         "statPositive": "Score de sentiment",
-         "statReviews": "Total des avis",
+         "statPositive": "Sentiment IA (normalisé)",
+         "statReviews": "Avis analysés",
          "noData":"Aucune donnée disponible",
          "noDataHint":"Le score apparaîtra une fois les avis recueillis.",
         "statRecentTrend": "Tendance récente",
         "statRecentTrendHint": "Comparée aux 60 jours précédents",
         "statRecentTrendInsufficient": "Données insuffisantes pour une comparaison sur 60 jours.",
-        "statRecentTrendInvalid": "Tendance exclue car les données d'avis semblent incohérentes."
+        "statRecentTrendInvalid": "Tendance exclue car les données d'avis semblent incohérentes.",
+        "trendExactPrefix": "Évolution exacte :",
+        "trendRelativePrefix": "Soit",
+        "trendRelativeSuffix": "par rapport à la période précédente.",
+        "trendWindow": "Calculé sur les {{days}} derniers jours vs les {{days}} précédents.",
+        "sourcesAndDetails": "Sources et détails"
        },
        "mainIssues": {
          "majorIssue": "Problème majeur",
@@ -751,11 +760,12 @@
        "overallTrend": {
          "title": "Tendance globale",
          "recentTrend": "60 derniers jours",
-        "change": "{{sign}}{{diff}} pts",
-         "changeAvg": "{{avg}} moy.",
-         "summaryNoPrevious": "Note moyenne actuelle : {{current}}/5 ({{count}} avis). Aucune donnée sur la période précédente.",
-        "summaryUp": "Note moyenne en hausse ({{diff}} pts)",
-        "summaryDown": "Note moyenne en baisse ({{diff}} pts)",
+          "change": "{{sign}}{{diff}} pts",
+          "changeAvg": "{{avg}} moy.",
+          "summaryInsufficientData": "Données insuffisantes pour une comparaison sur 60 jours.",
+          "summaryNoPrevious": "Note moyenne actuelle : {{current}}/5 ({{count}} avis). Aucune donnée sur la période précédente.",
+          "summaryUp": "Note moyenne en hausse ({{diff}} pts)",
+          "summaryDown": "Note moyenne en baisse ({{diff}} pts)",
          "summaryFlat": "Note moyenne stable sur 60 jours"
        },
       "riskAlert": {
@@ -975,11 +985,6 @@
       "backgroundDescription": "Choisissez la teinte de fond de l'interface",
       "backgroundBrightness": "Luminosité du fond",
       "backgroundBrightnessDescription": "Ajustez la luminosité du fond selectionne",
-      "backgroundColor": {
-        "cottonCandy": "Barbe à papa",
-        "dusk": "Crépuscule",
-        "lavender": "Lavande"
-      },
       "validation": {
         "settingsReset": "Paramètres réinitialisés",
         "updatedAppearance": "Apparence mise à jour",
@@ -1404,7 +1409,8 @@
     "detectType": "Détecter le type",
     "detectTypeTitle": "Détecter le type depuis Google Places",
     "detectTypeSuccess": "Type détecté : {{type}}",
-    "detectTypeError": "Impossible de détecter le type"
+    "detectTypeError": "Impossible de détecter le type",
+    "reviewsPanelTitle": "Mes Établissement"
   },
     "errors": {
     "title": "Erreur",
@@ -1584,6 +1590,7 @@
     "subtitle2": "efficacement.",
     "aiAssistance": "Assistance IA",
     "frequentQuestions": "Questions fréquentes",
+    "frequentQuestionsHint": "Cliquez sur une question ci-dessous pour la poser instantanément, ou saisissez tout ce qui concerne vos avis, votre note ou vos problèmes clients.",
     "needHelp": "Besoin d'aide ?",
     "teamHere": "Notre équipe est là pour vous accompagner dans l'utilisation de",
     "contactUs": "Contactez-nous",
@@ -2208,6 +2215,35 @@
     "aiGeneratedGoals": "Objectifs générés par l’IA et validés par l’utilisateur",
     "mainIssue": "Problème principal : \"{{issue}}\"",
     "negativeReviews": "{{percentage}}% des avis négatifs",
+    "modalTitle": "Générateur d'objectif SMART",
+    "generating": "Génération de l'objectif SMART pour \"{{cause}}\"...",
+    "reviewHint": "L'IA a généré cet objectif. Relisez-le et ajustez-le avant l'enregistrement.",
+    "impact": "Impact",
+    "effort": "Effort",
+    "quadrant": "Quadrant",
+    "impactValues": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé"
+    },
+    "quadrantValues": {
+      "quick_win": "Gain rapide",
+      "strategic": "Stratégique",
+      "minor": "Mineur",
+      "avoid": "À éviter"
+    },
+    "problemToSolve": "Problème à résoudre",
+    "kpiName": "Nom du KPI",
+    "current": "Actuel",
+    "target": "Cible",
+    "auto": "(auto)",
+    "unit": "Unité",
+    "deadline": "Date limite",
+    "durationMonths": "Durée (mois)",
+    "whyItMatters": "Pourquoi c'est important",
+    "cancel": "Annuler",
+    "saveObjective": "Enregistrer l'objectif",
+    "saving": "Enregistrement...",
     "updating": "Mise à jour...",
     "updateSmart": "Mettre à jour SMART",
     "questionnaireMissing": "⚠️ Questionnaire manquant pour le prochain problème Pareto",
@@ -2316,8 +2352,8 @@
     "specific":   "Spécifique",
     "measurable": "Mesurable",
     "achievable": "Atteignable",
-    "relevant":   "Pertinent",
-    "temporal":   "Temporel"
+    "relevant":   "Réaliste",
+    "temporal":   "Temporellement défini"
   },
   "temporal": {
     "deadline": "Échéance : {{date}}",
@@ -2402,4 +2438,3 @@
     "ambitious": "Ambitieux"
   }
 }
-

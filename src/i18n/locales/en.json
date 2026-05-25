@@ -56,6 +56,11 @@
     "spanish": "Spanish",
     "portuguese": "Portuguese"
   },
+  "languageSwitcher": {
+    "ariaLabel": "Change language",
+    "french": "French",
+    "english": "English"
+  },
   "auth": {
     "login": "Log in",
     "logout": "Log out",
@@ -235,7 +240,7 @@
     "topReviews": "Top reviews",
     "worstReviews": "Worst reviews",
     "ratingEvolution": "Rating evolution",
-    "platformDistribution": "Platform distribution",
+    "platformDistribution": "Rating distribution",
     "themesAnalysis": "Theme analysis",
     "recommendations": "Recommendations",
     "autoResponse": "Auto response",
@@ -355,7 +360,7 @@
     "concreteActions": "Concrete and prioritized actions to implement",
     "noActionsAvailable": "No actions available",
     "analyzeEstablishmentToGetActions": "Analyze your establishment to get improvement actions",
-    "agent": "Agent",
+    "agent": "Advisor",
     "aiRespondReview": "AI assistant to respond to your reviews",
     "askQuestion": "Ask a question about your reviews...",
     "aiAssistantForReviews": "Your AI assistant to manage your reviews",
@@ -574,7 +579,7 @@
     "noPositiveReviewsFound": "No positive reviews found",
     "keyIndicators": "Key indicators",
     "response": "Response",
-    "analyse": "Analyse",
+    "analyse": "Analysis",
     "noAnalysisAvailable": "No analysis available for this establishment. Click \"Analyze\" in the location map to get started.",
     "importAndAnalyzeToSeeResults": "Report reviews and run an analysis to see the results",
     "synthesisPriorities": "Summary & priorities",
@@ -648,21 +653,26 @@
       "quickRead": "Quick read for decision makers",
       "overallScore": {
         "overallScore": "Overall Score",
-        "critical": "Critical",
+        "critical": "Needs review",
         "toImprove": "To Improve",
         "good": "Good",
         "narrativeCritical": "Your establishment is facing critical issues that are significantly impacting customer satisfaction.",
         "narrativeWarning": "Your establishment shows mixed performance with clear areas that need improvement.",
         "narrativePositive": "Your establishment is performing well and delivers a positive overall customer experience.",
         "statRating": "Average Rating",
-        "statPositive": "Sentiment Score",
-        "statReviews": "Total Reviews",
+        "statPositive": "AI Sentiment (normalized)",
+        "statReviews": "Analyzed Reviews",
         "noData": "No data available",
         "noDataHint": "Score will appear once reviews are collected.",
         "statRecentTrend": "Recent Trend",
         "statRecentTrendHint": "Compared to the previous 60 days",
         "statRecentTrendInsufficient": "Insufficient data for a 60-day comparison.",
-        "statRecentTrendInvalid": "Trend excluded because the review data looks inconsistent."
+        "statRecentTrendInvalid": "Trend excluded because the review data looks inconsistent.",
+        "trendExactPrefix": "Exact change:",
+        "trendRelativePrefix": "That is",
+        "trendRelativeSuffix": "compared with the previous period.",
+        "trendWindow": "Calculated over the last {{days}} days vs the previous {{days}} days.",
+        "sourcesAndDetails": "Sources and details"
       },
       "mainIssues": {
         "majorIssue": "Major Issue",
@@ -685,6 +695,7 @@
         "recentTrend": "Last 60 days",
         "change": "{{sign}}{{diff}} pts",
         "changeAvg": "{{avg}} avg",
+        "summaryInsufficientData": "Insufficient data for a 60-day comparison.",
         "summaryNoPrevious": "Current average: {{current}}/5 ({{count}} reviews). No previous period data.",
         "summaryUp": "Average rating up ({{diff}} pts)",
         "summaryDown": "Average rating down ({{diff}} pts)",
@@ -907,11 +918,6 @@
       "backgroundDescription": "Choose the background color of the interface",
       "backgroundBrightness": "Background brightness",
       "backgroundBrightnessDescription": "Adjust the brightness of the selected background",
-      "backgroundColor": {
-        "cottonCandy": "Cotton Candy",
-        "dusk": "Dusk",
-        "lavender": "Lavender"
-      },
       "validation": {
         "settingsReset": "Settings reset",
         "updatedAppearance": "Updated appearance",
@@ -1241,7 +1247,8 @@
     "detectType": "Detect type",
     "detectTypeTitle": "Detect type from Google Places",
     "detectTypeSuccess": "Type detected: {{type}}",
-    "detectTypeError": "Unable to detect type"
+    "detectTypeError": "Unable to detect type",
+    "reviewsPanelTitle": "My Establishment"
   },
   "googleImport": {
     "connectionSuccess": "Connection successful",
@@ -1527,6 +1534,7 @@
     "subtitle2": "effectively.",
     "aiAssistance": "AI Assistance",
     "frequentQuestions": "Frequently asked questions",
+    "frequentQuestionsHint": "Click any question below to ask it instantly, or enter anything related to your reviews, rating, or customer issues.",
     "needHelp": "Need help?",
     "teamHere": "Our team is here to help you use",
     "contactUs": "Contact us",
@@ -1996,12 +2004,41 @@
   "success":"Questionare filled successfully",
   "effortOverridden": "Effort overridden to {{effort}} — dominant cause:"
 },
-"recommendations":{
+  "recommendations":{
   "smart":{
     "smartObjectives":"SMART objectives",
     "aiGeneratedGoals": "AI-generated, user-validated goals",
     "mainIssue": "Main issue: \"{{issue}}\"",
     "negativeReviews": "{{percentage}}% of negative reviews",
+    "modalTitle": "SMART objective generator",
+    "generating": "Generating SMART objective for \"{{cause}}\"...",
+    "reviewHint": "AI has generated this objective. Review and adjust before saving.",
+    "impact": "Impact",
+    "effort": "Effort",
+    "quadrant": "Quadrant",
+    "impactValues": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "quadrantValues": {
+      "quick_win": "Quick win",
+      "strategic": "Strategic",
+      "minor": "Minor",
+      "avoid": "Avoid"
+    },
+    "problemToSolve": "Problem to solve",
+    "kpiName": "KPI name",
+    "current": "Current",
+    "target": "Target",
+    "auto": "(auto)",
+    "unit": "Unit",
+    "deadline": "Deadline",
+    "durationMonths": "Duration (months)",
+    "whyItMatters": "Why it matters",
+    "cancel": "Cancel",
+    "saveObjective": "Save objective",
+    "saving": "Saving...",
     "updating": "Updating...",
     "updateSmart": "Update SMART",
     "questionnaireMissing": "⚠️ Questionnaire missing for next Pareto issue",
@@ -2111,7 +2148,7 @@
     "measurable": "Measurable",
     "achievable": "Achievable",
     "relevant":   "Relevant",
-    "temporal":   "Temporal"
+    "temporal":   "Time-bound"
   },
   "temporal": {
     "deadline": "Deadline: {{date}}",

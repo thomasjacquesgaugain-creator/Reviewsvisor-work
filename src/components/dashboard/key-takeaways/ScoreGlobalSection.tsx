@@ -1,23 +1,39 @@
-import { useMemo, type CSSProperties } from "react";
+import { useMemo, type CSSProperties, type ReactNode } from "react";
 import {
+  AlertCircle,
+  ArrowDown,
+  ArrowUp,
+  Info,
+  Minus,
   Sparkles,
   Star,
-  AlertCircle,
-  TrendingUp,
-  TrendingDown,
-  Minus,
 } from "lucide-react";
 import { parseISO, subDays } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { type ScoreGlobalSectionProps, type ScoreStatus } from "./types";
 import type { Review } from "./types";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const MIN_REVIEWS_FOR_TREND = 3;
 const MAX_REASONABLE_RATING_DELTA = 4;
+const TREND_WINDOW_DAYS = 60;
 
 const getNote = (r: Review): number => r.note || r.rating || 0;
 const getDateStr = (r: Review): string =>
   r.published_at || r.inserted_at || r.created_at || r.date || "";
+
+const getNumberLocale = (language: string | undefined) =>
+  language?.toLowerCase().startsWith("fr") ? "fr-FR" : "en-US";
+
+const formatLocalizedNumber = (
+  value: number,
+  locale: string,
+  options: Intl.NumberFormatOptions = {},
+) => new Intl.NumberFormat(locale, options).format(value);
 
 const parseReviewDate = (r: Review): Date | null => {
   const s = getDateStr(r);
@@ -91,7 +107,7 @@ function ScoreRing({
   return (
     <div className="relative mx-auto h-40 w-40 shrink-0">
       <div className="absolute inset-0 rounded-full" style={ringStyle} />
-      <div className="absolute inset-[10px] rounded-full bg-white dark:bg-slate-900 shadow-inner" />
+      <div className="absolute inset-[10px] rounded-full bg-white shadow-inner dark:bg-slate-900" />
       <div className="absolute inset-[18px] flex flex-col items-center justify-center rounded-full bg-white dark:bg-slate-950">
         <div className="flex items-end gap-1">
           <span className="text-4xl font-extrabold tracking-tight text-slate-950">
@@ -110,88 +126,154 @@ function ScoreRing({
   );
 }
 
-function ScoreStat({
+function SourceRow({
+  icon,
   label,
   value,
-  accentClassName,
+  valueClassName = "text-slate-700",
 }: {
+  icon: ReactNode;
   label: string;
   value: string;
-  accentClassName: string;
+  valueClassName?: string;
 }) {
   return (
-    <div className="rounded-[8px] border border-slate-100 bg-white/70 p-3 shadow-sm">
-      <div
-        className={`text-[11px] font-semibold uppercase tracking-[0.12em] ${accentClassName}`}
-      >
-        {label}
+    <div className="flex items-center justify-between gap-4 py-2.5">
+      <div className="flex items-center gap-2 text-[12px] font-medium text-slate-500">
+        <span className="text-slate-400">{icon}</span>
+        <span>{label}</span>
       </div>
-      <div className="mt-1 text-lg font-semibold text-slate-950">{value}</div>
+      <div className={`text-[13px] font-semibold tabular-nums ${valueClassName}`}>
+        {value}
+      </div>
     </div>
   );
 }
 
 type TrendState = {
   ratingChange: number | null;
+  currentAvg: number | null;
+  previousAvg: number | null;
   reason: "insufficient-data" | "invalid-data" | null;
 };
 
-function RatingChangeStat({
-  ratingChange,
-  reason,
+function TrendDelta({
+  trend,
+  locale,
   t,
 }: {
-  ratingChange: number | null;
-  reason: TrendState["reason"];
+  trend: TrendState;
+  locale: string;
   t: (key: string) => string;
 }) {
-  const isUnavailable = ratingChange === null;
-  const isPositive = !isUnavailable && ratingChange > 0;
-  const isNeutral = !isUnavailable && ratingChange === 0;
+  const deltaPoints = trend.ratingChange === null ? null : trend.ratingChange * 20;
 
-  const Icon = isUnavailable || isNeutral
-    ? Minus
-    : isPositive
-    ? TrendingUp
-    : TrendingDown;
-
-  const accentClassName =
-    isUnavailable || isNeutral
+  const isPositive = deltaPoints !== null && deltaPoints > 0;
+  const isNeutral = deltaPoints !== null && deltaPoints === 0;
+  const trendClassName =
+    deltaPoints === null
       ? "text-slate-500"
       : isPositive
       ? "text-emerald-700"
+      : isNeutral
+      ? "text-slate-600"
       : "text-rose-600";
 
-  const valueColor =
-    isUnavailable || isNeutral
-      ? "text-slate-950"
-      : isPositive
-      ? "text-emerald-700"
-      : "text-rose-600";
+  const formattedValue =
+    deltaPoints === null ? (
+      "-"
+    ) : (
+      <span className="inline-flex items-center gap-1">
+        {deltaPoints > 0 ? (
+          <ArrowUp className="h-3.5 w-3.5" />
+        ) : deltaPoints < 0 ? (
+          <ArrowDown className="h-3.5 w-3.5" />
+        ) : (
+          <Minus className="h-3.5 w-3.5" />
+        )}
+        <span>{`${formatLocalizedNumber(
+          Math.round(Math.abs(deltaPoints)),
+          locale,
+        )} pts`}</span>
+      </span>
+    );
 
-  const formattedValue = isUnavailable
-    ? "—"
-    : isNeutral
-    ? "0.0 pts"
-    : `${isPositive ? "↑" : "↓"} ${Math.abs(ratingChange).toFixed(1)} pts`;
+  const exactValue =
+    deltaPoints === null
+      ? null
+      : `${deltaPoints > 0 ? "+" : deltaPoints < 0 ? "-" : ""}${formatLocalizedNumber(
+          Math.abs(deltaPoints),
+          locale,
+          { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+        )} pts`;
+
+  const relativePct =
+    trend.ratingChange !== null &&
+    trend.previousAvg !== null &&
+    trend.previousAvg > 0
+      ? (trend.ratingChange / trend.previousAvg) * 100
+      : null;
+
+  const relativePctLabel =
+    relativePct === null
+      ? null
+      : `${relativePct > 0 ? "+" : relativePct < 0 ? "-" : ""}${formatLocalizedNumber(
+          Math.abs(relativePct),
+          locale,
+          { minimumFractionDigits: 1, maximumFractionDigits: 1 },
+        )} %`;
 
   const hint =
-    reason === "insufficient-data"
+    trend.reason === "insufficient-data"
       ? t("dashboard.keyTakeaways.overallScore.statRecentTrendInsufficient")
-      : reason === "invalid-data"
+      : trend.reason === "invalid-data"
       ? t("dashboard.keyTakeaways.overallScore.statRecentTrendInvalid")
       : t("dashboard.keyTakeaways.overallScore.statRecentTrendHint");
 
   return (
-    <div className="rounded-[8px] border border-slate-100 bg-slate-50 p-3 shadow-sm">
-      <div
-        className={`font-semibold uppercase tracking-[0.12em] flex items-center gap-1 text-[11px] ${accentClassName}`}
-      >
-        <Icon className="h-3 w-3" />
-        <span>{t("dashboard.keyTakeaways.overallScore.statRecentTrend")}</span>
+    <div className="flex flex-col items-center gap-1 lg:items-start">
+      <div className={`flex items-center gap-2 text-sm font-semibold ${trendClassName}`}>
+        <span>{formattedValue}</span>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              aria-label={t("dashboard.keyTakeaways.overallScore.statRecentTrend")}
+            >
+              <Info className="h-3.5 w-3.5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            className="w-72 border-slate-200 bg-white p-4 text-slate-900 shadow-lg"
+            align="center"
+            sideOffset={8}
+          >
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-slate-950">
+                {t("dashboard.keyTakeaways.overallScore.statRecentTrend")}
+              </p>
+              <p className="text-sm text-slate-600">
+                {t("dashboard.keyTakeaways.overallScore.trendExactPrefix")}{" "}
+                <strong>{exactValue ?? "-"}</strong>
+              </p>
+              <p className="text-sm text-slate-600">
+                {t("dashboard.keyTakeaways.overallScore.trendRelativePrefix")}{" "}
+                <strong>{relativePctLabel ?? "-"}</strong>{" "}
+                {t("dashboard.keyTakeaways.overallScore.trendRelativeSuffix")}
+              </p>
+              <p className="text-xs text-slate-400">
+                {t("dashboard.keyTakeaways.overallScore.trendWindow")
+                  .split("{{days}}")
+                  .join(String(TREND_WINDOW_DAYS))}
+              </p>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
-      <div className={`mt-1 text-lg font-bold ${valueColor}`}>{formattedValue}</div>
-      <div className="mt-0.5 text-[10px] text-slate-400">{hint}</div>
+      <div className="text-[12px] text-slate-400">
+        {t("dashboard.keyTakeaways.overallScore.statRecentTrendHint")}
+      </div>
     </div>
   );
 }
@@ -214,17 +296,23 @@ export function ScoreGlobalSection({
   reviewCount,
   reviews,
 }: Omit<ScoreGlobalSectionProps, "ratingChange">) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = getNumberLocale(i18n.language);
   const isDataAvailable = hasEnoughData(avgRating, positivePct, reviewCount);
 
   const trend = useMemo<TrendState>(() => {
     if (!reviews?.length) {
-      return { ratingChange: null, reason: "insufficient-data" };
+      return {
+        ratingChange: null,
+        currentAvg: null,
+        previousAvg: null,
+        reason: "insufficient-data",
+      };
     }
 
     const today = new Date();
-    const last60Start = subDays(today, 60);
-    const prior60Start = subDays(today, 120);
+    const last60Start = subDays(today, TREND_WINDOW_DAYS);
+    const prior60Start = subDays(today, TREND_WINDOW_DAYS * 2);
 
     const currentReviews = reviews.filter((r) => {
       const d = parseReviewDate(r);
@@ -243,14 +331,24 @@ export function ScoreGlobalSection({
       currentValid.length < MIN_REVIEWS_FOR_TREND ||
       previousValid.length < MIN_REVIEWS_FOR_TREND
     ) {
-      return { ratingChange: null, reason: "insufficient-data" };
+      return {
+        ratingChange: null,
+        currentAvg: null,
+        previousAvg: null,
+        reason: "insufficient-data",
+      };
     }
 
     const currentAvg = computeAverage(currentValid);
     const previousAvg = computeAverage(previousValid);
 
     if (currentAvg === null || previousAvg === null) {
-      return { ratingChange: null, reason: "insufficient-data" };
+      return {
+        ratingChange: null,
+        currentAvg: null,
+        previousAvg: null,
+        reason: "insufficient-data",
+      };
     }
 
     const ratingChange = currentAvg - previousAvg;
@@ -264,11 +362,17 @@ export function ScoreGlobalSection({
         previousCount: previousValid.length,
         reviewCount: reviews.length,
       });
-      return { ratingChange: null, reason: "invalid-data" };
+      return {
+        ratingChange: null,
+        currentAvg,
+        previousAvg,
+        reason: "invalid-data",
+      };
     }
 
-    return { ratingChange, reason: null };
+    return { ratingChange, currentAvg, previousAvg, reason: null };
   }, [reviews]);
+  
 
   const normalizedScore = useMemo<number | null>(() => {
     if (!isDataAvailable) return null;
@@ -289,15 +393,11 @@ export function ScoreGlobalSection({
         baseWeight: 0.2,
       });
     }
-console.log("Active pillars---->",activePillars);
 
     const totalActiveWeight = activePillars.reduce(
       (sum, pillar) => sum + pillar.baseWeight,
       0,
     );
-
-    console.log("total weight---->",totalActiveWeight);
-    
 
     if (totalActiveWeight === 0) return null;
 
@@ -347,6 +447,11 @@ console.log("Active pillars---->",activePillars);
       ? t("dashboard.keyTakeaways.overallScore.narrativeWarning")
       : t("dashboard.keyTakeaways.overallScore.narrativePositive");
 
+  const googleRating = avgRating ?? null;
+  const sentimentScore = positivePct ?? null;
+  const reviewLabel =
+    reviewCount == null ? null : formatLocalizedNumber(reviewCount, locale);
+
   return (
     <div className="h-full self-start rounded-[8px] border border-white/70 bg-gradient-to-br from-white via-[#fbfaff] to-[#f4fbff] p-5 shadow-[0_18px_45px_rgba(37,99,235,0.08)]">
       <div className="flex items-center justify-between gap-3">
@@ -355,10 +460,7 @@ console.log("Active pillars---->",activePillars);
             className="inline-flex h-8 w-8 items-center justify-center rounded-full"
             style={{ backgroundColor: `${status.accent}14` }}
           >
-            <Sparkles
-              className="h-4 w-4"
-              style={{ color: status.accent }}
-            />
+            <Sparkles className="h-4 w-4" style={{ color: status.accent }} />
           </span>
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
             {t("dashboard.keyTakeaways.overallScore.overallScore")}
@@ -372,39 +474,54 @@ console.log("Active pillars---->",activePillars);
         </span>
       </div>
 
-      <div className="mt-5 flex flex-col gap-5">
-        <div className="flex justify-center">
+      <div className="mt-5 space-y-5">
+        <div className="flex flex-col items-center gap-4 lg:flex-row lg:items-center lg:justify-between">
           <ScoreRing score={normalizedScore} label={status.label} t={t} />
+
+          {trend.reason!=="insufficient-data"&&<TrendDelta trend={trend} locale={locale} t={t} />}
         </div>
 
         <div className="mx-auto max-w-xl text-center">
-          <div className="mt-3 flex items-start gap-2 text-sm text-slate-500">
+          <div className="mt-3 flex items-start justify-center gap-2 text-sm text-slate-500">
             <Star className="mt-0.5 h-4 w-4 text-amber-400" />
             <span>{scoreNarrative}</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <ScoreStat
-            label={t("dashboard.keyTakeaways.overallScore.statRating")}
-            value={`${avgRating?.toFixed(1)}/5`}
-            accentClassName="text-[#fe53b3]"
-          />
-          <ScoreStat
-            label={t("dashboard.keyTakeaways.overallScore.statPositive")}
-            value={`${positivePct}/100`}
-            accentClassName="text-[#b18cf4]"
-          />
-          <ScoreStat
-            label={t("dashboard.keyTakeaways.overallScore.statReviews")}
-            value={String(reviewCount)}
-            accentClassName="text-[#2563eb]"
-          />
-          <RatingChangeStat
-            ratingChange={trend.ratingChange}
-            reason={trend.reason}
-            t={t}
-          />
+        <div className="border-t border-slate-100 pt-4">
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+            {t("dashboard.keyTakeaways.overallScore.sourcesAndDetails")}
+          </div>
+          <div className="divide-y divide-slate-100">
+            <SourceRow
+              icon={<Star className="h-3.5 w-3.5 text-amber-400" />}
+              label={t("dashboard.keyTakeaways.overallScore.statRating")}
+              value={
+                googleRating === null
+                ? "-"
+                  : `${formatLocalizedNumber(googleRating, locale, {
+                      minimumFractionDigits: 1,
+                      maximumFractionDigits: 1,
+                    })} / 5`
+              }
+            />
+            <SourceRow
+              icon={<Sparkles className="h-3.5 w-3.5 text-sky-500" />}
+              label={t("dashboard.keyTakeaways.overallScore.statPositive")}
+              value={
+                sentimentScore === null
+                ? "-"
+                  : `${formatLocalizedNumber(sentimentScore, locale, {
+                      maximumFractionDigits: 0,
+                    })} / 100`
+              }
+            />
+            <SourceRow
+              icon={<AlertCircle className="h-3.5 w-3.5 text-slate-400" />}
+              label={t("dashboard.keyTakeaways.overallScore.statReviews")}
+              value={reviewLabel ?? "-"}
+            />
+          </div>
         </div>
       </div>
     </div>

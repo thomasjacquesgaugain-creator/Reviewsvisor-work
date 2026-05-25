@@ -264,7 +264,7 @@ export function CustomizationSettings() {
                   style={{ background: tint.preview }}
                 />
                 <span className="text-xs font-medium text-gray-700 dark:text-slate-300">
-                  {t(`settings.personalization.backgroundColor.${tint.value}`)}
+                  {tint.label}
                 </span>
                 {bg === tint.value && (
                   <div className="absolute top-1 right-1">

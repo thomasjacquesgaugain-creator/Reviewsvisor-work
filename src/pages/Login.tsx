@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BackArrow from "@/components/BackArrow";
 import { useTranslation } from "react-i18next";
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/i18n/config";
 
 const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -21,6 +22,9 @@ const Login = () => {
   const [loginError, setLoginError] = useState("");
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const currentLanguage = (SUPPORTED_LANGUAGES.includes((window.localStorage.getItem("rv_lang") || "fr") as SupportedLanguage)
+    ? (window.localStorage.getItem("rv_lang") as SupportedLanguage)
+    : "fr");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -82,6 +86,7 @@ const Login = () => {
                 first_name: firstName.trim(),
                 last_name: lastName.trim(),
                 full_name: `${firstName.trim()} ${lastName.trim()}`,
+                preferred_language: currentLanguage,
                 updated_at: new Date().toISOString()
               }, { 
                 onConflict: 'id'
