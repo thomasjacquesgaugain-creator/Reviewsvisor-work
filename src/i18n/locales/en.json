@@ -63,7 +63,7 @@
   },
   "auth": {
     "login": "Log in",
-    "logout": "Sign Out",
+    "logout": "Sign out",
     "signup": "Create account",
     "signupAction": "Sign up",
     "email": "Email",
@@ -739,7 +739,7 @@
     "billingAndSubscription": "Billing / Subscription",
     "accountSettings": "Account settings",
     "help": "Help",
-    "logout": "Log out"
+    "logout": "Sign out"
   },
   "settings": {
     "title": "Settings",
