@@ -232,7 +232,7 @@ function TrendDelta({
         )} %`;
 
   return (
-    <div className="flex w-full max-w-[18rem] flex-col items-center gap-1 lg:w-[18rem] lg:items-start">
+    <div className="flex flex-col items-start gap-1">
       <div className={`flex items-center gap-2 text-sm font-semibold ${trendClassName}`}>
         <span>{formattedValue}</span>
         <Popover>
@@ -496,8 +496,11 @@ export function ScoreGlobalSection({
       </div>
 
       <div className="mt-5 space-y-5">
-        <div className="flex flex-col items-center gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <ScoreRing score={normalizedScore} label={status.label} t={t} />
+        <div className="flex items-center gap-6 ml-10">
+          <div className="shrink-0">
+            <ScoreRing score={normalizedScore} label={status.label} t={t} />
+          </div>
+
           <TrendDelta trend={trend} locale={locale} t={t} />
         </div>
 
