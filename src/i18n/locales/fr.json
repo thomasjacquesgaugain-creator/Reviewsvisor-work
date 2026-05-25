@@ -726,7 +726,7 @@
          "narrativeCritical": "Votre établissement rencontre des problèmes critiques qui impactent significativement la satisfaction client.",
          "narrativeWarning": "Votre établissement présente des performances mitigées avec des axes d'amélioration clairs.",
          "narrativePositive": "Votre établissement performe bien et offre une expérience client globalement positive.",
-         "statRating": "Note moyenne",
+         "statRating": "Note Google",
          "statPositive": "Sentiment IA (normalisé)",
          "statReviews": "Avis analysés",
          "noData":"Aucune donnée disponible",
@@ -739,6 +739,9 @@
         "trendRelativePrefix": "Soit",
         "trendRelativeSuffix": "par rapport à la période précédente.",
         "trendWindow": "Calculé sur les {{days}} derniers jours vs les {{days}} précédents.",
+        "trendCurrentWindow": "Les 60 derniers jours",
+        "trendComparisonWindow": "Comparé aux 60 jours précédents",
+        "trendUnavailableMessage": "Pas assez d'avis sur la période pour calculer une tendance fiable",
         "sourcesAndDetails": "Sources et détails"
        },
        "mainIssues": {
@@ -760,12 +763,12 @@
        "overallTrend": {
          "title": "Tendance globale",
          "recentTrend": "60 derniers jours",
-          "change": "{{sign}}{{diff}} pts",
+          "change": "{{sign}}{{diff}} note",
           "changeAvg": "{{avg}} moy.",
           "summaryInsufficientData": "Données insuffisantes pour une comparaison sur 60 jours.",
           "summaryNoPrevious": "Note moyenne actuelle : {{current}}/5 ({{count}} avis). Aucune donnée sur la période précédente.",
-          "summaryUp": "Note moyenne en hausse ({{diff}} pts)",
-          "summaryDown": "Note moyenne en baisse ({{diff}} pts)",
+          "summaryUp": "Note moyenne en hausse ({{diff}} note)",
+          "summaryDown": "Note moyenne en baisse ({{diff}} note)",
          "summaryFlat": "Note moyenne stable sur 60 jours"
        },
       "riskAlert": {
