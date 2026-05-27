@@ -6826,9 +6826,17 @@ const getLatestDate = (reviews: any[]): Date | null =>
                 {/* Agent */}
                 <Card
                   className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 mb-8 dark:bg-slate-900 dark:border-slate-800"
-                  onClick={() =>
-                    setOpenCard(openCard === "agent" ? null : "agent")
-                  }
+                  onClick={() => {
+                    if (openCard === "agent") {
+                      setOpenCard(null);
+                      setAgentQuestion("");
+                      setAgentAnswer("");
+                    } else {
+                      setOpenCard("agent");
+                      setAgentQuestion("");
+                      setAgentAnswer("");
+                    }
+                  }}
                 >
                   <CardHeader className="relative text-center">
                     <div className="flex flex-col items-center mb-2">
@@ -7126,6 +7134,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                             type="button"
                             onClick={() => {
                               setAgentQuestion(t("help.faq6Question"));
+                              setAgentAnswer("");
                               agentQuestionInputRef.current?.focus();
                             }}
                             className="w-full cursor-pointer border border-border/50 rounded-lg px-4 py-4 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
@@ -7139,6 +7148,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                             type="button"
                             onClick={() => {
                               setAgentQuestion(t("help.faq7Question"));
+                              setAgentAnswer("");
                               agentQuestionInputRef.current?.focus();
                             }}
                             className="w-full cursor-pointer border border-border/50 rounded-lg px-4 py-4 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
@@ -7152,6 +7162,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                             type="button"
                             onClick={() => {
                               setAgentQuestion(t("help.faq8Question"));
+                              setAgentAnswer("");
                               agentQuestionInputRef.current?.focus();
                             }}
                             className="w-full cursor-pointer border border-border/50 rounded-lg px-4 py-4 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
@@ -7165,6 +7176,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                             type="button"
                             onClick={() => {
                               setAgentQuestion(t("help.faq9Question"));
+                              setAgentAnswer("");
                               agentQuestionInputRef.current?.focus();
                             }}
                             className="w-full cursor-pointer border border-border/50 rounded-lg px-4 py-4 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
@@ -7178,6 +7190,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                             type="button"
                             onClick={() => {
                               setAgentQuestion(t("help.faq10Question"));
+                              setAgentAnswer("");
                               agentQuestionInputRef.current?.focus();
                             }}
                             className="w-full cursor-pointer border border-border/50 rounded-lg px-4 py-4 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"

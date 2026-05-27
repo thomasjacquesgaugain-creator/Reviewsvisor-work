@@ -1346,7 +1346,7 @@
   },
   "establishment": {
     "title": "Mon Établissements",
-    "myEstablishment": "Mon Établissement",
+    "myEstablishment": "Mon Etablissement",
     "search": "Rechercher un établissement",
     "searchPlaceholder": "Rechercher un établissement…",
     "name": "Nom de l'établissement",
@@ -1397,7 +1397,7 @@
     "thisEstablishment": "cet établissement",
     "yourEstablishment": "votre établissement",
     "chooseAnotherEstablishment": "Choisir un autre établissement",
-    "myEstablishments": "Mes Établissements",
+    "myEstablishments": "Mon Etablissement",
     "analyzeThisEstablishment": "Analyser cet établissement",
     "establishmentAnalysed": "Établissement analysé",
     "forgetThisEstablishment": "Oublier cet établissement",
@@ -1432,7 +1432,7 @@
     "analysisError": "Erreur lors de l'analyse",
     "cannotFetchGoogleReviews": "Impossible de récupérer les avis Google",
     "errorSavingResults": "Erreur lors de l'enregistrement des résultats",
-    "myEstablishment": "Mon Établissement",
+    "myEstablishment": "Mon Etablissement",
     "noEstablishmentSelected": "Aucun établissement sélectionné. Utilisez l'autocomplétion ci-dessus pour en choisir un.",
     "establishment": "Établissement",
     "clickSaveToAddToList": "Cliquez sur 'Enregistrer' pour l'ajouter à votre liste.",
@@ -1454,14 +1454,14 @@
     "unexpectedErrorOccurred": "Une erreur inattendue s'est produite",
     "select": "Sélectionner",
     "createEstablishment": "Créer un établissement",
-    "myEstablishments": "Mes Établissements",
+    "myEstablishments": "Mon Etablissements",
     "addEstablishment": "Ajouter un établissement",
     "typeLabel": "Type d'établissement",
     "detectType": "Détecter le type",
     "detectTypeTitle": "Détecter le type depuis Google Places",
     "detectTypeSuccess": "Type détecté : {{type}}",
     "detectTypeError": "Impossible de détecter le type",
-    "reviewsPanelTitle": "Mes Établissement"
+    "reviewsPanelTitle": "Mon Etablissement"
   },
     "errors": {
     "title": "Erreur",

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import BackArrow from "@/components/BackArrow";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthProvider";
 
 interface LegalDocViewerProps {
   docSlug: string;
@@ -12,6 +13,7 @@ export function LegalDocViewer({
   docSlug,
 }: LegalDocViewerProps) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const htmlUrl = `/legal/${docSlug}.html`;
   const embeddedDocumentOverrides = `
     <style>
@@ -122,7 +124,7 @@ export function LegalDocViewer({
       <div className="relative z-10">
         <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="mb-6">
-            <BackArrow />
+            <BackArrow top="top-[70px]" scrollTop="top-[15px]" isLoggedIn={user ? true : false}/>
             <div className="mt-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 !mb-0">
                 {t("footer.legalHeader")}
