@@ -550,10 +550,11 @@ if (recentPositiveRatio >= 0.7) {
     { label: t("dashboard.excellent"), icon: "💎", bg: "#D1FAE5", fg: "#166534" },
   ];
   const satisfactionThresholds = [
-    { label: t("dashboard.toReview"), icon: "🔴", bg: "#FCE4E4", fg: "#DC2626" },
-    { label: t("dashboard.average"), icon: "🟠", bg: "#FEF1DC", fg: "#E89614" },
-    { label: t("dashboard.good"), icon: "🟢", bg: "#E8F5E8", fg: "#16A34A" },
-  ];
+  { label: t("dashboard.toReview"), icon: "🔴", bg: "#FCE4E4", fg: "#DC2626" },
+  { label: t("dashboard.average"), icon: "🟠", bg: "#FEF1DC", fg: "#E89614" },
+  { label: t("dashboard.good"), icon: "🟢", bg: "#E8F5E8", fg: "#16A34A" },
+  { label: t("dashboard.waitingForData"), icon: "⚪", bg: "#F3F4F6", fg: "#9CA3AF" },
+];
   const perceivedValueThresholds = [
     { label: t("dashboard.low"), icon: "🔴", bg: "#FCE4E4", fg: "#DC2626" },
     { label: t("dashboard.average"), icon: "🟠", bg: "#FEF1DC", fg: "#E89614" },
@@ -1000,6 +1001,8 @@ if (recentPositiveRatio >= 0.7) {
                           description: t("dashboard.metricInfo.satisfactionFormula"),
                         },
                       ]}
+                      thresholds={satisfactionThresholds}
+                      thresholdsLabel={t("dashboard.metricInfo.thresholdsLabel")}
                     />
                   </MetricInfoPopover>
                 </div>

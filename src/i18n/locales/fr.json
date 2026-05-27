@@ -356,7 +356,7 @@
       "reviewCountFormula": "Nombre d'avis reçus pour l'établissement actif au cours des 30 derniers jours.",
       "reviewCountSource": "Avis stockés dans la base de données.",
       "validatedResponsesDescription": "Cette métrique calcule combien d'avis l'utilisateur a répondu ou validé, comparé au nombre total d'avis de l'établissement.",
-      "averageRatingFormula": "Moyenne arithmétique de toutes les notes par étoiles non nulles : somme des notes ÷ nombre d'avis notés.",
+      "averageRatingFormula": "Note moyenne = (Somme de toutes les notes par étoiles) ÷ (Nombre total d'avis notés)",
       "averageRatingSource": "Champ de notation de la table des avis. Les avis sans note par étoiles sont exclus.",
       "validatedResponsesFormula": "Response Rate = (Total Responses Given ÷ Total Number of Reviews) × 100",
       "validatedResponsesSource": "Table des réponses",
