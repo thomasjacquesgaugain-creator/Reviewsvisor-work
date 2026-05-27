@@ -353,11 +353,11 @@
       "satisfactionFormula": "Satisfaction Index = (Number of reviews with rating 4 or 5 ÷ Total number of reviews) × 100",
       "globalPerformanceFormula": "Status derived from the current average rating:\nTo improve < 3.0\nAverage 3.0-3.9\nGood 4.0-4.4\nExcellent ≥ 4.5.",
       "globalPerformanceSource": "Computed from Average Rating",
-      "perceivedValueDescription": "Calculation logic:\nA Sentiment Ratio is calculated.\nStatus mapping:\nIf Sentiment Ratio > 0.6 → High\nIf Sentiment Ratio > 0.4 → Average\nOtherwise → Low\nImportant note: the accuracy of this card depends entirely on the predefined keyword arrays.",
-      "perceivedValueFormula": "Sentiment Ratio = Positive Sentiment Count ÷ Negative Sentiment Count",
-      "deliveredExperienceDescription": "Calculation logic:\nThe system first fetches the 10 most recent reviews from the reviews table.\nIt then counts how many are positive reviews (ratings of 4 or 5).",
-      "deliveredExperienceFormula": "Recent Positive Ratio = (Number of recent positive reviews ÷ 10)\nStatus mapping:\nIf ratio > 0.7 → Smooth (Violet)\nIf ratio > 0.4 → Variable (Amber)\nOtherwise → To Review (Red)",
-      "deliveredExperienceSource": "The 10 most recent reviews from the reviews table."
+      "perceivedValueDescription": "For the Perceived Value, a Sentiment Ratio is calculated",
+      "perceivedValueFormula": "Sentiment Ratio = Positive Sentiment Count ÷ Negative Sentiment Count\nIf Sentiment Ratio > 0.6 → High\nIf Sentiment Ratio > 0.4 → Average\nOtherwise → Low",
+      "deliveredExperienceDescription": "For this value, the system fetches the 10 most recent reviews and counts how many of them are positive reviews (ratings of 4 or 5).",
+      "deliveredExperienceFormula": "Recent Positive Ratio = (Number of recent positive reviews ÷ 10)\nIf ratio > 0.7 → Smooth\nIf ratio > 0.4 → Variable\nOtherwise → To Review",
+      "deliveredExperienceSource": "The 10 most recent reviews."
     },
     "good": "Good",
     "excellent": "Excellent",
