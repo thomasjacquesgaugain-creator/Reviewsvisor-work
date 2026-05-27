@@ -345,7 +345,7 @@
       "reviewCountFormula": "Number of reviews received for the active establishment within the last 30 days.",
       "reviewCountSource": "Reviews stored in database.",
       "validatedResponsesDescription": "This metric calculates how many reviews the user has responded to or validated compared to the total number of reviews for the establishment.",
-      "averageRatingFormula": "Average Rating = (Sum of all star ratings) ÷ (Total number of rated reviews) ",
+      "averageRatingFormula": "Average Rating = (Sum of all star ratings) ÷ (Total number of rated reviews)",
       "averageRatingSource": "Rating field from the reviews table. Reviews without a star rating are excluded.",
       "validatedResponsesFormula": "Response Rate = (Total Responses Given ÷ Total Number of Reviews) × 100",
       "validatedResponsesSource": "Responses table",
