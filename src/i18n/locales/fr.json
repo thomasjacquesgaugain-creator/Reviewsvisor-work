@@ -362,7 +362,7 @@
       "validatedResponsesSource": "Table des réponses",
       "satisfactionDescription": "Le pourcentage de l'indice de satisfaction est calculé en fonction du nombre d'avis positifs (notes de 4 ou 5) comparé au nombre total d'avis dans la base de données.",
       "satisfactionFormula": "Indice de satisfaction = (Nombre d'avis notés 4 ou 5 ÷ Nombre total d'avis) × 100",
-      "globalPerformanceFormula": "Statut dérivé de la note moyenne actuelle :\nÀ améliorer < 3,0\nMoyen 3,0 - 3,9\nBon 4,0 - 4,4\nExcellent ≥ 4,5.",
+      "globalPerformanceFormula": "Note moyenne = Somme totale des notes ÷ Nombre total d'avis\nSi Note moyenne < 3,0 → À améliorer\nSi Note moyenne ≥ 3,0 et < 4,0 → Moyen\nSi ​​Note moyenne ≥ 4,0 et < 4,5 → Bon\nSinon → Excellent",
       "globalPerformanceSource": "Calculé à partir de la Note moyenne",
       "perceivedValueDescription": "Pour la Valeur perçue, un Ratio de sentiment est calculé",
       "perceivedValueFormula": "Ratio de sentiment = Nombre de sentiments positifs ÷ Nombre de sentiments négatifs\nSi Ratio de sentiment > 0,6 → Élevé\nSi Ratio de sentiment > 0,4 ​​→ Moyen\nSinon → Faible",

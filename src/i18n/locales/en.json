@@ -351,7 +351,7 @@
       "validatedResponsesSource": "Responses table",
       "satisfactionDescription": "The Satisfaction Index percentage is calculated based on the number of positive reviews (ratings of 4 or 5) compared to the total number of reviews in the database.",
       "satisfactionFormula": "Satisfaction Index = (Number of reviews with rating 4 or 5 ÷ Total number of reviews) × 100",
-      "globalPerformanceFormula": "Status derived from the current average rating:\nTo improve < 3.0\nAverage 3.0-3.9\nGood 4.0-4.4\nExcellent ≥ 4.5.",
+      "globalPerformanceFormula": "Average Rating = Total Rating Sum ÷ Total Reviews\nIf Average Rating < 3.0 → To Improve\nIf Average Rating ≥ 3.0 and < 4.0 → Average\nIf Average Rating ≥ 4.0 and < 4.5 → Good\nOtherwise → Excellent",
       "globalPerformanceSource": "Computed from Average Rating",
       "perceivedValueDescription": "For the Perceived Value, a Sentiment Ratio is calculated",
       "perceivedValueFormula": "Sentiment Ratio = Positive Sentiment Count ÷ Negative Sentiment Count\nIf Sentiment Ratio > 0.6 → High\nIf Sentiment Ratio > 0.4 → Average\nOtherwise → Low",
