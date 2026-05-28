@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import type { Etab } from "@/types/etablissement";
 import { useTranslation } from "react-i18next";
 
-const MONTHLY_AVERAGE_REVIEWS = 66; // TODO: replace with dynamic value
+const MONTHLY_AVERAGE_REVIEWS = 66;
 
 function getRecommendedTier(avgReviews: number): TierKey {
   if (avgReviews <= 25)  return "basic";
@@ -88,11 +88,19 @@ interface Props {
   open: boolean;
   onClose: () => void;
   establishment: Etab | null;
+  reviewCountLast12Months?: number | null;
 }
 
-export function PlanSelectionModal({ open, onClose, establishment }: Props) {
+export function PlanSelectionModal({
+  open,
+  onClose,
+  establishment,
+  reviewCountLast12Months,
+}: Props) {
   const { t,i18n } = useTranslation();
-  const recommendedTier = getRecommendedTier(MONTHLY_AVERAGE_REVIEWS);
+  const recommendedTier = getRecommendedTier(
+    reviewCountLast12Months != null ? reviewCountLast12Months / 12 : MONTHLY_AVERAGE_REVIEWS
+  );
 
   const defaultPlan = subscriptionPlans.find(
     (p) => p.tier === recommendedTier && p.billing === "annual"

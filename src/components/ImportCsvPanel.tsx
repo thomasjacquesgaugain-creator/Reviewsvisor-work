@@ -235,7 +235,7 @@ const mapStarRating = (rating: string) => {
 
             return {
               ...review,
-              source: "CSV"
+              source: "Google"
             };
           });
 

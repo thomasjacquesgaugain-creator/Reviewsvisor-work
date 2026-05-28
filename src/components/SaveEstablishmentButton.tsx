@@ -25,11 +25,13 @@ export default function SaveEstablishmentButton({
   selected,
   disabled,
   onSaveSuccess,
+  postSaveLoading = false,
 }: {
   selected: Etab | null;
   disabled?: boolean;
   // onSaveSuccess?: () => void;
   onSaveSuccess?: (savedEtab: Etab) => void;
+  postSaveLoading?: boolean;
 }) {
   const [isAlreadySaved, setIsAlreadySaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -416,6 +418,7 @@ export default function SaveEstablishmentButton({
         disabled={
           !selected ||
           disabled ||
+          postSaveLoading ||
           saving ||
           isAlreadySaved ||
           checkingSubscription
@@ -426,7 +429,12 @@ export default function SaveEstablishmentButton({
             : t("subscription.saveEstablishment")
         }
       >
-        {checkingSubscription ? (
+        {postSaveLoading ? (
+          <span className="flex items-center justify-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            {t("common.loading")}
+          </span>
+        ) : checkingSubscription ? (
           <span className="flex items-center justify-center gap-2">
             <Loader2 className="h-5 w-5 animate-spin" />
             {t("common.checking")}
