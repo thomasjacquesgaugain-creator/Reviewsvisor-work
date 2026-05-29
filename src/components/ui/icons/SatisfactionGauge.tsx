@@ -185,14 +185,14 @@ export const SatisfactionGauge: React.FC<SatisfactionGaugeProps> = ({
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 5,
-            padding: '7px 16px',
+            gap: 8,
+            padding: '10px 22px',
             borderRadius: 999,
             background: statusColor,
             color: '#fff',
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: 700,
-            marginBottom: 10,
+            marginBottom: 50,
           }}
         >
           {valueText} · {status}
