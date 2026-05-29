@@ -932,8 +932,8 @@ if (recentPositiveRatio >= 0.7) {
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: 5,
-                    padding: "7px 16px",
+                    gap: 8,
+                    padding: "10px 22px",
                     borderRadius: 999,
                     background:
                       metrics.globalPerformance.color === "green"
@@ -944,16 +944,16 @@ if (recentPositiveRatio >= 0.7) {
                         ? "rgb(220, 38, 38)"
                         : "rgb(156, 163, 175)",
                     color: "rgb(255, 255, 255)",
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: 700,
-                    marginBottom: 10,
+                    marginBottom: 50,
                   }}
                 >
-                  <PerformanceIcon className="h-[18px] w-[18px] text-white" />
+                  <PerformanceIcon className="h-[22px] w-[22px] text-white" />
                   {avgRating >= 4.5 && (
                     <span className="text-[12px] font-bold leading-none text-yellow-300">★</span>
                   )}
-                  <span className="text-[12px] font-bold leading-none text-white">
+                  <span className="text-[14px] font-bold leading-none text-white">
                     {metrics.globalPerformance.label}
                   </span>
                 </div>
@@ -1071,8 +1071,8 @@ if (recentPositiveRatio >= 0.7) {
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: 5,
-                      padding: "7px 16px",
+                      gap: 8,
+                      padding: "10px 22px",
                       borderRadius: 999,
                       background:
                         metrics.perceivedValue.color === "green"
@@ -1083,13 +1083,13 @@ if (recentPositiveRatio >= 0.7) {
                           ? "rgb(220, 38, 38)"
                           : "rgb(156, 163, 175)",
                       color: "rgb(255, 255, 255)",
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: 700,
-                      marginBottom: 10,
+                      marginBottom: 50,
                     }}
                   >
-                    <HeartHandshake className="h-[18px] w-[18px] text-white" />
-                    <span className="text-[12px] font-bold leading-none text-white">
+                    <HeartHandshake className="h-[22px] w-[22px] text-white" />
+                    <span className="text-[14px] font-bold leading-none text-white">
                       {metrics.perceivedValue.label}
                     </span>
                   </div>
@@ -1174,8 +1174,8 @@ if (recentPositiveRatio >= 0.7) {
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: 5,
-                      padding: "7px 16px",
+                      gap: 8,
+                      padding: "10px 22px",
                       borderRadius: 999,
                       background:
                         metrics.deliveredExperience.color === "green"
@@ -1186,13 +1186,13 @@ if (recentPositiveRatio >= 0.7) {
                           ? "rgb(220, 38, 38)"
                           : "rgb(156, 163, 175)",
                       color: "rgb(255, 255, 255)",
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: 700,
-                      marginBottom: 10,
+                      marginBottom: 50,
                     }}
                   >
-                    <ClipboardCheck className="h-[18px] w-[18px] text-white" />
-                    <span className="text-[12px] font-bold leading-none text-white">
+                    <ClipboardCheck className="h-[22px] w-[22px] text-white" />
+                    <span className="text-[14px] font-bold leading-none text-white">
                       {metrics.deliveredExperience.label}
                     </span>
                   </div>
