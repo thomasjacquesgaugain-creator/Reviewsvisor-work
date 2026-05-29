@@ -15,8 +15,6 @@ import { toast } from "sonner";
 import type { Etab } from "@/types/etablissement";
 import { useTranslation } from "react-i18next";
 
-const MONTHLY_AVERAGE_REVIEWS = 66;
-
 function getRecommendedTier(avgReviews: number): TierKey {
   if (avgReviews <= 25)  return "basic";
   if (avgReviews <= 50)  return "standard";
@@ -99,7 +97,7 @@ export function PlanSelectionModal({
 }: Props) {
   const { t,i18n } = useTranslation();
   const recommendedTier = getRecommendedTier(
-    reviewCountLast12Months != null ? reviewCountLast12Months / 12 : MONTHLY_AVERAGE_REVIEWS
+    reviewCountLast12Months != null ? reviewCountLast12Months / 12 : 10
   );
 
   const defaultPlan = subscriptionPlans.find(

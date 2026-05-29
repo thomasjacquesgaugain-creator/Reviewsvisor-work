@@ -170,6 +170,34 @@ serve(async (req) => {
     throw subscriptionError;
   }
 
+  if (establishmentId) {
+  const { error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .upsert(
+      {
+        user_id: userId,
+        current_establishment_id: establishmentId,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "user_id",
+      }
+    );
+
+  if (profileError) {
+    logStep("Error updating current establishment", {
+      error: profileError.message,
+      userId,
+      establishmentId,
+    });
+  } else {
+    logStep("Current establishment updated", {
+      userId,
+      establishmentId,
+    });
+  }
+}
+
   await supabaseAdmin.from("user_entitlements").upsert(
     {
       user_id: userId,

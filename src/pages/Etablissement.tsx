@@ -175,13 +175,13 @@ export default function EtablissementPage() {
       const payload = typeof data === "string" ? JSON.parse(data) : data;
       const count = Number(payload?.last12MonthsReviewsCount ?? payload?.total ?? 0) || 0;
       setReviewCountLast12Months(count);
+      setShowPlanModal(true);
     } catch (error) {
       console.error("Failed to fetch review count for subscription recommendation:", error);
       setReviewCountLast12Months(null);
     } finally {
       setFetchingReviewCount(false);
       resetSearchAndClose();
-      setShowPlanModal(true);
     }
   };
 
