@@ -32,6 +32,8 @@ export default function EtablissementPage() {
   const [showReviewsVisual, setShowReviewsVisual] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [savedEtabForPlan, setSavedEtabForPlan] = useState<Etab | null>(null);
+  const [reviewCountLast12Months, setReviewCountLast12Months] = useState<number | null>(null);
+  const [fetchingReviewCount, setFetchingReviewCount] = useState(false);
 
   const [isEstablishmentBeingAdded, setIsEstablishmentBeingAdded] =
     useState(false);
@@ -147,10 +149,41 @@ export default function EtablissementPage() {
   };
 
   const handleEstablishmentSaved = async (savedEtab: Etab) => {
-  resetSearchAndClose();
-  setSavedEtabForPlan(savedEtab);
-  setShowPlanModal(true);
-};
+    setSavedEtabForPlan(savedEtab);
+    setReviewCountLast12Months(null);
+    setFetchingReviewCount(true);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const { data, error } = await supabase.functions.invoke(
+        "outscraper-google-reviews-count",
+        {
+          body: {
+            placeId: savedEtab.place_id,
+            name: savedEtab.name,
+            address: savedEtab.address,
+          },
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        },
+      );
+
+      if (error) throw error;
+
+      const payload = typeof data === "string" ? JSON.parse(data) : data;
+      const count = Number(payload?.last12MonthsReviewsCount ?? payload?.total ?? 0) || 0;
+      setReviewCountLast12Months(count);
+      setShowPlanModal(true);
+    } catch (error) {
+      console.error("Failed to fetch review count for subscription recommendation:", error);
+      setReviewCountLast12Months(null);
+    } finally {
+      setFetchingReviewCount(false);
+      resetSearchAndClose();
+    }
+  };
 
   // Mapping des erreurs Google Places
   function mapPlacesStatus(
@@ -623,6 +656,7 @@ export default function EtablissementPage() {
                 selected={selected}
                 // onSaveSuccess={resetSearchAndClose}
                 onSaveSuccess={handleEstablishmentSaved}
+                postSaveLoading={fetchingReviewCount}
               />
             </div>
 
@@ -719,6 +753,7 @@ export default function EtablissementPage() {
         open={showPlanModal}
         onClose={() => setShowPlanModal(false)}
         establishment={savedEtabForPlan}
+        reviewCountLast12Months={reviewCountLast12Months}
       />
     </div>
   );
