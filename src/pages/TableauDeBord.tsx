@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, CheckCircle, ArrowDownRight, Minus, Award, Plus, Loader2, Info, Smile, HeartHandshake, ClipboardCheckIcon, ClipboardCheck } from "lucide-react";
+import { Upload, BarChart3, Clock, TrendingUp, User, LogOut, Home, Building, Target, Bell, MessageCircle, Star, ArrowUp, CheckCircle, ArrowDownRight, Minus, Award, Plus, Loader2, Info, Smile, HeartHandshake, ClipboardCheck } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -17,9 +17,156 @@ import { extractOriginalText } from "@/utils/extractOriginalText";
 import { getEstablishmentTypeTranslationKey } from "@/utils/establishmentTypeMapping";
 import { AppPageBackground } from "@/components/AppPageBackground";
 import { useAuth } from "@/contexts/AuthProvider";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { MetricInfoPopover } from "@/components/ui/MetricInfoPopover";
+import { PerformanceIcon } from "@/components/ui/icons/PerformanceIcon";
+import { SatisfactionGauge } from "@/components/ui/icons/SatisfactionGauge";
 import { subMonths, parseISO } from "date-fns";
+
+type MetricInfoLine = {
+  title: string;
+  description: string;
+  weight?: string;
+};
+
+type ThresholdPill = {
+  label: string;
+  icon: string;
+  bg: string;
+  fg: string;
+};
+
+function MetricInfoContent({
+  heading,
+  lines,
+  thresholds,
+  thresholdsLabel,
+  note,
+  footer,
+}: {
+  heading: string;
+  lines: MetricInfoLine[];
+  thresholds?: ThresholdPill[];
+  thresholdsLabel?: string;
+  note?: ReactNode;
+  footer?: ReactNode;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Info size={14} className="text-indigo-500" />
+        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          {heading}
+        </h4>
+      </div>
+
+      <div className="space-y-3">
+        {lines.map((line) => (
+          <div key={line.title} className="space-y-1">
+            <p className="text-[13px] font-bold text-[#15151f] dark:text-slate-100">
+              {line.title}
+              {line.weight ? (
+                <span className="font-bold text-[#4F46E5]"> {line.weight}</span>
+              ) : null}
+            </p>
+            {line.description.includes("\n") ? (
+              <div className="space-y-1 text-xs leading-5 text-[#6b6b85] dark:text-slate-300">
+                {(() => {
+                  const [intro, ...rest] = line.description
+                    .split("\n")
+                    .map((item) => item.trim())
+                    .filter(Boolean);
+
+                  return (
+                    <>
+                      {intro ? <p>{intro}</p> : null}
+                      {rest.length > 0 ? (
+                        <ul className="space-y-1">
+                          {rest.map((item) => (
+                            <li key={item} className="flex gap-2">
+                              <span
+                                aria-hidden="true"
+                                className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#4F46E5]"
+                              />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </>
+                  );
+                })()}
+              </div>
+            ) : (
+              <p className="text-xs leading-5 text-[#6b6b85] dark:text-slate-300">
+                {line.description}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {thresholds ? (
+        <div className="border-t border-dashed border-slate-200 pt-3 dark:border-slate-700">
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {thresholdsLabel ?? "Thresholds"}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {thresholds.map((threshold) => (
+              <span
+                key={threshold.label}
+                className="inline-flex items-center justify-center gap-1.5 rounded-full px-[8px] py-[3px] text-[10px] font-bold leading-none"
+                style={{ backgroundColor: threshold.bg, color: threshold.fg }}
+              >
+                <span
+                  aria-hidden="true"
+                  className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center leading-none"
+                >
+                  {threshold.icon}
+                </span>
+                {threshold.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {note ? (
+        <div className="border-t border-dashed border-slate-200 pt-3 dark:border-slate-700">
+          <p className="text-xs italic leading-5 text-slate-500 dark:text-slate-400">
+            {note}
+          </p>
+        </div>
+      ) : null}
+
+      {footer ? (
+        <div className="border-t border-slate-200 pt-3 text-[10px] text-slate-400 dark:border-slate-700 dark:text-slate-500">
+          {footer}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function MetricCardHeader({
+  title,
+  info,
+  titleClassName = "text-xl font-bold text-gray-900 dark:text-slate-100",
+  className = "flex items-center justify-between gap-3",
+}: {
+  title: string;
+  info: ReactNode;
+  titleClassName?: string;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <h3 className={titleClassName}>
+        {title}
+      </h3>
+      {info}
+    </div>
+  );
+}
 
 
 const Dashboard = () => {
@@ -395,6 +542,37 @@ if (recentPositiveRatio >= 0.7) {
   }
 
   const displayName = authDisplayName || t("dashboard.user");
+  const metricInfoHeading = t("dashboard.metricInfo.heading");
+  const performanceThresholds = [
+    { label: t("dashboard.toImprove"), icon: "🔴", bg: "#FCE4E4", fg: "#DC2626" },
+    { label: t("dashboard.average"), icon: "🟠", bg: "#FEF1DC", fg: "#E89614" },
+    { label: t("dashboard.good"), icon: "🟢", bg: "#E8F5E8", fg: "#16A34A" },
+    { label: t("dashboard.excellent"), icon: "💎", bg: "#D1FAE5", fg: "#166534" },
+  ];
+  const satisfactionThresholds = [
+  { label: t("dashboard.toReview"), icon: "🔴", bg: "#FCE4E4", fg: "#DC2626" },
+  { label: t("dashboard.average"), icon: "🟠", bg: "#FEF1DC", fg: "#E89614" },
+  { label: t("dashboard.good"), icon: "🟢", bg: "#E8F5E8", fg: "#16A34A" },
+  { label: t("dashboard.waitingForData"), icon: "⚪", bg: "#F3F4F6", fg: "#9CA3AF" },
+];
+  const perceivedValueThresholds = [
+    { label: t("dashboard.low"), icon: "🔴", bg: "#FCE4E4", fg: "#DC2626" },
+    { label: t("dashboard.average"), icon: "🟠", bg: "#FEF1DC", fg: "#E89614" },
+    { label: t("dashboard.high"), icon: "🟢", bg: "#E8F5E8", fg: "#16A34A" },
+  ];
+  const deliveredExperienceThresholds = [
+    { label: t("dashboard.toReview"), icon: "🔴", bg: "#FCE4E4", fg: "#DC2626" },
+    { label: t("dashboard.variable"), icon: "🟠", bg: "#FEF1DC", fg: "#E89614" },
+    { label: t("dashboard.smooth"), icon: "🟢", bg: "#E8F5E8", fg: "#16A34A" },
+  ];
+  const hasReviewData = allReviews.length > 0;
+  const satisfactionStatus = !hasReviewData
+    ? { label: t("dashboard.waitingForData"), color: "#9CA3AF" }
+    : metrics.satisfactionIndex.percentage >= 80
+    ? { label: t("dashboard.good"), color: "#16A34A" }
+    : metrics.satisfactionIndex.percentage >= 60
+    ? { label: t("dashboard.average"), color: "#E89614" }
+    : { label: t("dashboard.toReview"), color: "#DC2626" };
 
   return (
     <div className="app-page-shell">
@@ -462,17 +640,42 @@ if (recentPositiveRatio >= 0.7) {
                 
                 <div className="grid md:grid-cols-2 gap-4">
                   <Card className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-slate-900 border border-blue-100 dark:border-blue-900/40 rounded-xl">
-                    <CardContent className="p-4 flex items-center gap-3">
-                      <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center border-2 border-blue-300 shadow-md">
-                        <MessageCircle className="w-5 h-5 text-white" />
-                      </div>
-                   <div>
-                        <p className="font-medium text-gray-900 dark:text-slate-100">
-                          {recentReviewsCount} {t("dashboard.reviews")}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-slate-400">
-                          {t("dashboard.reviewsReceivedLast30Days")}
-                        </p>
+                    <CardContent className="p-4 space-y-3">
+                      <MetricCardHeader
+                        title={t("dashboard.metricInfo.reviewCountCardTitle")}
+                        titleClassName="text-sm font-semibold text-gray-900 dark:text-slate-100"
+                        className="flex items-center gap-2"
+                        info={
+                          <MetricInfoPopover
+                            ariaLabel={`${metricInfoHeading} - ${t("dashboard.metricInfo.reviewCountCardTitle")}`}
+                            side="bottom"
+                            align="center"
+                          >
+                            <MetricInfoContent
+                              heading={metricInfoHeading}
+                              lines={[
+                                {
+                                  title: t("dashboard.metricInfo.description"),
+                                  description: t("dashboard.metricInfo.reviewCountFormula"),
+                                },
+                              ]}
+                            />
+                          </MetricInfoPopover>
+                        }
+                      />
+
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full border-2 border-blue-300 bg-blue-600 shadow-md flex items-center justify-center">
+                          <MessageCircle className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-slate-100">
+                            {recentReviewsCount} {t("dashboard.reviews")}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-slate-400">
+                            {t("dashboard.reviewsReceivedLast30Days")}
+                          </p>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -484,7 +687,35 @@ if (recentPositiveRatio >= 0.7) {
                           ? "bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-950/40 dark:to-slate-900 border-orange-200 dark:border-orange-900/50"
                           : "bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/40 dark:to-slate-900 border-red-200 dark:border-red-900/50"
                       }`}>
-                    <CardContent className="p-4 flex items-center gap-3">
+                      <CardContent className="p-4 space-y-3">
+                        <MetricCardHeader
+                          title={t("dashboard.metricInfo.averageRatingCardTitle")}
+                          titleClassName="text-sm font-semibold text-gray-900 dark:text-slate-100"
+                          className="flex items-center gap-2"
+                          info={
+                            <MetricInfoPopover
+                              ariaLabel={`${metricInfoHeading} - ${t("dashboard.metricInfo.averageRatingCardTitle")}`}
+                              side="bottom"
+                              align="center"
+                            >
+                              <MetricInfoContent
+                                heading={metricInfoHeading}
+                                lines={[
+                                  {
+                                    title: t("dashboard.metricInfo.formula"),
+                                    description: t("dashboard.metricInfo.averageRatingFormula"),
+                                  },
+                                  // {
+                                  //   title: t("dashboard.metricInfo.source"),
+                                  //   description: t("dashboard.metricInfo.averageRatingSource"),
+                                  // },
+                                ]}
+                              />
+                            </MetricInfoPopover>
+                          }
+                        />
+
+                        <div className="flex items-center gap-3">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-md ${
                           avgRating >= 4
                             ? "bg-green-600 border-green-300"
@@ -512,6 +743,7 @@ if (recentPositiveRatio >= 0.7) {
                           icon={<Star size={16} className="text-primary" />}
                         />
                       </div> */}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -524,30 +756,59 @@ if (recentPositiveRatio >= 0.7) {
                                       : "bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/40 dark:to-slate-900 border-red-200 dark:border-red-900/50"
                                     : "bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-950/40 dark:to-slate-900 border-gray-200 dark:border-gray-900/50"
                                 }`}>
-                    <CardContent className="p-4 flex items-center gap-3">
-                      <div
-                        className={`w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-md ${
-                          totalReviewsForEstablishment > 0
-                            ? (validatedResponsesCount / totalReviewsForEstablishment) * 100 >= 80
-                              ? "bg-green-600 border-green-300"
-                              : (validatedResponsesCount / totalReviewsForEstablishment) * 100 >= 60
-                              ? "bg-orange-500 border-orange-300"
-                              : "bg-red-500 border-red-300"
-                            : "bg-gray-500 border-gray-300"
-                        }`}
-                      >
-                        <CheckCircle className="w-5 h-5 text-white" />
-                      </div>
+                    <CardContent className="p-4 space-y-3">
+                      <MetricCardHeader
+                        title={t("dashboard.metricInfo.validatedResponsesCardTitle")}
+                        titleClassName="text-sm font-semibold text-gray-900 dark:text-slate-100"
+                        className="flex items-center gap-2"
+                        info={
+                          <MetricInfoPopover
+                            ariaLabel={`${metricInfoHeading} - ${t("dashboard.metricInfo.validatedResponsesCardTitle")}`}
+                            side="bottom"
+                            align="center"
+                          >
+                            <MetricInfoContent
+                              heading={metricInfoHeading}
+                              lines={[
+                                {
+                                  title: t("dashboard.metricInfo.description"),
+                                  description: t("dashboard.metricInfo.validatedResponsesDescription"),
+                                },
+                                {
+                                  title: t("dashboard.metricInfo.formula"),
+                                  description: t("dashboard.metricInfo.validatedResponsesFormula"),
+                                },
+                              ]}
+                            />
+                          </MetricInfoPopover>
+                        }
+                      />
 
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-slate-100">
-                          {validatedResponsesCount}/{totalReviewsForEstablishment}{" "}
-                          {t("dashboard.responses")} {t("dashboard.validated")}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-md ${
+                            totalReviewsForEstablishment > 0
+                              ? (validatedResponsesCount / totalReviewsForEstablishment) * 100 >= 80
+                                ? "bg-green-600 border-green-300"
+                                : (validatedResponsesCount / totalReviewsForEstablishment) * 100 >= 60
+                                ? "bg-orange-500 border-orange-300"
+                                : "bg-red-500 border-red-300"
+                              : "bg-gray-500 border-gray-300"
+                          }`}
+                        >
+                          <CheckCircle className="w-5 h-5 text-white" />
+                        </div>
 
-                        <p className="text-sm text-gray-600 dark:text-slate-400">
-                          {t("dashboard.responses")}
-                        </p>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-slate-100">
+                            {validatedResponsesCount}/{totalReviewsForEstablishment}{" "}
+                            {t("dashboard.responses")} {t("dashboard.validated")}
+                          </p>
+
+                          <p className="text-sm text-gray-600 dark:text-slate-400">
+                            {t("dashboard.responses")}
+                          </p>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -560,28 +821,56 @@ if (recentPositiveRatio >= 0.7) {
                         : "bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/40 dark:to-slate-900 border-red-200 dark:border-red-900/50"
                     }`}
                   >
-                    <CardContent className="p-4 flex items-center gap-3">
-                      <div
-                        className={`w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-md ${
-                          metrics.satisfactionIndex.percentage >= 80
-                            ? "bg-green-600 border-green-300"
-                            : metrics.satisfactionIndex.percentage >= 60
-                            ? "bg-orange-500 border-orange-300"
-                            : "bg-red-500 border-red-300"
-                        }`}
-                      >
-                        <Smile className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-slate-100">
-                          {allReviews.length > 0 
-                            ? `${Math.round(metrics.satisfactionIndex.percentage)}%`
-                            : t("dashboard.satisfaction")
-                          }
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-slate-400">
-                          {allReviews.length > 0 ? t("dashboard.satisfactionIndex") : t("dashboard.waitingForReviews")}
-                        </p>
+                    <CardContent className="p-4 space-y-3">
+                      <MetricCardHeader
+                        title={t("dashboard.metricInfo.satisfactionCardTitle")}
+                        titleClassName="text-sm font-semibold text-gray-900 dark:text-slate-100"
+                        className="flex items-center gap-2"
+                        info={
+                          <MetricInfoPopover
+                            ariaLabel={`${metricInfoHeading} - ${t("dashboard.metricInfo.satisfactionCardTitle")}`}
+                            side="bottom"
+                            align="center"
+                          >
+                            <MetricInfoContent
+                              heading={metricInfoHeading}
+                              lines={[
+                                {
+                                  title: t("dashboard.metricInfo.description"),
+                                  description: t("dashboard.metricInfo.satisfactionDescription"),
+                                },
+                                {
+                                  title: t("dashboard.metricInfo.formula"),
+                                  description: t("dashboard.metricInfo.satisfactionFormula"),
+                                },
+                              ]}
+                            />
+                          </MetricInfoPopover>
+                        }
+                      />
+
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-md ${
+                            metrics.satisfactionIndex.percentage >= 80
+                              ? "bg-green-600 border-green-300"
+                              : metrics.satisfactionIndex.percentage >= 60
+                              ? "bg-orange-500 border-orange-300"
+                              : "bg-red-500 border-red-300"
+                          }`}
+                        >
+                          <Smile className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-slate-100">
+                            {allReviews.length > 0
+                              ? `${Math.round(metrics.satisfactionIndex.percentage)}%`
+                              : t("dashboard.satisfaction")}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-slate-400">
+                            {allReviews.length > 0 ? t("dashboard.satisfactionIndex") : t("dashboard.waitingForReviews")}
+                          </p>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -591,234 +880,343 @@ if (recentPositiveRatio >= 0.7) {
 
           <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto pt-6 pb-0">
             {/* Performance globale */}
-            <Card className="bg-white/80 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-lg dark:shadow-black/30 rounded-2xl p-6">
-            <CardContent className="p-0 space-y-4">
-              <div
-                className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                  metrics.globalPerformance.color === "green"
-                    ? "bg-green-100 dark:bg-green-900/30"
-                    : metrics.globalPerformance.color === "orange"
-                    ? "bg-orange-100 dark:bg-orange-900/30"
-                    : metrics.globalPerformance.color === "red"
-                    ? "bg-red-100 dark:bg-red-900/30"
-                    : "bg-gray-100 dark:bg-gray-900/30"
-                }`}
-              >
-                <Award
-                  className={`w-6 h-6 ${
-                    metrics.globalPerformance.color === "green"
-                      ? "text-green-600"
-                      : metrics.globalPerformance.color === "orange"
-                      ? "text-orange-500"
-                      : metrics.globalPerformance.color === "red"
-                      ? "text-red-500"
-                      : "text-gray-500"
-                  }`}
-                />
+            <Card className="bg-transparent border-0 shadow-none rounded-2xl">
+            <CardContent
+              className="relative flex flex-col items-center text-center"
+              style={{
+                background: "linear-gradient(135deg, #F7F1F9 0%, #EFEEFA 50%, #ECEFF8 100%)",
+                borderRadius: 16,
+                padding: "16px 12px 14px",
+                minHeight: 338,
+                boxShadow: "0 6px 24px rgba(0,0,0,0.06)",
+                height: "100%",
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              }}
+            >
+              <div className="absolute right-3 top-3 z-10">
+                <MetricInfoPopover
+                  ariaLabel={`${metricInfoHeading} - ${t("dashboard.globalPerformance")}`}
+                  side="bottom"
+                  align="center"
+                >
+                  <MetricInfoContent
+                    heading={metricInfoHeading}
+                    lines={[
+                      {
+                        title: t("dashboard.metricInfo.formula"),
+                        description: t("dashboard.metricInfo.globalPerformanceFormula"),
+                      },
+                      {
+                        title: t("dashboard.metricInfo.source"),
+                        description: t("dashboard.metricInfo.globalPerformanceSource"),
+                      },
+                    ]}
+                    thresholds={performanceThresholds}
+                    thresholdsLabel={t("dashboard.metricInfo.thresholdsLabel")}
+                  />
+                </MetricInfoPopover>
               </div>
 
-              <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+              <div className="mb-[10px] flex h-[84px] items-center justify-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F3E8FE]">
+                  <PerformanceIcon className="h-6 w-6 text-[#8B5CF6]" />
+                </div>
+              </div>
+
+              <div className="mb-[10px] flex min-h-8 items-center justify-center text-[20px] font-bold leading-[1.2] text-[#15151f]">
                 {t("dashboard.globalPerformance")}
-              </h3>
+              </div>
 
-              {/* Badge central */}
-              <div className="flex justify-center">
+              <div className="mt-auto flex w-full flex-col items-center">
                 <div
-                  className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
-                    metrics.globalPerformance.color === "green"
-                      ? "bg-green-600"
-                      : metrics.globalPerformance.color === "orange"
-                      ? "bg-orange-500"
-                      : metrics.globalPerformance.color === "red"
-                      ? "bg-red-500"
-                      : "bg-gray-400"
-                  }`}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "10px 22px",
+                    borderRadius: 999,
+                    background:
+                      metrics.globalPerformance.color === "green"
+                        ? "rgb(22, 163, 74)"
+                        : metrics.globalPerformance.color === "orange"
+                        ? "rgb(249, 115, 22)"
+                        : metrics.globalPerformance.color === "red"
+                        ? "rgb(220, 38, 38)"
+                        : "rgb(156, 163, 175)",
+                    color: "rgb(255, 255, 255)",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    marginBottom: 50,
+                  }}
                 >
-                  <Award className="w-5 h-5 text-white" />
-
+                  <PerformanceIcon className="h-[22px] w-[22px] text-white" />
                   {avgRating >= 4.5 && (
-                    <span className="text-yellow-300 text-lg">★</span>
+                    <span className="text-[12px] font-bold leading-none text-yellow-300">★</span>
                   )}
-
-                  <span className="text-white font-semibold text-base">
+                  <span className="text-[14px] font-bold leading-none text-white">
                     {metrics.globalPerformance.label}
                   </span>
                 </div>
-              </div>
 
-              <p className="text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
-                {t("dashboard.basedOnRating")}
-              </p>
+                <p
+                  className="w-full text-[11px]"
+                  style={{
+                    lineHeight: 1.45,
+                    textAlign: "justify",
+                    textAlignLast: "left",
+                    textJustify: "inter-word",
+                    color: "#6b6b85",
+                    hyphens: "auto",
+                    display: "-webkit-box",
+                    WebkitBoxOrient: "vertical",
+                    WebkitLineClamp: 3,
+                    overflow: "hidden",
+                    minHeight: "4.35em",
+                    maxHeight: "4.35em",
+                  }}
+                >
+                  {t("dashboard.basedOnRating")}
+                </p>
+              </div>
             </CardContent>
             </Card>
-
             {/* Indice de satisfaction */}
-            <Card className="bg-white/80 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-lg dark:shadow-black/30 rounded-2xl p-6">
-              <CardContent className="p-0 space-y-4">
-                <div
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                    metrics.satisfactionIndex.percentage >= 80
-                      ? "bg-green-100 dark:bg-green-900/30"
-                      : metrics.satisfactionIndex.percentage >= 60
-                      ? "bg-orange-100 dark:bg-orange-900/30"
-                      : "bg-red-100 dark:bg-red-900/30"
-                  }`}
-                >
-                  <Star
-                    className={`w-6 h-6 ${
-                      metrics.satisfactionIndex.percentage >= 80
-                        ? "text-green-600"
-                        : metrics.satisfactionIndex.percentage >= 60
-                        ? "text-orange-500"
-                        : "text-red-500"
-                    }`}
-                  />
-                </div>
-
-                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">
-                  {t("dashboard.satisfactionIndex")}
-                </h3>
-
-                {/* Badge central */}
-                <div className="flex justify-center">
-                  <div
-                    className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
-                      metrics.satisfactionIndex.percentage >= 80
-                        ? "bg-green-600"
-                        : metrics.satisfactionIndex.percentage >= 60
-                        ? "bg-orange-500"
-                        : "bg-red-500"
-                    }`}
+            <Card className="bg-transparent border-0 shadow-none rounded-2xl">
+              <CardContent className="relative p-0">
+                <div className="absolute right-3 top-3 z-10">
+                  <MetricInfoPopover
+                    ariaLabel={`${metricInfoHeading} - ${t("dashboard.satisfactionIndex")}`}
+                    side="bottom"
+                    align="center"
                   >
-                    <Star className="w-5 h-5 text-white" />
-
-                    <span className="text-white font-semibold text-base">
-                      {allReviews.length > 0
-                        ? `${metrics.satisfactionIndex.percentage}%`
-                        : "0%"}
-                    </span>
-                  </div>
+                    <MetricInfoContent
+                      heading={metricInfoHeading}
+                      lines={[
+                        {
+                          title: t("dashboard.metricInfo.description"),
+                          description: t("dashboard.metricInfo.satisfactionDescription"),
+                        },
+                        {
+                          title: t("dashboard.metricInfo.formula"),
+                          description: t("dashboard.metricInfo.satisfactionFormula"),
+                        },
+                      ]}
+                      thresholds={satisfactionThresholds}
+                      thresholdsLabel={t("dashboard.metricInfo.thresholdsLabel")}
+                    />
+                  </MetricInfoPopover>
                 </div>
 
-                <p className="text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
-                  {t("dashboard.identifyProblems")}
-                </p>
+                <SatisfactionGauge
+                  value={hasReviewData ? metrics.satisfactionIndex.percentage : null}
+                  label={t("dashboard.satisfactionIndex")}
+                  status={satisfactionStatus.label}
+                  statusColor={satisfactionStatus.color}
+                  description={t("dashboard.identifyProblems")}
+                  fallbackText={t("common.noData")}
+                />
               </CardContent>
             </Card>
 
             {/* Valeur ressentie */}
-            <Card className="bg-white/80 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-lg dark:shadow-black/30 rounded-2xl p-6">
-              <CardContent className="p-0 space-y-4">
-                <div
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                    metrics.perceivedValue.color === "green"
-                      ? "bg-green-100 dark:bg-green-900/30"
-                      : metrics.perceivedValue.color === "orange"
-                      ? "bg-orange-100 dark:bg-orange-900/30"
-                      : metrics.perceivedValue.color === "red"
-                      ? "bg-red-100 dark:bg-red-900/30"
-                      : "bg-gray-100 dark:bg-gray-900/30"
-                  }`}
-                >
-                  <HeartHandshake
-                    className={`w-6 h-6 ${
-                      metrics.perceivedValue.color === "green"
-                        ? "text-green-600"
-                        : metrics.perceivedValue.color === "orange"
-                        ? "text-orange-500"
-                        : metrics.perceivedValue.color === "red"
-                        ? "text-red-500"
-                        : "text-gray-500"
-                    }`}
-                  />
+            <Card className="bg-transparent border-0 shadow-none rounded-2xl">
+              <CardContent
+                className="relative flex flex-col items-center text-center"
+                style={{
+                  background: "linear-gradient(135deg, #F7F1F9 0%, #EFEEFA 50%, #ECEFF8 100%)",
+                  borderRadius: 16,
+                  padding: "16px 12px 14px",
+                  minHeight: 338,
+                  boxShadow: "0 6px 24px rgba(0,0,0,0.06)",
+                  height: "100%",
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                }}
+              >
+                <div className="absolute right-3 top-3 z-10">
+                  <MetricInfoPopover
+                    ariaLabel={`${metricInfoHeading} - ${t("dashboard.perceivedValue")}`}
+                    side="bottom"
+                    align="center"
+                  >
+                    <MetricInfoContent
+                      heading={metricInfoHeading}
+                      lines={[
+                        {
+                          title: t("dashboard.metricInfo.description"),
+                          description: t("dashboard.metricInfo.perceivedValueDescription"),
+                        },
+                        {
+                          title: t("dashboard.metricInfo.formula"),
+                          description: t("dashboard.metricInfo.perceivedValueFormula"),
+                        },
+                      ]}
+                      thresholds={perceivedValueThresholds}
+                      thresholdsLabel={t("dashboard.metricInfo.thresholdsLabel")}
+                    />
+                  </MetricInfoPopover>
                 </div>
 
-                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">
-                  {t("dashboard.perceivedValue")}
-                </h3>
-
-                {/* Badge central */}
-                <div className="flex justify-center">
-                  <div
-                    className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
-                      metrics.perceivedValue.color === "green"
-                        ? "bg-green-600"
-                        : metrics.perceivedValue.color === "orange"
-                        ? "bg-orange-500"
-                        : metrics.perceivedValue.color === "red"
-                        ? "bg-red-500"
-                        : "bg-gray-400"
-                    }`}
-                  >
-                    <HeartHandshake className="w-5 h-5 text-white" />
-
-                    <span className="text-white font-semibold text-base">
-                      {metrics.perceivedValue.label}
-                    </span>
+                <div className="mb-[10px] flex h-[84px] items-center justify-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFE8EF]">
+                    <HeartHandshake className="h-6 w-6 text-[#E11D48]" />
                   </div>
                 </div>
 
-                <p className="text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
-                  {t("dashboard.calculateScore")}
-                </p>
+                <div className="mb-[10px] flex min-h-8 items-center justify-center text-[20px] font-bold leading-[1.2] text-[#15151f]">
+                  {t("dashboard.perceivedValue")}
+                </div>
+
+                <div className="mt-auto flex w-full flex-col items-center">
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "10px 22px",
+                      borderRadius: 999,
+                      background:
+                        metrics.perceivedValue.color === "green"
+                          ? "rgb(22, 163, 74)"
+                          : metrics.perceivedValue.color === "orange"
+                          ? "rgb(249, 115, 22)"
+                          : metrics.perceivedValue.color === "red"
+                          ? "rgb(220, 38, 38)"
+                          : "rgb(156, 163, 175)",
+                      color: "rgb(255, 255, 255)",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      marginBottom: 50,
+                    }}
+                  >
+                    <HeartHandshake className="h-[22px] w-[22px] text-white" />
+                    <span className="text-[14px] font-bold leading-none text-white">
+                      {metrics.perceivedValue.label}
+                    </span>
+                  </div>
+
+                  <p
+                    className="w-full text-[11px]"
+                    style={{
+                      lineHeight: 1.45,
+                      textAlign: "justify",
+                      textAlignLast: "left",
+                      textJustify: "inter-word",
+                      color: "#6b6b85",
+                      hyphens: "auto",
+                      display: "-webkit-box",
+                      WebkitBoxOrient: "vertical",
+                      WebkitLineClamp: 3,
+                      overflow: "hidden",
+                      minHeight: "4.35em",
+                      maxHeight: "4.35em",
+                    }}
+                  >
+                    {t("dashboard.calculateScore")}
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
             {/* Expérience délivrée */}
-            <Card className="bg-white/80 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-lg dark:shadow-black/30 rounded-2xl p-6">
-              <CardContent className="p-0 space-y-4">
-                <div
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                    metrics.deliveredExperience.color === "green"
-                      ? "bg-green-100 dark:bg-green-900/30"
-                      : metrics.deliveredExperience.color === "orange"
-                      ? "bg-orange-100 dark:bg-orange-900/30"
-                      : metrics.deliveredExperience.color === "red"
-                      ? "bg-red-100 dark:bg-red-900/30"
-                      : "bg-gray-100 dark:bg-gray-900/30"
-                  }`}
-                >
-                  <ClipboardCheckIcon
-                    className={`w-6 h-6 ${
-                      metrics.deliveredExperience.color === "green"
-                        ? "text-green-600"
-                        : metrics.deliveredExperience.color === "orange"
-                        ? "text-orange-500"
-                        : metrics.deliveredExperience.color === "red"
-                        ? "text-red-500"
-                        : "text-gray-500"
-                    }`}
-                  />
+            <Card className="bg-transparent border-0 shadow-none rounded-2xl">
+              <CardContent
+                className="relative flex flex-col items-center text-center"
+                style={{
+                  background: "linear-gradient(135deg, #F7F1F9 0%, #EFEEFA 50%, #ECEFF8 100%)",
+                  borderRadius: 16,
+                  padding: "16px 12px 14px",
+                  minHeight: 338,
+                  boxShadow: "0 6px 24px rgba(0,0,0,0.06)",
+                  height: "100%",
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                }}
+              >
+                <div className="absolute right-3 top-3 z-10">
+                  <MetricInfoPopover
+                    ariaLabel={`${metricInfoHeading} - ${t("dashboard.deliveredExperience")}`}
+                    side="bottom"
+                    align="center"
+                  >
+                    <MetricInfoContent
+                      heading={metricInfoHeading}
+                      lines={[
+                        {
+                          title: t("dashboard.metricInfo.description"),
+                          description: t("dashboard.metricInfo.deliveredExperienceDescription"),
+                        },
+                        {
+                          title: t("dashboard.metricInfo.formula"),
+                          description: t("dashboard.metricInfo.deliveredExperienceFormula"),
+                        },
+                        {
+                          title: t("dashboard.metricInfo.source"),
+                          description: t("dashboard.metricInfo.deliveredExperienceSource"),
+                        },
+                      ]}
+                      thresholds={deliveredExperienceThresholds}
+                      thresholdsLabel={t("dashboard.metricInfo.thresholdsLabel")}
+                    />
+                  </MetricInfoPopover>
                 </div>
 
-                <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">
-                  {t("dashboard.deliveredExperience")}
-                </h3>
-
-                {/* Badge central */}
-                <div className="flex justify-center">
-                  <div
-                    className={`inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-md ${
-                      metrics.deliveredExperience.color === "green"
-                        ? "bg-green-600"
-                        : metrics.deliveredExperience.color === "orange"
-                        ? "bg-orange-500"
-                        : metrics.deliveredExperience.color === "red"
-                        ? "bg-red-500"
-                        : "bg-gray-400"
-                    }`}
-                  >
-                    <ClipboardCheckIcon className="w-5 h-5 text-white" />
-
-                    <span className="text-white font-semibold text-base">
-                      {metrics.deliveredExperience.label}
-                    </span>
+                <div className="mb-[10px] flex h-[84px] items-center justify-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#E8F5E8]">
+                    <ClipboardCheck className="h-6 w-6 text-[#16A34A]" />
                   </div>
                 </div>
 
-                <p className="text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
-                  {t("dashboard.summaryRecommendations")}
-                </p>
+                <div className="mb-[10px] flex min-h-8 items-center justify-center text-[20px] font-bold leading-[1.2] text-[#15151f]">
+                  {t("dashboard.deliveredExperience")}
+                </div>
+
+                <div className="mt-auto flex w-full flex-col items-center">
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "10px 22px",
+                      borderRadius: 999,
+                      background:
+                        metrics.deliveredExperience.color === "green"
+                          ? "rgb(22, 163, 74)"
+                          : metrics.deliveredExperience.color === "orange"
+                          ? "rgb(249, 115, 22)"
+                          : metrics.deliveredExperience.color === "red"
+                          ? "rgb(220, 38, 38)"
+                          : "rgb(156, 163, 175)",
+                      color: "rgb(255, 255, 255)",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      marginBottom: 50,
+                    }}
+                  >
+                    <ClipboardCheck className="h-[22px] w-[22px] text-white" />
+                    <span className="text-[14px] font-bold leading-none text-white">
+                      {metrics.deliveredExperience.label}
+                    </span>
+                  </div>
+
+                  <p
+                    className="w-full text-[11px]"
+                    style={{
+                      lineHeight: 1.45,
+                      textAlign: "justify",
+                      textAlignLast: "left",
+                      textJustify: "inter-word",
+                      color: "#6b6b85",
+                      hyphens: "auto",
+                      display: "-webkit-box",
+                      WebkitBoxOrient: "vertical",
+                      WebkitLineClamp: 3,
+                      overflow: "hidden",
+                      minHeight: "4.35em",
+                      maxHeight: "4.35em",
+                    }}
+                  >
+                    {t("dashboard.summaryRecommendations")}
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>
