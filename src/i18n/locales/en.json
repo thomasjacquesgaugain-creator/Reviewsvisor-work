@@ -1809,7 +1809,8 @@
       }
     },
     "ishikawa": {
-      "title": "Root Cause Analysis (Ishikawa/AI)",
+      "title": "AI diagnosis of causes",
+      "subtitle":"Identify the probable causes of your detected problems",
       "content":"Root Cause Analysis (Ishikawa): A tool for identifying the underlying causes of a recurring problem. Benefit: You understand why a problem occurs and can address it at the source.",
       "problemAnalyzed": "Problem Analyzed",
       "dataSrc":"Data from the Pareto chart of negative reviews.",
@@ -1826,7 +1827,12 @@
       "closeQuestionare":"Close Questionnaire",
       "questionareSkipped":"Questionnaire skipped — effort level is auto-detected",
       "recommendMessage":"Recommendations may be less accurate.",
-      "questionareWarning":"You have not completed the questionnaire for this issue."
+      "questionareWarning":"You have not completed the questionnaire for this issue.",
+      "refineTitle":"Refine the diagnosis",
+      "problem":"Issue",
+      "highImpact":"High impact",
+      "mediumImpact": "Moderate impact",
+      "primary":"Principal"
     },
     "syntheseAndDiagnostic": {
       "title": "Synthesis and Diagnostic",
@@ -2008,7 +2014,8 @@
     "saveFailed": "Failed to save. Please try again."
   },
   "success":"Questionare filled successfully",
-  "effortOverridden": "Effort overridden to {{effort}} — dominant cause:"
+  "effortOverridden": "Effort overridden to {{effort}} — dominant cause:",
+  "help":"Help Reviewsvisor confirm the causes of the problem detected."
 },
   "recommendations":{
   "smart":{

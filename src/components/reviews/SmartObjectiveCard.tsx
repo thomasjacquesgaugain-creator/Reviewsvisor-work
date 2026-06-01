@@ -42,6 +42,29 @@ const SMART_LETTER_STYLE: Record<string, string> = {
   T: "bg-purple-100 text-purple-700",
 };
 
+const getLocalizedText = (
+  value: any,
+  language: string = "en"
+): string => {
+  if (!value) return "";
+
+  // already plain string
+  if (typeof value === "string") return value;
+
+  // multilingual object
+  if (typeof value === "object") {
+    return (
+      value[language] ||
+      value.en ||
+      value.fr ||
+      Object.values(value)[0] ||
+      ""
+    );
+  }
+
+  return String(value);
+};
+
 /* ─────────────────────────────────────────────
    COMPONENT
 ───────────────────────────────────────────── */
@@ -51,7 +74,11 @@ export function SmartObjectiveCard({
   onUpdateProgress,
   onToggleAction,
 }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+const lang = i18n.language?.startsWith("fr")
+  ? "fr"
+  : "en";
   const progress = useSmartProgress(objective);
 
   const [showProgress, setShowProgress]   = useState(false);
@@ -85,11 +112,13 @@ export function SmartObjectiveCard({
             }`} />
             <div>
               <p className="text-sm font-semibold text-gray-800 leading-snug">
-                {t("smartCard.header.title", { cause: objective.pareto_cause })}
+             {t("smartCard.header.title", {
+                cause: getLocalizedText(objective.pareto_cause, lang),
+              })}
               </p>
               <p className="text-xs text-gray-400 mt-0.5">
                 {t("smartCard.header.pareto", {
-                  cause: objective.pareto_cause,
+                  cause: getLocalizedText(objective.pareto_cause, lang),
                   percentageText: objective.pareto_percentage != null
                     ? t("smartCard.header.negativeReviewsPercentage", {
                         percentage: Math.round(objective.pareto_percentage),
@@ -97,13 +126,23 @@ export function SmartObjectiveCard({
                     : "",
                 })}
                 {objective.ishikawa_top_category && (
-                  <span>
-                    {" · "}{t("smartCard.header.ishikawa", {category: objective.ishikawa_top_category,})}
-                    {objective.effort_source === "user_questionnaire" && (
-                      <span className="text-green-600">{" "}{t("smartCard.header.validated")}</span>
-                    )}
-                  </span>
-                )}
+  <span>
+    {" · "}
+    {t("smartCard.header.ishikawa", {
+      category: getLocalizedText(
+        objective.ishikawa_top_category,
+        lang
+      ),
+    })}
+
+    {objective.effort_source === "user_questionnaire" && (
+      <span className="text-green-600">
+        {" "}
+        {t("smartCard.header.validated")}
+      </span>
+    )}
+  </span>
+)}
               </p>
             </div>
           </div>
@@ -144,7 +183,7 @@ export function SmartObjectiveCard({
               </span>
             </div>
             <p className="text-xs text-gray-700 leading-relaxed line-clamp-3">
-              {objective.problem ?? "—"}
+              {getLocalizedText(objective.problem, lang) || "—"}
             </p>
           </div>
 
@@ -161,7 +200,7 @@ export function SmartObjectiveCard({
               </span>
             </div>
             <p className="text-xs text-gray-700 leading-relaxed line-clamp-3">
-              {objective.relevance_note ?? "—"}
+              {getLocalizedText(objective.relevance_note, lang) || "—"}
             </p>
           </div>
 
@@ -177,10 +216,10 @@ export function SmartObjectiveCard({
                 {t("smartCard.smart.measurable")}
               </span>
             </div>
-            <p className="text-xs text-gray-500">{objective.kpi_label}</p>
+            <p className="text-xs text-gray-500">{getLocalizedText(objective.kpi_label, lang)}</p>
             <p className="text-xs font-semibold text-gray-800 mt-0.5">
               {objective.current_value} → {objective.target_value}{" "}
-              {objective.unit}
+{getLocalizedText(objective.unit, lang)}
             </p>
           </div>
 
@@ -221,7 +260,8 @@ export function SmartObjectiveCard({
             </span>
           </div>
           <p className="text-xs text-gray-700">
-            {objective.actions?.[0]?.text ?? t("smartCard.achievable.noActions")}
+            {getLocalizedText(objective.actions?.[0]?.text, lang) ||
+  t("smartCard.achievable.noActions")}
             {(objective.actions?.length ?? 0) > 1 && (
               <span className="text-gray-400">
                 {" "}{t("smartCard.achievable.more", {count: (objective.actions?.length ?? 0) - 1,})}
@@ -323,7 +363,9 @@ export function SmartObjectiveCard({
     <div className="flex items-start gap-2 p-2.5 bg-blue-50 rounded-lg border-l-2 border-blue-400">
       <span className="text-xs font-bold text-blue-600 w-12 shrink-0">{t("smartCard.pdca.plan.label")}</span>
       <div className="text-xs text-gray-700">
-        <p className="font-medium">{objective.problem}</p>
+        <p className="font-medium">
+  {getLocalizedText(objective.problem, lang)}
+</p>
         <p className="text-gray-500 mt-0.5">
           {t("smartCard.pdca.plan.target", {  current:objective.current_value,target:objective.target_value,months:   objective.duration_months,})}
         </p>
@@ -343,7 +385,7 @@ export function SmartObjectiveCard({
               ? <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" />
               : <Circle className="h-3 w-3 text-gray-300 shrink-0" />}
             <span className={a.completed ? "line-through text-gray-400" : ""}>
-              {a.text}
+             { getLocalizedText(a?.text ?? a, lang)}
             </span>
           </div>
         ))}
@@ -356,7 +398,7 @@ export function SmartObjectiveCard({
       <div className="text-xs text-gray-700 flex-1">
         <p className="font-medium mb-1">{t("smartCard.pdca.check.kpiTracking")}</p>
         <p className="font-mono text-gray-600">
-          {objective.kpi_label}: {objective.current_value}
+          {getLocalizedText(objective.kpi_label, lang)}: {objective.current_value}
           {objective.current_progress != null &&
             objective.current_progress !== objective.current_value && (
               <span className="text-blue-600">

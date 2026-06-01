@@ -37,7 +37,11 @@ export type IshikawaKey =
 export type IshikawaScores = Record<IshikawaKey, number | null>;
 
 export interface QuestionnaireResult {
-  paretoIssue: string;
+  paretoIssue:    {
+                    key: string;
+                    en: string;
+                    fr: string;
+                    };
   scores:      IshikawaScores;
   dominantCategory: string;
   dominantEffort:   SmartEffort;
@@ -62,7 +66,11 @@ export interface SmartObjective {
   place_id:         string;
 
   // Source tracing
-  pareto_cause:       string;
+    pareto_cause:         {
+                          key: string;
+                          en: string;
+                          fr: string;
+                        };
   pareto_percentage?: number;
   pareto_count?:      number;
 
@@ -126,7 +134,11 @@ export interface SmartProgress {
 
 export interface GenerateSmartPayload {
   establishment_id:         string;
-  pareto_cause:             string;
+  pareto_cause:         {
+                          key: string;
+                          en: string;
+                          fr: string;
+                        };
   computed_count:           number;
   computed_target:          number;
   computed_impact:          SmartImpact;

@@ -44,6 +44,7 @@ export function AnalysisTabContent({
   }, [analyse, reviews]);
 
   const analysisData = analysisDataProp ?? analysisDataComputed;
+  console.log("analysis data comouted" , analysisData)
 
   // Source de vérité unique pour la date de dernière analyse (prop > analysisData > null)
   const lastAnalyzedAt =

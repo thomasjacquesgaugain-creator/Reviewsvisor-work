@@ -1,11 +1,10 @@
-import React, { useState } from "react";
-import { Button } from "../ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import { Loader2, Users, Share2, Wrench, Package, Building2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 /* ─────────────────────────────────────────────
-   TYPES
+   TYPES  (unchanged)
 ───────────────────────────────────────────── */
 
 export type IshikawaKey =
@@ -34,7 +33,7 @@ export const EFFORT_BY_5M: Record<IshikawaKey, "Low" | "Medium" | "High"> = {
 };
 
 export interface QuestionnaireResult {
-  paretoIssue: string;
+  paretoIssue: { key: string; en: string; fr: string };
   scores: IshikawaScores;
   dominantCategory: string;
   dominantEffort: "Low" | "Medium" | "High";
@@ -48,13 +47,8 @@ export interface QuestionnaireResult {
   isComplete: boolean;
 }
 
-
-/* ─────────────────────────────────────────────
-   HELPER — build result from scores
-───────────────────────────────────────────── */
-
 export function buildQuestionnaireResult(
-  paretoIssue: string,
+  paretoIssue: any,
   scores: IshikawaScores,
   scoreLabels: Record<number, string>
 ): QuestionnaireResult {
@@ -83,87 +77,192 @@ export function buildQuestionnaireResult(
   };
 }
 
+/* ─────────────────────────────────────────────
+   CATEGORY STYLES
+───────────────────────────────────────────── */
 
-const Section = ({
-  title,
-  subtitle,
+const CATEGORY_STYLES: Record<
+  IshikawaKey,
+  { icon: React.ElementType; accent: string; soft: string }
+> = {
+  manpower:    { icon: Users,     accent: "#6366f1", soft: "#eef0ff" },
+  method:      { icon: Share2,    accent: "#2563eb", soft: "#eaf1ff" },
+  machine:     { icon: Wrench,    accent: "#64748b", soft: "#f1f5f9" },
+  material:    { icon: Package,   accent: "#d97706", soft: "#fff4e0" },
+  measurement: { icon: Building2, accent: "#0d9488", soft: "#e6faf6" },
+};
+
+const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+
+/* ─────────────────────────────────────────────
+   SEGMENT CONTROL
+───────────────────────────────────────────── */
+
+const SegmentControl = ({
+  categoryKey,
   value,
   onChange,
   options,
 }: {
+  categoryKey: IshikawaKey;
+  value: number | null;
+  onChange: (val: number) => void;
+  options: { label: string; value: number }[];
+}) => {
+  const accent = CATEGORY_STYLES[categoryKey].accent;
+  return (
+    <div style={{
+      display: "flex",
+      background: "#f8fafc",
+      borderRadius: "11px",
+      padding: "4px",
+      gap: "2px",
+      border: "1px solid #eef0f7",
+    }}>
+      {options.map((opt) => {
+        const sel = value === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            style={{
+              flex: 1,
+              padding: "9px 4px",
+              border: sel ? `1.5px solid ${accent}` : "1.5px solid transparent",
+              background: sel ? "#ffffff" : "transparent",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              fontSize: "12px",
+              color: sel ? accent : "#9aa1b4",
+              fontWeight: sel ? 600 : 500,
+              transition: `all 0.2s ${EASE}`,
+              whiteSpace: "nowrap",
+              boxShadow: sel ? "0 2px 6px rgba(30,27,75,0.08)" : "none",
+              transform: sel ? "translateY(-0.5px)" : "none",
+              letterSpacing: "-0.005em",
+            }}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────────
+   QUESTION ROW
+───────────────────────────────────────────── */
+
+const QuestionRow = ({
+  sectionKey, title, subtitle, value, onChange, options, animDelay,
+}: {
+  sectionKey: IshikawaKey;
   title: string;
   subtitle: string;
   value: number | null;
   onChange: (val: number) => void;
   options: { label: string; value: number }[];
-}) => (
-  <div className="border-b border-slate-200 p-3 dark:border-slate-700">
-    <div className="font-semibold text-slate-900 dark:text-slate-100">{title}</div>
-    <div className="mb-2 text-sm text-slate-700 dark:text-slate-300">{subtitle}</div>
-
-    <div className="flex w-full justify-between gap-3 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/60">
-      {options.map((opt) => {
-        const selected = value === opt.value;
-        return (
-          <button
-            key={opt.value}
-            onClick={() => onChange(opt.value)}
-            className={`flex items-center gap-1 px-2 py-1 rounded-full transition
-              ${selected
-                ? "border border-blue-400 bg-blue-100 text-blue-900 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-100"
-                : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700/70"
-              }`}
-          >
-            <span className="text-sm">{opt.label}</span>
-          </button>
-        );
-      })}
+  animDelay: number;
+}) => {
+  const s = CATEGORY_STYLES[sectionKey];
+  const Icon = s.icon;
+  return (
+    <div style={{
+      padding: "16px 0 14px",
+      borderBottom: "1px solid #eef0f7",
+      animation: `wqFade 0.4s ${EASE} ${animDelay}s backwards`,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+        <span style={{
+          width: "30px", height: "30px", borderRadius: "9px",
+          background: s.soft, color: s.accent,
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0,
+        }}>
+          <Icon size={15} />
+        </span>
+        <span style={{ fontSize: "14px", fontWeight: 600, color: "#1e1b4b", lineHeight: 1.2 }}>
+          {title}
+        </span>
+      </div>
+      <div style={{ fontSize: "13.5px", color: "#5b6478", lineHeight: 1.5, marginBottom: "10px" }}>
+        {subtitle}
+      </div>
+      <SegmentControl
+        categoryKey={sectionKey}
+        value={value}
+        onChange={onChange}
+        options={options}
+      />
     </div>
-  </div>
-);
+  );
+};
 
-
+/* ─────────────────────────────────────────────
+   MAIN COMPONENT
+───────────────────────────────────────────── */
 
 type Props = {
+  isOpen: boolean;
+  onClose: () => void;
   problemTitle: string;
   establishmentId: string;
-  smartObjectiveId: string;       // the smart_objectives row to update
-  initialScores:any;
-  onSuccess: (result: QuestionnaireResult) => void;  // parent gets result after save
+  smartObjectiveId: string;
+  initialScores: any;
+  onSuccess: (result: QuestionnaireResult) => void;
   onSkip?: () => void;
 };
 
 const Questionnaire = ({
-  problemTitle,
-  establishmentId,
-  smartObjectiveId,
-  initialScores,
-  onSuccess,
-  onSkip,
+  isOpen, onClose, problemTitle, establishmentId,
+  smartObjectiveId, initialScores, onSuccess, onSkip,
 }: Props) => {
+
   const [scores, setScores] = useState<IshikawaScores>(
-    initialScores ?? {
-      manpower:    null,
-      method:      null,
-      machine:     null,
-      material:    null,
-      measurement: null,
-    }
+    initialScores ?? { manpower: null, method: null, machine: null, material: null, measurement: null }
   );
   const { t } = useTranslation();
-
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const [error, setError] = useState<string | null>(null);
 
+  // Animate in/out without touching body scroll at all
+  const [mounted, setMounted]   = useState(false);  // in DOM?
+  const [visible, setVisible]   = useState(false);  // CSS opacity/transform active?
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    if (isOpen) {
+      setMounted(true);
+      // one rAF so the mount paint happens before the transition starts
+      requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
+    } else {
+      setVisible(false);
+      // keep in DOM until transition finishes (400 ms), then unmount
+      closeTimerRef.current = setTimeout(() => setMounted(false), 420);
+    }
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
+  }, [isOpen]);
 
+  // sync scores when issue changes
+  useEffect(() => {
+    setScores(initialScores ?? {
+      manpower: null, method: null, machine: null, material: null, measurement: null,
+    });
+  }, [initialScores]);
 
+  // Escape key – does NOT touch body overflow
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isOpen, onClose]);
 
-/* ─────────────────────────────────────────────
-   CONSTANTS
-───────────────────────────────────────────── */
-
+  /* ── i18n constants ── */
   const OPTIONS = [
     { label: t("questionnaire.options.no"),         value: 0 },
     { label: t("questionnaire.options.unlikely"),   value: 1 },
@@ -181,227 +280,256 @@ const Questionnaire = ({
   };
 
   const SECTIONS: { key: IshikawaKey; title: string; subtitle: string }[] = [
-    {
-      key: "manpower",
-      title:    t("questionnaire.sections.manpower.title"),
-      subtitle: t("questionnaire.sections.manpower.subtitle"),
-    },
-    {
-      key: "method",
-      title:    t("questionnaire.sections.method.title"),
-      subtitle: t("questionnaire.sections.method.subtitle"),
-    },
-    {
-      key: "machine",
-      title:    t("questionnaire.sections.machine.title"),
-      subtitle: t("questionnaire.sections.machine.subtitle"),
-    },
-    {
-      key: "material",
-      title:    t("questionnaire.sections.material.title"),
-      subtitle: t("questionnaire.sections.material.subtitle"),
-    },
-    {
-      key: "measurement",
-      title:    t("questionnaire.sections.measurement.title"),
-      subtitle: t("questionnaire.sections.measurement.subtitle"),
-    },
+    { key: "manpower",    title: t("questionnaire.sections.manpower.title"),    subtitle: t("questionnaire.sections.manpower.subtitle") },
+    { key: "method",      title: t("questionnaire.sections.method.title"),      subtitle: t("questionnaire.sections.method.subtitle") },
+    { key: "machine",     title: t("questionnaire.sections.machine.title"),     subtitle: t("questionnaire.sections.machine.subtitle") },
+    { key: "material",    title: t("questionnaire.sections.material.title"),    subtitle: t("questionnaire.sections.material.subtitle") },
+    { key: "measurement", title: t("questionnaire.sections.measurement.title"), subtitle: t("questionnaire.sections.measurement.subtitle") },
   ];
 
+  /* ── validation — only require all answered ── */
+  const answeredCount = Object.values(scores).filter((v) => v !== null).length;
+  const isComplete    = answeredCount === SECTIONS.length;
+  const canSubmit     = isComplete;
 
-
-
-
-  const getValueCounts = (scores: IshikawaScores) => {
-  const map: Record<number, number> = {};
-
-  Object.values(scores).forEach((v) => {
-    if (v === null) return;
-    map[v] = (map[v] || 0) + 1;
-  });
-
-  return map;
-};
-
-const hasTooManySameValues = (scores: IshikawaScores) => {
-  const counts = getValueCounts(scores);
-  return Object.values(counts).some((count) => count > 2);
-};
-
-const hasStrongSignal = (scores: IshikawaScores) => {
-  return Object.values(scores).some((v) => v === 3 || v === 4);
-};
-  
-  const answeredCount = Object.values(scores).filter((s) => s !== null).length;
-  const isInvalidDistribution = hasTooManySameValues(scores);
-  const lacksStrongSignal     = !hasStrongSignal(scores);
-
-
-  const isComplete = answeredCount === SECTIONS.length;
   const handleChange = (key: IshikawaKey, val: number) => {
-  setScores((prev) => {
-    const updated = { ...prev };
+    setScores((prev) => ({ ...prev, [key]: val }));
+  };
 
-    // Only one "Very likely" (4)
-    if (val === 4) {
-      Object.keys(updated).forEach((k) => {
-        if (updated[k as IshikawaKey] === 4) {
-          updated[k as IshikawaKey] = null;
-        }
-      });
-    }
-
-    // Only one "Likely" (3)
-    if (val === 3) {
-      Object.keys(updated).forEach((k) => {
-        if (updated[k as IshikawaKey] === 3) {
-          updated[k as IshikawaKey] = null;
-        }
-      });
-    }
-
-    updated[key] = val;
-    return updated;
-  });
-};
   const handleSubmit = async () => {
-  if (!isComplete || isInvalidDistribution || lacksStrongSignal) return;
-
+    if (!canSubmit) return;
     setIsSubmitting(true);
-    setError(null);
-
     try {
-      const result = buildQuestionnaireResult(problemTitle, scores,SCORE_LABELS);
-
-      // Save questionnaire scores + derived effort override to smart_objectives
-      // const { error: dbError } = await supabase
-      //   .from("smart_objectives")
-      //   .update({
-      //     // Store raw 5M scores for traceability
-      //     questionnaire_scores: scores,
-
-      //     // Store which category the user identified as dominant
-      //     ishikawa_top_category: result.dominantCategory,
-
-      //     // Override effort with user-validated value
-      //     // This is what buildImpactEffortMatrix will read
-      //     effort: result.dominantEffort,
-
-      //     // Mark that effort came from user, not auto-detection
-      //     effort_source: "user_questionnaire",
-
-      //     updated_at: new Date().toISOString(),
-      //   })
-      //   .eq("id", smartObjectiveId)
-      //   .eq("place_id", placeId);
-
-      // if (dbError) throw dbError;
-
-      // Notify parent — parent re-runs buildImpactEffortMatrix
-      // with result.dominantEffort as the override
+      const result = buildQuestionnaireResult(problemTitle, scores, SCORE_LABELS);
       await onSuccess(result);
-
+      onClose();
     } catch (err: any) {
-      setError(err.message ?? t("questionnaire.errors.saveFailed"));
+      // silent — no validation UI
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  /* ── Submit button label ── */
+  const submitLabel = isSubmitting
+    ? null
+    : !isComplete
+    ? t("questionnaire.button.answerAll", { answered: answeredCount, total: 5 })
+    : t("questionnaire.button.submit");
 
-  const submitLabel = isSubmitting ? null
-    : !isComplete            ? t("questionnaire.button.answerAll",    { answered: answeredCount, total: 5 })
-    : isInvalidDistribution  ? t("questionnaire.button.tooSimilar")
-    : lacksStrongSignal      ? t("questionnaire.button.needStrong")
-    :                          t("questionnaire.button.submit");
+  /* ── render ── */
+  if (!mounted) return null;
 
-  /* ── Render ── */
+  const modalContent = (
+    <>
+      <style>{`
+        @keyframes wqFade {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes rvSpin { to { transform: rotate(360deg); } }
+        .rv-wz-close:hover  { background: #f1f5f9 !important; color: #1e1b4b !important; }
+        .rv-wz-body::-webkit-scrollbar { display: none; }
+        .rv-wz-body { scrollbar-width: none; }
+        .rv-wz-body > div:last-child { border-bottom: none !important; padding-bottom: 8px; }
+      `}</style>
 
-  return (
-    <div className="w-full rounded-lg border border-slate-200 bg-white font-sans dark:border-slate-700 dark:bg-slate-900">
-      {/* Header — same as your original */}
-      <div className="border-b border-slate-200 bg-slate-100 p-3 text-center font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
-        {problemTitle}
-      </div>
+      {/* ── BACKDROP — pointer-events only on the translucent layer, not the wizard ── */}
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9998,
+          background: "rgba(30,27,75,0.5)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          opacity: visible ? 1 : 0,
+          transition: `opacity 0.3s ${EASE}`,
+          // DO NOT set overflow or touch body scroll
+        }}
+      />
 
-      {/* Progress bar */}
-      <div className="px-3 pt-2 pb-1 flex items-center gap-2">
-        <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-          <div
-            className="h-full bg-blue-500 rounded-full transition-all duration-300"
-            style={{ width: `${(answeredCount / 5) * 100}%` }}
-          />
-        </div>
-        <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
-          {answeredCount}/5
-        </span>
-      </div>
-
-      {/* Sections — same structure as your original */}
-      {SECTIONS.map((section) => (
-        <Section
-          key={section.key}
-          title={section.title}
-          subtitle={section.subtitle}
-          value={scores[section.key]}
-          onChange={(val) => handleChange(section.key, val)}
-          options={OPTIONS}
-        />
-      ))}
-
-      {/* Error */}
-      {error && (
-        <p className="px-3 pt-2 text-xs text-red-500">{error}</p>
-      )}
-
-      {isInvalidDistribution && (
-        <p className="px-3 pt-2 text-xs text-orange-500">
-          {t("questionnaire.validation.tooManySame")}
-        </p>
-      )}
-      
-
-      {!isInvalidDistribution && lacksStrongSignal && (
-        <p className="px-3 pt-2 text-xs text-orange-500">
-          {t("questionnaire.validation.noStrongSignal")}
-        </p>
-      )}
-
-      {!isComplete && (
-        <p className="px-3 pt-2 text-xs text-orange-500">
-          {t("questionnaire.validation.incomplete")}
-        </p>
-      )}
-
-      {/* Footer */}
-      <div className="p-3 flex items-center justify-between gap-3">
-        {onSkip && (
-          <button
-            onClick={onSkip}
-            className="text-xs text-slate-400 underline hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
-          >
-            {t("questionnaire.button.skip")}
-          </button>
-        )}
-
-        <Button
-          onClick={handleSubmit}
-          disabled={!isComplete || isSubmitting || isInvalidDistribution || lacksStrongSignal}
-          className="ml-auto flex items-center gap-2 min-w-[170px]"
+      {/* ── WIZARD PANEL — separate stacking context so its own scroll works ── */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "24px",
+          // pointer-events: none on the centering wrapper so clicks pass through to backdrop
+          pointerEvents: "none",
+        }}
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            pointerEvents: "auto",           // re-enable inside the panel
+            background: "#ffffff",
+            borderRadius: "22px",
+            maxWidth: "580px",
+            width: "100%",
+            maxHeight: "92vh",
+            display: "flex",
+            flexDirection: "column",
+            boxShadow: "0 24px 60px rgba(30,27,75,0.2)",
+            border: "1px solid #eef0f7",
+            transform: visible ? "translateY(0) scale(1)" : "translateY(20px) scale(0.97)",
+            transition: `transform 0.4s ${EASE}`,
+            overflow: "hidden",             // clips radius; inner body scrolls itself
+          }}
         >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              {t("questionnaire.button.saving")}
-            </>
-          ) : (
-            submitLabel
-          )}
-        </Button>
+
+          {/* ── HEADER (fixed) ── */}
+          <div style={{
+            padding: "20px 24px 18px",
+            borderBottom: "1px solid #eef0f7",
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: "12px",
+            flexShrink: 0,
+          }}>
+            <div>
+              <div style={{ fontSize: "17px", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.2, color: "#1e1b4b" }}>
+                {t("analysis.ishikawa.refineTitle") || "Affiner le diagnostic"}
+              </div>
+              <div style={{ fontSize: "13px", color: "#5b6478", marginTop: "6px", lineHeight: 1.4, maxWidth: "460px" }}>
+                {t("questionnaire.help") || "Aidez à confirmer les causes du problème détecté."}
+              </div>
+              <div style={{ fontSize: "12px", color: "#9aa1b4", marginTop: "8px", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                {t("analysis.ishikawa.problem") || "Problème"}{" · "}
+                <strong style={{ color: "#6366f1", fontWeight: 700, textTransform: "none", letterSpacing: 0, fontSize: "13px" }}>
+                  {problemTitle}
+                </strong>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rv-wz-close"
+              aria-label="Fermer"
+              style={{
+                background: "transparent", border: "none", cursor: "pointer",
+                width: "32px", height: "32px", borderRadius: "9px",
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                color: "#9aa1b4", transition: "background 0.15s, color 0.15s", flexShrink: 0,
+              }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* ── BODY (scrollable on its own — does NOT touch window scroll) ── */}
+          <div
+            className="rv-wz-body"
+            style={{ flex: 1, overflowY: "auto", padding: "6px 24px 12px" }}
+          >
+            {SECTIONS.map((sec, i) => (
+              <QuestionRow
+                key={sec.key}
+                sectionKey={sec.key}
+                title={sec.title}
+                subtitle={sec.subtitle}
+                value={scores[sec.key]}
+                onChange={(val) => handleChange(sec.key, val)}
+                options={OPTIONS}
+                animDelay={0.04 + i * 0.03}
+              />
+            ))}
+
+          </div>
+
+          {/* ── FOOTER (fixed) ── */}
+          <div style={{
+            padding: "14px 24px 16px",
+            borderTop: "1px solid #eef0f7",
+            background: "#f8fafc",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "14px",
+            flexWrap: "wrap",
+            flexShrink: 0,
+          }}>
+            {/* Progress */}
+            <div style={{ flex: 1, minWidth: "140px" }}>
+              <span style={{ fontSize: "11.5px", color: "#5b6478", display: "block", marginBottom: "5px" }}>
+                <strong style={{ color: "#1e1b4b" }}>{answeredCount}</strong> / 5{" "}
+                {t("questionnaire.answers") || "réponses"}
+              </span>
+              <div style={{ height: "4px", background: "#f1f5f9", borderRadius: "999px", overflow: "hidden" }}>
+                <div style={{
+                  height: "100%",
+                  background: "linear-gradient(90deg, #8b5cf6, #6366f1)",
+                  borderRadius: "999px",
+                  width: `${(answeredCount / 5) * 100}%`,
+                  transition: `width 0.5s ${EASE}`,
+                }} />
+              </div>
+            </div>
+
+            {/* Skip */}
+            {onSkip && (
+              <button
+                type="button"
+                onClick={() => { onSkip(); onClose(); }}
+                style={{
+                  background: "transparent", border: "none", cursor: "pointer",
+                  fontSize: "12.5px", color: "#9aa1b4", textDecoration: "underline",
+                  fontFamily: "inherit",
+                }}
+              >
+                {t("questionnaire.button.skip")}
+              </button>
+            )}
+
+            {/* Validate */}
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!canSubmit || isSubmitting}
+              style={{
+                cursor: canSubmit && !isSubmitting ? "pointer" : "not-allowed",
+                border: "none", fontFamily: "inherit",
+                display: "inline-flex", alignItems: "center", gap: "7px",
+                padding: "11px 18px", borderRadius: "11px",
+                fontSize: "13.5px", fontWeight: 600, color: "white",
+                background: canSubmit && !isSubmitting
+                  ? "linear-gradient(145deg, #8b5cf6, #6d28d9)" : "#c3c8d6",
+                boxShadow: canSubmit && !isSubmitting
+                  ? "0 6px 16px -5px rgba(124,58,237,0.5)" : "none",
+                transition: `transform 0.2s ${EASE}`,
+                minWidth: "170px", justifyContent: "center",
+              }}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={14} style={{ animation: "rvSpin 1s linear infinite" }} />
+                  {t("questionnaire.button.saving")}
+                </>
+              ) : (
+                <>
+                  {submitLabel}
+                  {canSubmit && (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12l5 5l10 -10" />
+                    </svg>
+                  )}
+                </>
+              )}
+            </button>
+          </div>
+
+        </div>
       </div>
-    </div>
+    </>
   );
+
+  // Portal to document.body so it's completely outside the page DOM tree
+  return createPortal(modalContent, document.body);
 };
 
 export default Questionnaire;

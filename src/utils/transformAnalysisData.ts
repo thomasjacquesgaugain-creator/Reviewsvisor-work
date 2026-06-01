@@ -11,6 +11,7 @@ import {
   aggregateKeywords,
   mapThemeLabel
 } from "@/utils/reviewProcessing";
+import i18n from "@/i18n/config";
 
 
 function createEmptyRCA(problem: string = ""): RootCauseAnalysis {
@@ -231,18 +232,89 @@ export function transformAnalysisData(
 
   // Pareto Issues
   // Calculer le total des mentions d'irritants (dénominateur pour les %)
-  const totalIssuesMentions = (safeInsight?.top_issues || []).reduce((sum: number, issue: any) => sum + (issue.count || 0), 0);
-  
-  const paretoIssues = (safeInsight?.top_issues || []).map((issue: any, index: number) => {
-    const count = issue.count || 0;
-    // Pourcentage basé sur le total des mentions d'irritants (pas sur le total des avis)
-    const percentage = totalIssuesMentions > 0 ? (count / totalIssuesMentions) * 100 : 0;
+// Calculer le total des mentions d'irritants (dénominateur pour les %)
+const lang = i18n.language.startsWith("fr")
+  ? "fr"
+  : "en";
+
+/*
+safeInsight.top_issues => localized/current language
+safeInsight.original_top_issues => {
+  en: [],
+  fr: []
+}
+*/
+
+const originalTopIssues =
+  safeInsight?.top_issues_original
+|| {};
+
+const enIssues = Array.isArray(originalTopIssues.en)
+  ? originalTopIssues.en
+  : [];
+
+const frIssues = Array.isArray(originalTopIssues.fr)
+  ? originalTopIssues.fr
+  : [];
+
+// source for counts/length
+const sourceIssues =
+  enIssues.length > 0
+    ? enIssues
+    : frIssues;
+
+const totalIssuesMentions = sourceIssues.reduce(
+  (sum: number, issue: any) =>
+    sum + (issue?.count || 0),
+  0
+);
+
+const paretoIssues = sourceIssues.map(
+  (_: any, index: number) => {
+    const enIssue = enIssues[index] || {};
+    const frIssue = frIssues[index] || {};
+
+    const count =
+      enIssue.count ||
+      frIssue.count ||
+      0;
+
+    const percentage =
+      totalIssuesMentions > 0
+        ? (count / totalIssuesMentions) * 100
+        : 0;
+
+    const enName =
+      enIssue.theme ||
+      enIssue.issue ||
+      `Issue ${index + 1}`;
+
+    const frName =
+      frIssue.theme ||
+      frIssue.issue ||
+      `Problème ${index + 1}`;
+
     return {
-      name: issue.theme || issue.issue || `Problème ${index + 1}`,
+      key:
+        enIssue.key ||
+        frIssue.key ||
+        `issue_${index}`,
+
+      // current language display
+      name:
+        lang === "fr"
+          ? frName
+          : enName,
+
+      // preserve both languages
+      en: enName,
+      fr: frName,
+
       count,
-      percentage
+      percentage,
     };
-  });
+  }
+);
 
   // Calculer le total des mentions de satisfactions (dénominateur pour les %)
   const totalStrengthsMentions = (safeInsight?.top_praises || []).reduce((sum: number, strength: any) => sum + (strength.count || 0), 0);
@@ -666,12 +738,14 @@ safePareto.forEach(issue => {
       safePareto,
       safeReviewsArray
     );
-    rcaByIssue[issue.name] = rca || createEmptyRCA(issue.name);
+    rcaByIssue[issue.key] = rca || createEmptyRCA(issue.key);
   } catch (e) {
     console.warn(`RCA failed for issue: ${issue.name}`, e);
-    rcaByIssue[issue.name] = createEmptyRCA(issue.name);
+    rcaByIssue[issue.key] = createEmptyRCA(issue.key);
   }
 });
+
+console.log("safePareto", safePareto)
   return {
     overview,
     history,

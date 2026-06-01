@@ -2014,7 +2014,8 @@
       }
     },
     "ishikawa": {
-      "title": "Analyse des causes racines (Ishikawa IA)",
+      "title": "Diagnostic IA des causes",
+      "subtitle":"Identifiez les causes probables de vos problèmes détectés",
       "content":"Analyse des causes racines (Ishikawa) : outil pour identifier les causes profondes d'un problème récurrent. Bénéfice : vous comprenez pourquoi un problème survient et pouvez agir à la source.",
       "problemAnalyzed": "Problème analysé",
       "dataSrc":"Données issues du diagramme de Pareto des avis négatifs.",
@@ -2031,7 +2032,12 @@
       "closeQuestionare":"Fermer le questionnaire",
       "questionareSkipped":"Questionnaire ignoré — le niveau d'effort est détecté automatiquement.",
       "recommendMessage":"Les recommandations peuvent être moins précises.",
-      "questionareWarning":"Vous n'avez pas rempli le questionnaire pour ce problème."
+      "questionareWarning":"Vous n'avez pas rempli le questionnaire pour ce problème.",
+      "refineTitle":"Affiner le diagnostic",
+      "problem":"Problème",
+      "highImpact":"Impact élevé",
+      "mediumImpact": "Impact modéré",
+      "primary":"Principale"
     },
     "syntheseAndDiagnostic": {
       "title": "Synthèse & diagnostic",
@@ -2213,7 +2219,8 @@
     "saveFailed": "Échec de l'enregistrement. Veuillez réessayer."
   },
   "success":"Questionnaire rempli avec succès",
-  "effortOverridden": "Effort remplacé par {{effort}} — cause dominante :"
+  "effortOverridden": "Effort remplacé par {{effort}} — cause dominante :",
+  "help":"Aidez Reviewsvisor à confirmer les causes du problème détecté."
 },
 "recommendations":{
    "smart":{

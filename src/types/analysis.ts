@@ -28,6 +28,9 @@ export interface ParetoItem {
   name: string;
   count: number;
   percentage: number;
+  key?:string
+  en :string,
+  fr:string
 }
 
 export interface ThemeAnalysis {
