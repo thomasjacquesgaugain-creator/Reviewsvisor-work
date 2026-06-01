@@ -61,7 +61,7 @@ useEffect(() => {
       .map(p =>
         objectives.find(
           o =>
-            o.pareto_cause?.key.toLowerCase() ===
+            o.pareto_cause?.key?.toLowerCase() ===
             p.key.toLowerCase()
         )
       )
@@ -119,7 +119,7 @@ useEffect(() => {
         p =>
           !safeObjectives.some(
             o =>
-              o.pareto_cause?.key.toLowerCase() ===
+              o.pareto_cause?.key?.toLowerCase() ===
               p.key.toLowerCase()
           )
       ) || null

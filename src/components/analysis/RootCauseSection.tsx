@@ -254,7 +254,7 @@ export function RootCauseSection({
   const currentSmartObjective = useMemo(() => {
     if (!currentIssue) return null;
     return safeObjectives.find(
-      (obj) => obj.pareto_cause?.key.toLowerCase() === currentIssue.key?.toLowerCase()
+      (obj) => obj?.pareto_cause?.key?.toLowerCase() === currentIssue?.key?.toLowerCase()
     ) ?? null;
   }, [safeObjectives, currentIssue]);
 

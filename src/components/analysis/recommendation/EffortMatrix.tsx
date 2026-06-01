@@ -127,7 +127,7 @@ export const EffortMatrix = ({ analysisData }) => {
   ? (analysisData?.paretoIssues || []).filter(
       p =>
         p.key.toLowerCase() ===
-        activeObjective.pareto_cause?.key.toLowerCase()
+        activeObjective?.pareto_cause?.key?.toLowerCase()
     )
   : (() => {
       const topIssue = [...(analysisData?.paretoIssues || [])]
