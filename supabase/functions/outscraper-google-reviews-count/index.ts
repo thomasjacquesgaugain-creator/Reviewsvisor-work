@@ -60,7 +60,7 @@ serve(async (req) => {
     
 const response = await client.googleMapsReviews(
   [query],
-  3000,
+  1300,
   null,
   1,
   "newest",
