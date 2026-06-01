@@ -21,6 +21,7 @@ import { toast } from "sonner";
    DETERMINISTIC HELPERS
 ───────────────────────────────────────────── */
 const db = supabase as any;
+
 const DEADLINE_BY_EFFORT: Record<SmartEffort, number> = {
   Low:    2,
   Medium: 3,
@@ -78,7 +79,11 @@ export function buildSmartPayload(
 
   return {
     establishment_id:         establishmentId,
-    pareto_cause:             paretoIssue.name,
+    pareto_cause:             {
+                                key: paretoIssue.key,
+                                en:  paretoIssue.en,
+                                fr:  paretoIssue.fr,
+                              },
     computed_count:           count,
     computed_target:          Math.ceil(count * 0.5),
     computed_impact:          impact,
@@ -92,33 +97,57 @@ export function buildSmartPayload(
     language:                 i18n.language,
   };
 }
+
 // TYPES
 export type ObjectiveStatus =
   | "todo"
   | "in_progress"
   | "completed"
-  |"overdue";
+  | "overdue";
+
+/* ─────────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────────── */
+
+const buildParetoCause = (paretoIssue: ParetoItem) => ({
+  key: paretoIssue.key,
+  en:  paretoIssue.en,
+  fr:  paretoIssue.fr,
+});
+
+const findObjectiveByParetoKey = async (
+  establishmentId: string,
+  paretoKey:       string,
+  userId:          string,
+) => {
+  const { data } = await db
+    .from("smart_objectives")
+    .select("id")
+    .eq("establishment_id", establishmentId)
+    .eq("user_id", userId)
+    .eq("pareto_cause->>key", paretoKey)
+    .maybeSingle();
+
+  return data;
+};
 
 /* ─────────────────────────────────────────────
    STORE INTERFACE
 ───────────────────────────────────────────── */
 
 interface SmartStore {
-  objectives:           SmartObjective[];
-  currentDraft:         SmartObjective | null;
-  isGenerating:         boolean;
-  isSaving:             boolean;
-  error:                string | null;
-  questionnaireByIssue: Record<string, QuestionnaireResult>;
+  objectives:            SmartObjective[];
+  currentDraft:          SmartObjective | null;
+  isGenerating:          boolean;
+  isSaving:              boolean;
+  error:                 string | null;
+  questionnaireByIssue:  Record<string, QuestionnaireResult>;
   loadedEstablishmentId: string | null;
 
-  setQuestionnaireResult: (
-    issueName: string,
-    result: QuestionnaireResult
-  ) => void;
-  resetSmartState: () => void;
+  setQuestionnaireResult: (issueName: string, result: QuestionnaireResult) => void;
+  resetSmartState:        () => void;
 
-  generateSmart: ( 
+  generateSmart: (
     establishmentId:      string,
     paretoIssue:          ParetoItem,
     rca:                  RootCauseAnalysis,
@@ -127,24 +156,27 @@ interface SmartStore {
     effortSource?:        "auto_detected" | "user_questionnaire",
     questionnaireScores?: IshikawaScores | null,
     paretoPercentage?:    number,
-  ) => Promise<void>;
+  ) => Promise<boolean>; // true = saved OK, false = error (toast already shown)
 
   updateDraft:     (updates: Partial<SmartObjective>) => void;
   saveDraft:       () => Promise<void>;
   discardDraft:    () => void;
   fetchObjectives: (establishmentId: string) => Promise<void>;
   updateObjective: (id: string, updates: Partial<SmartObjective>) => Promise<void>;
-  toggleAction: (id: string, actionIndex: number) => Promise<void>;
+  toggleAction:    (id: string, actionIndex: number) => Promise<void>;
   updateProgress:  (id: string, current_progress: number) => Promise<void>;
+
   saveQuestionnaireOnly: (
-  establishmentId: string,
-  paretoIssue: ParetoItem,
-  result: QuestionnaireResult
-) => Promise<void>;
- updateObjectiveStatus: (
+    establishmentId: string,
+    paretoIssue:     ParetoItem,
+    result:          QuestionnaireResult,
+  ) => Promise<void>;
+
+  updateObjectiveStatus: (
     objectiveId: string,
-    status: ObjectiveStatus
+    status:      ObjectiveStatus,
   ) => Promise<SmartObjective | null>;
+
   resetAllData: () => void;
 }
 
@@ -163,13 +195,14 @@ export const useSmartStore = create<SmartStore>()(
       questionnaireByIssue:  {},
       loadedEstablishmentId: null,
 
-  setQuestionnaireResult: (issueName, result) =>
-    set((state) => ({
-      questionnaireByIssue: {
-        ...state.questionnaireByIssue,
-        [issueName]: result,
-      },
-    })),
+      /* ── questionnaire cache ── */
+      setQuestionnaireResult: (issueName, result) =>
+        set((state) => ({
+          questionnaireByIssue: {
+            ...state.questionnaireByIssue,
+            [issueName]: result,
+          },
+        })),
 
       resetSmartState: () =>
         set({
@@ -182,68 +215,69 @@ export const useSmartStore = create<SmartStore>()(
           isSaving:              false,
         }),
 
-  saveQuestionnaireOnly: async (
-  establishmentId: string,
-  paretoIssue: ParetoItem,
-  result: QuestionnaireResult
-  ) => {
+      /* ─────────────────────────────────────────
+         saveQuestionnaireOnly
+         Upserts by pareto_cause->>'key' so fr/en
+         never create duplicate rows.
+      ───────────────────────────────────────── */
+      saveQuestionnaireOnly: async (establishmentId, paretoIssue, result) => {
         const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
-  const { data: existing } = await db
-    .from("smart_objectives")
-    .select("id")
-    .eq("establishment_id", establishmentId)
-    .eq("pareto_cause", paretoIssue.name)
-    .eq("user_id", user.id)
-    .maybeSingle();
+        const paretoCause = buildParetoCause(paretoIssue);
 
-  if (existing) {
-    await db
-      .from("smart_objectives")
-      .update({
-        questionnaire_scores: result.scores,
-        ishikawa_top_category: result.dominantCategory,
-        effort: result.dominantEffort,
-        effort_source: "user_questionnaire",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", existing.id);
-  } else {
-    await db.from("smart_objectives").insert({
-      establishment_id: establishmentId,
-      pareto_cause: paretoIssue.name,
-      user_id: user.id,
-      questionnaire_scores: result.scores,
-      ishikawa_top_category: result.dominantCategory,
-      effort: result.dominantEffort,
-      effort_source: "user_questionnaire",
+        const existing = await findObjectiveByParetoKey(
+          establishmentId,
+          paretoIssue.key,
+          user.id,
+        );
 
-      // required fallback fields
-      place_id: "temp",
-      problem: paretoIssue.name,
-      kpi_label: "Negative mentions",
-      current_value: paretoIssue.count ?? 0,
-      target_value: Math.ceil((paretoIssue.count ?? 1) * 0.5),
-      deadline: new Date().toISOString(),
-    });
-  }
-},
+        if (existing) {
+          const { error } = await db
+            .from("smart_objectives")
+            .update({
+              pareto_cause:          paretoCause,
+              questionnaire_scores:  result.scores,
+              ishikawa_top_category: result.dominantCategory,
+              effort:                result.dominantEffort,
+              effort_source:         "user_questionnaire",
+              updated_at:            new Date().toISOString(),
+            })
+            .eq("id", existing.id);
 
+          if (error) throw error;
+        } else {
+          const { error } = await db.from("smart_objectives").insert({
+            establishment_id:      establishmentId,
+            user_id:               user.id,
+            pareto_cause:          paretoCause,
+            questionnaire_scores:  result.scores,
+            ishikawa_top_category: result.dominantCategory,
+            effort:                result.dominantEffort,
+            effort_source:         "user_questionnaire",
+            place_id:              "temp",
+            problem:               { en: `Reduce ${paretoIssue.en}`, fr: `Réduire ${paretoIssue.fr}` },
+            kpi_label:             { en: "Negative mentions", fr: "Mentions négatives" },
+            current_value:         paretoIssue.count ?? 0,
+            target_value:          Math.ceil((paretoIssue.count ?? 1) * 0.5),
+            deadline:              new Date().toISOString(),
+          });
 
-  generateSmart: async (
-    establishmentId,
-    paretoIssue,
-    rca,
-    effortOverride,
-    ishikawaTopCategory,
-    effortSource,
-    questionnaireScores,
-    paretoPercentage,
-  ) => {
-    set({ isGenerating: true, error: null });
-    const t = i18n.t.bind(i18n);
-    try {
-      const payload = buildSmartPayload(
+          if (error) throw error;
+        }
+      },
+
+      /* ─────────────────────────────────────────
+         generateSmart
+         Checks for existing row by pareto key
+         BEFORE calling the edge function, passes
+         existing_objective_id so the function
+         updates instead of inserting — prevents
+         fr/en duplication.
+         Returns true on success, false on failure
+         (toast already shown on failure).
+      ───────────────────────────────────────── */
+      generateSmart: async (
         establishmentId,
         paretoIssue,
         rca,
@@ -252,84 +286,147 @@ export const useSmartStore = create<SmartStore>()(
         effortSource,
         questionnaireScores,
         paretoPercentage,
-      );
+      ) => {
+        set({ isGenerating: true, error: null });
+        const t = i18n.t.bind(i18n);
 
-      const { data, error } = await supabase.functions.invoke(
-        "generate-smart-objective",
-        { body: payload }
-      );
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error("User not authenticated");
 
-        if (error) {
-        console.error("Edge function error:", error);
-        toast.error(t("toasts.error"), {
-          description: t("questionnaire.errors.saveFailed"),
-        });
+          const existing = await findObjectiveByParetoKey(
+            establishmentId,
+            paretoIssue.key,
+            user.id,
+          );
+
+          const payload = buildSmartPayload(
+            establishmentId,
+            paretoIssue,
+            rca,
+            effortOverride,
+            ishikawaTopCategory,
+            effortSource,
+            questionnaireScores,
+            paretoPercentage,
+          );
+
+          // Pass existing id so edge function updates rather than inserts
+          const payloadWithId = existing
+            ? { ...payload, existing_objective_id: existing.id }
+            : payload;
+
+          const { data, error } = await supabase.functions.invoke(
+            "generate-smart-objective",
+            { body: payloadWithId },
+          );
+
+          if (error) {
+            console.error("Edge function error:", error);
+            toast.error(t("toasts.error"), {
+              description: t("questionnaire.errors.saveFailed"),
+            });
             set({ isGenerating: false });
-        return;
-      }
-       if (data.ok) {
-        toast.success(t("toasts.saved"), {
-        description: t("questionnaire.success"),
-      });
-      }
+            return false; // failure: caller must NOT update local cache
+          }
 
-      set({ currentDraft: data.smart_objective, isGenerating: false });
-    } catch (err: any) {
-      console.error("generateSmart error:", err);
-      set({ error: err.message, isGenerating: false });
-    }
-  },
+          if (data.ok) {
+            toast.success(t("toasts.saved"), {
+              description: t("questionnaire.success"),
+            });
+          }
 
-  updateDraft: (updates) =>
-  set((state) => ({
-    currentDraft: state.currentDraft
-      ? { ...state.currentDraft, ...updates }
-      : (updates as SmartObjective),
-  })),
+          const saved: SmartObjective = data.smart_objective;
 
- saveDraft: async () => {
-  const { currentDraft } = get();
-  if (!currentDraft) return;
+          // Update in-place or prepend — no duplicates
+          set((state) => ({
+            objectives: [
+              saved,
+              ...state.objectives.filter(
+                (o) => o.pareto_cause?.key !== paretoIssue.key
+              ),
+            ],
+            currentDraft: saved,
+            isGenerating: false,
+          }));
 
-  set({ isSaving: true });
-  try {
-    let data;
-    let error;
+          return true; // success: caller may update local cache
 
-    if (currentDraft.id) {
-      const result = await db
-        .from("smart_objectives")
-        .update(currentDraft)
-        .eq("id", currentDraft.id)
-        .select()
-        .single();
-      data  = result.data;
-      error = result.error;
-    } else {
-      const result = await db
-        .from("smart_objectives")
-        .insert(currentDraft)
-        .select()
-        .single();
-      data  = result.data;
-      error = result.error;
-    }
+        } catch (err: any) {
+          console.error("generateSmart error:", err);
+          toast.error(i18n.t("toasts.error"), {
+            description: i18n.t("questionnaire.errors.saveFailed"),
+          });
+          set({ error: err.message, isGenerating: false });
+          return false; // failure
+        }
+      },
 
-    if (error) throw error;
+      /* ── draft helpers ── */
+      updateDraft: (updates) =>
+        set((state) => ({
+          currentDraft: state.currentDraft
+            ? { ...state.currentDraft, ...updates }
+            : (updates as SmartObjective),
+        })),
 
-    set((state) => ({
-      objectives:   [data, ...state.objectives.filter((o) => o.id !== data.id)],
-      currentDraft: null,
-      isSaving:     false,
-    }));
-  } catch (err: any) {
-    set({ error: err.message, isSaving: false });
-  }
-},
+      saveDraft: async () => {
+        const { currentDraft } = get();
+        if (!currentDraft) return;
 
-  discardDraft: () => set({ currentDraft: null }),
+        set({ isSaving: true });
+        try {
+          let data, error;
 
-  fetchObjectives: async (establishmentId) => {
+          if (currentDraft.id) {
+            const result = await db
+              .from("smart_objectives")
+              .update(currentDraft)
+              .eq("id", currentDraft.id)
+              .select()
+              .single();
+            data  = result.data;
+            error = result.error;
+          } else {
+            const existing = await findObjectiveByParetoKey(
+              currentDraft.establishment_id,
+              currentDraft.pareto_cause.key,
+              currentDraft.user_id,
+            );
+
+            const result = existing
+              ? await db
+                  .from("smart_objectives")
+                  .update(currentDraft)
+                  .eq("id", existing.id)
+                  .select()
+                  .single()
+              : await db
+                  .from("smart_objectives")
+                  .insert(currentDraft)
+                  .select()
+                  .single();
+
+            data  = result.data;
+            error = result.error;
+          }
+
+          if (error) throw error;
+
+          set((state) => ({
+            objectives:   [data, ...state.objectives.filter((o) => o.id !== data.id)],
+            currentDraft: null,
+            isSaving:     false,
+          }));
+        } catch (err: any) {
+          set({ error: err.message, isSaving: false });
+        }
+      },
+
+      discardDraft: () => set({ currentDraft: null }),
+
+      /* ── fetchObjectives ── */
+      fetchObjectives: async (establishmentId) => {
         const { loadedEstablishmentId } = get();
 
         if (loadedEstablishmentId !== establishmentId) {
@@ -341,36 +438,46 @@ export const useSmartStore = create<SmartStore>()(
           });
         }
 
-    const { data, error } = await db
-      .from("smart_objectives")
-      .select("*")
-      .eq("establishment_id", establishmentId)
-      .order("created_at", { ascending: false });
+        const { data, error } = await db
+          .from("smart_objectives")
+          .select("*")
+          .eq("establishment_id", establishmentId)
+          .order("created_at", { ascending: false });
 
-        if (!error && data) {
-          set({
-            objectives:            data,
-            loadedEstablishmentId: establishmentId,
-          });
+        if (error) {
+          console.error("fetchObjectives error:", error);
+          set({ error: error.message });
+          return;
         }
+
+        set({
+          objectives:            data ?? [],
+          loadedEstablishmentId: establishmentId,
+        });
       },
 
+      /* ── updateObjective ── */
       updateObjective: async (id, updates) => {
+        const normalizedUpdates = {
+          ...updates,
+          updated_at: new Date().toISOString(),
+        };
+
         const { error } = await db
           .from("smart_objectives")
-          .update({ ...updates, updated_at: new Date().toISOString() })
+          .update(normalizedUpdates)
           .eq("id", id);
 
         if (!error) {
           set((state) => ({
             objectives: state.objectives.map((obj) =>
-              obj.id === id ? { ...obj, ...updates } : obj
+              obj.id === id ? { ...obj, ...normalizedUpdates } : obj
             ),
           }));
         }
       },
 
-      toggleAction: async (id: string, actionIndex: number) => {
+      toggleAction: async (id, actionIndex) => {
         const { objectives } = get();
         const obj = objectives.find((o) => o.id === id);
         if (!obj) return;
@@ -384,9 +491,7 @@ export const useSmartStore = create<SmartStore>()(
       updateProgress: async (id, current_progress) => {
         const { objectives, updateObjectiveStatus } = get();
         const objective = objectives.find((o) => o.id === id);
-
         if (!objective) return;
-
         if (objective.status !== "in_progress") return;
 
         await get().updateObjective(id, { current_progress });
@@ -399,17 +504,11 @@ export const useSmartStore = create<SmartStore>()(
       updateObjectiveStatus: async (objectiveId, status) => {
         try {
           const { data: { session } } = await supabase.auth.getSession();
-
-          if (!session?.user) {
-            throw new Error("User not authenticated");
-          }
+          if (!session?.user) throw new Error("User not authenticated");
 
           const { data, error } = await db
             .from("smart_objectives")
-            .update({
-              status,
-              updated_at: new Date().toISOString(),
-            })
+            .update({ status, updated_at: new Date().toISOString() })
             .eq("id", objectiveId)
             .eq("user_id", session.user.id)
             .select()
@@ -418,27 +517,27 @@ export const useSmartStore = create<SmartStore>()(
           if (error) throw error;
 
           set((state) => ({
-      objectives: state.objectives.map((obj) =>
-        obj.id === objectiveId ? { ...obj, status } : obj
-      ),
-    }));
+            objectives: state.objectives.map((obj) =>
+              obj.id === objectiveId ? { ...obj, status } : obj
+            ),
+          }));
 
-    return data;
-  } catch (err) {
-    console.error("updateObjectiveStatus error:", err);
-    throw err;
-  }
-},
-resetAllData: () =>
+          return data;
+        } catch (err) {
+          console.error("updateObjectiveStatus error:", err);
+          throw err;
+        }
+      },
+
+      resetAllData: () =>
         set({
-          objectives:            [],
-          currentDraft:          null,
-          questionnaireByIssue:  {},
-          error:                 null,
-          isGenerating:          false,
-          isSaving:              false,
+          objectives:           [],
+          currentDraft:         null,
+          questionnaireByIssue: {},
+          error:                null,
+          isGenerating:         false,
+          isSaving:             false,
         }),
-
     }),
     {
       name: "smart-store",
@@ -450,4 +549,3 @@ resetAllData: () =>
     }
   )
 );
-

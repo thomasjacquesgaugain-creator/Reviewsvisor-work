@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentEstablishment } from "@/services/establishments";
+import i18n from "@/i18n/config";
 
 export interface AnalysisData {
   total_count: number | null;
@@ -43,6 +44,46 @@ const REVIEW_INSIGHTS_BASE_COLUMNS =
  * @param userId - L'ID de l'utilisateur
  * @returns Le résultat du chargement avec les données d'analyse ou null si aucune analyse
  */
+function localizeAnalysisData(data: any) {
+  const lang = i18n.language.startsWith("fr")
+    ? "fr"
+    : "en";
+
+  return {
+    ...data,
+    top_issues_original:
+      data?.top_issues || {},
+    top_issues:
+      data?.top_issues?.[lang] || [],
+
+    top_praises:
+      data?.top_praises?.[lang] || [],
+
+    themes_universal:
+      data?.themes_universal?.[lang] || [],
+
+    themes_industry:
+      data?.themes_industry?.[lang] || [],
+
+    pain_points_prioritized:
+      data?.pain_points_prioritized?.[lang] || [],
+
+    recommendations_quick_wins:
+      data?.recommendations_quick_wins?.[lang] || [],
+
+    recommendations_projects:
+      data?.recommendations_projects?.[lang] || [],
+
+    summary_one_liner:
+      data?.summary_one_liner?.[lang] || "",
+
+    summary_what_customers_love:
+      data?.summary_what_customers_love?.[lang] || [],
+
+    summary_what_customers_hate:
+      data?.summary_what_customers_hate?.[lang] || [],
+  };
+}
 export async function loadLatestAnalysis(
   placeId: string,
   userId: string
@@ -77,10 +118,9 @@ export async function loadLatestAnalysis(
 
     // Vérifier si l'analyse est valide (a au moins une date d'analyse)
     const hasAnalysis = !!data.last_analyzed_at;
-
     return {
       success: true,
-      data: data as AnalysisData,
+      data: localizeAnalysisData(data) as AnalysisData,
       hasAnalysis,
     };
   } catch (error) {

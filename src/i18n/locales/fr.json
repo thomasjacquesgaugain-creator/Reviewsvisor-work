@@ -749,6 +749,7 @@
        "title":"Essentiel à Retenir",
        "quickRead":"Lecture rapide pour les décideurs",
        "overallScore": {
+        "reviews":"avis",
          "overallScore": "Note globale",
         "critical": "A revoir",
         "toImprove": "À améliorer",
@@ -757,9 +758,9 @@
         "narrativeCritical": "Votre établissement rencontre des problèmes critiques qui impactent significativement la satisfaction client.",
          "narrativeWarning": "Votre établissement présente des performances mitigées avec des axes d'amélioration clairs.",
          "narrativePositive": "Votre établissement performe bien et offre une expérience client globalement positive.",
-         "statRating": "Note Google",
-         "statPositive": "Sentiment IA (normalisé)",
-         "statReviews": "Avis analysés",
+         "statRating": "Note moyenne",
+         "statPositive": "Sentiment IA",
+         "statReviews": "Total avis",
          "noData":"Aucune donnée disponible",
          "noDataHint":"Le score apparaîtra une fois les avis recueillis.",
         "statRecentTrend": "Tendance récente",
@@ -770,14 +771,14 @@
         "trendRelativePrefix": "Soit",
         "trendRelativeSuffix": "par rapport à la période précédente.",
         "trendWindow": "Calculé sur les {{days}} derniers jours vs les {{days}} précédents.",
-        "trendCurrentWindow": "Les 60 derniers jours",
+        "trendCurrentWindow": "Sur les 60 derniers jours",
         "trendComparisonWindow": "Comparé aux 60 jours précédents",
         "trendUnavailableMessage": "Pas assez d'avis sur la période pour calculer une tendance fiable",
         "sourcesAndDetails": "Sources et détails",
         "calcAriaLabel": "Détail du calcul",
         "calcTitle": "Comment c'est calculé ?",
-        "calcGoogleTitle": "Note moyenne Google",
-        "calcGoogleDesc": "Moyenne des étoiles de tous vos avis Google, convertie sur 100.",
+        "calcGoogleTitle": "Note moyenne",
+        "calcGoogleDesc": "Moyenne des étoiles de tous vos avis, convertie sur 100.",
         "calcSentimentTitle": "Sentiment client",
         "calcSentimentDesc": "Analyse sémantique des commentaires combinée au pourcentage d'avis positifs (≥ 4★).",
         "calcTrendTitle": "Tendance récente",
@@ -795,13 +796,13 @@
        "mainIssues": {
          "majorIssue": "Problème majeur",
          "impactHigh": "Impact - Élevé",
-         "mentionedIn": "Mentionné dans {{percentage}}% des avis négatifs",
+         "mentionedIn": "Mentionné dans <strong>{{percentage}}% des avis négatifs</strong>",
          "noData":"Aucune donnée disponible"
        },
        "mainStrengths": {
          "mainStrength": "Point fort",
          "positiveImpact": "Impact positif",
-         "mentionedIn": "Mentionné dans {{percentage}}% des avis positifs",
+         "mentionedIn": "Mentionné dans <strong>{{percentage}}% des avis positifs</strong>",
          "noData":"Aucun point fort identifié dans les évaluations récentes."
        },
        "recommandedActions":{
@@ -841,7 +842,7 @@
         "title": "Gain potentiel",
         "estimatedGain": "+{{gain}} estimé si l'action est appliquée.",
         "label":"Gain estimé",
-        "viewActionPlan":"Afficher le plan d'action",
+        "viewActionPlan":"Voir le plan d'action",
         "noData":"Aucune donnée disponible"
       }
      }
@@ -2059,7 +2060,8 @@
       }
     },
     "ishikawa": {
-      "title": "Analyse des causes racines (Ishikawa IA)",
+      "title": "Diagnostic IA des causes",
+      "subtitle":"Identifiez les causes probables de vos problèmes détectés",
       "content":"Analyse des causes racines (Ishikawa) : outil pour identifier les causes profondes d'un problème récurrent. Bénéfice : vous comprenez pourquoi un problème survient et pouvez agir à la source.",
       "problemAnalyzed": "Problème analysé",
       "dataSrc":"Données issues du diagramme de Pareto des avis négatifs.",
@@ -2076,7 +2078,12 @@
       "closeQuestionare":"Fermer le questionnaire",
       "questionareSkipped":"Questionnaire ignoré — le niveau d'effort est détecté automatiquement.",
       "recommendMessage":"Les recommandations peuvent être moins précises.",
-      "questionareWarning":"Vous n'avez pas rempli le questionnaire pour ce problème."
+      "questionareWarning":"Vous n'avez pas rempli le questionnaire pour ce problème.",
+      "refineTitle":"Affiner le diagnostic",
+      "problem":"Problème",
+      "highImpact":"Impact élevé",
+      "mediumImpact": "Impact modéré",
+      "primary":"Principale"
     },
     "syntheseAndDiagnostic": {
       "title": "Synthèse & diagnostic",
@@ -2258,7 +2265,8 @@
     "saveFailed": "Échec de l'enregistrement. Veuillez réessayer."
   },
   "success":"Questionnaire rempli avec succès",
-  "effortOverridden": "Effort remplacé par {{effort}} — cause dominante :"
+  "effortOverridden": "Effort remplacé par {{effort}} — cause dominante :",
+  "help":"Aidez Reviewsvisor à confirmer les causes du problème détecté."
 },
 "recommendations":{
    "smart":{

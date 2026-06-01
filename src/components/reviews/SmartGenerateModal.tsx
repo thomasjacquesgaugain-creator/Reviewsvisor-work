@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Sparkles, Check } from "lucide-react";
 import type { SmartObjective } from "@/types/smart";
 import { useEffect } from "react";
+import i18n from "@/i18n/config";
 
 interface Props {
   open:          boolean;
@@ -26,13 +27,52 @@ interface Props {
   activeObjective?: SmartObjective
 }
 
+
+const getLocalizedText = (
+  value: any,
+  language: string = "en"
+): string => {
+  if (!value) return "";
+
+  // already plain string
+  if (typeof value === "string") return value;
+
+  // multilingual object
+  if (typeof value === "object") {
+    return (
+      value[language] ||
+      value.en ||
+      value.fr ||
+      Object.values(value)[0] ||
+      ""
+    );
+  }
+
+  return String(value);
+};
+
+const updateLocalizedValue = (
+  existing: any,
+  value: string,
+  lang: "en" | "fr"
+) => ({
+  ...(typeof existing === "object" && existing ? existing : {}),
+  [lang]: value,
+});
+
+
 export function SmartGenerateModal({
   open, onClose, onSave,
   currentDraft, isGenerating, isSaving,
   updateDraft, paretoCause, updating , activeObjective
 }: Props) {
   const { t } = useTranslation();
+  const lang = i18n.language?.startsWith("fr")
+  ? "fr"
+  : "en";
   const draftData = currentDraft;
+  console.log("draftData",draftData)
+
 
   
   
@@ -104,8 +144,16 @@ export function SmartGenerateModal({
                 S — {t("smartCard.smart.specific")} ({t("recommendations.smart.problemToSolve")})
               </Label>
               <Textarea
-                value={draftData.problem}
-                onChange={(e) => updateDraft({ problem: e.target.value })}
+                value={getLocalizedText(draftData.problem, lang)}
+                onChange={(e) =>
+                  updateDraft({
+                    problem: updateLocalizedValue(
+                      draftData.problem,
+                      e.target.value,
+                      lang
+                    ),
+                  })
+                }
                 className="mt-1.5 text-sm"
                 rows={2}
               />
@@ -116,8 +164,15 @@ export function SmartGenerateModal({
                 M — {t("smartCard.smart.measurable")}
               </Label>
               <Input
-                value={draftData.kpi_label}
-                onChange={(e) => updateDraft({ kpi_label: e.target.value })}
+                value={getLocalizedText(draftData.kpi_label , lang)}
+                onChange={(e) =>updateDraft({
+                                  kpi_label: updateLocalizedValue(
+                                    draftData.kpi_label,
+                                    e.target.value,
+                                    lang
+                                  ),
+                                })
+                              }
                 placeholder={t("recommendations.smart.kpiName")}
                 className="mt-1.5 text-sm mb-2"
               />
@@ -128,7 +183,7 @@ export function SmartGenerateModal({
                   </Label>
                   <Input
                     type="number"
-                    value={draftData.current_value}
+                    value={getLocalizedText(draftData.current_value,lang)}
                     onChange={(e) =>
                       updateDraft({ current_value: Number(e.target.value) })
                     }
@@ -159,8 +214,15 @@ export function SmartGenerateModal({
                 <div>
                   <Label className="text-xs text-gray-500">{t("recommendations.smart.unit")}</Label>
                   <Input
-                    value={draftData.unit}
-                    onChange={(e) => updateDraft({ unit: e.target.value })}
+                    value={getLocalizedText(draftData.unit,lang)}
+                    onChange={(e) => updateDraft({
+                                      unit: updateLocalizedValue(
+                                        draftData.unit,
+                                        e.target.value,
+                                        lang
+                                      ),
+                                    })
+                                  }
                     className="mt-1 text-sm"
                   />
                 </div>
@@ -208,8 +270,15 @@ export function SmartGenerateModal({
                 R — {t("recommendations.smart.whyItMatters")}
               </Label>
               <Textarea
-                value={draftData.relevance_note ?? ""}
-                onChange={(e) => updateDraft({ relevance_note: e.target.value })}
+                value={getLocalizedText(draftData.relevance_note,lang) ?? ""}
+                onChange={(e) => updateDraft({
+                                  relevance_note: updateLocalizedValue(
+                                    draftData.relevance_note,
+                                    e.target.value,
+                                    lang
+                                  ),
+                                })
+                              }
                 className="mt-1.5 text-sm"
                 rows={2}
               />

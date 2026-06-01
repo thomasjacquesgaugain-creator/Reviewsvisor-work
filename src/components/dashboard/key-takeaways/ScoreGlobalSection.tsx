@@ -1,13 +1,12 @@
 import { useMemo, type CSSProperties, type ReactNode } from "react";
 import {
   AlertCircle,
-  ArrowDown,
-  ArrowUp,
   Info,
   Minus,
-  MessageCircleMore,
-  Sparkles,
   Star,
+  Sun,
+  TrendingDown,
+  TrendingUp,
 } from "lucide-react";
 import { parseISO, subDays } from "date-fns";
 import { useTranslation } from "react-i18next";
@@ -74,7 +73,6 @@ function getScoreStatus(score: number, t: (key: string) => string): ScoreStatus 
       accent: "#ef4444",
     };
   }
-
   if (score < 70) {
     return {
       label: t("dashboard.keyTakeaways.overallScore.toImprove"),
@@ -84,7 +82,6 @@ function getScoreStatus(score: number, t: (key: string) => string): ScoreStatus 
       accent: "#f59e0b",
     };
   }
-
   if (score < 85) {
     return {
       label: t("dashboard.keyTakeaways.overallScore.good"),
@@ -94,7 +91,6 @@ function getScoreStatus(score: number, t: (key: string) => string): ScoreStatus 
       accent: "#16a34a",
     };
   }
-
   return {
     label: t("dashboard.keyTakeaways.overallScore.excellent"),
     tone: "positive",
@@ -103,6 +99,7 @@ function getScoreStatus(score: number, t: (key: string) => string): ScoreStatus 
     accent: "#166534",
   };
 }
+
 
 function ScoreRing({
   score,
@@ -120,21 +117,19 @@ function ScoreRing({
   };
 
   return (
-    <div className="relative mx-auto h-40 w-40 shrink-0">
+    <div className="relative mx-auto h-44 w-44 shrink-0">
       <div className="absolute inset-0 rounded-full" style={ringStyle} />
       <div className="absolute inset-[10px] rounded-full bg-white shadow-inner dark:bg-slate-900" />
-      <div className="absolute inset-[18px] flex flex-col items-center justify-center rounded-full bg-white dark:bg-slate-950">
+      <div className="absolute inset-[18px] flex flex-col items-center justify-center rounded-full bg-white dark:bg-slate-900">
         <div className="flex items-end gap-1">
-          <span className="text-4xl font-extrabold tracking-tight text-slate-950 dark:text-slate-50">
+          <span className="text-5xl font-extrabold tracking-tight text-slate-950 dark:text-slate-50">
             {normalizedScore}
           </span>
-          <span className="pb-1 text-sm font-semibold text-slate-400 dark:text-slate-400">
-            /100
-          </span>
+          <span className="pb-1.5 text-sm font-semibold text-slate-400">/100</span>
         </div>
         <div
-          className="mt-2 rounded-full px-3 py-1 text-sm font-semibold"
-          style={{ color: status.accent, backgroundColor: `${status.accent}14` }}
+          className="mt-2 rounded-full px-3 py-1 text-xs font-semibold"
+          style={{ color: status.accent, backgroundColor: `${status.accent}18` }}
         >
           {label}
         </div>
@@ -170,30 +165,10 @@ function ScoreCalculationPopover() {
   ];
 
   const pills = [
-    {
-      label: t("dashboard.keyTakeaways.overallScore.calcThresholdCritical"),
-      bg: "#FCE4E4",
-      fg: "#DC2626",
-      symbol: "🔴",
-    },
-    {
-      label: t("dashboard.keyTakeaways.overallScore.calcThresholdImprove"),
-      bg: "#FEF1DC",
-      fg: "#E89614",
-      symbol: "🟠",
-    },
-    {
-      label: t("dashboard.keyTakeaways.overallScore.calcThresholdGood"),
-      bg: "#E8F5E8",
-      fg: "#16A34A",
-      symbol: "🟢",
-    },
-    {
-      label: t("dashboard.keyTakeaways.overallScore.calcThresholdExcellent"),
-      bg: "#D1FAE5",
-      fg: "#166534",
-      symbol: "💎",
-    },
+    { label: t("dashboard.keyTakeaways.overallScore.calcThresholdCritical"), bg: "#FCE4E4", fg: "#DC2626", symbol: "🔴" },
+    { label: t("dashboard.keyTakeaways.overallScore.calcThresholdImprove"), bg: "#FEF1DC", fg: "#E89614", symbol: "🟠" },
+    { label: t("dashboard.keyTakeaways.overallScore.calcThresholdGood"), bg: "#E8F5E8", fg: "#16A34A", symbol: "🟢" },
+    { label: t("dashboard.keyTakeaways.overallScore.calcThresholdExcellent"), bg: "#D1FAE5", fg: "#166534", symbol: "💎" },
   ];
 
   return (
@@ -211,20 +186,9 @@ function ScoreCalculationPopover() {
         side="bottom"
         align="start"
         sideOffset={10}
-        className="w-[380px] max-w-[calc(100vw-2rem)] overflow-hidden p-0 border-slate-200 bg-white text-slate-900 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:shadow-none"
-        style={{
-          borderRadius: 14,
-          boxShadow: "0 8px 28px rgba(0,0,0,0.1)",
-        }}
+        className="w-[380px] max-w-[calc(100vw-2rem)] overflow-hidden p-0 border-slate-200 bg-white text-slate-900 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+        style={{ borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.1)" }}
       >
-        <style>{`
-          @keyframes scoreCalcPulse {
-            0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.5); }
-            70% { box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
-          }
-        `}</style>
-
         <div className="px-[22px] py-5">
           <div className="flex items-center gap-2">
             <Info size={14} color="#4F46E5" />
@@ -232,61 +196,48 @@ function ScoreCalculationPopover() {
               {t("dashboard.keyTakeaways.overallScore.calcTitle")}
             </p>
           </div>
-
           <div className="mt-4 space-y-4">
             {pillars.map((pillar) => (
               <div key={pillar.title}>
                 <div className="flex items-start gap-2 text-[13px] font-bold text-[#15151f] dark:text-slate-100">
                   <span>
                     {pillar.title}{" "}
-                    <span className="font-bold text-[#4F46E5] dark:text-[#818cf8]">
-                      ({pillar.weight})
-                    </span>
+                    <span className="font-bold text-[#4F46E5]">({pillar.weight})</span>
                   </span>
                 </div>
-                <p className="mt-1 text-[12px] leading-5 text-[#6b6b85] dark:text-slate-300">
+                <p className="mt-1 text-[12px] leading-5 text-[#6b6b85]">
                   {pillar.description}
                 </p>
               </div>
             ))}
           </div>
-
-          <div className="mt-4 border-t border-dashed border-slate-200 pt-3 dark:border-slate-700">
-            <p className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+          <div className="mt-4 border-t border-dashed border-slate-200 pt-3">
+            <p className="text-[11px] font-bold text-slate-600">
               {t("dashboard.keyTakeaways.overallScore.calcThresholdsLabel")}
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
-                {pills.map((pill) => (
-                  <span
-                    key={pill.label}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-full px-[8px] py-[3px] text-[10px] font-bold leading-none"
-                    style={{ backgroundColor: pill.bg, color: pill.fg }}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center leading-none"
-                    >
-                      {pill.symbol}
-                    </span>
-                    {pill.label}
+              {pills.map((pill) => (
+                <span
+                  key={pill.label}
+                  className="inline-flex items-center gap-1.5 rounded-full px-[8px] py-[3px] text-[10px] font-bold leading-none"
+                  style={{ backgroundColor: pill.bg, color: pill.fg }}
+                >
+                  <span aria-hidden="true" className="inline-flex h-3.5 w-3.5 items-center justify-center leading-none">
+                    {pill.symbol}
                   </span>
-                ))}
+                  {pill.label}
+                </span>
+              ))}
             </div>
           </div>
-
-          <div className="mt-4 border-t border-dashed border-slate-200 pt-3 dark:border-slate-700">
-            <p className="text-[11px] italic text-slate-600 dark:text-slate-300">
+          <div className="mt-4 border-t border-dashed border-slate-200 pt-3">
+            <p className="text-[11px] italic text-slate-600">
               {t("dashboard.keyTakeaways.overallScore.calcNote")}
             </p>
           </div>
-
-          <div className="mt-4 border-t border-slate-200 pt-3 dark:border-slate-700">
-            <div className="flex items-start gap-2 text-[10px] text-[#9CA3AF] dark:text-slate-400">
-              <span
-                aria-hidden="true"
-                className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-[#16A34A]"
-                style={{ animation: "scoreCalcPulse 2s infinite" }}
-              />
+          <div className="mt-4 border-t border-slate-200 pt-3">
+            <div className="flex items-start gap-2 text-[10px] text-[#9CA3AF]">
+              <span aria-hidden="true" className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-[#16A34A]" />
               <p>{t("dashboard.keyTakeaways.overallScore.calcFooter")}</p>
             </div>
           </div>
@@ -296,29 +247,6 @@ function ScoreCalculationPopover() {
   );
 }
 
-function SourceRow({
-  icon,
-  label,
-  value,
-  valueClassName = "text-slate-700 dark:text-slate-200",
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  valueClassName?: string;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-2.5">
-      <div className="flex items-center gap-2 text-[12px] font-medium text-slate-500 dark:text-slate-300">
-        <span className="text-slate-400 dark:text-slate-500">{icon}</span>
-        <span>{label}</span>
-      </div>
-      <div className={`text-[13px] font-semibold tabular-nums ${valueClassName}`}>
-        {value}
-      </div>
-    </div>
-  );
-}
 
 type TrendState = {
   ratingChange: number | null;
@@ -338,39 +266,35 @@ function TrendDelta({
 }) {
   const deltaPoints = trend.ratingChange === null ? null : trend.ratingChange * 20;
   const isUnavailable = deltaPoints === null;
-  const unavailableMessage = t(
-    "dashboard.keyTakeaways.overallScore.trendUnavailableMessage",
-  );
+  const unavailableMessage = t("dashboard.keyTakeaways.overallScore.trendUnavailableMessage");
 
   const isPositive = deltaPoints !== null && deltaPoints > 0;
   const isNeutral = deltaPoints !== null && deltaPoints === 0;
-  const trendClassName =
+
+  const trendColor =
     deltaPoints === null
-      ? "text-slate-500 dark:text-slate-400"
+      ? "#94a3b8"
       : isPositive
-      ? "text-emerald-700 dark:text-emerald-400"
+      ? "#16a34a"
       : isNeutral
-      ? "text-slate-600 dark:text-slate-300"
-      : "text-rose-600 dark:text-rose-400";
+      ? "#64748b"
+      : "#ef4444";
 
   const formattedValue =
-    deltaPoints === null ? (
-      "—"
-    ) : (
+    deltaPoints === null ? "—" : (
       <span className="inline-flex items-center gap-1">
         {deltaPoints > 0 ? (
-          <ArrowUp className="h-3.5 w-3.5" />
+          <TrendingUp className="h-6 w-6 shrink-0" />
         ) : deltaPoints < 0 ? (
-          <ArrowDown className="h-3.5 w-3.5" />
+          <TrendingDown className="h-6 w-6 shrink-0" />
         ) : (
-          <Minus className="h-3.5 w-3.5" />
+          <Minus className="h-4 w-4" />
         )}
-        <span>
-          {`${formatLocalizedNumber(Math.abs(deltaPoints), locale, {
-            minimumFractionDigits: 1,
-            maximumFractionDigits: 1,
-          })} pts`}
-        </span>
+        {deltaPoints > 0 ? "+" : deltaPoints < 0 ? "-" : ""}
+        {`${formatLocalizedNumber(Math.abs(deltaPoints), locale, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`}
       </span>
     );
 
@@ -384,9 +308,7 @@ function TrendDelta({
         )} pts`;
 
   const relativePct =
-    trend.ratingChange !== null &&
-    trend.previousAvg !== null &&
-    trend.previousAvg > 0
+    trend.ratingChange !== null && trend.previousAvg !== null && trend.previousAvg > 0
       ? (trend.ratingChange / trend.previousAvg) * 100
       : null;
 
@@ -398,23 +320,42 @@ function TrendDelta({
           locale,
           { minimumFractionDigits: 1, maximumFractionDigits: 1 },
         )} %`;
-
   return (
-    <div className="flex flex-col items-start gap-1">
-      <div className={`flex items-center gap-2 text-sm font-semibold ${trendClassName}`}>
-        <span>{formattedValue}</span>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <span
+              className="text-[32px] font-bold leading-none tabular-nums"
+              style={{ color: trendColor }}
+            >
+              {formattedValue}
+            </span>
+            <Star className="h-6 w-6 mt-1 fill-amber-400 text-amber-400" />
+          </div>
+          <div className="flex flex-col leading-tight mt-1">
+            <span className="text-[12px] font-bold uppercase tracking-[0.12em] text-slate-500">
+              {t("dashboard.keyTakeaways.overallScore.statRecentTrend")}
+            </span>
+            <span className="mt-0 text-[10px] text-slate-400">
+              {t("dashboard.keyTakeaways.overallScore.trendCurrentWindow")}
+            </span>
+          </div>
+        </div>
+
         <Popover>
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
+              className="inline-flex mb-2 h-5 w-5 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 dark:text-slate-500 dark:hover:bg-slate-800"
               aria-label={t("dashboard.keyTakeaways.overallScore.statRecentTrend")}
             >
               <Info className="h-3.5 w-3.5" />
             </button>
           </PopoverTrigger>
+
           <PopoverContent
-            className="w-72 border-slate-200 bg-white p-4 text-slate-900 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:shadow-none"
+            className="w-72 border border-slate-200 bg-white p-4 text-slate-900 shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
             align="center"
             sideOffset={8}
           >
@@ -422,6 +363,7 @@ function TrendDelta({
               <p className="text-sm font-semibold text-slate-950 dark:text-slate-50">
                 {t("dashboard.keyTakeaways.overallScore.statRecentTrend")}
               </p>
+
               {isUnavailable ? (
                 <p className="text-sm text-slate-600 dark:text-slate-300">
                   {unavailableMessage}
@@ -430,13 +372,19 @@ function TrendDelta({
                 <>
                   <p className="text-sm text-slate-600 dark:text-slate-300">
                     {t("dashboard.keyTakeaways.overallScore.trendExactPrefix")}{" "}
-                    <strong>{exactValue ?? "-"}</strong>
+                    <strong className="text-slate-900 dark:text-slate-100">
+                      {exactValue ?? "-"}
+                    </strong>
                   </p>
+
                   <p className="text-sm text-slate-600 dark:text-slate-300">
                     {t("dashboard.keyTakeaways.overallScore.trendRelativePrefix")}{" "}
-                    <strong>{relativePctLabel ?? "-"}</strong>{" "}
+                    <strong className="text-slate-900 dark:text-slate-100">
+                      {relativePctLabel ?? "-"}
+                    </strong>{" "}
                     {t("dashboard.keyTakeaways.overallScore.trendRelativeSuffix")}
                   </p>
+
                   <p className="text-xs text-slate-400 dark:text-slate-500">
                     {t("dashboard.keyTakeaways.overallScore.trendWindow")
                       .split("{{days}}")
@@ -448,19 +396,45 @@ function TrendDelta({
           </PopoverContent>
         </Popover>
       </div>
-      {isUnavailable ? (
-        <div className="min-h-[2.5rem] text-[12px] leading-5 text-slate-400 dark:text-slate-400">
-          {unavailableMessage}
-        </div>
-      ) : (
-        <div className="min-h-[2.5rem] text-[12px] leading-5 text-slate-400 dark:text-slate-400">
-          <div>{t("dashboard.keyTakeaways.overallScore.trendCurrentWindow")}</div>
-          <div>{t("dashboard.keyTakeaways.overallScore.trendComparisonWindow")}</div>
-        </div>
-      )}
     </div>
   );
 }
+
+function SourceTile({
+  icon,
+  label,
+  value,
+  unit,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  unit?: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-[14px] border border-slate-100 bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900 transition-transform hover:-translate-y-0.5">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center text-2xl rounded-[12px] bg-[#f7f5fb] dark:bg-slate-800">
+        {icon}
+      </span>
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#6b6b80]">
+          {label}
+        </span>
+        <div className="flex items-end gap-1 leading-none">
+          <span className="text-2xl font-bold tabular-nums text-slate-900 dark:text-slate-50">
+            {value}
+          </span>
+          {unit && (
+            <span className="pb-0.5 text-sm font-semibold text-slate-400 dark:text-slate-500">
+              {unit}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function hasEnoughData(
   avgRating?: number,
@@ -469,10 +443,10 @@ function hasEnoughData(
 ): boolean {
   if (avgRating == null || !Number.isFinite(avgRating) || avgRating <= 0) return false;
   if (positivePct == null || !Number.isFinite(positivePct)) return false;
-  if (reviewCount == null || !Number.isFinite(reviewCount) || reviewCount <= 0)
-    return false;
+  if (reviewCount == null || !Number.isFinite(reviewCount) || reviewCount <= 0) return false;
   return true;
 }
+
 
 export function ScoreGlobalSection({
   avgRating,
@@ -486,12 +460,7 @@ export function ScoreGlobalSection({
 
   const trend = useMemo<TrendState>(() => {
     if (!reviews?.length) {
-      return {
-        ratingChange: null,
-        currentAvg: null,
-        previousAvg: null,
-        reason: "insufficient-data",
-      };
+      return { ratingChange: null, currentAvg: null, previousAvg: null, reason: "insufficient-data" };
     }
 
     const today = new Date();
@@ -515,43 +484,20 @@ export function ScoreGlobalSection({
       currentValid.length < MIN_REVIEWS_FOR_TREND ||
       previousValid.length < MIN_REVIEWS_FOR_TREND
     ) {
-      return {
-        ratingChange: null,
-        currentAvg: null,
-        previousAvg: null,
-        reason: "insufficient-data",
-      };
+      return { ratingChange: null, currentAvg: null, previousAvg: null, reason: "insufficient-data" };
     }
 
     const currentAvg = computeAverage(currentValid);
     const previousAvg = computeAverage(previousValid);
 
     if (currentAvg === null || previousAvg === null) {
-      return {
-        ratingChange: null,
-        currentAvg: null,
-        previousAvg: null,
-        reason: "insufficient-data",
-      };
+      return { ratingChange: null, currentAvg: null, previousAvg: null, reason: "insufficient-data" };
     }
 
     const ratingChange = currentAvg - previousAvg;
 
     if (Math.abs(ratingChange) > MAX_REASONABLE_RATING_DELTA) {
-      console.error("Mathematically impossible ratingChange", {
-        ratingChange,
-        currentAvg,
-        previousAvg,
-        currentCount: currentValid.length,
-        previousCount: previousValid.length,
-        reviewCount: reviews.length,
-      });
-      return {
-        ratingChange: null,
-        currentAvg,
-        previousAvg,
-        reason: "invalid-data",
-      };
+      return { ratingChange: null, currentAvg, previousAvg, reason: "invalid-data" };
     }
 
     return { ratingChange, currentAvg, previousAvg, reason: null };
@@ -577,140 +523,155 @@ export function ScoreGlobalSection({
       });
     }
 
-    const totalActiveWeight = activePillars.reduce(
-      (sum, pillar) => sum + pillar.baseWeight,
-      0,
-    );
-
+    const totalActiveWeight = activePillars.reduce((sum, p) => sum + p.baseWeight, 0);
     if (totalActiveWeight === 0) return null;
 
     const finalScore = activePillars.reduce(
-      (sum, pillar) => sum + pillar.score * (pillar.baseWeight / totalActiveWeight),
+      (sum, p) => sum + p.score * (p.baseWeight / totalActiveWeight),
       0,
     );
-
     return Math.round(clampScore(finalScore));
   }, [isDataAvailable, avgRating, positivePct, reviewCount, trend.ratingChange]);
 
-  if (normalizedScore === null) {
-    return (
-      <div className="h-full self-start rounded-[8px] border border-slate-200 bg-white p-5 shadow-[0_16px_35px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-              <Sparkles className="h-4 w-4 text-slate-400 dark:text-slate-400" />
-            </span>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-              {t("dashboard.keyTakeaways.overallScore.overallScore")}
-            </p>
-            <ScoreCalculationPopover />
-          </div>
-        </div>
-
-        <div className="mt-6 flex flex-col items-center justify-center gap-3 rounded-[8px] border border-slate-100 bg-white/70 py-10 text-center dark:border-slate-800 dark:bg-slate-900/60">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-            <AlertCircle className="h-6 w-6 text-slate-400 dark:text-slate-500" />
-          </div>
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-200">
-            {t("dashboard.keyTakeaways.overallScore.noData")}
-          </p>
-          <p className="max-w-[240px] text-xs text-slate-400 dark:text-slate-400">
-            {t("dashboard.keyTakeaways.overallScore.noDataHint")}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const status = getScoreStatus(normalizedScore, t);
+  const status = normalizedScore === null ? null : getScoreStatus(normalizedScore, t);
 
   const scoreNarrative =
-    status.tone === "critical"
+    status?.tone === "critical"
       ? t("dashboard.keyTakeaways.overallScore.narrativeCritical")
-      : status.tone === "warning"
+      : status?.tone === "warning"
       ? t("dashboard.keyTakeaways.overallScore.narrativeWarning")
       : t("dashboard.keyTakeaways.overallScore.narrativePositive");
 
   const googleRating = avgRating ?? null;
   const sentimentScore = positivePct ?? null;
-  const reviewLabel =
-    reviewCount == null ? null : formatLocalizedNumber(reviewCount, locale);
+  const reviewLabel = reviewCount == null ? null : formatLocalizedNumber(reviewCount, locale);
+
+  if (normalizedScore === null || !status) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="rounded-[18px] border border-white/70 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.08)] ring-1 ring-white/40 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#defbf4]">
+                <Sun className="h-4 w-4 text-emerald-500" />
+              </span>
+
+              <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                {t("dashboard.keyTakeaways.overallScore.overallScore")}
+              </p>
+
+              <ScoreCalculationPopover />
+            </div>
+
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+              {t("dashboard.keyTakeaways.overallScore.noData")}
+            </span>
+          </div>
+
+          <div className="mt-6 flex min-h-[200px] flex-col items-center justify-center gap-3 rounded-[16px] border border-dashed border-slate-200 bg-slate-50/70 text-center dark:border-slate-800 dark:bg-slate-900/60">
+            <AlertCircle className="h-6 w-6 text-slate-400 dark:text-slate-500" />
+
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              {t("dashboard.keyTakeaways.overallScore.noData")}
+            </p>
+
+            <p className="max-w-[260px] text-xs text-slate-400 dark:text-slate-500">
+              {t("dashboard.keyTakeaways.overallScore.noDataHint")}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="h-full self-start rounded-[8px] border border-slate-200 bg-white p-5 shadow-[0_16px_35px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full"
-            style={{ backgroundColor: `${status.accent}14` }}
-          >
-            <Sparkles className="h-4 w-4" style={{ color: status.accent }} />
-          </span>
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-            {t("dashboard.keyTakeaways.overallScore.overallScore")}
-          </p>
-          <ScoreCalculationPopover />
-        </div>
-        <span
-          className="rounded-full px-3 py-1 text-xs font-semibold"
-          style={{ color: status.accent, backgroundColor: `${status.accent}14` }}
-        >
-          {status.label}
-        </span>
-      </div>
+    <div className="flex flex-col gap-4">
 
-      <div className="mt-5 space-y-5">
-        <div className="flex items-center gap-6 ml-10">
-          <div className="shrink-0">
+      <div className="rounded-[18px] border border-white/70 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.08)] ring-1 ring-white/40 dark:border-slate-800 dark:bg-slate-900">
+
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
+             <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl dark:bg-[#ffe7f2]">
+            <span
+              className="inline-flex h-8 w-8 items-center justify-center rounded-xl"
+              style={{ backgroundColor: `${status.accent}18` }}
+            >
+              <Sun className="h-4 w-4" style={{ color: status.accent }} />
+            </span>
+             </span>
+
+            <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+              {t("dashboard.keyTakeaways.overallScore.overallScore")}
+            </p>
+            <ScoreCalculationPopover />
+          </div>
+          <span
+            className="rounded-full px-3 py-1 text-[11px] font-semibold"
+            style={{ color: status.accent, backgroundColor: `${status.accent}18` }}
+          >
+            {status.label}
+          </span>
+        </div>
+
+        <div className="mt-6 mb-8 flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:gap-8">
+
+          <div className="flex shrink-0 justify-center  ml-8 mr-8">
             <ScoreRing score={normalizedScore} label={status.label} t={t} />
           </div>
 
-          <TrendDelta trend={trend} locale={locale} t={t} />
-        </div>
+          <div className="flex w-full flex-col gap-4">
+            <TrendDelta trend={trend} locale={locale} t={t} />
 
-        <div className="mx-auto max-w-xl text-center">
-          <div className="mt-3 flex items-start justify-center gap-2 text-sm text-slate-500 dark:text-slate-300">
-            <Star className="mt-0.5 h-4 w-4 text-amber-400" />
-            <span>{scoreNarrative}</span>
-          </div>
-        </div>
-
-        <div className="border-t border-slate-100 pt-4 dark:border-slate-800">
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
-            {t("dashboard.keyTakeaways.overallScore.sourcesAndDetails")}
-          </div>
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            <SourceRow
-              icon={"⭐"}
-              label={t("dashboard.keyTakeaways.overallScore.statRating")}
-              value={
-                googleRating === null
-                  ? "-"
-                  : `${formatLocalizedNumber(googleRating, locale, {
-                      minimumFractionDigits: 1,
-                      maximumFractionDigits: 1,
-                    })} / 5`
-              }
-            />
-            <SourceRow
-              icon={"🧠"}
-              label={t("dashboard.keyTakeaways.overallScore.statPositive")}
-              value={
-                sentimentScore === null
-                  ? "-"
-                  : `${formatLocalizedNumber(sentimentScore, locale, {
-                      maximumFractionDigits: 0,
-                    })} / 100`
-              }
-            />
-            <SourceRow
-              icon={"💬"}
-              label={t("dashboard.keyTakeaways.overallScore.statReviews")}
-              value={reviewLabel ?? "-"}
-            />
+            <div
+              className="flex items-start gap-2.5 rounded-[10px] border-l-[3px] bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              style={{ borderLeftColor: status.accent }}
+            >
+              <Star className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+              <span>{scoreNarrative}</span>
+            </div>
           </div>
         </div>
       </div>
+
+      <div className="rounded-[18px] border border-white/70 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.08)] ring-1 ring-white/40 dark:border-slate-800 dark:bg-slate-900">
+
+        <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9a9aae] dark:text-slate-500">
+          {t("dashboard.keyTakeaways.overallScore.sourcesAndDetails")}
+        </p>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <SourceTile
+            icon={"⭐"}
+            label={t("dashboard.keyTakeaways.overallScore.statRating")}
+            value={
+              googleRating === null
+                ? "-"
+                : formatLocalizedNumber(googleRating, locale, {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  })
+            }
+            unit="/5"
+          />
+          <SourceTile
+            icon={"🧠"}
+            label={t("dashboard.keyTakeaways.overallScore.statPositive")}
+            value={
+              sentimentScore === null
+                ? "-"
+                : formatLocalizedNumber(sentimentScore, locale, { maximumFractionDigits: 0 })
+            }
+            unit="/100"
+          />
+          <SourceTile
+            icon={"💬"}
+            label={t("dashboard.keyTakeaways.overallScore.statReviews")}
+            value={reviewLabel ?? "-"}
+            unit={t("dashboard.keyTakeaways.overallScore.reviews")}
+          />
+        </div>
+      </div>
+
     </div>
   );
 }

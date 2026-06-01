@@ -11,6 +11,7 @@ import type { RootCauseAnalysis } from "@/utils/rootCauseAnalysis";
 import { getCurrentEstablishment } from "@/services/establishments";
 import { useTranslation } from "react-i18next";
 import { useEstablishmentStore } from "@/store/establishmentStore";
+import i18n from "@/i18n/config";
 
 interface Props {
   paretoCauses: ParetoItem[];
@@ -60,8 +61,8 @@ useEffect(() => {
       .map(p =>
         objectives.find(
           o =>
-            o.pareto_cause?.toLowerCase() ===
-            p.name.toLowerCase()
+            o.pareto_cause?.key?.toLowerCase() ===
+            p.key.toLowerCase()
         )
       )
       .find(o => o &&o.status !== "completed");
@@ -118,8 +119,8 @@ useEffect(() => {
         p =>
           !safeObjectives.some(
             o =>
-              o.pareto_cause?.toLowerCase() ===
-              p.name.toLowerCase()
+              o.pareto_cause?.key?.toLowerCase() ===
+              p.key.toLowerCase()
           )
       ) || null
     );
@@ -160,7 +161,7 @@ useEffect(() => {
               <div>
                 <p className="text-sm font-semibold text-orange-800">
                  {t("recommendations.smart.mainIssue", {
-                    issue: activeObjective.pareto_cause,
+                    issue: activeObjective.pareto_cause?.[i18n.language],
                   })}
                 </p>
 
@@ -249,7 +250,7 @@ useEffect(() => {
                 className="flex items-center justify-between border rounded-lg px-4 py-3 bg-gray-50"
               >
                 <p className="text-sm text-gray-700">
-                  {o.pareto_cause}
+                  {o.pareto_cause?.[i18n.language]}
                 </p>
                 <span className="text-xs bg-gray-200 px-2 py-1 rounded">
                   {t("recommendations.smart.todo")}
@@ -274,7 +275,7 @@ useEffect(() => {
                 className="flex items-center justify-between border rounded-lg px-4 py-3 bg-green-50"
               >
                 <p className="text-sm text-green-700">
-                  {o.pareto_cause}
+                  {o.pareto_cause?.[i18n.language]}
                 </p>
                 <span>✓</span>
               </div>
@@ -295,7 +296,7 @@ useEffect(() => {
         isGenerating={isGenerating}
         isSaving={isSaving}
         updateDraft={updateDraft}
-        paretoCause={activeObjective?.pareto_cause ?? ""}
+        paretoCause={activeObjective?.pareto_cause?.[i18n.language] ?? ""}
         activeObjective ={activeObjective}
       />
     </div>

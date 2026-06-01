@@ -151,32 +151,41 @@ Deno.serve(async (req) => {
     if (insightError || !insight) {
       return json({ ok: false, error: "no review insights found for this establishment" }, 404);
     }
-
-
-    const complaintsRaw = insight.summary_what_customers_hate;
-    let complaints: string[] = [];
-    if (Array.isArray(complaintsRaw)) {
-      complaints = complaintsRaw;
-    } else if (typeof complaintsRaw === "string") {
-      try {
-        complaints = JSON.parse(complaintsRaw);
-      } catch {
-        complaints = [complaintsRaw]; // fallback: single string
-      }
-    }
-    const complaintsText =
-    complaints
-      .filter((c) =>
-        c.toLowerCase().includes(pareto_cause.toLowerCase())
-      )
-      .slice(0, 5)
-      .join("\n") || "General dissatisfaction mentioned in reviews";
-
-      // language extractions
     const outputLanguage = normalizeLanguage(language);
+    const localizedComplaints =
+      insight.summary_what_customers_hate?.[
+        outputLanguage
+      ] || [];
+
+    const complaints = Array.isArray(localizedComplaints)
+      ? localizedComplaints
+      : [];
+
+    const localizedParetoCause =
+      outputLanguage === "fr"
+        ? pareto_cause?.fr
+        : pareto_cause?.en;
+
+    const complaintsText =
+      complaints
+        .filter((c: string) =>
+          c
+            ?.toLowerCase()
+            ?.includes(
+              localizedParetoCause?.toLowerCase()
+            )
+        )
+        .slice(0, 5)
+        .join("\n") ||
+      "General dissatisfaction mentioned in reviews";
+      // language extractions
+    
     const languageInstruction = getLanguageInstruction(outputLanguage);
+    const paretoCauseEn =pareto_cause?.en || "";
+
+    const paretoCauseFr =pareto_cause?.fr || "";
     /* ── Build deadline from effort ── */
-    const deadlineMonths = computed_deadline_months
+      const deadlineMonths = computed_deadline_months
       ?? DEADLINE_BY_EFFORT[computed_effort]
       ?? 3;
 
@@ -185,13 +194,29 @@ Deno.serve(async (req) => {
     const deadlineStr = deadline.toISOString().split("T")[0];
 
     /* ── Related quick wins from existing analysis ── */
-    const relatedActions = (insight.recommendations_quick_wins ?? [])
-      .filter((r: any) =>
-        r.title?.toLowerCase().includes(pareto_cause.toLowerCase()) ||
-        r.details?.toLowerCase().includes(pareto_cause.toLowerCase())
-      )
-      .slice(0, 3);
+   const localizedQuickWins =
+  insight.recommendations_quick_wins?.[
+    outputLanguage
+  ] || [];
 
+const relatedActions = (
+  Array.isArray(localizedQuickWins)
+    ? localizedQuickWins
+    : []
+)
+  .filter((r: any) =>
+    r.title
+      ?.toLowerCase()
+      ?.includes(
+        localizedParetoCause?.toLowerCase()
+      ) ||
+    r.details
+      ?.toLowerCase()
+      ?.includes(
+        localizedParetoCause?.toLowerCase()
+      )
+  )
+  .slice(0, 3);
     /* ── Questionnaire context for AI prompt ── */
     const questionnaireContext = questionnaire_scores
       ? `
@@ -211,11 +236,18 @@ Effort level (user-validated): ${computed_effort}
        This solves the "inconsistent prioritization" critique from the other AI
     ── */
     const prompt = `
-You are a business improvement consultant writing a SMART objective for a ${insight.business_type}${languageInstruction}.
+You are a business improvement consultant writing a SMART objective for a ${insight.business_type}
+
+IMPORTANT:
+- Generate BOTH English and French translations for all text fields.
+- Keep JSON keys exactly as requested.
+- Never change provided numbers.
+- Return ONLY valid JSON.
 
 
 FIXED VALUES — do not change these numbers, they are computed from real review data:
-- Problem area: "${pareto_cause}"
+- - Problem area EN: "${paretoCauseEn}"
+- Problem area FR: "${paretoCauseFr}"
 - Current negative mentions: ${computed_count}
 - Target (50% reduction formula): ${computed_target}
 - Impact level: ${computed_impact} (based on ${computed_count} mentions out of total negatives)
@@ -234,16 +266,62 @@ ${relatedActions.map((a: any) => `- ${a.title}: ${a.details}`).join("\n") || "No
 YOUR JOB: Write only the descriptive text fields. Do not suggest different numbers.
 Return ONLY valid JSON, no markdown,7. ${languageInstruction}:
 {
-  "problem": "one clear sentence — what specifically needs to improve for this ${insight.business_type}",
-  "kpi_label": "metric name to track (4 words max)",
-  "unit": "negative reviews | mentions | percent",
-  "relevance_note": "one sentence — direct impact on revenue or customer loyalty",
-  "actions": [
-    { "text": "concrete action using vocabulary of a ${insight.business_type}", "frequency": "daily|weekly|monthly|once", "completed": false },
-    { "text": "second action step", "frequency": "daily|weekly|monthly|once", "completed": false },
-    { "text": "third action step", "frequency": "daily|weekly|monthly|once", "completed": false }
-  ],
-  "ai_confidence": <0.0 to 1.0 — how clear the review signals were>
+  "problem": {
+    "en": "one clear sentence — what specifically needs to improve for this ${insight.business_type},english version",
+    "fr": "version française"
+  },
+
+  "kpi_label": {
+    "en": "english metric",
+    "fr": "métrique française"
+  },
+
+  "unit": {
+    "en": "negative reviews | mentions | percent",
+    "fr": "avis négatifs | mentions | pourcentage"
+  },
+
+  "relevance_note": {
+    "en": "english explanation",
+    "fr": "explication française"
+  },
+"actions": [
+  {
+    "text": {
+      "en": "action 1",
+      "fr": "action 1"
+    },
+    "frequency": "daily",
+    "completed": false
+  },
+  {
+    "text": {
+      "en": "action 2",
+      "fr": "action 2"
+    },
+    "frequency": "weekly",
+    "completed": false
+  },
+  {
+    "text": {
+      "en": "action 3",
+      "fr": "action 3"
+    },
+    "frequency": "monthly",
+    "completed": false
+  },
+  {
+    "text": {
+      "en": "action 4",
+      "fr": "action 4"
+    },
+    "frequency": "once",
+    "completed": false
+  }
+]
+
+  "ai_confidence": <0.0 to 1.0>
+}
 }`;
 
     /* ── Call OpenAI ── */
@@ -314,10 +392,24 @@ Return ONLY valid JSON, no markdown,7. ${languageInstruction}:
       deadline_source:         "computed",
 
       // SMART — AI prose
-      problem:        aiFields.problem        ?? `Reduce ${pareto_cause} issues`,
-      kpi_label:      aiFields.kpi_label      ?? `${pareto_cause} mentions`,
-      unit:           aiFields.unit           ?? "negative reviews",
-      relevance_note: aiFields.relevance_note ?? null,
+      problem:         aiFields.problem ?? {
+                                          en: `Reduce ${paretoCauseEn} issues`,
+                                          fr: `Réduire les problèmes de ${paretoCauseFr}`,
+                                          },
+      kpi_label:       aiFields.kpi_label ?? {
+                                              en: `${paretoCauseEn} mentions`,
+                                              fr: `Mentions ${paretoCauseFr}`,
+                                              },
+
+      unit:            aiFields.unit ?? {
+                                          en: "negative reviews",
+                                          fr: "avis négatifs",
+                                        },
+
+      relevance_note:   aiFields.relevance_note ?? {
+                                                  en: "Improving this issue may increase customer satisfaction and loyalty.",
+                                                  fr: "L’amélioration de ce problème peut augmenter la satisfaction et la fidélité des clients.",
+                                                },
       actions:        aiFields.actions        ?? [],
 
       // Status
@@ -335,13 +427,12 @@ Return ONLY valid JSON, no markdown,7. ${languageInstruction}:
    // In generate-smart-objective/index.ts — replace the upsert block
 
 // Check if a row already exists for this establishment + cause
-    const { data: existing } = await supabase
-      .from("smart_objectives")
-      .select("id")
-      .eq("establishment_id", establishmentId)
-      .eq("pareto_cause", pareto_cause)
-      .single();
-
+   const { data: existing } = await supabase
+  .from("smart_objectives")
+  .select("id")
+  .eq("establishment_id", establishmentId)
+  .eq("pareto_cause->>key", pareto_cause.key)
+  .single();
   let saved;
   let saveError;
 

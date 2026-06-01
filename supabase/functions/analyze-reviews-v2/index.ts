@@ -1,26 +1,32 @@
 /**
  * Edge Function: analyze-reviews-v2
  * Version: v2-auto-universal
- * 
+ *
  * Pipeline d'analyse en 2 passes :
  * - PASS A: Détection businessType + extraction thèmes universels + thèmes métier (si confidence >= 75)
  * - PASS B: Recommandations + reply templates
- * 
+ *
  * Format de sortie JSON strict validé par Zod
+ *
+ * Changes vs previous version:
+ * - CANONICAL_THEME_KEYS dictionary: keys are resolved from a hardcoded map,
+ *   AI-generated keys are never trusted → consistent keys across re-runs
+ * - normalizeSentiment(): sentiment values are always English (positive/mixed/negative)
+ *   even on FR items — AI translations like "positif"/"mixte"/"négatif" are normalized
+ * - enforceKeys() updated: uses resolveThemeKey() + normalizeSentiment() on every item
+ * - getLanguageInstruction() updated: explicitly tells AI not to translate sentiment
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import "https://deno.land/x/dotenv@v3.2.2/load.ts";
 
-// Note: Pour Deno, on ne peut pas importer directement depuis src/
-// On duplique les types et fonctions nécessaires ici
-type BusinessType = 
-  | 'restaurant' 
-  | 'salon_coiffure' 
-  | 'salle_sport' 
-  | 'serrurier' 
-  | 'retail_chaussures' 
-  | 'institut_beaute' 
+type BusinessType =
+  | 'restaurant'
+  | 'salon_coiffure'
+  | 'salle_sport'
+  | 'serrurier'
+  | 'retail_chaussures'
+  | 'institut_beaute'
   | 'autre';
 
 type ReviewRow = {
@@ -67,7 +73,6 @@ function env(key: string, fallback = "") {
 
 const SUPABASE_URL = env("SB_URL");
 const SERVICE_ROLE = env("SB_SERVICE_ROLE_KEY");
-// const OPENAI_KEY   = env("GOOGLE_PLACES_API_KEY");
 const OPENAI_KEY   = env("OPENAI_API_KEY", "");
 const APP_URL = env("APP_URL", "https://reviewsvisor.com");
 
@@ -77,10 +82,8 @@ const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE, {
 
 function normalizeLanguage(code: string | null | undefined): OutputLanguage {
   const normalized = String(code || '').trim().toLowerCase();
-
   if (normalized.startsWith('en')) return 'en';
   if (normalized.startsWith('fr')) return 'fr';
-
   return 'fr';
 }
 
@@ -88,39 +91,191 @@ function getOutputLanguageName(language: OutputLanguage): string {
   return language === 'fr' ? 'French' : 'English';
 }
 
-function getLanguageInstruction(language: OutputLanguage): string {
-  return `All output text values in the JSON must be in ${getOutputLanguageName(language)}. Keep JSON keys exactly as requested and do not translate the field names.`;
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "")
+    .trim();
 }
 
-function getUniversalThemes(language: OutputLanguage): string[] {
-  return language === 'fr'
-    ? ['Accueil', 'Propreté', 'Prix', 'Attente', 'Communication', 'SAV', 'Confiance']
-    : ['Cleanliness', 'Price', 'Wait Time', 'Communication', 'After-sales Service', 'Trust'];
+// ─── CANONICAL KEY DICTIONARY ────────────────────────────────────────────────
+// Single source of truth for theme keys.
+// AI-generated keys are NEVER trusted — always resolved through this map.
+// To add new themes: append variants to an existing key, or add a new entry.
+// When a theme falls through to slugify(), a console.warn is emitted — use
+// those logs to grow this dictionary over time.
+
+const CANONICAL_THEME_KEYS: Record<string, string[]> = {
+  // ── Universal themes ──────────────────────────────────────────────────────
+  cleanliness:        ['cleanliness', 'clean', 'hygiene', 'hygiène', 'propreté', 'proprete', 'sanitation'],
+  price:              ['price', 'pricing', 'cost', 'value', 'prix', 'tarif', 'tarifs', 'value for money', 'rapport qualité prix', 'rapport qualite prix'],
+  wait_time:          ['wait time', 'wait', 'waiting', 'waiting time', 'attente', "temps d'attente", 'délai', 'delai', 'queue', 'temps attente'],
+  communication:      ['communication', 'responsiveness', 'response', 'réactivité', 'reactivite', 'contact'],
+  after_sales:        ['after-sales', 'after sales', 'after-sales service', 'sav', 'service après vente', 'service apres vente', 'follow-up', 'follow up', 'après vente', 'apres vente'],
+  trust:              ['trust', 'confiance', 'reliability', 'fiabilité', 'fiabilite', 'honesty', 'honnêteté', 'honnetete'],
+
+  // ── Restaurant ────────────────────────────────────────────────────────────
+  food_quality:       ['food quality', 'food', 'cuisine', 'dish', 'dishes', 'meal', 'taste', 'flavor', 'flavour', 'qualité des plats', 'qualite des plats', 'qualité plats', 'plats'],
+  service:            ['service', 'staff', 'server', 'waiter', 'personnel', 'équipe', 'equipe', 'team', 'serveur', 'serveuse'],
+  ambiance:           ['ambiance', 'atmosphere', 'décor', 'decor', 'vibe', 'setting', 'environment', 'cadre'],
+  portions:           ['portions', 'portion size', 'quantity', 'quantité', 'quantite'],
+  menu_variety:       ['menu variety', 'menu', 'choice', 'options', 'variety', 'variété', 'variete', 'selection', 'carte'],
+  reservation:        ['reservation', 'booking', 'réservation'],
+
+  // ── Salon coiffure ────────────────────────────────────────────────────────
+  hair_quality:       ['hair quality', 'hair result', 'coupe', 'cut', 'résultat coiffure', 'resultat coiffure', 'haircut', 'hairstyle', 'résultat', 'resultat'],
+  colorist:           ['color', 'colour', 'coloring', 'colouring', 'couleur', 'coloration', 'highlights', 'balayage', 'teinture'],
+  stylist_skill:      ['stylist', 'hairdresser', 'coiffeur', 'coiffeuse', 'skill', 'expertise', 'technique', 'savoir-faire'],
+  appointment:        ['appointment', 'availability', 'disponibilité', 'disponibilite', 'rendez-vous', 'rdv', 'schedule', 'booking', 'prise de rendez-vous'],
+
+  // ── Salle de sport ────────────────────────────────────────────────────────
+  equipment:          ['equipment', 'machines', 'gear', 'matériel', 'materiel', 'appareil', 'appareils', 'équipements', 'equipements'],
+  coaching:           ['coaching', 'coach', 'trainer', 'personal trainer', 'instructor', 'entraîneur', 'entraineur', 'cours', 'classes'],
+  facilities:         ['facilities', 'locker room', 'showers', 'vestiaires', 'douches', 'changing room', 'sanitaires'],
+  crowd:              ['crowd', 'crowded', 'busy', 'affluence', 'monde', 'fréquentation', 'frequentation', 'surpeuplé', 'surpeuple'],
+
+  // ── Institut beauté ───────────────────────────────────────────────────────
+  treatment_quality:  ['treatment', 'soin', 'soins', 'facial', 'massage', 'quality of treatment', 'qualité du soin', 'qualite du soin', 'qualité des soins'],
+  waxing:             ['waxing', 'epilation', 'épilation', 'hair removal', 'cire'],
+  nail_service:       ['nails', 'nail', 'manicure', 'pedicure', 'manucure', 'pédicure', 'ongles', 'nail art'],
+
+  // ── Serrurier ─────────────────────────────────────────────────────────────
+  response_time:      ['response time', 'speed', 'rapidité', 'rapidite', 'fast', 'quick', 'urgence', 'emergency response', 'délai intervention', 'delai intervention'],
+  pricing_clarity:    ['pricing clarity', 'transparent pricing', 'devis', 'quote', 'invoice', 'facture', 'transparence prix', 'prix transparents'],
+  professionalism:    ['professionalism', 'professional', 'professionnalisme', 'sérieux', 'serieux', 'seriousness'],
+
+  // ── Retail chaussures ─────────────────────────────────────────────────────
+  product_variety:    ['product variety', 'stock', 'choix', 'collection', 'range', 'selection', 'assortiment'],
+  fit_comfort:        ['fit', 'comfort', 'confort', 'size', 'taille', 'fitting', 'pointure'],
+  staff_knowledge:    ['staff knowledge', 'advice', 'conseil', 'conseils', 'knowledgeable staff', 'expertise vendeur'],
+};
+
+// Reverse lookup: built once at module load time
+// e.g. "attente" → "wait_time", "propreté" → "cleanliness"
+const THEME_TO_KEY: Map<string, string> = new Map();
+for (const [key, variants] of Object.entries(CANONICAL_THEME_KEYS)) {
+  for (const variant of variants) {
+    THEME_TO_KEY.set(variant.toLowerCase().trim(), key);
+  }
 }
 
-function getFallbackSummaryOneLiner(language: OutputLanguage, establishmentName: string, reviewCount: number): string {
-  return language === 'fr'
-    ? `Analyse de ${reviewCount} avis pour ${establishmentName}`
-    : `Analysis of ${reviewCount} reviews for ${establishmentName}`;
+/**
+ * Resolves any AI-generated theme string to a stable canonical key.
+ * Priority: exact match → partial match → slugify fallback.
+ * Logs a warning when falling back so the dictionary can be grown over time.
+ */
+function resolveThemeKey(theme: string): string {
+  const normalized = theme.toLowerCase().trim();
+
+  // 1. Exact match
+  const exact = THEME_TO_KEY.get(normalized);
+  if (exact) return exact;
+
+  // 2. Partial match — theme contains a known variant or vice versa
+  for (const [variant, key] of THEME_TO_KEY.entries()) {
+    if (normalized.includes(variant) || variant.includes(normalized)) {
+      return key;
+    }
+  }
+
+  // 3. Fallback: slugify (consistent within a run but not pinned across runs)
+  const fallback = slugify(theme);
+  console.warn(
+    `[resolveThemeKey] No canonical key for theme "${theme}" → fallback slug: "${fallback}". ` +
+    `Add to CANONICAL_THEME_KEYS to pin this permanently.`
+  );
+  return fallback;
+}
+
+// ─── SENTIMENT NORMALIZATION ─────────────────────────────────────────────────
+// Sentiment is always stored as English regardless of output language.
+// This map handles all known AI translation variants.
+
+const SENTIMENT_NORMALIZE: Record<string, 'positive' | 'mixed' | 'negative'> = {
+  // English — canonical
+  positive:   'positive',
+  mixed:      'mixed',
+  negative:   'negative',
+  // French translations the AI sometimes produces
+  positif:    'positive',
+  positifve:  'positive',  // typo guard
+  mixte:      'mixed',
+  négatif:    'negative',
+  negatif:    'negative',
+  // Spanish / other drift guards
+  positivo:   'positive',
+  negativo:   'negative',
+  mixto:      'mixed',
+};
+
+function normalizeSentiment(raw: unknown): 'positive' | 'mixed' | 'negative' {
+  const s = String(raw ?? '').toLowerCase().trim();
+  const result = SENTIMENT_NORMALIZE[s];
+  if (!result) {
+    console.warn(`[normalizeSentiment] Unrecognized sentiment value "${raw}" — defaulting to "mixed".`);
+  }
+  return result ?? 'mixed';
+}
+
+/**
+ * Drop-in replacement for the previous enforceKeys().
+ *
+ * Changes:
+ * - Keys are resolved from CANONICAL_THEME_KEYS (AI key field is ignored entirely)
+ * - FR keys are always mirrored from EN by index (unchanged behaviour)
+ * - sentiment is normalized to English on ALL items in both EN and FR arrays
+ */
+function enforceKeys(bilingual: { en: any[]; fr: any[] }): { en: any[]; fr: any[] } {
+  const enItems = Array.isArray(bilingual?.en) ? bilingual.en : [];
+  const frItems = Array.isArray(bilingual?.fr) ? bilingual.fr : [];
+
+  // EN: resolve key from dictionary + normalize sentiment
+  const keyedEn = enItems.map((item) => ({
+    ...item,
+    key: resolveThemeKey(item.theme ?? ''),
+    ...(item.sentiment !== undefined && { sentiment: normalizeSentiment(item.sentiment) }),
+  }));
+
+  // FR: mirror EN key by index + normalize sentiment
+  const keyedFr = frItems.map((item, i) => ({
+    ...item,
+    key: keyedEn[i]?.key ?? resolveThemeKey(item.theme ?? ''),
+    ...(item.sentiment !== undefined && { sentiment: normalizeSentiment(item.sentiment) }),
+  }));
+
+  return { en: keyedEn, fr: keyedFr };
+}
+
+function getUniversalThemes(): { en: string[]; fr: string[] } {
+  return {
+    en: ['Cleanliness', 'Price', 'Wait Time', 'Communication', 'After-sales Service', 'Trust'],
+    fr: ['Propreté', 'Prix', 'Attente', 'Communication', 'SAV', 'Confiance'],
+  };
+}
+
+function getFallbackSummaryOneLiner(establishmentName: string, reviewCount: number): { en: string; fr: string } {
+  return {
+    en: `Analysis of ${reviewCount} reviews for ${establishmentName}`,
+    fr: `Analyse de ${reviewCount} avis pour ${establishmentName}`,
+  };
 }
 
 function normalizeIssues(raw: unknown): IssueSummary[] {
   if (!Array.isArray(raw)) return [];
-
   return raw
     .map((item) => {
       if (!item || typeof item !== "object") return null;
-
       const issue = item as Record<string, unknown>;
       const theme = typeof issue.theme === "string" ? issue.theme.trim() : "";
       if (!theme) return null;
-
       const count = typeof issue.count === "number"
         ? issue.count
         : typeof issue.count === "string"
           ? Number(issue.count)
           : undefined;
-
       return {
         theme,
         count: Number.isFinite(count as number) ? (count as number) : undefined,
@@ -129,7 +284,6 @@ function normalizeIssues(raw: unknown): IssueSummary[] {
     .filter((item): item is IssueSummary => item !== null);
 }
 
-
 function shouldSendSignificantChangeNotification(
   previousAvgRating: number | null,
   currentAvgRating: number | null,
@@ -137,7 +291,6 @@ function shouldSendSignificantChangeNotification(
   currentIssues: IssueSummary[],
 ): { send: boolean; reason: "rating_drop" | "major_issue" | null } {
   const ratingDrop = (previousAvgRating ?? 0) - (currentAvgRating ?? 0);
-
   if (previousAvgRating !== null && currentAvgRating !== null && ratingDrop > 0) {
     return { send: true, reason: "rating_drop" };
   }
@@ -235,37 +388,28 @@ async function sendSignificantChangeNotification(input: {
   const subject = input.language === "fr"
     ? `Alerte de réputation - ${input.establishmentName}`
     : `Reputation alert - ${input.establishmentName}`;
-
   const html = buildAlertEmailHtml(input);
-
   const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${SERVICE_ROLE}`,
     },
-    body: JSON.stringify({
-      to: [input.userEmail],
-      subject,
-      html,
-    }),
+    body: JSON.stringify({ to: [input.userEmail], subject, html }),
   });
-
   if (!response.ok) {
     const errorText = await response.text().catch(() => "");
     throw new Error(`send-email failed: ${response.status} ${errorText}`);
   }
 }
 
-// Détection businessType simplifiée (version Deno)
 function detectBusinessType(
   name: string,
-  googlePlacesTypes?: string[]| null,
+  googlePlacesTypes?: string[] | null,
   reviewsTexts?: string[]
 ): { type: BusinessType; confidence: number; candidates: Array<{type: BusinessType; confidence: number}>; source: 'places' | 'keywords' | 'manual' } {
   const combinedText = `${name} ${(reviewsTexts || []).join(' ')}`.toLowerCase();
-  
-  // Mapping Google Places
+
   const placesMapping: Record<string, BusinessType> = {
     'restaurant': 'restaurant', 'food': 'restaurant', 'cafe': 'restaurant',
     'hair_care': 'salon_coiffure', 'beauty_salon': 'salon_coiffure',
@@ -275,41 +419,26 @@ function detectBusinessType(
     'spa': 'institut_beaute'
   };
 
-  // Keywords par type
   const keywords: Record<BusinessType, string[]> = {
-    // restaurant: ['restaurant', 'resto', 'bistrot', 'brasserie', 'café', 'bar', 'pizzeria', 'burger', 'sushi', 'cuisine', 'manger', 'repas', 'plat'],
-    // salon_coiffure: ['coiffeur', 'coiffeuse', 'salon', 'barber', 'hair', 'cheveux', 'coloration', 'coupe', 'coiffure'],
-    // salle_sport: ['gym', 'fitness', 'salle de sport', 'sport', 'musculation', 'crossfit', 'yoga', 'coach'],
-    // serrurier: ['serrurier', 'serrurerie', 'dépannage', 'clé', 'verrou', 'serrure', 'urgence'],
-    // retail_chaussures: ['chaussure', 'chaussures', 'sneaker', 'basket', 'magasin', 'boutique'],
-    // institut_beaute: ['institut', 'beauté', 'beaute', 'esthétique', 'soin', 'massage', 'épilation'],
-    // autre: []
-      restaurant: ['restaurant', 'diner', 'bistro', 'brasserie', 'cafe', 'bar', 'pizzeria', 'burger', 'sushi', 'cuisine', 'eat', 'meal', 'dish'],
-      salon_coiffure: ['hairdresser', 'hair stylist', 'salon', 'barber', 'hair', 'hair', 'coloring', 'cut', 'hairstyle'],
-      salle_sport: ['gym', 'fitness', 'gym', 'sport', 'bodybuilding', 'crossfit', 'yoga', 'coach'],
-      serrurier: ['locksmith', 'locksmith service', 'repair', 'key', 'lock', 'lock', 'emergency'],
-      retail_chaussures: ['shoe', 'shoes', 'sneaker', 'sneakers', 'store', 'shop'],
-      institut_beaute: ['beauty institute', 'beauty', 'beauty', 'esthetic', 'care', 'massage', 'hair removal'],
-      autre: []
+    restaurant: ['restaurant', 'diner', 'bistro', 'brasserie', 'cafe', 'bar', 'pizzeria', 'burger', 'sushi', 'cuisine', 'eat', 'meal', 'dish'],
+    salon_coiffure: ['hairdresser', 'hair stylist', 'salon', 'barber', 'hair', 'coloring', 'cut', 'hairstyle'],
+    salle_sport: ['gym', 'fitness', 'sport', 'bodybuilding', 'crossfit', 'yoga', 'coach'],
+    serrurier: ['locksmith', 'locksmith service', 'repair', 'key', 'lock', 'emergency'],
+    retail_chaussures: ['shoe', 'shoes', 'sneaker', 'sneakers', 'store', 'shop'],
+    institut_beaute: ['beauty institute', 'beauty', 'esthetic', 'care', 'massage', 'hair removal'],
+    autre: []
   };
 
-  // 1. Essayer Google Places
   if (googlePlacesTypes && googlePlacesTypes.length > 0) {
     for (const placeType of googlePlacesTypes) {
-    const normalized = placeType.toLowerCase().replace(/\s+/g, '_');
-    const mapped = placesMapping[normalized];
+      const normalized = placeType.toLowerCase().replace(/\s+/g, '_');
+      const mapped = placesMapping[normalized];
       if (mapped) {
-        return {
-          type: mapped,
-          confidence: 90,
-          candidates: [{ type: mapped, confidence: 90 }],
-          source: 'places'
-        };
+        return { type: mapped, confidence: 90, candidates: [{ type: mapped, confidence: 90 }], source: 'places' };
       }
     }
   }
 
-  // 2. Fallback keywords
   const scores: Record<BusinessType, number> = {
     restaurant: 0, salon_coiffure: 0, salle_sport: 0, serrurier: 0,
     retail_chaussures: 0, institut_beaute: 0, autre: 0
@@ -342,145 +471,198 @@ function detectBusinessType(
   return { type: top.type, confidence, candidates, source: 'keywords' };
 }
 
-// Stats simples
 function computeStats(rows: ReviewRow[]) {
   const ratings = rows.map(r => r.rating ?? 0).filter(n => n > 0);
   const total = rows.length;
-  const avg = ratings.length ? (ratings.reduce((a,b)=>a+b,0) / ratings.length) : null;
+  const avg = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length) : null;
   const pos = rows.filter(r => (r.rating ?? 0) >= 4).length;
   const neg = rows.filter(r => (r.rating ?? 0) <= 2).length;
   const positive_pct = total ? Math.round((pos / total) * 100) : 0;
   const negative_pct = total ? Math.round((neg / total) * 100) : 0;
   const by_rating: Record<string, number> = {};
-  for (let i=1;i<=5;i++) by_rating[i] = rows.filter(r => (r.rating ?? 0) === i).length;
+  for (let i = 1; i <= 5; i++) by_rating[i] = rows.filter(r => (r.rating ?? 0) === i).length;
   return { total, by_rating, positive_pct, negative_pct, overall: avg };
 }
 
-// PASS A: Détection + extraction thèmes
+// ─── LANGUAGE INSTRUCTION ────────────────────────────────────────────────────
+// Updated: explicitly instructs AI to never translate sentiment values.
+
+function getLanguageInstruction(): string {
+  return `
+Generate BOTH English and French content.
+
+IMPORTANT RULES:
+- DO NOT create root keys named "en" or "fr"
+- Keep all JSON field names exactly as provided
+- Each field must internally contain { "en": ..., "fr": ... }
+- The key in top_issues.fr[N] MUST be identical to top_issues.en[N].key
+- The key in top_strength.fr[N] MUST be identical to top_strength.en[N].key
+- Keys are NEVER translated — they are always English snake_case
+- sentiment values MUST always be in English: "positive", "mixed", or "negative"
+  DO NOT translate sentiment to French — "positif", "mixte", "négatif" are WRONG
+
+Example:
+{
+  "top_issues": {
+    "en": [...],
+    "fr": [...]
+  }
+}
+
+- Translate ONLY generated analysis content (theme names, descriptions, what_it_means, etc.)
+- Keep evidence_quotes in original review language
+- sentiment, importance, and count values should remain equivalent across EN and FR
+`;
+}
+
+// ─── PASS A ─────────────────────────────────────────────────────────────────
 async function analyzePassA(
   placeName: string,
   samples: string[],
   totalReviews: number,
   businessType: BusinessType,
   businessTypeConfidence: number,
-  language: OutputLanguage
 ) {
-  if (!OPENAI_KEY) {
-    return null;
-  }
-console.log("language-language", language)
-  const universalThemes = getUniversalThemes(language);
-  const languageInstruction = getLanguageInstruction(language);
-  const industryThemesHint = businessTypeConfidence >= 45 
-    ? `\nAlso look for themes specific to the ${businessType} industry.`
+  if (!OPENAI_KEY) return null;
+
+  const universalThemes = getUniversalThemes();
+  const languageInstruction = getLanguageInstruction();
+  const industryThemesHint = businessTypeConfidence >= 45
+    ? `\nAlso extract 3–6 themes specific to the ${businessType} industry — these are REQUIRED when confidence >= 45%.`
     : '\nFocus only on universal themes and do not invent industry-specific themes.';
 
-//   const prompt = [
-//     { role: "system", content: `Tu es un analyste expert qui synthétise des avis clients en english.
-// Tu dois extraire les thématiques UNIQUEMENT depuis le contenu réel des avis.
-// Réponds exclusivement en JSON valide.` },
-//     { role: "user", content:
-// `Établissement: ${placeName}
-// Type détecté: ${businessType} (confiance: ${businessTypeConfidence}%)
-// Total d'avis analysés: ${totalReviews}
-
-// Avis clients:
-// ${samples.slice(0, 100).map((t,i)=>`${i+1}. ${t}`).join("\n")}
-
-// INSTRUCTIONS:
-// 1. Extrais les thèmes UNIVERSELS mentionnés: ${universalThemes.join(', ')}${industryThemesHint}
-// 2. Pour chaque thème, détermine le sentiment (positive/mixed/negative) et l'importance (0-100)
-// 3. Inclus 1-2 citations courtes comme preuve
-// 4. Si confidence >= 75%, extrais aussi les thèmes spécifiques au secteur ${businessType}
-// 5. Si confidence < 75%, ne liste QUE les thèmes universels
-
-// Retourne ce JSON:
-// {
-//   "themes_universal": [
-//     {
-//       "theme": "Accueil",
-//       "sentiment": "positive|mixed|negative",
-//       "importance": 0-100,
-//       "evidence_quotes": ["citation 1", "citation 2"],
-//       "what_it_means": "Explication courte"
-//     }
-//   ],
-//   "themes_industry": [
-//     {
-//       "theme": "Thème spécifique secteur",
-//       "sentiment": "positive|mixed|negative",
-//       "importance": 0-100,
-//       "evidence_quotes": ["citation"],
-//       "what_it_means": "Explication"
-//     }
-//   ],
-//   "summary": {
-//     "one_liner": "Résumé en une phrase",
-//     "what_customers_love": ["point 1", "point 2"],
-//     "what_customers_hate": ["point 1", "point 2"]
-//   }
-// }`
-//     }
-//   ];
-const prompt = [
-  { 
-    role: "system", 
-    content: `You are an expert analyst who synthesizes customer reviews.
+  const prompt = [
+    {
+      role: "system",
+      content: `You are an expert analyst who synthesizes customer reviews.
 You must extract themes ONLY from the actual content of the reviews.
 Respond strictly with valid JSON.
-${languageInstruction}` 
-  },
-  { 
-    role: "user", 
-    content:
+${languageInstruction}`,
+    },
+    {
+      role: "user",
+      content:
 `Business: ${placeName}
 Detected type: ${businessType} (confidence: ${businessTypeConfidence}%)
 Total reviews analyzed: ${totalReviews}
 
 Customer reviews:
-${samples.slice(0, 100).map((t,i)=>`${i+1}. ${t}`).join("\n")}
+${samples.slice(0, 100).map((t, i) => `${i + 1}. ${t}`).join("\n")}
+
+COUNTING RULE — very important:
+For every theme, "count" = the NUMBER OF INDIVIDUAL REVIEWS (out of ${totalReviews} total) that explicitly mention this theme.
+Count carefully: if 18 reviews mention food quality, count = 18. Do NOT undercount. Typical themes in a dataset of ${totalReviews} reviews will have counts of 5–40+.
 
 INSTRUCTIONS:
-1. Extract the UNIVERSAL themes mentioned: ${universalThemes.join(', ')}${industryThemesHint}
-2. For each theme, determine the sentiment (positive/mixed/negative) and importance (0–100)
-3. Include 1–2 short quotes as evidence
-4. If confidence >= 40%, also extract themes specific to the ${businessType} industry
-5. If confidence < 75%, list ONLY universal themes
-6. Reviews can be multilingual; analyze them as-is without translating the original review text
-7. ${languageInstruction}
+1. Extract ALL relevant UNIVERSAL themes found in the reviews:
+   EN: ${universalThemes.en.join(', ')}
+   FR: ${universalThemes.fr.join(', ')}
+   Only include a theme if at least 2 reviews mention it.
+2. ${industryThemesHint}
+3. For each theme, determine the sentiment (positive/mixed/negative) and importance (0–100)
+4. Include 1–2 short quotes as evidence (in the original review language)
+5. ${languageInstruction}
+IMPORTANT:
+- Every theme MUST contain a stable "key"
+- The key MUST ALWAYS be in English
+- The key MUST be snake_case
+- The SAME key must be used in both English and French versions
+- Example:
+  EN -> { "key": "wait_time", "theme": "Wait Time" }
+  FR -> { "key": "wait_time", "theme": "Temps d'attente" }
+- sentiment MUST always be one of: "positive", "mixed", "negative" — NEVER translate to French
 
-Return this JSON:
+QUANTITY REQUIREMENTS:
+- top_issues: 3–5 items, sorted by count descending (themes with negative/mixed sentiment most mentioned)
+- top_strength: 3–5 items, sorted by count descending (themes with positive sentiment most mentioned)
+- themes_universal: all universal themes found (typically 4–7)
+- themes_industry: 3–6 industry-specific themes (REQUIRED if confidence >= 45%)
+
+Return EXACTLY this JSON shape (ALL values in angle brackets are placeholders — derive every value from the reviews above, do not copy these):
 {
-  "top_issues": [{"theme": "...", "count": X}, ...],
-  "top_strength": [{"theme": "...", "count": X}, ...],
-  "themes_universal": [
-    {
-      "theme": "Welcome",
-      "sentiment": "positive|mixed|negative",
-      "importance": 0-100,
-      "evidence_quotes": ["quote 1", "quote 2"],
-      "what_it_means": "Short explanation".
-      "count": X,
-    }
-  ],
-  "themes_industry": [
-    {
-      "theme": "Industry-specific theme",
-      "sentiment": "positive|mixed|negative",
-      "importance": 0-100,
-      "evidence_quotes": ["quote"],
-      "what_it_means": "Explanation",
-      "count": X,
-    }
-  ],
+  "top_issues": {
+    "en": [
+      { "key": "<stable_slug_in_english_snake_case>", "theme": "<theme>", "count": <number> },
+      { "key": "<stable_slug_in_english_snake_case>", "theme": "<theme>", "count": <number> },
+      { "key": "<stable_slug_in_english_snake_case>", "theme": "<theme>", "count": <number> }
+    ],
+    "fr": [
+      { "key": "<SAME key as EN item 1 — must match exactly>", "theme": "<thème>", "count": <number> },
+      { "key": "<SAME key as EN item 2 — must match exactly>", "theme": "<thème>", "count": <number> },
+      { "key": "<SAME key as EN item 3 — must match exactly>", "theme": "<thème>", "count": <number> }
+    ]
+  },
+  "top_strength": {
+    "en": [
+      { "key": "<stable_slug_in_english_snake_case>", "theme": "<theme>", "count": <number> },
+      { "key": "<stable_slug_in_english_snake_case>", "theme": "<theme>", "count": <number> },
+      { "key": "<stable_slug_in_english_snake_case>", "theme": "<theme>", "count": <number> }
+    ],
+    "fr": [
+      { "key": "<SAME key as EN item 1>", "theme": "<thème>", "count": <number> },
+      { "key": "<SAME key as EN item 2>", "theme": "<thème>", "count": <number> },
+      { "key": "<SAME key as EN item 3>", "theme": "<thème>", "count": <number> }
+    ]
+  },
+  "themes_universal": {
+    "en": [
+      {
+        "theme": "<universal theme name in English>",
+        "sentiment": "<positive|mixed|negative>",
+        "importance": "<0-100 based on how often and strongly it appears>",
+        "evidence_quotes": ["<exact short quote from a review>", "<exact short quote from a review>"],
+        "what_it_means": "<one sentence explaining what customers say about this theme>",
+        "count": "<number of reviews mentioning this theme>"
+      }
+    ],
+    "fr": [
+      {
+        "theme": "<nom du thème universel en français>",
+        "sentiment": "<positive|mixed|negative — NEVER translate, always use English values>",
+        "importance": "<0-100 selon la fréquence et l'intensité>",
+        "evidence_quotes": ["<citation courte exacte d'un avis>", "<citation courte exacte d'un avis>"],
+        "what_it_means": "<une phrase expliquant ce que les clients disent de ce thème>",
+        "count": "<nombre d'avis mentionnant ce thème>"
+      }
+    ]
+  },
+  "themes_industry": {
+    "en": [
+      {
+        "theme": "<industry-specific theme name in English>",
+        "sentiment": "<positive|mixed|negative>",
+        "importance": "<0-100 based on how often and strongly it appears>",
+        "evidence_quotes": ["<exact short quote from a review>"],
+        "what_it_means": "<one sentence explaining what customers say about this theme>",
+        "count": "<number of reviews mentioning this theme>"
+      }
+    ],
+    "fr": [
+      {
+        "theme": "<nom du thème métier en français>",
+        "sentiment": "<positive|mixed|negative — NEVER translate, always use English values>",
+        "importance": "<0-100 selon la fréquence et l'intensité>",
+        "evidence_quotes": ["<citation courte exacte d'un avis>"],
+        "what_it_means": "<une phrase expliquant ce que les clients disent de ce thème>",
+        "count": "<nombre d'avis mentionnant ce thème>"
+      }
+    ]
+  },
   "summary": {
-    "one_liner": "One-sentence summary",
-    "what_customers_love": ["point 1", "point 2"],
-    "what_customers_hate": ["point 1", "point 2"]
+    "en": {
+      "one_liner": "One-sentence summary",
+      "what_customers_love": ["point 1", "point 2"],
+      "what_customers_hate": ["point 1", "point 2"]
+    },
+    "fr": {
+      "one_liner": "Résumé en une phrase",
+      "what_customers_love": ["point 1", "point 2"],
+      "what_customers_hate": ["point 1", "point 2"]
+    }
   }
-}`
-  }
-];
+}`,
+    },
+  ];
 
   const resp = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -489,8 +671,8 @@ Return this JSON:
       model: "gpt-4o-mini",
       temperature: 0.2,
       response_format: { type: "json_object" },
-      messages: prompt
-    })
+      messages: prompt,
+    }),
   });
 
   const data = await resp.json();
@@ -503,103 +685,43 @@ Return this JSON:
   }
 }
 
-// PASS B: Recommandations + reply templates
+// ─── PASS B ─────────────────────────────────────────────────────────────────
 async function analyzePassB(
   placeName: string,
   businessType: BusinessType,
   businessTypeConfidence: number,
-  themesUniversal: any[],
-  themesIndustry: any[],
-  topIssues: any[],
+  themesUniversal: { en: any[]; fr: any[] },
+  themesIndustry: { en: any[]; fr: any[] },
+  topIssues: { en: any[]; fr: any[] },
   avgRating: number | null,
-  language: OutputLanguage
 ) {
-  if (!OPENAI_KEY) {
-    return null;
-  }
+  if (!OPENAI_KEY) return null;
 
-  const languageInstruction = getLanguageInstruction(language);
+  const languageInstruction = getLanguageInstruction();
 
-//   const prompt = [
-//     { role: "system", content: `Tu es un consultant expert en amélioration de l'expérience client.
-// Génère des recommandations actionnables et des templates de réponses adaptés au secteur.
-// Réponds exclusivement en JSON valide.` },
-//     { role: "user", content:
-// `Établissement: ${placeName}
-// Type: ${businessType} (confiance: ${businessTypeConfidence}%)
-// Note moyenne: ${avgRating?.toFixed(1) || 'N/A'}
-
-// Thèmes identifiés (universels): ${themesUniversal.map((t: any) => t.theme).join(', ')}
-// ${themesIndustry.length > 0 ? `Thèmes métier: ${themesIndustry.map((t: any) => t.theme).join(', ')}` : ''}
-// Problèmes prioritaires: ${topIssues.map((i: any) => i.theme || i).join(', ')}
-
-// Génère:
-// 1. Pain points priorisés (impact 0-100, ease 0-100, first_step concret)
-// 2. Quick wins (7 jours) - actions rapides avec résultat attendu
-// 3. Projets (30 jours) - actions plus structurées
-// 4. Reply templates (positive/neutral/negative) adaptés au secteur ${businessType}
-
-// Retourne ce JSON:
-// {
-//   "pain_points_prioritized": [
-//     {
-//       "issue": "Nom du problème",
-//       "why_it_matters": "Pourquoi c'est important",
-//       "impact": 0-100,
-//       "ease": 0-100,
-//       "first_step": "Première action concrète"
-//     }
-//   ],
-//   "recommendations": {
-//     "quick_wins_7_days": [
-//       {
-//         "title": "Titre action",
-//         "details": "Détails",
-//         "expected_result": "Résultat attendu",
-//         "priority": 1-5
-//       }
-//     ],
-//     "projects_30_days": [
-//       {
-//         "title": "Titre projet",
-//         "details": "Détails",
-//         "expected_result": "Résultat attendu",
-//         "priority": 1-5
-//       }
-//     ]
-//   },
-//   "reply_templates": {
-//     "positive": [
-//       {
-//         "title": "Titre template",
-//         "reply": "Texte de réponse",
-//         "use_when": "Quand utiliser"
-//       }
-//     ],
-//     "neutral": [...],
-//     "negative": [...]
-//   }
-// }`
-//     }
-//   ];
-const prompt = [
-  { 
-    role: "system", 
-    content: `You are an expert consultant in customer experience improvement.
+  const prompt = [
+    {
+      role: "system",
+      content: `You are an expert consultant in customer experience improvement.
 Generate actionable recommendations and response templates tailored to the business sector.
-Respond strictly with valid JSON.
-${languageInstruction}` 
-  },
-  { 
-    role: "user", 
-    content:
+Respond ONLY with valid JSON — no markdown, no preamble.
+${languageInstruction}`,
+    },
+    {
+      role: "user",
+      content:
 `Business: ${placeName}
 Type: ${businessType} (confidence: ${businessTypeConfidence}%)
 Average rating: ${avgRating?.toFixed(1) || 'N/A'}
 
-Identified themes (universal): ${themesUniversal.map((t: any) => t.theme).join(', ')}
-${themesIndustry.length > 0 ? `Industry themes: ${themesIndustry.map((t: any) => t.theme).join(', ')}` : ''}
-Priority issues: ${topIssues.map((i: any) => i.theme || i).join(', ')}
+Universal themes (EN): ${(themesUniversal?.en || []).map((t: any) => t.theme).join(', ') || 'None'}
+Universal themes (FR): ${(themesUniversal?.fr || []).map((t: any) => t.theme).join(', ') || 'Aucun'}
+
+Industry themes (EN): ${(themesIndustry?.en || []).map((t: any) => t.theme).join(', ') || 'None'}
+Industry themes (FR): ${(themesIndustry?.fr || []).map((t: any) => t.theme).join(', ') || 'Aucun'}
+
+Priority issues (EN): ${(topIssues?.en || []).map((t: any) => t.theme).join(', ') || 'None'}
+Priority issues (FR): ${(topIssues?.fr || []).map((t: any) => t.theme).join(', ') || 'Aucun'}
 
 Generate:
 1. Prioritized pain points (impact 0–100, ease 0–100, concrete first_step)
@@ -608,49 +730,81 @@ Generate:
 4. Reply templates (positive/neutral/negative) adapted to the ${businessType} sector
 5. ${languageInstruction}
 
-Return this JSON:
+Return EXACTLY this JSON shape:
 {
-  "pain_points_prioritized": [
-    {
-      "issue": "Problem name",
-      "why_it_matters": "Why it matters",
-      "impact": 0-100,
-      "ease": 0-100,
-      "first_step": "First concrete action"
-    }
-  ],
-  "recommendations": {
-    "quick_wins_7_days": [
+  "pain_points_prioritized": {
+    "en": [
       {
-        "title": "Action title",
-        "details": "Details",
-        "expected_result": "Expected result",
-        "priority": 1-5
+        "issue": "Problem name",
+        "why_it_matters": "Why it matters",
+        "impact": 80,
+        "ease": 60,
+        "first_step": "First concrete action"
       }
     ],
-    "projects_30_days": [
+    "fr": [
       {
-        "title": "Project title",
-        "details": "Details",
-        "expected_result": "Expected result",
-        "priority": 1-5
+        "issue": "Nom du problème",
+        "why_it_matters": "Pourquoi cela compte",
+        "impact": 80,
+        "ease": 60,
+        "first_step": "Première action concrète"
       }
     ]
   },
+  "recommendations": {
+    "en": {
+      "quick_wins_7_days": [
+        {
+          "title": "Action title",
+          "details": "Details",
+          "expected_result": "Expected result",
+          "priority": 1
+        }
+      ],
+      "projects_30_days": [
+        {
+          "title": "Project title",
+          "details": "Details",
+          "expected_result": "Expected result",
+          "priority": 1
+        }
+      ]
+    },
+    "fr": {
+      "quick_wins_7_days": [
+        {
+          "title": "Titre action",
+          "details": "Détails",
+          "expected_result": "Résultat attendu",
+          "priority": 1
+        }
+      ],
+      "projects_30_days": [
+        {
+          "title": "Titre projet",
+          "details": "Détails",
+          "expected_result": "Résultat attendu",
+          "priority": 1
+        }
+      ]
+    }
+  },
   "reply_templates": {
-    "positive": [
-      {
-        "title": "Template title",
-        "reply": "Response text",
-        "use_when": "When to use"
-      }
-    ],
-    "neutral": [...],
-    "negative": [...]
+    "en": {
+      "positive": [{"title": "Template title", "reply": "Response text", "use_when": "When to use"}],
+      "neutral":  [{"title": "Template title", "reply": "Response text", "use_when": "When to use"}],
+      "negative": [{"title": "Template title", "reply": "Response text", "use_when": "When to use"}]
+    },
+    "fr": {
+      "positive": [{"title": "Titre template", "reply": "Texte de réponse", "use_when": "Quand utiliser"}],
+      "neutral":  [{"title": "Titre template", "reply": "Texte de réponse", "use_when": "Quand utiliser"}],
+      "negative": [{"title": "Titre template", "reply": "Texte de réponse", "use_when": "Quand utiliser"}]
+    }
   }
-}`
-  }
-];
+}`,
+    },
+  ];
 
   const resp = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -659,8 +813,8 @@ Return this JSON:
       model: "gpt-4o-mini",
       temperature: 0.3,
       response_format: { type: "json_object" },
-      messages: prompt
-    })
+      messages: prompt,
+    }),
   });
 
   const data = await resp.json();
@@ -673,6 +827,7 @@ Return this JSON:
   }
 }
 
+// ─── MAIN HANDLER ────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
@@ -703,14 +858,14 @@ Deno.serve(async (req) => {
     const displayName = [firstName, lastName].filter(Boolean).join(" ") || userEmail || "User";
     const importantUpdatesEnabled = userProfile?.important_updates_enabled === true;
 
-    const { place_id, name, dryRun = false, language } = await req.json().catch(()=>({}));
-    if (!place_id) return json({ ok:false, error:"missing_place_id" }, 400);
+    const { place_id, name, dryRun = false, language } = await req.json().catch(() => ({}));
+    if (!place_id) return json({ ok: false, error: "missing_place_id" }, 400);
+
     const outputLanguage = normalizeLanguage(language);
 
-    // Récupérer l'établissement pour obtenir Google Places types
     let establishmentName = name || 'Établissement';
     let googlePlacesTypes: string[] | null = null;
-    
+
     try {
       const { data: establishment } = await supabaseAdmin
         .from('establishments')
@@ -720,22 +875,17 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (establishment?.name) {
-        console.log("setting ename")
         establishmentName = establishment.name;
       }
-    
       if (establishment?.types) {
-      googlePlacesTypes = Array.isArray(establishment.types)
-    ? establishment.types
-    : [establishment.types];
-      console.log("googlePlacesTypes",typeof googlePlacesTypes);
-      console.log("googlePlacesTypes", googlePlacesTypes);
+        googlePlacesTypes = Array.isArray(establishment.types)
+          ? establishment.types
+          : [establishment.types];
       }
     } catch (err) {
       console.warn('[analyze-reviews-v2] Erreur récupération établissement:', err);
     }
 
-    // Récupérer les avis
     const { data: reviewsData, error: reviewsErr } = await supabaseAdmin
       .from('reviews')
       .select('text, rating')
@@ -763,89 +913,113 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: "no_reviews_found" }, 400);
     }
 
-    // Stats
     const stats = computeStats(rows);
     const sampleTexts = rows.map(r => r.text ?? "").filter(Boolean).slice(0, 120);
-    const reviewTexts = sampleTexts;
-    console.log("sampleTexts-sampleTexts", sampleTexts)
-    console.log("establishmentName-establishmentName", establishmentName)
-    console.log("googlePlacesTypes-googlePlacesTypes", googlePlacesTypes)
 
-    // Détection businessType
-    const detection = detectBusinessType(establishmentName, googlePlacesTypes, reviewTexts);
+    const detection = detectBusinessType(establishmentName, googlePlacesTypes, sampleTexts);
     console.log(`[analyze-reviews-v2] Détection: ${detection.type} (${detection.confidence}%) via ${detection.source}`);
 
-    // PASS A: Extraction thèmes
     const passAResult = await analyzePassA(
       establishmentName,
       sampleTexts,
       rows.length,
       detection.type,
       detection.confidence,
-      outputLanguage
     );
 
     if (!passAResult) {
       return json({ ok: false, error: "analysis_pass_a_failed" }, 500);
     }
 
-    // Préparer top_issues depuis les thèmes négatifs
-    const negativeThemes = [
-      ...(passAResult.themes_universal || []).filter((t: any) => t.sentiment === 'negative'),
-      ...(passAResult.themes_industry || []).filter((t: any) => t.sentiment === 'negative')
-    ].sort((a: any, b: any) => b.importance - a.importance).slice(0, 3);
+    // ─── Enforce stable keys + normalize sentiment on all bilingual arrays ──
+    if (passAResult.top_issues) {
+      passAResult.top_issues = enforceKeys(passAResult.top_issues);
+    }
+    if (passAResult.top_strength) {
+      passAResult.top_strength = enforceKeys(passAResult.top_strength);
+    }
+    if (passAResult.themes_universal) {
+      passAResult.themes_universal = enforceKeys(passAResult.themes_universal);
+    }
+    if (passAResult.themes_industry) {
+      passAResult.themes_industry = enforceKeys(passAResult.themes_industry);
+    }
 
-    // PASS B: Recommandations + templates
     const passBResult = await analyzePassB(
       establishmentName,
       detection.type,
       detection.confidence,
-      passAResult.themes_universal || [],
-      passAResult.themes_industry || [],
-      negativeThemes,
+      {
+        en: passAResult?.themes_universal?.en || [],
+        fr: passAResult?.themes_universal?.fr || [],
+      },
+      {
+        en: passAResult?.themes_industry?.en || [],
+        fr: passAResult?.themes_industry?.fr || [],
+      },
+      {
+        en: passAResult?.top_issues?.en || [],
+        fr: passAResult?.top_issues?.fr || [],
+      },
       stats.overall,
-      outputLanguage
     );
 
     if (!passBResult) {
       return json({ ok: false, error: "analysis_pass_b_failed" }, 500);
     }
 
-    // Assembler le résultat final
-    const summaryData = passAResult.summary || {
-      one_liner: getFallbackSummaryOneLiner(outputLanguage, establishmentName, rows.length),
-      what_customers_love: [],
-      what_customers_hate: []
+    // ─── Fallback summary ───────────────────────────────────────────────────
+    const fallbackOneLiner = getFallbackSummaryOneLiner(establishmentName, rows.length);
+    const summaryData = {
+      en: {
+        one_liner: passAResult?.summary?.en?.one_liner || fallbackOneLiner.en,
+        what_customers_love: passAResult?.summary?.en?.what_customers_love || [],
+        what_customers_hate: passAResult?.summary?.en?.what_customers_hate || [],
+      },
+      fr: {
+        one_liner: passAResult?.summary?.fr?.one_liner || fallbackOneLiner.fr,
+        what_customers_love: passAResult?.summary?.fr?.what_customers_love || [],
+        what_customers_hate: passAResult?.summary?.fr?.what_customers_hate || [],
+      },
     };
 
+    // ─── Final analysis object ──────────────────────────────────────────────
     const analysisResult = {
-      analysis_language: outputLanguage,
-      top_praises: passAResult.top_strength, 
-      top_issues:passAResult.top_issues,
       business_type: detection.type,
       business_type_confidence: detection.confidence,
       business_type_candidates: detection.candidates,
+
+      top_praises: passAResult?.top_strength || { en: [], fr: [] },
+      top_issues:  passAResult?.top_issues   || { en: [], fr: [] },
+
       summary: summaryData,
+
+      themes_universal: passAResult?.themes_universal || { en: [], fr: [] },
+      themes_industry: detection.confidence >= 45
+        ? (passAResult?.themes_industry || { en: [], fr: [] })
+        : { en: [], fr: [] },
+
+      pain_points_prioritized: passBResult?.pain_points_prioritized || { en: [], fr: [] },
+
+      recommendations: passBResult?.recommendations || {
+        en: { quick_wins_7_days: [], projects_30_days: [] },
+        fr: { quick_wins_7_days: [], projects_30_days: [] },
+      },
+
+      reply_templates: passBResult?.reply_templates || {
+        en: { positive: [], neutral: [], negative: [] },
+        fr: { positive: [], neutral: [], negative: [] },
+      },
+
       kpis: {
         avg_rating: stats.overall,
         total_reviews: stats.total,
         positive_ratio_estimate: stats.positive_pct,
-        negative_ratio_estimate: stats.negative_pct
+        negative_ratio_estimate: stats.negative_pct,
       },
-      themes_universal: passAResult.themes_universal || [],
-      themes_industry: detection.confidence >= 45 ? (passAResult.themes_industry || []) : [],
-      pain_points_prioritized: passBResult.pain_points_prioritized || [],
-      recommendations: passBResult.recommendations || {
-        quick_wins_7_days: [],
-        projects_30_days: []
-      },
-      reply_templates: passBResult.reply_templates || {
-        positive: [],
-        neutral: [],
-        negative: []
-      }
     };
 
+    // ─── Notification logic ─────────────────────────────────────────────────
     const previousInsight = dryRun ? null : await supabaseAdmin
       .from('review_insights')
       .select('avg_rating, top_issues, last_analyzed_at')
@@ -854,8 +1028,9 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     const previousAvgRating = previousInsight?.data?.avg_rating ?? null;
-    const previousIssues = normalizeIssues(previousInsight?.data?.top_issues);
-    const currentIssues = normalizeIssues(passAResult.top_issues);
+    const previousIssues = normalizeIssues(previousInsight?.data?.top_issues?.en || previousInsight?.data?.top_issues || []);
+    const currentIssues  = normalizeIssues(passAResult?.top_issues?.en || []);
+
     const notificationDecision = shouldSendSignificantChangeNotification(
       previousAvgRating,
       stats.overall,
@@ -863,58 +1038,71 @@ Deno.serve(async (req) => {
       currentIssues,
     );
 
-    // Sauvegarder dans review_insights (format v2)
+    // ─── Persist ────────────────────────────────────────────────────────────
     if (!dryRun) {
-    const payload = {
-      place_id,
-      user_id: userId,
-      last_analyzed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      business_type: detection.type,
-      business_type_confidence: detection.confidence,
-      business_type_candidates: detection.candidates,
+      const payload = {
+        place_id,
+        user_id: userId,
+        last_analyzed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        business_type: detection.type,
+        business_type_confidence: detection.confidence,
+        business_type_candidates: detection.candidates,
         analysis_version: 'v2-auto-universal',
         total_count: stats.total,
         avg_rating: stats.overall,
         positive_ratio: stats.positive_pct / 100,
-        // Format v1 (rétrocompatibilité)
+
+        // Flat legacy themes array (retro-compat — uses EN branch)
         themes: [
-          ...(passAResult.themes_universal || []).map((t: any) => ({ theme: t.theme, count: Math.round(t.importance / 10) })),
-          ...(passAResult.themes_industry || []).map((t: any) => ({ theme: t.theme, count: Math.round(t.importance / 10) }))
+          ...(passAResult?.themes_universal?.en || []).map((t: any) => ({
+            theme: t.theme,
+            count: Math.round(t.importance / 10),
+          })),
+          ...(passAResult?.themes_industry?.en || []).map((t: any) => ({
+            theme: t.theme,
+            count: Math.round(t.importance / 10),
+          })),
         ],
-        top_praises: passAResult.top_strength, 
-        top_issues:passAResult.top_issues,
-        // top_issues: negativeThemes.map((t: any, idx: number) => ({
-        //   theme: t.theme,
-        //   count: Math.round(t.importance / 10),
-        //   severity: idx < 1 ? 'high' : 'medium'
-        // })),
-        // top_praises: [
-        //   ...(passAResult.themes_universal || []).filter((t: any) => t.sentiment === 'positive'),
-        //   ...(passAResult.themes_industry || []).filter((t: any) => t.sentiment === 'positive')
-        // ].slice(0, 3).map((t: any) => ({
-        //   theme: t.theme,
-        //   count: Math.round(t.importance / 10)
-        // })),
-        
-        summary: {
-          analysis_language: outputLanguage,
-          total: stats.total,
-          by_rating: stats.by_rating,
-          positive_pct: stats.positive_pct,
-          negative_pct: stats.negative_pct,
-          recommendations: (passBResult.recommendations?.quick_wins_7_days || []).slice(0, 3).map((r: any) => r.title)
+
+        top_praises: passAResult?.top_strength  || { en: [], fr: [] },
+        top_issues:  passAResult?.top_issues    || { en: [], fr: [] },
+
+        summary: summaryData,
+
+        themes_universal: passAResult?.themes_universal || { en: [], fr: [] },
+        themes_industry: detection.confidence >= 45
+          ? (passAResult?.themes_industry || { en: [], fr: [] })
+          : { en: [], fr: [] },
+
+        pain_points_prioritized: passBResult?.pain_points_prioritized || { en: [], fr: [] },
+
+        recommendations_quick_wins: {
+          en: passBResult?.recommendations?.en?.quick_wins_7_days || [],
+          fr: passBResult?.recommendations?.fr?.quick_wins_7_days || [],
         },
-        // Format v2 (nouveau)
-        themes_universal: passAResult.themes_universal || [],
-        themes_industry: detection.confidence >= 45 ? (passAResult.themes_industry || []) : [],
-        pain_points_prioritized: passBResult.pain_points_prioritized || [],
-        recommendations_quick_wins: passBResult.recommendations?.quick_wins_7_days || [],
-        recommendations_projects: passBResult.recommendations?.projects_30_days || [],
-        reply_templates: passBResult.reply_templates || {},
-        summary_one_liner: summaryData.one_liner || '',
-        summary_what_customers_love: summaryData.what_customers_love || [],
-        summary_what_customers_hate: summaryData.what_customers_hate || []
+        recommendations_projects: {
+          en: passBResult?.recommendations?.en?.projects_30_days || [],
+          fr: passBResult?.recommendations?.fr?.projects_30_days || [],
+        },
+
+        reply_templates: passBResult?.reply_templates || {
+          en: { positive: [], neutral: [], negative: [] },
+          fr: { positive: [], neutral: [], negative: [] },
+        },
+
+        summary_one_liner: {
+          en: summaryData.en.one_liner,
+          fr: summaryData.fr.one_liner,
+        },
+        summary_what_customers_love: {
+          en: summaryData.en.what_customers_love,
+          fr: summaryData.fr.what_customers_love,
+        },
+        summary_what_customers_hate: {
+          en: summaryData.en.what_customers_hate,
+          fr: summaryData.fr.what_customers_hate,
+        },
       };
 
       const { data: upsertedInsight, error: insightError } = await supabaseAdmin
@@ -928,12 +1116,11 @@ Deno.serve(async (req) => {
         console.log("✅ review_insights saved:", upsertedInsight);
       }
 
-      // Mettre à jour l'établissement avec le businessType détecté
       if (
-      importantUpdatesEnabled &&
-      notificationDecision.send &&
-      notificationDecision.reason &&
-      userEmail
+        importantUpdatesEnabled &&
+        notificationDecision.send &&
+        notificationDecision.reason &&
+        userEmail
       ) {
         try {
           const reportLocale = outputLanguage === "fr" ? "fr-FR" : "en-US";
@@ -976,7 +1163,7 @@ Deno.serve(async (req) => {
           business_type_confidence: detection.confidence,
           business_type_candidates: detection.candidates,
           business_type_source: detection.source,
-          analysis_version: 'v2-auto-universal'
+          analysis_version: 'v2-auto-universal',
         })
         .eq('place_id', place_id)
         .eq('user_id', userId);
@@ -987,10 +1174,10 @@ Deno.serve(async (req) => {
       analysis_language: outputLanguage,
       analysis: analysisResult,
       counts: { collected: rows.length },
-      dryRun
+      dryRun,
     });
   } catch (e) {
     console.error('[analyze-reviews-v2] Error:', e);
-    return json({ ok:false, error: String(e?.message ?? e) }, 500);
+    return json({ ok: false, error: String((e as any)?.message ?? e) }, 500);
   }
 });

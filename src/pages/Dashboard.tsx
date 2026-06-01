@@ -883,10 +883,18 @@ const Dashboard = () => {
   }, [allReviewsForChart]);
 
   const linkedKeywords = useMemo(() => {
-    const issues = insight?.top_issues || [];
-    const themes = issues
-      .map((i: any) => (i?.theme || i || "").toString().toLowerCase())
-      .filter(Boolean);
+  const issues = Array.isArray(insight?.top_issues)? insight.top_issues: [];
+
+const themes =issues.length > 0? issues
+        .map((i: any) =>
+          (i?.theme ||i?.issue ||
+            i?.name ||""
+          )
+            .toString()
+            .toLowerCase()
+        )
+        .filter(Boolean)
+    : [];
 
     const keywords: string[] = [];
     const add = (...words: string[]) => {
@@ -2626,6 +2634,7 @@ const Dashboard = () => {
     }
   }, [placeIdForCache]);
 
+  const currentLanguage = i18n.language;
   // Fetch review insights data - Chargement automatique au mount
   // Utilise le place_id de l'établissement sélectionné (selectedEtab) en priorité, sinon l'actif en DB
   useEffect(() => {
@@ -3041,7 +3050,9 @@ const Dashboard = () => {
         supabase.removeChannel(channel);
       }
     };
-  }, [user?.id, currentPlaceId]);
+  }, [user?.id, currentPlaceId,currentLanguage]);
+
+  console.log("insights" , insight)
 
   // Mise à jour de l'heure en temps réel
   useEffect(() => {
@@ -3352,16 +3363,20 @@ const getLatestDate = (reviews: any[]): Date | null =>
   
     // ✅ MAP OBJECTIVES IN PARETO ORDER
     const orderedObjectives = useMemo(() => {
-      return sortedPareto
-        .map(p =>
-          safeObjectives.find(
-            o => o.pareto_cause?.toLowerCase() === p.name.toLowerCase()
-          )
-        )
-        .filter(Boolean);
-    }, [sortedPareto, safeObjectives]);
-  
-    const activeObjective =orderedObjectives.find(o => o.status !== "completed") || null;
+  return sortedPareto
+    .map(p =>
+      safeObjectives.find(
+        o =>
+          o.pareto_cause?.key === p.key
+      )
+    )
+    .filter(Boolean);
+}, [sortedPareto, safeObjectives]);
+
+const activeObjective =
+  orderedObjectives.find(
+    o => o.status !== "completed"
+  ) || null;
 
     const progress = useSmartProgress(activeObjective);
 
@@ -3599,27 +3614,29 @@ const getLatestDate = (reviews: any[]): Date | null =>
                                   );
                                 toast.success(t("establishment.establishmentAnalysed"))
                                   // Recharger les insights au lieu de recharger toute la page
-                                  const { data: insightData } = await supabase
-                                    .from("review_insights")
-                                    .select(
-                                      "total_count, avg_rating, top_issues, top_praises, positive_ratio, last_analyzed_at, summary, themes,themes_universal,themes_industry,pain_points_prioritized , recommendations_quick_wins , recommendations_projects,summary_one_liner ,summary_what_customers_love ,summary_what_customers_hate,analysis_version ,business_type,business_type_confidence,business_type_candidates",
-                                    )
-                                    .eq("place_id", selectedEtab.place_id)
-                                    .eq("user_id", user?.id)
-                                    .order("last_analyzed_at", {
-                                      ascending: false,
-                                    })
-                                    .limit(1)
-                                    .maybeSingle();
+                                 const { loadLatestAnalysis } = await import(
+                                    "@/services/analysisLoader"
+                                  )
+                                  const analysisResult = await loadLatestAnalysis(
+                                    selectedEtab.place_id,
+                                    user!.id,
+                                  );
 
-                                  if (insightData) {
-                                    setInsight(insightData);
+                                  if (
+                                    analysisResult.success &&
+                                    analysisResult.hasAnalysis &&
+                                    analysisResult.data
+                                  ) {
+                                    setInsight(analysisResult.data);
+
                                     setHasAnalysis(true);
+
                                     console.log(
                                       t("dashboard.insightsReloaded"),
-                                      insightData,
+                                      analysisResult.data,
                                     );
                                   } else {
+                                    setInsight(null);
                                     setHasAnalysis(false);
                                   }
 
@@ -6555,166 +6572,182 @@ const getLatestDate = (reviews: any[]): Date | null =>
                     </CardHeader>
 
 
-                      <CardContent>
-                        {!activeObjective ? (
-                          <div className="text-center py-8 text-gray-500 dark:text-slate-400">
-                            <p className="text-sm">
-                             {t("recommendations.smart.noSmartActions")}
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="space-y-8">
-                            {(() => {
-                              const objective = activeObjective;
+                    <CardContent>
+                      {!activeObjective ? (
+                        <div className="text-center py-8 text-gray-500 dark:text-slate-400">
+                          <p className="text-sm">
+                            {t("recommendations.smart.noSmartActions")}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-8">
+                          {(() => {
+                            const objective = activeObjective;
 
-                              const actions = objective.actions || [];
+                            const lang = i18n.language.startsWith("fr")
+                              ? "fr"
+                              : "en";
 
-                              const grouped = {
-                                daily: actions.filter(
-                                  (a) => a.frequency === "daily"
-                                ),
-                                weekly: actions.filter(
-                                  (a) => a.frequency === "weekly"
-                                ),
-                                monthly: actions.filter(
-                                  (a) => a.frequency === "once" || a.frequency === "monthly"
-                                ),
-                              };
+                            const actions = Array.isArray(objective.actions)
+                              ? objective.actions
+                              : [];
 
-                              const totalActions = actions.length;
+                            const grouped = {
+                              daily: actions.filter(
+                                (a) => a.frequency === "daily"
+                              ),
+                              weekly: actions.filter(
+                                (a) => a.frequency === "weekly"
+                              ),
+                              monthly: actions.filter(
+                                (a) =>
+                                  a.frequency === "once" ||
+                                  a.frequency === "monthly"
+                              ),
+                            };
 
-                              const completedActions = actions.filter(
-                                (a) => a.completed
-                              ).length;
+                            const totalActions = actions.length;
 
-                              const progress =
-                                totalActions > 0
-                                  ? Math.round(
-                                      (completedActions / totalActions) * 100
-                                    )
-                                  : 0;
+                            const completedActions = actions.filter(
+                              (a) => a.completed
+                            ).length;
 
-                              return (
-                                <div
-                                  key={objective.id}
-                                  className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 bg-white dark:bg-slate-900"
-                                >
-                                  {/* Objective header */}
-                                  <div className="mb-5">
-                                    <div className="flex items-center justify-between gap-4 mb-2">
-                                      <div>
-                                        <h3 className="font-semibold text-gray-900 dark:text-slate-100">
-                                          {objective.problem ||
-                                            objective.kpi_label ||
-                                            "SMART Objective"}
-                                        </h3>
+                            const progress =
+                              totalActions > 0
+                                ? Math.round(
+                                    (completedActions / totalActions) * 100
+                                  )
+                                : 0;
 
-                                        {objective.pareto_cause && (
-                                          <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-                                            {t("dashboard.relatedIssue")} {" : "}
-                                            {objective.pareto_cause}
-                                          </p>
-                                        )}
-                                      </div>
+                            const problemText =
+                              typeof objective.problem === "string"
+                                ? JSON.parse(objective.problem)?.[lang]
+                                : objective.problem?.[lang];
 
-                                      <Badge className="bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/60">
-                                        {completedActions}/{totalActions}
-                                      </Badge>
+                            const paretoCauseText =
+                              typeof objective.pareto_cause === "string"
+                                ? JSON.parse(objective.pareto_cause)?.[lang]
+                                : objective.pareto_cause?.[lang];
+
+                            return (
+                              <div
+                                key={objective.id}
+                                className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 bg-white dark:bg-slate-900"
+                              >
+                                {/* Objective header */}
+                                <div className="mb-5">
+                                  <div className="flex items-center justify-between gap-4 mb-2">
+                                    <div>
+                                      <h3 className="font-semibold text-gray-900 dark:text-slate-100">
+                                        {problemText ||
+                                          "SMART Objective"}
+                                      </h3>
+
+                                      {paretoCauseText && (
+                                        <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
+                                          {t("dashboard.relatedIssue")} :
+                                          {" "}
+                                          {paretoCauseText}
+                                        </p>
+                                      )}
                                     </div>
 
-                                    {/* Progress */}
-                                    
-                                  </div>
-
-                                  {/* Sections */}
-                                  <div className="space-y-6">
-                                    {Object.entries(grouped).map(
-                                      ([frequency, list]) => {
-                                        if (!list.length) return null;
-
-                                        return (
-                                          <div key={frequency}>
-                                            <h4 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-slate-400 mb-3">
-                                              {frequency === "daily" &&
-                                               t(`dashboard.${frequency}`)}
-                                              {frequency === "weekly" &&
-                                                t(`dashboard.${frequency}`)}
-                                              {frequency === "monthly" &&
-                                                t(`dashboard.${frequency}`)}
-                                              {frequency === "once" &&
-                                                t(`dashboard.${frequency}`)}
-                                            </h4>
-
-                                            <div className="space-y-2">
-                                              {list.map((action, index) => {
-                                                const realIndex =
-                                                  actions.findIndex(
-                                                    (a) =>
-                                                      a.text === action.text
-                                                  );
-
-                                                return (
-                                                  <div
-                                                    key={`${objective.id}-${index}`}
-                                                    onClick={() =>
-                                                      toggleAction(
-                                                        objective.id!,
-                                                        realIndex
-                                                      )
-                                                    }
-                                                    className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-all"
-                                                  >
-                                                    {/* Checkbox */}
-                                                    <div className="mt-0.5 shrink-0">
-                                                      {action.completed ? (
-                                                        <CheckCircle2 className="w-5 h-5 text-green-600" />
-                                                      ) : (
-                                                        <Circle className="w-5 h-5 text-gray-300 dark:text-slate-500" />
-                                                      )}
-                                                    </div>
-
-                                                    {/* Text */}
-                                                    <div className="flex-1">
-                                                      <p
-                                                        className={`text-sm leading-relaxed ${
-                                                          action.completed
-                                                            ? "line-through text-gray-400 dark:text-slate-500"
-                                                            : "text-gray-800 dark:text-slate-100"
-                                                        }`}
-                                                      >
-                                                        {action.text}
-                                                      </p>
-                                                    </div>
-
-                                                    {/* Frequency badge */}
-                                                    <Badge
-                                                      className={
-                                                        frequency === "daily"
-                                                          ? "bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-900/60"
-                                                          : frequency === "weekly"
-                                                            ? "bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/60"
-                                                            : frequency === "monthly"
-                                                              ? "bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-900/60"
-                                                              : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700"
-                                                      }
-                                                    >
-                                                      {t(`dashboard.${frequency}`)}
-                                                    </Badge>
-                                                  </div>
-                                                );
-                                              })}
-                                            </div>
-                                          </div>
-                                        );
-                                      }
-                                    )}
+                                    <Badge className="bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/60">
+                                      {completedActions}/{totalActions}
+                                    </Badge>
                                   </div>
                                 </div>
-                              );
-                            })()}
-                          </div>
-                        )}
-                      </CardContent>
+
+                                {/* Sections */}
+                                <div className="space-y-6">
+                                  {Object.entries(grouped).map(
+                                    ([frequency, list]) => {
+                                      if (!list.length) return null;
+
+                                      return (
+                                        <div key={frequency}>
+                                          <h4 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-slate-400 mb-3">
+                                            {t(`dashboard.${frequency}`)}
+                                          </h4>
+
+                                          <div className="space-y-2">
+                                            {list.map((action, index) => {
+                                              const actionText =
+                                                typeof action.text === "string"
+                                                  ? JSON.parse(action.text)?.[
+                                                      lang
+                                                    ]
+                                                  : action.text?.[lang];
+
+                                              const realIndex =
+                                                actions.findIndex(
+                                                  (a) =>
+                                                    JSON.stringify(a.text) ===
+                                                    JSON.stringify(action.text)
+                                                );
+
+                                              return (
+                                                <div
+                                                  key={`${objective.id}-${index}`}
+                                                  onClick={() =>
+                                                    toggleAction(
+                                                      objective.id!,
+                                                      realIndex
+                                                    )
+                                                  }
+                                                  className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-all"
+                                                >
+                                                  {/* Checkbox */}
+                                                  <div className="mt-0.5 shrink-0">
+                                                    {action.completed ? (
+                                                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                                                    ) : (
+                                                      <Circle className="w-5 h-5 text-gray-300 dark:text-slate-500" />
+                                                    )}
+                                                  </div>
+
+                                                  {/* Text */}
+                                                  <div className="flex-1">
+                                                    <p
+                                                      className={`text-sm leading-relaxed ${
+                                                        action.completed
+                                                          ? "line-through text-gray-400 dark:text-slate-500"
+                                                          : "text-gray-800 dark:text-slate-100"
+                                                      }`}
+                                                    >
+                                                      {actionText}
+                                                    </p>
+                                                  </div>
+
+                                                  {/* Frequency badge */}
+                                                  <Badge
+                                                    className={
+                                                      frequency === "daily"
+                                                        ? "bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-900/60"
+                                                        : frequency === "weekly"
+                                                          ? "bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/60"
+                                                          : frequency === "monthly"
+                                                            ? "bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-900/60"
+                                                            : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700"
+                                                    }
+                                                  >
+                                                    {t(`dashboard.${frequency}`)}
+                                                  </Badge>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
+                    </CardContent>
                   </Card>
                 )}
 
@@ -10970,7 +11003,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
                               <span>
                                 {activeObjective?.pareto_cause
                                   ? t("objective.focus", {
-                                      cause: activeObjective.pareto_cause,
+                                      cause: activeObjective.pareto_cause?.[i18n.language],
                                     })
                                   : t("objective.actionTracking")}
                               </span>

@@ -126,8 +126,8 @@ export const EffortMatrix = ({ analysisData }) => {
   const paretoIssues = activeObjective
   ? (analysisData?.paretoIssues || []).filter(
       p =>
-        p.name.toLowerCase() ===
-        activeObjective.pareto_cause?.toLowerCase()
+        p.key.toLowerCase() ===
+        activeObjective?.pareto_cause?.key?.toLowerCase()
     )
   : (() => {
       const topIssue = [...(analysisData?.paretoIssues || [])]
@@ -153,7 +153,7 @@ export const EffortMatrix = ({ analysisData }) => {
       </h4>
 
       {paretoIssues.map((issue, idx) => {
-        const rca = rcaByIssue[issue.name];
+        const rca = rcaByIssue[issue.key];
 
         if (!rca) return null;
 
