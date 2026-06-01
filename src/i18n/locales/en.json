@@ -1,4 +1,4 @@
-{
+﻿{
   "common": {
     "loading": "Loading...",
     "save": "Save",
@@ -682,6 +682,7 @@
       "title": "Key Takeaways",
       "quickRead": "Quick read for decision makers",
       "overallScore": {
+        "reviews":"reviews",
         "overallScore": "Overall Score",
         "critical": "Needs review",
         "toImprove": "To Improve",
@@ -690,9 +691,9 @@
         "narrativeCritical": "Your establishment is facing critical issues that are significantly impacting customer satisfaction.",
         "narrativeWarning": "Your establishment shows mixed performance with clear areas that need improvement.",
         "narrativePositive": "Your establishment is performing well and delivers a positive overall customer experience.",
-        "statRating": "Google Rating",
-        "statPositive": "AI Sentiment (normalized)",
-        "statReviews": "Analyzed Reviews",
+        "statRating": "Average Rating",
+        "statPositive": "AI Sentiment",
+        "statReviews": "Total Reviews",
         "noData": "No data available",
         "noDataHint": "Score will appear once reviews are collected.",
         "statRecentTrend": "Recent Trend",
@@ -703,14 +704,14 @@
         "trendRelativePrefix": "That is",
         "trendRelativeSuffix": "compared with the previous period.",
         "trendWindow": "Calculated over the last {{days}} days vs the previous {{days}} days.",
-        "trendCurrentWindow": "Last 60 days",
+        "trendCurrentWindow": "Over the last 60 days",
         "trendComparisonWindow": "Compared to the previous 60 days",
         "trendUnavailableMessage": "Not enough reviews in the period to calculate a reliable trend",
         "sourcesAndDetails": "Sources and details",
         "calcAriaLabel": "Calculation details",
         "calcTitle": "How is this calculated?",
-        "calcGoogleTitle": "Google average rating",
-        "calcGoogleDesc": "Average of all your Google review stars, converted to 100.",
+        "calcGoogleTitle": "Average rating",
+        "calcGoogleDesc": "Average of all your review stars, converted to 100.",
         "calcSentimentTitle": "Customer sentiment",
         "calcSentimentDesc": "Semantic analysis of comments combined with the percentage of positive reviews (>= 4★).",
         "calcTrendTitle": "Recent trend",
@@ -728,13 +729,13 @@
       "mainIssues": {
         "majorIssue": "Major Issue",
         "impactHigh": "Impact - High",
-        "mentionedIn": "Mentioned in {{percentage}}% of negative reviews",
+        "mentionedIn": "Mentioned in <strong>{{percentage}}% of negative reviews</strong>",
         "noData": "No data available"
       },
       "mainStrengths": {
         "mainStrength": "Major Strength",
         "positiveImpact": "Positive Impact",
-        "mentionedIn": "Mentioned in {{percentage}}% of positive reviews",
+        "mentionedIn": "Mentioned in <strong>{{percentage}}% of positive reviews</strong>",
         "noData": "No key strengths identified from recent reviews."
       },
       "recommandedActions": {
@@ -773,8 +774,8 @@
       "potentialGain": {
         "title": "Potential Gain",
         "estimatedGain": "+{{gain}} estimated if action applied.",
-        "label": "Estimated lift",
-        "viewActionPlan": "View Action Plan",
+        "label": "Estimated Gain",
+        "viewActionPlan": "View action plan",
         "noData": "No data available"
       }
     }
