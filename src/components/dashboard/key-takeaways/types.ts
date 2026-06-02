@@ -16,6 +16,7 @@ export interface Review {
   note?: number;
   rating?: number;
   published_at?: string;
+  create_time?: string;
   inserted_at?: string;
   created_at?: string;
   date?: string;
@@ -26,6 +27,7 @@ export interface ReviewDash {
   note?: number;
   rating?: number;
   published_at?: string;
+  create_time?: string;
   inserted_at?: string;
   created_at?: string;
   date?: string;

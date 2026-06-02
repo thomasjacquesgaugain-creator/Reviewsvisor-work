@@ -2,16 +2,13 @@ import { BarChart2, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Label } from "recharts";
 import { useMemo, useState } from "react";
-import { parseISO, subDays, isAfter } from "date-fns";
-import { getRatingEvolution, Granularity as RatingGranularity } from "@/utils/ratingEvolution";
+import { parseISO, subDays, isAfter, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, endOfDay, endOfWeek, endOfMonth, format, startOfMonth } from "date-fns";
+import { fr, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import type { OverallTrendSectionProps, Review } from "./types";
 
 type Granularity = "day" | "week" | "month";
 const MIN_REVIEWS_FOR_TREND = 3;
-
-const mapGranularity = (g: Granularity): RatingGranularity =>
-  ({ day: "jour", week: "semaine", month: "mois" }[g] as RatingGranularity) ?? "mois";
 
 const getNote = (r: Review): number => r.note || r.rating || 0;
 
@@ -25,7 +22,7 @@ const formatLocalizedNumber = (
 ) => new Intl.NumberFormat(locale, options).format(value);
 
 const getDateStr = (r: Review): string =>
-  r.published_at || r.inserted_at || r.created_at || r.date || "";
+  r.published_at || r.create_time || r.inserted_at || r.created_at || r.date || "";
 
 const parseReviewDate = (r: Review): Date | null => {
   const s = getDateStr(r);
@@ -55,6 +52,44 @@ const getLatestDate = (reviews: Review[]): Date | null =>
     const d = parseReviewDate(r);
     return d && (!latest || d > latest) ? d : latest;
   }, null);
+
+const getPeriods = (start: Date, end: Date, granularity: Granularity): Date[] => {
+  switch (granularity) {
+    case "day":
+      return eachDayOfInterval({ start, end });
+    case "week":
+      return eachWeekOfInterval({ start, end }, { weekStartsOn: 1 });
+    case "month":
+    default:
+      return eachMonthOfInterval({ start, end });
+  }
+};
+
+const getPeriodEnd = (date: Date, granularity: Granularity): Date => {
+  switch (granularity) {
+    case "day":
+      return endOfDay(date);
+    case "week":
+      return endOfWeek(date, { weekStartsOn: 1 });
+    case "month":
+    default:
+      return endOfMonth(date);
+  }
+};
+
+const formatPeriodLabel = (date: Date, granularity: Granularity, language: string | undefined): string => {
+  const locale = getNumberLocale(language) === "fr-FR" ? fr : enUS;
+
+  switch (granularity) {
+    case "day":
+      return format(date, "dd/MM", { locale });
+    case "week":
+      return `S${format(date, "w", { locale })}`;
+    case "month":
+    default:
+      return format(date, "MMMM yyyy", { locale });
+  }
+};
 
 export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
   const { t, i18n } = useTranslation();
@@ -140,36 +175,71 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
   const chartData = useMemo(() => {
     if (!reviews?.length) return [];
     const cutoff = subDays(anchorDate, 60);
-
-    const filtered = reviews
-      .filter((r) => {
-        const n = getNote(r);
-        const s = getDateStr(r);
-        if (!s || n < 1 || n > 5) return false;
-        try {
-          const d = parseISO(s);
-          return isAfter(d, cutoff) && !isAfter(d, anchorDate);
-        } catch {
-          return false;
-        }
-      })
+    const validReviews = reviews
       .map((r) => ({
         rating: getNote(r),
-        published_at: getDateStr(r),
-        inserted_at: r.inserted_at || r.created_at || r.date || "",
-      }));
+        dateStr: getDateStr(r),
+      }))
+      .filter((r) => r.rating >= 1 && r.rating <= 5 && r.dateStr);
 
-    if (!filtered.length) return [];
+    if (!validReviews.length) return [];
 
-    return getRatingEvolution(filtered, cutoff, mapGranularity(granularity), i18n.language || "fr")
-      .filter((p) => {
-        try {
-          return !isAfter(parseISO(p.fullDate), anchorDate);
-        } catch {
-          return true;
-        }
+    const parsedReviews = validReviews
+      .map((r) => ({
+        rating: r.rating,
+        date: parseISO(r.dateStr),
+      }))
+      .filter((r) => !isNaN(r.date.getTime()) && !isAfter(r.date, anchorDate))
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    if (!parsedReviews.length) return [];
+
+    if (granularity === "month") {
+      const start = startOfMonth(cutoff);
+      const end = startOfMonth(anchorDate);
+      const periods = eachMonthOfInterval({ start, end });
+
+      return periods
+        .map((period) => {
+          const periodKey = format(period, "yyyy-MM");
+          const reviewsInMonth = parsedReviews.filter((r) => format(r.date, "yyyy-MM") === periodKey);
+
+          const avg = reviewsInMonth.length > 0
+            ? reviewsInMonth.reduce((sum, r) => sum + r.rating, 0) / reviewsInMonth.length
+            : null;
+
+          return {
+            label: formatPeriodLabel(period, granularity, i18n.language),
+            note: avg === null ? null : Math.round(avg * 10) / 10,
+            fullDate: format(period, "yyyy-MM-dd"),
+          };
+        })
+        .filter((point) => point.note !== null);
+    }
+
+    const reviewsInWindow = parsedReviews.filter((r) => isAfter(r.date, cutoff));
+    if (!reviewsInWindow.length) return [];
+
+    const periods = getPeriods(cutoff, anchorDate, granularity);
+
+    return periods
+      .map((period) => {
+        const periodEnd = getPeriodEnd(period, granularity);
+        const reviewsInPeriod = reviewsInWindow.filter((r) => {
+          return (r.date.getTime() >= period.getTime()) && (r.date.getTime() <= periodEnd.getTime());
+        });
+
+        const avg = reviewsInPeriod.length > 0
+          ? reviewsInPeriod.reduce((sum, r) => sum + r.rating, 0) / reviewsInPeriod.length
+          : null;
+
+        return {
+          label: formatPeriodLabel(period, granularity, i18n.language),
+          note: avg === null ? null : Math.round(avg * 10) / 10,
+          fullDate: format(period, "yyyy-MM-dd"),
+        };
       })
-      .map((p) => ({ label: p.mois, note: p.note, fullDate: p.fullDate }));
+      .filter((point) => point.note !== null);
   }, [reviews, anchorDate, granularity, i18n.language]);
 
   const xAngle = granularity === "day" ? -45 : 0;
@@ -309,14 +379,15 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
                   }}
                 />
                 {!insufficientData && (
-                  <Line
-                    type="monotone"
-                    dataKey="note"
-                    stroke="#3b82f6"
-                    strokeWidth={2.5}
-                    dot={{ fill: "#fff", stroke: "#3b82f6", strokeWidth: 2, r: 3.5 }}
-                    activeDot={{ r: 5, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }}
-                  />
+                <Line
+                  type="monotone"
+                  dataKey="note"
+                  stroke="#3b82f6"
+                  strokeWidth={2.5}
+                  dot={{ fill: "#fff", stroke: "#3b82f6", strokeWidth: 2, r: 3.5 }}
+                  activeDot={{ r: 5, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }}
+                  connectNulls
+                />
                 )}
               </LineChart>
             </ResponsiveContainer>
