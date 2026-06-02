@@ -224,7 +224,7 @@ export default function SavedEstablishmentsList({
         .from("profiles")
         .select("current_establishment_id")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       const { data: current_establishment } = await supabase
         .from("establishments")
