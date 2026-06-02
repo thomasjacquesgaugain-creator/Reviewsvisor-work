@@ -9,7 +9,8 @@ import { Target, Calendar, CheckCircle2, Circle,
          ChevronDown, ChevronUp } from "lucide-react";
 import type { SmartObjective } from "@/types/smart";
 import { useSmartProgress } from "@/hooks/useSmartProgress";
-import { format } from "date-fns";
+import { format, type Locale } from "date-fns";
+import { fr, enUS, it, es, ptBR } from "date-fns/locale";
 
 interface Props {
   objective:         SmartObjective;
@@ -40,6 +41,14 @@ const SMART_LETTER_STYLE: Record<string, string> = {
   A: "bg-yellow-100 text-yellow-700",
   R: "bg-orange-100 text-orange-700",
   T: "bg-purple-100 text-purple-700",
+};
+
+const localeMap: Record<string, Locale> = {
+  fr,
+  en: enUS,
+  it,
+  es,
+  pt: ptBR,
 };
 
 const getLocalizedText = (
@@ -79,6 +88,8 @@ export function SmartObjectiveCard({
 const lang = i18n.language?.startsWith("fr")
   ? "fr"
   : "en";
+  const localeKey = (i18n.language || "fr").split("-")[0].toLowerCase();
+  const locale = localeMap[localeKey] || fr;
   const progress = useSmartProgress(objective);
 
   const [showProgress, setShowProgress]   = useState(false);
@@ -91,7 +102,7 @@ const lang = i18n.language?.startsWith("fr")
     ? (() => {
         const d = new Date(objective.created_at);
         d.setDate(d.getDate() + 42);
-        return format(d, "MMM d, yyyy");
+        return format(d, "PPP", { locale });
       })()
     : null;
 
@@ -238,7 +249,7 @@ const lang = i18n.language?.startsWith("fr")
             <p className="text-xs text-gray-700">
               {t("smartCard.temporal.deadline", {
                 date: objective.deadline
-                ? format(new Date(objective.deadline), "MMM d, yyyy")
+                ? format(new Date(objective.deadline), "PPP", { locale })
                 : "—",})}
             </p>
             <p className="text-xs text-gray-500">
