@@ -9,10 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Sparkles, Check } from "lucide-react";
+import { Loader2, Sparkles, Check, CalendarIcon } from "lucide-react";
 import type { SmartObjective } from "@/types/smart";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import i18n from "@/i18n/config";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format, parseISO } from "date-fns";
+import { fr as frLocale, enUS } from "date-fns/locale";
 
 interface Props {
   open:          boolean;
@@ -70,6 +74,8 @@ export function SmartGenerateModal({
   const lang = i18n.language?.startsWith("fr")
   ? "fr"
   : "en";
+  const dateLocale = lang === "fr" ? frLocale : enUS;
+  const [deadlineOpen, setDeadlineOpen] = useState(false);
   const draftData = currentDraft;
   console.log("draftData",draftData)
 
@@ -235,17 +241,34 @@ export function SmartGenerateModal({
                 <Label className="text-xs font-semibold text-gray-700">
                   T — {t("recommendations.smart.deadline")}
                 </Label>
-                <Input
-                  type="date"
-                  value={draftData.deadline?.split("T")[0]}
-                  onChange={(e) =>
-                    updateDraft({
-                      deadline:        e.target.value,
-                      deadline_source: "user_adjusted",
-                    })
-                  }
-                  className="mt-1.5 text-sm"
-                />
+                <Popover open={deadlineOpen} onOpenChange={setDeadlineOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="mt-1.5 w-full justify-start text-left font-normal text-sm"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                      {draftData?.deadline
+                        ? format(parseISO(draftData.deadline.split("T")[0]), "PPP", { locale: dateLocale })
+                        : t("recommendations.smart.pickDate")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={draftData?.deadline ? parseISO(draftData.deadline.split("T")[0]) : undefined}
+                      onSelect={(date) => {
+                        updateDraft({
+                          deadline:        date ? format(date, "yyyy-MM-dd") : undefined,
+                          deadline_source: "user_adjusted",
+                        });
+                        setDeadlineOpen(false);
+                      }}
+                      locale={dateLocale}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <Label className="text-xs font-semibold text-gray-700">
