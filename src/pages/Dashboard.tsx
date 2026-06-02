@@ -114,7 +114,6 @@ import {
   Granularity,
 } from "@/utils/ratingEvolution";
 import { validateReponse, getReponsesStats } from "@/lib/reponses";
-import { generatePdfReport } from "@/utils/generatePdfReport";
 import { extractOriginalText } from "@/utils/extractOriginalText";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
@@ -3762,7 +3761,7 @@ const activeObjective =
                 {(selectedEtab || selectedEstablishment) && (
                   <Button
                     className="download-report-btn"
-                    onClick={() => {
+                    onClick={async () => {
                       if (!import.meta.env.PROD) {
                         console.log(
                           "[Dashboard] 🔘 Clic sur Télécharger le rapport PDF",
@@ -3815,7 +3814,8 @@ const activeObjective =
                         }
 
                         // Générer et télécharger le PDF
-                        generatePdfReport(reportData);
+                        const { generatePdfReport } = await import("@/utils/generatePdfReport");
+                        await generatePdfReport(reportData);
 
                         toast.success(t("dashboard.reportDownloaded"), {
                           description: t("dashboard.reportGeneratedSuccess"),

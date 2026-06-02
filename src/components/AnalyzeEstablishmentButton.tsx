@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { runAnalyze } from '@/lib/runAnalyze';
 import { useTranslation } from 'react-i18next';
 
 interface AnalyzeEstablishmentButtonProps {
@@ -29,6 +28,7 @@ export function AnalyzeEstablishmentButton({ place_id, name, address }: AnalyzeE
     setIsAnalyzing(true);
 
     try {
+      const { runAnalyze } = await import('@/lib/runAnalyze');
       const result = await runAnalyze({
         place_id,
         name,

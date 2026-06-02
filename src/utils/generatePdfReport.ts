@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+import type jsPDF from 'jspdf';
 
 interface ReportData {
   establishmentName: string;
@@ -76,8 +76,9 @@ function addSectionTitle(doc: jsPDF, title: string, yPos: number, color: [number
   return yPos + 20;
 }
 
-export function generatePdfReport(data: ReportData): void {
-  const doc = new jsPDF({
+export async function generatePdfReport(data: ReportData): Promise<void> {
+  const { default: JsPDF } = await import('jspdf');
+  const doc = new JsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4',

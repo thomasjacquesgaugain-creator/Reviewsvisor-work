@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthProvider";
 import { Toaster } from "sonner";
@@ -8,44 +8,42 @@ import RequireGuest from "@/components/RequireGuest";
 import { AppLayout } from "@/components/AppLayout";
 import { loadCustomization } from "@/utils/theme";
 import { diagnoseSupabaseStorage } from "@/utils/supabaseDiagnostics";
-import Accueil from "./pages/Accueil";
-import Login from "./pages/Login";
-import TableauDeBord from "./pages/TableauDeBord";
-import Dashboard from "./pages/Dashboard";
-import Etablissement from "./pages/Etablissement";
-import NotFound from "./pages/NotFound";
-import BillingSuccess from "./pages/BillingSuccess";
-import BillingCancel from "./pages/BillingCancel";
-import Onboarding from "./pages/Onboarding";
-import OnboardingSignup from "./pages/OnboardingSignup";
-import CreerComptePreview from "./pages/CreerComptePreview";
-import MerciInscription from "./pages/MerciInscription";
-import GoogleOAuthCallback from "./pages/GoogleOAuthCallback";
-import Contact from "./pages/Contact";
-import APropos from "./pages/APropos";
-import Fonctionnalites from "./pages/Fonctionnalites";
-import Aide from "./pages/Aide";
-import ResetPassword from "./pages/ResetPassword";
-import UpdatePassword from "./pages/UpdatePassword";
-import ForgotPassword from "./pages/ForgotPassword";
-import Abonnement from "./pages/Abonnement";
-import Compte from "./pages/Compte";
-import Cgu from "./pages/Cgu";
-import MentionsLegales from "./pages/MentionsLegales";
-import PolitiqueConfidentialite from "./pages/PolitiqueConfidentialite";
-import PolitiqueCookies from "./pages/PolitiqueCookies";
-import Inscription from "./pages/Inscription";
 import { SettingsLayout } from "./components/settings/SettingsLayout";
-import { ProfileSettings } from "./pages/settings/ProfileSettings";
-import { SecuritySettings } from "./pages/settings/SecuritySettings";
-import { EstablishmentsSettings } from "./pages/settings/EstablishmentsSettings";
-import { EstablishmentInfoSettings } from "./pages/settings/EstablishmentInfoSettings";
-import { NotificationsSettings } from "./pages/settings/NotificationsSettings";
-import { LanguageSettings } from "./pages/settings/LanguageSettings";
-import { BillingSettings } from "./pages/settings/BillingSettings";
-import { BillingReports } from "./pages/settings/BillingReports";
-import { CustomizationSettings } from "./pages/settings/CustomizationSettings";
-import Messages from "./pages/Messages";
+
+const Accueil = lazy(() => import("./pages/Accueil"));
+const Login = lazy(() => import("./pages/Login"));
+const TableauDeBord = lazy(() => import("./pages/TableauDeBord"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Etablissement = lazy(() => import("./pages/Etablissement"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const BillingSuccess = lazy(() => import("./pages/BillingSuccess"));
+const BillingCancel = lazy(() => import("./pages/BillingCancel"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const OnboardingSignup = lazy(() => import("./pages/OnboardingSignup"));
+const MerciInscription = lazy(() => import("./pages/MerciInscription"));
+const GoogleOAuthCallback = lazy(() => import("./pages/GoogleOAuthCallback"));
+const Contact = lazy(() => import("./pages/Contact"));
+const APropos = lazy(() => import("./pages/APropos"));
+const Fonctionnalites = lazy(() => import("./pages/Fonctionnalites"));
+const Aide = lazy(() => import("./pages/Aide"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const Cgu = lazy(() => import("./pages/Cgu"));
+const MentionsLegales = lazy(() => import("./pages/MentionsLegales"));
+const PolitiqueConfidentialite = lazy(() => import("./pages/PolitiqueConfidentialite"));
+const PolitiqueCookies = lazy(() => import("./pages/PolitiqueCookies"));
+const Inscription = lazy(() => import("./pages/Inscription"));
+const Messages = lazy(() => import("./pages/Messages"));
+const ProfileSettings = lazy(() => import("./pages/settings/ProfileSettings").then(m => ({ default: m.ProfileSettings })));
+const SecuritySettings = lazy(() => import("./pages/settings/SecuritySettings").then(m => ({ default: m.SecuritySettings })));
+const EstablishmentsSettings = lazy(() => import("./pages/settings/EstablishmentsSettings").then(m => ({ default: m.EstablishmentsSettings })));
+const EstablishmentInfoSettings = lazy(() => import("./pages/settings/EstablishmentInfoSettings").then(m => ({ default: m.EstablishmentInfoSettings })));
+const NotificationsSettings = lazy(() => import("./pages/settings/NotificationsSettings").then(m => ({ default: m.NotificationsSettings })));
+const LanguageSettings = lazy(() => import("./pages/settings/LanguageSettings").then(m => ({ default: m.LanguageSettings })));
+const BillingSettings = lazy(() => import("./pages/settings/BillingSettings").then(m => ({ default: m.BillingSettings })));
+const BillingReports = lazy(() => import("./pages/settings/BillingReports").then(m => ({ default: m.BillingReports })));
+const CustomizationSettings = lazy(() => import("./pages/settings/CustomizationSettings").then(m => ({ default: m.CustomizationSettings })));
 
 const ScrollToTop = () => {
   const location = useLocation();
@@ -125,6 +123,7 @@ const App = () => {
           }} 
         />
         <AppLayout>
+          <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
           <Routes>
             {/* Public routes - redirect to dashboard if authenticated */}
             <Route path="/" element={
@@ -270,6 +269,7 @@ const App = () => {
             <Route path="/merci-inscription" element={<MerciInscription />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </AppLayout>
       </BrowserRouter>
     </AuthProvider>

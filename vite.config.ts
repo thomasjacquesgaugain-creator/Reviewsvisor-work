@@ -58,6 +58,7 @@ export default defineConfig(({ mode }) => {
       dedupe: ['react', 'react-dom'],
     },
     build: {
+      target: 'es2022',
       chunkSizeWarningLimit: 600,
       rollupOptions: {
         output: {
@@ -105,7 +106,6 @@ export default defineConfig(({ mode }) => {
 
             // PDF & document parsing — heavy, isolated
             pdf: ['jspdf'],
-            mammoth: ['mammoth'],
 
             // Stripe
             stripe: ['@stripe/stripe-js', '@stripe/react-stripe-js'],
