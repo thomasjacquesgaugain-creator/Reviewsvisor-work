@@ -104,57 +104,89 @@ function slugify(text: string): string {
 // ─── CANONICAL KEY DICTIONARY ────────────────────────────────────────────────
 // Single source of truth for theme keys.
 // AI-generated keys are NEVER trusted — always resolved through this map.
-// To add new themes: append variants to an existing key, or add a new entry.
-// When a theme falls through to slugify(), a console.warn is emitted — use
-// those logs to grow this dictionary over time.
+//
+// ORDERING RULE — specific before generic, always:
+//   "service_quality" must be listed BEFORE "service"
+//   "food_presentation" must be listed BEFORE "food_quality"
+//   "food_quality" must be listed BEFORE "food"
+// The resolver picks the longest matching variant, so ordering here is a
+// documentation aid — but keep specific entries above generic ones anyway
+// for readability and to avoid future mistakes.
+//
+// When a theme falls through to slugify(), a console.warn is emitted.
+// Use those logs to grow this dictionary over time.
 
 const CANONICAL_THEME_KEYS: Record<string, string[]> = {
   // ── Universal themes ──────────────────────────────────────────────────────
-  cleanliness:        ['cleanliness', 'clean', 'hygiene', 'hygiène', 'propreté', 'proprete', 'sanitation'],
-  price:              ['price', 'pricing', 'cost', 'value', 'prix', 'tarif', 'tarifs', 'value for money', 'rapport qualité prix', 'rapport qualite prix'],
-  wait_time:          ['wait time', 'wait', 'waiting', 'waiting time', 'attente', "temps d'attente", 'délai', 'delai', 'queue', 'temps attente'],
-  communication:      ['communication', 'responsiveness', 'response', 'réactivité', 'reactivite', 'contact'],
-  after_sales:        ['after-sales', 'after sales', 'after-sales service', 'sav', 'service après vente', 'service apres vente', 'follow-up', 'follow up', 'après vente', 'apres vente'],
-  trust:              ['trust', 'confiance', 'reliability', 'fiabilité', 'fiabilite', 'honesty', 'honnêteté', 'honnetete'],
+  cleanliness:            ['cleanliness', 'clean', 'hygiene', 'hygiène', 'propreté', 'proprete', 'sanitation'],
+  price:                  ['price', 'pricing', 'cost', 'value for money', 'prix', 'tarif', 'tarifs', 'rapport qualité prix', 'rapport qualite prix'],
+  wait_time:              ['wait time', 'waiting time', 'attente', "temps d'attente", 'temps attente', 'délai', 'delai', 'queue'],
+  communication:          ['communication', 'responsiveness', 'réactivité', 'reactivite', 'contact'],
+  after_sales:            ['after-sales service', 'after sales service', 'after-sales', 'after sales', 'sav', 'service après vente', 'service apres vente', 'après vente', 'apres vente', 'follow-up'],
+  trust:                  ['trust', 'confiance', 'reliability', 'fiabilité', 'fiabilite', 'honesty', 'honnêteté', 'honnetete'],
 
-  // ── Restaurant ────────────────────────────────────────────────────────────
-  food_quality:       ['food quality', 'food', 'cuisine', 'dish', 'dishes', 'meal', 'taste', 'flavor', 'flavour', 'qualité des plats', 'qualite des plats', 'qualité plats', 'plats'],
-  service:            ['service', 'staff', 'server', 'waiter', 'personnel', 'équipe', 'equipe', 'team', 'serveur', 'serveuse'],
-  ambiance:           ['ambiance', 'atmosphere', 'décor', 'decor', 'vibe', 'setting', 'environment', 'cadre'],
-  portions:           ['portions', 'portion size', 'quantity', 'quantité', 'quantite'],
-  menu_variety:       ['menu variety', 'menu', 'choice', 'options', 'variety', 'variété', 'variete', 'selection', 'carte'],
-  reservation:        ['reservation', 'booking', 'réservation'],
+  // ── Restaurant — price variants (specific before generic price) ───────────
+  service_price:          ['service price', 'service cost', 'service charge', 'prix du service', 'coût du service', 'cout du service'],
+  food_price:             ['food price', 'food cost', 'prix des plats', 'prix de la nourriture', 'coût des plats', 'cout des plats'],
+  drink_price:            ['drink price', 'drinks price', 'prix des boissons', 'prix des drinks'],
 
-  // ── Salon coiffure ────────────────────────────────────────────────────────
-  hair_quality:       ['hair quality', 'hair result', 'coupe', 'cut', 'résultat coiffure', 'resultat coiffure', 'haircut', 'hairstyle', 'résultat', 'resultat'],
-  colorist:           ['color', 'colour', 'coloring', 'colouring', 'couleur', 'coloration', 'highlights', 'balayage', 'teinture'],
-  stylist_skill:      ['stylist', 'hairdresser', 'coiffeur', 'coiffeuse', 'skill', 'expertise', 'technique', 'savoir-faire'],
-  appointment:        ['appointment', 'availability', 'disponibilité', 'disponibilite', 'rendez-vous', 'rdv', 'schedule', 'booking', 'prise de rendez-vous'],
+  // ── Restaurant — food variants (specific before generic food_quality) ─────
+  food_presentation:      ['food presentation', 'dish presentation', 'plating', 'dressage', 'présentation des plats', 'presentation des plats', 'présentation plat'],
+  food_temperature:       ['food temperature', 'cold dish', 'cold food', 'cold dishes', 'plat froid', 'plats froids', 'nourriture froide', 'température des plats', 'temperature des plats'],
+  food_quality:           ['food quality', 'cuisine quality', 'dish quality', 'qualité des plats', 'qualite des plats', 'qualité cuisine', 'qualite cuisine', 'taste', 'flavor', 'flavour', 'goût', 'gout', 'food', 'dish', 'dishes', 'meal', 'cuisine', 'plats'],
+  food_variety:           ['food variety', 'menu variety', 'menu choice', 'variété des plats', 'variete des plats', 'choix des plats'],
 
-  // ── Salle de sport ────────────────────────────────────────────────────────
-  equipment:          ['equipment', 'machines', 'gear', 'matériel', 'materiel', 'appareil', 'appareils', 'équipements', 'equipements'],
-  coaching:           ['coaching', 'coach', 'trainer', 'personal trainer', 'instructor', 'entraîneur', 'entraineur', 'cours', 'classes'],
-  facilities:         ['facilities', 'locker room', 'showers', 'vestiaires', 'douches', 'changing room', 'sanitaires'],
-  crowd:              ['crowd', 'crowded', 'busy', 'affluence', 'monde', 'fréquentation', 'frequentation', 'surpeuplé', 'surpeuple'],
+  // ── Restaurant — service variants (specific before generic service) ────────
+  service_speed:          ['service speed', 'slow service', 'fast service', 'speed of service', 'vitesse du service', 'rapidité du service', 'rapidite du service', 'service lent', 'service rapide'],
+  service_quality:        ['service quality', 'quality of service', 'qualité du service', 'qualite du service'],
+  service_attitude:       ['service attitude', 'rude staff', 'unfriendly staff', 'rude waiter', 'impoli', 'attitude du personnel', 'comportement personnel', 'unfriendly'],
+  service:                ['service', 'staff', 'server', 'waiter', 'personnel', 'équipe', 'equipe', 'team', 'serveur', 'serveuse'],
 
-  // ── Institut beauté ───────────────────────────────────────────────────────
-  treatment_quality:  ['treatment', 'soin', 'soins', 'facial', 'massage', 'quality of treatment', 'qualité du soin', 'qualite du soin', 'qualité des soins'],
-  waxing:             ['waxing', 'epilation', 'épilation', 'hair removal', 'cire'],
-  nail_service:       ['nails', 'nail', 'manicure', 'pedicure', 'manucure', 'pédicure', 'ongles', 'nail art'],
+  // ── Restaurant — other ────────────────────────────────────────────────────
+  noise_level:            ['noise level', 'noise', 'noisy', 'loud', 'bruit', 'bruyant', 'niveau sonore'],
+  ambiance:               ['ambiance', 'atmosphere', 'décor', 'decor', 'vibe', 'setting', 'environment', 'cadre'],
+  portions:               ['portions', 'portion size', 'quantity', 'quantité', 'quantite'],
+  menu_variety:           ['menu variety', 'menu', 'choice', 'options', 'variety', 'variété', 'variete', 'selection', 'carte'],
+  reservation:            ['reservation', 'booking', 'réservation', 'table booking'],
+
+  // ── Salon coiffure — specific before generic ──────────────────────────────
+  hair_color_result:      ['color result', 'colour result', 'résultat couleur', 'resultat couleur', 'résultat coloration', 'resultat coloration', 'color outcome'],
+  hair_cut_result:        ['haircut result', 'cut result', 'résultat coupe', 'resultat coupe', 'résultat de coupe'],
+  hair_quality:           ['hair quality', 'hair condition', 'qualité des cheveux', 'qualite des cheveux', 'état des cheveux', 'etat des cheveux', 'hair result', 'résultat coiffure', 'resultat coiffure', 'hairstyle', 'haircut', 'coupe', 'cut'],
+  colorist:               ['coloring service', 'colouring service', 'color service', 'coloration service', 'highlights', 'balayage', 'teinture', 'coloring', 'colouring', 'coloration', 'couleur'],
+  stylist_skill:          ['stylist skill', 'hairdresser skill', 'stylist expertise', 'technique coiffeur', 'expertise coiffeur', 'savoir-faire coiffeur', 'stylist', 'hairdresser', 'coiffeur', 'coiffeuse', 'skill', 'expertise', 'technique', 'savoir-faire'],
+  appointment:            ['appointment availability', 'prise de rendez-vous', 'appointment', 'availability', 'disponibilité', 'disponibilite', 'rendez-vous', 'rdv', 'schedule', 'booking'],
+
+  // ── Salle de sport — specific before generic ──────────────────────────────
+  equipment_quality:      ['equipment quality', 'machine quality', 'qualité des équipements', 'qualite des equipements', 'qualité des machines', 'qualite des machines', 'état des machines', 'etat des machines'],
+  equipment_variety:      ['equipment variety', 'machine variety', 'variété des équipements', 'variete des equipements', 'choix des machines'],
+  equipment:              ['equipment', 'machines', 'gear', 'matériel', 'materiel', 'appareil', 'appareils', 'équipements', 'equipements'],
+  coaching_quality:       ['coaching quality', 'trainer quality', 'qualité du coaching', 'qualite du coaching', 'qualité des coachs', 'qualite des coachs'],
+  coaching:               ['coaching', 'coach', 'trainer', 'personal trainer', 'instructor', 'entraîneur', 'entraineur', 'cours', 'classes'],
+  facilities:             ['facilities', 'locker room', 'showers', 'vestiaires', 'douches', 'changing room', 'sanitaires'],
+  crowd:                  ['crowd', 'crowded', 'busy', 'affluence', 'monde', 'fréquentation', 'frequentation', 'surpeuplé', 'surpeuple'],
+
+  // ── Institut beauté — specific before generic ─────────────────────────────
+  treatment_result:       ['treatment result', 'résultat soin', 'resultat soin', 'résultat du soin', 'resultat du soin', 'résultat traitement', 'resultat traitement'],
+  treatment_quality:      ['treatment quality', 'qualité du soin', 'qualite du soin', 'qualité des soins', 'qualite des soins', 'qualité traitement', 'treatment', 'soin', 'soins', 'facial', 'massage'],
+  waxing:                 ['waxing', 'epilation', 'épilation', 'hair removal', 'cire'],
+  nail_service:           ['nail service', 'nail art', 'manicure', 'pedicure', 'manucure', 'pédicure', 'pedicure', 'nails', 'nail', 'ongles'],
 
   // ── Serrurier ─────────────────────────────────────────────────────────────
-  response_time:      ['response time', 'speed', 'rapidité', 'rapidite', 'fast', 'quick', 'urgence', 'emergency response', 'délai intervention', 'delai intervention'],
-  pricing_clarity:    ['pricing clarity', 'transparent pricing', 'devis', 'quote', 'invoice', 'facture', 'transparence prix', 'prix transparents'],
-  professionalism:    ['professionalism', 'professional', 'professionnalisme', 'sérieux', 'serieux', 'seriousness'],
+  response_time:          ['response time', 'intervention time', 'délai intervention', 'delai intervention', 'rapidité intervention', 'rapidite intervention', 'emergency response', 'urgence'],
+  pricing_clarity:        ['pricing clarity', 'transparent pricing', 'prix transparents', 'transparence prix', 'devis', 'quote', 'invoice', 'facture'],
+  professionalism:        ['professionalism', 'professional', 'professionnalisme', 'sérieux', 'serieux', 'seriousness'],
 
   // ── Retail chaussures ─────────────────────────────────────────────────────
-  product_variety:    ['product variety', 'stock', 'choix', 'collection', 'range', 'selection', 'assortiment'],
-  fit_comfort:        ['fit', 'comfort', 'confort', 'size', 'taille', 'fitting', 'pointure'],
-  staff_knowledge:    ['staff knowledge', 'advice', 'conseil', 'conseils', 'knowledgeable staff', 'expertise vendeur'],
+  product_variety:        ['product variety', 'product selection', 'stock variety', 'stock', 'choix', 'collection', 'range', 'assortiment'],
+  fit_comfort:            ['fit and comfort', 'fit comfort', 'comfort fit', 'fit', 'comfort', 'confort', 'taille', 'fitting', 'pointure'],
+  staff_knowledge:        ['staff knowledge', 'advice quality', 'knowledgeable staff', 'conseil', 'conseils', 'expertise vendeur'],
 };
 
-// Reverse lookup: built once at module load time
-// e.g. "attente" → "wait_time", "propreté" → "cleanliness"
+// ─── REVERSE LOOKUP MAP ───────────────────────────────────────────────────────
+// Built once at module load. Maps every variant → canonical key.
+// e.g. "attente" → "wait_time", "service quality" → "service_quality"
+
 const THEME_TO_KEY: Map<string, string> = new Map();
 for (const [key, variants] of Object.entries(CANONICAL_THEME_KEYS)) {
   for (const variant of variants) {
@@ -164,8 +196,15 @@ for (const [key, variants] of Object.entries(CANONICAL_THEME_KEYS)) {
 
 /**
  * Resolves any AI-generated theme string to a stable canonical key.
- * Priority: exact match → partial match → slugify fallback.
- * Logs a warning when falling back so the dictionary can be grown over time.
+ *
+ * Resolution order:
+ *   1. Exact match against THEME_TO_KEY
+ *   2. Partial match — sorted by variant length DESC so the most specific
+ *      variant always wins over a shorter generic one.
+ *      e.g. "service quality" (15 chars) beats "service" (7 chars)
+ *           "food presentation" (17 chars) beats "food" (4 chars)
+ *   3. slugify() fallback — consistent within a run, logs a warning so the
+ *      dictionary can be grown from production logs.
  */
 function resolveThemeKey(theme: string): string {
   const normalized = theme.toLowerCase().trim();
@@ -174,14 +213,22 @@ function resolveThemeKey(theme: string): string {
   const exact = THEME_TO_KEY.get(normalized);
   if (exact) return exact;
 
-  // 2. Partial match — theme contains a known variant or vice versa
+  // 2. Partial match — collect ALL matches, then pick longest variant
+  const partialMatches: Array<{ key: string; variantLength: number }> = [];
+
   for (const [variant, key] of THEME_TO_KEY.entries()) {
     if (normalized.includes(variant) || variant.includes(normalized)) {
-      return key;
+      partialMatches.push({ key, variantLength: variant.length });
     }
   }
 
-  // 3. Fallback: slugify (consistent within a run but not pinned across runs)
+  if (partialMatches.length > 0) {
+    // Longest variant = most specific match wins
+    partialMatches.sort((a, b) => b.variantLength - a.variantLength);
+    return partialMatches[0].key;
+  }
+
+  // 3. Fallback: slugify
   const fallback = slugify(theme);
   console.warn(
     `[resolveThemeKey] No canonical key for theme "${theme}" → fallback slug: "${fallback}". ` +

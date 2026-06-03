@@ -591,6 +591,8 @@
     "actionPlanDescription": "Suivez l'avancement de vos actions d'amélioration pour atteindre vos objectifs.",
     "synthesisPriorities": "Synthèse & priorités",
     "synthesisPrioritiesSubtitle": "Lecture stratégique des avis clients et points de focus prioritaires",
+     "noSynthesisAvailable": "Aucune synthèse disponible",
+    "noSynthesisDescription": "Sélectionnez un objectif actif ou collectez davantage d'avis pour générer une synthèse stratégique.",
     "improvementAxesIdentified": "Axes d’amélioration identifiés",
     "reviewManagement": "Gestion des avis",
     "respondSystematically": "Répondre aux avis clients (positifs et négatifs) → bonne pratique à maintenir",

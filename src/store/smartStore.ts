@@ -84,7 +84,7 @@ export function buildSmartPayload(
                                 en:  paretoIssue.en,
                                 fr:  paretoIssue.fr,
                               },
-    computed_count:           count,
+    computed_count:           paretoIssue.count,
     computed_target:          Math.ceil(count * 0.5),
     computed_impact:          impact,
     computed_effort:          effort,

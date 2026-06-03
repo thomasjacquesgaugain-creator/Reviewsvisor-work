@@ -92,6 +92,8 @@ export interface SmartObjective {
   unit:           string;
   relevance_note?: string;
   actions:         SmartAction[];
+  action_plan:     any;
+  synthesis:        any;
   deadline:        string;
   duration_months: number;
 

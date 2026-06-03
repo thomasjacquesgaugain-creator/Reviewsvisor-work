@@ -614,6 +614,8 @@
     "importAndAnalyzeToSeeResults": "Report reviews and run an analysis to see the results",
     "synthesisPriorities": "Summary & priorities",
     "synthesisPrioritiesSubtitle": "Strategic reading of customer reviews and priority focus points",
+     "noSynthesisAvailable": "No synthesis available",
+    "noSynthesisDescription": "Select an active objective or collect more reviews to generate a strategic synthesis.",
     "improvementAxesIdentified": "Identified areas for improvement",
     "low": "Low",
     "medium": "Medium",
