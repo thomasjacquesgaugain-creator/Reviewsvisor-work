@@ -96,10 +96,7 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
   const locale = getNumberLocale(i18n.language);
   const [granularity, setGranularity] = useState<Granularity>("month");
 
-  const anchorDate = useMemo(
-    () => (!reviews?.length ? null : getLatestDate(reviews)) ?? new Date(),
-    [reviews],
-  );
+  const anchorDate = useMemo(() => new Date(), []);
 
   const { summary, isPositive, isNegative, insufficientData } = useMemo(() => {
     if (!reviews?.length) {
@@ -199,22 +196,20 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
       const end = startOfMonth(anchorDate);
       const periods = eachMonthOfInterval({ start, end });
 
-      return periods
-        .map((period) => {
-          const periodKey = format(period, "yyyy-MM");
-          const reviewsInMonth = parsedReviews.filter((r) => format(r.date, "yyyy-MM") === periodKey);
+      return periods.map((period) => {
+        const periodKey = format(period, "yyyy-MM");
+        const reviewsInMonth = parsedReviews.filter((r) => format(r.date, "yyyy-MM") === periodKey);
 
-          const avg = reviewsInMonth.length > 0
-            ? reviewsInMonth.reduce((sum, r) => sum + r.rating, 0) / reviewsInMonth.length
-            : null;
+        const avg = reviewsInMonth.length > 0
+          ? reviewsInMonth.reduce((sum, r) => sum + r.rating, 0) / reviewsInMonth.length
+          : null;
 
-          return {
-            label: formatPeriodLabel(period, granularity, i18n.language),
-            note: avg === null ? null : Math.round(avg * 10) / 10,
-            fullDate: format(period, "yyyy-MM-dd"),
-          };
-        })
-        .filter((point) => point.note !== null);
+        return {
+          label: formatPeriodLabel(period, granularity, i18n.language),
+          note: avg === null ? 0 : Math.round(avg * 10) / 10,
+          fullDate: format(period, "yyyy-MM-dd"),
+        };
+      });
     }
 
     const reviewsInWindow = parsedReviews.filter((r) => isAfter(r.date, cutoff));
@@ -235,11 +230,11 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
 
         return {
           label: formatPeriodLabel(period, granularity, i18n.language),
-          note: avg === null ? null : Math.round(avg * 10) / 10,
+          note: avg === null ? 0 : Math.round(avg * 10) / 10,
           fullDate: format(period, "yyyy-MM-dd"),
         };
       })
-      .filter((point) => point.note !== null);
+      ;
   }, [reviews, anchorDate, granularity, i18n.language]);
 
   const xAngle = granularity === "day" ? -45 : 0;
@@ -345,8 +340,8 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
                   tickLine={false}
                 />
                 <YAxis
-                  domain={[1, 5]}
-                  ticks={[1, 2, 3, 4, 5]}
+                  domain={[0, 5]}
+                  ticks={[0, 1, 2, 3, 4, 5]}
                   tick={{ fill: "#94a3b8", fontSize: 11 }}
                   width={30}
                   axisLine={false}
