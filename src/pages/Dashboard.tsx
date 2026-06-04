@@ -226,6 +226,14 @@ const Dashboard = () => {
   );
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState("key-takeaways");
+
+  useEffect(() => {
+    if (activeTab !== "recommandations") {
+      setOpenCard(null);
+      resetAgent();
+    }
+  }, [activeTab]);
+
   const [showBusinessTypeOverrideModal, setShowBusinessTypeOverrideModal] =
     useState(false);
 
@@ -376,6 +384,17 @@ const Dashboard = () => {
   const [agentAnswer, setAgentAnswer] = useState("");
   const [isAgentLoading, setIsAgentLoading] = useState(false);
   const agentQuestionInputRef = useRef<HTMLInputElement | null>(null);
+
+  const resetAgent = () => {
+    setAgentQuestion("");
+    setAgentAnswer("");
+    setIsAgentLoading(false);
+  };
+
+  const toggleAgentCard = () => {
+    resetAgent();
+    setOpenCard(openCard === "agent" ? null : "agent");
+  };
 
   // Réinitialiser displayCount quand le filtre change
   useEffect(() => {
@@ -6859,17 +6878,7 @@ const activeObjective =
                 {/* Agent */}
                 <Card
                   className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 mb-8 dark:bg-slate-900 dark:border-slate-800"
-                  onClick={() => {
-                    if (openCard === "agent") {
-                      setOpenCard(null);
-                      setAgentQuestion("");
-                      setAgentAnswer("");
-                    } else {
-                      setOpenCard("agent");
-                      setAgentQuestion("");
-                      setAgentAnswer("");
-                    }
-                  }}
+                  onClick={toggleAgentCard}
                 >
                   <CardHeader className="relative text-center">
                     <div className="flex flex-col items-center mb-2">
@@ -6886,7 +6895,7 @@ const activeObjective =
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setOpenCard(openCard === "agent" ? null : "agent");
+                        toggleAgentCard();
                       }}
                       className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-purple-50 dark:hover:bg-purple-950/40"
                     >
@@ -7099,7 +7108,7 @@ const activeObjective =
                                   variant="outline"
                                   disabled={isAgentLoading}
                                   onClick={() => {
-                                    setAgentQuestion("");
+                                    resetAgent();
                                     agentQuestionInputRef.current?.focus();
                                   }}
                                   className="shrink-0"
