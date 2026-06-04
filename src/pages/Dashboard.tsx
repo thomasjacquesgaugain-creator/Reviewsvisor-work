@@ -3799,9 +3799,10 @@ const activeObjective =
                             totalAnalyzed || allReviewsForChart.length,
                           avgRating: avgRating,
                           positiveRatio: positivePct / 100,
+                          positivePct,
                           topIssues: topIssues,
                           topStrengths: topStrengths,
-                          themes: insight?.themes || [],
+                          themes:  analysisDataForTab?.themes||[],
                           recentReviews: allReviewsForChart,
                           summary: insight?.summary || "",
                         };
