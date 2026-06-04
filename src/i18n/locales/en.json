@@ -2093,6 +2093,7 @@
     "auto": "(auto)",
     "unit": "Unit",
     "deadline": "Deadline",
+    "pickDate": "Pick a date",
     "durationMonths": "Duration (months)",
     "whyItMatters": "Why it matters",
     "cancel": "Cancel",

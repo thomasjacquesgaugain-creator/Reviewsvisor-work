@@ -13,6 +13,7 @@ import { Loader2, Sparkles, Check } from "lucide-react";
 import type { SmartObjective } from "@/types/smart";
 import { useEffect } from "react";
 import i18n from "@/i18n/config";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface Props {
   open:          boolean;
@@ -235,12 +236,11 @@ export function SmartGenerateModal({
                 <Label className="text-xs font-semibold text-gray-700">
                   T — {t("recommendations.smart.deadline")}
                 </Label>
-                <Input
-                  type="date"
-                  value={draftData.deadline?.split("T")[0]}
-                  onChange={(e) =>
+                <DatePicker
+                  value={draftData?.deadline}
+                  onChange={(date) =>
                     updateDraft({
-                      deadline:        e.target.value,
+                      deadline:        date,
                       deadline_source: "user_adjusted",
                     })
                   }
