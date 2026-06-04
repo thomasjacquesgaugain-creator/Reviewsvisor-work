@@ -415,7 +415,7 @@ export async function getCurrentEstablishment(): Promise<EstablishmentData | nul
     .from("profiles")
     .select("current_establishment_id")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   if (profile?.current_establishment_id) {
     const { data: establishment, error } = await supabase

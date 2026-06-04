@@ -176,42 +176,93 @@ serve(async (req) => {
 
       const upsertData: Record<string, any> = {
         user_id: userId,
-        source: 'admin_bypass',
+        source: "admin_bypass",
         pro_plan_key: productKey,
-        pro_status: 'active',
+        pro_status: "active",
         pro_current_period_end: periodEndISO,
         updated_at: new Date().toISOString(),
       };
 
       if (existingEntitlement) {
-        await supabaseClient.from('user_entitlements').update(upsertData).eq('user_id', userId);
+        await supabaseClient
+          .from("user_entitlements")
+          .update(upsertData)
+          .eq("user_id", userId);
       } else {
-        await supabaseClient.from('user_entitlements').insert({
+        await supabaseClient.from("user_entitlements").insert({
           ...upsertData,
-          addon_multi_etablissements_status: 'inactive',
+          addon_multi_etablissements_status: "inactive",
           addon_multi_etablissements_qty: 0,
         });
       }
 
+      let establishmentId: string | null = null;
+
       // Admin bypass: also save the establishment immediately (no webhook needed)
       if (pendingEstablishment?.place_id && userId) {
-        logStep("Admin bypass: saving establishment directly", { place_id: pendingEstablishment.place_id });
-        await supabaseClient.from("establishments").upsert(
-          {
-            user_id: userId,
-            place_id: pendingEstablishment.place_id,
-            nom: pendingEstablishment.name,
-            name: pendingEstablishment.name,
-            formatted_address: pendingEstablishment.address,
-            phone: pendingEstablishment.phone || null,
-            website: pendingEstablishment.website || null,
-            rating: pendingEstablishment.rating || null,
-            lat: pendingEstablishment.lat || null,
-            lng: pendingEstablishment.lng || null,
-            types: pendingEstablishment.type_etablissement || null,
-          },
-          { onConflict: "user_id,place_id", ignoreDuplicates: false }
-        );
+        logStep("Admin bypass: saving establishment directly", {
+          place_id: pendingEstablishment.place_id,
+        });
+        const { data: establishment, error: establishmentError } =
+          await supabaseClient
+            .from("establishments")
+            .upsert(
+              {
+                user_id: userId,
+                place_id: pendingEstablishment.place_id,
+                nom: pendingEstablishment.name,
+                name: pendingEstablishment.name,
+                formatted_address: pendingEstablishment.address,
+                phone: pendingEstablishment.phone || null,
+                website: pendingEstablishment.website || null,
+                rating: pendingEstablishment.rating || null,
+                lat: pendingEstablishment.lat || null,
+                lng: pendingEstablishment.lng || null,
+                types: pendingEstablishment.type_etablissement || null,
+              },
+              { onConflict: "user_id,place_id", ignoreDuplicates: false },
+            )
+            .select()
+            .single();
+        if (establishmentError) {
+          logStep("Error saving establishment", {
+            error: establishmentError.message,
+          });
+          throw establishmentError;
+        }
+
+        establishmentId = establishment.id;
+
+        logStep("Establishment saved", {
+          establishmentId,
+        });
+
+        // Update profiles table exactly like webhook
+        const { error: profileError } = await supabaseClient
+          .from("profiles")
+          .upsert(
+            {
+              user_id: userId,
+              current_establishment_id: establishmentId,
+              updated_at: new Date().toISOString(),
+            },
+            {
+              onConflict: "user_id",
+            },
+          );
+
+        if (profileError) {
+          logStep("Error updating current establishment", {
+            error: profileError.message,
+            userId,
+            establishmentId,
+          });
+        } else {
+          logStep("Current establishment updated", {
+            userId,
+            establishmentId,
+          });
+        }
       }
 
       const successUrl = `${origin}/billing/success?session_id=admin_bypass_${Date.now()}`;
