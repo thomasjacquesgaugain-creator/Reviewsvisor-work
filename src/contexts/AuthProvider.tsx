@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
 import { capitalizeName } from "@/utils/capitalizeName";
@@ -84,6 +84,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const hasBootstrappedRef = useRef(false);
 
   const applyPreferredLanguage = async (preferredLanguage: SupportedLanguage | null) => {
     if (!preferredLanguage) return;
@@ -126,28 +127,58 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const hydrateSession = async (nextSession: Session | null) => {
+  const hydrateSession = async (
+    nextSession: Session | null,
+    shouldBlockUi: boolean,
+  ) => {
     setSession(nextSession);
 
     if (nextSession?.user) {
-      setLoading(true);
+      if (shouldBlockUi) {
+        setLoading(true);
+      }
+
       await fetchProfile(nextSession.user.id);
-      setLoading(false);
+
+      if (shouldBlockUi) {
+        setLoading(false);
+      }
       return;
     }
 
     setProfile(null);
     useEstablishmentStore.getState().clearSelectedEstablishment();
-    setLoading(false);
+
+    if (shouldBlockUi) {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
-        void hydrateSession(nextSession);
+      if (event === "INITIAL_SESSION" && hasBootstrappedRef.current) {
+        return;
       }
-    );
 
-    void supabase.auth.getSession().then(({ data: { session: nextSession } }) => hydrateSession(nextSession));
+      if (event === "SIGNED_OUT") {
+        setSession(null);
+        setProfile(null);
+        useEstablishmentStore.getState().clearSelectedEstablishment();
+        setLoading(false);
+        return;
+      }
+
+      void hydrateSession(nextSession, false);
+    });
+
+    void supabase.auth
+      .getSession()
+      .then(({ data: { session: nextSession } }) =>
+        hydrateSession(nextSession, true),
+      )
+      .finally(() => {
+        hasBootstrappedRef.current = true;
+      });
 
     return () => {
       subscription.unsubscribe();
