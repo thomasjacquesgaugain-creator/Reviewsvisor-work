@@ -11,6 +11,7 @@ interface ReportData {
   recentReviews: Array<{ text?: string; rating?: number; author?: string; author_name?: string; published_at?: string }>;
   summary?: string;
   aiDebrief?: string;
+  positivePct?:number;
 }
 
 // Couleurs professionnelles
@@ -47,10 +48,17 @@ function addNewPage(doc: jsPDF, pageNumber: number): number {
   return pageNumber + 1;
 }
 
-function getSatisfactionIndex(avgRating: number): { label: string; color: [number, number, number] } {
-  if (avgRating >= 4.5) return { label: 'Excellent', color: COLORS.success };
-  if (avgRating >= 3.5) return { label: 'Bon', color: COLORS.warning };
-  return { label: 'Moyen', color: COLORS.danger };
+
+function getSatisfactionIndex(
+  percentage: number
+): { label: string; color: [number, number, number] } {
+  if (percentage >= 80) {
+    return { label: "Bon", color: COLORS.success };
+  }
+  if (percentage >= 60) {
+    return { label: "Moyen", color: COLORS.warning };
+  }
+  return { label: "À revoir", color: COLORS.danger };
 }
 
 function getSentimentLabel(ratio: number): { label: string; color: [number, number, number] } {
@@ -86,6 +94,23 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
 
   let pageNumber = 1;
   let yPos = MARGINS.top;
+
+const BLUE_PRIMARY: [number, number, number]  = [37, 99, 235];
+const BLUE_LIGHT: [number, number, number]    = [191, 219, 254];
+const BLUE_PALE: [number, number, number]     = [239, 246, 255];
+const GREEN_PRIMARY: [number, number, number] = [22, 163, 74];
+const GREEN_BORDER: [number, number, number]  = [134, 239, 172];
+const GREEN_PALE: [number, number, number]    = [240, 253, 244];
+const RED_PRIMARY: [number, number, number]   = [220, 38, 38];
+const RED_BORDER: [number, number, number]    = [252, 165, 165];
+const RED_PALE: [number, number, number]      = [255, 245, 245];
+const GREEN_LIGHT: [number, number, number]   = [187, 247, 208];
+const RED_LIGHT: [number, number, number]     = [254, 202, 202];
+const ROW_WHITE: [number, number, number]     = [255, 255, 255];
+
+const BLUE_DARK: [number, number, number]     = [30, 64, 175];
+const GREEN_ICON: [number, number, number]    = [220, 252, 231];
+const RED_ICON: [number, number, number]      = [254, 226, 226];
 
   // ========== PAGE 1: COUVERTURE ==========
   
@@ -165,329 +190,666 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
   addFooter(doc, pageNumber);
 
   // ========== PAGE 2: SCORE GLOBAL (VERSION TEXTE UNIQUEMENT) ==========
-  pageNumber = addNewPage(doc, pageNumber);
-  yPos = MARGINS.top;
+pageNumber = addNewPage(doc, pageNumber);
+yPos = MARGINS.top;
 
-  yPos = addSectionTitle(doc, 'Score Global', yPos, COLORS.gold);
+yPos = addSectionTitle(doc, 'Score Global', yPos, COLORS.gold);
 
-  // Encadre principal du score
-  doc.setFillColor(...COLORS.background);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 60, 4, 4, 'F');
-  
-  // Bordure coloree selon le score
-  const satisfaction = getSatisfactionIndex(data.avgRating);
-  doc.setDrawColor(...satisfaction.color);
-  doc.setLineWidth(2);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 60, 4, 4, 'S');
+const satisfaction = getSatisfactionIndex(data.positivePct);
+const positivePct = Math.round(data.positiveRatio * 100);
+const negativePct = 100 - positivePct;
 
-  // Note globale texte
-  doc.setTextColor(...COLORS.text);
-  doc.setFontSize(14);
+// =====================================================
+// HERO CARD
+// =====================================================
+const heroH = 42;
+
+doc.setFillColor(255, 255, 255);
+doc.roundedRect(
+  MARGINS.left,
+  yPos,
+  CONTENT_WIDTH,
+  heroH,
+  4,
+  4,
+  'F'
+);
+
+doc.setDrawColor(...BLUE_PRIMARY);
+doc.setLineWidth(0.9);
+doc.roundedRect(
+  MARGINS.left,
+  yPos,
+  CONTENT_WIDTH,
+  heroH,
+  4,
+  4,
+  'S'
+);
+
+// NOTE GLOBALE
+doc.setTextColor(180, 176, 165);
+doc.setFont('helvetica', 'bold');
+doc.setFontSize(8);
+doc.text('NOTE GLOBALE', PAGE_WIDTH / 2, yPos + 8, {
+  align: 'center',
+});
+
+// SCORE
+doc.setTextColor(...BLUE_PRIMARY);
+doc.setFont('helvetica', 'bold');
+doc.setFontSize(32);
+
+doc.text(
+  data.avgRating.toFixed(1),
+  PAGE_WIDTH / 2 - 6,
+  yPos + 23,
+  { align: 'center' }
+);
+
+doc.setTextColor(147, 197, 253);
+doc.setFontSize(14);
+doc.setFont('helvetica', 'bold');
+doc.text('/ 5', PAGE_WIDTH / 2 + 12, yPos + 23);
+
+// Divider
+doc.setDrawColor(...BLUE_LIGHT);
+doc.setLineWidth(0.6);
+doc.line(
+  PAGE_WIDTH / 2 - 12,
+  yPos + 28,
+  PAGE_WIDTH / 2 + 12,
+  yPos + 28
+);
+
+// Satisfaction Row
+const rowY = yPos + 38;
+
+doc.setTextColor(...COLORS.textLight);
+doc.setFont('helvetica', 'normal');
+doc.setFontSize(8.5);
+
+doc.text(
+  'Indice de satisfaction',
+  PAGE_WIDTH / 2 - 10,
+  rowY,
+  { align: 'right' }
+);
+
+const pillW = 18;
+const pillH = 7;
+const pillX = PAGE_WIDTH / 2 + 2;
+
+doc.setFillColor(...BLUE_PRIMARY);
+doc.roundedRect(
+  pillX,
+  rowY - 5.5,
+  pillW,
+  pillH,
+  3,
+  3,
+  'F'
+);
+
+doc.setTextColor(255, 255, 255);
+doc.setFont('helvetica', 'bold');
+doc.setFontSize(7.5);
+
+doc.text(
+  satisfaction.label,
+  pillX + pillW / 2,
+  rowY - 1,
+  { align: 'center' }
+);
+
+yPos += heroH + 8;
+
+// =====================================================
+// STAT CARDS
+// =====================================================
+const gap = 4;
+const cardW = (CONTENT_WIDTH - gap) / 2;
+const cardH = 26;
+
+const drawStatCard = (
+  x: number,
+  pct: number,
+  label: string,
+  bg: [number, number, number],
+  border: [number, number, number],
+  numColor: [number, number, number],
+  barColor: [number, number, number]
+) => {
+  doc.setFillColor(...bg);
+  doc.roundedRect(x, yPos, cardW, cardH, 4, 4, 'F');
+
+  doc.setDrawColor(...border);
+  doc.setLineWidth(0.8);
+  doc.roundedRect(x, yPos, cardW, cardH, 4, 4, 'S');
+
+  // %
+  doc.setTextColor(...numColor);
   doc.setFont('helvetica', 'bold');
-  doc.text('Note globale :', PAGE_WIDTH / 2, yPos + 20, { align: 'center' });
-  
-  doc.setTextColor(...COLORS.primary);
-  doc.setFontSize(36);
-  doc.text(`${data.avgRating.toFixed(1)} / 5`, PAGE_WIDTH / 2, yPos + 38, { align: 'center' });
+  doc.setFontSize(20);
 
-  // Indice de satisfaction texte
-  doc.setTextColor(...COLORS.text);
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Indice de satisfaction : `, PAGE_WIDTH / 2 - 25, yPos + 52);
-  doc.setTextColor(...satisfaction.color);
-  doc.setFont('helvetica', 'bold');
-  doc.text(satisfaction.label, PAGE_WIDTH / 2 + 25, yPos + 52);
+  doc.text(
+    `${pct}%`,
+    x + cardW / 2,
+    yPos + 12,
+    { align: 'center' }
+  );
 
-  yPos += 75;
-
-  // Stats complementaires
-  doc.setFillColor(...COLORS.white);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH / 2 - 5, 40, 3, 3, 'F');
-  doc.setDrawColor(...COLORS.success);
-  doc.setLineWidth(0.5);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH / 2 - 5, 40, 3, 3, 'S');
-  
-  doc.setTextColor(...COLORS.success);
-  doc.setFontSize(24);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`${Math.round(data.positiveRatio * 100)}%`, MARGINS.left + (CONTENT_WIDTH / 4) - 2, yPos + 20, { align: 'center' });
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...COLORS.text);
-  doc.text('Avis positifs', MARGINS.left + (CONTENT_WIDTH / 4) - 2, yPos + 32, { align: 'center' });
-
-  doc.setFillColor(...COLORS.white);
-  doc.roundedRect(MARGINS.left + CONTENT_WIDTH / 2 + 5, yPos, CONTENT_WIDTH / 2 - 5, 40, 3, 3, 'F');
-  doc.setDrawColor(...COLORS.danger);
-  doc.roundedRect(MARGINS.left + CONTENT_WIDTH / 2 + 5, yPos, CONTENT_WIDTH / 2 - 5, 40, 3, 3, 'S');
-  
-  doc.setTextColor(...COLORS.danger);
-  doc.setFontSize(24);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`${100 - Math.round(data.positiveRatio * 100)}%`, MARGINS.left + (CONTENT_WIDTH * 3 / 4) + 2, yPos + 20, { align: 'center' });
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...COLORS.text);
-  doc.text('Avis negatifs', MARGINS.left + (CONTENT_WIDTH * 3 / 4) + 2, yPos + 32, { align: 'center' });
-
-  yPos += 55;
-
-  // ========== KPI - INDICATEURS CLES A SUIVRE ==========
-  yPos = addSectionTitle(doc, 'KPI - Indicateurs cles a suivre', yPos, COLORS.secondary);
-
-  // Encadre principal des KPIs
-  doc.setFillColor(...COLORS.background);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 80, 3, 3, 'F');
-
-  doc.setTextColor(...COLORS.text);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-
-  let kpiY = yPos + 10;
-
-  // Note moyenne globale
-  doc.setFont('helvetica', 'bold');
-  doc.text('Note moyenne globale :', MARGINS.left + 10, kpiY);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`${data.avgRating.toFixed(1)} / 5`, MARGINS.left + 80, kpiY);
-  kpiY += 10;
-
-  // Pourcentage d'avis positifs
-  doc.setFont('helvetica', 'bold');
-  doc.text('Pourcentage d\'avis positifs :', MARGINS.left + 10, kpiY);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`${Math.round(data.positiveRatio * 100)}%`, MARGINS.left + 80, kpiY);
-  kpiY += 10;
-
-  // Pourcentage d'avis negatifs
-  doc.setFont('helvetica', 'bold');
-  doc.text('Pourcentage d\'avis negatifs :', MARGINS.left + 10, kpiY);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`${100 - Math.round(data.positiveRatio * 100)}%`, MARGINS.left + 80, kpiY);
-  kpiY += 10;
-
-  // Principal theme negatif identifie
-  doc.setFont('helvetica', 'bold');
-  doc.text('Principal theme negatif :', MARGINS.left + 10, kpiY);
-  doc.setFont('helvetica', 'normal');
-  const mainNegativeTheme = (data.topIssues && data.topIssues.length > 0) 
-    ? (data.topIssues[0].theme || data.topIssues[0].issue || 'Non identifie') 
-    : 'Aucun';
-  doc.text(truncateText(mainNegativeTheme, 50), MARGINS.left + 80, kpiY);
-  kpiY += 10;
-
-  // Principal theme positif identifie
-  doc.setFont('helvetica', 'bold');
-  doc.text('Principal theme positif :', MARGINS.left + 10, kpiY);
-  doc.setFont('helvetica', 'normal');
-  const mainPositiveTheme = (data.topStrengths && data.topStrengths.length > 0) 
-    ? (data.topStrengths[0].theme || data.topStrengths[0].strength || 'Non identifie') 
-    : 'Aucun';
-  doc.text(truncateText(mainPositiveTheme, 50), MARGINS.left + 80, kpiY);
-
-  // Texte explicatif
-  yPos += 90;
-  doc.setFillColor(240, 249, 255);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 20, 2, 2, 'F');
+  // Label
   doc.setTextColor(...COLORS.textLight);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'italic');
-  const kpiExplanation = 'Ces indicateurs permettent de suivre l\'evolution de la satisfaction client et de mesurer l\'impact des actions mises en place dans le temps.';
-  const kpiLines = doc.splitTextToSize(kpiExplanation, CONTENT_WIDTH - 10);
-  doc.text(kpiLines, MARGINS.left + 5, yPos + 8);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
 
-  addFooter(doc, pageNumber);
+  doc.text(
+    label,
+    x + cardW / 2,
+    yPos + 19,
+    { align: 'center' }
+  );
+
+  // Accent line
+  const barW = cardW * 0.55;
+
+  doc.setFillColor(...barColor);
+  doc.roundedRect(
+    x + (cardW - barW) / 2,
+    yPos + 22,
+    barW,
+    1.2,
+    0.6,
+    0.6,
+    'F'
+  );
+};
+
+drawStatCard(
+  MARGINS.left,
+  positivePct,
+  'Avis positifs',
+  GREEN_PALE,
+  GREEN_BORDER,
+  GREEN_PRIMARY,
+  GREEN_BORDER
+);
+
+drawStatCard(
+  MARGINS.left + cardW + gap,
+  negativePct,
+  'Avis négatifs',
+  RED_PALE,
+  RED_BORDER,
+  RED_PRIMARY,
+  RED_BORDER
+);
+
+yPos += cardH + 10;
+// ── KPI Block ──────────────────────────────────────────────
+yPos = addSectionTitle(doc, 'KPI - Indicateurs cles a suivre', yPos, COLORS.secondary);
+
+const mainNegTheme = (data.topIssues && data.topIssues.length > 0)
+  ? truncateText(data.topIssues[0].theme || data.topIssues[0].issue || 'Non identifie', 35)
+  : 'Aucun';
+const mainPosTheme = (data.topStrengths && data.topStrengths.length > 0)
+  ? truncateText(data.topStrengths[0].theme || data.topStrengths[0].strength || 'Non identifie', 35)
+  : 'Aucun';
+
+const kpiItems: Array<{ label: string; value: string; valueColor: [number,number,number] }> = [
+  { label: 'Note moyenne globale',    value: `${data.avgRating.toFixed(1)} / 5`, valueColor: BLUE_PRIMARY },
+  { label: 'Avis positifs',           value: `${positivePct}%`,                  valueColor: GREEN_PRIMARY },
+  { label: 'Avis negatifs',           value: `${negativePct}%`,                  valueColor: RED_PRIMARY },
+  { label: 'Principal theme negatif', value: mainNegTheme,                        valueColor: COLORS.text as [number,number,number] },
+  { label: 'Principal theme positif', value: mainPosTheme,                        valueColor: COLORS.text as [number,number,number] },
+];
+
+const kpiRowH  = 11;
+const kpiTotalH = kpiRowH * kpiItems.length;
+const kpiHdrH  = 9;
+
+// KPI header (blue, same style as other tables)
+// doc.setFillColor(...BLUE_PRIMARY);
+// doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, kpiHdrH, 1, 1, 'F');
+// doc.setDrawColor(...BLUE_PRIMARY);
+// doc.setLineWidth(0.6);
+// doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, kpiHdrH, 1, 1, 'S');
+// doc.setTextColor(255, 255, 255);
+// doc.setFontSize(8.5);
+// doc.setFont('helvetica', 'bold');
+// doc.text('Indicateurs cles', MARGINS.left + 5, yPos + 6);
+// yPos += kpiHdrH;
+
+const kpiRowsStart = yPos;
+
+kpiItems.forEach((item, idx) => {
+  const bg =  [255, 255, 255] as [number,number,number];
+  doc.setFillColor(...bg);
+  doc.rect(MARGINS.left, yPos, CONTENT_WIDTH, kpiRowH, 'F');
+
+  doc.setDrawColor(...BLUE_LIGHT);
+  doc.setLineWidth(0.25);
+  doc.line(MARGINS.left, yPos + kpiRowH, MARGINS.left + CONTENT_WIDTH, yPos + kpiRowH);
+
+  doc.setTextColor(...COLORS.textLight);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.text(item.label, MARGINS.left + 6, yPos + 7.5);
+
+  doc.setTextColor(...item.valueColor);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text(item.value, MARGINS.left + CONTENT_WIDTH - 6, yPos + 7.5, { align: 'right' });
+
+  yPos += kpiRowH;
+});
+
+// Outer border for KPI block
+// doc.setDrawColor(...BLUE_PRIMARY);
+// doc.setLineWidth(0.6);
+// doc.roundedRect(MARGINS.left, kpiRowsStart - kpiHdrH, CONTENT_WIDTH, kpiHdrH + kpiTotalH, 1, 1, 'S');
+
+// Note box with left accent
+yPos += 6;
+const noteLines = doc.splitTextToSize(
+  'Ces indicateurs permettent de suivre l\'evolution de la satisfaction client et de mesurer l\'impact des actions mises en place dans le temps.',
+  CONTENT_WIDTH - 14
+);
+const noteH = Math.max(16, 8 + noteLines.length * 5);
+doc.setFillColor(...BLUE_PALE);
+doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, noteH, 2, 2, 'F');
+doc.setFillColor(...BLUE_PRIMARY);
+doc.rect(MARGINS.left, yPos, 3, noteH, 'F');
+doc.setTextColor(...BLUE_DARK);
+doc.setFontSize(8);
+doc.setFont('helvetica', 'italic');
+doc.text(noteLines, MARGINS.left + 8, yPos + 6);
+
+addFooter(doc, pageNumber);
 
   // ========== PAGE 3: SYNTHESE - CE QUE VOS CLIENTS DISENT VRAIMENT ==========
   pageNumber = addNewPage(doc, pageNumber);
-  yPos = MARGINS.top;
+yPos = MARGINS.top;
 
-  yPos = addSectionTitle(doc, 'Synthese des retours clients', yPos);
+yPos = addSectionTitle(doc, 'Synthese des retours clients', yPos);
 
-  // Sous-titre
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'italic');
-  doc.setTextColor(...COLORS.textLight);
-  doc.text('Ce que vos clients disent vraiment de votre etablissement', MARGINS.left, yPos);
-  yPos += 15;
+// Sous-titre
+doc.setFontSize(11);
+doc.setFont('helvetica', 'italic');
+doc.setTextColor(...COLORS.textLight);
+doc.text('Ce que vos clients disent vraiment de votre etablissement', MARGINS.left, yPos);
+yPos += 12;
 
-  // Section: Elements positifs les plus cites
-  doc.setFillColor(...COLORS.success);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 8, 1, 1, 'F');
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(11);
+// ── Helper: draw a section table ──────────────────────────
+const drawSectionTable = (
+  title: string,
+  rows: Array<{ label: string; count: number }>,
+  emptyMsg: string,
+  headerColor: [number, number, number],
+  rowPale: [number, number, number],
+  rowDivider: [number, number, number],
+  badgeBg: [number, number, number],
+  badgeTxt: [number, number, number],
+  numColor: [number, number, number]
+) => {
+  const tW    = CONTENT_WIDTH;
+  const hdrH  = 9;
+  const rowH  = 11;
+  const nameW = tW - 38; // left column
+  const cntW  = 38;      // right column (badge)
+  const tX    = MARGINS.left;
+  const cntX  = tX + nameW;
+
+  // Header
+  doc.setFillColor(...headerColor);
+  doc.roundedRect(tX, yPos, tW, hdrH, 1, 1, 'F');
+  doc.setDrawColor(...headerColor);
+  doc.setLineWidth(0.6);
+  doc.roundedRect(tX, yPos, tW, hdrH, 1, 1, 'S');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
-  doc.text('Les 3 elements les plus apprecies', MARGINS.left + 5, yPos + 5.5);
-  yPos += 15;
+  doc.text(title, tX + 5, yPos + 6);
+  yPos += hdrH;
 
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  if (data.topStrengths && data.topStrengths.length > 0) {
-    data.topStrengths.slice(0, 3).forEach((strength, idx) => {
-      const name = strength.theme || strength.strength || `Point fort ${idx + 1}`;
-      const count = strength.count || strength.mentions || 0;
-      doc.setFillColor(...COLORS.background);
-      doc.roundedRect(MARGINS.left, yPos - 3, CONTENT_WIDTH, 10, 1, 1, 'F');
-      doc.setTextColor(...COLORS.success);
-      doc.text(`${idx + 1}.`, MARGINS.left + 5, yPos + 3);
+  const rowsStartY = yPos;
+  const displayRows = rows.length > 0 ? rows : [{ label: emptyMsg, count: 0 }];
+
+  displayRows.forEach((row, idx) => {
+    const bg = ROW_WHITE;
+    doc.setFillColor(...bg);
+    doc.rect(tX, yPos, tW, rowH, 'F');
+
+    // Dividers
+    doc.setDrawColor(...rowDivider);
+    doc.setLineWidth(0.3);
+    if (idx > 0) doc.line(tX, yPos, tX + tW, yPos);
+    if (rows.length > 0) doc.line(cntX, yPos, cntX, yPos + rowH);
+
+    if (rows.length > 0) {
+      // Number
+      doc.setTextColor(...numColor);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.text(`${idx + 1}.`, tX + 5, yPos + 7);
+
+      // Label
       doc.setTextColor(...COLORS.text);
       doc.setFont('helvetica', 'bold');
-      doc.text(name, MARGINS.left + 15, yPos + 3);
-      if (count > 0) {
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...COLORS.textLight);
-        doc.text(`(${count} mentions)`, MARGINS.left + 120, yPos + 3);
+      doc.setFontSize(8.5);
+      const label = doc.splitTextToSize(row.label, nameW - 20);
+      doc.text(label[0], tX + 15, yPos + 7);
+
+      // Badge
+      if (row.count > 0) {
+        const badgeW = 28;
+        const badgeX = cntX + (cntW - badgeW) / 2;
+        doc.setFillColor(...badgeBg);
+        doc.roundedRect(badgeX, yPos + 2.5, badgeW, 6, 1, 1, 'F');
+        doc.setTextColor(...badgeTxt);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text(`${row.count} mentions`, cntX + cntW / 2, yPos + 7, { align: 'center' });
       }
-      yPos += 12;
-    });
-  } else {
-    doc.setTextColor(...COLORS.textLight);
-    doc.text('Aucun point fort identifie dans les avis analyses', MARGINS.left + 5, yPos);
-    yPos += 12;
-  }
+    } else {
+      // Empty message
+      doc.setTextColor(...COLORS.textLight);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.text(row.label, tX + 5, yPos + 7);
+    }
+
+    yPos += rowH;
+  });
+
+  // Outer border
+  doc.setDrawColor(...headerColor);
+  doc.setLineWidth(0);
+  doc.roundedRect(tX, rowsStartY - hdrH, tW, hdrH + rowH * displayRows.length, 1, 1, 'S');
 
   yPos += 10;
+};
 
-  // Section: Points de friction
-  doc.setFillColor(...COLORS.danger);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 8, 1, 1, 'F');
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Les 2-3 principaux points de friction', MARGINS.left + 5, yPos + 5.5);
-  yPos += 15;
+// ── Section 1: Points forts ────────────────────────────────
+const strengthRows = (data.topStrengths || []).slice(0, 3).map((s) => ({
+  label: s.theme || s.strength || 'Point fort',
+  count: s.count || s.mentions || 0
+}));
+drawSectionTable(
+  'Les 3 elements les plus apprecies',
+  strengthRows,
+  'Aucun point fort identifie dans les avis analyses',
+  GREEN_PRIMARY, GREEN_PALE, GREEN_LIGHT,
+  [220, 252, 231], [22, 101, 52],
+  GREEN_PRIMARY
+);
 
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  if (data.topIssues && data.topIssues.length > 0) {
-    data.topIssues.slice(0, 3).forEach((issue, idx) => {
-      const name = issue.theme || issue.issue || `Probleme ${idx + 1}`;
-      const count = issue.count || issue.mentions || 0;
-      doc.setFillColor(...COLORS.background);
-      doc.roundedRect(MARGINS.left, yPos - 3, CONTENT_WIDTH, 10, 1, 1, 'F');
-      doc.setTextColor(...COLORS.danger);
-      doc.text(`${idx + 1}.`, MARGINS.left + 5, yPos + 3);
-      doc.setTextColor(...COLORS.text);
-      doc.setFont('helvetica', 'bold');
-      doc.text(name, MARGINS.left + 15, yPos + 3);
-      if (count > 0) {
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...COLORS.textLight);
-        doc.text(`(${count} mentions)`, MARGINS.left + 120, yPos + 3);
-      }
-      yPos += 12;
-    });
-  } else {
-    doc.setTextColor(...COLORS.textLight);
-    doc.text('Aucun probleme majeur identifie', MARGINS.left + 5, yPos);
-    yPos += 12;
-  }
+// ── Section 2: Points de friction ─────────────────────────
+const issueRows = (data.topIssues || []).slice(0, 3).map((i) => ({
+  label: i.theme || i.issue || 'Probleme',
+  count: i.count || i.mentions || 0
+}));
+drawSectionTable(
+  'Les 2-3 principaux points de friction',
+  issueRows,
+  'Aucun probleme majeur identifie',
+  RED_PRIMARY, RED_PALE, RED_LIGHT,
+  [254, 226, 226], [153, 27, 27],
+  RED_PRIMARY
+);
 
-  yPos += 10;
+// ── Section 3: Impact sur la note ─────────────────────────
+const impactHdrH = 9;
+const impactTX   = MARGINS.left;
+const impactTW   = CONTENT_WIDTH;
 
-  // Section: Impact sur la note globale
-  doc.setFillColor(...COLORS.primary);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 8, 1, 1, 'F');
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Element ayant le plus d\'impact sur la note', MARGINS.left + 5, yPos + 5.5);
-  yPos += 15;
+// Header
+doc.setFillColor(...BLUE_PRIMARY);
+doc.roundedRect(impactTX, yPos, impactTW, impactHdrH, 1, 1, 'F');
+doc.setDrawColor(...BLUE_PRIMARY);
+doc.setLineWidth(0.6);
+doc.roundedRect(impactTX, yPos, impactTW, impactHdrH, 1, 1, 'S');
+doc.setTextColor(255, 255, 255);
+doc.setFontSize(9);
+doc.setFont('helvetica', 'bold');
+doc.text('Element ayant le plus d\'impact sur la note', impactTX + 5, yPos + 6);
+yPos += impactHdrH;
 
-  doc.setFillColor(...COLORS.background);
-  doc.roundedRect(MARGINS.left, yPos - 3, CONTENT_WIDTH, 20, 2, 2, 'F');
-  doc.setTextColor(...COLORS.text);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
+let impactText = '';
+if (data.topIssues && data.topIssues.length > 0 && data.avgRating < 4) {
+  const main = data.topIssues[0];
+  impactText = `Le principal facteur impactant negativement votre note est "${main.theme || main.issue}". Ameliorer ce point pourrait significativement augmenter votre note globale.`;
+} else if (data.topStrengths && data.topStrengths.length > 0) {
+  const main = data.topStrengths[0];
+  impactText = `Votre point fort "${main.theme || main.strength}" est le principal atout qui maintient votre bonne note. Continuez a le valoriser.`;
+} else {
+  impactText = 'Collectez plus d\'avis pour identifier les facteurs cles impactant votre note.';
+}
 
-  let impactElement = '';
-  if (data.topIssues && data.topIssues.length > 0 && data.avgRating < 4) {
-    const mainIssue = data.topIssues[0];
-    impactElement = `Le principal facteur impactant negativement votre note est "${mainIssue.theme || mainIssue.issue}". Ameliorer ce point pourrait significativement augmenter votre note globale.`;
-  } else if (data.topStrengths && data.topStrengths.length > 0) {
-    const mainStrength = data.topStrengths[0];
-    impactElement = `Votre point fort "${mainStrength.theme || mainStrength.strength}" est le principal atout qui maintient votre bonne note. Continuez a le valoriser.`;
-  } else {
-    impactElement = 'Collectez plus d\'avis pour identifier les facteurs cles impactant votre note.';
-  }
-  
-  const impactLines = doc.splitTextToSize(impactElement, CONTENT_WIDTH - 10);
-  doc.text(impactLines, MARGINS.left + 5, yPos + 5);
+const impactLines = doc.splitTextToSize(impactText, impactTW - 10);
+const impactRowH  = Math.max(14, 8 + impactLines.length * 5);
 
-  addFooter(doc, pageNumber);
+doc.setFillColor(...BLUE_PALE);
+doc.rect(impactTX, yPos, impactTW, impactRowH, 'F');
+doc.setTextColor(...COLORS.text);
+doc.setFontSize(8.5);
+doc.setFont('helvetica', 'normal');
+doc.text(impactLines, impactTX + 5, yPos + 6);
+yPos += impactRowH;
+
+// Outer border
+doc.setDrawColor(...BLUE_PRIMARY);
+doc.setLineWidth(0);
+doc.roundedRect(impactTX, yPos - impactHdrH - impactRowH, impactTW, impactHdrH + impactRowH, 1, 1, 'S');
+
+addFooter(doc, pageNumber);
 
   // ========== PAGE 4: ANALYSE DETAILLEE ==========
-  pageNumber = addNewPage(doc, pageNumber);
-  yPos = MARGINS.top;
+pageNumber = addNewPage(doc, pageNumber);
+yPos = MARGINS.top;
 
-  yPos = addSectionTitle(doc, 'Analyse Detaillee', yPos);
+yPos = addSectionTitle(doc, 'Analyse Detaillee', yPos);
 
-  // Repartition par note
-  doc.setFontSize(12);
+
+// ─── Répartition par note ──────────────────────────────────
+doc.setFontSize(11);
+doc.setFont('helvetica', 'bold');
+doc.setTextColor(...COLORS.text);
+doc.text('Repartition des avis par note', MARGINS.left, yPos);
+yPos += 8;
+
+const ratingCounts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+data.recentReviews.forEach((review) => {
+  const rating = review.rating || 0;
+  if (rating >= 1 && rating <= 5) ratingCounts[Math.round(rating)]++;
+});
+const totalRatings = Object.values(ratingCounts).reduce((a, b) => a + b, 0) || 1;
+
+const ratingRows = [5, 4, 3, 2, 1];
+const rTableW  = CONTENT_WIDTH;
+const rNoteW   = 22;
+const rRowH    = 11;
+
+const rColNote = MARGINS.left;
+const rColInfo = rColNote + rNoteW; // single combined column for bar + pct + count
+
+const rRowsStartY = yPos;
+
+ratingRows.forEach((rating, idx) => {
+  const count = ratingCounts[rating];
+  const pct   = (count / totalRatings) * 100;
+  const bg    =  ROW_WHITE;
+
+  doc.setFillColor(...bg);
+  doc.rect(rColNote, yPos, rTableW, rRowH, 'F');
+
+  // Row separator
+  doc.setDrawColor(...BLUE_LIGHT);
+  doc.setLineWidth(0.3);
+  if (idx > 0) {
+    doc.line(rColNote, yPos, rColNote + rTableW, yPos);
+  }
+  // Single vertical divider after note column
+  // doc.line(rColInfo, yPos, rColInfo, yPos + rRowH);
+
+  // Note label
+  doc.setTextColor(...COLORS.text);
   doc.setFont('helvetica', 'bold');
-  doc.text('Repartition des avis par note', MARGINS.left, yPos);
-  yPos += 10;
+  doc.setFontSize(8.5);
+  doc.text(`${rating}/5`, rColNote + rNoteW / 2, yPos + 7, { align: 'center' });
 
-  const ratingCounts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-  data.recentReviews.forEach((review) => {
-    const rating = review.rating || 0;
-    if (rating >= 1 && rating <= 5) {
-      ratingCounts[Math.round(rating)]++;
-    }
-  });
-  const totalRatings = Object.values(ratingCounts).reduce((a, b) => a + b, 0) || 1;
+  // ── Combined info column: bar + badge + count ──
+  const infoW    = rTableW - rNoteW;
+  const pctW     = 18;
+  const countW   = 16;
+  const barPad   = 4;
+  const barW     = infoW - pctW - countW - barPad * 2 - 6;
 
-  [5, 4, 3, 2, 1].forEach((rating) => {
-    const count = ratingCounts[rating];
-    const pct = (count / totalRatings) * 100;
-    const barWidth = (pct / 100) * 100;
+  const trackX = rColInfo + barPad;
+  const trackW = barW;
+  const trackH = 5;
+  const trackY = yPos + 3;
 
-    doc.setTextColor(...COLORS.text);
-    doc.setFontSize(10);
-    doc.text(`Note ${rating}/5`, MARGINS.left, yPos + 4);
-
-    doc.setFillColor(...COLORS.background);
-    doc.roundedRect(MARGINS.left + 35, yPos, 100, 6, 1, 1, 'F');
-    
-    const barColor = rating >= 4 ? COLORS.success : rating === 3 ? COLORS.warning : COLORS.danger;
+  // Progress track
+  doc.setFillColor(219, 234, 254);
+  doc.roundedRect(trackX, trackY, trackW, trackH, 1, 1, 'F');
+  if (pct > 0) {
+    const barColor: [number, number, number] =
+      rating >= 4 ? [22, 163, 74] : rating === 3 ? [245, 158, 11] : [220, 38, 38];
     doc.setFillColor(...barColor);
-    if (barWidth > 0) {
-      doc.roundedRect(MARGINS.left + 35, yPos, barWidth, 6, 1, 1, 'F');
-    }
-
-    doc.setTextColor(...COLORS.textLight);
-    doc.text(`${pct.toFixed(0)}% (${count})`, MARGINS.left + 140, yPos + 4);
-
-    yPos += 10;
-  });
-
-  yPos += 10;
-
-  // Themes recurrents
-  if (data.themes && data.themes.length > 0) {
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.text);
-    doc.text('Themes recurrents', MARGINS.left, yPos);
-    yPos += 10;
-
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    data.themes.slice(0, 6).forEach((theme) => {
-      doc.setFillColor(...COLORS.primary);
-      doc.circle(MARGINS.left + 3, yPos - 1, 1.5, 'F');
-      doc.setTextColor(...COLORS.text);
-      doc.text(theme.theme, MARGINS.left + 8, yPos);
-      if (theme.count || theme.score) {
-        doc.setTextColor(...COLORS.textLight);
-        doc.text(`(${theme.count || theme.score} mentions)`, MARGINS.left + 80, yPos);
-      }
-      yPos += 7;
-    });
+    doc.roundedRect(trackX, trackY, (pct / 100) * trackW, trackH, 1, 1, 'F');
   }
 
-  addFooter(doc, pageNumber);
+  // Pct badge — right after bar
+  const badgeColor: [number, number, number] =
+    pct === 0    ? [241, 245, 249] :
+    rating >= 4  ? [220, 252, 231] :
+    rating === 3 ? [254, 249, 195] : [254, 226, 226];
+  const badgeTxtColor: [number, number, number] =
+    pct === 0    ? [100, 116, 139] :
+    rating >= 4  ? [22, 101, 52]   :
+    rating === 3 ? [180, 83, 9]    : [153, 27, 27];
+  const badgeX = trackX + trackW + 2;
+  doc.setFillColor(...badgeColor);
+  doc.roundedRect(badgeX, yPos + 2.5, pctW, 6, 1, 1, 'F');
+  doc.setTextColor(...badgeTxtColor);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.text(`${Math.round(pct)}%`, badgeX + pctW / 2, yPos + 7, { align: 'center' });
+
+  // Count — right after badge
+  const countX = badgeX + pctW + 2;
+  doc.setTextColor(...COLORS.textLight);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text(`${count}`, countX + countW / 2, yPos + 7, { align: 'center' });
+
+  yPos += rRowH;
+});
+
+// Outer border (no header, just rows)
+// doc.setDrawColor(...BLUE_PRIMARY);
+// doc.setLineWidth(0);
+// doc.roundedRect(rColNote, rRowsStartY, rTableW, rRowH * ratingRows.length, 1, 1, 'S');
+
+yPos += 12;
+
+// ─── Thèmes récurrents ─────────────────────────────────────
+if (data.themes && data.themes.length > 0) {
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...COLORS.text);
+  doc.text('Themes recurrents', MARGINS.left, yPos);
+  yPos += 8;
+
+  const themes = data.themes.slice(0, 6);
+  const maxCount = Math.max(...themes.map((t) => t.count || t.score || 1));
+
+  const tTableW   = CONTENT_WIDTH;
+  const tThemeW   = 80;
+  const tMentionW = 28;
+  const tBarW     = tTableW - tThemeW - tMentionW;
+
+  const tColTheme   = MARGINS.left;
+  const tColMention = tColTheme + tThemeW;
+  const tColBar     = tColMention + tMentionW;
+
+  const tHdrH = 9;
+  const tRowH = 11;
+
+  // Header
+  doc.setFillColor(...BLUE_PRIMARY);
+  doc.roundedRect(tColTheme, yPos, tTableW, tHdrH, 1, 1, 'F');
+  doc.setDrawColor(...BLUE_PRIMARY);
+  doc.setLineWidth(0.6);
+  doc.roundedRect(tColTheme, yPos, tTableW, tHdrH, 1, 1, 'S');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Theme',     tColTheme + 4,               yPos + 6);
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(0.35);
+  doc.line(tColMention, yPos + 1, tColMention, yPos + tHdrH - 1);
+  doc.line(tColBar,     yPos + 1, tColBar,     yPos + tHdrH - 1);
+  doc.text('Mentions',  tColMention + tMentionW / 2, yPos + 6, { align: 'center' });
+  doc.text('Frequence', tColBar + tBarW / 2,         yPos + 6, { align: 'center' });
+  yPos += tHdrH;
+
+  const tRowsStartY = yPos;
+
+  themes.forEach((theme, idx) => {
+    const count = theme.count || theme.score || 0;
+    const bg    = idx % 2 === 0 ? BLUE_PALE : ROW_WHITE;
+
+    doc.setFillColor(...bg);
+    doc.rect(tColTheme, yPos, tTableW, tRowH, 'F');
+
+    doc.setDrawColor(...BLUE_LIGHT);
+    doc.setLineWidth(0.3);
+    doc.line(tColTheme,   yPos + tRowH, tColTheme + tTableW, yPos + tRowH);
+    doc.line(tColMention, yPos, tColMention, yPos + tRowH);
+    doc.line(tColBar,     yPos, tColBar,     yPos + tRowH);
+
+    // Theme name
+    doc.setTextColor(...COLORS.text);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    const themeLabel = doc.splitTextToSize(theme.theme, tThemeW - 8);
+    doc.text(themeLabel[0], tColTheme + 4, yPos + 7);
+
+    // Mention badge
+    const badgeW = 18;
+    const badgeX = tColMention + (tMentionW - badgeW) / 2;
+    doc.setFillColor(219, 234, 254);
+    doc.roundedRect(badgeX, yPos + 2.5, badgeW, 6, 1, 1, 'F');
+    doc.setTextColor(30, 64, 175);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.text(`${count}`, tColMention + tMentionW / 2, yPos + 7, { align: 'center' });
+
+    // Frequency bar
+    const barTrackX = tColBar + 4;
+    const barTrackW = tBarW - 8;
+    const barH = 5;
+    const barY = yPos + 3;
+    doc.setFillColor(219, 234, 254);
+    doc.roundedRect(barTrackX, barY, barTrackW, barH, 1, 1, 'F');
+    if (count > 0) {
+      doc.setFillColor(...BLUE_PRIMARY);
+      doc.roundedRect(barTrackX, barY, (count / maxCount) * barTrackW, barH, 1, 1, 'F');
+    }
+
+    yPos += tRowH;
+  });
+
+  // Outer border
+  doc.setDrawColor(...BLUE_PRIMARY);
+  doc.setLineWidth(0);
+  doc.roundedRect(tColTheme, tRowsStartY - tHdrH, tTableW, tHdrH + tRowH * themes.length, 1, 1, 'S');
+}
+
+addFooter(doc, pageNumber);
 
   // ========== PAGE 5: CHECKLIST OPERATIONNELLE ==========
   pageNumber = addNewPage(doc, pageNumber);
@@ -608,123 +970,190 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
 
   // ========== PAGE 6: PRIORISATION DES ACTIONS ==========
   pageNumber = addNewPage(doc, pageNumber);
-  yPos = MARGINS.top;
+yPos = MARGINS.top;
 
-  yPos = addSectionTitle(doc, 'Priorisation des actions - Impact vs Effort', yPos, COLORS.warning);
+yPos = addSectionTitle(doc, 'Priorisation des actions - Impact vs Effort', yPos, COLORS.warning);
 
-  // Sous-titre
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'italic');
-  doc.setTextColor(...COLORS.textLight);
-  doc.text('Classement des actions par impact attendu et effort estime', MARGINS.left, yPos);
-  yPos += 15;
+// Sous-titre
+doc.setFontSize(11);
+doc.setFont('helvetica', 'italic');
+doc.setTextColor(...COLORS.textLight);
+doc.text('Classement des actions par impact attendu et effort estime', MARGINS.left, yPos);
+yPos += 12;
 
-  // Actions prioritaires
-  const prioritizedActions: Array<{ action: string; impact: string; effort: string; impactColor: [number, number, number] }> = [];
+// Actions prioritaires
+const prioritizedActions: Array<{ action: string; impact: string; effort: string; impactColor: [number, number, number]; impactBg: [number, number, number] }> = [];
 
-  // Action 1: Corriger le principal point de friction identifie
-  const mainIssueAction = (data.topIssues && data.topIssues.length > 0) 
-    ? `Corriger le principal point de friction : "${data.topIssues[0].theme || data.topIssues[0].issue}"`
-    : 'Corriger le principal point de friction identifie';
-  prioritizedActions.push({
-    action: mainIssueAction,
-    impact: 'Eleve',
-    effort: 'Moyen',
-    impactColor: COLORS.success
-  });
+const mainIssueAction = (data.topIssues && data.topIssues.length > 0)
+  ? `Corriger le principal point de friction : "${data.topIssues[0].theme || data.topIssues[0].issue}"`
+  : 'Corriger le principal point de friction identifie';
+prioritizedActions.push({
+  action: mainIssueAction,
+  impact: 'Eleve',
+  effort: 'Moyen',
+  impactColor: [22, 163, 74],
+  impactBg: [220, 252, 231]
+});
 
-  // Action 2: Former l'equipe
-  prioritizedActions.push({
-    action: 'Former l\'equipe sur les points d\'amelioration',
-    impact: 'Moyen',
-    effort: 'Faible',
-    impactColor: COLORS.warning
-  });
+prioritizedActions.push({
+  action: 'Former l\'equipe sur les points d\'amelioration',
+  impact: 'Moyen',
+  effort: 'Faible',
+  impactColor: [180, 83, 9],
+  impactBg: [254, 249, 195]
+});
 
-  // Action 3: Repondre systematiquement aux avis clients
-  prioritizedActions.push({
-    action: 'Repondre systematiquement aux avis clients',
-    impact: 'Moyen',
-    effort: 'Faible',
-    impactColor: COLORS.warning
-  });
+prioritizedActions.push({
+  action: 'Repondre systematiquement aux avis clients',
+  impact: 'Moyen',
+  effort: 'Faible',
+  impactColor: [180, 83, 9],
+  impactBg: [254, 249, 195]
+});
 
-  // Action 4: Valoriser les points forts identifies
-  const strengthAction = (data.topStrengths && data.topStrengths.length > 0) 
-    ? `Valoriser le point fort : "${data.topStrengths[0].theme || data.topStrengths[0].strength}"`
-    : 'Valoriser les points forts identifies';
-  prioritizedActions.push({
-    action: strengthAction,
-    impact: 'Moyen',
-    effort: 'Faible',
-    impactColor: COLORS.warning
-  });
+const strengthAction = (data.topStrengths && data.topStrengths.length > 0)
+  ? `Valoriser le point fort : "${data.topStrengths[0].theme || data.topStrengths[0].strength}"`
+  : 'Valoriser les points forts identifies';
+prioritizedActions.push({
+  action: strengthAction,
+  impact: 'Moyen',
+  effort: 'Faible',
+  impactColor: [180, 83, 9],
+  impactBg: [254, 249, 195]
+});
 
-  // En-tete du tableau
-  doc.setFillColor(...COLORS.primary);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 10, 1, 1, 'F');
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Action', MARGINS.left + 5, yPos + 7);
-  doc.text('Impact', MARGINS.left + 115, yPos + 7);
-  doc.text('Effort', MARGINS.left + 145, yPos + 7);
-  yPos += 15;
+const tableX = MARGINS.left;
+const tableWidth = CONTENT_WIDTH;
+const actionLabelWidth = 95;
+const impactLabelWidth = 35;
+const effortLabelWidth = tableWidth - actionLabelWidth - impactLabelWidth;
+const rowPaddingX = 4;
+const rowPaddingY = 3;
+const actionTextX = tableX + 12;
+const actionTextWidth = actionLabelWidth - 14;
+const impactX = tableX + actionLabelWidth;
+const effortX = impactX + impactLabelWidth;
+const lineHeight = 4.2;
+const headerHeight = 10;
 
-  // Liste des actions
-  prioritizedActions.forEach((item, idx) => {
-    const bgColor = idx % 2 === 0 ? COLORS.background : COLORS.white;
-    doc.setFillColor(...bgColor);
-    doc.roundedRect(MARGINS.left, yPos - 3, CONTENT_WIDTH, 16, 1, 1, 'F');
+// Blue primary color for table border & header
+// const BLUE_PRIMARY: [number, number, number] = [37, 99, 235];
+// const BLUE_LIGHT: [number, number, number] = [191, 219, 254];
+const ROW_ALT: [number, number, number] = [239, 246, 255];
 
-    // Numero et action
-    doc.setTextColor(...COLORS.text);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`${idx + 1}.`, MARGINS.left + 5, yPos + 5);
-    doc.setFont('helvetica', 'normal');
-    const actionLines = doc.splitTextToSize(item.action, 95);
-    doc.text(actionLines[0], MARGINS.left + 12, yPos + 5);
-    if (actionLines.length > 1) {
-      doc.setFontSize(8);
-      doc.text(truncateText(actionLines[1], 50), MARGINS.left + 12, yPos + 11);
-      doc.setFontSize(9);
-    }
+// Outer table border (draw first, behind everything)
+doc.setDrawColor(...BLUE_PRIMARY);
+doc.setLineWidth(0.6);
+doc.roundedRect(tableX, yPos, tableWidth, headerHeight, 1, 1, 'FD');
 
-    // Impact
-    doc.setTextColor(...item.impactColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text(item.impact, MARGINS.left + 115, yPos + 5);
+// Header fill
+doc.setFillColor(...BLUE_PRIMARY);
+doc.roundedRect(tableX, yPos, tableWidth, headerHeight, 1, 1, 'F');
 
-    // Effort
-    doc.setTextColor(...COLORS.textLight);
-    doc.setFont('helvetica', 'normal');
-    doc.text(item.effort, MARGINS.left + 145, yPos + 5);
+// Header column dividers (white semi-transparent approximated as light blue)
+doc.setDrawColor(255, 255, 255);
+doc.setLineWidth(0.4);
+doc.line(impactX, yPos + 1, impactX, yPos + headerHeight - 1);
+doc.line(effortX, yPos + 1, effortX, yPos + headerHeight - 1);
 
-    yPos += 20;
-  });
+// Header text
+doc.setTextColor(255, 255, 255);
+doc.setFontSize(9);
+doc.setFont('helvetica', 'bold');
+doc.text('Action', tableX + rowPaddingX, yPos + 6.5);
+doc.text('Impact', impactX + impactLabelWidth / 2, yPos + 6.5, { align: 'center' });
+doc.text('Effort', effortX + effortLabelWidth / 2, yPos + 6.5, { align: 'center' });
+yPos += headerHeight;
 
-  // Phrase de conclusion
-  yPos += 10;
-  doc.setFillColor(255, 251, 235);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 25, 2, 2, 'F');
-  doc.setDrawColor(...COLORS.warning);
-  doc.setLineWidth(1);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 25, 2, 2, 'S');
-  
-  doc.setTextColor(...COLORS.warning);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Recommandation', MARGINS.left + 5, yPos + 8);
-  
-  doc.setTextColor(...COLORS.text);
-  doc.setFontSize(9);
+// Track total rows height for outer border
+const rowStartY = yPos;
+
+// Rows
+prioritizedActions.forEach((item, idx) => {
+  const bgColor = idx % 2 === 0 ? ROW_ALT : [255, 255, 255] as [number, number, number];
+  doc.setFillColor(...bgColor);
   doc.setFont('helvetica', 'normal');
-  const prioConclusion = 'Il est recommande de commencer par les actions a fort impact et faible effort afin d\'obtenir des resultats rapides et mesurables.';
-  const prioLines = doc.splitTextToSize(prioConclusion, CONTENT_WIDTH - 10);
-  doc.text(prioLines, MARGINS.left + 5, yPos + 16);
+  doc.setFontSize(9);
+  const actionLines = doc.splitTextToSize(item.action, actionTextWidth);
+  const rowHeight = Math.max(13, rowPaddingY * 2 + actionLines.length * lineHeight);
 
-  addFooter(doc, pageNumber);
+  // Row background (no stroke here — outer border drawn separately)
+  doc.rect(tableX, yPos, tableWidth, rowHeight, 'F');
+
+  // Row bottom divider
+  doc.setDrawColor(...BLUE_LIGHT);
+  doc.setLineWidth(0.3);
+  doc.line(tableX, yPos + rowHeight, tableX + tableWidth, yPos + rowHeight);
+
+  // Column dividers (blue light)
+  doc.line(impactX, yPos, impactX, yPos + rowHeight);
+  doc.line(effortX, yPos, effortX, yPos + rowHeight);
+
+  // Row number
+  doc.setTextColor(...COLORS.text);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`${idx + 1}.`, tableX + rowPaddingX, yPos + rowPaddingY + 3);
+
+  // Action text
+  doc.setTextColor(...COLORS.text);
+  doc.setFont('helvetica', 'normal');
+  actionLines.forEach((line: string, lineIdx: number) => {
+    doc.text(line, actionTextX, yPos + rowPaddingY + 3 + lineIdx * lineHeight);
+  });
+
+  // Impact badge background
+  const badgeW = 20;
+  const badgeH = 5.5;
+  const badgeX = impactX + (impactLabelWidth - badgeW) / 2;
+  const badgeY = yPos + (rowHeight - badgeH) / 2;
+  doc.setFillColor(...item.impactBg);
+  doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 1, 1, 'F');
+  doc.setTextColor(...item.impactColor);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text(item.impact, impactX + impactLabelWidth / 2, badgeY + 4, { align: 'center' });
+
+  // Effort text
+  doc.setFontSize(9);
+  doc.setTextColor(...COLORS.textLight);
+  doc.setFont('helvetica', 'normal');
+  doc.text(item.effort, effortX + effortLabelWidth / 2, yPos + rowHeight / 2 + 1.5, { align: 'center' });
+
+  yPos += rowHeight;
+});
+
+// Outer border around all rows (blue, matching header)
+doc.setDrawColor(...BLUE_PRIMARY);
+doc.setLineWidth(0.6);
+doc.rect(tableX, rowStartY, tableWidth, yPos - rowStartY, 'S');
+
+// Bottom-left and bottom-right rounded corners via clipping workaround:
+// Draw a final rounded rect outline over the whole table
+doc.setDrawColor(...BLUE_PRIMARY);
+doc.setLineWidth(0.6);
+doc.roundedRect(tableX, rowStartY - headerHeight, tableWidth, yPos - rowStartY + headerHeight, 1, 1, 'S');
+
+// Recommandation box
+yPos += 8;
+doc.setFillColor(255, 251, 235);
+doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 22, 2, 2, 'F');
+doc.setDrawColor(...COLORS.warning);
+doc.setLineWidth(0.8);
+doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 22, 2, 2, 'S');
+
+doc.setTextColor(...COLORS.warning);
+doc.setFontSize(9);
+doc.setFont('helvetica', 'bold');
+doc.text('Recommandation', MARGINS.left + 5, yPos + 7);
+
+doc.setTextColor(...COLORS.text);
+doc.setFontSize(8.5);
+doc.setFont('helvetica', 'normal');
+const prioConclusion = 'Il est recommande de commencer par les actions a fort impact et faible effort afin d\'obtenir des resultats rapides et mesurables.';
+const prioLines = doc.splitTextToSize(prioConclusion, CONTENT_WIDTH - 10);
+doc.text(prioLines, MARGINS.left + 5, yPos + 14);
+
+addFooter(doc, pageNumber);
 
   // ========== PAGE 6: CONCLUSION STRATEGIQUE - ANALYSE IA ==========
   pageNumber = addNewPage(doc, pageNumber);
