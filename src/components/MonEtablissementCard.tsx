@@ -63,7 +63,7 @@ export default function MonEtablissementCard({
         .from("profiles")
         .select("current_establishment_id")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       const { data: establishment, error } = await supabase
         .from("establishments")

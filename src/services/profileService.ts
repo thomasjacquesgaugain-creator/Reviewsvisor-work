@@ -97,7 +97,7 @@ export async function getOrCreateProfile(
     .from("profiles")
     .select(selectCols)
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   if (refetchError) {
     logSupabaseError("getOrCreateProfile (refetch)", refetchError);
