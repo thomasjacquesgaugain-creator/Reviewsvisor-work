@@ -48,16 +48,15 @@ export function ThemesDisplay({
 
 
   // ✅ GLOBAL TOTAL (KEY FIX)
-  const allThemes = [
-    ...(insight?.themes_universal || []),
-    ...(insight?.themes_industry || [])
-  ];
+const allThemes = [
+  ...(insight?.themes_universal || []),
+  ...(insight?.themes_industry  || []),
+].map((t: any) => ({ ...t, count: Number(t.count) || 0, importance: Number(t.importance) || 50 }));
 
   const totalThemeMentions = allThemes.reduce(
     (sum: number, t: any) => sum + (t.count || 0),
     0
   );
-
   const translateTheme = (theme: string): string => {
     const themeLower = theme.toLowerCase();
     const map: Record<string, string> = {
@@ -89,41 +88,41 @@ export function ThemesDisplay({
   };
 
   const processThemes = (themes: any[]) => {
-    return themes
-      .map((theme) => {
-        const count = theme.count || 0;
+  return themes
+    .map((theme) => {
+      const count      = Number(theme.count)      || 0;
+      const importance = Number(theme.importance) || 50;  // coerce here too
+      const ratio      = Number(insight?.positive_ratio) || 0.7;
 
-        let positive = 0;
-        let negative = 0;
+      let positive = 0;
+      let negative = 0;
 
-        if (theme.reviews?.length) {
-          theme.reviews.forEach((r: any) => {
-            if (r.rating >= 4) positive++;
-            else if (r.rating <= 2) negative++;
-          });
-        } else {
-          const ratio = insight?.positive_ratio || 0.7;
-          positive = Math.round(count * ratio);                             
-          negative = Math.round(count * (1 - ratio));                
-        }
+      if (theme.reviews?.length) {
+        theme.reviews.forEach((r: any) => {
+          if (r.rating >= 4) positive++;
+          else if (r.rating <= 2) negative++;
+        });
+      } else {
+        positive = Math.round(count * ratio);
+        negative = Math.round(count * (1 - ratio));
+      }
 
-        const total = positive + negative;
+      const total = positive + negative;
 
-        return {
-          ...theme,
-          percentage:
-            totalThemeMentions > 0
-              ? Math.round((count / totalThemeMentions) * 100)            //total theme = 10
-              : 0,
-          positivePercent:
-            total > 0 ? Math.round((positive / total) * 100) : 0,       
-          negativePercent:
-            total > 0 ? Math.round((negative / total) * 100) : 0,         
-        };
-      })
-      .sort((a, b) => (b.count || 0) - (a.count || 0));
-  };
-
+      return {
+        ...theme,
+        count,       // ✅ normalized
+        importance,  // ✅ normalized
+        percentage:
+          totalThemeMentions > 0
+            ? Math.round((count / totalThemeMentions) * 100)
+            : 0,
+        positivePercent: total > 0 ? Math.round((positive / total) * 100) : 0,
+        negativePercent: total > 0 ? Math.round((negative / total) * 100) : 0,
+      };
+    })
+    .sort((a, b) => b.count - a.count);
+};
   const SentimentBadges = ({ p, n }: any) => (
     <div className="flex gap-2">
       <span className="rounded-xl bg-green-50 px-3 py-1 text-sm font-semibold text-green-600 dark:bg-green-950/40 dark:text-green-300">
@@ -176,7 +175,7 @@ export function ThemesDisplay({
         <div>
           <h4 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">{t("analysis.overview.universalThemes")}</h4>
           <div className="space-y-2">
-            {renderThemes(insight?.themes_universal || [])}
+            {renderThemes((insight?.themes_universal || []).map((t: any) => ({ ...t, count: Number(t.count) || 0, importance: Number(t.importance) || 50 })))}
           </div>
         </div>
       )}
@@ -188,7 +187,7 @@ export function ThemesDisplay({
             {t("analysis.overview.industryThemes")}
           </h4>
           <div className="space-y-2">
-            {renderThemes(insight?.themes_industry || [])}
+            {renderThemes((insight?.themes_industry || []).map((t: any) => ({ ...t, count: Number(t.count) || 0, importance: Number(t.importance) || 50 })))}
           </div>
         </div>
       )}

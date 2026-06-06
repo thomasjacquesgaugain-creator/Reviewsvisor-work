@@ -3070,7 +3070,6 @@ const themes =issues.length > 0? issues
     };
   }, [user?.id, currentPlaceId,currentLanguage]);
 
-  console.log("insights" , insight)
 
   // Mise à jour de l'heure en temps réel
   useEffect(() => {
@@ -3208,7 +3207,7 @@ const sortedStrength = [...topStrengths].sort(
     }
   }, [insight, reviewsForAnalysis]);
 
-  console.log(analysisDataForTab)
+
 
   // Map top issues to Pareto data format
   const paretoData =
@@ -3256,8 +3255,6 @@ const sortedStrength = [...topStrengths].sort(
           };
         })
       : defaultParetoPointsData;
-
-      console.log("pareto data ",paretoPointsData)
 
   // Calculate cumulative percentages for strengths
   let cumulativeStrengths = 0;
@@ -6201,7 +6198,6 @@ const activeObjective =
                 <CardContent>
                   <RecommendationsSection
                     paretoCauses={analysisDataForTab?.paretoIssues}
-                    rcaByIssue={analysisDataForTab?.rcaByIssue}
                   />
                 </CardContent>
               </Card>
