@@ -1348,8 +1348,8 @@
   }
   },
   "establishment": {
-    "title": "Mon Établissements",
-    "myEstablishment": "Mon Etablissement",
+    "title": "Mon Établissement",
+    "myEstablishment": "Mon Établissement",
     "search": "Rechercher un établissement",
     "searchPlaceholder": "Rechercher un établissement…",
     "name": "Nom de l'établissement",
@@ -1400,7 +1400,7 @@
     "thisEstablishment": "cet établissement",
     "yourEstablishment": "votre établissement",
     "chooseAnotherEstablishment": "Choisir un autre établissement",
-    "myEstablishments": "Mon Etablissement",
+    "myEstablishments": "Mon Établissement",
     "analyzeThisEstablishment": "Analyser cet établissement",
     "establishmentAnalysed": "Établissement analysé",
     "forgetThisEstablishment": "Oublier cet établissement",
@@ -1435,7 +1435,7 @@
     "analysisError": "Erreur lors de l'analyse",
     "cannotFetchGoogleReviews": "Impossible de récupérer les avis Google",
     "errorSavingResults": "Erreur lors de l'enregistrement des résultats",
-    "myEstablishment": "Mon Etablissement",
+    "myEstablishment": "Mon Établissement",
     "noEstablishmentSelected": "Aucun établissement sélectionné. Utilisez l'autocomplétion ci-dessus pour en choisir un.",
     "establishment": "Établissement",
     "clickSaveToAddToList": "Cliquez sur 'Enregistrer' pour l'ajouter à votre liste.",
@@ -1457,14 +1457,14 @@
     "unexpectedErrorOccurred": "Une erreur inattendue s'est produite",
     "select": "Sélectionner",
     "createEstablishment": "Créer un établissement",
-    "myEstablishments": "Mon Etablissements",
+    "myEstablishments": "Mon Établissements",
     "addEstablishment": "Ajouter un établissement",
     "typeLabel": "Type d'établissement",
     "detectType": "Détecter le type",
     "detectTypeTitle": "Détecter le type depuis Google Places",
     "detectTypeSuccess": "Type détecté : {{type}}",
     "detectTypeError": "Impossible de détecter le type",
-    "reviewsPanelTitle": "Mon Etablissement"
+    "reviewsPanelTitle": "Mon Établissement"
   },
     "errors": {
     "title": "Erreur",

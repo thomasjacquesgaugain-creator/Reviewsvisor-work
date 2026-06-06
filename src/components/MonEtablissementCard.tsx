@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { getCurrentEstablishment } from "@/services/establishments";
 import {
   Etab,
@@ -27,6 +27,7 @@ import {
 import { toast as sonnerToast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
+import { getEstablishmentTypeTranslationKey } from "@/utils/establishmentTypeMapping";
 
 interface MonEtablissementCardProps {
   onAddClick?: () => void;
@@ -63,7 +64,7 @@ export default function MonEtablissementCard({
         .from("profiles")
         .select("current_establishment_id")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       const { data: establishment, error } = await supabase
         .from("establishments")
@@ -136,6 +137,33 @@ export default function MonEtablissementCard({
     address: etab?.address || undefined,
     forceFullImport,
   };
+
+  const currentEstablishmentTypes = useMemo(() => {
+    const types = etab?.types;
+    if (!types) return null;
+
+    const translateType = (value: string) => {
+      const trimmedValue = String(value).trim();
+      if (!trimmedValue) return null;
+
+      const translationKey = getEstablishmentTypeTranslationKey(trimmedValue);
+      if (!translationKey) return trimmedValue;
+
+      return t(
+        `settings.establishmentInformation.establishmentTypesOptions.${translationKey}`,
+        { defaultValue: trimmedValue },
+      );
+    };
+
+    if (Array.isArray(types)) {
+      return types
+        .map((type) => translateType(String(type)))
+        .filter(Boolean)
+        .join(", ");
+    }
+
+    return translateType(String(types));
+  }, [etab?.types, t]);
 
   const handleImportReviews = async (source?: ImportReviewSource) => {
     if (!etab?.place_id) return;
@@ -310,7 +338,14 @@ export default function MonEtablissementCard({
           <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
             {t("establishment.nameLabel")}
           </p>
-          <p className="text-base font-medium text-gray-900 dark:text-slate-100">{etab.name}</p>
+          <p className="text-base font-medium text-gray-900 dark:text-slate-100">
+            {etab.name}
+            {currentEstablishmentTypes ? (
+              <span className="ml-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+                • (<span className="italic">{currentEstablishmentTypes}</span>)
+              </span>
+            ) : null}
+          </p>
         </div>
 
         {/* Ligne 1 - Col 2 : Note Google */}
