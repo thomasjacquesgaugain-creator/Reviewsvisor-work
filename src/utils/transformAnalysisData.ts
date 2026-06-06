@@ -1,35 +1,21 @@
 import { CompleteAnalysisData, Review } from "@/types/analysis";
 import { format, parseISO, subMonths } from "date-fns";
-import { cleanReviewText, STOP_WORDS } from "@/utils/cleanReviewText";
+import { cleanReviewText } from "@/utils/cleanReviewText";
 import { formatDiagnosticSummary, formatRecommendations } from "@/utils/formatDiagnosticSummary";
-import { analyzeRootCauses } from "@/utils/rootCauseAnalysis";
-import { RootCauseAnalysis } from "@/utils/rootCauseAnalysis";
+// ✅ REMOVED: analyzeRootCauses, RootCauseAnalysis — no longer needed
 import { 
   computeSentimentFromRating, 
   normalizeRating,
   extractKeywordsWithSentiment,
-  aggregateKeywords,
-  mapThemeLabel
 } from "@/utils/reviewProcessing";
 import i18n from "@/i18n/config";
 
+// ✅ REMOVED: createEmptyRCA — no longer needed
 
-function createEmptyRCA(problem: string = ""): RootCauseAnalysis {
-  return {
-    problem,
-    summary: "",
-    categories: []
-  };
-}
-
-/**
- * Transforme les données brutes (insight + reviews) en structure CompleteAnalysisData
- */
 export function transformAnalysisData(
   insight: any,
   reviews: Review[]
 ): CompleteAnalysisData {
-  // Protection contre les données null/undefined
   const safeReviews = reviews || [];
   const safeInsight = insight || {};
   
@@ -37,10 +23,8 @@ export function transformAnalysisData(
   const avgRating = safeInsight?.avg_rating || 0;
   const positiveRatio = safeInsight?.positive_ratio || 0;
 
-  // Calculer la tendance (comparaison avec il y a 3 mois)
-  // Minimum d'avis requis par période pour un calcul significatif
   const MIN_REVIEWS_PER_PERIOD = 5;
-  const MIN_REVIEWS_FOR_SIMPLE_TREND = 5; // Minimum pour afficher une tendance simple
+  const MIN_REVIEWS_FOR_SIMPLE_TREND = 5;
   
   let trend: 'up' | 'down' | 'stable' | 'insufficient' | 'partial' = 'stable';
   let trendValue: number | null = null;
@@ -48,7 +32,6 @@ export function transformAnalysisData(
   let isPartialData = false;
   
   if (safeReviews.length > 0) {
-    // Filtrer les avis avec dates valides
     const reviewsWithDates = safeReviews.filter(r => {
       try {
         const dateStr = (r as any).published_at || r.date;
@@ -60,120 +43,66 @@ export function transformAnalysisData(
       }
     });
 
-    // Si moins de 5 avis avec dates, données vraiment insuffisantes
     if (reviewsWithDates.length < MIN_REVIEWS_FOR_SIMPLE_TREND) {
       trend = 'insufficient';
-      trendValue = null;
-      trendDeltaPoints = null;
     } else {
-      // Trier par date
       const sortedReviews = reviewsWithDates
-        .map(r => ({
-          ...r,
-          date: parseISO((r as any).published_at || r.date || '')
-        }))
+        .map(r => ({ ...r, date: parseISO((r as any).published_at || r.date || '') }))
         .sort((a, b) => a.date.getTime() - b.date.getTime());
 
       const threeMonthsAgo = subMonths(new Date(), 3);
       const recentReviews = sortedReviews.filter(r => r.date >= threeMonthsAgo);
-      const olderReviews = sortedReviews.filter(r => r.date < threeMonthsAgo);
+      const olderReviews  = sortedReviews.filter(r => r.date < threeMonthsAgo);
 
-      // Méthode 1 : Comparaison 3 mois vs 3 mois précédents (méthode standard)
+      const computeSimpleTrend = (sorted: typeof sortedReviews) => {
+        const firstPartSize = Math.max(1, Math.floor(sorted.length * 0.3));
+        const lastPartSize  = Math.max(1, Math.floor(sorted.length * 0.3));
+        const firstPart = sorted.slice(0, firstPartSize);
+        const lastPart  = sorted.slice(-lastPartSize);
+        if (firstPart.length < 2 || lastPart.length < 2) return false;
+        const firstAvg = firstPart.reduce((s, r) => s + (r.note || 0), 0) / firstPart.length;
+        const lastAvg  = lastPart.reduce((s, r) => s + (r.note || 0), 0) / lastPart.length;
+        if (!isFinite(firstAvg) || !isFinite(lastAvg) || firstAvg === 0) return false;
+        trendDeltaPoints = lastAvg - firstAvg;
+        trendValue = ((lastAvg - firstAvg) / firstAvg) * 100;
+        isPartialData = true;
+        trend = 'partial';
+        return true;
+      };
+
       if (recentReviews.length >= MIN_REVIEWS_PER_PERIOD && olderReviews.length >= MIN_REVIEWS_PER_PERIOD) {
-        const recentAvg = recentReviews.reduce((sum, r) => sum + (r.note || 0), 0) / recentReviews.length;
-        const olderAvg = olderReviews.reduce((sum, r) => sum + (r.note || 0), 0) / olderReviews.length;
-        
-        if (!isNaN(recentAvg) && !isNaN(olderAvg) && isFinite(recentAvg) && isFinite(olderAvg) && olderAvg > 0) {
+        const recentAvg = recentReviews.reduce((s, r) => s + (r.note || 0), 0) / recentReviews.length;
+        const olderAvg  = olderReviews.reduce((s, r) => s + (r.note || 0), 0) / olderReviews.length;
+        if (isFinite(recentAvg) && isFinite(olderAvg) && olderAvg > 0) {
           trendDeltaPoints = recentAvg - olderAvg;
           trendValue = ((recentAvg - olderAvg) / olderAvg) * 100;
-          
-          if (trendValue > 2) trend = 'up';
-          else if (trendValue < -2) trend = 'down';
-          else trend = 'stable';
+          trend = trendValue > 2 ? 'up' : trendValue < -2 ? 'down' : 'stable';
         } else {
-          // Fallback sur méthode simple si moyennes invalides mais on a assez d'avis
-          if (sortedReviews.length >= MIN_REVIEWS_FOR_SIMPLE_TREND) {
-            const firstPartSize = Math.max(1, Math.floor(sortedReviews.length * 0.3));
-            const lastPartSize = Math.max(1, Math.floor(sortedReviews.length * 0.3));
-            const firstPart = sortedReviews.slice(0, firstPartSize);
-            const lastPart = sortedReviews.slice(-lastPartSize);
-            
-            if (firstPart.length >= 2 && lastPart.length >= 2) {
-              const firstAvg = firstPart.reduce((sum, r) => sum + (r.note || 0), 0) / firstPart.length;
-              const lastAvg = lastPart.reduce((sum, r) => sum + (r.note || 0), 0) / lastPart.length;
-              
-              if (!isNaN(firstAvg) && !isNaN(lastAvg) && isFinite(firstAvg) && isFinite(lastAvg) && firstAvg > 0) {
-                trendDeltaPoints = lastAvg - firstAvg;
-                trendValue = ((lastAvg - firstAvg) / firstAvg) * 100;
-                isPartialData = true;
-                trend = 'partial';
-              } else {
-                trend = 'insufficient';
-                trendValue = null;
-                trendDeltaPoints = null;
-              }
-            } else {
-              trend = 'insufficient';
-              trendValue = null;
-              trendDeltaPoints = null;
-            }
-          } else {
+          if (!computeSimpleTrend(sortedReviews)) {
             trend = 'insufficient';
-            trendValue = null;
-            trendDeltaPoints = null;
           }
         }
       } else {
-        // Méthode 2 : Tendance simple (début vs fin) si période courte
-        // Prendre les premiers 30% et derniers 30% des avis
-        const firstPartSize = Math.max(1, Math.floor(sortedReviews.length * 0.3));
-        const lastPartSize = Math.max(1, Math.floor(sortedReviews.length * 0.3));
-        
-        const firstPart = sortedReviews.slice(0, firstPartSize);
-        const lastPart = sortedReviews.slice(-lastPartSize);
-        
-        if (firstPart.length >= 2 && lastPart.length >= 2) {
-          const firstAvg = firstPart.reduce((sum, r) => sum + (r.note || 0), 0) / firstPart.length;
-          const lastAvg = lastPart.reduce((sum, r) => sum + (r.note || 0), 0) / lastPart.length;
-          
-          if (!isNaN(firstAvg) && !isNaN(lastAvg) && isFinite(firstAvg) && isFinite(lastAvg) && firstAvg > 0) {
-            trendDeltaPoints = lastAvg - firstAvg;
-            trendValue = ((lastAvg - firstAvg) / firstAvg) * 100;
-            isPartialData = true;
-            // Garder 'partial' comme statut, la direction sera déterminée par trendValue dans l'UI
-            trend = 'partial';
-          } else {
-            trend = 'insufficient';
-            trendValue = null;
-            trendDeltaPoints = null;
-          }
-        } else {
-          // Pas assez de données même pour tendance simple
+        if (!computeSimpleTrend(sortedReviews)) {
           trend = 'insufficient';
-          trendValue = null;
-          trendDeltaPoints = null;
         }
       }
     }
   }
 
-  // Calculer les pourcentages depuis les vrais avis si possible
   let positivePercentage = positiveRatio * 100;
   let negativePercentage = (1 - positiveRatio) * 100;
-  let neutralPercentage = 0;
+  let neutralPercentage  = 0;
   
   if (safeReviews.length > 0) {
-    // Recalculer depuis les avis réels pour plus de précision
     const positiveCount = safeReviews.filter(r => r.note >= 4).length;
     const negativeCount = safeReviews.filter(r => r.note <= 2).length;
-    const neutralCount = totalReviews - positiveCount - negativeCount;
-    
+    const neutralCount  = totalReviews - positiveCount - negativeCount;
     positivePercentage = (positiveCount / totalReviews) * 100;
     negativePercentage = (negativeCount / totalReviews) * 100;
-    neutralPercentage = (neutralCount / totalReviews) * 100;
+    neutralPercentage  = (neutralCount  / totalReviews) * 100;
   }
 
-  // Vue d'ensemble
   const overview = {
     averageRating: avgRating || (safeReviews.length > 0 
       ? safeReviews.reduce((sum, r) => sum + (r.note || 0), 0) / safeReviews.length 
@@ -188,480 +117,223 @@ export function transformAnalysisData(
     isPartialData
   };
 
-  // Historique - grouper par mois depuis published_at ou date
   const historyMap = new Map<string, { sum: number; count: number }>();
   safeReviews.forEach(review => {
     try {
       if (!review.note) return;
-      // Utiliser published_at si disponible, sinon date
       const dateStr = (review as any).published_at || review.date;
       if (!dateStr) return;
-      
       const date = parseISO(dateStr);
-      if (isNaN(date.getTime())) return; // Date invalide
-      
+      if (isNaN(date.getTime())) return;
       const monthKey = format(date, 'yyyy-MM');
       const existing = historyMap.get(monthKey) || { sum: 0, count: 0 };
       existing.sum += review.note;
       existing.count += 1;
       historyMap.set(monthKey, existing);
-    } catch (e) {
-      // Ignorer les dates invalides
-      console.warn('Date invalide pour review:', review.date);
+    } catch {
+      console.warn('Invalid date for review:', review.date);
     }
   });
 
   const history = Array.from(historyMap.entries())
-    .map(([date, data]) => ({
-      date,
-      rating: data.count > 0 ? data.sum / data.count : 0,
-      count: data.count
-    }))
+    .map(([date, data]) => ({ date, rating: data.count > 0 ? data.sum / data.count : 0, count: data.count }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  // Sentiment
   const positiveCount = safeReviews.filter(r => r.note >= 4).length;
   const negativeCount = safeReviews.filter(r => r.note <= 2).length;
-  const neutralCount = totalReviews - positiveCount - negativeCount;
+  const neutralCount  = totalReviews - positiveCount - negativeCount;
+  const sentiment = { positive: positiveCount, neutral: neutralCount, negative: negativeCount };
 
-  const sentiment = {
-    positive: positiveCount,
-    neutral: neutralCount,
-    negative: negativeCount
-  };
+  // ── PARETO ISSUES ──────────────────────────────────────────
+  const localizedIssues = Array.isArray(safeInsight?.top_issues) ? safeInsight.top_issues : [];
+  const originalTopIssues = safeInsight?.top_issues_original || {};
+  const enIssues = Array.isArray(originalTopIssues.en) ? originalTopIssues.en : [];
+  const frIssues = Array.isArray(originalTopIssues.fr) ? originalTopIssues.fr : [];
+  const sourceIssues = enIssues.length > 0 ? enIssues : frIssues;
 
-  // Pareto Issues
-  // Calculer le total des mentions d'irritants (dénominateur pour les %)
-// Calculer le total des mentions d'irritants (dénominateur pour les %)
-const lang = i18n.language.startsWith("fr")
-  ? "fr"
-  : "en";
+  const totalIssuesMentions = sourceIssues.reduce(
+    (sum: number, issue: any) => sum + (Number(issue?.count) || 0), 0
+  );
 
-/*
-safeInsight.top_issues => localized/current language
-safeInsight.original_top_issues => {
-  en: [],
-  fr: []
-}
-*/
-
-const originalTopIssues =
-  safeInsight?.top_issues_original
-|| {};
-
-const enIssues = Array.isArray(originalTopIssues.en)
-  ? originalTopIssues.en
-  : [];
-
-const frIssues = Array.isArray(originalTopIssues.fr)
-  ? originalTopIssues.fr
-  : [];
-
-// source for counts/length
-const sourceIssues =
-  enIssues.length > 0
-    ? enIssues
-    : frIssues;
-
-const totalIssuesMentions = sourceIssues.reduce(
-  (sum: number, issue: any) =>
-    sum + (issue?.count || 0),
-  0
-);
-
-const paretoIssues = sourceIssues.map(
-  (_: any, index: number) => {
-    const enIssue = enIssues[index] || {};
-    const frIssue = frIssues[index] || {};
-
-    const count =
-      enIssue.count ||
-      frIssue.count ||
-      0;
-
-    const percentage =
-      totalIssuesMentions > 0
-        ? (count / totalIssuesMentions) * 100
-        : 0;
-
-    const enName =
-      enIssue.theme ||
-      enIssue.issue ||
-      `Issue ${index + 1}`;
-
-    const frName =
-      frIssue.theme ||
-      frIssue.issue ||
-      `Problème ${index + 1}`;
+  const paretoIssues = sourceIssues.map((_: any, index: number) => {
+    const enIssue       = enIssues[index]       || {};
+    const frIssue       = frIssues[index]       || {};
+    const localizedIssue = localizedIssues[index] || {};
+    const count      = Number(enIssue.count ?? frIssue.count ?? 0) || 0;
+    const percentage = totalIssuesMentions > 0 ? (count / totalIssuesMentions) * 100 : 0;
 
     return {
-      key:
-        enIssue.key ||
-        frIssue.key ||
-        `issue_${index}`,
-
-      // current language display
-      name:
-        lang === "fr"
-          ? frName
-          : enName,
-
-      // preserve both languages
-      en: enName,
-      fr: frName,
-
+      key:         enIssue.key || frIssue.key || localizedIssue.key || `issue_${index}`,
+      name:        localizedIssue.theme || localizedIssue.issue || "",
+      en:          enIssue.theme  || enIssue.issue  || "",
+      fr:          frIssue.theme  || frIssue.issue  || "",
       count,
       percentage,
-    };
-  }
-);
-
-  // Calculer le total des mentions de satisfactions (dénominateur pour les %)
-  const totalStrengthsMentions = (safeInsight?.top_praises || []).reduce((sum: number, strength: any) => sum + (strength.count || 0), 0);
-  
-  // Pareto Strengths
-  const paretoStrengths = (safeInsight?.top_praises || []).map((strength: any, index: number) => {
-    const count = strength.count || 0;
-    // Pourcentage basé sur le total des mentions de satisfactions (pas sur le total des avis)
-    const percentage = totalStrengthsMentions > 0 ? (count / totalStrengthsMentions) * 100 : 0;
-    return {
-      name: strength.theme || strength.strength || `Point fort ${index + 1}`,
-      count,
-      percentage
+      impact:      localizedIssue.impact        || "medium",
+      ai_synthesis:localizedIssue.ai_synthesis  || "",
+      root_causes: localizedIssue.root_causes   || [],   // ✅ comes straight from API
     };
   });
 
-  // Thèmes - utiliser les données de l'IA si disponibles, sinon calculer depuis les avis
-  let themes = [];
-  let universalThemes = [];
-  let industryThemes = [];
-  if ((safeInsight?.themes_industry||safeInsight?.themes_universal)
-     && (Array.isArray(safeInsight.themes_industry)||Array.isArray(safeInsight.themes_universal))
-     && (safeInsight.themes_industry.length > 0 ||safeInsight.themes_universal.length > 0)) {
-    // Utiliser les thèmes de l'IA
-
-   const totalcountcheck = safeInsight.themes_universal.reduce((sum, item) => sum + item.count, 0) +
-  safeInsight.themes_industry.reduce((sum, item) => sum + item.count, 0) ;
-   const totalcount = totalcountcheck>=totalReviews?totalcountcheck:totalReviews
- function computeThemeScore(theme: any, totalCount: number) {
-  const count = theme.count || 0;
-
-  // Frequency ratio
-  const frequency =
-    totalCount > 0
-      ? count / totalCount
-      : 0;
-
-  // Smooth scaling
-  const frequencyBoost = Math.sqrt(frequency);
-
-  // Normalize importance (10–100 → 0.1–1)
-  const normalizedImportance =
-    Math.max(0, Math.min(1, (theme.importance || 50) / 100));
-
-  // Combined weight
-  const weight =
-    frequencyBoost * 0.5 +
-    normalizedImportance * 0.5;
-
-  // Final polarity score
-  if (theme.sentiment === "positive") {
-    return 0.5 + weight * 0.5;
-  }
-
-  if (theme.sentiment === "negative") {
-    return 0.5 - weight * 0.5;
-  }
-
-  return 0.5;
-}
-  industryThemes = safeInsight.themes_industry.map((theme: any) => {
-  const count = theme.count || 0;
-  return {
-    theme: theme.theme || theme,
-    score: computeThemeScore(theme, totalcount), 
-    count,
-    verbatims: theme.verbatims || [],
-    importance: theme.importance
-  };
-});
-  universalThemes = safeInsight.themes_universal.map((theme: any) => {
-  const count = theme.count || 0;
-
-  return {
-      theme: theme.theme || theme,
-      score: computeThemeScore(theme, totalcount), 
+  // ── PARETO STRENGTHS ───────────────────────────────────────
+  const totalStrengthsMentions = (safeInsight?.top_praises || []).reduce(
+    (sum: number, s: any) => sum + (Number(s.count) || 0), 0
+  );
+  const paretoStrengths = (safeInsight?.top_praises || []).map((strength: any, index: number) => {
+    const count = Number(strength.count) || 0;
+    return {
+      name:       strength.theme || strength.strength || `Point fort ${index + 1}`,
       count,
-      verbatims: theme.verbatims || [],
-      importance:theme.importance
+      percentage: totalStrengthsMentions > 0 ? (count / totalStrengthsMentions) * 100 : 0,
     };
-});
-    themes=[...universalThemes ,...industryThemes]
+  });
+
+  // ── THEMES ─────────────────────────────────────────────────
+  // ✅ Guard: ensure both arrays exist before reduce
+  const rawUniversal = Array.isArray(safeInsight?.themes_universal) ? safeInsight.themes_universal : [];
+  const rawIndustry  = Array.isArray(safeInsight?.themes_industry)  ? safeInsight.themes_industry  : [];
+
+  let themes: any[] = [];
+
+  if (rawUniversal.length > 0 || rawIndustry.length > 0) {
+
+    // ✅ Number() coercion so string counts/importance don't break math
+    function computeThemeScore(theme: any, totalCount: number): number {
+      const count      = Number(theme.count)      || 0;
+      const importance = Number(theme.importance) || 50;
+      const frequency     = totalCount > 0 ? count / totalCount : 0;
+      const frequencyBoost = Math.sqrt(frequency);
+      const normalizedImportance = Math.max(0, Math.min(1, importance / 100));
+      const weight = frequencyBoost * 0.5 + normalizedImportance * 0.5;
+      if (theme.sentiment === "positive") return 0.5 + weight * 0.5;
+      if (theme.sentiment === "negative") return 0.5 - weight * 0.5;
+      return 0.5;
+    }
+
+    const totalCountCheck =
+      rawUniversal.reduce((sum: number, item: any) => sum + (Number(item.count) || 0), 0) +
+      rawIndustry .reduce((sum: number, item: any) => sum + (Number(item.count) || 0), 0);
+    const totalCount = totalCountCheck >= totalReviews ? totalCountCheck : totalReviews;
+
+    const mapTheme = (theme: any) => ({
+      theme:      theme.theme || theme,
+      score:      computeThemeScore(theme, totalCount),
+      count:      Number(theme.count)      || 0,   // ✅ coerced
+      importance: Number(theme.importance) || 50,  // ✅ coerced
+      verbatims:  theme.verbatims || [],
+    });
+
+    const universalThemes = rawUniversal.map(mapTheme);
+    const industryThemes  = rawIndustry .map(mapTheme);
+    themes = [...universalThemes, ...industryThemes];
+
+    // Fill missing verbatims from reviews
     themes = themes.map(theme => {
-  
-      if (theme.verbatims && theme.verbatims.length > 0) {
-        return theme;
-      }
+      if (theme.verbatims && theme.verbatims.length > 0) return theme;
 
       const themeWords = theme.theme
         .toLowerCase()
         .replace(/[^\w\s]/g, "")
         .split(/\s+/);
 
-      const matched = (safeReviews || [])
+      const matched = safeReviews
         .map(r => {
           const text = cleanReviewText(r.texte || "");
           if (!text) return null;
-
-          const rating = normalizeRating(r.note || 0);
+          const rating    = normalizeRating(r.note || 0);
           const sentiment = computeSentimentFromRating(rating);
-          return {
-            text,
-            lower: text.toLowerCase(),
-            sentiment
-          };
+          return { text, lower: text.toLowerCase(), sentiment };
         })
-        .filter(r => r !== null)
-        .filter(r =>
-          themeWords.some(word => r!.lower.includes(word))
-        );
+        .filter(Boolean)
+        .filter(r => themeWords.some(word => r!.lower.includes(word)));
 
-      
       const positive = matched.filter(r => r!.sentiment === 'positive');
       const negative = matched.filter(r => r!.sentiment === 'negative');
       const neutral  = matched.filter(r => r!.sentiment === 'neutral');
-      let selected: any[] = [];
-      if (theme.score < 0.5) {
-        // Negative themes:
-        // prioritize negative + neutral reviews
-        selected = [
-          ...negative.slice(0, 4),
-          ...neutral.slice(0, 2),
-        ];
-      } else if (theme.score > 0.5) {
-        // Positive themes:
-        // prioritize positive + neutral reviews
-        selected = [
-          ...positive.slice(0, 4),
-          ...neutral.slice(0, 2),
-        ];
-      } else {
-        // Neutral themes
-        selected = [
-          ...neutral.slice(0, 3),
-          ...positive.slice(0, 1),
-          ...negative.slice(0, 1),
-        ];
-      }
 
-      // Remove duplicates
-      selected = selected.filter(
-        (v, index, self) =>
-          index === self.findIndex((x) => x.text === v.text)
-      );
+      let selected: any[] =
+        theme.score < 0.5 ? [...negative.slice(0, 4), ...neutral.slice(0, 2)]
+        : theme.score > 0.5 ? [...positive.slice(0, 4), ...neutral.slice(0, 2)]
+        : [...neutral.slice(0, 3), ...positive.slice(0, 1), ...negative.slice(0, 1)];
+
+      selected = selected.filter((v, i, self) => i === self.findIndex(x => x.text === v.text));
       if (selected.length < 5) {
-        const remaining = matched.filter((m) => !selected.some((s) => s.text === m!.text));
+        const remaining = matched.filter(m => !selected.some(s => s.text === m!.text));
         selected.push(...remaining.slice(0, 5 - selected.length));
       }
 
-      return {
-        ...theme,
-        verbatims: selected.slice(0, 5).map((v) => v!.text),
-      };
+      return { ...theme, verbatims: selected.slice(0, 5).map(v => v!.text) };
     });
 
-// const totalcount =
-//   safeInsight.themes_universal.reduce((sum, item) => sum + item.count, 0) +
-//   safeInsight.themes_industry.reduce((sum, item) => sum + item.count, 0);
-
-//  const allThemes = new Map<string, { count: number; score: number }>();
-
-//  //for issues
-//  (safeInsight?.themes_industry||[]).forEach((issue: any) => {
-
-//       if(issue.sentiment.toLowerCase()==='negative'){
-//         const themeName = issue.theme || issue.issue || '';
-//         if (themeName) {
-//           const count = issue.count || 0;
-//           allThemes.set(themeName, { count, score: Math.max(0, 1 - (count / totalcount)) });
-//         }}
-
-//       else if(issue.sentiment.toLowerCase()==='positive'){
-//          const themeName = issue.theme || issue.issue || '';
-//         if (themeName) {
-//           const count = issue.count || 0;
-//          allThemes.set(themeName, { count, score: Math.min(1, 0.5 + (count / totalcount)) });
-//         }
-//       }
-
-      // else if(issue.sentiment.toLowerCase()==='mixed'){
-      //    const themeName = issue.theme || issue.strength || '';
-      //    if (themeName) {
-      //     const count = issue.count || 0;
-      //     allThemes.set(themeName, { count, score: Math.max(0, 1 - (count / totalReviews)) });
-      //   }}
-    // });
-
-    
-    // (safeInsight?.themes_universal||[]).forEach((issue: any) => {
-
-    //   if(issue.sentiment.toLowerCase()==='negative'){
-    //     const themeName = issue.theme || issue.issue || '';
-    //     if (themeName) {
-    //       const count = issue.count || 0;
-    //       allThemes.set(themeName, { count, score: Math.max(0, 1 - (count / totalcount)) });
-    //     }}
-
-    //   else if(issue.sentiment.toLowerCase()==='positive'){
-    //      const themeName = issue.theme || issue.issue || '';
-    //     if (themeName) {
-    //       const count = issue.count || 0;
-    //      allThemes.set(themeName, { count, score: Math.min(1, 0.5 + (count / totalcount)) });
-    //     }
-    //   }
-
-      // else if(issue.sentiment.toLowerCase()==='mixed'){
-      //    const themeName = issue.theme || issue.strength || '';
-      //    if (themeName) {
-      //     const count = issue.count || 0;
-      //     allThemes.set(themeName, { count, score: Math.max(0, 1 - (count / totalReviews)) });
-      //   }}
-    // });
-
-
-   
-  // themes = Array.from(allThemes.entries()).map(([theme, data]) => ({
-  //     theme,
-  //     score: data.score,
-  //     count: data.count,
-  //     verbatims: []
-  //   }));
-
-
-
-
-
-
-  } 
-  else {
-    // Calculer les thèmes depuis les top_issues et top_praises
+  } else {
+    // Fallback: derive themes from top_issues / top_praises
     const allThemes = new Map<string, { count: number; score: number }>();
-    
-    // Ajouter les problèmes (score bas)
     (safeInsight?.top_issues || []).forEach((issue: any) => {
-      const themeName = issue.theme || issue.issue || '';
-      if (themeName) {
-        const count = issue.count || 0;
-        allThemes.set(themeName, { count, score: Math.max(0, 1 - (count / totalReviews)) });
-      }
+      const name  = issue.theme || issue.issue || '';
+      const count = Number(issue.count) || 0;
+      if (name) allThemes.set(name, { count, score: Math.max(0, 1 - (count / totalReviews)) });
     });
-    
-    // Ajouter les points forts (score haut)
     (safeInsight?.top_praises || []).forEach((strength: any) => {
-      const themeName = strength.theme || strength.strength || '';
-      if (themeName) {
-        const count = strength.count || 0;
-        const existing = allThemes.get(themeName);
-        if (existing) {
-          // Si le thème existe déjà (problème + point fort), moyenner les scores
-          existing.count += count;
-          existing.score = Math.max(0.5, existing.score + (count / totalReviews));
-        } else {
-          allThemes.set(themeName, { count, score: Math.min(1, 0.5 + (count / totalReviews)) });
-        }
+      const name  = strength.theme || strength.strength || '';
+      const count = Number(strength.count) || 0;
+      if (!name) return;
+      const existing = allThemes.get(name);
+      if (existing) {
+        existing.count += count;
+        existing.score  = Math.max(0.5, existing.score + (count / totalReviews));
+      } else {
+        allThemes.set(name, { count, score: Math.min(1, 0.5 + (count / totalReviews)) });
       }
     });
-    
     themes = Array.from(allThemes.entries()).map(([theme, data]) => ({
-      theme,
-      score: data.score,
-      count: data.count,
-      verbatims: []
+      theme, score: data.score, count: Number(data.count), verbatims: []
     }));
   }
 
-  // Analyse qualitative - extraire les mots-clés avec sentiment associé
-  // RÈGLE FONDAMENTALE : Un mot peut apparaître plusieurs fois, une fois par sentiment
-  // Chaque couple (mot, sentiment) possède son propre compteur
+  // ── QUALITATIVE ────────────────────────────────────────────
   const wordSentimentCounts = new Map<string, Map<'positive' | 'neutral' | 'negative', number>>();
-  
   safeReviews.forEach(review => {
     const rawText = (review as any).text || review.texte;
     if (!rawText) return;
-    
-    // Nettoyer le texte pour extraire uniquement la partie française
     const cleanedText = cleanReviewText(rawText);
     if (!cleanedText) return;
-    
-    // Calculer le sentiment de l'avis
-    const rating = normalizeRating(review.note || (review as any).rating || 0);
+    const rating          = normalizeRating(review.note || (review as any).rating || 0);
     const reviewSentiment = computeSentimentFromRating(rating);
-    
-    // Extraire les mots-clés avec leur sentiment
-    const keywords = extractKeywordsWithSentiment(cleanedText, reviewSentiment);
-    
-    // Agrégation par couple (mot, sentiment) - chaque couple a son propre compteur
-    keywords.forEach(({ word, sentiment }) => {
-      if (!wordSentimentCounts.has(word)) {
-        wordSentimentCounts.set(word, new Map());
-      }
-      
-      const sentimentMap = wordSentimentCounts.get(word)!;
-      sentimentMap.set(
-        sentiment,
-        (sentimentMap.get(sentiment) || 0) + 1
-      );
+    extractKeywordsWithSentiment(cleanedText, reviewSentiment).forEach(({ word, sentiment }) => {
+      if (!wordSentimentCounts.has(word)) wordSentimentCounts.set(word, new Map());
+      const sm = wordSentimentCounts.get(word)!;
+      sm.set(sentiment, (sm.get(sentiment) || 0) + 1);
     });
   });
 
-  // Construire la liste des top keywords : une entrée par couple (mot, sentiment)
-  // Un même mot peut apparaître plusieurs fois (une fois par sentiment)
   const topKeywords: Array<{ word: string; count: number; sentiment: 'positive' | 'neutral' | 'negative' }> = [];
-  
   for (const [word, sentimentMap] of wordSentimentCounts.entries()) {
-    // Créer une entrée séparée pour chaque sentiment de ce mot
     for (const [sentiment, count] of sentimentMap.entries()) {
-      topKeywords.push({
-        word,
-        count, // Nombre d'occurrences de ce mot avec ce sentiment spécifique
-        sentiment
-      });
+      topKeywords.push({ word, count, sentiment });
     }
   }
-  
-  // Trier par fréquence décroissante (par sentiment)
   topKeywords.sort((a, b) => b.count - a.count);
 
-  // Verbatims clés - prendre les avis les plus représentatifs (texte nettoyé en français)
   const keyVerbatims = safeReviews
     .map(r => {
-      const rawText = (r as any).text || r.texte;
+      const rawText     = (r as any).text || r.texte;
       if (!rawText) return null;
-      
-      // Nettoyer le texte pour extraire uniquement la partie française
       const cleanedText = cleanReviewText(rawText);
       if (!cleanedText || cleanedText.length < 20) return null;
-      
-      return {
-        ...r,
-        cleanedText
-      };
+      return { ...r, cleanedText };
     })
     .filter((r): r is NonNullable<typeof r> => r !== null)
     .sort((a, b) => {
-      // Prioriser les avis avec des notes extrêmes (1, 5) ou neutres (3)
-      const ratingA = a.note || 0;
-      const ratingB = b.note || 0;
-      const importanceA = ratingA === 1 || ratingA === 5 || ratingA === 3 ? 1 : 0;
-      const importanceB = ratingB === 1 || ratingB === 5 || ratingB === 3 ? 1 : 0;
-      if (importanceA !== importanceB) return importanceB - importanceA;
-      return (b as any).published_at ? 1 : -1; // Prioriser les plus récents
+      const rA = a.note || 0, rB = b.note || 0;
+      const iA = rA === 1 || rA === 5 || rA === 3 ? 1 : 0;
+      const iB = rB === 1 || rB === 5 || rB === 3 ? 1 : 0;
+      if (iA !== iB) return iB - iA;
+      return (b as any).published_at ? 1 : -1;
     })
-    .slice(0, 8) // Prendre plus de verbatims
+    .slice(0, 8)
     .map(r => {
-      const rating = normalizeRating(r.note || (r as any).rating || 0);
+      const rating    = normalizeRating(r.note || (r as any).rating || 0);
       const sentiment = computeSentimentFromRating(rating);
-      
       return {
         text: r.cleanedText.substring(0, 200) + (r.cleanedText.length > 200 ? '...' : ''),
         rating,
@@ -669,83 +341,36 @@ const paretoIssues = sourceIssues.map(
       };
     });
 
-  const qualitative = {
-    topKeywords,
-    keyVerbatims
-  };
+  const qualitative = { topKeywords, keyVerbatims };
 
-  // Préparer les données pour le formatage du résumé
+  // ── DIAGNOSTIC ─────────────────────────────────────────────
   const diagnosticInsights = {
     totalReviews,
     avgRating: overview.averageRating,
     positivePercentage: overview.positivePercentage,
     negativePercentage: overview.negativePercentage,
-    topStrengths: paretoStrengths.slice(0, 3).map(s => ({
-      theme: s.name,
-      count: s.count,
-      percentage: s.percentage
-    })),
-    topWeaknesses: paretoIssues.slice(0, 3).map(i => ({
-      theme: i.name,
-      count: i.count,
-      percentage: i.percentage
-    }))
+    topStrengths:  paretoStrengths.slice(0, 3).map(s => ({ theme: s.name,  count: s.count, percentage: s.percentage })),
+    topWeaknesses: paretoIssues  .slice(0, 3).map(i => ({ theme: i.name,  count: i.count, percentage: i.percentage })),
   };
 
-  // Diagnostic - formater le résumé depuis summary (peut être un objet JSON ou une string)
-  const summaryText = formatDiagnosticSummary(safeInsight?.summary, diagnosticInsights);
-
-  // Recommandations - peut être dans summary.recommendations ou directement dans recommendations
+  const summaryText    = formatDiagnosticSummary(safeInsight?.summary, diagnosticInsights);
   let recommendations: string[] = [];
   if (safeInsight?.recommendations) {
     recommendations = formatRecommendations(safeInsight.recommendations);
   } else if (safeInsight?.summary && typeof safeInsight.summary === 'object') {
-    const summaryObj = safeInsight.summary as any;
-    if (summaryObj.recommendations) {
-      recommendations = formatRecommendations(summaryObj.recommendations);
-    }
+    const s = safeInsight.summary as any;
+    if (s.recommendations) recommendations = formatRecommendations(s.recommendations);
   }
 
   const diagnostic = {
-    summary: summaryText,
+    summary:      summaryText,
     topStrengths: diagnosticInsights.topStrengths,
-    topWeaknesses: diagnosticInsights.topWeaknesses,
+    topWeaknesses:diagnosticInsights.topWeaknesses,
     recommendations,
-    recommendations_for_main_issues:insight?.pain_points_prioritized
+    recommendations_for_main_issues: insight?.pain_points_prioritized,
   };
 
-  // ----------------------
-// Root Cause Analysis (RCA
-// ----------------------
-// ----------------------
-// RCA PER ISSUE
-// ----------------------
-const rcaByIssue: Record<string, RootCauseAnalysis> = {};
-
-const safePareto = Array.isArray(paretoIssues) ? paretoIssues : [];
-const safeQualitative = qualitative || {
-  topKeywords: [],
-  keyVerbatims: []
-};
-const safeReviewsArray = Array.isArray(safeReviews) ? safeReviews : [];
-
-safePareto.forEach(issue => {
-  try {
-    const rca = analyzeRootCauses(
-      issue.name,   
-      themes,
-      safeQualitative,
-      safePareto,
-      safeReviewsArray
-    );
-    rcaByIssue[issue.key] = rca || createEmptyRCA(issue.key);
-  } catch (e) {
-    console.warn(`RCA failed for issue: ${issue.name}`, e);
-    rcaByIssue[issue.key] = createEmptyRCA(issue.key);
-  }
-});
-
-console.log("safePareto", safePareto)
+  // ✅ REMOVED: rcaByIssue — root_causes now live directly on each paretoIssue
   return {
     overview,
     history,
@@ -755,6 +380,5 @@ console.log("safePareto", safePareto)
     themes,
     qualitative,
     diagnostic,
-    rcaByIssue
   };
 }

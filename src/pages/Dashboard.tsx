@@ -3070,7 +3070,6 @@ const themes =issues.length > 0? issues
     };
   }, [user?.id, currentPlaceId,currentLanguage]);
 
-  console.log("insights" , insight)
 
   // Mise à jour de l'heure en temps réel
   useEffect(() => {
@@ -3208,7 +3207,7 @@ const sortedStrength = [...topStrengths].sort(
     }
   }, [insight, reviewsForAnalysis]);
 
-  console.log(analysisDataForTab)
+
 
   // Map top issues to Pareto data format
   const paretoData =
@@ -3256,8 +3255,6 @@ const sortedStrength = [...topStrengths].sort(
           };
         })
       : defaultParetoPointsData;
-
-      console.log("pareto data ",paretoPointsData)
 
   // Calculate cumulative percentages for strengths
   let cumulativeStrengths = 0;
@@ -3397,7 +3394,7 @@ const activeObjective =
   ) || null;
 
     const progress = useSmartProgress(activeObjective);
-
+    
 
 
 
@@ -6003,16 +6000,13 @@ const activeObjective =
                 </div>
 
                 {/* Contenu Synthèse & priorités - EN DESSOUS */}
-                {openCard === "synthesis" && (
+               {openCard === "synthesis" && (
                   <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="relative text-left">
                       <div className="flex items-center gap-2 mb-2">
                         <Lightbulb className="w-5 h-5 text-blue-500" />
                         <span className="text-lg font-semibold">
-                          {t(
-                            "dashboard.synthesisPriorities",
-                            "Synthèse & priorités",
-                          )}
+                          {t("dashboard.synthesisPriorities", "Synthèse & priorités")}
                         </span>
                       </div>
                       <p className="text-sm text-gray-600 dark:text-slate-300">
@@ -6023,97 +6017,107 @@ const activeObjective =
                       </p>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-8">
-                        {/* Section 1 - Axes d'amélioration identifiés */}
-                        <div>
-                          <h4 className="font-semibold text-gray-800 dark:text-slate-100 mb-4">
-                            {t(
-                              "dashboard.improvementAxesIdentified",
-                              "Axes d'amélioration identifiés",
-                            )}
+                      {/* Empty state - no active objective or no synthesis */}
+                      {!activeObjective || !activeObjective.synthesis?.[i18n.language] ? (
+                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                          <Lightbulb className="w-12 h-12 text-gray-300 dark:text-slate-600 mb-4" />
+                          <h4 className="font-semibold text-gray-500 dark:text-slate-400 mb-2">
+                            {t("dashboard.noSynthesisAvailable", "Aucune synthèse disponible")}
                           </h4>
-                          <div className="space-y-3">
-                            {/* Action prioritaire */}
-                            <div className="p-4 bg-red-50 dark:bg-red-950/30 rounded-lg border-l-4 border-red-500">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Badge className="bg-red-500 text-white text-xs">
-                                  {t("dashboard.priorityAction")}
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-gray-700 dark:text-slate-200">
-                                {topIssues.length > 0
-                                  ? t("dashboard.fixMainFrictionPoint", {
-                                      issue: translateTheme(
-                                        sortedIssue[0]?.theme ||
-                                          sortedIssue[0]?.issue ||
-                                          t("dashboard.notIdentified"),
-                                      ),
-                                    })
-                                  : t(
-                                      "dashboard.analyzeReviewsToIdentifyFrictionPoints",
-                                    )}
-                              </p>
-                            </div>
-
-                            {/* Court terme */}
-                            <div className="p-4 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border-l-4 border-yellow-500">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Badge className="bg-yellow-500 text-white text-xs">
-                                  {t("dashboard.shortTerm")}
-                                </Badge>
-                              </div>
-                              <ul className="space-y-2">
-                                <li className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2">
-                                  <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                                  {t(
-                                    "dashboard.trainTeamOnIdentifiedImprovements",
-                                  )}
-                                <span>: {topIssues[1]?.theme||t("dashboard.notIdentified")}</span>
-                                </li>
-                                <li className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2">
-                                  <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                                  {topStrengths.length > 0
-                                    ? t("dashboard.enhanceStrengths", {
-                                        strength: 
-                                            sortedStrength[0]?.theme ||
-                                            t("dashboard.notIdentified"),
-                                            
-                                      })
-                                    : t(
-                                           sortedStrength[0]?.theme ||
-                                 "dashboard.identifyAndEnhanceExistingStrengths",
-                                      )}
-                                </li>
-                              </ul>
-                            </div>
-
-                            {/* Gestion des avis */}
-                            <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border-l-4 border-blue-500">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Badge className="bg-blue-500 text-white text-xs">
-                                  {t("dashboard.reviewManagement")}
-                                </Badge>
-                              </div>
-                              <ul className="space-y-2">
-                                <li className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2">
-                                  <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                                  {t("dashboard.respondSystematically")}
-                                </li>
-                                <li className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2">
-                                  <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                                  {t("dashboard.setUpRegularTracking")}
-                                </li>
-                              </ul>
-                            </div>
-                          </div>
+                          <p className="text-sm text-gray-400 dark:text-slate-500 max-w-sm">
+                            {t(
+                              "dashboard.noSynthesisDescription",
+                              "Sélectionnez un objectif actif ou collectez davantage d'avis pour générer une synthèse stratégique.",
+                            )}
+                          </p>
                         </div>
+                      ) : (
+                        <div className="space-y-8">
+                          {/* Section 1 - Axes d'amélioration identifiés */}
+                          {(() => {
+                            const synthesis = activeObjective.synthesis[i18n.language];
 
-                        {/* Séparateur visuel */}
-                        <div className="border-t border-gray-200 dark:border-slate-700"></div>
-                               
-                          <EffortMatrix analysisData={analysisDataForTab}></EffortMatrix>
+                            return (
+                              <div>
+                                <h4 className="font-semibold text-gray-800 dark:text-slate-100 mb-4">
+                                  {t("dashboard.improvementAxesIdentified", "Axes d'amélioration identifiés")}
+                                </h4>
+                                <div className="space-y-3">
+                                  {/* Action prioritaire */}
+                                  <div className="p-4 bg-red-50 dark:bg-red-950/30 rounded-lg border-l-4 border-red-500">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Badge className="bg-red-500 text-white text-xs">
+                                        {t("dashboard.priorityAction")}
+                                      </Badge>
+                                    </div>
+                                    <p className="text-sm text-gray-700 dark:text-slate-200">
+                                      {synthesis.top_priority || t("dashboard.analyzeReviewsToIdentifyFrictionPoints")}
+                                    </p>
+                                    {synthesis.primary_friction && (
+                                      <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 italic">
+                                        {synthesis.primary_friction}
+                                      </p>
+                                    )}
+                                  </div>
 
-                      </div>
+                                  {/* Court terme */}
+                                  <div className="p-4 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border-l-4 border-yellow-500">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Badge className="bg-yellow-500 text-white text-xs">
+                                        {t("dashboard.shortTerm")}
+                                      </Badge>
+                                    </div>
+                                    <ul className="space-y-2">
+                                      {synthesis.secondary_issues?.map((issue, index) => (
+                                        <li
+                                          key={index}
+                                          className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2"
+                                        >
+                                          <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                                          {issue}
+                                        </li>
+                                      ))}
+                                      {synthesis.strengths_to_preserve?.map((strength, index) => (
+                                        <li
+                                          key={`strength-${index}`}
+                                          className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2"
+                                        >
+                                          <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                                          {t("dashboard.enhanceStrengths", { strength })}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+
+                                  {/* Gestion des avis */}
+                                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border-l-4 border-blue-500">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Badge className="bg-blue-500 text-white text-xs">
+                                        {t("dashboard.reviewManagement")}
+                                      </Badge>
+                                    </div>
+                                    <ul className="space-y-2">
+                                      <li className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2">
+                                        <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                        {t("dashboard.respondSystematically")}
+                                      </li>
+                                      <li className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2">
+                                        <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                        {t("dashboard.setUpRegularTracking")}
+                                      </li>
+                                    </ul>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()}
+
+                          {/* Séparateur visuel */}
+                          <div className="border-t border-gray-200 dark:border-slate-700"></div>
+
+                          <EffortMatrix analysisData={analysisDataForTab} />
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 )}
@@ -6194,7 +6198,6 @@ const activeObjective =
                 <CardContent>
                   <RecommendationsSection
                     paretoCauses={analysisDataForTab?.paretoIssues}
-                    rcaByIssue={analysisDataForTab?.rcaByIssue}
                   />
                 </CardContent>
               </Card>
@@ -6308,64 +6311,39 @@ const activeObjective =
                         {t("dashboard.followImprovementActions")}
                       </p>
                     </CardHeader>
-                    <CardContent>
+                  <CardContent>
+                    {!activeObjective || !activeObjective.action_plan?.[i18n.language] ? (
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <ClipboardList className="w-12 h-12 text-gray-300 dark:text-slate-600 mb-4" />
+                        <h4 className="font-semibold text-gray-500 dark:text-slate-400 mb-2">
+                          {t("dashboard.noActionsAvailable", "Aucune action disponible")}
+                        </h4>
+                        <p className="text-sm text-gray-400 dark:text-slate-500 max-w-sm">
+                          {t(
+                            "dashboard.analyzeEstablishmentToGetActions",
+                            "Analysez votre établissement pour obtenir des actions personnalisées.",
+                          )}
+                        </p>
+                      </div>
+                    ) : (
                       <div className="space-y-4">
-                        {/* Liste des actions générées dynamiquement */}
                         {(() => {
-                          const actionPlan = generateActionPlan(
-                            insight,
-                            allReviewsForChart,
-                          );
-
-                          if (actionPlan.length === 0) {
-                            return (
-                              <div className="text-center py-8 text-gray-500 dark:text-slate-400">
-                                <p className="text-sm">
-                                  {t("dashboard.noActionsAvailable") ||
-                                    "Aucune action disponible"}
-                                </p>
-                                <p className="text-xs mt-1">
-                                  {t(
-                                    "dashboard.analyzeEstablishmentToGetActions",
-                                  ) ||
-                                    "Analysez votre établissement pour obtenir des actions personnalisées"}
-                                </p>
-                              </div>
-                            );
-                          }
+                          const actionPlan = activeObjective.action_plan[i18n.language];
 
                           return (
                             <div className="space-y-3">
                               {actionPlan.map((action, index) => {
                                 const priorityBadgeClass =
-                                  action.priority === "high"
+                                  action.priority.toLowerCase() === "high"
                                     ? "bg-red-100 text-red-800 border-red-300"
-                                    : action.priority === "medium"
+                                    : action.priority.toLowerCase() === "medium"
                                       ? "bg-yellow-100 text-yellow-800 border-yellow-300"
                                       : "bg-blue-100 text-blue-800 border-blue-300";
 
-                                const statusBadgeClass =
-                                  action.status === "completed"
-                                    ? "bg-green-100 text-green-800 border-green-300"
-                                    : action.status === "inProgress"
-                                      ? "bg-yellow-100 text-yellow-800 border-yellow-300"
-                                      : action.priority === "high"
-                                        ? "bg-red-500 text-white border-red-500"
-                                        : action.priority === "low"
-                                          ? "bg-blue-500 text-white border-blue-500"
-                                          : "border-gray-300 text-gray-700";
-
-                                const statusLabel =
-                                  action.status === "completed"
-                                    ? t("dashboard.completed")
-                                    : action.status === "inProgress"
-                                      ? t("dashboard.inProgress")
-                                      : t("dashboard.toDo");
-
                                 const priorityLabel =
-                                  action.priority === "high"
+                                  action.priority.toLowerCase() === "high"
                                     ? t("dashboard.highPriority")
-                                    : action.priority === "medium"
+                                    : action.priority.toLowerCase() === "medium"
                                       ? t("dashboard.mediumPriority")
                                       : t("dashboard.lowPriority");
 
@@ -6377,7 +6355,7 @@ const activeObjective =
                                     <div className="flex items-start justify-between gap-3">
                                       <div className="flex-1">
                                         <p className="text-sm font-medium text-gray-900 dark:text-slate-100 mb-1">
-                                          {action.title}
+                                          {action.text}
                                         </p>
                                         <div className="flex items-center gap-2 mt-2">
                                           <Badge
@@ -6387,53 +6365,11 @@ const activeObjective =
                                             {priorityLabel}
                                           </Badge>
                                           <span className="text-xs text-gray-500 dark:text-slate-400">
-                                            {translateTheme(action.issue)}
+                                            {activeObjective.pareto_cause?.[i18n.language]}
                                           </span>
                                         </div>
                                       </div>
-                                      <div className="flex flex-col items-end gap-2">
-                                        {/* <Badge
-                                          variant={
-                                            action.status === "completed"
-                                              ? "default"
-                                              : "outline"
-                                          }
-                                          className={`text-xs ${statusBadgeClass}`}
-                                        >
-                                          {statusLabel}
-                                        </Badge> */}
-
-                                        {/* <button
-                                          type="button"
-                                          onClick={() => {
-                                            const key = `${action.title}__${action.issue}`;
-                                            setActionPlanChecks((prev) => ({
-                                              ...prev,
-                                              [key]: !prev[key],
-                                            }));
-                                          }}
-                                          className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
-                                          aria-label={`Cocher l'action "${action.title}"`}
-                                        >
-                                          <div
-                                            className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${(() => {
-                                              const key = `${action.title}__${action.issue}`;
-                                              const checked =
-                                                !!actionPlanChecks[key];
-                                              return checked
-                                                ? "border-green-600 bg-green-50"
-                                                : "border-gray-400 bg-white hover:border-gray-600";
-                                            })()}`}
-                                          >
-                                            {(() => {
-                                              const key = `${action.title}__${action.issue}`;
-                                              return actionPlanChecks[key] ? (
-                                                <Check className="w-4 h-4 text-green-600" />
-                                              ) : null;
-                                            })()}
-                                          </div>
-                                        </button> */}
-                                      </div>
+                                      <div className="flex flex-col items-end gap-2" />
                                     </div>
                                   </div>
                                 );
@@ -6449,9 +6385,10 @@ const activeObjective =
                           </p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
                 {/* Contenu Checklist opérationnelle - EN DESSOUS */}
                 {/* {openCard === "checklist" && (

@@ -203,16 +203,6 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
 
   // Préparer l'analyse des causes racines pour le problème principal
   const mainIssue = safeIssues.length > 0 ? safeIssues[0] : null;
-  const rootCauseAnalysis = useMemo(() => {
-    if (!mainIssue || !qualitative) return null;
-    return analyzeRootCauses(
-      mainIssue.name,
-      themes,
-      qualitative,
-      safeIssues,
-      filteredReviews
-    );
-  }, [mainIssue, themes, qualitative, safeIssues, filteredReviews]);
 
   // Préparer les données pour le diagramme de Pareto détaillé (irritants)
   const detailedIssuesData = useMemo(() => {
@@ -472,12 +462,12 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                   {generateIssuesAnalysis(safeIssues,t)}
                   
                   {/* CTA discret sur la cause principale */}
-                  {safeIssues.length > 0 && rootCauseAnalysis && (
+                  {safeIssues.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="gap-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        className="gap-2 ..."
                         onClick={() => setOpenRootCauseModal(true)}
                       >
                         <ArrowRight className="w-4 h-4" />
@@ -723,11 +713,12 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
       </Card>
 
       {/* Modal d'analyse des causes racines */}
-      {rootCauseAnalysis && (
+      {safeIssues.length > 0 && (
         <RootCauseAnalysisModal
           open={openRootCauseModal}
           onOpenChange={setOpenRootCauseModal}
-          analysis={rootCauseAnalysis}
+          paretoIssues={safeIssues}   // ← full array, modal handles stepping
+          initialIndex={0}
         />
       )}
     </div>

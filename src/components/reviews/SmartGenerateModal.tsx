@@ -72,7 +72,7 @@ export function SmartGenerateModal({
   ? "fr"
   : "en";
   const draftData = currentDraft;
-  console.log("draftData",draftData)
+ 
 
 
   

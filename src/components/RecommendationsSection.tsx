@@ -15,10 +15,9 @@ import i18n from "@/i18n/config";
 
 interface Props {
   paretoCauses: ParetoItem[];
-  rcaByIssue: Record<string, RootCauseAnalysis>;
 }
 
-export function RecommendationsSection({ paretoCauses, rcaByIssue = {} }: Props) {
+export function RecommendationsSection({ paretoCauses }: Props) {
 
   const {
     objectives,

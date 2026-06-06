@@ -56,9 +56,9 @@ export function buildSmartPayload(
 ): GenerateSmartPayload {
   const totalNegative = paretoIssue.count ?? 1;
 
-  const allCauses = rca.categories.flatMap((c) =>
-    c.causes.map((cause) => ({ ...cause, categoryName: c.name }))
-  );
+const allCauses = (rca.categories ?? []).flatMap((c) =>
+  (c.causes ?? []).map((cause) => ({ ...cause, categoryName: c.name }))
+);
   const topCause = [...allCauses].sort(
     (a, b) => (b.count ?? 0) - (a.count ?? 0)
   )[0];
@@ -84,7 +84,7 @@ export function buildSmartPayload(
                                 en:  paretoIssue.en,
                                 fr:  paretoIssue.fr,
                               },
-    computed_count:           count,
+    computed_count:           paretoIssue.count,
     computed_target:          Math.ceil(count * 0.5),
     computed_impact:          impact,
     computed_effort:          effort,
@@ -291,6 +291,7 @@ export const useSmartStore = create<SmartStore>()(
         const t = i18n.t.bind(i18n);
 
         try {
+        
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) throw new Error("User not authenticated");
 

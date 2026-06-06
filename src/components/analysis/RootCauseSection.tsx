@@ -99,8 +99,6 @@ const CauseCard = ({
 }) => {
   const catStyle = CATEGORY_STYLES[category] ?? DEFAULT_CAT_STYLE;
   const Icon = catStyle.icon;
-  console.log("category",category)
-  console.log("causes",causes)
 
 
   return (
@@ -169,16 +167,16 @@ const CauseCard = ({
                 }} />
                 {cause.description}
               </span>
-              <span style={{
+              {/* <span style={{
                 display: "inline-flex", alignItems: "center", gap: "4px",
                 padding: "3px 8px", borderRadius: "999px",
                 fontSize: "11px", fontWeight: 600,
                 color: prob.color, background: prob.bg, border: `1px solid ${prob.border}`,
                 flexShrink: 0, whiteSpace: "nowrap",
-              }}>
-                <ProbIcon size={11} />
-                {t(`analysis.pareto.rootCause.probability.${prob.label}`) || prob.label}
-              </span>
+              }}> */}
+                {/* <ProbIcon size={11} /> */}
+                {/* {t(`analysis.pareto.rootCause.probability.${prob.label}`) || prob.label} */}
+              {/* </span> */}
             </li>
           );
         })}
@@ -213,6 +211,7 @@ export function RootCauseSection({
   const resolvedEstablishmentId = activeEstablishmentId ?? selectedEstablishment?.id ?? null;
 
   const currentIssue = paretoIssues?.length > 0 ? paretoIssues[currentStep] : null;
+
 
   useEffect(() => {
     setCurrentStep(0);
@@ -258,12 +257,31 @@ export function RootCauseSection({
     ) ?? null;
   }, [safeObjectives, currentIssue]);
 
-  const rootCauseAnalysis = useMemo(() => {
-    if (!currentIssue || !qualitative) return null;
-    return analyzeRootCauses(currentIssue.name, themes, qualitative, paretoIssues, reviews);
-  }, [currentIssue, themes, qualitative, paretoIssues, reviews]);
+// 1. Replace the rootCauseAnalysis memo with this:
+const rootCauseAnalysis = useMemo(() => {
+  if (!currentIssue) return null;
 
-  console.log("root cause analysis", rootCauseAnalysis)
+  const importanceToProbability = (importance: string): ProbabilityLevel => {
+    if (importance === "dominant")  return "Probable";
+    if (importance === "secondary") return "Possible";
+    return "Occasionnelle";
+  };
+
+  const categories = (currentIssue.root_causes ?? []).map((rc, idx) => ({
+    name: rc.category,
+    causes: (rc.causes ?? []).map((desc: string) => ({
+      description: desc,
+      probability: importanceToProbability(rc.importance),
+    })),
+    isPrimary: idx === 0,
+  }));
+
+  return {
+    categories,
+    summary: currentIssue.ai_synthesis ?? "",
+  };
+}, [currentIssue]);
+ 
 
   const goToStep = (step: number) => {
     setCurrentStep(step);
@@ -283,7 +301,7 @@ export function RootCauseSection({
     const saved = await generateSmart(
       estId,
       currentIssue,
-      rootCauseAnalysis,
+      currentIssue.root_causes,
       result.dominantEffort,
       result.dominantCategory,
       "user_questionnaire",
@@ -519,7 +537,7 @@ export function RootCauseSection({
             {rootCauseAnalysis.categories.length > 0 ? (
               <div style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(225px, 1fr))",
+                gridTemplateColumns: "repeat(3, minmax(0, 340px))",
                 gap: "16px",
                 animation: `rvPaneFade 0.35s ${EASE} 0.05s backwards`,
               }}>
