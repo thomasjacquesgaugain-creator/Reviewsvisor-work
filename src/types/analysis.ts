@@ -30,7 +30,9 @@ export interface ParetoItem {
   percentage: number;
   key?:string
   en :string,
-  fr:string
+  fr:string,
+  ai_synthesis:any,
+  root_causes:any
 }
 
 export interface ThemeAnalysis {
@@ -62,7 +64,7 @@ export interface CompleteAnalysisData {
   themes: ThemeAnalysis[];
   qualitative: QualitativeData;
   diagnostic: DiagnosticSummary;
-  rcaByIssue:any;
+
 }
 
 export interface Review {

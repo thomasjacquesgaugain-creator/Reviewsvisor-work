@@ -17,7 +17,7 @@
  * - getLanguageInstruction() updated: explicitly tells AI not to translate sentiment
  */
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import "https://deno.land/x/dotenv@v3.2.2/load.ts";
 
 type BusinessType =
@@ -185,7 +185,6 @@ const CANONICAL_THEME_KEYS: Record<string, string[]> = {
 
 // ─── REVERSE LOOKUP MAP ───────────────────────────────────────────────────────
 // Built once at module load. Maps every variant → canonical key.
-// e.g. "attente" → "wait_time", "service quality" → "service_quality"
 
 const THEME_TO_KEY: Map<string, string> = new Map();
 for (const [key, variants] of Object.entries(CANONICAL_THEME_KEYS)) {
@@ -201,10 +200,7 @@ for (const [key, variants] of Object.entries(CANONICAL_THEME_KEYS)) {
  *   1. Exact match against THEME_TO_KEY
  *   2. Partial match — sorted by variant length DESC so the most specific
  *      variant always wins over a shorter generic one.
- *      e.g. "service quality" (15 chars) beats "service" (7 chars)
- *           "food presentation" (17 chars) beats "food" (4 chars)
- *   3. slugify() fallback — consistent within a run, logs a warning so the
- *      dictionary can be grown from production logs.
+ *   3. slugify() fallback — logs a warning for dictionary growth.
  */
 function resolveThemeKey(theme: string): string {
   const normalized = theme.toLowerCase().trim();
@@ -213,9 +209,8 @@ function resolveThemeKey(theme: string): string {
   const exact = THEME_TO_KEY.get(normalized);
   if (exact) return exact;
 
-  // 2. Partial match — collect ALL matches, then pick longest variant
+  // 2. Partial match — collect ALL matches, pick longest variant
   const partialMatches: Array<{ key: string; variantLength: number }> = [];
-
   for (const [variant, key] of THEME_TO_KEY.entries()) {
     if (normalized.includes(variant) || variant.includes(normalized)) {
       partialMatches.push({ key, variantLength: variant.length });
@@ -238,21 +233,15 @@ function resolveThemeKey(theme: string): string {
 }
 
 // ─── SENTIMENT NORMALIZATION ─────────────────────────────────────────────────
-// Sentiment is always stored as English regardless of output language.
-// This map handles all known AI translation variants.
-
 const SENTIMENT_NORMALIZE: Record<string, 'positive' | 'mixed' | 'negative'> = {
-  // English — canonical
   positive:   'positive',
   mixed:      'mixed',
   negative:   'negative',
-  // French translations the AI sometimes produces
   positif:    'positive',
-  positifve:  'positive',  // typo guard
+  positifve:  'positive',
   mixte:      'mixed',
   négatif:    'negative',
   negatif:    'negative',
-  // Spanish / other drift guards
   positivo:   'positive',
   negativo:   'negative',
   mixto:      'mixed',
@@ -268,25 +257,21 @@ function normalizeSentiment(raw: unknown): 'positive' | 'mixed' | 'negative' {
 }
 
 /**
- * Drop-in replacement for the previous enforceKeys().
- *
- * Changes:
- * - Keys are resolved from CANONICAL_THEME_KEYS (AI key field is ignored entirely)
- * - FR keys are always mirrored from EN by index (unchanged behaviour)
- * - sentiment is normalized to English on ALL items in both EN and FR arrays
+ * Enforces stable keys and normalized sentiment on all bilingual arrays.
+ * - Keys resolved from CANONICAL_THEME_KEYS (AI key field ignored)
+ * - FR keys always mirrored from EN by index
+ * - sentiment normalized to English on ALL items in both EN and FR
  */
 function enforceKeys(bilingual: { en: any[]; fr: any[] }): { en: any[]; fr: any[] } {
   const enItems = Array.isArray(bilingual?.en) ? bilingual.en : [];
   const frItems = Array.isArray(bilingual?.fr) ? bilingual.fr : [];
 
-  // EN: resolve key from dictionary + normalize sentiment
   const keyedEn = enItems.map((item) => ({
     ...item,
     key: resolveThemeKey(item.theme ?? ''),
     ...(item.sentiment !== undefined && { sentiment: normalizeSentiment(item.sentiment) }),
   }));
 
-  // FR: mirror EN key by index + normalize sentiment
   const keyedFr = frItems.map((item, i) => ({
     ...item,
     key: keyedEn[i]?.key ?? resolveThemeKey(item.theme ?? ''),
@@ -294,6 +279,35 @@ function enforceKeys(bilingual: { en: any[]; fr: any[] }): { en: any[]; fr: any[
   }));
 
   return { en: keyedEn, fr: keyedFr };
+}
+
+// ─── LOCKED KEYS BUILDER ─────────────────────────────────────────────────────
+/**
+ * Builds a theme→key map from previously saved review_insights data.
+ * Covers top_issues, top_praises, themes_universal, themes_industry.
+ * This map is passed to analyzePassA and injected into the prompt as
+ * frozen constraints — the AI cannot change keys that already exist.
+ */
+function buildLockedKeys(existingInsight: any): Record<string, string> {
+  const locked: Record<string, string> = {};
+
+  const sources = [
+    existingInsight?.top_issues?.en,
+    existingInsight?.top_praises?.en,
+    existingInsight?.themes_universal?.en,
+    existingInsight?.themes_industry?.en,
+  ];
+
+  for (const arr of sources) {
+    if (!Array.isArray(arr)) continue;
+    for (const item of arr) {
+      if (item?.theme && item?.key) {
+        locked[item.theme.toLowerCase().trim()] = item.key;
+      }
+    }
+  }
+
+  return locked;
 }
 
 function getUniversalThemes(): { en: string[]; fr: string[] } {
@@ -532,8 +546,6 @@ function computeStats(rows: ReviewRow[]) {
 }
 
 // ─── LANGUAGE INSTRUCTION ────────────────────────────────────────────────────
-// Updated: explicitly instructs AI to never translate sentiment values.
-
 function getLanguageInstruction(): string {
   return `
 Generate BOTH English and French content.
@@ -548,14 +560,6 @@ IMPORTANT RULES:
 - sentiment values MUST always be in English: "positive", "mixed", or "negative"
   DO NOT translate sentiment to French — "positif", "mixte", "négatif" are WRONG
 
-Example:
-{
-  "top_issues": {
-    "en": [...],
-    "fr": [...]
-  }
-}
-
 - Translate ONLY generated analysis content (theme names, descriptions, what_it_means, etc.)
 - Keep evidence_quotes in original review language
 - sentiment, importance, and count values should remain equivalent across EN and FR
@@ -569,6 +573,7 @@ async function analyzePassA(
   totalReviews: number,
   businessType: BusinessType,
   businessTypeConfidence: number,
+  lockedKeys: Record<string, string> = {},  // ← frozen keys from previous run
 ) {
   if (!OPENAI_KEY) return null;
 
@@ -577,6 +582,21 @@ async function analyzePassA(
   const industryThemesHint = businessTypeConfidence >= 45
     ? `\nAlso extract 3–6 themes specific to the ${businessType} industry — these are REQUIRED when confidence >= 45%.`
     : '\nFocus only on universal themes and do not invent industry-specific themes.';
+
+  // ─── Build locked keys instruction ────────────────────────────────────────
+  // If this place_id has been analyzed before, the existing theme→key pairs
+  // are injected here as hard constraints. The AI MUST reuse these exact keys
+  // for the same themes — it cannot rename, reslug, or change them.
+  const lockedKeysInstruction = Object.keys(lockedKeys).length > 0
+    ? `
+LOCKED THEME KEYS — this establishment has been analyzed before.
+The following theme→key pairs are FROZEN. You MUST use exactly these keys for these themes.
+Do NOT change, rename, reslug, or translate them under any circumstances:
+${Object.entries(lockedKeys).map(([theme, key]) => `- "${theme}" → key must be "${key}"`).join("\n")}
+
+Any theme NOT listed above follows the normal key rules.
+`
+    : '';
 
   const prompt = [
     {
@@ -596,115 +616,139 @@ Total reviews analyzed: ${totalReviews}
 Customer reviews:
 ${samples.slice(0, 100).map((t, i) => `${i + 1}. ${t}`).join("\n")}
 
+${lockedKeysInstruction}
+
 COUNTING RULE — very important:
 For every theme, "count" = the NUMBER OF INDIVIDUAL REVIEWS (out of ${totalReviews} total) that explicitly mention this theme.
-Count carefully: if 18 reviews mention food quality, count = 18. Do NOT undercount. Typical themes in a dataset of ${totalReviews} reviews will have counts of 5–40+.
+Count carefully: if 18 reviews mention food quality, count = 18. Do NOT undercount.
 
 INSTRUCTIONS:
 1. Extract ALL relevant UNIVERSAL themes found in the reviews:
    EN: ${universalThemes.en.join(', ')}
    FR: ${universalThemes.fr.join(', ')}
    Only include a theme if at least 2 reviews mention it.
+
 2. ${industryThemesHint}
+
 3. For each theme, determine the sentiment (positive/mixed/negative) and importance (0–100)
+
 4. Include 1–2 short quotes as evidence (in the original review language)
+
 5. ${languageInstruction}
+
 IMPORTANT:
 - Every theme MUST contain a stable "key"
-- The key MUST ALWAYS be in English
-- The key MUST be snake_case
-- The SAME key must be used in both English and French versions
+- The key MUST ALWAYS be in English snake_case
+- The SAME key MUST be used in both English and French versions
+- If the theme appears in the LOCKED THEME KEYS above, use the locked key — no exceptions
 - Example:
   EN -> { "key": "wait_time", "theme": "Wait Time" }
   FR -> { "key": "wait_time", "theme": "Temps d'attente" }
-- sentiment MUST always be one of: "positive", "mixed", "negative" — NEVER translate to French
+- sentiment MUST always be one of: "positive", "mixed", "negative" — NEVER translate
+
+ROOT CAUSE ANALYSIS (TOP ISSUES ONLY)
+
+For every issue returned in top_issues, perform an evidence-based root cause analysis using the Ishikawa (5M) framework.
+
+Allowed category_key values: workforce | methods | equipment | materials | environment
+
+Category selection rules:
+- workforce → staffing levels, responsiveness, professionalism, training, attitude
+- methods → workflow problems, scheduling, coordination failures, operational bottlenecks
+- equipment → broken equipment, slow systems, malfunctioning tools, technical failures
+- materials → products, ingredients, food quality, freshness, stock availability
+- environment → cleanliness, noise, layout, temperature, atmosphere, seating, parking
+
+STRICT RULES:
+- NEVER include a category without supporting review evidence
+- NEVER generate more than 3 categories
+- NEVER generate empty categories
+- A category with weak or missing evidence MUST be omitted
+- Generate 1 card if only one category is strongly supported
+- Generate 2 cards if two are strongly supported
+- Generate 3 cards only if three are strongly supported
+- Cards ranked: dominant → secondary → monitor
+
+Each root cause card must contain: label, importance, category, category_key, causes (2–3), evidence (1–3 real quotes)
 
 QUANTITY REQUIREMENTS:
-- top_issues: 3–5 items, sorted by count descending (themes with negative/mixed sentiment most mentioned)
-- top_strength: 3–5 items, sorted by count descending (themes with positive sentiment most mentioned)
+- top_issues: 3–5 items, sorted by count descending
+- top_strength: 3–5 items, sorted by count descending
 - themes_universal: all universal themes found (typically 4–7)
 - themes_industry: 3–6 industry-specific themes (REQUIRED if confidence >= 45%)
 
-Return EXACTLY this JSON shape (ALL values in angle brackets are placeholders — derive every value from the reviews above, do not copy these):
+Return EXACTLY this JSON shape:
 {
   "top_issues": {
     "en": [
-      { "key": "<stable_slug_in_english_snake_case>", "theme": "<theme>", "count": <number> },
-      { "key": "<stable_slug_in_english_snake_case>", "theme": "<theme>", "count": <number> },
-      { "key": "<stable_slug_in_english_snake_case>", "theme": "<theme>", "count": <number> }
+      {
+        "key": "<stable_slug_in_english_snake_case>",
+        "theme": "<theme>",
+        "count": <number>,
+        "impact": "<dominant|high|medium>",
+        "ai_synthesis": "<summary of the issue and likely causes>",
+        "root_causes": [
+          {
+            "label": "Dominant Cause",
+            "importance": "dominant",
+            "category": "<display category>",
+            "category_key": "<workforce|methods|equipment|materials|environment>",
+            "causes": ["<specific cause>", "<specific cause>"],
+            "evidence": ["<review quote>", "<review quote>"]
+          }
+        ]
+      }
     ],
     "fr": [
-      { "key": "<SAME key as EN item 1 — must match exactly>", "theme": "<thème>", "count": <number> },
-      { "key": "<SAME key as EN item 2 — must match exactly>", "theme": "<thème>", "count": <number> },
-      { "key": "<SAME key as EN item 3 — must match exactly>", "theme": "<thème>", "count": <number> }
+      {
+        "key": "<same key as EN — MUST match exactly>",
+        "theme": "<translated theme>",
+        "count": <number>,
+        "impact": "<dominant|high|medium>",
+        "ai_synthesis": "<translated synthesis>",
+        "root_causes": [
+          {
+            "label": "Dominant Cause",
+            "importance": "dominant",
+            "category": "<display category>",
+            "category_key": "<workforce|methods|equipment|materials|environment>",
+            "causes": ["<specific cause>", "<specific cause>"],
+            "evidence": ["<review quote>", "<review quote>"]
+          }
+        ]
+      }
     ]
   },
   "top_strength": {
-    "en": [
-      { "key": "<stable_slug_in_english_snake_case>", "theme": "<theme>", "count": <number> },
-      { "key": "<stable_slug_in_english_snake_case>", "theme": "<theme>", "count": <number> },
-      { "key": "<stable_slug_in_english_snake_case>", "theme": "<theme>", "count": <number> }
-    ],
-    "fr": [
-      { "key": "<SAME key as EN item 1>", "theme": "<thème>", "count": <number> },
-      { "key": "<SAME key as EN item 2>", "theme": "<thème>", "count": <number> },
-      { "key": "<SAME key as EN item 3>", "theme": "<thème>", "count": <number> }
-    ]
+    "en": [{ "key": "<slug>", "theme": "<theme>", "count": <number> }],
+    "fr": [{ "key": "<same key as EN>", "theme": "<theme>", "count": <number> }]
   },
   "themes_universal": {
-    "en": [
-      {
-        "theme": "<universal theme name in English>",
-        "sentiment": "<positive|mixed|negative>",
-        "importance": "<0-100 based on how often and strongly it appears>",
-        "evidence_quotes": ["<exact short quote from a review>", "<exact short quote from a review>"],
-        "what_it_means": "<one sentence explaining what customers say about this theme>",
-        "count": "<number of reviews mentioning this theme>"
-      }
-    ],
-    "fr": [
-      {
-        "theme": "<nom du thème universel en français>",
-        "sentiment": "<positive|mixed|negative — NEVER translate, always use English values>",
-        "importance": "<0-100 selon la fréquence et l'intensité>",
-        "evidence_quotes": ["<citation courte exacte d'un avis>", "<citation courte exacte d'un avis>"],
-        "what_it_means": "<une phrase expliquant ce que les clients disent de ce thème>",
-        "count": "<nombre d'avis mentionnant ce thème>"
-      }
-    ]
+    "en": [{ "theme": "<name>", "sentiment": "<positive|mixed|negative>", "importance": <0-100>, "evidence_quotes": ["<quote>"], "what_it_means": "<explanation>", "count": <number> }],
+    "fr": [{ "theme": "<nom>", "sentiment": "<positive|mixed|negative>", "importance": <0-100>, "evidence_quotes": ["<citation>"], "what_it_means": "<explication>", "count": <number> }]
   },
   "themes_industry": {
-    "en": [
-      {
-        "theme": "<industry-specific theme name in English>",
-        "sentiment": "<positive|mixed|negative>",
-        "importance": "<0-100 based on how often and strongly it appears>",
-        "evidence_quotes": ["<exact short quote from a review>"],
-        "what_it_means": "<one sentence explaining what customers say about this theme>",
-        "count": "<number of reviews mentioning this theme>"
-      }
-    ],
-    "fr": [
-      {
-        "theme": "<nom du thème métier en français>",
-        "sentiment": "<positive|mixed|negative — NEVER translate, always use English values>",
-        "importance": "<0-100 selon la fréquence et l'intensité>",
-        "evidence_quotes": ["<citation courte exacte d'un avis>"],
-        "what_it_means": "<une phrase expliquant ce que les clients disent de ce thème>",
-        "count": "<nombre d'avis mentionnant ce thème>"
-      }
-    ]
+    "en": [{ "theme": "<name>", "sentiment": "<positive|mixed|negative>", "importance": <0-100>, "evidence_quotes": ["<quote>"], "what_it_means": "<explanation>", "count": <number> }],
+    "fr": [{ "theme": "<nom>", "sentiment": "<positive|mixed|negative>", "importance": <0-100>, "evidence_quotes": ["<citation>"], "what_it_means": "<explication>", "count": <number> }]
   },
   "summary": {
     "en": {
       "one_liner": "One-sentence summary",
-      "what_customers_love": ["point 1", "point 2"],
-      "what_customers_hate": ["point 1", "point 2"]
+      "what_customers_love": [
+        { "theme": "<exact theme from top_strength.en[N].theme>", "reason": "<why from what_it_means>", "count": <from top_strength.en[N].count> }
+      ],
+      "what_customers_hate": [
+        { "theme": "<exact theme from top_issues.en[N].theme>", "reason": "<why from what_it_means>", "count": <from top_issues.en[N].count> }
+      ]
     },
     "fr": {
       "one_liner": "Résumé en une phrase",
-      "what_customers_love": ["point 1", "point 2"],
-      "what_customers_hate": ["point 1", "point 2"]
+      "what_customers_love": [
+        { "theme": "<thème exact de top_strength.fr[N].theme>", "reason": "<pourquoi>", "count": <count> }
+      ],
+      "what_customers_hate": [
+        { "theme": "<thème exact de top_issues.fr[N].theme>", "reason": "<pourquoi>", "count": <count> }
+      ]
     }
   }
 }`,
@@ -780,73 +824,29 @@ Generate:
 Return EXACTLY this JSON shape:
 {
   "pain_points_prioritized": {
-    "en": [
-      {
-        "issue": "Problem name",
-        "why_it_matters": "Why it matters",
-        "impact": 80,
-        "ease": 60,
-        "first_step": "First concrete action"
-      }
-    ],
-    "fr": [
-      {
-        "issue": "Nom du problème",
-        "why_it_matters": "Pourquoi cela compte",
-        "impact": 80,
-        "ease": 60,
-        "first_step": "Première action concrète"
-      }
-    ]
+    "en": [{ "issue": "Problem name", "why_it_matters": "Why it matters", "impact": 80, "ease": 60, "first_step": "First concrete action" }],
+    "fr": [{ "issue": "Nom du problème", "why_it_matters": "Pourquoi cela compte", "impact": 80, "ease": 60, "first_step": "Première action concrète" }]
   },
   "recommendations": {
     "en": {
-      "quick_wins_7_days": [
-        {
-          "title": "Action title",
-          "details": "Details",
-          "expected_result": "Expected result",
-          "priority": 1
-        }
-      ],
-      "projects_30_days": [
-        {
-          "title": "Project title",
-          "details": "Details",
-          "expected_result": "Expected result",
-          "priority": 1
-        }
-      ]
+      "quick_wins_7_days": [{ "title": "Action title", "details": "Details", "expected_result": "Expected result", "priority": 1 }],
+      "projects_30_days":  [{ "title": "Project title", "details": "Details", "expected_result": "Expected result", "priority": 1 }]
     },
     "fr": {
-      "quick_wins_7_days": [
-        {
-          "title": "Titre action",
-          "details": "Détails",
-          "expected_result": "Résultat attendu",
-          "priority": 1
-        }
-      ],
-      "projects_30_days": [
-        {
-          "title": "Titre projet",
-          "details": "Détails",
-          "expected_result": "Résultat attendu",
-          "priority": 1
-        }
-      ]
+      "quick_wins_7_days": [{ "title": "Titre action", "details": "Détails", "expected_result": "Résultat attendu", "priority": 1 }],
+      "projects_30_days":  [{ "title": "Titre projet", "details": "Détails", "expected_result": "Résultat attendu", "priority": 1 }]
     }
   },
   "reply_templates": {
     "en": {
-      "positive": [{"title": "Template title", "reply": "Response text", "use_when": "When to use"}],
-      "neutral":  [{"title": "Template title", "reply": "Response text", "use_when": "When to use"}],
-      "negative": [{"title": "Template title", "reply": "Response text", "use_when": "When to use"}]
+      "positive": [{ "title": "Template title", "reply": "Response text", "use_when": "When to use" }],
+      "neutral":  [{ "title": "Template title", "reply": "Response text", "use_when": "When to use" }],
+      "negative": [{ "title": "Template title", "reply": "Response text", "use_when": "When to use" }]
     },
     "fr": {
-      "positive": [{"title": "Titre template", "reply": "Texte de réponse", "use_when": "Quand utiliser"}],
-      "neutral":  [{"title": "Titre template", "reply": "Texte de réponse", "use_when": "Quand utiliser"}],
-      "negative": [{"title": "Titre template", "reply": "Texte de réponse", "use_when": "Quand utiliser"}]
+      "positive": [{ "title": "Titre template", "reply": "Texte de réponse", "use_when": "Quand utiliser" }],
+      "neutral":  [{ "title": "Titre template", "reply": "Texte de réponse", "use_when": "Quand utiliser" }],
+      "negative": [{ "title": "Titre template", "reply": "Texte de réponse", "use_when": "Quand utiliser" }]
     }
   }
 }`,
@@ -921,9 +921,7 @@ Deno.serve(async (req) => {
         .eq('user_id', userId)
         .maybeSingle();
 
-      if (establishment?.name) {
-        establishmentName = establishment.name;
-      }
+      if (establishment?.name) establishmentName = establishment.name;
       if (establishment?.types) {
         googlePlacesTypes = Array.isArray(establishment.types)
           ? establishment.types
@@ -941,6 +939,7 @@ Deno.serve(async (req) => {
       .limit(200);
 
     if (reviewsErr) throw new Error(`reviews_fetch_failed:${reviewsErr.message}`);
+
     const rows: ReviewRow[] = (reviewsData || []).map((r: any) => ({
       user_id: userId,
       place_id,
@@ -966,48 +965,50 @@ Deno.serve(async (req) => {
     const detection = detectBusinessType(establishmentName, googlePlacesTypes, sampleTexts);
     console.log(`[analyze-reviews-v2] Détection: ${detection.type} (${detection.confidence}%) via ${detection.source}`);
 
+    // ─── Fetch existing insight to build locked keys ──────────────────────
+    // This runs BEFORE analyzePassA so existing theme→key pairs can be
+    // injected into the prompt as frozen constraints.
+    // On first run: returns null → lockedKeys is empty → no constraints.
+    // On re-runs: returns saved data → keys are locked → no drift.
+    const { data: existingInsight } = await supabaseAdmin
+      .from('review_insights')
+      .select('top_issues, top_praises, themes_universal, themes_industry')
+      .eq('place_id', place_id)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    const lockedKeys = buildLockedKeys(existingInsight);
+    const lockedKeyCount = Object.keys(lockedKeys).length;
+    console.log(`[analyze-reviews-v2] Locked keys: ${lockedKeyCount} theme(s) frozen from previous run`);
+
+    // ─── Pass A ───────────────────────────────────────────────────────────
     const passAResult = await analyzePassA(
       establishmentName,
       sampleTexts,
       rows.length,
       detection.type,
       detection.confidence,
+      lockedKeys,              // ← injected here
     );
 
     if (!passAResult) {
       return json({ ok: false, error: "analysis_pass_a_failed" }, 500);
     }
 
-    // ─── Enforce stable keys + normalize sentiment on all bilingual arrays ──
-    if (passAResult.top_issues) {
-      passAResult.top_issues = enforceKeys(passAResult.top_issues);
-    }
-    if (passAResult.top_strength) {
-      passAResult.top_strength = enforceKeys(passAResult.top_strength);
-    }
-    if (passAResult.themes_universal) {
-      passAResult.themes_universal = enforceKeys(passAResult.themes_universal);
-    }
-    if (passAResult.themes_industry) {
-      passAResult.themes_industry = enforceKeys(passAResult.themes_industry);
-    }
+    // ─── Enforce stable keys + normalize sentiment ────────────────────────
+    if (passAResult.top_issues)      passAResult.top_issues      = enforceKeys(passAResult.top_issues);
+    if (passAResult.top_strength)    passAResult.top_strength    = enforceKeys(passAResult.top_strength);
+    if (passAResult.themes_universal) passAResult.themes_universal = enforceKeys(passAResult.themes_universal);
+    if (passAResult.themes_industry)  passAResult.themes_industry  = enforceKeys(passAResult.themes_industry);
 
+    // ─── Pass B ───────────────────────────────────────────────────────────
     const passBResult = await analyzePassB(
       establishmentName,
       detection.type,
       detection.confidence,
-      {
-        en: passAResult?.themes_universal?.en || [],
-        fr: passAResult?.themes_universal?.fr || [],
-      },
-      {
-        en: passAResult?.themes_industry?.en || [],
-        fr: passAResult?.themes_industry?.fr || [],
-      },
-      {
-        en: passAResult?.top_issues?.en || [],
-        fr: passAResult?.top_issues?.fr || [],
-      },
+      { en: passAResult?.themes_universal?.en || [], fr: passAResult?.themes_universal?.fr || [] },
+      { en: passAResult?.themes_industry?.en  || [], fr: passAResult?.themes_industry?.fr  || [] },
+      { en: passAResult?.top_issues?.en       || [], fr: passAResult?.top_issues?.fr       || [] },
       stats.overall,
     );
 
@@ -1015,24 +1016,24 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: "analysis_pass_b_failed" }, 500);
     }
 
-    // ─── Fallback summary ───────────────────────────────────────────────────
+    // ─── Summary ──────────────────────────────────────────────────────────
     const fallbackOneLiner = getFallbackSummaryOneLiner(establishmentName, rows.length);
     const summaryData = {
       en: {
-        one_liner: passAResult?.summary?.en?.one_liner || fallbackOneLiner.en,
+        one_liner:           passAResult?.summary?.en?.one_liner           || fallbackOneLiner.en,
         what_customers_love: passAResult?.summary?.en?.what_customers_love || [],
         what_customers_hate: passAResult?.summary?.en?.what_customers_hate || [],
       },
       fr: {
-        one_liner: passAResult?.summary?.fr?.one_liner || fallbackOneLiner.fr,
+        one_liner:           passAResult?.summary?.fr?.one_liner           || fallbackOneLiner.fr,
         what_customers_love: passAResult?.summary?.fr?.what_customers_love || [],
         what_customers_hate: passAResult?.summary?.fr?.what_customers_hate || [],
       },
     };
 
-    // ─── Final analysis object ──────────────────────────────────────────────
+    // ─── Final analysis object ────────────────────────────────────────────
     const analysisResult = {
-      business_type: detection.type,
+      business_type:            detection.type,
       business_type_confidence: detection.confidence,
       business_type_candidates: detection.candidates,
 
@@ -1042,7 +1043,7 @@ Deno.serve(async (req) => {
       summary: summaryData,
 
       themes_universal: passAResult?.themes_universal || { en: [], fr: [] },
-      themes_industry: detection.confidence >= 45
+      themes_industry:  detection.confidence >= 45
         ? (passAResult?.themes_industry || { en: [], fr: [] })
         : { en: [], fr: [] },
 
@@ -1059,66 +1060,68 @@ Deno.serve(async (req) => {
       },
 
       kpis: {
-        avg_rating: stats.overall,
-        total_reviews: stats.total,
+        avg_rating:              stats.overall,
+        total_reviews:           stats.total,
         positive_ratio_estimate: stats.positive_pct,
         negative_ratio_estimate: stats.negative_pct,
       },
     };
 
-    // ─── Notification logic ─────────────────────────────────────────────────
-    const previousInsight = dryRun ? null : await supabaseAdmin
-      .from('review_insights')
-      .select('avg_rating, top_issues, last_analyzed_at')
-      .eq('user_id', userId)
-      .eq('place_id', place_id)
-      .maybeSingle();
+    // ─── Notification logic ───────────────────────────────────────────────
+    // Re-use the already-fetched existingInsight (no extra DB call needed)
+    const previousAvgRating = dryRun ? null : (existingInsight as any)?.avg_rating ?? null;
+    const previousIssues = normalizeIssues(
+      (existingInsight as any)?.top_issues?.en || (existingInsight as any)?.top_issues || []
+    );
+    const currentIssues = normalizeIssues(passAResult?.top_issues?.en || []);
 
-    const previousAvgRating = previousInsight?.data?.avg_rating ?? null;
-    const previousIssues = normalizeIssues(previousInsight?.data?.top_issues?.en || previousInsight?.data?.top_issues || []);
-    const currentIssues  = normalizeIssues(passAResult?.top_issues?.en || []);
+    // Fetch avg_rating separately if needed (existingInsight select above didn't include it)
+    let prevAvgForNotif = previousAvgRating;
+    if (!dryRun && existingInsight) {
+      const { data: ratingRow } = await supabaseAdmin
+        .from('review_insights')
+        .select('avg_rating')
+        .eq('place_id', place_id)
+        .eq('user_id', userId)
+        .maybeSingle();
+      prevAvgForNotif = ratingRow?.avg_rating ?? null;
+    }
 
     const notificationDecision = shouldSendSignificantChangeNotification(
-      previousAvgRating,
+      prevAvgForNotif,
       stats.overall,
       previousIssues,
       currentIssues,
     );
 
-    // ─── Persist ────────────────────────────────────────────────────────────
+    // ─── Persist ──────────────────────────────────────────────────────────
     if (!dryRun) {
       const payload = {
         place_id,
-        user_id: userId,
+        user_id:          userId,
         last_analyzed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        business_type: detection.type,
+        updated_at:       new Date().toISOString(),
+        business_type:            detection.type,
         business_type_confidence: detection.confidence,
         business_type_candidates: detection.candidates,
         analysis_version: 'v2-auto-universal',
-        total_count: stats.total,
-        avg_rating: stats.overall,
-        positive_ratio: stats.positive_pct / 100,
+        total_count:      stats.total,
+        avg_rating:       stats.overall,
+        positive_ratio:   stats.positive_pct / 100,
 
         // Flat legacy themes array (retro-compat — uses EN branch)
         themes: [
-          ...(passAResult?.themes_universal?.en || []).map((t: any) => ({
-            theme: t.theme,
-            count: Math.round(t.importance / 10),
-          })),
-          ...(passAResult?.themes_industry?.en || []).map((t: any) => ({
-            theme: t.theme,
-            count: Math.round(t.importance / 10),
-          })),
+          ...(passAResult?.themes_universal?.en || []).map((t: any) => ({ theme: t.theme, count: Math.round(t.importance / 10) })),
+          ...(passAResult?.themes_industry?.en  || []).map((t: any) => ({ theme: t.theme, count: Math.round(t.importance / 10) })),
         ],
 
-        top_praises: passAResult?.top_strength  || { en: [], fr: [] },
-        top_issues:  passAResult?.top_issues    || { en: [], fr: [] },
+        top_praises:      passAResult?.top_strength || { en: [], fr: [] },
+        top_issues:       passAResult?.top_issues   || { en: [], fr: [] },
 
-        summary: summaryData,
+        summary:          summaryData,
 
         themes_universal: passAResult?.themes_universal || { en: [], fr: [] },
-        themes_industry: detection.confidence >= 45
+        themes_industry:  detection.confidence >= 45
           ? (passAResult?.themes_industry || { en: [], fr: [] })
           : { en: [], fr: [] },
 
@@ -1172,45 +1175,39 @@ Deno.serve(async (req) => {
         try {
           const reportLocale = outputLanguage === "fr" ? "fr-FR" : "en-US";
           const reportMonthName = new Intl.DateTimeFormat(reportLocale, {
-            month: "long",
-            year: "numeric",
+            month: "long", year: "numeric",
           }).format(new Date());
 
           await sendSignificantChangeNotification({
-            language: outputLanguage,
+            language:          outputLanguage,
             displayName,
             userEmail,
             establishmentName,
             reportMonthName,
-            previousAvg: previousAvgRating,
-            currentAvg: stats.overall,
-            ratingDrop: (previousAvgRating ?? 0) - (stats.overall ?? 0),
-            issues: currentIssues,
-            reason: notificationDecision.reason,
+            previousAvg:  prevAvgForNotif,
+            currentAvg:   stats.overall,
+            ratingDrop:   (prevAvgForNotif ?? 0) - (stats.overall ?? 0),
+            issues:       currentIssues,
+            reason:       notificationDecision.reason,
           });
           console.log('[analyze-reviews-v2] Significant change notification sent', {
-            reason: notificationDecision.reason,
-            userId,
-            place_id,
+            reason: notificationDecision.reason, userId, place_id,
           });
         } catch (notificationError) {
           console.error('[analyze-reviews-v2] Failed to send notification:', notificationError);
         }
       } else if (!importantUpdatesEnabled) {
-        console.log('[analyze-reviews-v2] Important updates notifications disabled for user', {
-          userId,
-          place_id,
-        });
+        console.log('[analyze-reviews-v2] Important updates notifications disabled for user', { userId, place_id });
       }
 
       await supabaseAdmin
         .from('establishments')
         .update({
-          business_type: detection.type,
+          business_type:            detection.type,
           business_type_confidence: detection.confidence,
           business_type_candidates: detection.candidates,
-          business_type_source: detection.source,
-          analysis_version: 'v2-auto-universal',
+          business_type_source:     detection.source,
+          analysis_version:         'v2-auto-universal',
         })
         .eq('place_id', place_id)
         .eq('user_id', userId);
@@ -1223,6 +1220,7 @@ Deno.serve(async (req) => {
       counts: { collected: rows.length },
       dryRun,
     });
+
   } catch (e) {
     console.error('[analyze-reviews-v2] Error:', e);
     return json({ ok: false, error: String((e as any)?.message ?? e) }, 500);
