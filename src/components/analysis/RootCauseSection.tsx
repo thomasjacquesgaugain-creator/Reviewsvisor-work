@@ -558,7 +558,7 @@ const rootCauseAnalysis = useMemo(() => {
                 border: `1px solid ${COLORS.border}`, borderRadius: "18px",
                 textAlign: "center", color: COLORS.text3,
               }}>
-                <p>{t("analysis.pareto.rootCause.noCause") || "Aucune cause spécifique identifiée."}</p>
+                <p>{t("analysis.pareto.rootCause.noCauses") || "Aucune cause spécifique identifiée."}</p>
                 <p style={{ fontSize: "13px", marginTop: "8px" }}>
                   {t("analysis.pareto.rootCause.fieldAnalysisRecommended") || "Une analyse terrain est recommandée."}
                 </p>
