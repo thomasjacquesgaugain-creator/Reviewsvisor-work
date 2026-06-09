@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { QualitativeData, Review } from "@/types/analysis";
+import { QualitativeData, QualitativeKeywordTheme, Review, ThemeAnalysis } from "@/types/analysis";
 import { useTranslation,Trans } from "react-i18next";
 import { MessageSquare, Star, TrendingUp, TrendingDown, ShoppingBag, Users } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -10,7 +10,9 @@ import { STOP_WORDS } from "@/utils/cleanReviewText";
 interface QualitativeSectionProps {
   data: QualitativeData;
   reviews?: Review[];
+  themes?: ThemeAnalysis[];
   dynamicThemes?: Array<{ theme: string; count?: number; importance?: number }>; // Thèmes dynamiques depuis insight?.themes
+  themeDefinitions?: Array<{ key: string; theme: string }>;
 }
 
 // Classification des mots par thématique
@@ -21,6 +23,19 @@ interface ClassifiedWord {
   count: number;
   category: WordCategory;
   sentiment: 'positive' | 'neutral' | 'negative';
+}
+
+interface QualitativeThemeKeyword {
+  keyword: string;
+  count: number;
+}
+
+interface QualitativeThemeGroup {
+  themeKey: string;
+  label: string;
+  keywords: QualitativeThemeKeyword[];
+  mentionCount: number;
+  palette: (typeof THEME_PALETTE)[number];
 }
 
 // Mots-clés pour la classification automatique
@@ -35,6 +50,60 @@ const EXPERIENCE_KEYWORDS = ['ambience', 'welcome', 'server', 'service', 'decor'
 const POSITIVE_KEYWORDS = ['great', 'perfect', 'excellent', 'amazing', 'awesome', 'top', 'recommended', 'love', 'fantastic', 'wonderful', 'remarkable', 'outstanding'];
 
 const FRICTION_KEYWORDS = ['wait', 'long', 'too', 'slow', 'expensive', 'noise', 'crowded', 'cold', 'hot', 'small', 'disappointed', 'disappointing'];
+
+const QUALITATIVE_THEME_LABELS: Record<string, string> = {
+  wait_time: 'Waiting Time',
+  service: 'Service',
+  food_quality: 'Food Quality',
+  cleanliness: 'Cleanliness',
+  atmosphere: 'Atmosphere',
+  ambiance: 'Atmosphere',
+  price: 'Price',
+  staff: 'Staff',
+  communication: 'Communication',
+  parking: 'Parking',
+  delivery: 'Delivery',
+  hospitality: 'Hospitality',
+};
+
+const THEME_PALETTE = [
+  { bg: '#DBEAFE', text: '#1E40AF', badge: '#3B82F6' },
+  { bg: '#ECFDF5', text: '#065F46', badge: '#10B981' },
+  { bg: '#F1F5F9', text: '#475569', badge: '#64748B' },
+  { bg: '#FEF3C7', text: '#D97706', badge: '#F59E0B' },
+  { bg: '#E9D5FF', text: '#7C3AED', badge: '#8B5CF6' },
+  { bg: '#FEE2E2', text: '#DC2626', badge: '#EF4444' },
+] as const;
+
+function normalizeThemeText(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatThemeLabel(themeKey: string): string {
+  return QUALITATIVE_THEME_LABELS[themeKey] || themeKey
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function matchesKeywordPhrase(source: string, target: string): boolean {
+  const normalizedSource = normalizeThemeText(source);
+  const normalizedTarget = normalizeThemeText(target);
+
+  if (!normalizedSource || !normalizedTarget) {
+    return false;
+  }
+
+  return (
+    normalizedSource.includes(normalizedTarget) ||
+    normalizedTarget.includes(normalizedSource)
+  );
+}
 // Configuration des thématiques avec couleurs Reviewsvisor pastels (mode Fréquence)
 const THEMES = {
   produit: {
@@ -192,7 +261,7 @@ function classifyWord(word: string, sentiment?: 'positive' | 'neutral' | 'negati
   return { category: 'experience', sentiment: 'neutral' };
 }
 
-export function QualitativeSection({ data, reviews, dynamicThemes = [] }: QualitativeSectionProps) {
+export function QualitativeSection({ data, reviews, themes = [], dynamicThemes = [], themeDefinitions = [] }: QualitativeSectionProps) {
   const { t } = useTranslation();
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<'frequency' | 'sentiment' | 'theme'>('frequency');
@@ -362,6 +431,155 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
 
   const topKeywords = data.topKeywords || [];
   const keyVerbatims = data.keyVerbatims || [];
+  const qualitativeKeywords = data.qualitativeKeywords || [];
+  const themeLabelByKey = useMemo(() => {
+    const map = new Map<string, string>();
+    (themeDefinitions || []).forEach((theme) => {
+      const key = String(theme.key || "").trim();
+      const label = String(theme.theme || "").trim();
+      if (key && label && !map.has(key)) {
+        map.set(key, label);
+      }
+    });
+    return map;
+  }, [themeDefinitions]);
+  
+  const qualitativeThemeGroups = useMemo(() => {
+    if (!Array.isArray(qualitativeKeywords) || qualitativeKeywords.length === 0) {
+      return [];
+    }
+
+    const reviewTexts = (reviews || [])
+      .map((review) => String((review as any)?.text || review.texte || "").trim())
+      .filter(Boolean);
+
+    const themeCountByLabel = new Map<string, number>();
+    (themes || []).forEach((theme) => {
+      const label = normalizeThemeText(String(theme?.theme || ""));
+      if (!label) return;
+      themeCountByLabel.set(label, Number(theme?.count) || 0);
+    });
+
+    return qualitativeKeywords
+      .map((theme: QualitativeKeywordTheme, index) => {
+        const themeKey = (theme.theme_key || "").trim();
+        const keywords = Array.from(
+          new Set(
+            (theme.keywords || [])
+              .map((keyword) => String(keyword || "").trim())
+              .filter(Boolean)
+          )
+        );
+
+        const keywordCounts = keywords
+          .map((keyword) => {
+            const count = reviewTexts.reduce((total, reviewText) => {
+              return total + (matchesKeywordPhrase(reviewText, keyword) ? 1 : 0);
+            }, 0);
+
+            return { keyword, count };
+          })
+          .sort((a, b) => b.count - a.count || a.keyword.localeCompare(b.keyword));
+
+        const normalizedMatchTerms = Array.from(
+          new Set(
+            [
+              themeKey,
+              formatThemeLabel(themeKey),
+              themeLabelByKey.get(themeKey) || "",
+              QUALITATIVE_THEME_LABELS[themeKey] || "",
+            ]
+              .map((value) => normalizeThemeText(value))
+              .filter(Boolean)
+          )
+        );
+
+        const mentionCount =
+          themeCountByLabel.get(normalizeThemeText(themeLabelByKey.get(themeKey) || formatThemeLabel(themeKey))) ??
+          themeCountByLabel.get(normalizeThemeText(formatThemeLabel(themeKey))) ??
+          (reviews || []).reduce((total, review) => {
+            const reviewThemeNames = Array.isArray((review as any)?.themes)
+              ? (review as any).themes
+                  .map((entry: any) => normalizeThemeText(String(entry?.name || entry?.theme || "")))
+                  .filter(Boolean)
+              : [];
+
+            const matchesByTheme = reviewThemeNames.some((themeName) =>
+              normalizedMatchTerms.some((term) => themeName === term || themeName.includes(term) || term.includes(themeName))
+            );
+
+            if (matchesByTheme) {
+              return total + 1;
+            }
+
+            const reviewText = String((review as any)?.text || review.texte || "");
+            const matchesByText = keywords.some((keyword) => matchesKeywordPhrase(reviewText, keyword));
+            return total + (matchesByText ? 1 : 0);
+          }, 0);
+
+        return {
+          themeKey,
+          label: themeLabelByKey.get(themeKey) || formatThemeLabel(themeKey),
+          keywords: keywordCounts,
+          mentionCount,
+          palette: THEME_PALETTE[index % THEME_PALETTE.length],
+        };
+      })
+      .filter((group) => group.themeKey && group.keywords.length > 0);
+  }, [qualitativeKeywords, themeLabelByKey, themes, reviews]);
+
+  const qualitativeKeywordWords = useMemo(() => {
+    if (!Array.isArray(qualitativeKeywords) || qualitativeKeywords.length === 0) {
+      return [];
+    }
+
+    const keywords = Array.from(
+      new Set(
+        qualitativeKeywords.flatMap((theme) =>
+          (theme.keywords || [])
+            .map((keyword) => String(keyword || "").trim())
+            .filter(Boolean)
+        )
+      )
+    );
+
+    return keywords.flatMap((keyword) => {
+      const sentimentCounts: Record<'positive' | 'neutral' | 'negative', number> = {
+        positive: 0,
+        neutral: 0,
+        negative: 0,
+      };
+
+      (reviews || []).forEach((review) => {
+        const reviewText = String((review as any)?.text || review.texte || "");
+        if (!matchesKeywordPhrase(reviewText, keyword)) return;
+
+        const rating = normalizeRating(review.note || (review as any)?.rating || 0);
+        const sentiment = computeSentimentFromRating(rating);
+        sentimentCounts[sentiment] += 1;
+      });
+
+      const totalCount = sentimentCounts.positive + sentimentCounts.neutral + sentimentCounts.negative;
+
+      if (totalCount === 0) {
+        return [{
+          word: keyword,
+          count: 0,
+          category: classifyWord(keyword, 'neutral').category,
+          sentiment: 'neutral' as const,
+        }];
+      }
+
+      return (Object.entries(sentimentCounts) as Array<['positive' | 'neutral' | 'negative', number]>)
+        .filter(([, count]) => count > 0)
+        .map(([sentiment, count]) => ({
+          word: keyword,
+          count,
+          category: classifyWord(keyword, sentiment).category,
+          sentiment,
+        }));
+    });
+  }, [qualitativeKeywords, reviews]);
 
   const ALL_KEYWORDS = useMemo(
     () =>
@@ -412,6 +630,10 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
 
   // Classifier et organiser les mots en utilisant le sentiment réel de l'avis
   const classifiedWords = useMemo(() => {
+    if (qualitativeKeywordWords.length > 0) {
+      return qualitativeKeywordWords;
+    }
+
     return topKeywords.map(kw => {
       // Utiliser le sentiment réel de l'avis si disponible, sinon fallback
       const sentiment = kw.sentiment || 'neutral';
@@ -424,7 +646,7 @@ export function QualitativeSection({ data, reviews, dynamicThemes = [] }: Qualit
         sentiment: sentiment // Utiliser le sentiment réel, pas celui de classifyWord
       } as ClassifiedWord;
     }).filter(w => w.word.length > 2); // Filtrer les mots trop courts
-  }, [topKeywords]);
+  }, [topKeywords, qualitativeKeywordWords]);
 
   // Pour le mode Fréquence : organiser par sentiment réel (positif/négatif/neutre) plutôt que par catégorie
   // Cela garantit que tous les mots négatifs sont visibles
@@ -577,6 +799,7 @@ const wordsByFrequency = useMemo(() => {
         <CardTitle>{t("analysis.qualitative.title", "Analyse qualitative")}</CardTitle>
       </CardHeader>
       <CardContent>
+        {qualitativeThemeGroups.length >0?
         <div className="space-y-6">
           {/* Synthèse rapide */}
           <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
@@ -766,112 +989,75 @@ const wordsByFrequency = useMemo(() => {
               
               {/* Mode Thème */}
               {sortMode === 'theme' && (
-                <div className="grid gap-y-6 md:grid-cols-2 md:gap-x-12 lg:gap-x-16 transition-opacity duration-200">
-                  {sortedThemeGroups.map(([themeKey, theme]) => {
-                    const words = [...(wordsByTheme[themeKey] || [])];
-                    const Icon = theme.icon;
+                qualitativeThemeGroups.length > 0 ? (
+                  <div className="grid gap-y-6 md:grid-cols-2 md:gap-x-12 lg:gap-x-16 transition-opacity duration-200">
+                    {qualitativeThemeGroups.map((group) => {
+                      const maxKeywordCount = Math.max(
+                        1,
+                        ...group.keywords.map((item) => item.count)
+                      );
 
-                    if (!words.length) {
                       return (
-                        <div key={themeKey} className="space-y-3">
+                        <div key={group.themeKey} className="space-y-3">
                           <div className="flex items-center gap-2">
-                            <Icon className="w-4 h-4" style={{ color: theme.textColor }} />
-                            <span className="text-[13px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-                              {theme.label}
+                            <Users className="w-4 h-4" style={{ color: group.palette.text }} />
+                            <span
+                              className="text-[13px] font-semibold tracking-tight text-slate-800 dark:text-slate-100"
+                              style={{ color: group.palette.text }}
+                            >
+                              {group.label}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">{t("analysis.qualitative.noDataForTheme")}</p>
+
+                          <div className="space-y-2">
+                            {group.keywords.map((item) => {
+                              const widthPercent = Math.max(18, (item.count / maxKeywordCount) * 100);
+
+                              return (
+                                <div
+                                  key={`${group.themeKey}-${item.keyword}`}
+                                  className="group flex items-center gap-3 rounded-md bg-slate-100 px-2 py-1.5 dark:bg-slate-800/70"
+                                >
+                                  <div className="w-36 truncate text-xs text-slate-700 dark:text-slate-200">
+                                    {item.keyword}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="h-2 rounded-full" style={{ backgroundColor: `${group.palette.bg}cc` }}>
+                                      <div
+                                        className="h-2 rounded-full transition-all duration-150 group-hover:opacity-90"
+                                        style={{
+                                          width: `${widthPercent}%`,
+                                          backgroundColor: group.palette.badge,
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                   <div className="w-8 text-right text-xs font-medium text-slate-500 dark:text-slate-300">
+                                    {Math.max(1,(item.count))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       );
-                    }
-
-                    // Tri par fréquence décroissante
-                    words.sort((a, b) => b.count - a.count);
-                    const maxCount = Math.max(...words.map((w) => w.count));
-
-                    // Calculer le sentiment global du thème
-                    const themeSentiment = getThemeGlobalSentiment(themeKey);
-                    
-                    // Déterminer l'icône et les couleurs selon le sentiment global du thème
-                    let IconComponent = Icon;
-                    let iconColor = theme.textColor;
-                    let barBg = "bg-amber-100 dark:bg-amber-900/35"; // Orange pastel par défaut pour neutre
-                    let barFill = "bg-amber-500"; // Orange par défaut pour neutre
-                    
-                    if (themeSentiment === 'positive') {
-                      IconComponent = TrendingUp;
-                      iconColor = '#10B981'; // Vert
-                      barBg = "bg-emerald-100 dark:bg-emerald-900/35";
-                      barFill = "bg-emerald-500";
-                    } else if (themeSentiment === 'negative') {
-                      IconComponent = TrendingDown;
-                      iconColor = '#EF4444'; // Rouge
-                      barBg = "bg-red-100 dark:bg-red-900/35";
-                      barFill = "bg-red-500";
-                    } else {
-                      // Neutre
-                      IconComponent = Icon;
-                      iconColor = '#F59E0B'; // Orange (cohérent avec Répartition des avis)
-                      barBg = "bg-amber-100 dark:bg-amber-900/35";
-                      barFill = "bg-amber-500";
-                    }
-
-                    return (
+                    })}
+                  </div>
+                ) : (
+                  <div className="grid gap-y-6 md:grid-cols-2 md:gap-x-12 lg:gap-x-16 transition-opacity duration-200">
+                    {sortedThemeGroups.map(([themeKey, theme]) => (
                       <div key={themeKey} className="space-y-3">
                         <div className="flex items-center gap-2">
-                          <IconComponent className="w-4 h-4" style={{ color: iconColor }} />
-                          <span
-                            className="text-[13px] font-semibold tracking-tight text-slate-800 dark:text-slate-100"
-                            style={{ color: iconColor }}
-                          >
+                          <theme.icon className="w-4 h-4" style={{ color: theme.textColor }} />
+                          <span className="text-[13px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
                             {theme.label}
                           </span>
                         </div>
-
-                        <div className="space-y-2">
-                          {words.slice(0,8).map((word) => {
-                            const widthPercent =
-                              maxCount > 0 ? Math.max(10, (word.count / maxCount) * 100) : 0;
-
-                            // Couleur selon le sentiment INDIVIDUEL du mot-clé (pas du thème)
-                            const wordSentiment = word.sentiment || 'neutral';
-                            const wordBarBg =
-                              wordSentiment === 'positive' ? "bg-emerald-100 dark:bg-emerald-900/35" 
-                              : wordSentiment === 'negative' ? "bg-red-100 dark:bg-red-900/35" 
-                              : "bg-amber-100 dark:bg-amber-900/35"; // Orange pastel pour neutre
-                            const wordBarFill =
-                              wordSentiment === 'positive' ? "bg-emerald-500" 
-                              : wordSentiment === 'negative' ? "bg-red-500" 
-                              : "bg-amber-500"; // Orange pour neutre
-
-                            // Clé unique incluant le sentiment pour permettre la redondance (même mot, différents sentiments)
-                            return (
-                              <div
-                                key={`theme-${themeKey}-${word.word}-${word.sentiment}`}
-                                className="group flex items-center gap-3 rounded-md bg-slate-100 px-2 py-1.5 dark:bg-slate-800/70"
-                              >
-                                <div className="w-32 truncate text-xs text-slate-700 dark:text-slate-200">
-                                  {word.word}
-                                </div>
-                                <div className="flex-1">
-                                  <div className={`h-2 rounded-full ${wordBarBg}`}>
-                                    <div
-                                      className={`h-2 rounded-full ${wordBarFill} transition-all duration-150 group-hover:opacity-90 group-hover:scale-[1.01]`}
-                                      style={{ width: `${widthPercent}%` }}
-                                    />
-                                  </div>
-                                </div>
-                                <div className="w-8 text-right text-xs font-medium text-slate-500 dark:text-slate-300">
-                                  {word.count}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t("analysis.qualitative.noDataForTheme")}</p>
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )
               )}
 
               {/* État vide global si aucun mode n'a de données */}
@@ -1012,7 +1198,11 @@ const wordsByFrequency = useMemo(() => {
               </div>
             )}
           </div>
-        </div>
+        </div>:
+         <div className="h-80 flex items-center justify-center text-muted-foreground">
+            <p>{t("analysis.themes.noData", "Aucune donnée disponible")}</p>
+          </div>
+}
       </CardContent>
     </Card>
   );
