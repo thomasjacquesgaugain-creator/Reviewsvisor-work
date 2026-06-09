@@ -1011,7 +1011,6 @@ Deno.serve(async (req) => {
     if (!passAResult) {
       return json({ ok: false, error: "analysis_pass_a_failed" }, 500);
     }
-    console.log("pass a result" ,passAResult)
     // ─── Enforce stable keys + normalize sentiment ────────────────────────
     if (passAResult.top_issues)      passAResult.top_issues      = enforceKeys(passAResult.top_issues);
     if (passAResult.top_strength)    passAResult.top_strength    = enforceKeys(passAResult.top_strength);
@@ -1183,6 +1182,31 @@ Deno.serve(async (req) => {
         console.log("✅ review_insights saved:", upsertedInsight);
       }
 
+      const qualitativeResponse = await fetch(
+        `${SUPABASE_URL}/functions/v1/qualitative-analysis`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${SERVICE_ROLE}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId,
+            placeId: place_id,
+            reviews: sampleTexts,
+            themesUniversal: passAResult?.themes_universal || {
+              en: [],
+              fr: [],
+            },
+            themesIndustry: passAResult?.themes_industry || { en: [], fr: [] },
+          }),
+        },
+      );
+
+      if (!qualitativeResponse.ok) {
+        throw new Error("qualitative-analysis failed");
+      }
+
       if (
         importantUpdatesEnabled &&
         notificationDecision.send &&
@@ -1192,29 +1216,41 @@ Deno.serve(async (req) => {
         try {
           const reportLocale = outputLanguage === "fr" ? "fr-FR" : "en-US";
           const reportMonthName = new Intl.DateTimeFormat(reportLocale, {
-            month: "long", year: "numeric",
+            month: "long",
+            year: "numeric",
           }).format(new Date());
 
           await sendSignificantChangeNotification({
-            language:          outputLanguage,
+            language: outputLanguage,
             displayName,
             userEmail,
             establishmentName,
             reportMonthName,
-            previousAvg:  prevAvgForNotif,
-            currentAvg:   stats.overall,
-            ratingDrop:   (prevAvgForNotif ?? 0) - (stats.overall ?? 0),
-            issues:       currentIssues,
-            reason:       notificationDecision.reason,
+            previousAvg: prevAvgForNotif,
+            currentAvg: stats.overall,
+            ratingDrop: (prevAvgForNotif ?? 0) - (stats.overall ?? 0),
+            issues: currentIssues,
+            reason: notificationDecision.reason,
           });
-          console.log('[analyze-reviews-v2] Significant change notification sent', {
-            reason: notificationDecision.reason, userId, place_id,
-          });
+          console.log(
+            "[analyze-reviews-v2] Significant change notification sent",
+            {
+              reason: notificationDecision.reason,
+              userId,
+              place_id,
+            },
+          );
         } catch (notificationError) {
-          console.error('[analyze-reviews-v2] Failed to send notification:', notificationError);
+          console.error(
+            "[analyze-reviews-v2] Failed to send notification:",
+            notificationError,
+          );
         }
       } else if (!importantUpdatesEnabled) {
-        console.log('[analyze-reviews-v2] Important updates notifications disabled for user', { userId, place_id });
+        console.log(
+          "[analyze-reviews-v2] Important updates notifications disabled for user",
+          { userId, place_id },
+        );
       }
 
       await supabaseAdmin

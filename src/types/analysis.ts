@@ -42,9 +42,15 @@ export interface ThemeAnalysis {
   verbatims: string[];
 }
 
+export interface QualitativeKeywordTheme {
+  theme_key: string;
+  keywords: string[];
+}
+
 export interface QualitativeData {
   topKeywords: Array<{ word: string; count: number; sentiment?: 'positive' | 'neutral' | 'negative' }>;
   keyVerbatims: Array<{ text: string; rating: number; sentiment: 'positive' | 'neutral' | 'negative' }>;
+  qualitativeKeywords?: QualitativeKeywordTheme[];
 }
 
 export interface DiagnosticSummary {
