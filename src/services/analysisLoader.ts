@@ -82,6 +82,8 @@ function localizeAnalysisData(data: any) {
 
     summary_what_customers_hate:
       data?.summary_what_customers_hate?.[lang] || [],
+
+    summary: data?.summary?.[lang]||[]  
   };
 }
 export async function loadLatestAnalysis(

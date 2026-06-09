@@ -353,7 +353,7 @@ export function transformAnalysisData(
     topWeaknesses: paretoIssues  .slice(0, 3).map(i => ({ theme: i.name,  count: i.count, percentage: i.percentage })),
   };
 
-  const summaryText    = formatDiagnosticSummary(safeInsight?.summary, diagnosticInsights);
+  const summaryText    = formatDiagnosticSummary(safeInsight?.summary.one_liner, diagnosticInsights);
   let recommendations: string[] = [];
   if (safeInsight?.recommendations) {
     recommendations = formatRecommendations(safeInsight.recommendations);

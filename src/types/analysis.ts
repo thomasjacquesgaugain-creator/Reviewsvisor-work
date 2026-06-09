@@ -52,7 +52,7 @@ export interface DiagnosticSummary {
   topStrengths: Array<{ theme: string; count: number; percentage: number }>;
   topWeaknesses: Array<{ theme: string; count: number; percentage: number }>;
   recommendations: string[];
-  recommendations_for_main_issues:[]
+  recommendations_for_main_issues:any;
 }
 
 export interface CompleteAnalysisData {
