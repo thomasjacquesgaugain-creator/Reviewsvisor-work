@@ -47,11 +47,9 @@ export function DiagnosticSection({
     normalizedSummary?.text ||
     data.summary ||
     t("analysis.diagnostic.noSummary", "Aucun résumé disponible");
-  const recommendations =
-    (data as any).recommendations?.length > 0
-      ? (data as any).recommendations
-      : normalizedSummary?.recommendations || [];
-
+const recommendations = Array.isArray(data?.recommendations_for_main_issues)
+  ? data.recommendations_for_main_issues
+  : [];
   const getConfidenceLevel = (total: number) => {
   if (total < 30) {
     return {
@@ -191,8 +189,8 @@ export function DiagnosticSection({
             <div className="mt-4">
               {recommendations.length > 0 ? (
                 <ul className="list-disc pl-5 space-y-1 text-sm text-slate-700 dark:text-slate-300">
-                  {recommendations.slice(0, 8).map((rec: string, idx: number) => (
-                    <li key={idx}>{rec}</li>
+                  {recommendations.slice(0, 8).map((rec: any, idx: number) => (
+                    <li key={idx}>{rec.first_step}</li>
                   ))}
                 </ul>
               ) : (

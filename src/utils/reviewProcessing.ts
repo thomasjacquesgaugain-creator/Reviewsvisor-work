@@ -208,15 +208,16 @@ export function mapThemeLabel(label: string | null | undefined): CanonicalTheme 
  */
 export function extractKeywordsWithSentiment(
   text: string,
-  reviewSentiment: CanonicalSentiment
+  reviewSentiment: CanonicalSentiment,
+  qualitativeStopWords: string[] = [],
 ): Array<{ word: string; sentiment: CanonicalSentiment }> {
   if (!text) return [];
-  
-  
+
+
   const STOP_WORDS = new Set([
   // Articles
   'the', 'a', 'an',
-  
+
   // Pronouns
   'i', 'you', 'he', 'she', 'it', 'we', 'they',
   'me', 'him', 'her', 'us', 'them',
@@ -231,7 +232,7 @@ export function extractKeywordsWithSentiment(
 
   // Common adverbs
   'very', 'more', 'less', 'well', 'badly', 'too', 'quite', 'enough', 'much', 'many', 'little',
-  'also', 'still', 'already', 'always', 'never', 'often', 'sometimes',
+  'also', 'still', 'already', 'always', 'never', 'often', 'sometimes','good','best',
 
   // Auxiliary verbs
   'be', 'have', 'do', 'go', 'come', 'can', 'will', 'shall', 'must', 'may', 'might',
@@ -256,8 +257,8 @@ export function extractKeywordsWithSentiment(
   // Stop words à exclure (français + anglais)
   const STOP_WORDS2 = new Set([
     // Français
-    'très', 'bonne', 'bon', 'bien', 'plus', 'moins', 'assez', 'tout', 'tous', 'toute', 'toutes',
-    'un', 'une', 'des', 'de', 'du', 'le', 'la', 'les', 'est', 'sont', 'était', 'être', 'avoir',
+    'très','chez', 'bonne', 'bon', 'bien', 'plus', 'moins', 'assez', 'tout', 'tous', 'toute', 'toutes',
+    'un', 'une', 'des', 'de', 'du', 'le', 'la', 'les', 'est', 'sont', 'était', 'être', 'qualité','avoir',
     'pour', 'avec', 'sans', 'dans', 'sur', 'par', 'que', 'qui', 'quoi', 'comme', 'mais', 'ou',
     'et', 'donc', 'car', 'ce', 'cette', 'ces', 'son', 'sa', 'ses', 'leur', 'leurs', 'nos', 'notre',
     // Anglais
@@ -269,16 +270,21 @@ export function extractKeywordsWithSentiment(
     'way', 'yes', 'yet', 'one', 'two', 'new', 'any', 'few', 'off', 'old', 'see', 'use', 'man', 
     'day', 'come', 'made', 'find', 'give', 'hair', 'translated', 'google'
   ]);
-  
+
+  const finalStopWords = new Set([
+  ...STOP_WORDS,
+  ...STOP_WORDS2,
+  ...qualitativeStopWords.map(word => word.toLowerCase().trim()),
+]);
+
   // Nettoyer et extraire les mots
   const cleaned = text
     .toLowerCase()
     .replace(/[^\w\sàâäéèêëïîôùûüÿç]/g, ' ')
     .split(/\s+/)
     .filter(word => {
-      return word.length > 3 && !STOP_WORDS.has(word);
+      return word.length > 3 && !finalStopWords.has(word);
     });
-  
   // Retourner les mots avec le sentiment de l'avis
   return cleaned.map(word => ({
     word: word.trim(),

@@ -42,9 +42,15 @@ export interface ThemeAnalysis {
   verbatims: string[];
 }
 
+export interface QualitativeKeywordTheme {
+  theme_key: string;
+  keywords: string[];
+}
+
 export interface QualitativeData {
   topKeywords: Array<{ word: string; count: number; sentiment?: 'positive' | 'neutral' | 'negative' }>;
   keyVerbatims: Array<{ text: string; rating: number; sentiment: 'positive' | 'neutral' | 'negative' }>;
+  qualitativeKeywords?: QualitativeKeywordTheme[];
 }
 
 export interface DiagnosticSummary {
@@ -52,7 +58,7 @@ export interface DiagnosticSummary {
   topStrengths: Array<{ theme: string; count: number; percentage: number }>;
   topWeaknesses: Array<{ theme: string; count: number; percentage: number }>;
   recommendations: string[];
-  recommendations_for_main_issues:[]
+  recommendations_for_main_issues:any;
 }
 
 export interface CompleteAnalysisData {

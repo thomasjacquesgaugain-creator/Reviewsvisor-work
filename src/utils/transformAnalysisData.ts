@@ -1,4 +1,4 @@
-import { CompleteAnalysisData, Review } from "@/types/analysis";
+import { CompleteAnalysisData, Review, QualitativeKeywordTheme } from "@/types/analysis";
 import { format, parseISO, subMonths } from "date-fns";
 import { cleanReviewText } from "@/utils/cleanReviewText";
 import { formatDiagnosticSummary, formatRecommendations } from "@/utils/formatDiagnosticSummary";
@@ -299,7 +299,7 @@ export function transformAnalysisData(
     if (!cleanedText) return;
     const rating          = normalizeRating(review.note || (review as any).rating || 0);
     const reviewSentiment = computeSentimentFromRating(rating);
-    extractKeywordsWithSentiment(cleanedText, reviewSentiment).forEach(({ word, sentiment }) => {
+    extractKeywordsWithSentiment(cleanedText, reviewSentiment,insight?.qualitative_stop_words).forEach(({ word, sentiment }) => {
       if (!wordSentimentCounts.has(word)) wordSentimentCounts.set(word, new Map());
       const sm = wordSentimentCounts.get(word)!;
       sm.set(sentiment, (sm.get(sentiment) || 0) + 1);
@@ -341,7 +341,11 @@ export function transformAnalysisData(
       };
     });
 
-  const qualitative = { topKeywords, keyVerbatims };
+  const qualitative = {
+    topKeywords,
+    keyVerbatims,
+    qualitativeKeywords: normalizeQualitativeKeywords(safeInsight?.qualitative_keywords),
+  };
 
   // ── DIAGNOSTIC ─────────────────────────────────────────────
   const diagnosticInsights = {
@@ -353,7 +357,7 @@ export function transformAnalysisData(
     topWeaknesses: paretoIssues  .slice(0, 3).map(i => ({ theme: i.name,  count: i.count, percentage: i.percentage })),
   };
 
-  const summaryText    = formatDiagnosticSummary(safeInsight?.summary, diagnosticInsights);
+  const summaryText    = formatDiagnosticSummary(safeInsight?.summary.one_liner, diagnosticInsights);
   let recommendations: string[] = [];
   if (safeInsight?.recommendations) {
     recommendations = formatRecommendations(safeInsight.recommendations);
@@ -381,4 +385,24 @@ export function transformAnalysisData(
     qualitative,
     diagnostic,
   };
+}
+
+function normalizeQualitativeKeywords(value: unknown): QualitativeKeywordTheme[] {
+  const rawItems = Array.isArray(value) ? value : [];
+
+  return rawItems
+    .map((item: any) => {
+      const themeKey = String(item?.theme_key ?? item?.key ?? item?.theme ?? "").trim();
+      const keywords = Array.isArray(item?.keywords)
+        ? item.keywords
+            .map((keyword: unknown) => String(keyword ?? "").trim())
+            .filter(Boolean)
+        : [];
+
+      return {
+        theme_key: themeKey,
+        keywords,
+      };
+    })
+    .filter((item) => item.theme_key && item.keywords.length > 0);
 }

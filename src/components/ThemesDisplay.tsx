@@ -9,7 +9,7 @@ import { BusinessTypeIndicator } from "./BusinessTypeIndicator";
 import { BusinessType } from "@/config/industry";
 
 import {
-  BarChart3,TrendingUp,User,LogOut,Home,Eye,Trash2,AlertTriangle,CheckCircle,Lightbulb,Target,ChevronDown,ChevronUp,ChevronRight,Building2,Star,UtensilsCrossed,Wine,Users,MapPin,Clock,MessageSquare,Info,Loader2,Copy,Calendar,Download,ClipboardList,Bot,X,Reply,Send,List,Sparkles,AlertCircle,Frown,ThumbsUp,Flag,Zap,Flame,Globe,Layers,Check,
+  BarChart3,TrendingUp,User,LogOut,Home,Eye,Trash2,AlertTriangle,CheckCircle,Lightbulb,Target,ChevronDown,ChevronUp,ChevronRight,Building2,Star,UtensilsCrossed,Wine,Users,MapPin,Clock,MessageSquare,Info,Loader2,Copy,Calendar,Download,ClipboardList,Bot,X,Reply,Send,List,Sparkles,AlertCircle,Frown,ThumbsUp,Flag,Zap,Flame,Globe,Layers,Check, Headphones , ShieldCheck , MessageCircle,BadgeDollarSign
 } from "lucide-react";
 
 interface Theme {
@@ -73,19 +73,53 @@ const allThemes = [
     }
     return theme;
   };
+const getThemeIcon = (name: string) => {
+  const n = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  const getThemeIcon = (name: string) => {
-    const n = name.toLowerCase();
-    if (n.includes("cuisine") || n.includes("plat"))
-      return <UtensilsCrossed className="w-4 h-4 text-purple-500" />;
-    if (n.includes("service"))
-      return <Users className="w-4 h-4 text-purple-500" />;
-    if (n.includes("ambiance"))
-      return <Wine className="w-4 h-4 text-purple-500" />;
-    if (n.includes("emplacement"))
-      return <MapPin className="w-4 h-4 text-purple-500" />;
-    return <BarChart3 className="w-4 h-4 text-purple-500" />;
-  };
+  const matches = (terms: string[]) => terms.some(t => n.includes(t));
+
+  // Food & drink
+  if (matches(["cuisine", "plat", "dish", "food", "meal", "menu", "repas", "nourriture", "taste", "gout", "flavor", "ingredient"]))
+    return <UtensilsCrossed className="w-4 h-4 text-purple-500" />;
+
+  // Service & staff
+  if (matches(["service", "staff", "serveur", "serveuse", "waiter", "personnel", "equipe", "team", "accueil", "welcome"]))
+    return <Users className="w-4 h-4 text-purple-500" />;
+
+  // Ambiance & atmosphere
+  if (matches(["ambiance", "atmosphere", "decor", "decoration", "bruit", "noise", "cadre", "setting", "vibe", "musique", "music"]))
+    return <Wine className="w-4 h-4 text-purple-500" />;
+
+  // Location & access
+  if (matches(["emplacement", "location", "acces", "access", "parking", "quartier", "neighborhood", "adresse", "address"]))
+    return <MapPin className="w-4 h-4 text-purple-500" />;
+
+  // Price & value
+  if (matches(["prix", "price", "tarif", "cost", "cout", "value", "valeur", "rapport", "cher", "expensive", "cheap", "abordable"]))
+    return <BadgeDollarSign className="w-4 h-4 text-purple-500" />;
+
+  // Wait time
+  if (matches(["attente", "wait", "delai", "delay", "lent", "slow", "rapide", "quick", "temps", "time"]))
+    return <Clock className="w-4 h-4 text-purple-500" />;
+
+  // Cleanliness
+  if (matches(["proprete", "clean", "hygiene", "sanitaire", "soin", "salle", "toilette"]))
+    return <Sparkles className="w-4 h-4 text-purple-500" />;
+
+  // Communication
+  if (matches(["communication", "contact", "reponse", "response", "message", "appel", "call", "email"]))
+    return <MessageCircle className="w-4 h-4 text-purple-500" />;
+
+  // Trust & reliability
+  if (matches(["confiance", "trust", "fiabilite", "reliability", "serieux", "honest", "integrite"]))
+    return <ShieldCheck className="w-4 h-4 text-purple-500" />;
+
+  // After-sales
+  if (matches(["sav", "after", "apres", "suivi", "follow", "remboursement", "refund", "reclamation", "complaint"]))
+    return <Headphones className="w-4 h-4 text-purple-500" />;
+
+  return <BarChart3 className="w-4 h-4 text-purple-500" />;
+};
 
   const processThemes = (themes: any[]) => {
   return themes
