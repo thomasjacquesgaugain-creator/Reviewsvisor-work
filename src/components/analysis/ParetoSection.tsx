@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { analyzeRootCauses } from "@/utils/rootCauseAnalysis";
 import { RootCauseAnalysisModal } from "./RootCauseAnalysisModal";
 import { useAnalysisFilters } from "./AnalysisFiltersContext";
+import { StrengthInsightModal } from "./StrengthInsightModal";
 
 interface ParetoSectionProps {
   issues: ParetoItem[];
@@ -185,8 +186,10 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
   const { filteredReviews } = useAnalysisFilters();
   const [activeIssueIndex, setActiveIssueIndex] = useState<number | null>(null);
   const [activeStrengthIndex, setActiveStrengthIndex] = useState<number | null>(null);
+  const [selectedStrengthIndex, setSelectedStrengthIndex] = useState(0);
   const [openIssuesModal, setOpenIssuesModal] = useState(false);
   const [openStrengthsModal, setOpenStrengthsModal] = useState(false);
+  const [openStrengthInsightModal, setOpenStrengthInsightModal] = useState(false);
   const [openRootCauseModal, setOpenRootCauseModal] = useState(false);
   
 
@@ -656,6 +659,10 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                               }}
                               onMouseEnter={() => setActiveStrengthIndex(originalIndex)}
                               onMouseLeave={() => setActiveStrengthIndex(null)}
+                              onClick={() => {
+                                setSelectedStrengthIndex(originalIndex);
+                                setOpenStrengthInsightModal(true);
+                              }}
                             />
                           );
                         })}
@@ -692,8 +699,8 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                         size="sm"
                         className="gap-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800"
                         onClick={() => {
-                          // Placeholder pour future action d'analyse approfondie
-                          console.log('Analyser le point fort:', safeStrengths[0]?.name);
+                          setSelectedStrengthIndex(0);
+                          setOpenStrengthInsightModal(true);
                         }}
                       >
                         <ArrowRight className="w-4 h-4" />
@@ -719,6 +726,16 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
           onOpenChange={setOpenRootCauseModal}
           paretoIssues={safeIssues}   // ← full array, modal handles stepping
           initialIndex={0}
+        />
+      )}
+      {safeStrengths.length > 0 && (
+        <StrengthInsightModal
+          open={openStrengthInsightModal}
+          onOpenChange={setOpenStrengthInsightModal}
+          strengths={safeStrengths}
+          initialIndex={selectedStrengthIndex}
+          reviews={filteredReviews}
+          themes={themes}
         />
       )}
     </div>

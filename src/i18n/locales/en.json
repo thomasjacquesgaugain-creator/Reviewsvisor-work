@@ -1854,6 +1854,18 @@
           "possible": "Possible",
           "occasional": "Occasional"
         }
+      },
+      "strengthDetails": {
+        "title": "Strength Analysis: {{name}}",
+        "summaryText": "{{name}} has been mentioned {{count}} times in positive customer feedback and is one of the strongest satisfaction drivers.",
+        "noCustomerComments": "No customer comments available.",
+        "summary": "Summary",
+        "relatedThemes": "Related themes",
+        "customerReviews": "Customer Reviews",
+        "recommendation": "Recommendation",
+        "mentions": "Mentions",
+        "share": "Share of strengths",
+        "recommendationText": "Maintain this strength, promote it in your communication, and continue monitoring customer feedback to preserve this advantage."
       }
     },
     "ishikawa": {
