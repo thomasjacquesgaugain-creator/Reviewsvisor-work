@@ -24,9 +24,10 @@ interface AnalysisPageProps {
   insight?:any;
   reviews?: Review[]; // Avis bruts pour le graphique d'historique
   dynamicThemes?: Array<{ theme: string; count?: number; importance?: number }>; // Thèmes dynamiques depuis insight
+  themeDefinitions?: Array<{ key: string; theme: string }>;
 }
 
-export function AnalysisPage({ data, establishmentName,insight,  reviews, dynamicThemes = [] }: AnalysisPageProps) {
+export function AnalysisPage({ data, establishmentName,insight,  reviews, dynamicThemes = [], themeDefinitions = [] }: AnalysisPageProps) {
   const { t } = useTranslation();
   const ANALYSIS_TOC_SECTIONS = [
   { id: "overview-section", label: `1. ${t("analysis.overview.title", "Vue d'ensemble")} – ${t("analysis.overview.kpiTitle", "Key KPIs")}` },
@@ -176,6 +177,7 @@ export function AnalysisPage({ data, establishmentName,insight,  reviews, dynami
                 data={data}
                 reviews={reviews}
                 dynamicThemes={dynamicThemes}
+                themeDefinitions={themeDefinitions}
                 insight={insight}
               />
             </div>
@@ -201,9 +203,10 @@ interface AnalysisContentProps {
   reviews?: Review[];
   insight:any;
   dynamicThemes?: Array<{ theme: string; count?: number; importance?: number }>;
+  themeDefinitions?: Array<{ key: string; theme: string }>;
 }
 
-function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: AnalysisContentProps) {
+function AnalysisContent({ data, reviews,insight, dynamicThemes = [], themeDefinitions = [] }: AnalysisContentProps) {
   const { filteredReviews, ratingFilter, periodFilter, sourceFilter, availableSources } = useAnalysisFilters();
     const { t } = useTranslation();
 
@@ -279,7 +282,15 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [] }: Analysis
       )}
 
       {/* Section 4b: Analyse qualitative */}
-      {data.qualitative && <QualitativeSection data={data.qualitative} reviews={effectiveReviews} dynamicThemes={dynamicThemes} />}
+      {data.qualitative && (
+        <QualitativeSection
+          data={data.qualitative}
+          reviews={effectiveReviews}
+          themes={data.themes}
+          dynamicThemes={dynamicThemes}
+          themeDefinitions={themeDefinitions}
+        />
+      )}
       </section>
 
       {/* Titre de section 5 */}

@@ -64,6 +64,28 @@ export function AnalysisTabContent({
     }));
   }, [analyse]);
 
+  const themeDefinitions = useMemo(() => {
+    const lang = i18n?.language?.startsWith("fr") ? "fr" : "en";
+    const source: any = analyse ?? {};
+
+    const extractLocalizedThemes = (value: any) => {
+      if (!value) return [];
+      if (Array.isArray(value)) return value;
+      if (Array.isArray(value?.[lang])) return value[lang];
+      return [];
+    };
+
+    const universal = extractLocalizedThemes(source?.themes_universal);
+    const industry = extractLocalizedThemes(source?.themes_industry);
+
+    return [...universal, ...industry]
+      .map((theme: any) => ({
+        key: String(theme?.key ?? "").trim(),
+        theme: String(theme?.theme ?? "").trim(),
+      }))
+      .filter((theme: { key: string; theme: string }) => theme.key && theme.theme);
+  }, [analyse, i18n?.language]);
+
   // Règle unique : afficher les graphes dès que analysisData est présent (pas de flag hasRunAnalysis / isAnalyzed)
   if (analysisData) {
     const locale = i18n?.language === "fr" ? fr : undefined;
@@ -93,6 +115,7 @@ export function AnalysisTabContent({
           establishmentName={establishmentName}
           reviews={reviews}
           dynamicThemes={dynamicThemes}
+          themeDefinitions={themeDefinitions}
           insight={analyse}
         />
       </div>
