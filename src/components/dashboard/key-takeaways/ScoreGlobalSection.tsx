@@ -264,7 +264,7 @@ function TrendDelta({
   locale: string;
   t: (key: string) => string;
 }) {
-  const deltaPoints = trend.ratingChange === null ? null : trend.ratingChange * 20;
+  const deltaPoints = trend.ratingChange === null ? null : trend.ratingChange;
   const isUnavailable = deltaPoints === null;
   const unavailableMessage = t("dashboard.keyTakeaways.overallScore.trendUnavailableMessage");
 
@@ -292,20 +292,25 @@ function TrendDelta({
         )}
         {deltaPoints > 0 ? "+" : deltaPoints < 0 ? "-" : ""}
         {`${formatLocalizedNumber(Math.abs(deltaPoints), locale, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
         })}`}
       </span>
     );
 
-  const exactValue =
-    deltaPoints === null
-      ? null
-      : `${deltaPoints > 0 ? "+" : deltaPoints < 0 ? "-" : ""}${formatLocalizedNumber(
+  const exactValueNode =
+  deltaPoints === null ? null : (
+    <span className="inline-flex items-center gap-1">
+      <span>
+        {`${deltaPoints > 0 ? "+" : deltaPoints < 0 ? "-" : ""}${formatLocalizedNumber(
           Math.abs(deltaPoints),
           locale,
           { minimumFractionDigits: 2, maximumFractionDigits: 2 },
-        )} pts`;
+        )}`}
+      </span>
+      <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+    </span>
+  );
 
   const relativePct =
     trend.ratingChange !== null && trend.previousAvg !== null && trend.previousAvg > 0
@@ -373,7 +378,7 @@ function TrendDelta({
                   <p className="text-sm text-slate-600 dark:text-slate-300">
                     {t("dashboard.keyTakeaways.overallScore.trendExactPrefix")}{" "}
                     <strong className="text-slate-900 dark:text-slate-100">
-                      {exactValue ?? "-"}
+                      {exactValueNode ?? "-"}
                     </strong>
                   </p>
 
