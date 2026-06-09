@@ -305,7 +305,7 @@ function TrendDelta({
         {`${deltaPoints > 0 ? "+" : deltaPoints < 0 ? "-" : ""}${formatLocalizedNumber(
           Math.abs(deltaPoints),
           locale,
-          { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+          { minimumFractionDigits: 1, maximumFractionDigits: 1 },
         )}`}
       </span>
       <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
