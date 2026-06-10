@@ -223,7 +223,7 @@ export default function GoogleImportButton({
     setIsOutscraperImporting(true);
 
     try {
-      const result = await importGoogleReviews(placeId, 2000, {
+      const result = await importGoogleReviews(placeId, 5000, {
         name,
         address,
         source: 'google',

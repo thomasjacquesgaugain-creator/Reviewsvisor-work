@@ -749,12 +749,12 @@ export default function EtablissementPage() {
           </div>
         </div>
       </div>
-      <PlanSelectionModal
+      {reviewCountLast12Months&&<PlanSelectionModal
         open={showPlanModal}
         onClose={() => setShowPlanModal(false)}
         establishment={savedEtabForPlan}
         reviewCountLast12Months={reviewCountLast12Months}
-      />
+      />}
     </div>
   );
 }

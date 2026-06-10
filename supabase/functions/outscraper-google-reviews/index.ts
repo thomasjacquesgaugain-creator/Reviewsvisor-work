@@ -43,7 +43,7 @@ serve(async (req) => {
     const placeId = body.placeId?.trim();
     const name = body.name?.trim();
     const address = body.address?.trim();
-    const limit = Math.min(Math.max(body.limit || 2000, 1), 3000);
+    const limit =body.limit || 2000;
     const sourceParam = body.source || "google";
     const forceFullImport = !!body.forceFullImport;
 
@@ -124,7 +124,7 @@ serve(async (req) => {
           updated: 0,
           skipped: 0,
         }),
-        { headers: corsHeaders }
+        { headers: corsHeaders },
       );
     }
 
@@ -132,64 +132,116 @@ serve(async (req) => {
     let updated = 0;
     let skipped = 0;
 
-    for (const r of rows) {
-      const author = (
-        r.author_title ||
-        r.author_name ||
-        ""
-      ).trim();
+    const reviewMeta = rows.map((r) => {
+      const author = (r.author_title || r.author_name || "").trim();
 
       const rating = r.review_rating ?? r.rating ?? null;
       const text = (r.review_text || "").trim();
       const dateRaw = r.review_datetime_utc || r.review_date || "";
 
       const identityHash = simpleHash(
-        `${sourceParam}|${author}|${dateRaw}|${placeId}`
+        `${sourceParam}|${author}|${dateRaw}|${placeId}`,
       );
 
-      const contentHash = simpleHash(
-        `${rating}|${text.toLowerCase().trim()}`
-      );
+      const contentHash = simpleHash(`${rating}|${text.toLowerCase().trim()}`);
 
-      const { data: existing } = await supabase
-        .from("reviews")
-        .select("id, rating, text")
-        .eq("user_id", user.id)
-        .eq("source_review_id", identityHash)
-        .maybeSingle();
+      return {
+        raw: r,
+        author,
+        rating,
+        text,
+        dateRaw,
+        identityHash,
+        contentHash,
+      };
+    });
 
-      if (existing) {
-        const existingHash = simpleHash(
-          `${existing.rating}|${(existing.text || "")
-            .toLowerCase()
-            .trim()}`
-        );
+    const { data: existingReviews, existingError } = await supabase
+      .from("reviews")
+      .select("id, source_review_id, rating, text")
+      .eq("user_id", user.id)
+      .eq("place_id", placeId);
 
-        if (existingHash === contentHash) {
-          skipped++;
-        } else {
-          await supabase
-            .from("reviews")
-            .update({ rating, text })
-            .eq("id", existing.id);
-          updated++;
-        }
+    if (existingError) {
+      throw existingError;
+    }
+
+    const existingMap = new Map(
+      (existingReviews || []).map((r) => [r.source_review_id, r]),
+    );
+
+    for (const review of existingReviews || []) {
+      existingMap.set(review.source_review_id, review);
+    }
+
+    const insertRows: any[] = [];
+    const updateRows: any[] = [];
+
+    for (const review of reviewMeta) {
+      const existing = existingMap.get(review.identityHash);
+
+      if (!existing) {
+        insertRows.push({
+          user_id: user.id,
+          place_id: placeId,
+          source: sourceParam,
+          source_review_id: review.identityHash,
+          author_name: review.author,
+          rating: review.rating,
+          text: review.text,
+          published_at: review.dateRaw,
+          raw: review.raw,
+        });
+
         continue;
       }
 
-      await supabase.from("reviews").insert({
-        user_id: user.id,
-        place_id: placeId,
-        source: sourceParam,
-        source_review_id: identityHash,
-        author_name: author,
-        rating,
-        text,
-        published_at: dateRaw,
-        raw: r,
-      });
+      const existingHash = simpleHash(
+        `${existing.rating}|${(existing.text || "").toLowerCase().trim()}`,
+      );
 
-      inserted++;
+      if (existingHash === review.contentHash) {
+        skipped++;
+        continue;
+      }
+
+      updateRows.push({
+        id: existing.id,
+        rating: review.rating,
+        text: review.text,
+      });
+    }
+
+    const BATCH_SIZE = 500;
+
+    for (let i = 0; i < insertRows.length; i += BATCH_SIZE) {
+      const batch = insertRows.slice(i, i + BATCH_SIZE);
+
+      const { error } = await supabase.from("reviews").insert(batch);
+
+      if (error) {
+        throw error;
+      }
+
+      inserted += batch.length;
+    }
+
+    for (let i = 0; i < updateRows.length; i += 100) {
+      const batch = updateRows.slice(i, i + 100);
+
+      await Promise.all(
+        batch.map((review) =>
+          supabase
+            .from("reviews")
+            .update({
+              rating: review.rating,
+              text: review.text,
+            })
+            .eq("id", review.id),
+        ),
+      );
+
+      updated += batch.length;
     }
 
     await supabase
