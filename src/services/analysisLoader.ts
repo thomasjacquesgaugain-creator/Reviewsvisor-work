@@ -23,6 +23,7 @@ export interface AnalysisData {
   summary_what_customers_love:any[] | null;
   summary_what_customers_hate:any[] | null;
   analysis_version: string | null;
+  qualitative_keywords: any[] | null;
 }
 
 export interface LoadAnalysisResult {
@@ -35,7 +36,7 @@ export interface LoadAnalysisResult {
 // Colonnes garanties présentes dans review_insights (schéma de base).
 // Les colonnes business_type, themes_universal, etc. sont optionnelles (migration 20260128).
 const REVIEW_INSIGHTS_BASE_COLUMNS =
-  'total_count, avg_rating, top_issues, top_praises, positive_ratio, last_analyzed_at, summary, themes,themes_universal,themes_industry,pain_points_prioritized , recommendations_quick_wins , recommendations_projects,summary_one_liner ,summary_what_customers_love ,summary_what_customers_hate,analysis_version ,business_type,business_type_confidence,business_type_candidates'
+  'total_count, avg_rating, top_issues, top_praises, positive_ratio, last_analyzed_at, summary, themes,themes_universal,themes_industry,pain_points_prioritized , recommendations_quick_wins , recommendations_projects,summary_one_liner ,summary_what_customers_love ,summary_what_customers_hate,analysis_version ,business_type,business_type_confidence,business_type_candidates,qualitative_stop_words,qualitative_keywords'
 
 /**
  * Charge la dernière analyse pour un établissement donné.
@@ -82,6 +83,9 @@ function localizeAnalysisData(data: any) {
 
     summary_what_customers_hate:
       data?.summary_what_customers_hate?.[lang] || [],
+    summary: data?.summary?.[lang]||[]  ,
+    qualitative_keywords:
+      data?.qualitative_keywords || [],
   };
 }
 export async function loadLatestAnalysis(

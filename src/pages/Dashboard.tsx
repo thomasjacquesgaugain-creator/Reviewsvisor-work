@@ -258,6 +258,7 @@ const Dashboard = () => {
 }, [fetchObjectives, activeEstablishmentId]);
 
   const safeObjectives = Array.isArray(objectives) ? objectives : [];
+  console.log("safeObjectives",safeObjectives)
 
   function handleClickActionPlan(){
    setActiveTab("recommandations"); // third tab id
@@ -3815,11 +3816,15 @@ const activeObjective =
                             totalAnalyzed || allReviewsForChart.length,
                           avgRating: avgRating,
                           positiveRatio: positivePct / 100,
+                          positivePct,
                           topIssues: topIssues,
                           topStrengths: topStrengths,
-                          themes: insight?.themes || [],
+                          themes: analysisDataForTab?.themes || [],
                           recentReviews: allReviewsForChart,
                           summary: insight?.summary || "",
+                          analysis_data:insight,
+                          smart_objectives: safeObjectives,   // your sorted objectives array
+                          report_language: i18n.language as 'en' | 'fr',
                         };
 
                         if (!import.meta.env.PROD) {

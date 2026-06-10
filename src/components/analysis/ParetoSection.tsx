@@ -85,7 +85,9 @@ function generateIssuesAnalysis(items: ParetoItem[],t: (key: string, opts?: any)
   }
 
   const totalMentions = items.reduce((sum, item) => sum + item.count, 0);
-  const topItems = items.slice(0, 3);
+  const topItems = [...items]
+  .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
+  .slice(0, 3);
   const topItemsTotal = topItems.reduce((sum, item) => sum + item.count, 0);
   const topItemsPercentage = totalMentions > 0 ? Math.round((topItemsTotal / totalMentions) * 100) : 0;
 
@@ -193,7 +195,8 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
   const [openRootCauseModal, setOpenRootCauseModal] = useState(false);
   
 
-  const safeIssues = issues || [];
+  const safeIssues = [...(issues || [])]
+  .sort((a, b) => (b.count ?? 0) - (a.count ?? 0));
   const safeStrengths = strengths || [];
   
   // Inverser l'ordre pour avoir la plus grande barre en bas

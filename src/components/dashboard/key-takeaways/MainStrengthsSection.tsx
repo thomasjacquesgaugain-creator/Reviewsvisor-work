@@ -13,7 +13,7 @@ export function MainStrengthsSection({ strengths }: MainStrengthsSectionProps) {
 
   if (!mainStrength) {
     return (
-<div className="h-full  bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.08)] ring-1 ring-white/40 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+<div className="h-full rounded-[18px] bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.08)] ring-1 ring-white/40 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#defbf4]">
             <TrendingUp className="h-4 w-4 text-emerald-600" />

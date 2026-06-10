@@ -22,7 +22,6 @@ import {
   subYears,
 } from "date-fns";
 import { fr, enUS, it, es, ptBR } from "date-fns/locale";
-import { getRatingEvolution, Granularity as RatingGranularity } from "@/utils/ratingEvolution";
 import { TrendingUp, BarChart3, Filter } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -35,17 +34,6 @@ interface HistorySectionProps {
 }
 
 type Granularity = 'day' | 'week' | 'month' | 'year';
-
-// Mapper Granularity vers RatingGranularity
-function mapGranularity(g: Granularity): RatingGranularity {
-  switch (g) {
-    case 'day': return 'jour';
-    case 'week': return 'semaine';
-    case 'month': return 'mois';
-    case 'year': return 'année';
-    default: return 'mois';
-  }
-}
 
 export function HistorySection({ data, reviews }: HistorySectionProps) {  
   const { t, i18n } = useTranslation();
@@ -130,7 +118,7 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
     }
   }, [autoVolumeGranularity, hasUserChosenVolumeGranularity]);
 
-  // Calculer depuis les avis bruts en utilisant getRatingEvolution (même logique que "Indicateurs clés")
+  // Calculer depuis les avis bruts avec une moyenne par période
   const processedData = useMemo(() => {
     // DEBUG: Afficher les données reçues
     console.log('[HistorySection] Reviews reçus:', reviews);
@@ -142,12 +130,10 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
       granularity: periodNoteMoyenne
     });
 
-    // Si on a des reviews bruts, utiliser getRatingEvolution (même logique que "Indicateurs clés")
+    // Si on a des reviews bruts, calculer la moyenne par période
     if (reviews && reviews.length > 0) {
       console.log('[HistorySection] 🔍 DEBUG - Avis récupérés:', reviews);
-      
-      // Convertir les reviews au format attendu par getRatingEvolution
-      const reviewsForEvolution = reviews
+      const validReviews = reviews
         .filter(r => {
           const note = r.note || (r as any).rating || 0;
           const dateStr = (r as any).published_at || (r as any).inserted_at || (r as any).created_at || r.date || '';
@@ -155,41 +141,67 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
         })
         .map(r => ({
           rating: r.note || (r as any).rating || 0,
-          published_at: (r as any).published_at || (r as any).inserted_at || (r as any).created_at || r.date || '',
-          inserted_at: (r as any).inserted_at || (r as any).created_at || r.date || ''
-        }));
-
-      // Trouver la date de départ (premier avis ou date d'il y a 12 mois)
-      const allDates = reviewsForEvolution
+          dateStr: (r as any).published_at || (r as any).inserted_at || (r as any).created_at || r.date || '',
+        }))
         .map(r => {
           try {
-            return parseISO(r.published_at);
+            return { rating: r.rating, date: parseISO(r.dateStr) };
           } catch {
             return null;
           }
         })
-        .filter((d): d is Date => d !== null && !isNaN(d.getTime()))
-        .sort((a, b) => a.getTime() - b.getTime());
-      
-      const startDate = allDates.length > 0 ? allDates[0] : subMonths(new Date(), 12);
+        .filter((r): r is { rating: number; date: Date } => r !== null && !isNaN(r.date.getTime()))
+        .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-      // Utiliser getRatingEvolution avec la granularité mappée
-      const ratingGranularity = mapGranularity(periodNoteMoyenne);
-      const evolutionData = getRatingEvolution(
-        reviewsForEvolution,
-        startDate,
-        ratingGranularity,
-        i18n.language || 'fr'
-      );
+      if (validReviews.length === 0) return [];
 
-      console.log('[HistorySection] 🔍 DEBUG - Données du graphique (getRatingEvolution):', evolutionData);
+      const buckets = new Map<string, { sortDate: Date; sum: number; count: number; label: string }>();
 
-      // Convertir au format attendu par le graphique (label au lieu de mois)
-      const chartData = evolutionData.map(point => ({
-        date: point.fullDate,
-        label: point.mois,
-        rating: point.note
-      }));
+      validReviews.forEach(({ rating, date }) => {
+        let sortDate: Date;
+        let key: string;
+        let label: string;
+
+        switch (periodNoteMoyenne) {
+          case 'day':
+            sortDate = startOfDay(date);
+            key = format(sortDate, 'yyyy-MM-dd');
+            label = format(sortDate, 'dd/MM', { locale: dateLocale });
+            break;
+          case 'week':
+            sortDate = startOfWeek(date, { locale: dateLocale, weekStartsOn: 1 });
+            key = format(sortDate, 'yyyy-MM-dd');
+            label = `S${getWeek(date, { locale: dateLocale })}`;
+            break;
+          case 'month':
+            sortDate = startOfMonth(date);
+            key = format(sortDate, 'yyyy-MM');
+            label = format(sortDate, 'MMMM yyyy', { locale: dateLocale });
+            break;
+          case 'year':
+            sortDate = startOfYear(date);
+            key = format(sortDate, 'yyyy-MM-dd');
+            label = format(sortDate, 'yyyy');
+            break;
+          default:
+            sortDate = startOfMonth(date);
+            key = format(sortDate, 'yyyy-MM');
+            label = format(sortDate, 'MMMM yyyy', { locale: dateLocale });
+        }
+
+        const existing = buckets.get(key) || { sortDate, sum: 0, count: 0, label };
+        existing.sum += rating;
+        existing.count += 1;
+        buckets.set(key, existing);
+      });
+
+      const chartData = Array.from(buckets.entries())
+        .map(([key, bucket]) => ({
+          date: key,
+          label: bucket.label,
+          rating: bucket.count > 0 ? Number((bucket.sum / bucket.count).toFixed(1)) : 0
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date));
 
       console.log('[HistorySection] ✅ Données finales pour le graphique:', chartData);
 
@@ -530,7 +542,7 @@ export function HistorySection({ data, reviews }: HistorySectionProps) {
             <p className="text-sm text-muted-foreground">
               {t("analysis.history.averageRatingLabel")}{" "}
               <span className="font-semibold text-foreground">
-                {typeof value === "number" ? value.toFixed(2) : "-"} / 5
+                {typeof value === "number" ? value.toFixed(1) : "-"} / 5
               </span>
             </p>
             <p className="text-xs text-muted-foreground mt-1">

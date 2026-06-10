@@ -58,7 +58,7 @@ export function RiskAlertSection({ reviews }: RiskAlertSectionProps) {
   const riskData = useMemo(() => {
     if (!reviews?.length) return null;
 
-    const anchorDate = getLatestDate(reviews) ?? new Date();
+    const anchorDate =  new Date();
     const language = (i18n.language || "fr").split("-")[0].toLowerCase();
     const locale = localeMap[language] || fr;
     const currentMonthKey = format(anchorDate, "yyyy-MM");

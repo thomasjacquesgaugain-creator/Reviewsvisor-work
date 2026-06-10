@@ -301,8 +301,18 @@ function buildLockedKeys(existingInsight: any): Record<string, string> {
   for (const arr of sources) {
     if (!Array.isArray(arr)) continue;
     for (const item of arr) {
-      if (item?.theme && item?.key) {
+      if (!item?.key) continue;
+
+      // Index by theme display name (original behavior)
+      if (item.theme) {
         locked[item.theme.toLowerCase().trim()] = item.key;
+      }
+      locked[item.key.toLowerCase().trim()] = item.key;
+      const variants = CANONICAL_THEME_KEYS[item.key];
+      if (Array.isArray(variants)) {
+        for (const variant of variants) {
+          locked[variant.toLowerCase().trim()] = item.key;
+        }
       }
     }
   }
@@ -589,13 +599,13 @@ async function analyzePassA(
   // for the same themes — it cannot rename, reslug, or change them.
   const lockedKeysInstruction = Object.keys(lockedKeys).length > 0
     ? `
-LOCKED THEME KEYS — this establishment has been analyzed before.
-The following theme→key pairs are FROZEN. You MUST use exactly these keys for these themes.
-Do NOT change, rename, reslug, or translate them under any circumstances:
-${Object.entries(lockedKeys).map(([theme, key]) => `- "${theme}" → key must be "${key}"`).join("\n")}
-
-Any theme NOT listed above follows the normal key rules.
-`
+  LOCKED THEME KEYS — FROZEN, do NOT change under any circumstances:
+  ${Object.entries(lockedKeys)
+      // Deduplicate: only show theme display names, skip key→key entries
+      .filter(([variant, key]) => variant !== key)
+      .map(([theme, key]) => `- theme "${theme}" → key MUST be "${key}"`)
+      .join("\n")}
+  `
     : '';
 
   const prompt = [
@@ -614,13 +624,18 @@ Detected type: ${businessType} (confidence: ${businessTypeConfidence}%)
 Total reviews analyzed: ${totalReviews}
 
 Customer reviews:
-${samples.slice(0, 100).map((t, i) => `${i + 1}. ${t}`).join("\n")}
+${samples.map((t, i) => `${i + 1}. ${t}`).join("\n")}
 
 ${lockedKeysInstruction}
 
-COUNTING RULE — very important:
-For every theme, "count" = the NUMBER OF INDIVIDUAL REVIEWS (out of ${totalReviews} total) that explicitly mention this theme.
-Count carefully: if 18 reviews mention food quality, count = 18. Do NOT undercount.
+COUNTING RULE — MANDATORY:
+You are shown exactly ${samples.length} reviews above, numbered 1 to ${samples.length}.
+For each theme, go through the reviews one by one and count how many explicitly mention it.
+"count" = the number of reviews that directly OR indirectly relate to this theme.
+Include reviews where the theme is implied, not just explicitly stated.
+Minimum count for inclusion: 2 reviews
+This is not an estimate. Count directly from the list above.
+Minimum count for inclusion: 2 reviews.
 
 INSTRUCTIONS:
 1. Extract ALL relevant UNIVERSAL themes found in the reviews:
@@ -635,6 +650,7 @@ INSTRUCTIONS:
 4. Include 1–2 short quotes as evidence (in the original review language)
 
 5. ${languageInstruction}
+6. Do strictly follow the counting rules 
 
 IMPORTANT:
 - Every theme MUST contain a stable "key"
@@ -936,7 +952,8 @@ Deno.serve(async (req) => {
       .select('text, rating')
       .eq('place_id', place_id)
       .eq('user_id', userId)
-      .limit(200);
+      .order('published_at', { ascending: false })
+      .limit(300);
 
     if (reviewsErr) throw new Error(`reviews_fetch_failed:${reviewsErr.message}`);
 
@@ -960,7 +977,7 @@ Deno.serve(async (req) => {
     }
 
     const stats = computeStats(rows);
-    const sampleTexts = rows.map(r => r.text ?? "").filter(Boolean).slice(0, 120);
+    const sampleTexts = rows.map(r => r.text ?? "").filter(Boolean);
 
     const detection = detectBusinessType(establishmentName, googlePlacesTypes, sampleTexts);
     console.log(`[analyze-reviews-v2] Détection: ${detection.type} (${detection.confidence}%) via ${detection.source}`);
@@ -994,7 +1011,6 @@ Deno.serve(async (req) => {
     if (!passAResult) {
       return json({ ok: false, error: "analysis_pass_a_failed" }, 500);
     }
-
     // ─── Enforce stable keys + normalize sentiment ────────────────────────
     if (passAResult.top_issues)      passAResult.top_issues      = enforceKeys(passAResult.top_issues);
     if (passAResult.top_strength)    passAResult.top_strength    = enforceKeys(passAResult.top_strength);
@@ -1166,6 +1182,31 @@ Deno.serve(async (req) => {
         console.log("✅ review_insights saved:", upsertedInsight);
       }
 
+      const qualitativeResponse = await fetch(
+        `${SUPABASE_URL}/functions/v1/qualitative-analysis`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${SERVICE_ROLE}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId,
+            placeId: place_id,
+            reviews: sampleTexts,
+            themesUniversal: passAResult?.themes_universal || {
+              en: [],
+              fr: [],
+            },
+            themesIndustry: passAResult?.themes_industry || { en: [], fr: [] },
+          }),
+        },
+      );
+
+      if (!qualitativeResponse.ok) {
+        throw new Error("qualitative-analysis failed");
+      }
+
       if (
         importantUpdatesEnabled &&
         notificationDecision.send &&
@@ -1175,29 +1216,41 @@ Deno.serve(async (req) => {
         try {
           const reportLocale = outputLanguage === "fr" ? "fr-FR" : "en-US";
           const reportMonthName = new Intl.DateTimeFormat(reportLocale, {
-            month: "long", year: "numeric",
+            month: "long",
+            year: "numeric",
           }).format(new Date());
 
           await sendSignificantChangeNotification({
-            language:          outputLanguage,
+            language: outputLanguage,
             displayName,
             userEmail,
             establishmentName,
             reportMonthName,
-            previousAvg:  prevAvgForNotif,
-            currentAvg:   stats.overall,
-            ratingDrop:   (prevAvgForNotif ?? 0) - (stats.overall ?? 0),
-            issues:       currentIssues,
-            reason:       notificationDecision.reason,
+            previousAvg: prevAvgForNotif,
+            currentAvg: stats.overall,
+            ratingDrop: (prevAvgForNotif ?? 0) - (stats.overall ?? 0),
+            issues: currentIssues,
+            reason: notificationDecision.reason,
           });
-          console.log('[analyze-reviews-v2] Significant change notification sent', {
-            reason: notificationDecision.reason, userId, place_id,
-          });
+          console.log(
+            "[analyze-reviews-v2] Significant change notification sent",
+            {
+              reason: notificationDecision.reason,
+              userId,
+              place_id,
+            },
+          );
         } catch (notificationError) {
-          console.error('[analyze-reviews-v2] Failed to send notification:', notificationError);
+          console.error(
+            "[analyze-reviews-v2] Failed to send notification:",
+            notificationError,
+          );
         }
       } else if (!importantUpdatesEnabled) {
-        console.log('[analyze-reviews-v2] Important updates notifications disabled for user', { userId, place_id });
+        console.log(
+          "[analyze-reviews-v2] Important updates notifications disabled for user",
+          { userId, place_id },
+        );
       }
 
       await supabaseAdmin
