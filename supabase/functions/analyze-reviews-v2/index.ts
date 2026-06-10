@@ -736,8 +736,34 @@ Return EXACTLY this JSON shape:
     ]
   },
   "top_strength": {
-    "en": [{ "key": "<slug>", "theme": "<theme>", "count": <number> }],
-    "fr": [{ "key": "<same key as EN>", "theme": "<theme>", "count": <number> }]
+    "en": [
+      {
+        "key": "<slug>",
+        "theme": "<theme>",
+        "count": <number>,
+        "impact": "<dominant|high|medium>",
+        "ai_synthesis": "<summary explaining why customers praise this strength>",
+        "evidence": [
+          "<review quote>",
+          "<review quote>",
+          "<review quote>"
+        ]
+      }
+    ],
+    "fr": [
+      {
+        "key": "<same key as EN>",
+        "theme": "<translated theme>",
+        "count": <number>,
+        "impact": "<dominant|high|medium>",
+        "ai_synthesis": "<translated synthesis>",
+        "evidence": [
+          "<review quote>",
+          "<review quote>",
+          "<review quote>"
+        ]
+      }
+    ]
   },
   "themes_universal": {
     "en": [{ "theme": "<name>", "sentiment": "<positive|mixed|negative>", "importance": <0-100>, "evidence_quotes": ["<quote>"], "what_it_means": "<explanation>", "count": <number> }],

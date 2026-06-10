@@ -70,21 +70,13 @@ export function StrengthInsightModal({
   const isFirst = currentStep === 0;
   const isLast = currentStep === total - 1;
 
-  const positiveReviews = reviews
-    .filter((review) => {
-      const reviewText = getReviewText(review);
+  const evidenceReviews = strength.evidence || [];
 
-      return reviewText.trim().length > 0 && isPositiveReview(review);
-    })
-    .slice(0, 5);
-
-  const relatedThemes = themes
-    .filter((theme) => {
-      const themeName = getThemeName(theme);
-
-      return themeName.toLowerCase() === strength.name.toLowerCase();
-    })
-    .slice(0, 5);
+  const relatedThemes = [
+    {
+      theme: strength.name,
+    },
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -136,11 +128,8 @@ export function StrengthInsightModal({
                 </h3>
 
                 <p className="text-slate-700 dark:text-slate-300">
-                  {t("analysis.pareto.strengthDetails.summaryText", {
-                    name: strength.name,
-                    count: strength.count,
-                    defaultValue: `${strength.name} has been mentioned ${strength.count} times in positive customer feedback and is one of the strongest satisfaction drivers.`,
-                  })}
+                  {strength.ai_synthesis ||
+                    `${strength.name} has been mentioned ${strength.count} times in positive customer feedback and is one of the strongest satisfaction drivers.`}
                 </p>
               </div>
             </div>
@@ -204,11 +193,9 @@ export function StrengthInsightModal({
               </h3>
             </div>
 
-            {positiveReviews.length > 0 ? (
+            {evidenceReviews.length > 0 ? (
               <div className="space-y-3">
-                {positiveReviews.map((review, index) => {
-                  const reviewText = getReviewText(review);
-                  const rating = getReviewRating(review);
+                  {evidenceReviews.map((quote, index) => {
 
                   return (
                     <div
@@ -216,18 +203,8 @@ export function StrengthInsightModal({
                       className="border-l-4 border-green-500 pl-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-r"
                     >
                       <p className="text-sm italic text-slate-700 dark:text-slate-300">
-                        "
-                        {reviewText.length > 250
-                          ? `${reviewText.substring(0, 250)}...`
-                          : reviewText}
-                        "
+                        "{quote}"
                       </p>
-
-                      {rating && (
-                        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                          {t("analysis.pareto.rating", "Rating")}: {rating}/5
-                        </p>
-                      )}
                     </div>
                   );
                 })}

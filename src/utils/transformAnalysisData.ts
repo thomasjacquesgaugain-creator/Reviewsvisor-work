@@ -182,11 +182,19 @@ export function transformAnalysisData(
   const paretoStrengths = (safeInsight?.top_praises || []).map((strength: any, index: number) => {
     const count = Number(strength.count) || 0;
     return {
-      name:       strength.theme || strength.strength || `Point fort ${index + 1}`,
+      key: strength.key,
+      name: strength.theme || strength.strength || `Point fort ${index + 1}`,
       count,
       percentage: totalStrengthsMentions > 0 ? (count / totalStrengthsMentions) * 100 : 0,
-    };
-  });
+
+      impact: strength.impact || "medium",
+      ai_synthesis: strength.ai_synthesis || "",
+      evidence: Array.isArray(strength.evidence)
+        ? strength.evidence
+        : [],
+      };
+    }
+  );
 
   // ── THEMES ─────────────────────────────────────────────────
   // ✅ Guard: ensure both arrays exist before reduce

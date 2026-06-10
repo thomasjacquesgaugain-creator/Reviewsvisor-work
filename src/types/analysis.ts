@@ -33,6 +33,8 @@ export interface ParetoItem {
   fr:string,
   ai_synthesis:any,
   root_causes:any
+  impact?: string;
+  evidence?: string[];
 }
 
 export interface ThemeAnalysis {

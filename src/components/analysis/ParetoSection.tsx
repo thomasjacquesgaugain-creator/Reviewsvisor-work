@@ -662,10 +662,6 @@ export function ParetoSection({ issues, strengths, themes = [], qualitative }: P
                               }}
                               onMouseEnter={() => setActiveStrengthIndex(originalIndex)}
                               onMouseLeave={() => setActiveStrengthIndex(null)}
-                              onClick={() => {
-                                setSelectedStrengthIndex(originalIndex);
-                                setOpenStrengthInsightModal(true);
-                              }}
                             />
                           );
                         })}
