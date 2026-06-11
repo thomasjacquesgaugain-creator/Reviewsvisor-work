@@ -2059,6 +2059,18 @@
           "possible": "Possible",
           "occasional": "Occasionnelle"
         }
+      },
+      "strengthDetails": {
+        "title": "Analyse de la force: {{name}}",
+        "summaryText": "{{name}} a été mentionné {{count}} fois dans les avis positifs et constitue l’un des principaux facteurs de satisfaction.",
+        "noCustomerComments": "Aucun commentaire client disponible.",
+        "summary": "Synthèse",
+        "relatedThemes": "Thèmes liés",
+        "customerReviews": "Commentaires des clients",
+        "recommendation": "Recommandation",
+        "mentions": "Mentionné",
+        "share": "Part des points forts",
+        "recommendationText": "Maintenez cette force, valorisez-la dans votre communication et continuez à suivre les retours clients pour préserver cet avantage."
       }
     },
     "ishikawa": {
