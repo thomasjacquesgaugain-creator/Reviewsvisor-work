@@ -170,7 +170,7 @@ export function StrengthInsightModal({
           {relatedThemes.length > 0 && (
             <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-4">
               <h3 className="font-semibold mb-3 text-slate-900 dark:text-slate-100">
-                {t("analysis.pareto.strengthDetails.relatedThemes", "Related Themes")}
+                {t("analysis.pareto.strengthDetails.relatedThemes", "Related Theme")}
               </h3>
 
               <div className="flex flex-wrap gap-2">
