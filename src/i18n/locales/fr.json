@@ -1755,7 +1755,10 @@
     "cannotFallbackWithoutEstablishmentInfo":"Nom ou adresse de l'établissement manquant pour le repli Outscraper.",
     "fallbackImportSuccess":"Import Outscraper terminé avec succès",
     "fallbackImportFailed":"L'import Outscraper a échoué",
-    "import_summary": "{{inserted}} importés - {{skipped}} déjà présents - {{updated}} mis à jour"
+    "import_summary": "{{inserted}} importés - {{skipped}} déjà présents - {{updated}} mis à jour",
+    "importInBackground":"Importation lancée",
+    "importInBackgroundDescription":"Les avis sont en cours d'importation en arrière-plan. Nous vous informerons une fois l'opération terminée.",
+    "importCompleteDescription": "Importation terminée — {{count}} nouveaux avis ajoutés"
   },
   "aiAssistance": {
     "emptyQuestion": "Question vide",

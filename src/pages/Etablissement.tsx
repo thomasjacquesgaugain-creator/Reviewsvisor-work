@@ -601,6 +601,18 @@ export default function EtablissementPage() {
     t,
   ]);
 
+  // Simple listener — no Realtime here, GoogleImportButton owns that
+  useEffect(() => {
+    const onImported = (e: any) => {
+      const id = e?.detail?.establishmentId;
+      if (id && id !== currentEstablishment?.place_id) return;
+      setRefreshTrigger((prev) => prev + 1);
+    };
+
+    window.addEventListener("reviews:imported", onImported);
+    return () => window.removeEventListener("reviews:imported", onImported);
+  }, [currentEstablishment?.place_id]);
+
   return (
     <div className="app-page-shell">
       <AppPageBackground />
@@ -749,12 +761,12 @@ export default function EtablissementPage() {
           </div>
         </div>
       </div>
-      <PlanSelectionModal
+      {reviewCountLast12Months&&<PlanSelectionModal
         open={showPlanModal}
         onClose={() => setShowPlanModal(false)}
         establishment={savedEtabForPlan}
         reviewCountLast12Months={reviewCountLast12Months}
-      />
+      />}
     </div>
   );
 }
