@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface ImportGoogleReviewsResult {
   success: boolean;
+  jobId?: string; 
   total: number;
   inserted: number;
   skipped: number;
@@ -138,6 +139,7 @@ if (typeof data === "string") {
 
   return {
     success: true,
+    jobId: body.jobId,
     total: body.total ?? 0,
     inserted: body.inserted ?? 0,
     skipped: body.skipped ?? 0,

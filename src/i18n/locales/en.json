@@ -1345,7 +1345,10 @@
     "cannotFallbackWithoutEstablishmentInfo":"Missing establishment name or address for Outscraper fallback.",
     "fallbackImportSuccess":"Outscraper import completed successfully",
     "fallbackImportFailed":"Outscraper import failed",
-    "import_summary": "{{inserted}} imported - {{skipped}} already present - {{updated}} updated"
+    "import_summary": "{{inserted}} imported - {{skipped}} already present - {{updated}} updated",
+    "importInBackground":"Import started",
+    "importInBackgroundDescription":"Reviews are being imported in the background. We will notify you once complete.",
+    "importCompleteDescription": "Import complete — {{count}} new reviews added"
   },
   "errors": {
     "title": "Error",

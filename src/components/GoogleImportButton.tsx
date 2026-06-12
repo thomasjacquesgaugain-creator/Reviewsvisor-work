@@ -148,6 +148,13 @@ export default function GoogleImportButton({
 
   // Ref to track if an operation is in progress (prevents double-clicks)
   const operationInProgress = useRef(false);
+  const importChannelRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      importChannelRef.current?.unsubscribe();
+    };
+  }, []);
 
   // Check for existing Google connection on mount
   useEffect(() => {
@@ -196,99 +203,120 @@ export default function GoogleImportButton({
     return `${origin}/api/auth/callback/google/index.html`;
   };
 
-  const handleContinueWithOutscraper = async () => {
-    if (!placeId) {
-      toast({
-        title: t('common.error'),
-        description: t('import.pleaseAddEstablishmentFirst'),
-        variant: 'destructive',
-      });
-      return;
-    }
+const handleContinueWithOutscraper = async () => {
+  if (!placeId) {
+    toast({ title: t('common.error'), description: t('import.pleaseAddEstablishmentFirst'), variant: 'destructive' });
+    return;
+  }
 
-    const name = establishmentName?.trim() || '';
-    const address = establishmentAddress?.trim() || '';
-    if (!name || !address) {
-      toast({
-        title: t('common.error'),
-        description: t(
-          'googleImport.cannotFallbackWithoutEstablishmentInfo',
-          'Missing establishment name or address for Outscraper fallback.',
-        ),
-        variant: 'destructive',
-      });
-      return;
-    }
+  const name = establishmentName?.trim() || '';
+  const address = establishmentAddress?.trim() || '';
+  if (!name || !address) {
+    toast({
+      title: t('common.error'),
+      description: t('googleImport.cannotFallbackWithoutEstablishmentInfo'),
+      variant: 'destructive',
+    });
+    return;
+  }
 
-    setIsOutscraperImporting(true);
+  setIsOutscraperImporting(true); 
 
-    try {
-      const result = await importGoogleReviews(placeId, 5000, {
-        name,
-        address,
-        source: 'google',
-      });      
-
-      if (result.success) {
-        const inserted = Number(result.inserted ?? 0);
-        const skipped = Number(result.skipped ?? 0);
-        const updated=Number(result.updated??0)
-
-        setShowApiNotConfiguredDialog(false);
-        sonnerToast.success(
-          t(
-            'googleImport.fallbackImportSuccess',
-            'Outscraper import completed successfully',
-          ),
-          {
-            description: t("googleImport.import_summary", { inserted, skipped, updated }),
-          },
-        );
-
-        void sendReviewImportNotification({
-          establishmentName: establishmentName?.trim() || 'Your establishment',
-          source: 'outscraper',
-          inserted,
-          skipped,
-          updated,
-          total: inserted + updated,
-        });
-
-        window.dispatchEvent(new CustomEvent('reviews:imported'));
-        onSuccess?.();
-
-        if (onOpenVisualPanel) {
-          onOpenVisualPanel();
-          setTimeout(() => {
-            document.getElementById('reviews-visual-anchor')?.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start',
-            });
-          }, 100);
-        }
-
-        if (onClose) {
-          onClose();
-        }
-        return;
-      }
-
+  try {
+    const result = await importGoogleReviews(placeId, 50000, { name, address, source: 'google' });
+    if (!result.success || !result.jobId) {
       toast({
         title: `${t('common.error')}: ${t('googleImport.fallbackImportFailed')}`,
         description: result.error || t('googleImport.syncFailure'),
         variant: 'destructive',
       });
-    } catch (error: any) {
-      console.error('[google-sync] Outscraper fallback failed:', error);
-      toast({
-        title: `${t('common.error')}: ${t('googleImport.fallbackImportFailed')}`,
-        description: error?.message || t('googleImport.syncFailure'),
-        variant: 'destructive',
-      });
-    } finally {
       setIsOutscraperImporting(false);
+      return;
     }
-  };
+       
+
+    const channel = supabase
+      .channel(`import-job-${result.jobId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'import_jobs',
+          filter: `id=eq.${result.jobId}`,
+        },
+        async (payload) => {
+          const job = payload.new as any;
+
+          if (job.status === 'done') {
+            const inserted = Number(job.inserted ?? 0);
+            const updated = Number(job.updated ?? 0);
+            const skipped = Number(job.skipped ?? 0);
+
+            setIsOutscraperImporting(false);
+            setShowApiNotConfiguredDialog(false);
+
+            sonnerToast.success(
+              t("googleImport.importCompleteDescription", {
+                count: inserted,
+              }),
+              { duration: 8000 }
+            );
+
+            void sendReviewImportNotification({
+              establishmentName: name,
+              source: 'outscraper',
+              inserted,
+              skipped,
+              updated,
+              total: job.total ?? inserted + updated,
+            });
+
+            window.dispatchEvent(
+              new CustomEvent('reviews:imported', {
+                detail: { establishmentId: placeId, source: 'outscraper' },
+              })
+            );
+
+            if (onOpenVisualPanel) {
+              onOpenVisualPanel();
+              setTimeout(() => {
+                document.getElementById('reviews-visual-anchor')?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'start',
+                });
+              }, 100);
+            }
+
+            if (onClose) onClose();
+            importChannelRef.current?.unsubscribe();
+          }
+
+          if (job.status === 'error') {
+            setIsOutscraperImporting(false); // ← unblock UI on error too
+
+            sonnerToast.error(
+              t('googleImport.fallbackImportFailed'),
+              { description: job.error ?? t('googleImport.syncFailure'), duration: 6000 }
+            );
+            importChannelRef.current?.unsubscribe();
+          }
+        }
+      )
+      .subscribe((status: string) => {
+      });
+
+    importChannelRef.current = channel;
+  } catch (error: any) {
+    console.error('[google-sync] Outscraper fallback failed:', error);
+    setIsOutscraperImporting(false); 
+    toast({
+      title: `${t('common.error')}: ${t('googleImport.fallbackImportFailed')}`,
+      description: error?.message || t('googleImport.syncFailure'),
+      variant: 'destructive',
+    });
+  }
+};
 
   const handleImportClick = async () => {
     console.log('[google-sync] click', {
@@ -820,9 +848,19 @@ const checkPopupClosed = setInterval(() => {
       {/* Google APIs Not Configured Dialog */}
       <Dialog
         open={showApiNotConfiguredDialog}
-        onOpenChange={setShowApiNotConfiguredDialog}
+        onOpenChange={(open) => {
+          if (isOutscraperImporting) return;
+          setShowApiNotConfiguredDialog(open);
+        }}
       >
-        <DialogContent>
+        <DialogContent
+          className={cn(
+            isOutscraperImporting &&
+            "cursor-wait [&_*]:cursor-wait [&>button]:cursor-wait"
+          )}
+          onPointerDownOutside={(e) => { if (isOutscraperImporting) e.preventDefault(); }}
+          onEscapeKeyDown={(e) => { if (isOutscraperImporting) e.preventDefault(); }}
+        >
           <DialogHeader>
             <DialogTitle>
               {t(

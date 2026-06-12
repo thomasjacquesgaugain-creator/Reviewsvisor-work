@@ -601,6 +601,18 @@ export default function EtablissementPage() {
     t,
   ]);
 
+  // Simple listener — no Realtime here, GoogleImportButton owns that
+  useEffect(() => {
+    const onImported = (e: any) => {
+      const id = e?.detail?.establishmentId;
+      if (id && id !== currentEstablishment?.place_id) return;
+      setRefreshTrigger((prev) => prev + 1);
+    };
+
+    window.addEventListener("reviews:imported", onImported);
+    return () => window.removeEventListener("reviews:imported", onImported);
+  }, [currentEstablishment?.place_id]);
+
   return (
     <div className="app-page-shell">
       <AppPageBackground />

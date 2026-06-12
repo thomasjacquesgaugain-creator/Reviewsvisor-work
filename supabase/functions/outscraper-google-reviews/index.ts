@@ -4,261 +4,86 @@ import Outscraper from "https://esm.sh/outscraper";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function simpleHash(text: string) {
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    const char = text.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0;
-  }
-  return Math.abs(hash).toString(16);
-}
-
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      Deno.env.get("SB_URL")!,
+      Deno.env.get("SB_SERVICE_ROLE_KEY")!,
       { auth: { persistSession: false } }
     );
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Unauthorized");
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData } = await supabase.auth.getUser(token);
+    const { data: userData } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+    if (!userData.user) throw new Error("Unauthorized");
     const user = userData.user;
-    if (!user) throw new Error("Unauthorized");
 
-    const body = await req.json();
-
-    const placeId = body.placeId?.trim();
-    const name = body.name?.trim();
-    const address = body.address?.trim();
-    const limit =body.limit || 2000;
-    const sourceParam = body.source || "google";
-    const forceFullImport = !!body.forceFullImport;
-
-    if (!placeId || !name || !address) {
-      throw new Error("placeId, name, address required");
-    }
+    const { placeId, name, address, limit = 2000, source = "google", forceFullImport = false } = await req.json();
+    if (!placeId || !name || !address) throw new Error("placeId, name, address required");
+    const { data: job, error: jobErr } = await supabase
+      .from("import_jobs")
+      .insert({ user_id: user.id, place_id: placeId, status: "pending",source: source??"google" })
+      .select("id")
+      .single();
+    if (jobErr) throw jobErr;
 
     const query = `${name}, ${address}`;
 
-    // 🔹 Incremental import logic
     let cutoffTimestamp: number | null = null;
-
-    if (sourceParam === "google" && !forceFullImport) {
+    if (source === "google" && !forceFullImport) {
       const { data: etab } = await supabase
         .from("establishments")
         .select("last_reviews_import")
         .eq("place_id", placeId)
         .eq("user_id", user.id)
         .maybeSingle();
-
       if (etab?.last_reviews_import) {
         const last = new Date(etab.last_reviews_import);
-        cutoffTimestamp = Math.floor(
-          (last.getTime() - 24 * 60 * 60 * 1000) / 1000
-        );
+        cutoffTimestamp = Math.floor((last.getTime() - 86400000) / 1000);
       }
     }
 
-    // 🔹 Outscraper SDK
-    const client = new Outscraper(Deno.env.get("OUTSCRAPER_API_KEY")!);
+    const webhookUrl = `${Deno.env.get("SB_URL")}/functions/v1/outscraper-webhook`;
 
-    let response: any;
+const params = new URLSearchParams({
+  query,
+  reviewsLimit: String(limit),
+  limit: "1",
+  sort: "newest",
+  source: "google",
+  async: "true",
+  webhook: webhookUrl,
+  ...(cutoffTimestamp && { cutoff: String(cutoffTimestamp) }),
+});
 
-    if (sourceParam === "tripadvisor") {
-      response = await client.tripadvisorReviews([query], limit, false);
-    } else if (sourceParam === "trustpilot") {
-      response = await client.trustpilotReviews(
-        [query],
-        limit,
-        "default",
-        "",
-        null,
-        "",
-        false
-      );
-    } else {
-      response = await client.googleMapsReviews(
-        [query],
-        limit,
-        null,
-        1,
-        "newest",
-        null,
-        null,
-        cutoffTimestamp,
-        null,
-        false,
-        "google",
-        "fr"
-      );
-    }
+const res = await fetch(
+  `https://api.app.outscraper.com/maps/reviews-v3?${params.toString()}`,
+  {
+    method: "GET",
+    headers: {
+      "X-API-KEY": Deno.env.get("OUTSCRAPER_API_KEY")!,
+    },
+  }
+);
 
-    const data = Array.isArray(response) ? response : response?.data ?? response;
-    const rows =
-      data?.[0]?.reviews_data ??
-      (Array.isArray(data?.[0]) ? data[0] : data) ??
-      [];
+const task = await res.json();
 
-      console.log("response----->",rows.length);
-      
+if (!task.id) throw new Error(`Outscraper error: ${JSON.stringify(task)}`);
 
-    if (!rows.length) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          total: 0,
-          inserted: 0,
-          updated: 0,
-          skipped: 0,
-        }),
-        { headers: corsHeaders },
-      );
-    }
-
-    let inserted = 0;
-    let updated = 0;
-    let skipped = 0;
-
-    const reviewMeta = rows.map((r) => {
-      const author = (r.author_title || r.author_name || "").trim();
-
-      const rating = r.review_rating ?? r.rating ?? null;
-      const text = (r.review_text || "").trim();
-      const dateRaw = r.review_datetime_utc || r.review_date || "";
-
-      const identityHash = simpleHash(
-        `${sourceParam}|${author}|${dateRaw}|${placeId}`,
-      );
-
-      const contentHash = simpleHash(`${rating}|${text.toLowerCase().trim()}`);
-
-      return {
-        raw: r,
-        author,
-        rating,
-        text,
-        dateRaw,
-        identityHash,
-        contentHash,
-      };
-    });
-
-    const { data: existingReviews, existingError } = await supabase
-      .from("reviews")
-      .select("id, source_review_id, rating, text")
-      .eq("user_id", user.id)
-      .eq("place_id", placeId);
-
-    if (existingError) {
-      throw existingError;
-    }
-
-    const existingMap = new Map(
-      (existingReviews || []).map((r) => [r.source_review_id, r]),
-    );
-
-    for (const review of existingReviews || []) {
-      existingMap.set(review.source_review_id, review);
-    }
-
-    const insertRows: any[] = [];
-    const updateRows: any[] = [];
-
-    for (const review of reviewMeta) {
-      const existing = existingMap.get(review.identityHash);
-
-      if (!existing) {
-        insertRows.push({
-          user_id: user.id,
-          place_id: placeId,
-          source: sourceParam,
-          source_review_id: review.identityHash,
-          author_name: review.author,
-          rating: review.rating,
-          text: review.text,
-          published_at: review.dateRaw,
-          raw: review.raw,
-        });
-
-        continue;
-      }
-
-      const existingHash = simpleHash(
-        `${existing.rating}|${(existing.text || "").toLowerCase().trim()}`,
-      );
-
-      if (existingHash === review.contentHash) {
-        skipped++;
-        continue;
-      }
-
-      updateRows.push({
-        id: existing.id,
-        rating: review.rating,
-        text: review.text,
-      });
-    }
-
-    const BATCH_SIZE = 500;
-
-    for (let i = 0; i < insertRows.length; i += BATCH_SIZE) {
-      const batch = insertRows.slice(i, i + BATCH_SIZE);
-
-      const { error } = await supabase.from("reviews").insert(batch);
-
-      if (error) {
-        throw error;
-      }
-
-      inserted += batch.length;
-    }
-
-    for (let i = 0; i < updateRows.length; i += 100) {
-      const batch = updateRows.slice(i, i + 100);
-
-      await Promise.all(
-        batch.map((review) =>
-          supabase
-            .from("reviews")
-            .update({
-              rating: review.rating,
-              text: review.text,
-            })
-            .eq("id", review.id),
-        ),
-      );
-
-      updated += batch.length;
-    }
 
     await supabase
-      .from("establishments")
-      .update({ last_reviews_import: new Date().toISOString() })
-      .eq("place_id", placeId)
-      .eq("user_id", user.id);
+      .from("import_jobs")
+      .update({ outscraper_task_id: task.id, status: "running" })
+      .eq("id", job.id);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        total: rows.length,
-        inserted,
-        updated,
-        skipped,
-      }),
-      { headers: corsHeaders }
+      JSON.stringify({ success: true, jobId: job.id }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
     return new Response(

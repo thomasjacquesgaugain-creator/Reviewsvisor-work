@@ -132,6 +132,15 @@ export default function MonEtablissementCard({
     return () => subscription.unsubscribe();
   }, [loadActiveEstablishment]);
 
+  useEffect(() => {
+    const onImported = () => {
+      loadActiveEstablishment();
+    };
+
+    window.addEventListener("reviews:imported", onImported);
+    return () => window.removeEventListener("reviews:imported", onImported);
+  }, [loadActiveEstablishment]);
+
   const opts = {
     name: etab?.name ?? undefined,
     address: etab?.address || undefined,
