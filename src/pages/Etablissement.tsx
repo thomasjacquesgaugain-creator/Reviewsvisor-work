@@ -158,27 +158,59 @@ export default function EtablissementPage() {
         data: { session },
       } = await supabase.auth.getSession();
 
-      const { data, error } = await supabase.functions.invoke(
-        "outscraper-google-reviews-count",
-        {
-          body: {
-            placeId: savedEtab.place_id,
-            name: savedEtab.name,
-            address: savedEtab.address,
-          },
-          headers: { Authorization: `Bearer ${session?.access_token}` },
-        },
-      );
+     const { data, error } = await supabase.functions.invoke(
+  "outscraper-google-reviews-count",
+  {
+    body: {
+      placeId: savedEtab.place_id,
+      name: savedEtab.name,
+      address: savedEtab.address,
+    },
+    headers: {
+      Authorization: `Bearer ${session?.access_token}`,
+    },
+  },
+);
 
-      if (error) throw error;
+if (error) {
+  let errorMessage =
+    "Failed to fetch review count for subscription recommendation";
 
-      const payload = typeof data === "string" ? JSON.parse(data) : data;
-      const count = Number(payload?.last12MonthsReviewsCount ?? payload?.total ?? 0) || 0;
-      setReviewCountLast12Months(count);
-      setShowPlanModal(true);
+  try {
+    if ("context" in error && error.context) {
+      const errorBody = await error.context.json();
+      errorMessage = errorBody?.error || errorMessage;
+    }
+  } catch (parseError) {
+    console.error("Failed to parse Edge Function error:", parseError);
+  }
+
+  throw new Error(errorMessage);
+}
+
+const payload = typeof data === "string" ? JSON.parse(data) : data;
+
+const count =
+  Number(
+    payload?.last12MonthsReviewsCount ??
+      payload?.total ??
+      0,
+  ) || 0;
+
+setReviewCountLast12Months(count);
+setShowPlanModal(true);
     } catch (error) {
-      console.error("Failed to fetch review count for subscription recommendation:", error);
-      setReviewCountLast12Months(null);
+     console.error(
+    "Failed to fetch review count for subscription recommendation:",
+    error
+  );
+
+  toast.error(
+    error?.message ||
+      t("common.somethingWentWrong")
+  );
+
+  setReviewCountLast12Months(null);
     } finally {
       setFetchingReviewCount(false);
       resetSearchAndClose();
@@ -316,9 +348,9 @@ export default function EtablissementPage() {
 
             // UNIQUEMENT mettre à jour l'état local (pas de sauvegarde DB)
             setSelected(etab);
-            toast.success(t("establishment.selected", { name: etab.name }), {
-              description: t("establishment.clickSaveToAddToList"),
-            });
+            // toast.success(t("establishment.selected", { name: etab.name }), {
+            //   description: t("establishment.clickSaveToAddToList"),
+            // });
           } catch (error: any) {
             console.error("Erreur lors de la récupération des détails:", error);
             toast.error(
