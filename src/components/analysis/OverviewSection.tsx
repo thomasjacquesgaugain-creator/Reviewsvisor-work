@@ -77,43 +77,17 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
   const getTrendIcon = () => {
     if (data.trend === 'up') return <TrendingUp className="w-4 h-4 text-green-500 flex-shrink-0" aria-hidden="true" />;
     if (data.trend === 'down') return <TrendingDown className="w-4 h-4 text-red-500 flex-shrink-0" aria-hidden="true" />;
-    if (data.trend === 'insufficient') return <Minus className="w-4 h-4 text-gray-400 flex-shrink-0" aria-hidden="true" />;
-    if (data.trend === 'partial') {
-      // Pour partial, déterminer l'icône selon la direction si disponible
-      if (data.trendValue !== null && data.trendValue !== undefined) {
-        if (data.trendValue > 0) return <TrendingUp className="w-4 h-4 text-green-500 flex-shrink-0" aria-hidden="true" />;
-        if (data.trendValue < 0) return <TrendingDown className="w-4 h-4 text-red-500 flex-shrink-0" aria-hidden="true" />;
-      }
-      return <ArrowRight className="w-4 h-4 text-amber-500 flex-shrink-0" aria-hidden="true" />;
-    }
+    if (data.trend === 'insufficient' || data.trend === 'partial') return <Minus className="w-4 h-4 text-gray-400 flex-shrink-0" aria-hidden="true" />;
     return <ArrowRight className="w-4 h-4 text-gray-500 flex-shrink-0" aria-hidden="true" />;
   };
 
   const getTrendColor = () => {
     if (data.trend === 'up') return 'text-green-600';
     if (data.trend === 'down') return 'text-red-600';
-    if (data.trend === 'insufficient') return 'text-gray-400';
-    if (data.trend === 'partial') {
-      // Pour partial, déterminer la couleur selon la direction si disponible
-      if (data.trendValue !== null && data.trendValue !== undefined) {
-        if (data.trendValue > 0) return 'text-green-600';
-        if (data.trendValue < 0) return 'text-red-600';
-      }
-      return 'text-amber-600';
-    }
+    if (data.trend === 'insufficient' || data.trend === 'partial') return 'text-gray-400';
     return 'text-gray-600';
   };
   
-  const getTrendLabel = () => {
-    if (data.trend === 'partial' && data.trendValue !== null && data.trendValue !== undefined) {
-      // Déterminer la direction même avec données partielles
-      if (data.trendValue > 2) return t("analysis.overview.increasing", "En hausse");
-      if (data.trendValue < -2) return t("analysis.overview.decreasing", "En baisse");
-      return t("analysis.overview.stable", "Stable");
-    }
-    return null;
-  };
-
   // Formater la valeur de tendance en pourcentage (format FR avec virgule, entre parenthèses)
   const formatTrendValue = (value: number | null | undefined, isPositive: boolean): string => {
     if (value === null || value === undefined || isNaN(value)) return '';
@@ -231,15 +205,16 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
         <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
           <CardHeader className="pb-3 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("analysis.overview.trend", "Tendance")} {data.trend !== 'insufficient' && t("analysis.overview.trendAverage")}
+              {t("analysis.overview.trend", "Tendance")}
+              {data.trend === 'up' || data.trend === 'down' || data.trend === 'stable'
+                ? ` ${t("analysis.overview.trendAverage")}`
+                : ""}
             </CardTitle>
             <div className="absolute top-3 right-3">
               <InfoTooltip
                 content={
-                  data.trend === 'insufficient' 
+                  data.trend === 'insufficient' || data.trend === 'partial'
                     ? t("analysis.overview.trendTooltip.insufficient")
-                    : data.trend === 'partial'
-                    ? t("analysis.overview.trendTooltip.partial")
                     : (
                       <div className="space-y-2 text-xs font-normal text-gray-600 dark:text-slate-300 leading-5">
                         <p className="font-medium mb-2">
@@ -265,7 +240,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
             </div>
           </CardHeader>
           <CardContent>
-            {data.trend === 'insufficient' ? (
+            {data.trend === 'insufficient' || data.trend === 'partial' ? (
               <div className="flex items-center gap-2">
                 {getTrendIcon()}
                 <span className={`text-lg font-semibold ${getTrendColor()}`}>
@@ -329,34 +304,11 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                         )}
                       </>
                     )}
-                    {data.trend === 'partial' && (
-                      <>
-                        {getTrendLabel() || t("analysis.overview.stable", "Stable")}
-                        {data.trendValue !== null && data.trendValue !== undefined && (
-                          <>
-                            {data.trendDeltaPoints !== null && data.trendDeltaPoints !== undefined && (
-                              <span className="ml-1 text-base inline-flex items-center gap-1">
-                                {formatDeltaPoints(data.trendDeltaPoints)} 
-                                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                              </span>
-                            )}
-                            <span className="ml-1 text-base">
-                              {formatTrendValue(Math.abs(data.trendValue), data.trendValue >= 0)}
-                            </span>
-                          </>
-                        )}
-                      </>
-                    )}
                   </span>
-                  {data.trend === 'partial' && (
-                    <Badge variant="outline" className="ml-2 text-xs bg-amber-50 text-amber-700 border-amber-300">
-                      {t("analysis.overview.partialData", "Données partielles")}
-                    </Badge>
-                  )}
                 </div>
                 {data.trendValue !== null && data.trendValue !== undefined && (
                   <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-                    {data.trend === 'partial' ? t("analysis.overview.trendComparison.partial") : t("analysis.overview.trendComparison.previous3Months")}
+                    {t("analysis.overview.trendComparison.previous3Months")}
                   </p>
                 )}
               </>

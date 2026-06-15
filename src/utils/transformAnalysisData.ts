@@ -1,5 +1,5 @@
 import { CompleteAnalysisData, Review, QualitativeKeywordTheme } from "@/types/analysis";
-import { format, parseISO, subMonths } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { cleanReviewText } from "@/utils/cleanReviewText";
 import { formatDiagnosticSummary, formatRecommendations } from "@/utils/formatDiagnosticSummary";
 // ✅ REMOVED: analyzeRootCauses, RootCauseAnalysis — no longer needed
@@ -8,7 +8,6 @@ import {
   normalizeRating,
   extractKeywordsWithSentiment,
 } from "@/utils/reviewProcessing";
-import i18n from "@/i18n/config";
 
 // ✅ REMOVED: createEmptyRCA — no longer needed
 
@@ -24,7 +23,6 @@ export function transformAnalysisData(
   const positiveRatio = safeInsight?.positive_ratio || 0;
 
   const MIN_REVIEWS_PER_PERIOD = 3;
-  const MIN_REVIEWS_FOR_SIMPLE_TREND = 3;
   
   let trend: 'up' | 'down' | 'stable' | 'insufficient' | 'partial' = 'stable';
   let trendValue: number | null = null;
@@ -33,9 +31,10 @@ export function transformAnalysisData(
   
   if (safeReviews.length > 0) {
     const reviewsWithDates = safeReviews.filter((r) => {
+      const dateStr = (r as any).published_at || r.date;
+      if (!dateStr) return false;
+
       try {
-        const dateStr = (r as any).published_at || r.date;
-        if (!dateStr) return false;
         const reviewDate = parseISO(dateStr);
         return !isNaN(reviewDate.getTime());
       } catch {
@@ -43,7 +42,7 @@ export function transformAnalysisData(
       }
     });
 
-    if (reviewsWithDates.length < MIN_REVIEWS_FOR_SIMPLE_TREND) {
+    if (reviewsWithDates.length < MIN_REVIEWS_PER_PERIOD) {
       trend = "insufficient";
     } else {
       const sortedReviews = reviewsWithDates
@@ -53,36 +52,14 @@ export function transformAnalysisData(
         }))
         .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-      const computeSimpleTrend = (sorted: typeof sortedReviews) => {
-        const firstPartSize = Math.max(1, Math.floor(sorted.length * 0.3));
-        const lastPartSize = Math.max(1, Math.floor(sorted.length * 0.3));
-        const firstPart = sorted.slice(0, firstPartSize);
-        const lastPart = sorted.slice(-lastPartSize);
-        if (firstPart.length < 2 || lastPart.length < 2) return false;
-        const firstAvg =
-          firstPart.reduce((s, r) => s + (r.note || 0), 0) / firstPart.length;
-        const lastAvg =
-          lastPart.reduce((s, r) => s + (r.note || 0), 0) / lastPart.length;
-        if (!isFinite(firstAvg) || !isFinite(lastAvg) || firstAvg === 0)
-          return false;
-        trendDeltaPoints = lastAvg - firstAvg;
-        trendValue = ((lastAvg - firstAvg) / firstAvg) * 100;
-        isPartialData = true;
-        trend = "partial";
-        return true;
-      };
-
-      // const now = new Date();
-    // Use completed months only for trend calculation.
-    // Example (June): compare Apr+May vs Feb+Mar and exclude partial June data.
+      // Use completed months only for trend calculation.
+      // Example (June): compare Apr+May vs Feb+Mar and exclude partial June data.
       const last_month_date = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
-
       const currentPeriodStart = new Date(last_month_date);
       currentPeriodStart.setDate(last_month_date.getDate() - 60);
-
       const previousPeriodStart = new Date(last_month_date);
       previousPeriodStart.setDate(last_month_date.getDate() - 120);
-debugger
+
       const currentReviews = sortedReviews.filter(
         (r) => r.date >= currentPeriodStart && r.date <= last_month_date,
       );
@@ -91,16 +68,15 @@ debugger
         (r) => r.date >= previousPeriodStart && r.date < currentPeriodStart,
       );
 
-      
-
       if (
-        currentReviews.length >= MIN_REVIEWS_PER_PERIOD &&
-        previousReviews.length >= MIN_REVIEWS_PER_PERIOD
+        currentReviews.length < MIN_REVIEWS_PER_PERIOD ||
+        previousReviews.length < MIN_REVIEWS_PER_PERIOD
       ) {
+        trend = "insufficient";
+      } else {
         const currentAvg =
           currentReviews.reduce((s, r) => s + (r.note || 0), 0) /
           currentReviews.length;
-
         const previousAvg =
           previousReviews.reduce((s, r) => s + (r.note || 0), 0) /
           previousReviews.length;
@@ -108,7 +84,6 @@ debugger
         if (isFinite(currentAvg) && isFinite(previousAvg) && previousAvg > 0) {
           trendDeltaPoints = currentAvg - previousAvg;
           trendValue = ((currentAvg - previousAvg) / previousAvg) * 100;
-
           trend =
             trendDeltaPoints > 0
               ? "up"
@@ -116,12 +91,6 @@ debugger
                 ? "down"
                 : "stable";
         } else {
-          if (!computeSimpleTrend(sortedReviews)) {
-            trend = "insufficient";
-          }
-        }
-      } else {
-        if (!computeSimpleTrend(sortedReviews)) {
           trend = "insufficient";
         }
       }
