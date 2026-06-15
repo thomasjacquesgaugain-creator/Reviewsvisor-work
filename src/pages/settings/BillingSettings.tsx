@@ -87,69 +87,6 @@ const activePlan = useMemo(
           <>
             <CurrentPlanCard summary={summary} activePlan={activePlan} />
             {/* Établissements supplémentaires : calculé depuis la table établissements (total - 1). Masqué si 0 ou négatif. */}
-           {summary.activeSubscriptions.length > 0 && (
-  <div className="mt-8">
-    <div className="flex items-center gap-3 mb-4">
-      <CreditCard className="h-5 w-5 text-slate-400 dark:text-slate-500" />
-      <h2 className="text-lg font-medium text-gray-900 dark:text-slate-100">
-       {t("subscription.activeSubscriptions")} ({summary.activeSubscriptions.length})
-      </h2>
-    </div>
-    <div className="space-y-3 max-w-3xl rounded-2xl bg-slate-100 dark:bg-slate-900 p-3 border border-slate-200 dark:border-slate-800">
-      {summary.activeSubscriptions.map((sub, i) => (
-        <Card
-          key={sub.subscriptionId}
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm transition-colors"
-        >
-          <CardContent className="p-5 flex items-center justify-between gap-4 bg-transparent">
-            <div>
-              <p className="font-semibold text-gray-900 dark:text-slate-100">
-                {sub.planName}
-                {sub.planBilling && (
-                  <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
-                    · {sub.planBilling === "annual" ? t("subscription.yearly") : t("subscription.monthly")}
-                  </span>
-                )}
-              </p>
-              {sub.periodEnd && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  {sub.cancelAtPeriodEnd ? t("subscription.endsOn") :t("subscription.renewsOn")}{" "}
-                  {new Date(sub.periodEnd).toLocaleDateString("fr-FR")}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
-                {t("subscription.active")}
-              </span>
-              {/* {(sub.latestInvoicePdfUrl || sub.latestInvoiceHostedUrl) ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => {
-                    const url = sub.latestInvoicePdfUrl || sub.latestInvoiceHostedUrl;
-                    if (url) {
-                      window.open(url, "_blank", "noopener,noreferrer");
-                    }
-                  }}
-                >
-                  <Download className="h-4 w-4" />
-                  Télécharger la facture
-                </Button>
-              ) : (
-                <Button variant="outline" size="sm" disabled className="gap-2">
-                  <ExternalLink className="h-4 w-4" />
-                  Facture indisponible
-                </Button>
-              )} */}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-                </div>
-              </div>
-            )}
             {summary.activeSubscriptions.length === 0 && !isFree && (
               <p className="mt-6 text-sm text-slate-500 dark:text-slate-400">
                 {t("settings.BillingAndSubscription.noAdditionalEstablishments")}
@@ -193,7 +130,7 @@ const activePlan = useMemo(
             </Button>
           <Button
             variant="outline"
-            onClick={() => navigate("/settings/billing/reports")}
+            onClick={() => navigate("/settings/billing/invoices")}
             className="border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             {t("settings.BillingAndSubscription.invoiceHistory")}

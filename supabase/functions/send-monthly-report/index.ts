@@ -1,8 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const SUPABASE_URL = Deno.env.get("SB_URL")||"";
-const SUPABASE_SERVICE_ROLE_KEY =  Deno.env.get("SB_SERVICE_ROLE_KEY") || "";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL") || "";
+const SUPABASE_SERVICE_ROLE_KEY =
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
+  Deno.env.get("SB_SERVICE_ROLE_KEY") ||
+  "";
 const APP_URL = Deno.env.get("APP_URL") || "https://reviewsvisor.com";
 
 const corsHeaders = {
@@ -18,6 +21,8 @@ interface MonthlyReportData {
   establishmentName: string;
   reportMonthName: string;
   previousMonthName: string;
+  reportMonthKey: string;
+  previousMonthKey: string;
   currentMonth: {
     avgRating: number;
     totalReviews: number;
@@ -36,6 +41,35 @@ interface MonthlyReportData {
   };
   recommendations: string[];
 }
+
+interface ReportMonthWindow {
+  reportMonthStart: Date;
+  reportMonthEnd: Date;
+  comparisonMonthStart: Date;
+  comparisonMonthEnd: Date;
+  reportMonthName: string;
+  previousMonthName: string;
+  reportMonthKey: string;
+  previousMonthKey: string;
+}
+
+type ReportStatus =
+  | "ready"
+  | "db_failed"
+  | "email_failed"
+  | "partial_failure";
+
+type Establishment = {
+  id: string;
+  name: string;
+  place_id: string;
+  rating: number;
+};
+
+type ReportPersistenceResult = {
+  rowId: string | null;
+  error: string | null;
+};
 
 function getPerformanceBadge(ratingDiff: number): { label: string; color: string; bgColor: string } {
   if (ratingDiff >= 0.7) {
@@ -64,6 +98,59 @@ function formatReviewSnippet(text: string | null | undefined, fallback: string):
   if (!truncated || truncated === "...") return fallback;
 
   return truncated;
+}
+
+function resolveReportMonthWindow(reportMonth?: string): ReportMonthWindow {
+  let year: number;
+  let monthIndex: number;
+
+  if (reportMonth && /^\d{4}-\d{2}$/.test(reportMonth)) {
+    const [parsedYear, parsedMonth] = reportMonth.split("-").map(Number);
+    year = parsedYear;
+    monthIndex = parsedMonth - 1;
+  } else {
+    const now = new Date();
+    // const now = new Date("2026-06-01");
+    year = now.getFullYear();
+    monthIndex = now.getMonth() - 1;
+  }
+
+  const reportMonthStart = new Date(year, monthIndex, 1);
+  const reportMonthEnd = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
+  const comparisonMonthStart = new Date(year, monthIndex - 1, 1);
+  const comparisonMonthEnd = new Date(
+    year,
+    monthIndex,
+    0,
+    23,
+    59,
+    59,
+    999,
+  );
+
+  const reportMonthKey = `${reportMonthStart.getFullYear()}-${String(
+    reportMonthStart.getMonth() + 1,
+  ).padStart(2, "0")}`;
+  const previousMonthKey = `${comparisonMonthStart.getFullYear()}-${String(
+    comparisonMonthStart.getMonth() + 1,
+  ).padStart(2, "0")}`;
+
+  return {
+    reportMonthStart,
+    reportMonthEnd,
+    comparisonMonthStart,
+    comparisonMonthEnd,
+    reportMonthName: reportMonthStart.toLocaleDateString("fr-FR", {
+      month: "long",
+      year: "numeric",
+    }),
+    previousMonthName: comparisonMonthStart.toLocaleDateString("fr-FR", {
+      month: "long",
+      year: "numeric",
+    }),
+    reportMonthKey,
+    previousMonthKey,
+  };
 }
 
 function generateReportHTML(data: MonthlyReportData): string {
@@ -223,12 +310,210 @@ function generateReportHTML(data: MonthlyReportData): string {
   `;
 }
 
-async function generateAndSendReport(userId: string, supabaseAdmin: any): Promise<void> {
+async function upsertMonthlyReportRecord({
+  userId,
+  establishment,
+  monthWindow,
+  reportData,
+  supabaseAdmin,
+}: {
+  userId: string;
+  establishment: Establishment;
+  monthWindow: ReportMonthWindow;
+  reportData: MonthlyReportData;
+  supabaseAdmin: ReturnType<typeof createClient>;
+}): Promise<string> {
+  const { data, error } = await supabaseAdmin
+    .from("monthly_reports")
+    .upsert({
+      user_id: userId,
+      establishment_id: establishment.id,
+      place_id: establishment.place_id,
+      report_month: `${monthWindow.reportMonthKey}-01`,
+      report_month_key: monthWindow.reportMonthKey,
+      report_month_label: monthWindow.reportMonthName,
+      period_start: monthWindow.reportMonthStart.toISOString(),
+      period_end: monthWindow.reportMonthEnd.toISOString(),
+      report_data: reportData,
+      status: "ready",
+      generated_at: new Date().toISOString(),
+      error_message: null,
+    }, {
+      onConflict: "establishment_id,report_month_key",
+    })
+    .select("id")
+    .single();
+
+  if (error || !data?.id) {
+    throw new Error(
+      `monthly_reports upsert failed: ${error?.message || "missing row id"}`,
+    );
+  }
+
+  return data.id;
+}
+
+async function updateMonthlyReportStatus({
+  reportId,
+  status,
+  errorMessage,
+  supabaseAdmin,
+  emailSentAt,
+}: {
+  reportId: string;
+  status: ReportStatus;
+  errorMessage?: string | null;
+  supabaseAdmin: ReturnType<typeof createClient>;
+  emailSentAt?: string | null;
+}) {
+  const updatePayload: Record<string, string | null> = {
+    status,
+    error_message: errorMessage || null,
+  };
+
+  if (emailSentAt !== undefined) {
+    updatePayload.email_sent_at = emailSentAt;
+  }
+
+  const { error } = await supabaseAdmin
+    .from("monthly_reports")
+    .update(updatePayload)
+    .eq("id", reportId);
+
+  if (error) {
+    console.error(`Failed to update monthly report ${reportId}:`, error);
+  }
+}
+
+async function markExistingMonthlyReportFailure({
+  establishmentId,
+  reportMonthKey,
+  status,
+  errorMessage,
+  supabaseAdmin,
+}: {
+  establishmentId: string;
+  reportMonthKey: string;
+  status: ReportStatus;
+  errorMessage: string;
+  supabaseAdmin: ReturnType<typeof createClient>;
+}) {
+  const { data: existing, error: lookupError } = await supabaseAdmin
+    .from("monthly_reports")
+    .select("id")
+    .eq("establishment_id", establishmentId)
+    .eq("report_month_key", reportMonthKey)
+    .maybeSingle();
+
+  if (lookupError || !existing?.id) {
+    if (lookupError) {
+      console.error(
+        `Failed to lookup monthly report ${establishmentId}/${reportMonthKey}:`,
+        lookupError,
+      );
+    }
+    return;
+  }
+
+  await updateMonthlyReportStatus({
+    reportId: existing.id,
+    status,
+    errorMessage,
+    supabaseAdmin,
+  });
+}
+
+async function persistMonthlyReport({
+  userId,
+  establishment,
+  monthWindow,
+  reportData,
+  supabaseAdmin,
+}: {
+  userId: string;
+  establishment: Establishment;
+  monthWindow: ReportMonthWindow;
+  reportData: MonthlyReportData;
+  supabaseAdmin: ReturnType<typeof createClient>;
+}): Promise<ReportPersistenceResult> {
+  try {
+    const rowId = await upsertMonthlyReportRecord({
+      userId,
+      establishment,
+      monthWindow,
+      reportData,
+      supabaseAdmin,
+    });
+
+    return {
+      rowId,
+      error: null,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Monthly report DB persistence failed:", {
+      establishmentId: establishment.id,
+      reportMonthKey: monthWindow.reportMonthKey,
+      message,
+    });
+
+    await markExistingMonthlyReportFailure({
+      establishmentId: establishment.id,
+      reportMonthKey: monthWindow.reportMonthKey,
+      status: "db_failed",
+      errorMessage: message,
+      supabaseAdmin,
+    });
+
+    return {
+      rowId: null,
+      error: message,
+    };
+  }
+}
+
+async function sendMonthlyReportEmail({
+  userEmail,
+  establishmentName,
+  reportMonthName,
+  htmlContent,
+}: {
+  userEmail: string;
+  establishmentName: string;
+  reportMonthName: string;
+  htmlContent: string;
+}) {
+  const emailResponse = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+    },
+    body: JSON.stringify({
+      to: [userEmail],
+      subject: `📊 Rapport mensuel – ${establishmentName} – ${reportMonthName}`,
+      html: htmlContent,
+    }),
+  });
+
+  if (!emailResponse.ok) {
+    const errorText = await emailResponse.text().catch(() => "");
+    throw new Error(`send-email failed: ${emailResponse.status} ${errorText}`);
+  }
+
+  return emailResponse.json().catch(() => ({}));
+}
+
+async function generateAndSendReport(
+  userId: string,
+  supabaseAdmin: ReturnType<typeof createClient>,
+  reportMonth?: string,
+): Promise<Array<Record<string, string | null>>> {
   try {
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
     if (userError || !userData?.user) {
       console.error(`Error fetching user ${userId}:`, userError);
-      return;
+      return [{ userId, establishmentId: null, status: "error", error: "user_not_found" }];
     }
 
     const { data: profile, error: profileError } = await supabaseAdmin
@@ -239,13 +524,13 @@ async function generateAndSendReport(userId: string, supabaseAdmin: any): Promis
 
     if (profileError || !profile) {
       console.error(`Error fetching profile for user ${userId}:`, profileError);
-      return;
+      return [{ userId, establishmentId: null, status: "error", error: "profile_not_found" }];
     }
 
     const userEmail = userData.user.email;
     if (!userEmail) {
       console.error(`No email found for user ${userId}`);
-      return;
+      return [{ userId, establishmentId: null, status: "error", error: "email_missing" }];
     }
 
     const { data: establishments, error: estabError } = await supabaseAdmin
@@ -264,22 +549,40 @@ async function generateAndSendReport(userId: string, supabaseAdmin: any): Promis
 
     if (estabError || !establishments || establishments.length === 0) {
       console.error(`Error fetching establishments for user ${userId}:`, estabError);
-      return;
+      return [{
+        userId,
+        establishmentId: null,
+        status: "error",
+        error: "establishments_not_found",
+      }];
     }
+    const results: Array<Record<string, string | null>> = [];
 
-    for (const establishment of establishments) {
+    for (const establishment of establishments as Establishment[]) {
       try {
-        await generateAndSendReportForEstablishment({
+        const result = await generateAndSendReportForEstablishment({
           userId,
           userEmail,
           profile,
           establishment,
           supabaseAdmin,
+          reportMonth,
         });
+
+        results.push(result);
       } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
         console.error(`Error processing establishment ${establishment.id} for user ${userId}:`, err);
+        results.push({
+          userId,
+          establishmentId: establishment.id,
+          reportMonth: reportMonth || null,
+          status: "error",
+          error: message,
+        });
       }
     }
+    return results;
   } catch (error) {
     console.error(`Error in generateAndSendReport for user ${userId}:`, error);
     throw error;
@@ -292,33 +595,27 @@ async function generateAndSendReportForEstablishment({
   profile,
   establishment,
   supabaseAdmin,
+  reportMonth,
 }: {
   userId: string;
   userEmail: string;
   profile: { first_name: string; last_name: string };
-  establishment: { id: string; name: string; place_id: string; rating: number };
-  supabaseAdmin: any;
-}): Promise<void> {
-  const now = new Date();
-  const reportMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const reportMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-  const comparisonMonthStart = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-  const comparisonMonthEnd = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59);
-
-  const reportMonthName = reportMonthStart.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-  const previousMonthName = comparisonMonthStart.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  establishment: Establishment;
+  supabaseAdmin: ReturnType<typeof createClient>;
+  reportMonth?: string;
+}): Promise<Record<string, string | null>> {
+  const monthWindow = resolveReportMonthWindow(reportMonth);
 
   const { data: reportMonthReviews, error: reportError } = await supabaseAdmin
     .from('reviews')
     .select('rating, text, owner_reply_text, published_at')
     .eq('user_id', userId)
     .eq('place_id', establishment.place_id)
-    .gte('published_at', reportMonthStart.toISOString())
-    .lte('published_at', reportMonthEnd.toISOString());
+    .gte('published_at', monthWindow.reportMonthStart.toISOString())
+    .lte('published_at', monthWindow.reportMonthEnd.toISOString());
 
   if (reportError) {
-    console.error(`Error fetching report month reviews for establishment ${establishment.id}:`, reportError);
-    return;
+    throw new Error(`Error fetching report month reviews for establishment ${establishment.id}: ${reportError.message}`);
   }
 
   const { data: comparisonMonthReviews, error: comparisonError } = await supabaseAdmin
@@ -326,12 +623,11 @@ async function generateAndSendReportForEstablishment({
     .select('rating')
     .eq('user_id', userId)
     .eq('place_id', establishment.place_id)
-    .gte('published_at', comparisonMonthStart.toISOString())
-    .lte('published_at', comparisonMonthEnd.toISOString());
+    .gte('published_at', monthWindow.comparisonMonthStart.toISOString())
+    .lte('published_at', monthWindow.comparisonMonthEnd.toISOString());
 
   if (comparisonError) {
-    console.error(`Error fetching comparison month reviews for establishment ${establishment.id}:`, comparisonError);
-    return;
+    throw new Error(`Error fetching comparison month reviews for establishment ${establishment.id}: ${comparisonError.message}`);
   }
 
   const reportReviews = reportMonthReviews || [];
@@ -386,8 +682,10 @@ async function generateAndSendReportForEstablishment({
     firstName: profile.first_name || '',
     lastName: profile.last_name || '',
     establishmentName: establishment.name,
-    reportMonthName,
-    previousMonthName,
+    reportMonthName: monthWindow.reportMonthName,
+    previousMonthName: monthWindow.previousMonthName,
+    reportMonthKey: monthWindow.reportMonthKey,
+    previousMonthKey: monthWindow.previousMonthKey,
     currentMonth: {
       avgRating: reportAvgRating,
       totalReviews: reportReviews.length,
@@ -408,27 +706,65 @@ async function generateAndSendReportForEstablishment({
   };
 
   const htmlContent = generateReportHTML(reportData);
-
-  console.log(`Sending monthly report to ${userEmail} for establishment: ${establishment.name}`);
-  const emailResponse = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-    },
-    body: JSON.stringify({
-      to: [userEmail],
-      subject: `📊 Rapport mensuel – ${establishment.name} – ${reportMonthName}`,
-      html: htmlContent,
-    }),
+  const persistenceResult = await persistMonthlyReport({
+    userId,
+    establishment,
+    monthWindow,
+    reportData,
+    supabaseAdmin,
   });
 
-  if (!emailResponse.ok) {
-    const errorText = await emailResponse.text().catch(() => "");
-    throw new Error(`send-email failed: ${emailResponse.status} ${errorText}`);
-  }
+  console.log(`Sending monthly report to ${userEmail} for establishment: ${establishment.name}`);
 
-  console.log(`Report sent for ${establishment.name}:`, await emailResponse.json().catch(() => ({})));
+  try {
+    const emailResponse = await sendMonthlyReportEmail({
+      userEmail,
+      establishmentName: establishment.name,
+      reportMonthName: monthWindow.reportMonthName,
+      htmlContent,
+    });
+
+    const status: ReportStatus = persistenceResult.error
+      ? "partial_failure"
+      : "ready";
+    if (persistenceResult.rowId) {
+      await updateMonthlyReportStatus({
+        reportId: persistenceResult.rowId,
+        status,
+        errorMessage: persistenceResult.error,
+        emailSentAt: new Date().toISOString(),
+        supabaseAdmin,
+      });
+    }
+
+    console.log(`Report sent for ${establishment.name}:`, emailResponse);
+
+    return {
+      userId,
+      establishmentId: establishment.id,
+      reportMonth: monthWindow.reportMonthKey,
+      status,
+      error: persistenceResult.error,
+    };
+  } catch (emailError) {
+    const message = emailError instanceof Error
+      ? emailError.message
+      : String(emailError);
+
+    if (persistenceResult.rowId) {
+      await updateMonthlyReportStatus({
+        reportId: persistenceResult.rowId,
+        status: persistenceResult.error ? "partial_failure" : "email_failed",
+        errorMessage: persistenceResult.error
+          ? `${persistenceResult.error}; ${message}`
+          : message,
+        supabaseAdmin,
+        emailSentAt: null,
+      });
+    }
+
+    throw new Error(message);
+  }
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -444,15 +780,15 @@ const handler = async (req: Request): Promise<Response> => {
       auth: { persistSession: false }
     });
 
-    const { userId } = await req.json().catch(() => ({}));
+    const { userId, reportMonth } = await req.json().catch(() => ({}));
 
     if (userId) {
-      await generateAndSendReport(userId, supabaseAdmin);
+      const results = await generateAndSendReport(userId, supabaseAdmin, reportMonth);
       return new Response(
-        JSON.stringify({ success: true, message: `Report sent to user ${userId}` }),
+        JSON.stringify({success: true, message: `Report processed for user ${userId}`, results }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
-    } else {
+    }
       const { data: usersList, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
 
       if (usersError) {
@@ -461,46 +797,56 @@ const handler = async (req: Request): Promise<Response> => {
 
       const { data: profiles, error: profilesError } = await supabaseAdmin
         .from('profiles')
-        .select('user_id, monthly_report_enabled, report_frequency')
+        .select('user_id, monthly_report_enabled')
         .eq('monthly_report_enabled', true);
 
       if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
+        console.error("Error fetching profiles:", profilesError);
       }
 
       const enabledUsers = new Set(
         (profiles || [])
           .filter((p) => p.monthly_report_enabled === true)
-          .map((p) => p.user_id)
+          .map((p) => p.user_id),
       );
 
-      const results = [];
+      const results: Array<Record<string, string | null>> = [];
       for (const user of usersList?.users || []) {
         if (!user.email) continue;
         if (!enabledUsers.has(user.id)) continue;
 
-        try {
-          await generateAndSendReport(user.id, supabaseAdmin);
-          results.push({ userId: user.id, status: 'success' });
-        } catch (error: any) {
-          results.push({ userId: user.id, status: 'error', error: error.message });
-        }
+      try {
+        const userResults = await generateAndSendReport(
+          user.id,
+          supabaseAdmin,
+          reportMonth,
+        );
+        results.push(...userResults);
+      } catch (error: unknown) {
+        results.push({userId: user.id, establishmentId: null, reportMonth: reportMonth || null, status: "error", error: error instanceof Error ? error.message : String(error)});
       }
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: `Reports sent to ${results.filter((r) => r.status === 'success').length} users`,
-          results
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
     }
-  } catch (error: any) {
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: `Reports processed for ${results.length} establishment runs`,
+        results,
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     console.error("Error in send-monthly-report function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      JSON.stringify({ error: message }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      },
     );
   }
 };

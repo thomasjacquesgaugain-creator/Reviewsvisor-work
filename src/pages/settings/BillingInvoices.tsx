@@ -32,7 +32,7 @@ const statusStyles: Record<string, string> = {
     "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300",
 };
 
-export function BillingReports() {
+export function BillingInvoices() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const [invoices, setInvoices] = useState<BillingInvoice[]>([]);
@@ -112,20 +112,20 @@ export function BillingReports() {
           className="mb-4 gap-2 text-gray-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>{t("settings.myMonthlyReports.back")}</span>
+          <span>{t("settings.myMonthlyInvoices.back")}</span>
         </Button>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
-          {t("settings.myMonthlyReports.title")}
+          {t("settings.myMonthlyInvoices.title")}
         </h1>
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-          {t("settings.myMonthlyReports.monthlyReportDescription")}
+          {t("settings.myMonthlyInvoices.monthlyReportDescription")}
         </p>
       </div>
 
       {loading ? (
         <div className="flex items-center gap-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 text-sm text-slate-600 dark:text-slate-400">
           <Loader2 className="h-5 w-5 animate-spin" />
-         {t("settings.myMonthlyReports.loadingInvoices")}
+         {t("settings.myMonthlyInvoices.loadingInvoices")}
         </div>
       ) : error ? (
         <Card className="border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/20">
@@ -158,7 +158,7 @@ export function BillingReports() {
                     </div>
                   </div>
                   <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    {monthInvoices.length}  {t("settings.myMonthlyReports.invoice")}{monthInvoices.length > 1 ? "s" : ""}
+                    {monthInvoices.length}  {t("settings.myMonthlyInvoices.invoice")}{monthInvoices.length > 1 ? "s" : ""}
                   </span>
                 </div>
 
@@ -205,7 +205,7 @@ export function BillingReports() {
                               <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">
                                 {formatMoney(invoice.amount_paid || invoice.amount_due, invoice.currency)}
                               </p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400"> {t("settings.myMonthlyReports.stripeInvoice")}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400"> {t("settings.myMonthlyInvoices.stripeInvoice")}</p>
                             </div>
 
                             <Button
@@ -220,7 +220,7 @@ export function BillingReports() {
                               }}
                             >
                               <Download className="h-4 w-4" />
-                              {t("settings.myMonthlyReports.download")}
+                              {t("settings.myMonthlyInvoices.download")}
                             </Button>
                           </div>
                         </div>
@@ -228,7 +228,7 @@ export function BillingReports() {
                     })
                   ) : (
                     <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-6 text-sm text-slate-500 dark:text-slate-400">
-                      {t("settings.myMonthlyReports.noInvoice")}
+                      {t("settings.myMonthlyInvoices.noInvoice")}
                     </div>
                   )}
                 </div>
@@ -241,7 +241,7 @@ export function BillingReports() {
       {!loading && invoices.length === 0 && !error && (
         <div className="mt-8 text-center py-12">
           <FileText className="h-12 w-12 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
-          <p className="text-slate-500 dark:text-slate-400"> {t("settings.myMonthlyReports.noInvoiceAvailable")}</p>
+          <p className="text-slate-500 dark:text-slate-400"> {t("settings.myMonthlyInvoices.noInvoiceAvailable")}</p>
         </div>
       )}
     </div>

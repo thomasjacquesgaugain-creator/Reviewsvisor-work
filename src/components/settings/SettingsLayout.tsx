@@ -68,9 +68,9 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
     icon: <CreditCard className="h-4 w-4" />,
   },
   {
-    id: "billing-reports",
-    label: t("settings.myMonthlyReports.title"),
-    path: "/settings/billing/reports",
+    id: "reports",
+    label: t("settings.reports.title"),
+    path: "/settings/reports",
     icon: <FileText className="h-4 w-4" />,
   },
   {

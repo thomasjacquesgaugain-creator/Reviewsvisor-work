@@ -936,16 +936,29 @@
       "invoiceHistory": "Invoice history",
       "manageMySubscription":"Manage My Subscription"
     },
-    "myMonthlyReports": {
-      "title": "My monthly reports",
+    "myMonthlyInvoices": {
+      "title": "My monthly invoices",
       "back": "Back",
-      "monthlyReportDescription": "Download your monthly billing and activity reports",
+      "monthlyReportDescription": "Download your monthly invoices",
       "download": "Download",
       "loadingInvoices":"Loading invoices...",
       "invoice":"invoice",
       "stripeInvoice":"Stripe invoice",
       "noInvoice":"No invoices for this month.",
       "noInvoiceAvailable":"No invoice available"
+    },
+    "reports": {
+      "title": "Monthly reports",
+      "description": "Download the monthly reports already generated for each establishment.",
+      "activeEstablishment": "Active establishment",
+      "loading": "Loading reports...",
+      "emptyTitle": "No reports available",
+      "emptyDescription": "Monthly reports will appear here after a complete month has been processed.",
+      "download": "Download",
+      "downloadError": "Unable to prepare the report download right now.",
+      "period": "Report period",
+      "groupDescription": "Only months saved in your report history are shown here.",
+      "unknownEstablishment": "Unknown establishment"
     },
     "personalization": {
       "title": "Personalisation",

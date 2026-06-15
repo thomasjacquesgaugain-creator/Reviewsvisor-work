@@ -1003,16 +1003,29 @@
       "invoiceHistory": "Historique des factures",
       "manageMySubscription":"Gérer mon abonnement"
     },
-    "myMonthlyReports": {
-      "title": "Mes rapports mensuels",
+    "myMonthlyInvoices": {
+      "title": "Mes factures mensuelles",
       "back": "Retour",
-      "monthlyReportDescription": "Téléchargez vos rapports mensuels de facturation et d'activité",
+      "monthlyReportDescription": "Téléchargez vos factures mensuelles",
       "download": "Télécharger",
       "loadingInvoices": "Chargement des factures...",
       "invoice": "facture",
       "stripeInvoice": "Facture Stripe",
       "noInvoice": "Aucune facture pour ce mois.",
       "noInvoiceAvailable": "Aucune facture disponible"
+    },
+    "reports": {
+      "title": "Rapports mensuels",
+      "description": "Téléchargez les rapports mensuels déjà générés pour chaque établissement.",
+      "activeEstablishment": "Établissement actif",
+      "loading": "Chargement des rapports...",
+      "emptyTitle": "Aucun rapport disponible",
+      "emptyDescription": "Les rapports mensuels apparaîtront ici après le traitement complet d'un mois.",
+      "download": "Télécharger",
+      "downloadError": "Impossible de préparer le téléchargement du rapport pour le moment.",
+      "period": "Période du rapport",
+      "groupDescription": "Seuls les mois déjà enregistrés dans l'historique des rapports sont affichés ici.",
+      "unknownEstablishment": "Établissement inconnu"
     },
     "personalization": {
       "title": "Personnalisation",
