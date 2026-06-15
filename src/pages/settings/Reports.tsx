@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { enUS, fr, type Locale } from "date-fns/locale";
-import { Download, FileText, Loader2 } from "lucide-react";
+import {
+  Download,
+  FileText,
+  Loader2,
+  ChevronDown,
+  ChevronRight,
+  Calendar,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -22,7 +28,8 @@ type GroupedReportsByYear = {
 export function Reports() {
   const { t, i18n } = useTranslation();
   const activeEstablishmentId = useEstablishmentStore(
-    (state) => state.activeEstablishmentId ?? state.selectedEstablishment?.id ?? null,
+    (state) =>
+      state.activeEstablishmentId ?? state.selectedEstablishment?.id ?? null,
   );
   const activeEstablishmentName = useEstablishmentStore(
     (state) => state.selectedEstablishment?.name ?? null,
@@ -31,6 +38,16 @@ export function Reports() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
+  const [expandedYears, setExpandedYears] = useState<Record<string, boolean>>(
+    {},
+  );
+
+  const toggleYear = (year: string) => {
+    setExpandedYears((prev) => ({
+      ...prev,
+      [year]: !prev[year],
+    }));
+  };
 
   const localeMap: Record<string, Locale> = {
     fr,
@@ -52,7 +69,9 @@ export function Reports() {
       setLoading(true);
       setError(null);
       try {
-        const rows = await getMonthlyReportsByEstablishment(activeEstablishmentId);
+        const rows = await getMonthlyReportsByEstablishment(
+          activeEstablishmentId,
+        );
         if (!cancelled) {
           setReports(rows);
         }
@@ -74,21 +93,26 @@ export function Reports() {
   }, [activeEstablishmentId]);
 
   const groupedReports = useMemo<GroupedReportsByYear[]>(() => {
-    const groups = reports.reduce<Map<string, GroupedReportsByYear>>((acc, report) => {
-      const year = format(parseISO(report.report_month), "yyyy");
+    const groups = reports.reduce<Map<string, GroupedReportsByYear>>(
+      (acc, report) => {
+        const year = format(parseISO(report.report_month), "yyyy");
 
-      if (!acc.has(year)) {
-        acc.set(year, {
-          year,
-          reports: [],
-        });
-      }
+        if (!acc.has(year)) {
+          acc.set(year, {
+            year,
+            reports: [],
+          });
+        }
 
-      acc.get(year)!.reports.push(report);
-      return acc;
-    }, new Map());
+        acc.get(year)!.reports.push(report);
+        return acc;
+      },
+      new Map(),
+    );
 
-    return Array.from(groups.values()).sort((a, b) => Number(b.year) - Number(a.year));
+    return Array.from(groups.values()).sort(
+      (a, b) => Number(b.year) - Number(a.year),
+    );
   }, [reports]);
 
   const handleDownload = async (report: MonthlyReportRow) => {
@@ -165,7 +189,10 @@ export function Reports() {
               <FileText className="mx-auto mb-4 h-12 w-12 text-slate-400 dark:text-slate-500" />
 
               <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100">
-                {t("settings.reports.noActiveEstablishmentTitle", "No active establishment selected")}
+                {t(
+                  "settings.reports.noActiveEstablishmentTitle",
+                  "No active establishment selected",
+                )}
               </h3>
 
               <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
@@ -209,64 +236,88 @@ export function Reports() {
               key={group.year}
               className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
             >
-              <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
-                  {group.year}
-                </h2>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  {t("settings.reports.groupDescription", "Only months saved in your report history are shown here.")}
-                </p>
-              </div>
+              <button
+                onClick={() => toggleYear(group.year)}
+                className={`flex w-full items-center justify-between px-5 py-4 ${
+                  expandedYears[group.year]
+                    ? "border-b border-slate-200 dark:border-slate-800"
+                    : ""
+                }`}
+              >
+                <div>
+                  <h2 className="mt-1 flex items-center gap-2 text-left text-lg font-semibold text-gray-900 dark:text-slate-100">
+                    <Calendar className="h-3.5 w-3.5" />{" "}
+                    <span>{group.year}</span>
+                  </h2>
 
-              <div className="space-y-3 p-5">
-                {group.reports.map((report) => {
-                  const isDownloading = downloadingKey === report.id;
+                  <div className="mt-1 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <span>
+                      {t(
+                        "settings.reports.groupDescription",
+                        "Only months saved in your report history are shown here.",
+                      )}
+                    </span>
+                  </div>
+                </div>
 
-                  return (
-                    <Card
-                      key={report.id}
-                      className="border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
-                    >
-                      <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/30">
-                            <FileText className="h-5 w-5 text-blue-600" />
+                {expandedYears[group.year] ? (
+                  <ChevronDown className="h-5 w-5 text-slate-500" />
+                ) : (
+                  <ChevronRight className="h-5 w-5 text-slate-500" />
+                )}
+              </button>
+
+              {expandedYears[group.year] && (
+                <div className="space-y-3 p-5">
+                  {group.reports.map((report) => {
+                    const isDownloading = downloadingKey === report.id;
+
+                    return (
+                      <Card
+                        key={report.id}
+                        className="border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                      >
+                        <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/30">
+                              <FileText className="h-5 w-5 text-blue-600" />
+                            </div>
+
+                            <div>
+                              <h3 className="font-medium text-gray-900 dark:text-slate-100">
+                                {formatMonthLabel(report.report_month)}
+                              </h3>
+
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {t("settings.reports.period", "Report period")}:{" "}
+                                {formatPeriod(report.period_start)} -{" "}
+                                {formatPeriod(report.period_end)}
+                              </p>
+                            </div>
                           </div>
 
-                          <div>
-                            <h3 className="font-medium text-gray-900 dark:text-slate-100">
-                              {formatMonthLabel(report.report_month)}
-                            </h3>
-
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                              {t("settings.reports.period", "Report period")}:{" "}
-                              {formatPeriod(report.period_start)} -{" "}
-                              {formatPeriod(report.period_end)}
-                            </p>
-                          </div>
-                        </div>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-2 border-slate-300 bg-white text-gray-900 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
-                          disabled={isDownloading}
-                          onClick={() => {
-                            void handleDownload(report);
-                          }}
-                        >
-                          {isDownloading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Download className="h-4 w-4" />
-                          )}
-                          {t("settings.reports.download", "Download")}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2 border-slate-300 bg-white text-gray-900 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+                            disabled={isDownloading}
+                            onClick={() => {
+                              void handleDownload(report);
+                            }}
+                          >
+                            {isDownloading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Download className="h-4 w-4" />
+                            )}
+                            {t("settings.reports.download", "Download")}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
             </section>
           ))}
         </div>
