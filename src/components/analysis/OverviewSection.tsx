@@ -131,7 +131,7 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
   const formatDeltaPoints = (delta: number | null | undefined): string => {
     if (delta === null || delta === undefined || isNaN(delta)) return '';
     // Format FR : virgule + 1 décimale
-    const formatted = Math.abs(delta).toFixed(1).replace(
+    const formatted = Math.abs(delta).toFixed(2).replace(
     '.',
     i18n.language === 'fr' ? ',' : '.'
     );
@@ -283,8 +283,9 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                         {data.trendValue !== null && data.trendValue !== undefined && (
                           <>
                             {data.trendDeltaPoints !== null && data.trendDeltaPoints !== undefined && (
-                              <span className="ml-1 text-base">
-                                {formatDeltaPoints(data.trendDeltaPoints)} pt
+                              <span className="ml-1 text-base inline-flex items-center gap-1">
+                                {formatDeltaPoints(data.trendDeltaPoints)} 
+                                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                               </span>
                             )}
                             <span className="ml-1 text-base">
@@ -300,8 +301,9 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                         {data.trendValue !== null && data.trendValue !== undefined && (
                           <>
                             {data.trendDeltaPoints !== null && data.trendDeltaPoints !== undefined && (
-                              <span className="ml-1 text-base">
-                                {formatDeltaPoints(data.trendDeltaPoints)} pt
+                              <span className="ml-1 text-base inline-flex items-center gap-1">
+                                {formatDeltaPoints(data.trendDeltaPoints)}
+                                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                               </span>
                             )}
                             <span className="ml-1 text-base">
@@ -316,8 +318,9 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                         {t("analysis.overview.stable", "Stable")}
                         {data.trendValue !== null && data.trendValue !== undefined && data.trendDeltaPoints !== null && data.trendDeltaPoints !== undefined && (
                           <>
-                            <span className="ml-1 text-base">
-                              {formatDeltaPoints(data.trendDeltaPoints)} pt
+                            <span className="ml-1 text-base inline-flex items-center gap-1">
+                              {formatDeltaPoints(data.trendDeltaPoints)}
+                              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                             </span>
                             <span className="ml-1 text-base">
                               {formatTrendValue(Math.abs(data.trendValue), data.trendValue >= 0)}
@@ -332,8 +335,9 @@ export function OverviewSection({ data, reviews, insight,themes,onSentimentFilte
                         {data.trendValue !== null && data.trendValue !== undefined && (
                           <>
                             {data.trendDeltaPoints !== null && data.trendDeltaPoints !== undefined && (
-                              <span className="ml-1 text-base">
-                                {formatDeltaPoints(data.trendDeltaPoints)} pt
+                              <span className="ml-1 text-base inline-flex items-center gap-1">
+                                {formatDeltaPoints(data.trendDeltaPoints)} 
+                                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                               </span>
                             )}
                             <span className="ml-1 text-base">

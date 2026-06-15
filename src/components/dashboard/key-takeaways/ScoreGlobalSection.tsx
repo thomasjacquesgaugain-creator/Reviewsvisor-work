@@ -292,8 +292,8 @@ function TrendDelta({
         )}
         {deltaPoints > 0 ? "+" : deltaPoints < 0 ? "-" : ""}
         {`${formatLocalizedNumber(Math.abs(deltaPoints), locale, {
-          minimumFractionDigits: 1,
-          maximumFractionDigits: 1,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
         })}`}
       </span>
     );
@@ -305,7 +305,7 @@ function TrendDelta({
         {`${deltaPoints > 0 ? "+" : deltaPoints < 0 ? "-" : ""}${formatLocalizedNumber(
           Math.abs(deltaPoints),
           locale,
-          { minimumFractionDigits: 1, maximumFractionDigits: 1 },
+          { minimumFractionDigits: 2, maximumFractionDigits: 2 },
         )}`}
       </span>
       <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
@@ -467,14 +467,16 @@ export function ScoreGlobalSection({
     if (!reviews?.length) {
       return { ratingChange: null, currentAvg: null, previousAvg: null, reason: "insufficient-data" };
     }
-
-    const today = new Date();
-    const last60Start = subDays(today, TREND_WINDOW_DAYS);
-    const prior60Start = subDays(today, TREND_WINDOW_DAYS * 2);
+    // const today = new Date();
+    // Use completed months only for trend calculation.
+    // Example (June): compare Apr+May vs Feb+Mar and exclude partial June data.
+    const last_month_date = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
+    const last60Start = subDays(last_month_date, TREND_WINDOW_DAYS);
+    const prior60Start = subDays(last_month_date, TREND_WINDOW_DAYS * 2);
 
     const currentReviews = reviews.filter((r) => {
       const d = parseReviewDate(r);
-      return !!d && d >= last60Start && d <= today;
+      return !!d && d >= last60Start && d <= last_month_date;
     });
 
     const previousReviews = reviews.filter((r) => {

@@ -47,11 +47,6 @@ const computeAverage = (reviews: Review[]): number | null => {
   return valid.reduce((acc, r) => acc + getNote(r), 0) / valid.length;
 };
 
-const getLatestDate = (reviews: Review[]): Date | null =>
-  reviews.reduce<Date | null>((latest, r) => {
-    const d = parseReviewDate(r);
-    return d && (!latest || d > latest) ? d : latest;
-  }, null);
 
 const getPeriods = (start: Date, end: Date, granularity: Granularity): Date[] => {
   switch (granularity) {
@@ -103,13 +98,16 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
       return { summary: "", isPositive: false, isNegative: false, insufficientData: false };
     }
 
-    const today = new Date();
-    const last60Start = subDays(today, 60);
-    const prior60Start = subDays(today, 120);
+    // const today = new Date();
+    // Use completed months only for trend calculation.
+    // Example (June): compare Apr+May vs Feb+Mar and exclude partial June data.
+    const last_month_date = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
+    const last60Start = subDays(last_month_date, 60);
+    const prior60Start = subDays(last_month_date, 120);
 
     const current = reviews.filter((r) => {
       const d = parseReviewDate(r);
-      return d && d >= last60Start && d <= today;
+      return d && d >= last60Start && d <= last_month_date;
     });
     const previous = reviews.filter((r) => {
       const d = parseReviewDate(r);
@@ -142,8 +140,8 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
       return {
         summary: t("dashboard.keyTakeaways.overallTrend.summaryNoPrevious", {
           current: formatLocalizedNumber(currentAvg, locale, {
-            minimumFractionDigits: 1,
-            maximumFractionDigits: 1,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
           }), count: currentValid.length,
         }),
         isPositive: false,
@@ -159,9 +157,9 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
     return {
       summary: t(`dashboard.keyTakeaways.overallTrend.${summaryKey}`, {
         diff: `${sign}${formatLocalizedNumber(Math.abs(diff), locale, {
-          minimumFractionDigits: 1,
-          maximumFractionDigits: 1,
-        })}`,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`
       }),
       isPositive: diff > 0,
       isNegative: diff < 0,
@@ -206,7 +204,9 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
 
         return {
           label: formatPeriodLabel(period, granularity, i18n.language),
-          note: avg === null ? 0 : Math.round(avg * 10) / 10,
+          note: avg === null ? undefined : Math.round(avg * 10) / 10,
+          phantom: avg === null ? 0 : undefined, 
+          hasData: avg !== null,
           fullDate: format(period, "yyyy-MM-dd"),
         };
       });
@@ -230,7 +230,9 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
 
         return {
           label: formatPeriodLabel(period, granularity, i18n.language),
-          note: avg === null ? 0 : Math.round(avg * 10) / 10,
+          note: avg === null ? undefined : Math.round(avg * 10) / 10,
+          phantom: avg === null ? 0 : undefined, 
+          hasData: avg !== null,
           fullDate: format(period, "yyyy-MM-dd"),
         };
       })
@@ -356,7 +358,22 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
                 </YAxis>
                 <Tooltip
                   content={({ active, payload, label: lbl }) => {
-                    if (insufficientData || !active || !payload?.length) return null;
+                    if (!active) return null;
+
+                    const point = chartData.find((d) => d.label === lbl);
+                    if (!point) return null;
+
+                    if (!point.hasData) {
+                      return (
+                        <div className="rounded-xl border border-slate-100 bg-white px-3 py-2 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                          <p className="text-xs font-semibold text-slate-500">{lbl}</p>
+                          <p className="mt-0.5 text-sm font-medium text-slate-400">
+                            {t("analysis.history.noData", "No data available")}
+                          </p>
+                        </div>
+                      );
+                    }
+
                     const val = payload[0]?.value as number | undefined;
                     return (
                       <div className="rounded-xl border border-slate-100 bg-white px-3 py-2 shadow-lg dark:border-slate-700 dark:bg-slate-900">
@@ -373,6 +390,30 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
                     );
                   }}
                 />
+                <Line
+                  type="monotone"
+                  dataKey="phantom"
+                  stroke="transparent"
+                  strokeWidth={0}
+                  dot={false}
+                  activeDot={(props: any) => {
+                    const { cx, cy, payload } = props;
+                    if (payload.hasData) return <g key={payload.fullDate} />;
+                    return (
+                      <circle
+                        key={payload.fullDate}
+                        cx={cx}
+                        cy={cy}
+                        r={5}
+                        fill="#94a3b8"
+                        stroke="#fff"
+                        strokeWidth={2}
+                      />
+                    );
+                  }}
+                  legendType="none"
+                  isAnimationActive={false}
+                />
                 {!insufficientData && (
                 <Line
                   type="monotone"
@@ -381,7 +422,7 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
                   strokeWidth={2.5}
                   dot={{ fill: "#fff", stroke: "#3b82f6", strokeWidth: 2, r: 3.5 }}
                   activeDot={{ r: 5, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }}
-                  connectNulls
+                  connectNulls={true}
                 />
                 )}
               </LineChart>

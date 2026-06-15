@@ -23,8 +23,8 @@ export function transformAnalysisData(
   const avgRating = safeInsight?.avg_rating || 0;
   const positiveRatio = safeInsight?.positive_ratio || 0;
 
-  const MIN_REVIEWS_PER_PERIOD = 5;
-  const MIN_REVIEWS_FOR_SIMPLE_TREND = 5;
+  const MIN_REVIEWS_PER_PERIOD = 3;
+  const MIN_REVIEWS_FOR_SIMPLE_TREND = 3;
   
   let trend: 'up' | 'down' | 'stable' | 'insufficient' | 'partial' = 'stable';
   let trendValue: number | null = null;
@@ -32,7 +32,7 @@ export function transformAnalysisData(
   let isPartialData = false;
   
   if (safeReviews.length > 0) {
-    const reviewsWithDates = safeReviews.filter(r => {
+    const reviewsWithDates = safeReviews.filter((r) => {
       try {
         const dateStr = (r as any).published_at || r.date;
         if (!dateStr) return false;
@@ -44,47 +44,85 @@ export function transformAnalysisData(
     });
 
     if (reviewsWithDates.length < MIN_REVIEWS_FOR_SIMPLE_TREND) {
-      trend = 'insufficient';
+      trend = "insufficient";
     } else {
       const sortedReviews = reviewsWithDates
-        .map(r => ({ ...r, date: parseISO((r as any).published_at || r.date || '') }))
+        .map((r) => ({
+          ...r,
+          date: parseISO((r as any).published_at || r.date || ""),
+        }))
         .sort((a, b) => a.date.getTime() - b.date.getTime());
-
-      const threeMonthsAgo = subMonths(new Date(), 3);
-      const recentReviews = sortedReviews.filter(r => r.date >= threeMonthsAgo);
-      const olderReviews  = sortedReviews.filter(r => r.date < threeMonthsAgo);
 
       const computeSimpleTrend = (sorted: typeof sortedReviews) => {
         const firstPartSize = Math.max(1, Math.floor(sorted.length * 0.3));
-        const lastPartSize  = Math.max(1, Math.floor(sorted.length * 0.3));
+        const lastPartSize = Math.max(1, Math.floor(sorted.length * 0.3));
         const firstPart = sorted.slice(0, firstPartSize);
-        const lastPart  = sorted.slice(-lastPartSize);
+        const lastPart = sorted.slice(-lastPartSize);
         if (firstPart.length < 2 || lastPart.length < 2) return false;
-        const firstAvg = firstPart.reduce((s, r) => s + (r.note || 0), 0) / firstPart.length;
-        const lastAvg  = lastPart.reduce((s, r) => s + (r.note || 0), 0) / lastPart.length;
-        if (!isFinite(firstAvg) || !isFinite(lastAvg) || firstAvg === 0) return false;
+        const firstAvg =
+          firstPart.reduce((s, r) => s + (r.note || 0), 0) / firstPart.length;
+        const lastAvg =
+          lastPart.reduce((s, r) => s + (r.note || 0), 0) / lastPart.length;
+        if (!isFinite(firstAvg) || !isFinite(lastAvg) || firstAvg === 0)
+          return false;
         trendDeltaPoints = lastAvg - firstAvg;
         trendValue = ((lastAvg - firstAvg) / firstAvg) * 100;
         isPartialData = true;
-        trend = 'partial';
+        trend = "partial";
         return true;
       };
 
-      if (recentReviews.length >= MIN_REVIEWS_PER_PERIOD && olderReviews.length >= MIN_REVIEWS_PER_PERIOD) {
-        const recentAvg = recentReviews.reduce((s, r) => s + (r.note || 0), 0) / recentReviews.length;
-        const olderAvg  = olderReviews.reduce((s, r) => s + (r.note || 0), 0) / olderReviews.length;
-        if (isFinite(recentAvg) && isFinite(olderAvg) && olderAvg > 0) {
-          trendDeltaPoints = recentAvg - olderAvg;
-          trendValue = ((recentAvg - olderAvg) / olderAvg) * 100;
-          trend = trendValue > 2 ? 'up' : trendValue < -2 ? 'down' : 'stable';
+      // const now = new Date();
+    // Use completed months only for trend calculation.
+    // Example (June): compare Apr+May vs Feb+Mar and exclude partial June data.
+      const last_month_date = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
+
+      const currentPeriodStart = new Date(last_month_date);
+      currentPeriodStart.setDate(last_month_date.getDate() - 60);
+
+      const previousPeriodStart = new Date(last_month_date);
+      previousPeriodStart.setDate(last_month_date.getDate() - 120);
+debugger
+      const currentReviews = sortedReviews.filter(
+        (r) => r.date >= currentPeriodStart && r.date <= last_month_date,
+      );
+
+      const previousReviews = sortedReviews.filter(
+        (r) => r.date >= previousPeriodStart && r.date < currentPeriodStart,
+      );
+
+      
+
+      if (
+        currentReviews.length >= MIN_REVIEWS_PER_PERIOD &&
+        previousReviews.length >= MIN_REVIEWS_PER_PERIOD
+      ) {
+        const currentAvg =
+          currentReviews.reduce((s, r) => s + (r.note || 0), 0) /
+          currentReviews.length;
+
+        const previousAvg =
+          previousReviews.reduce((s, r) => s + (r.note || 0), 0) /
+          previousReviews.length;
+
+        if (isFinite(currentAvg) && isFinite(previousAvg) && previousAvg > 0) {
+          trendDeltaPoints = currentAvg - previousAvg;
+          trendValue = ((currentAvg - previousAvg) / previousAvg) * 100;
+
+          trend =
+            trendDeltaPoints > 0
+              ? "up"
+              : trendDeltaPoints < 0
+                ? "down"
+                : "stable";
         } else {
           if (!computeSimpleTrend(sortedReviews)) {
-            trend = 'insufficient';
+            trend = "insufficient";
           }
         }
       } else {
         if (!computeSimpleTrend(sortedReviews)) {
-          trend = 'insufficient';
+          trend = "insufficient";
         }
       }
     }
@@ -92,15 +130,15 @@ export function transformAnalysisData(
 
   let positivePercentage = positiveRatio * 100;
   let negativePercentage = (1 - positiveRatio) * 100;
-  let neutralPercentage  = 0;
-  
+  let neutralPercentage = 0;
+
   if (safeReviews.length > 0) {
-    const positiveCount = safeReviews.filter(r => r.note >= 4).length;
-    const negativeCount = safeReviews.filter(r => r.note <= 2).length;
-    const neutralCount  = totalReviews - positiveCount - negativeCount;
+    const positiveCount = safeReviews.filter((r) => r.note >= 4).length;
+    const negativeCount = safeReviews.filter((r) => r.note <= 2).length;
+    const neutralCount = totalReviews - positiveCount - negativeCount;
     positivePercentage = (positiveCount / totalReviews) * 100;
     negativePercentage = (negativeCount / totalReviews) * 100;
-    neutralPercentage  = (neutralCount  / totalReviews) * 100;
+    neutralPercentage = (neutralCount / totalReviews) * 100;
   }
 
   const overview = {
