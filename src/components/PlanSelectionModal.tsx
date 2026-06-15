@@ -171,25 +171,6 @@ export function PlanSelectionModal({
       setLoading(false);
     }
   };
-
-  const selectedPlan = subscriptionPlans.find((p) => p.id === selectedPlanId);
-
-  const annualSavingsHint = (() => {
-    if (billingCycle !== "annual") return null;
-    const annualPlan = subscriptionPlans.find(
-      (p) => p.tier === recommendedTier && p.billing === "annual"
-    );
-    const monthlyPlan = subscriptionPlans.find(
-      (p) => p.tier === recommendedTier && p.billing === "monthly"
-    );
-    if (!annualPlan || !monthlyPlan) return null;
-    const saving = monthlyPlan.priceTTC - annualPlan.priceTTC;
-    return saving > 0
-      ? t("subscription.annualSavingsHint", {
-      saving: saving.toFixed(2).replace(".", ",")
-    })
-      : null;
-  })();
   
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -256,8 +237,10 @@ export function PlanSelectionModal({
                 recommendedLabel={t("subscription.recommended")}
                 flexibleLabel={t("subscription.flexible")}
                 selectedLabel={t("subscription.selected")}
+                billingCycle={billingCycle}
                 chooseLabel={t("subscription.choose")}
                 perMonthLabel={t("subscription.perMonth")}
+                perYearLabel={t('subscription.perYear')}
                 onSelect={() => {
                   if (!isDisabled) setSelectedPlanId(plan.id);
                 }}
@@ -265,15 +248,6 @@ export function PlanSelectionModal({
             );
           })}
         </div>
-
-        {billingCycle === "annual" && selectedPlan?.annualTotalTTC && (
-          <p className="text-xs text-center text-muted-foreground">
-            {t("subscription.annualPriceInfo", {
-              total: selectedPlan.annualTotalTTC.toFixed(0),
-              monthly: selectedPlan.priceHT.toFixed(2).replace(".", ",")
-            })}
-          </p>
-        )}
 
         <div className="flex items-center justify-end gap-3 border-t pt-3">
           <Button variant="outline" onClick={onClose} disabled={loading}>
@@ -313,6 +287,8 @@ interface PlanCardProps {
   selectedLabel: string;
   chooseLabel: string;
   perMonthLabel: string;
+  perYearLabel:string;
+  billingCycle: "annual" | "monthly";
   onSelect: () => void;
 }
 
@@ -325,11 +301,13 @@ function PlanCard({
   isSelected,
   quota,
   audience, 
+  billingCycle,
   recommendedLabel, 
   flexibleLabel,
   selectedLabel, 
   chooseLabel, 
   perMonthLabel,
+  perYearLabel,
   onSelect,
 }: PlanCardProps) {
     const { t } = useTranslation();
@@ -386,13 +364,24 @@ function PlanCard({
 
         <div className="mb-0.5">
           <span className="text-lg font-bold text-foreground leading-none">
-            {plan.priceTTC.toFixed(2).replace(".", ",")} € TTC
+            {billingCycle === "annual"
+              ? `${plan.annualTotalTTC?.toFixed(0)} € TTC`
+              : `${plan.priceTTC.toFixed(2).replace(".", ",")} € TTC`}
           </span>
-          <span className="text-xs text-muted-foreground">{perMonthLabel}</span>
+
+          <span className="text-xs text-muted-foreground">
+            {billingCycle === "annual" ? perYearLabel : perMonthLabel}
+          </span>
         </div>
+
         <p className="text-xs text-muted-foreground mb-2">
-          {plan.priceHT.toFixed(2).replace(".", ",")} € HT
-          <span className="text-xs text-muted-foreground">{perMonthLabel}</span>
+          {billingCycle === "annual"
+            ? `${plan.annualTotalHT?.toFixed(0)} € HT`
+            : `${plan.priceHT.toFixed(2).replace(".", ",")} € HT`}
+
+          <span className="text-xs text-muted-foreground">
+            {billingCycle === "annual" ? perYearLabel : perMonthLabel}
+          </span>
         </p>
 
         <button

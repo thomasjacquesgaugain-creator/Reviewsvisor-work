@@ -227,7 +227,7 @@ const handleContinueWithOutscraper = async () => {
     if (!result.success || !result.jobId) {
       toast({
         title: `${t('common.error')}: ${t('googleImport.fallbackImportFailed')}`,
-        description: result.error || t('googleImport.syncFailure'),
+        // description: result.error || t('googleImport.syncFailure'),
         variant: 'destructive',
       });
       setIsOutscraperImporting(false);

@@ -1907,9 +1907,9 @@
         "1to2": "1-2 étoiles"
       },
       "trendTooltip": {
-        "insufficient": "Données insuffisantes pour calculer la tendance. Au moins 5 avis avec date sont nécessaires.",
+        "insufficient": "Données insuffisantes pour calculer la tendance.",
         "partial": "Données partielles : tendance calculée sur une période courte en comparant le début et la fin de la série d'avis.",
-        "description": "Variation (%) de la note moyenne sur les 3 derniers mois comparée aux 3 mois précédents.",
+        "description": "Variation (%) de la note moyenne sur les 2 derniers mois comparée aux 2 mois précédents.",
         "up": "En hausse — Progression observée sur la période analysée.",
         "stable": "Stable — Aucune variation significative détectée.",
         "down": "En baisse — Diminution observée sur la période analysée."
@@ -1917,7 +1917,7 @@
 
       "trendComparison": {
         "partial": "Comparaison début vs fin de période",
-        "previous3Months": "vs 3 mois précédents"
+        "previous3Months": "vs les 60 derniers jours"
       },
     "universalThemes": "Thèmes universels",
     "industryThemes":"Thèmes spécifiques au secteur",

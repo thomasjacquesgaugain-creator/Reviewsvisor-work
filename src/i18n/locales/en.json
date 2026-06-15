@@ -1705,16 +1705,16 @@
         "1to2": "1-2 stars"
       },
       "trendTooltip": {
-        "insufficient": "Insufficient data to calculate the trend. At least 5 reviews with dates are required.",
+        "insufficient": "Insufficient data to calculate the trend.",
         "partial": "Partial data: trend calculated over a short period by comparing the beginning and end of the review series.",
-        "description": "Percentage change (%) in the average rating over the last 3 months compared to the preceding 3 months.",
+        "description": "Percentage change (%) in the average rating over the last 2 months compared to the preceding 2 months.",
         "up": "Upward — Improvement observed over the analyzed period.",
         "stable": "Stable — No significant change detected.",
         "down": "Downward — Decline observed over the analyzed period."
       },
       "trendComparison": {
         "partial": "Comparison: start vs. end of period",
-        "previous3Months": "vs. previous 3 months"
+        "previous3Months": "vs. last 60 days"
       },
       "trendTooltipAria": "Trend explanation",
       "universalThemes": "Universal Themes",

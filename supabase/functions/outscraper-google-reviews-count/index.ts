@@ -76,8 +76,42 @@ const response = await client.googleMapsReviews(
 );
 
 
-const data = Array.isArray(response) ? response : response?.data ?? response;
-const rows = data?.[0]?.reviews_data ?? [];
+const data = Array.isArray(response)
+  ? response
+  : response?.data ?? response;
+
+
+if (
+  response &&
+  typeof response === "object" &&
+  response.error
+) {
+  throw new Error(
+    response.errorMessage ||
+    "Outscraper service unavailable"
+  );
+}
+
+const firstResult = data[0];
+
+if (!firstResult) {
+  throw new Error(
+    `No result returned from Outscraper: ${JSON.stringify(response)}`
+  );
+}
+
+if (firstResult.error) {
+  throw new Error(firstResult.error);
+}
+
+const rows = firstResult.reviews_data;
+
+if (!Array.isArray(rows)) {
+  throw new Error(
+    `reviews_data missing: ${JSON.stringify(firstResult)}`
+  );
+}
+
 
 console.log("total reviews---->",rows.length);
 
