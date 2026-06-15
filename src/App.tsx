@@ -42,7 +42,8 @@ const EstablishmentInfoSettings = lazy(() => import("./pages/settings/Establishm
 const NotificationsSettings = lazy(() => import("./pages/settings/NotificationsSettings").then(m => ({ default: m.NotificationsSettings })));
 const LanguageSettings = lazy(() => import("./pages/settings/LanguageSettings").then(m => ({ default: m.LanguageSettings })));
 const BillingSettings = lazy(() => import("./pages/settings/BillingSettings").then(m => ({ default: m.BillingSettings })));
-const BillingReports = lazy(() => import("./pages/settings/BillingReports").then(m => ({ default: m.BillingReports })));
+const Reports = lazy(() => import("./pages/settings/Reports").then(m => ({ default: m.Reports })));
+const BillingInvoices = lazy(() => import("./pages/settings/BillingInvoices").then(m => ({ default: m.BillingInvoices })));
 const CustomizationSettings = lazy(() => import("./pages/settings/CustomizationSettings").then(m => ({ default: m.CustomizationSettings })));
 
 const ScrollToTop = () => {
@@ -239,10 +240,17 @@ const App = () => {
                 </SettingsLayout>
               </Protected>
             } />
-            <Route path="/settings/billing/reports" element={
+            <Route path="/settings/billing/invoices" element={
               <Protected>
                 <SettingsLayout>
-                  <BillingReports />
+                  <BillingInvoices />
+                </SettingsLayout>
+              </Protected>
+            } />
+            <Route path="/settings/reports" element={
+              <Protected>
+                <SettingsLayout>
+                  <Reports />
                 </SettingsLayout>
               </Protected>
             } />

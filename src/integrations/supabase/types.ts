@@ -395,6 +395,71 @@ export type Database = {
           },
         ]
       }
+      monthly_reports: {
+        Row: {
+          created_at: string
+          email_sent_at: string | null
+          error_message: string | null
+          establishment_id: string
+          generated_at: string
+          id: string
+          period_end: string
+          period_start: string
+          place_id: string
+          report_data: Json
+          report_month: string
+          report_month_key: string
+          report_month_label: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_sent_at?: string | null
+          error_message?: string | null
+          establishment_id: string
+          generated_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          place_id: string
+          report_data: Json
+          report_month: string
+          report_month_key: string
+          report_month_label: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_sent_at?: string | null
+          error_message?: string | null
+          establishment_id?: string
+          generated_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          place_id?: string
+          report_data?: Json
+          report_month?: string
+          report_month_key?: string
+          report_month_label?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_reports_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reponses: {
         Row: {
           avis_id: string
