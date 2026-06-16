@@ -98,22 +98,21 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
       return { summary: "", isPositive: false, isNegative: false, insufficientData: false };
     }
 
-    // const today = new Date();
-    // Use completed months only for trend calculation.
-    // Example (June): compare Apr+May vs Feb+Mar and exclude partial June data.
-    const last_month_date = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
-    const last60Start = subDays(last_month_date, 60);
-    const prior60Start = subDays(last_month_date, 120);
+    const now = new Date();
+    const endCurrent = new Date(now.getFullYear(), now.getMonth(), 0);
+    const startCurrent = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    const startPrevious = new Date(now.getFullYear(), now.getMonth() - 4, 1);
+    const endPrevious = new Date(now.getFullYear(), now.getMonth() - 2, 0);
 
     const current = reviews.filter((r) => {
       const d = parseReviewDate(r);
-      return d && d >= last60Start && d <= last_month_date;
-    });
-    const previous = reviews.filter((r) => {
-      const d = parseReviewDate(r);
-      return d && d >= prior60Start && d < last60Start;
+      return !!d && d >= startCurrent && d <= endCurrent;
     });
 
+    const previous = reviews.filter((r) => {
+      const d = parseReviewDate(r);
+      return !!d && d >= startPrevious && d <= endPrevious;
+    });
     const currentValid = getValidRatedReviews(current);
     const previousValid = getValidRatedReviews(previous);
 

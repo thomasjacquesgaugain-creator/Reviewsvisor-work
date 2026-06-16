@@ -51,20 +51,17 @@ export function transformAnalysisData(
         }))
         .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-      // Use completed months only for trend calculation.
-      // Example (June): compare Apr+May vs Feb+Mar and exclude partial June data.
-      const last_month_date = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
-      const currentPeriodStart = new Date(last_month_date);
-      currentPeriodStart.setDate(last_month_date.getDate() - 60);
-      const previousPeriodStart = new Date(last_month_date);
-      previousPeriodStart.setDate(last_month_date.getDate() - 120);
-
+      const now = new Date();
+      const endCurrent = new Date(now.getFullYear(), now.getMonth(), 0);
+      const startCurrent = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+      const startPrevious = new Date(now.getFullYear(), now.getMonth() - 4, 1);
+      const endPrevious = new Date(now.getFullYear(), now.getMonth() - 2, 0);
       const currentReviews = sortedReviews.filter(
-        (r) => r.date >= currentPeriodStart && r.date <= last_month_date,
+        (r) => r.date >= startCurrent && r.date <= endCurrent,
       );
 
       const previousReviews = sortedReviews.filter(
-        (r) => r.date >= previousPeriodStart && r.date < currentPeriodStart,
+        (r) => r.date >= startPrevious && r.date < endPrevious,
       );
 
       if (
