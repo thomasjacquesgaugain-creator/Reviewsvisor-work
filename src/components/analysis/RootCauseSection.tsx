@@ -12,6 +12,23 @@ import { useSmartStore } from "@/store/smartStore";
 import { useEffect } from "react";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 import { useTranslation } from "react-i18next";
+import i18n from "@/i18n/config";
+
+// ─── TYPES ───────────────────────────────────────────────────────────────────
+
+export interface RootCause {
+  description: string;
+  probability: ProbabilityLevel;
+  evidence?: string[];
+  count: number;
+  confidence?: number;
+}
+
+export interface RootCauseCategory {
+  name: string;
+  category_key?: string;
+  causes: RootCause[];
+}
 
 interface RootCauseSectionProps {
   paretoIssues: ParetoItem[];
@@ -20,9 +37,115 @@ interface RootCauseSectionProps {
   reviews?: Review[];
 }
 
-/* ─────────────────────────────────────────────
-   DESIGN TOKENS
-───────────────────────────────────────────── */
+// Shape of one root_cause entry coming from the edge function
+interface AiRootCause {
+  label:        string;
+  importance:   string;        // "dominant" | "secondary" | "monitor"
+  category:     string;        // display name, already in output language
+  category_key: string;        // "workforce"|"methods"|"equipment"|"materials"|"environment"
+  confidence:   number;        // 0-100
+  causes:       string[];
+  evidence:     string[];
+}
+
+// Internal enriched category shape used only inside this component
+interface ResolvedCategory extends RootCauseCategory {
+  isPrimary:    boolean;
+  _isMainCard:  boolean;  // AI confidence >= 60
+  _isExtraCard: boolean;  // user selected "Very Likely" but AI was not confident
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+export function buildRootCauseFromAI(
+  problem: string,
+  aiRootCauses: AiRootCause[],
+  questionnaire?: Record<string, number>,
+  lang: "fr" | "en" = "fr",
+): { problem: string; categories: ResolvedCategory[]; summary: string } {
+  const userHighKeys = new Set(
+    Object.entries(questionnaire ?? {})
+      .filter(([, v]) => v >= 4)
+      .map(([k]) => k),
+  );
+
+  const aiByKey = new Map<string, AiRootCause>(
+    aiRootCauses.map((rc) => [rc.category_key, rc]),
+  );
+
+  const visibleKeys = new Set<string>([
+    ...aiRootCauses.filter((rc) => rc.confidence >= 60).map((rc) => rc.category_key),
+    ...userHighKeys,
+  ]);
+
+  const sorted = [...visibleKeys].sort((a, b) => {
+    const confA = aiByKey.get(a)?.confidence ?? 0;
+    const confB = aiByKey.get(b)?.confidence ?? 0;
+    return confB - confA;
+  });
+
+  const categories: ResolvedCategory[] = sorted.map((key, idx) => {
+    const rc          = aiByKey.get(key);
+    const isAiConf    = (rc?.confidence ?? 0) >= 60;
+    const isUserHigh  = userHighKeys.has(key);
+    const isExtraCard = isUserHigh && !isAiConf;
+    const effectiveConf = rc ? (isExtraCard ? 40 : rc.confidence) : 0;
+
+    return {
+      name:         rc?.category_key ?? key,
+      category_key: key,
+      causes: rc
+        ? rc.causes.map((desc, i) => ({
+            description: desc,
+            probability: isExtraCard ? "Possible" : confidenceToProbability(rc.confidence),
+            evidence:    i === 0 ? rc.evidence : [],
+            count:       Math.round((effectiveConf / 100) * 10),
+            confidence:  effectiveConf,
+          }))
+        : [],
+      isPrimary:    idx === 0,
+      _isMainCard:  isAiConf,
+      _isExtraCard: isExtraCard,
+    };
+  });
+
+  const importanceOrder: Record<string, number> = { dominant: 0, secondary: 1, monitor: 2 };
+  const sortedAI = [...aiRootCauses].sort((a, b) => {
+    const imp = (importanceOrder[a.importance] ?? 2) - (importanceOrder[b.importance] ?? 2);
+    return imp !== 0 ? imp : b.confidence - a.confidence;
+  });
+  const dominantCause = sortedAI[0];
+
+  const summary =
+    dominantCause && dominantCause.confidence >= 30
+      ? lang === "fr"
+        ? `Les causes principales de "${problem}" sont liées à ${dominantCause.category.toLowerCase()} (confiance ${dominantCause.confidence}%).`
+        : `The main causes of "${problem}" relate to ${dominantCause.category.toLowerCase()} (confidence ${dominantCause.confidence}%).`
+      : lang === "fr"
+      ? `Analyse insuffisante pour "${problem}" — investigation terrain recommandée.`
+      : `Insufficient signal for "${problem}" — on-site investigation recommended.`;
+
+  return { problem, categories, summary };
+}
+
+function confidenceToProbability(confidence: number): ProbabilityLevel {
+  if (confidence >= 60) return "Probable";
+  if (confidence >= 30) return "Possible";
+  return "Occasionnelle";
+}
+
+/** Returns true when the edge fn has produced the new 5-category shape */
+function hasNewRootCauseShape(rootCauses: any[]): boolean {
+  return (
+    Array.isArray(rootCauses) &&
+    rootCauses.length === 5 &&
+    rootCauses.every(
+      (rc) => typeof rc.confidence === "number" && typeof rc.category_key === "string",
+    )
+  );
+}
+
+// ─── DESIGN TOKENS ───────────────────────────────────────────────────────────
 
 const COLORS = {
   violet:       "#6d28d9",
@@ -43,20 +166,19 @@ const COLORS = {
   surface3:     "#f1f5f9",
 };
 
+// Covers both legacy display-name keys AND new category_key values
 const CATEGORY_STYLES: Record<
   string,
   { color: string; soft: string; tint: string; icon: React.ElementType }
 > = {
-  "Main-d'œuvre": { color: "#6366f1", soft: "#eef0ff", tint: "#f7f7ff", icon: Users },
-  Méthodes:       { color: "#2563eb", soft: "#eaf1ff", tint: "#f5f8ff", icon: Share2 },
-  Matériel:       { color: "#64748b", soft: "#f1f5f9", tint: "#fafbfc", icon: Wrench },
-  Matières:       { color: "#d97706", soft: "#fff4e0", tint: "#fffdf6", icon: Package },
-  Milieu:         { color: "#0d9488", soft: "#e6faf6", tint: "#f5fdfb", icon: Building2 },
-  Manpower:       { color: "#6366f1", soft: "#eef0ff", tint: "#f7f7ff", icon: Users },
-  Methods:        { color: "#2563eb", soft: "#eaf1ff", tint: "#f5f8ff", icon: Share2 },
-  Machine:        { color: "#64748b", soft: "#f1f5f9", tint: "#fafbfc", icon: Wrench },
-  Material:       { color: "#d97706", soft: "#fff4e0", tint: "#fffdf6", icon: Package },
-  Measurement:    { color: "#0d9488", soft: "#e6faf6", tint: "#f5fdfb", icon: Building2 },
+  
+  
+  // ── new stable category_key values ───────────────────────────────────────
+  manpower: { color: "#6366f1", soft: "#eef0ff", tint: "#f7f7ff", icon: Users },
+  material:      { color: "#6366f1", soft: "#eef0ff", tint: "#f7f7ff", icon: Users },
+  method:        { color: "#2563eb", soft: "#eaf1ff", tint: "#f5f8ff", icon: Share2 },
+  machine:        { color: "#64748b", soft: "#f1f5f9", tint: "#fafbfc", icon: Wrench },
+  environment:    { color: "#0d9488", soft: "#e6faf6", tint: "#f5fdfb", icon: Building2 },
 };
 
 const DEFAULT_CAT_STYLE = {
@@ -89,24 +211,39 @@ const probabilityConfig: Record<
 ───────────────────────────────────────────── */
 
 const CauseCard = ({
-  category, causes, isPrimary, animDelay, t,
+  category,
+  categoryKey,
+  causes,
+  isPrimary,
+  isExtraCard,
+  isUserValidated,
+  animDelay,
+  t,
 }: {
-  category: string;
-  causes: { description: string; probability: ProbabilityLevel }[];
-  isPrimary: boolean;
-  animDelay: number;
-  t: (k: string) => string;
+  category:        string;
+  categoryKey?:    string;
+  causes:          { description: string; probability: ProbabilityLevel }[];
+  isPrimary:       boolean;
+  isExtraCard?:    boolean;
+  isUserValidated?: boolean; // AI-confident card also confirmed by user
+  animDelay:       number;
+  t:               (k: string) => string;
 }) => {
-  const catStyle = CATEGORY_STYLES[category] ?? DEFAULT_CAT_STYLE;
+  // Resolve style: stable key first, display name fallback
+  const catStyle =
+    CATEGORY_STYLES[categoryKey ?? ""] ??
+    CATEGORY_STYLES[category] ??
+    DEFAULT_CAT_STYLE;
   const Icon = catStyle.icon;
 
+  const borderColor = isExtraCard ? "#059669" : catStyle.color;
 
   return (
     <div
       className="rv-cause-card"
       style={{
         background:   COLORS.surface,
-        border:       `${isPrimary ? 2 : 1.5}px solid ${catStyle.color}`,
+        border:       `${isPrimary ? 2 : 1.5}px solid ${borderColor}`,
         borderRadius: "18px",
         padding:      "20px 20px 18px",
         position:     "relative",
@@ -119,9 +256,11 @@ const CauseCard = ({
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "14px" }}>
         <span style={{
           width: "44px", height: "44px", borderRadius: "13px",
-          background: catStyle.soft, color: catStyle.color,
-          display: "inline-flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0, boxShadow: "inset 0 0 0 1px rgba(30,27,75,0.03)",
+          background: isExtraCard ? "#f0fdf4" : catStyle.soft,
+          color:      isExtraCard ? "#059669" : catStyle.color,
+          display:    "inline-flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0,
+          boxShadow:  "inset 0 0 0 1px rgba(30,27,75,0.03)",
         }}>
           <Icon size={21} />
         </span>
@@ -130,17 +269,43 @@ const CauseCard = ({
             fontSize: "16.5px", fontWeight: 700, lineHeight: 1.15,
             letterSpacing: "-0.015em", color: COLORS.text,
           }}>
-            {category}
+            {t(`analysis.ishikawa.categories.${category}`)}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px", minHeight: "18px" }}>
-            {isPrimary && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            marginTop: "4px", minHeight: "18px", flexWrap: "wrap",
+          }}>
+            {isPrimary && !isExtraCard && (
               <span style={{
-                fontSize: "9px", fontWeight: 700, color: catStyle.color,
-                background: COLORS.surface, border: `1px solid ${catStyle.color}`,
+                fontSize: "9px", fontWeight: 700,
+                color: catStyle.color,
+                background: COLORS.surface,
+                border: `1px solid ${catStyle.color}`,
                 padding: "2px 7px", borderRadius: "999px",
                 letterSpacing: "0.4px", textTransform: "uppercase", flexShrink: 0,
               }}>
                 {t("analysis.ishikawa.primary") || "Principale"}
+              </span>
+            )}
+            {isExtraCard && (
+              <span style={{
+                fontSize: "9px", fontWeight: 700, color: "#059669",
+                background: "#f0fdf4", border: "1px solid #6ee7b7",
+                padding: "2px 7px", borderRadius: "999px",
+                letterSpacing: "0.4px", textTransform: "uppercase", flexShrink: 0,
+              }}>
+                {t("analysis.ishikawa.fromQuestionnaire") || "Vous"}
+              </span>
+            )}
+            {/* Show a small "✓ Confirmed" pill when user also rated this AI card highly */}
+            {isUserValidated && !isExtraCard && (
+              <span style={{
+                fontSize: "9px", fontWeight: 700, color: "#059669",
+                background: "#f0fdf4", border: "1px solid #6ee7b7",
+                padding: "2px 7px", borderRadius: "999px",
+                letterSpacing: "0.4px", textTransform: "uppercase", flexShrink: 0,
+              }}>
+                ✓ {t("analysis.ishikawa.confirmedByYou") || "Confirmé"}
               </span>
             )}
           </div>
@@ -148,39 +313,60 @@ const CauseCard = ({
       </div>
 
       {/* Causes list */}
+    {causes.length > 0 ? (
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-        {causes.map((cause, i) => {
-          const prob    = probabilityConfig[cause.probability];
-          const ProbIcon = prob.icon;
-          return (
-            <li key={i} style={{
-              display: "flex", alignItems: "flex-start",
-              justifyContent: "space-between", gap: "10px", padding: "4px 0",
+        {causes.map((cause, i) => (
+          <li key={i} style={{
+            display: "flex", alignItems: "flex-start",
+            justifyContent: "space-between", gap: "10px", padding: "4px 0",
+          }}>
+            <span style={{
+              display: "flex", alignItems: "flex-start", gap: "10px",
+              flex: 1, fontSize: "14px", color: COLORS.text2, lineHeight: 1.5,
             }}>
               <span style={{
-                display: "flex", alignItems: "flex-start", gap: "10px",
-                flex: 1, fontSize: "14px", color: COLORS.text2, lineHeight: 1.5,
-              }}>
-                <span style={{
-                  width: "6px", height: "6px", borderRadius: "50%",
-                  background: catStyle.color, marginTop: "7px", flexShrink: 0,
-                }} />
-                {cause.description}
-              </span>
-              {/* <span style={{
-                display: "inline-flex", alignItems: "center", gap: "4px",
-                padding: "3px 8px", borderRadius: "999px",
-                fontSize: "11px", fontWeight: 600,
-                color: prob.color, background: prob.bg, border: `1px solid ${prob.border}`,
-                flexShrink: 0, whiteSpace: "nowrap",
-              }}> */}
-                {/* <ProbIcon size={11} /> */}
-                {/* {t(`analysis.pareto.rootCause.probability.${prob.label}`) || prob.label} */}
-              {/* </span> */}
-            </li>
-          );
-        })}
+                width: "6px", height: "6px", borderRadius: "50%",
+                background: isExtraCard ? "#059669" : catStyle.color,
+                marginTop: "7px", flexShrink: 0,
+              }} />
+              {cause.description}
+            </span>
+          </li>
+        ))}
       </ul>
+    ) : (
+      <div style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "10px",
+        padding: "10px 12px",
+        borderRadius: "12px",
+        background: "#f8fafc",
+        border: "1px dashed #cbd5e1",
+        marginTop: "4px",
+      }}>
+        <div>
+          <p style={{
+            fontSize: "13px",
+            fontWeight: 600,
+            color: "#64748b",
+            margin: "0 0 2px",
+            lineHeight: 1.4,
+          }}>
+            {t("analysis.ishikawa.noCausesUserCategory") || "Catégorie sélectionnée par vous"}
+          </p>
+          <p style={{
+            fontSize: "12.5px",
+            color: "#94a3b8",
+            margin: 0,
+            lineHeight: 1.5,
+          }}>
+            {t("analysis.ishikawa.noCausesUserCategoryHint") ||
+              "L'IA n'a pas identifié de causes spécifiques pour cette catégorie. Une investigation terrain est recommandée."}
+          </p>
+        </div>
+      </div>
+    )}
     </div>
   );
 };
@@ -209,8 +395,12 @@ export function RootCauseSection({
   const activeEstablishmentId  = useEstablishmentStore((s) => s.activeEstablishmentId);
   const selectedEstablishment  = useEstablishmentStore((s) => s.selectedEstablishment);
   const resolvedEstablishmentId = activeEstablishmentId ?? selectedEstablishment?.id ?? null;
+if (Array.isArray(paretoIssues) && paretoIssues.length > 0) {
+  paretoIssues.sort((a, b) => b.count - a.count);
+}
 
-  const currentIssue = paretoIssues?.length > 0 ? paretoIssues[currentStep] : null;
+const currentIssue =
+  paretoIssues?.length > 0 ? paretoIssues[currentStep] : null;
 
 
   useEffect(() => {
@@ -252,36 +442,124 @@ export function RootCauseSection({
 
   const currentSmartObjective = useMemo(() => {
     if (!currentIssue) return null;
-    return safeObjectives.find(
-      (obj) => obj?.pareto_cause?.key?.toLowerCase() === currentIssue?.key?.toLowerCase()
-    ) ?? null;
+    return (
+      safeObjectives.find(
+        (obj) => obj?.pareto_cause?.key?.toLowerCase() === currentIssue?.key?.toLowerCase(),
+      ) ?? null
+    );
   }, [safeObjectives, currentIssue]);
 
-// 1. Replace the rootCauseAnalysis memo with this:
-const rootCauseAnalysis = useMemo(() => {
-  if (!currentIssue) return null;
+  // ─── ROOT CAUSE RESOLUTION ─────────────────────────────────────────────────
+  const rootCauseAnalysis = useMemo(() => {
+    if (!currentIssue) return null;
 
-  const importanceToProbability = (importance: string): ProbabilityLevel => {
-    if (importance === "dominant")  return "Probable";
-    if (importance === "secondary") return "Possible";
-    return "Occasionnelle";
-  };
+    // Questionnaire scores: Record<category_key, 1–5>
+    const questionnaireScores: Record<string, number> =
+      currentQuestionnaire?.scores ??
+      dbObjective?.questionnaire_scores?.scores ??
+      {};
 
-  const categories = (currentIssue.root_causes ?? []).map((rc, idx) => ({
-    name: rc.category,
-    causes: (rc.causes ?? []).map((desc: string) => ({
-      description: desc,
-      probability: importanceToProbability(rc.importance),
-    })),
-    isPrimary: idx === 0,
-  }));
+    // All category_keys the user rated "Very Likely" (≥ 4)
+    const userHighKeys = new Set(
+      Object.entries(questionnaireScores)
+        .filter(([, v]) => v >= 4)
+        .map(([k]) => k),
+    );
 
-  return {
-    categories,
-    summary: currentIssue.ai_synthesis ?? "",
-  };
-}, [currentIssue]);
- 
+    const rawRootCauses: AiRootCause[] = currentIssue.root_causes ?? [];
+
+    // ── NEW PATH: edge fn returned all 5 categories with confidence ──────────
+    if (hasNewRootCauseShape(rawRootCauses)) {
+      // Index AI entries by category_key for O(1) merge lookup
+      const aiByKey = new Map<string, AiRootCause>(
+        rawRootCauses.map((rc) => [rc.category_key, rc]),
+      );
+
+      // Union: AI-confident (≥60) keys + ALL user "Very Likely" keys
+      // Using a Set guarantees no duplicate keys — same category_key
+      // can only appear once, merging AI + user signal into one card.
+      const visibleKeys = new Set<string>([
+        ...rawRootCauses.filter((rc) => rc.confidence >= 60).map((rc) => rc.category_key),
+        ...userHighKeys,
+      ]);
+
+      // Sort: highest AI confidence first; user-only keys (conf = 0) come last
+      const sorted = [...visibleKeys].sort((a, b) => {
+        const confA = aiByKey.get(a)?.confidence ?? 0;
+        const confB = aiByKey.get(b)?.confidence ?? 0;
+        return confB - confA;
+      });
+
+      const categories: ResolvedCategory[] = sorted.map((key, idx) => {
+        const rc          = aiByKey.get(key);
+        const isAiConf    = (rc?.confidence ?? 0) >= 60;
+        const isUserHigh  = userHighKeys.has(key);
+        // "extra" = user surfaced it AND AI was not confident (no duplicate: same key = same card)
+        const isExtraCard = isUserHigh && !isAiConf;
+        // When user boosted a low-confidence entry, treat confidence as 40
+        const effectiveConf = rc ? (isExtraCard ? 40 : rc.confidence) : 0;
+
+        return {
+          name:         rc?.category_key ?? key,
+          category_key: key,
+          causes: rc
+            ? rc.causes.map((desc, i) => ({
+                description: desc,
+                probability: isExtraCard
+                  ? "Possible"
+                  : confidenceToProbability(rc.confidence),
+                evidence:    i === 0 ? rc.evidence : [],
+                count:       Math.round((effectiveConf / 100) * 10),
+                confidence:  effectiveConf,
+              }))
+            : [],
+          isPrimary:    idx === 0,
+          _isMainCard:  isAiConf,
+          _isExtraCard: isExtraCard,
+          // Extra flag to show "Confirmed" pill on AI cards the user also validated
+          _isUserValidated: isAiConf && isUserHigh,
+        } as ResolvedCategory & { _isUserValidated: boolean };
+      });
+
+      return { categories, summary: currentIssue.ai_synthesis ?? "", userHighKeys };
+    }
+
+    // ── LEGACY PATH: old shape with 1–3 cats, no confidence field ───────────
+    const importanceToProbability = (importance: string): ProbabilityLevel => {
+      if (importance === "dominant")  return "Probable";
+      if (importance === "secondary") return "Possible";
+      return "Occasionnelle";
+    };
+
+    // Build a map from legacy AI output, then layer in any user-only keys
+    const legacyByKey = new Map<string, any>(
+      rawRootCauses.map((rc: any) => [rc.category_key ?? rc.category, rc]),
+    );
+    userHighKeys.forEach((k) => {
+      if (!legacyByKey.has(k)) legacyByKey.set(k, null);
+    });
+
+    const categories: ResolvedCategory[] = [...legacyByKey.entries()].map(
+      ([key, rc], idx) => ({
+        name:         rc?.category ?? key,
+        category_key: rc?.category_key ?? key,
+        causes: rc
+          ? (rc.causes ?? []).map((desc: string) => ({
+              description: desc,
+              probability: importanceToProbability(rc.importance),
+              count:       0,
+            }))
+          : [],
+        isPrimary:    idx === 0,
+        _isMainCard:  rc != null,
+        _isExtraCard: rc == null || (userHighKeys.has(key) && rc.importance !== "dominant"),
+        _isUserValidated: rc != null && userHighKeys.has(key),
+      } as ResolvedCategory & { _isUserValidated: boolean }),
+    );
+
+    return { categories, summary: currentIssue.ai_synthesis ?? "", userHighKeys };
+  }, [currentIssue, currentQuestionnaire, dbObjective]);
+
 
   const goToStep = (step: number) => {
     setCurrentStep(step);
@@ -322,6 +600,28 @@ const rootCauseAnalysis = useMemo(() => {
   };
 
   if (!currentIssue || !rootCauseAnalysis) return null;
+
+  // ─── GRID LAYOUT HELPERS ──────────────────────────────────────────────────
+  // Rule:
+  //   Row 1 → primary AI card + all "extra" (user-only) cards, up to 3 columns
+  //   Row 2+ → remaining AI-confident cards
+  // Because the Set-union dedup already merges same-key cards, there are never
+  // two cards for the same category — extra cards are genuinely new categories.
+  const mainCards  = rootCauseAnalysis.categories.filter(
+    (c) => !(c as any)._isExtraCard,
+  );
+  const extraCards = rootCauseAnalysis.categories.filter(
+    (c) => (c as any)._isExtraCard,
+  );
+
+  // Build ordered array: [primary, ...extras, ...remainingMain]
+  const primaryCard   = mainCards[0] ?? null;
+  const remainingMain = mainCards.slice(1);
+  const orderedCards  = [
+    ...(primaryCard ? [primaryCard] : []),
+    ...extraCards,
+    ...remainingMain,
+  ];
 
   return (
     <>
@@ -492,18 +792,56 @@ const rootCauseAnalysis = useMemo(() => {
           {!questionnaireSubmitted && (
             <div style={{ padding: "0 26px 16px" }}>
               <div style={{
-                display: "flex", alignItems: "flex-start", justifyContent: "space-between",
-                borderRadius: "16px", border: "1px solid #fda4af",
-                background: COLORS.criticalSoft, padding: "16px 20px",
+                display: "flex", alignItems: "center", gap: "14px",
+                borderRadius: "16px", border: "1px solid #e8e4fb",
+                background: "linear-gradient(135deg, #f4f0fe 0%, #eef1fe 100%)",
+                padding: "14px 18px",
               }}>
-                <div>
-                  <p style={{ fontSize: "13px", fontWeight: 600, color: COLORS.criticalText, margin: "0 0 4px" }}>
-                    ⚠️ {t("analysis.ishikawa.questionareWarning") || "Questionnaire non complété"}
+                <span style={{
+                  width: "36px", height: "36px", borderRadius: "10px",
+                  background: "linear-gradient(145deg, #8b5cf6, #6366f1)",
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  color: "white", flexShrink: 0,
+                  boxShadow: "0 4px 10px -3px rgba(124,58,237,0.4)",
+                }}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"/>
+                    <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z"/>
+                    <path d="M9 12l.01 0"/><path d="M13 12l2 0"/>
+                    <path d="M9 16l.01 0"/><path d="M13 16l2 0"/>
+                  </svg>
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: "13.5px", fontWeight: 600, color: COLORS.violet, margin: "0 0 2px" }}>
+                    {t("analysis.ishikawa.questionareWarning") || "Questionnaire non complété"}
                   </p>
-                  <p style={{ fontSize: "13px", color: "#e11d48", margin: 0 }}>
+                  <p style={{ fontSize: "13px", color: COLORS.text2, margin: 0 }}>
                     {t("analysis.ishikawa.recommendMessage") || "Complétez le questionnaire pour affiner le diagnostic."}
                   </p>
                 </div>
+                <button
+                  onClick={() => setShowQuestionnaire(true)}
+                  style={{
+                    cursor: "pointer", border: "none", fontFamily: "inherit",
+                    padding: "8px 16px", borderRadius: "10px",
+                    fontSize: "13px", fontWeight: 600, color: "white",
+                    background: "linear-gradient(145deg, #8b5cf6, #6d28d9)",
+                    boxShadow: "0 4px 12px -4px rgba(124,58,237,0.45)",
+                    whiteSpace: "nowrap", flexShrink: 0,
+                    transition: `transform 0.2s ${EASE}, box-shadow 0.2s ${EASE}`,
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 8px 18px -4px rgba(124,58,237,0.5)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 12px -4px rgba(124,58,237,0.45)";
+                  }}
+                >
+                  {t("analysis.ishikawa.fillQuestionare") || "Répondre →"}
+                </button>
               </div>
             </div>
           )}
@@ -534,19 +872,24 @@ const rootCauseAnalysis = useMemo(() => {
               {t("analysis.ishikawa.probableCausesIdentified") || "Causes principales détectées"}
             </div>
 
-            {rootCauseAnalysis.categories.length > 0 ? (
+            {orderedCards.length > 0 ? (
               <div style={{
                 display: "grid",
+                // Up to 3 columns; extra cards naturally land right of the primary card
+                // because of the [primary, ...extras, ...remaining] ordering above.
                 gridTemplateColumns: "repeat(3, minmax(0, 340px))",
                 gap: "16px",
                 animation: `rvPaneFade 0.35s ${EASE} 0.05s backwards`,
               }}>
-                {rootCauseAnalysis.categories.map((category, catIdx) => (
+                {orderedCards.map((category, catIdx) => (
                   <CauseCard
-                    key={catIdx}
+                    key={(category as any).category_key ?? catIdx}
                     category={category.name}
+                    categoryKey={(category as any).category_key}
                     causes={category.causes}
-                    isPrimary={catIdx === 0}
+                    isPrimary={(category as ResolvedCategory)._isMainCard && catIdx === 0}
+                    isExtraCard={(category as ResolvedCategory)._isExtraCard}
+                    isUserValidated={(category as any)._isUserValidated === true}
                     animDelay={0.05 + catIdx * 0.04}
                     t={t}
                   />
@@ -660,9 +1003,9 @@ const rootCauseAnalysis = useMemo(() => {
                       <span>✅</span>
                       <span>
                         {t("questionnaire.effortOverridden", { effort: currentQuestionnaire?.dominantEffort }) || "Effort déterminé par le questionnaire :"}{" "}
-                        <strong>
+                        {/* <strong>
                           {t(`questionnaire.sections.${currentQuestionnaire?.dominantCategory}.title`) || currentQuestionnaire?.dominantCategory}
-                        </strong>
+                        </strong> */}
                       </span>
                     </div>
                   )}

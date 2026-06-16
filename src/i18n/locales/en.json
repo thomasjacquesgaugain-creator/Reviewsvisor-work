@@ -1908,8 +1908,19 @@
       "problem":"Issue",
       "highImpact":"High impact",
       "mediumImpact": "Moderate impact",
-      "primary":"Principal"
-    },
+      "primary":"Principal",
+      "userCausesTitle": "Causes identified via questionnaire",
+      "fromQuestionnaire": "You",
+      "confirmedByYou":"confirmed by you",
+      "noCausesUserCategory": "Category selected by you",
+      "noCausesUserCategoryHint": "The AI did not find specific causes for this category. An on-site investigation is recommended.",
+       "categories":{
+      "manpower":"Manpower",
+      "method":  "Method",
+      "machine":"Machine",
+      "material":  "Material",
+      "environment": "Environment"
+    }},
     "syntheseAndDiagnostic": {
       "title": "Synthesis and Diagnostic",
       "averageRating": "Average Rating",
@@ -1975,6 +1986,16 @@
         "understaffed": "Insufficient headcount to handle demand"
       }
     },
+     "manpower": {
+      "name": "Workforce",
+      "fallback": "Issues related to staff behaviour or competencies",
+      "causes": {
+        "disrespectful": "Disrespectful or impolite behaviour by staff toward customers",
+        "untrained": "Lack of training or insufficient staff competencies",
+        "inattentive": "Staff inattentive or negligent toward customer requests",
+        "understaffed": "Insufficient headcount to handle demand"
+      }
+    },
     "process": {
       "name": "Process",
       "fallback": "Service process malfunction",
@@ -1997,6 +2018,16 @@
       }
     },
     "tools": {
+      "name": "Tools & Systems",
+      "fallback": "Failing tools or systems impacting service",
+      "causes": {
+        "crashes": "Failures or malfunctions in technological tools",
+        "payment": "Issues with payment or billing systems",
+        "performance": "Insufficient performance of systems or applications",
+        "outdated": "Outdated tools no longer meeting operational needs"
+      }
+    },
+    "machine": {
       "name": "Tools & Systems",
       "fallback": "Failing tools or systems impacting service",
       "causes": {
@@ -2053,19 +2084,19 @@
   },
   "sections": {
     "manpower": {
-      "title":    "Workforce (People)",
+      "title":    "manpower",
       "subtitle": "Is the issue related to staff skills, training, or behaviour?"
     },
     "method": {
-      "title":    "Methods (Processes)",
+      "title":    "method",
       "subtitle": "Is the issue related to the way tasks are performed or a lack of clear procedures?"
     },
     "machine": {
-      "title":    "Equipment & Tools",
+      "title":    "machine",
       "subtitle": "Is the issue related to tools, equipment, or software used?"
     },
     "material": {
-      "title":    "Materials (Products & Components)",
+      "title":    "material",
       "subtitle": "Is the issue related to the quality of raw materials or components used?"
     },
     "measurement": {

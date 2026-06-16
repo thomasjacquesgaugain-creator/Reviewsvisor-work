@@ -47,7 +47,7 @@ export function RootCauseAnalysisModal({
   if (!issue) return null;
 
   const categories = (issue.root_causes ?? []).map((rc) => ({
-    name: rc.category,
+    name: rc.label,
     causes: (rc.causes ?? []).map((desc: string) => ({
       description: desc,
       probability: importanceToProbability(rc.importance),

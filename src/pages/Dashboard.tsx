@@ -258,7 +258,6 @@ const Dashboard = () => {
 }, [fetchObjectives, activeEstablishmentId]);
 
   const safeObjectives = Array.isArray(objectives) ? objectives : [];
-  console.log("safeObjectives",safeObjectives)
 
   function handleClickActionPlan(){
    setActiveTab("recommandations"); // third tab id
@@ -3208,6 +3207,7 @@ const sortedStrength = [...topStrengths].sort(
     }
   }, [insight, reviewsForAnalysis]);
 
+  console.log("analysis data for tab" , analysisDataForTab)
 
 
   // Map top issues to Pareto data format

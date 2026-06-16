@@ -2,7 +2,6 @@ import { CompleteAnalysisData, Review, QualitativeKeywordTheme } from "@/types/a
 import { format, parseISO } from "date-fns";
 import { cleanReviewText } from "@/utils/cleanReviewText";
 import { formatDiagnosticSummary, formatRecommendations } from "@/utils/formatDiagnosticSummary";
-// ✅ REMOVED: analyzeRootCauses, RootCauseAnalysis — no longer needed
 import { 
   computeSentimentFromRating, 
   normalizeRating,
@@ -272,10 +271,6 @@ export function transformAnalysisData(
         : [...neutral.slice(0, 3), ...positive.slice(0, 1), ...negative.slice(0, 1)];
 
       selected = selected.filter((v, i, self) => i === self.findIndex(x => x.text === v.text));
-      if (selected.length < 5) {
-        const remaining = matched.filter(m => !selected.some(s => s.text === m!.text));
-        selected.push(...remaining.slice(0, 5 - selected.length));
-      }
 
       return { ...theme, verbatims: selected.slice(0, 5).map(v => v!.text) };
     });
@@ -304,6 +299,10 @@ export function transformAnalysisData(
       theme, score: data.score, count: Number(data.count), verbatims: []
     }));
   }
+
+  // top strenth calcylation
+
+
 
   // ── QUALITATIVE ────────────────────────────────────────────
   const wordSentimentCounts = new Map<string, Map<'positive' | 'neutral' | 'negative', number>>();
