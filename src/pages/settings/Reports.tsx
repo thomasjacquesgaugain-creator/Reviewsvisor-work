@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, subDays } from "date-fns";
 import { enUS, fr, type Locale } from "date-fns/locale";
 import {
   Download,
@@ -153,6 +153,9 @@ export function Reports() {
   const formatPeriod = (value: string) =>
     format(parseISO(value), "dd MMM yyyy", { locale });
 
+  const formatPeriodEnd = (value: string) =>
+    format(subDays(parseISO(value), 1), "dd MMM yyyy", { locale });
+
   return (
     <div className="p-8 text-gray-900 dark:text-slate-100">
       <div className="mb-8">
@@ -163,18 +166,17 @@ export function Reports() {
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
           {t(
             "settings.reports.description",
-            "Download the monthly reports already generated for your active establishment.",
+            "Download the monthly reports for active establishment",
+          )}
+          {activeEstablishmentName && (
+            <>
+              {" "}
+              <span className="font-medium text-slate-700 dark:text-slate-300">
+                {activeEstablishmentName}
+              </span>
+            </>
           )}
         </p>
-
-        {activeEstablishmentName ? (
-          <p className="mt-3 text-sm font-medium text-slate-700 dark:text-slate-300">
-            {t("settings.reports.activeEstablishment", "Active establishment")}:{" "}
-            <span className="text-gray-900 dark:text-slate-100">
-              {activeEstablishmentName}
-            </span>
-          </p>
-        ) : null}
       </div>
 
       {loading ? (
@@ -249,15 +251,6 @@ export function Reports() {
                     <Calendar className="h-3.5 w-3.5" />{" "}
                     <span>{group.year}</span>
                   </h2>
-
-                  <div className="mt-1 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                    <span>
-                      {t(
-                        "settings.reports.groupDescription",
-                        "Only months saved in your report history are shown here.",
-                      )}
-                    </span>
-                  </div>
                 </div>
 
                 {expandedYears[group.year] ? (
@@ -291,7 +284,7 @@ export function Reports() {
                               <p className="text-xs text-slate-500 dark:text-slate-400">
                                 {t("settings.reports.period", "Report period")}:{" "}
                                 {formatPeriod(report.period_start)} -{" "}
-                                {formatPeriod(report.period_end)}
+                                {formatPeriodEnd(report.period_end)}
                               </p>
                             </div>
                           </div>
