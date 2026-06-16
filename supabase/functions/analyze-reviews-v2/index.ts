@@ -17,7 +17,7 @@
  * - getLanguageInstruction() updated: explicitly tells AI not to translate sentiment
  */
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import "https://deno.land/x/dotenv@v3.2.2/load.ts";
 
 type BusinessType =
