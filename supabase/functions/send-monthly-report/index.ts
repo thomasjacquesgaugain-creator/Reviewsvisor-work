@@ -508,6 +508,7 @@ async function generateAndSendReport(
   userId: string,
   supabaseAdmin: ReturnType<typeof createClient>,
   reportMonth?: string,
+  sendEmail = true,
 ): Promise<Array<Record<string, string | null>>> {
   try {
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
@@ -567,6 +568,7 @@ async function generateAndSendReport(
           establishment,
           supabaseAdmin,
           reportMonth,
+          sendEmail,
         });
 
         results.push(result);
@@ -596,6 +598,7 @@ async function generateAndSendReportForEstablishment({
   establishment,
   supabaseAdmin,
   reportMonth,
+  sendEmail = true,
 }: {
   userId: string;
   userEmail: string;
@@ -603,6 +606,7 @@ async function generateAndSendReportForEstablishment({
   establishment: Establishment;
   supabaseAdmin: ReturnType<typeof createClient>;
   reportMonth?: string;
+   sendEmail?: boolean;
 }): Promise<Record<string, string | null>> {
   const monthWindow = resolveReportMonthWindow(reportMonth);
 
@@ -714,15 +718,23 @@ async function generateAndSendReportForEstablishment({
     supabaseAdmin,
   });
 
-  console.log(`Sending monthly report to ${userEmail} for establishment: ${establishment.name}`);
-
   try {
-    const emailResponse = await sendMonthlyReportEmail({
-      userEmail,
-      establishmentName: establishment.name,
-      reportMonthName: monthWindow.reportMonthName,
-      htmlContent,
-    });
+    // const emailResponse = await sendMonthlyReportEmail({
+    //   userEmail,
+    //   establishmentName: establishment.name,
+    //   reportMonthName: monthWindow.reportMonthName,
+    //   htmlContent,
+    // });
+    let emailResponse = null;
+
+    if (sendEmail) {
+      emailResponse = await sendMonthlyReportEmail({
+        userEmail,
+        establishmentName: establishment.name,
+        reportMonthName: monthWindow.reportMonthName,
+        htmlContent,
+      });
+    }
 
     const status: ReportStatus = persistenceResult.error
       ? "partial_failure"
@@ -732,12 +744,12 @@ async function generateAndSendReportForEstablishment({
         reportId: persistenceResult.rowId,
         status,
         errorMessage: persistenceResult.error,
-        emailSentAt: new Date().toISOString(),
+        emailSentAt: sendEmail
+          ? new Date().toISOString()
+          : null,
         supabaseAdmin,
       });
     }
-
-    console.log(`Report sent for ${establishment.name}:`, emailResponse);
 
     return {
       userId,
@@ -798,28 +810,35 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: profiles, error: profilesError } = await supabaseAdmin
         .from('profiles')
         .select('user_id, monthly_report_enabled')
-        .eq('monthly_report_enabled', true);
+        // .eq('monthly_report_enabled', true);
 
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
       }
 
-      const enabledUsers = new Set(
-        (profiles || [])
-          .filter((p) => p.monthly_report_enabled === true)
-          .map((p) => p.user_id),
+      // const enabledUsers = new Set(
+      //   (profiles || [])
+      //     .filter((p) => p.monthly_report_enabled === true)
+      //     .map((p) => p.user_id),
+      // );
+      const notificationMap = new Map<string, boolean>(
+        (profiles || []).map((p) => [
+          p.user_id,
+          p.monthly_report_enabled === true,
+        ]),
       );
 
       const results: Array<Record<string, string | null>> = [];
       for (const user of usersList?.users || []) {
         if (!user.email) continue;
-        if (!enabledUsers.has(user.id)) continue;
+        // if (!enabledUsers.has(user.id)) continue;
 
       try {
         const userResults = await generateAndSendReport(
           user.id,
           supabaseAdmin,
           reportMonth,
+          notificationMap.get(user.id) ?? false,
         );
         results.push(...userResults);
       } catch (error: unknown) {
