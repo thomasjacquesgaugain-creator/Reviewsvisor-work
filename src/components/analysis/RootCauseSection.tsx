@@ -269,7 +269,7 @@ const CauseCard = ({
             fontSize: "16.5px", fontWeight: 700, lineHeight: 1.15,
             letterSpacing: "-0.015em", color: COLORS.text,
           }}>
-            {t(`analysis.ishikawa.categories.${category}`)}
+            {category}
           </div>
           <div style={{
             display: "flex", alignItems: "center", gap: "6px",
@@ -884,7 +884,9 @@ const currentIssue =
                 {orderedCards.map((category, catIdx) => (
                   <CauseCard
                     key={(category as any).category_key ?? catIdx}
-                    category={category.name}
+                      category={
+                        t(`analysis.ishikawa.categories.${(category as any).category_key}`) || category.name
+                      }
                     categoryKey={(category as any).category_key}
                     causes={category.causes}
                     isPrimary={(category as ResolvedCategory)._isMainCard && catIdx === 0}
