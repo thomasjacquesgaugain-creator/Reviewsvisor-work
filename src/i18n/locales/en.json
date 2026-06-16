@@ -949,7 +949,7 @@
     },
     "reports": {
       "title": "Monthly reports",
-      "description": "Download the monthly reports already generated for each establishment.",
+      "description": "Download the monthly reports for active establishment",
       "activeEstablishment": "Active establishment",
       "loading": "Loading reports...",
       "emptyTitle": "No reports available",

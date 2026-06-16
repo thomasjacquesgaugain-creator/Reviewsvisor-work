@@ -1016,7 +1016,7 @@
     },
     "reports": {
       "title": "Rapports mensuels",
-      "description": "Téléchargez les rapports mensuels déjà générés pour chaque établissement.",
+      "description": "Téléchargez les rapports mensuels pour les établissements actifs.",
       "activeEstablishment": "Établissement actif",
       "loading": "Chargement des rapports...",
       "emptyTitle": "Aucun rapport disponible",

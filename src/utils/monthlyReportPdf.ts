@@ -42,14 +42,9 @@ type MonthlyReportPdfCopy = {
   greeting: (name: string | null) => string;
   reportIntroPrefix: string;
   reportIntroSuffix: string;
-  averageRating: string;
-  analyzedReviews: string;
-  sentiment: string;
-  summary: string;
   scoreTitle: string;
   scoreSubtitle: (previousMonthName: string, reportMonthName: string) => string;
-  globalRating: string;
-  satisfactionIndex: string;
+  changeLabel: string;
   positiveReviews: string;
   negativeReviews: string;
   kpiTitle: string;
@@ -68,18 +63,6 @@ type MonthlyReportPdfCopy = {
   recommendationsSubtitle: string;
   noRecommendations: string;
   footer: string;
-  satisfactionLabels: {
-    excellent: string;
-    good: string;
-    average: string;
-  };
-  sentimentLabels: {
-    veryPositive: string;
-    positive: string;
-    neutral: string;
-    negative: string;
-    veryNegative: string;
-  };
 };
 
 const PDF_COPY: Record<MonthlyReportLanguage, MonthlyReportPdfCopy> = {
@@ -90,47 +73,29 @@ const PDF_COPY: Record<MonthlyReportLanguage, MonthlyReportPdfCopy> = {
     reportIntroPrefix: "Voici votre rapport mensuel pour ",
     reportIntroSuffix:
       ". Découvrez l'évolution de votre réputation en ligne et les actions à mettre en place.",
-    averageRating: "Note moyenne",
-    analyzedReviews: "Avis analyses",
-    sentiment: "Sentiment",
-    summary: "Synthese mensuelle pour suivre votre reputation en ligne",
-    scoreTitle: "Score Global",
+    scoreTitle: "Évolution de la note",
     scoreSubtitle: (previousMonthName, reportMonthName) =>
       `Evolution entre ${previousMonthName} et ${reportMonthName}`,
-    globalRating: "Note globale",
-    satisfactionIndex: "Indice de satisfaction :",
+    changeLabel: "Évolution",
     positiveReviews: "Avis positifs",
     negativeReviews: "Avis negatifs",
-    kpiTitle: "KPI - Indicateurs cles a suivre",
-    kpiSubtitle: "Les chiffres essentiels du mois",
+    kpiTitle: "Actions réalisées ce mois",
+    kpiSubtitle: "",
     reviewsReceived: "Avis recus",
     responsesSent: "Reponses envoyees",
     responseRate: "Taux de reponse",
     ratingEvolution: "Evolution de la note",
-    customerFeedbackTitle: "Analyse des retours clients",
-    customerFeedbackSubtitle:
-      "Ce que les clients ont aime et ce qui doit etre ameliore",
+    customerFeedbackTitle: "Résumé des avis",
+    customerFeedbackSubtitle: "",
     positives: "Points positifs",
     improvements: "Points a ameliorer",
     noPositives: "Aucun point positif identifie ce mois",
     noNegatives: "Aucun point negatif identifie ce mois",
-    recommendations: "Recommandations",
-    recommendationsSubtitle: "Actions prioritaires pour le mois prochain",
+    recommendations: "Recommandations pour le mois prochain",
+    recommendationsSubtitle: "",
     noRecommendations:
       "Continuez vos efforts pour maintenir votre excellente reputation",
     footer: "Rapport genere automatiquement par Reviewsvisor",
-    satisfactionLabels: {
-      excellent: "Excellent",
-      good: "Bon",
-      average: "Moyen",
-    },
-    sentimentLabels: {
-      veryPositive: "Tres positif",
-      positive: "Positif",
-      neutral: "Neutre",
-      negative: "Negatif",
-      veryNegative: "Tres negatif",
-    },
   },
   en: {
     reportTitle: "Monthly Report",
@@ -139,46 +104,28 @@ const PDF_COPY: Record<MonthlyReportLanguage, MonthlyReportPdfCopy> = {
     reportIntroPrefix: "Here is your monthly report for ",
     reportIntroSuffix:
       ". Discover how your online reputation is evolving and the actions to put in place.",
-    averageRating: "Average rating",
-    analyzedReviews: "Reviews analyzed",
-    sentiment: "Sentiment",
-    summary: "Monthly summary to track your online reputation",
-    scoreTitle: "Overall Score",
+    scoreTitle: "Rating Change",
     scoreSubtitle: (previousMonthName, reportMonthName) =>
       `Evolution between ${previousMonthName} and ${reportMonthName}`,
-    globalRating: "Overall rating",
-    satisfactionIndex: "Satisfaction index:",
+    changeLabel: "Change",
     positiveReviews: "Positive reviews",
     negativeReviews: "Negative reviews",
-    kpiTitle: "KPI - Key indicators to track",
-    kpiSubtitle: "The essential figures for the month",
+    kpiTitle: "Actions Taken This Month",
+    kpiSubtitle: "",
     reviewsReceived: "Reviews received",
     responsesSent: "Responses sent",
     responseRate: "Response rate",
     ratingEvolution: "Rating evolution",
-    customerFeedbackTitle: "Customer feedback analysis",
-    customerFeedbackSubtitle:
-      "What customers liked and what should be improved",
+    customerFeedbackTitle: "Review Summary",
+    customerFeedbackSubtitle: "",
     positives: "Positive points",
     improvements: "Points to improve",
     noPositives: "No positive points identified this month",
     noNegatives: "No negative points identified this month",
-    recommendations: "Recommendations",
-    recommendationsSubtitle: "Priority actions for next month",
+    recommendations: "Recommendations for Next Month",
+    recommendationsSubtitle: "",
     noRecommendations: "Keep up the good work to maintain your reputation",
     footer: "Report generated automatically by Reviewsvisor",
-    satisfactionLabels: {
-      excellent: "Excellent",
-      good: "Good",
-      average: "Average",
-    },
-    sentimentLabels: {
-      veryPositive: "Very positive",
-      positive: "Positive",
-      neutral: "Neutral",
-      negative: "Negative",
-      veryNegative: "Very negative",
-    },
   },
 };
 
@@ -471,37 +418,29 @@ function fitFontSize(
   return size;
 }
 
-function drawMetricBox(
-  page: PDFPage,
-  x: number,
-  y: number,
-  width: number,
-  title: string,
-  value: string,
-  bold: PDFFont,
-  regular: PDFFont,
-  valueColor: RGB,
-) {
-  const innerPadding = 10;
-  const innerWidth = width - innerPadding * 2;
-  const titleSize = fitFontSize(title, bold, 10, innerWidth, 8);
-  const valueSize = fitFontSize(value, bold, 22, innerWidth, 13);
+function getRatingStatus(
+  diff: number,
+  language: MonthlyReportLanguage,
+): string {
+  if (diff >= 0.5) {
+    return language === "en" ? "Incredible" : "Incroyable";
+  }
 
-  page.drawText(title, {
-    x: x + (width - bold.widthOfTextAtSize(title, titleSize)) / 2,
-    y,
-    size: titleSize,
-    font: bold,
-    color: COLORS.text,
-  });
+  if (diff >= 0.2) {
+    return language === "en" ? "Excellent" : "Excellent";
+  }
 
-  page.drawText(value, {
-    x: x + (width - bold.widthOfTextAtSize(value, valueSize)) / 2,
-    y: y - 26,
-    size: valueSize,
-    font: bold,
-    color: valueColor,
-  });
+  if (diff > 0) {
+    return language === "en" ? "Improved" : "Amélioration";
+  }
+
+  if (diff === 0) {
+    return language === "en" ? "Stable" : "Stable";
+  }
+
+  return language === "en"
+    ? "Needs Attention"
+    : "À améliorer";
 }
 
 function drawCoverMetricBox(
@@ -539,110 +478,128 @@ function drawCoverMetricBox(
   });
 }
 
-function drawOverallScoreBlock(
+function drawRatingChangeBlock(
   page: PDFPage,
   topY: number,
-  positiveRatio: number,
-  avgRating: number,
-  satisfaction: { label: string; color: RGB },
+  previousMonthName: string,
+  reportMonthName: string,
+  previousRating: number,
+  currentRating: number,
+  language: MonthlyReportLanguage,
   copy: MonthlyReportPdfCopy,
   bold: PDFFont,
   regular: PDFFont,
-) {
-  const fullWidth = PAGE.width - PAGE.margin * 2;
-  const mainCardHeight = 88;
-  const mainCardY = topY - mainCardHeight;
+): number {
+  const width = PAGE.width - PAGE.margin * 2;
+  const height = 220;
 
   drawCard(
     page,
     PAGE.margin,
-    mainCardY,
-    fullWidth,
-    mainCardHeight,
+    topY - height,
+    width,
+    height,
     COLORS.background,
-    satisfaction.color,
-  );
-
-  drawTextCentered(page, copy.globalRating, bold, 13, topY - 28, COLORS.text);
-  drawTextCentered(
-    page,
-    `${avgRating.toFixed(1)} / 5`,
-    bold,
-    28,
-    topY - 52,
     COLORS.primary,
   );
 
-  const satisfactionLabel = copy.satisfactionIndex;
-  const satisfactionValue = satisfaction.label;
-  const labelWidth = regular.widthOfTextAtSize(satisfactionLabel, 11);
-  const valueWidth = bold.widthOfTextAtSize(satisfactionValue, 11);
-  const gap = 20;
-  const startX = (PAGE.width - labelWidth - gap - valueWidth) / 2;
+  const diff = currentRating - previousRating;
 
-  page.drawText(satisfactionLabel, {
-    x: startX,
-    y: topY - 76,
-    size: 11,
-    font: regular,
+  const diffLabel =
+    diff >= 0
+      ? `+${diff.toFixed(1)}`
+      : diff.toFixed(1);
+
+  const status = getRatingStatus(diff, language);
+  const leftScore = `${previousRating.toFixed(1)}/5`;
+  const rightScore = `${currentRating.toFixed(1)}/5`;
+
+  const centerX = PAGE.margin + width / 2;
+
+  const leftScoreX = centerX - 170;
+  const rightScoreX = centerX + 60;
+  const arrowX = centerX - 25;
+
+  page.drawText(
+    `${language === "en" ? "Rating" : "Note"} ${previousMonthName}`,
+    {
+      x: leftScoreX,
+      y: topY - 35,
+      size: 12,
+      font: regular,
+      color: COLORS.textMuted,
+    },
+  );
+
+  page.drawText(
+    `${language === "en" ? "Rating" : "Note"} ${reportMonthName}`,
+    {
+      x: rightScoreX,
+      y: topY - 35,
+      size: 12,
+      font: regular,
+      color: COLORS.textMuted,
+    },
+  );
+
+  page.drawText(leftScore, {
+    x: leftScoreX,
+    y: topY - 80,
+    size: 32,
+    font: bold,
     color: COLORS.text,
   });
-  page.drawText(satisfactionValue, {
-    x: startX + labelWidth + gap,
-    y: topY - 76,
-    size: 11,
+
+  page.drawText("=>", {
+    x: arrowX,
+    y: topY - 70,
+    size: 28,
     font: bold,
-    color: satisfaction.color,
+    color: COLORS.textMuted,
   });
 
-  const statGap = 12;
-  const statWidth = (fullWidth - statGap) / 2;
-  const statTopY = mainCardY - 28;
-  const statHeight = 52;
+  page.drawText(rightScore, {
+    x: rightScoreX,
+    y: topY - 80,
+    size: 32,
+    font: bold,
+    color: COLORS.text,
+  });
 
-  drawCard(
-    page,
-    PAGE.margin,
-    statTopY - statHeight,
-    statWidth,
-    statHeight,
-    COLORS.white,
-    COLORS.success,
-  );
-  drawCard(
-    page,
-    PAGE.margin + statWidth + statGap,
-    statTopY - statHeight,
-    statWidth,
-    statHeight,
-    COLORS.white,
-    COLORS.danger,
-  );
+  page.drawLine({
+    start: { x: PAGE.margin + 20, y: topY - 105 },
+    end: { x: PAGE.width - PAGE.margin - 20, y: topY - 105 },
+    thickness: 1,
+    color: COLORS.border,
+  });
 
-  drawMetricBox(
-    page,
-    PAGE.margin,
-    statTopY - 18,
-    statWidth,
-    copy.positiveReviews,
-    `${Math.round(positiveRatio * 100)}%`,
-    bold,
-    regular,
-    COLORS.success,
-  );
-  drawMetricBox(
-    page,
-    PAGE.margin + statWidth + statGap,
-    statTopY - 18,
-    statWidth,
-    copy.negativeReviews,
-    `${100 - Math.round(positiveRatio * 100)}%`,
-    bold,
-    regular,
-    COLORS.danger,
-  );
+  page.drawText(copy.changeLabel, {
+    x: PAGE.margin + 90,
+    y: topY - 145,
+    size: 16,
+    font: regular,
+    color: COLORS.textMuted,
+  });
 
-  return statTopY - statHeight;
+  page.drawText(diffLabel, {
+    x: PAGE.margin + 90,
+    y: topY - 190,
+    size: 28,
+    font: bold,
+    color: diff >= 0 ? COLORS.success : COLORS.danger,
+  });
+
+  const statusWidth = bold.widthOfTextAtSize(status, 14);
+
+  page.drawText(status, {
+    x: PAGE.width - PAGE.margin - 120 - statusWidth,
+    y: topY - 155,
+    size: 14,
+    font: bold,
+    color: COLORS.primary,
+  });
+
+  return topY - height;
 }
 
 function drawCard(
@@ -704,36 +661,68 @@ function drawBulletList(
   return nextY;
 }
 
-function getSatisfactionIndex(
-  avgRating: number,
+function drawKpiSection(
+  page: PDFPage,
+  y: number,
+  data: MonthlyReportData,
+  ratingDiff: number,
+  ratingDiffLabel: string,
   copy: MonthlyReportPdfCopy,
-): { label: string; color: RGB } {
-  if (avgRating >= 4.5) {
-    return { label: copy.satisfactionLabels.excellent, color: COLORS.success };
-  }
-  if (avgRating >= 3.5) {
-    return { label: copy.satisfactionLabels.good, color: COLORS.warning };
-  }
-  return { label: copy.satisfactionLabels.average, color: COLORS.danger };
-}
+  bold: PDFFont,
+): void {
+  drawCard(
+    page,
+    PAGE.margin,
+    y - 88,
+    PAGE.width - PAGE.margin * 2,
+    90,
+    COLORS.background,
+  );
 
-function getSentimentLabel(
-  ratio: number,
-  copy: MonthlyReportPdfCopy,
-): { label: string; color: RGB } {
-  if (ratio >= 0.8) {
-    return { label: copy.sentimentLabels.veryPositive, color: COLORS.success };
-  }
-  if (ratio >= 0.6) {
-    return { label: copy.sentimentLabels.positive, color: COLORS.success };
-  }
-  if (ratio >= 0.4) {
-    return { label: copy.sentimentLabels.neutral, color: COLORS.warning };
-  }
-  if (ratio >= 0.2) {
-    return { label: copy.sentimentLabels.negative, color: COLORS.danger };
-  }
-  return { label: copy.sentimentLabels.veryNegative, color: COLORS.danger };
+  const infoX = PAGE.margin + 18;
+
+  page.drawText(`${copy.reviewsReceived} : ${data.currentMonth.totalReviews}`, {
+    x: infoX,
+    y: y - 24,
+    size: 12,
+    font: bold,
+    color: COLORS.text,
+  });
+  page.drawText(`${copy.responsesSent} : ${data.currentMonth.responsesSent}`, {
+    x: infoX,
+    y: y - 44,
+    size: 12,
+    font: bold,
+    color: COLORS.text,
+  });
+  page.drawText(`${copy.responseRate} : ${data.currentMonth.responseRate}%`, {
+    x: infoX,
+    y: y - 64,
+    size: 12,
+    font: bold,
+    color: COLORS.text,
+  });
+  page.drawText(`${copy.ratingEvolution} : ${ratingDiffLabel}`, {
+    x: 322,
+    y: y - 24,
+    size: 12,
+    font: bold,
+    color: ratingDiff >= 0 ? COLORS.success : COLORS.danger,
+  });
+  page.drawText(`${copy.positiveReviews} : ${data.currentMonth.positiveReviews}`, {
+    x: 322,
+    y: y - 44,
+    size: 12,
+    font: bold,
+    color: COLORS.success,
+  });
+  page.drawText(`${copy.negativeReviews} : ${data.currentMonth.negativeReviews}`, {
+    x: 322,
+    y: y - 64,
+    size: 12,
+    font: bold,
+    color: COLORS.danger,
+  });
 }
 
 export async function generateMonthlyReportPdf(
@@ -748,12 +737,6 @@ export async function generateMonthlyReportPdf(
   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-  const positiveRatio =
-    data.currentMonth.totalReviews > 0
-      ? data.currentMonth.positiveReviews / data.currentMonth.totalReviews
-      : 0;
-  const sentiment = getSentimentLabel(positiveRatio, copy);
-  const satisfaction = getSatisfactionIndex(data.currentMonth.avgRating, copy);
   const ratingDiff = data.currentMonth.avgRating - data.previousMonth.avgRating;
   const ratingDiffLabel =
     ratingDiff >= 0 ? `+${ratingDiff.toFixed(1)}` : ratingDiff.toFixed(1);
@@ -776,6 +759,9 @@ export async function generateMonthlyReportPdf(
     day: "numeric",
   });
 
+  // ── PAGE 1: COVER ──────────────────────────────────────────────────────────
+
+  // Header banner
   coverPage.drawRectangle({
     x: 0,
     y: PAGE.height - 132,
@@ -792,7 +778,7 @@ export async function generateMonthlyReportPdf(
     PAGE.height - 60,
     COLORS.white,
   );
-  
+
   drawTextCentered(
     coverPage,
     `${reportMonthName}`,
@@ -802,6 +788,7 @@ export async function generateMonthlyReportPdf(
     COLORS.white,
   );
 
+  // Greeting
   coverPage.drawRectangle({
     x: PAGE.margin,
     y: PAGE.height - 195,
@@ -817,6 +804,7 @@ export async function generateMonthlyReportPdf(
     color: COLORS.text,
   });
 
+  // Intro paragraph
   drawInlineParagraph(
     coverPage,
     [
@@ -832,69 +820,8 @@ export async function generateMonthlyReportPdf(
     20,
   );
 
-  const metricsCardX = 72;
-  const metricsCardY = PAGE.height - 446;
-  const metricsCardWidth = PAGE.width - 144;
-  const metricsCardHeight = 138;
-  const metricsPadding = 18;
-  const metricsGap = 12;
-  const coverMetricWidth =
-    (metricsCardWidth - metricsPadding * 2 - metricsGap * 2) / 3;
-  const coverMetricTopY = metricsCardY + metricsCardHeight - 24;
-
-  drawCard(
-    coverPage,
-    metricsCardX,
-    metricsCardY,
-    metricsCardWidth,
-    metricsCardHeight,
-    COLORS.background,
-  );
-
-  drawCoverMetricBox(
-    coverPage,
-    metricsCardX + metricsPadding,
-    coverMetricTopY,
-    coverMetricWidth,
-    86,
-    copy.averageRating,
-    `${data.currentMonth.avgRating.toFixed(1)}/5`,
-    bold,
-    COLORS.primary,
-  );
-  drawCoverMetricBox(
-    coverPage,
-    metricsCardX + metricsPadding + coverMetricWidth + metricsGap,
-    coverMetricTopY,
-    coverMetricWidth,
-    86,
-    copy.analyzedReviews,
-    `${data.currentMonth.totalReviews}`,
-    bold,
-    COLORS.primary,
-  );
-  drawCoverMetricBox(
-    coverPage,
-    metricsCardX + metricsPadding + (coverMetricWidth + metricsGap) * 2,
-    coverMetricTopY,
-    coverMetricWidth,
-    86,
-    copy.sentiment,
-    sentiment.label,
-    bold,
-    sentiment.color,
-  );
-
-  drawTextCentered(
-    coverPage,
-    copy.summary,
-    regular,
-    10,
-    metricsCardY - 34,
-    COLORS.textMuted,
-  );
-
-  let coverY = metricsCardY - 82;
+  // ── Rating Change section ──
+  let coverY = PAGE.height - 320;
   coverY = addSectionTitle(
     coverPage,
     copy.scoreTitle,
@@ -904,82 +831,47 @@ export async function generateMonthlyReportPdf(
     regular,
     COLORS.gold,
   );
-  drawOverallScoreBlock(
+
+  coverY = drawRatingChangeBlock(
     coverPage,
     coverY,
-    positiveRatio,
+    previousMonthName,
+    reportMonthName,
+    data.previousMonth.avgRating,
     data.currentMonth.avgRating,
-    satisfaction,
+    language,
     copy,
     bold,
     regular,
   );
 
-  let y = PAGE.height - 58;
-  y = addSectionTitle(
-    pageTwo,
+  // ── KPI/Actions Taken section
+  let coverKpiY = coverY - 28;
+  coverKpiY = addSectionTitle(
+    coverPage,
     copy.kpiTitle,
     copy.kpiSubtitle,
-    y,
+    coverKpiY,
     bold,
     regular,
     COLORS.secondary,
   );
 
-  drawCard(
-    pageTwo,
-    PAGE.margin,
-    y - 88,
-    PAGE.width - PAGE.margin * 2,
-    90,
-    COLORS.background,
+  drawKpiSection(
+    coverPage,
+    coverKpiY,
+    data,
+    ratingDiff,
+    ratingDiffLabel,
+    copy,
+    bold,
   );
 
-  const infoX = PAGE.margin + 18;
-  pageTwo.drawText(`${copy.reviewsReceived} : ${data.currentMonth.totalReviews}`, {
-    x: infoX,
-    y: y - 24,
-    size: 12,
-    font: bold,
-    color: COLORS.text,
-  });
-  pageTwo.drawText(`${copy.responsesSent} : ${data.currentMonth.responsesSent}`, {
-    x: infoX,
-    y: y - 44,
-    size: 12,
-    font: bold,
-    color: COLORS.text,
-  });
-  pageTwo.drawText(`${copy.responseRate} : ${data.currentMonth.responseRate}%`, {
-    x: infoX,
-    y: y - 64,
-    size: 12,
-    font: bold,
-    color: COLORS.text,
-  });
-  pageTwo.drawText(`${copy.ratingEvolution} : ${ratingDiffLabel}`, {
-    x: 322,
-    y: y - 24,
-    size: 12,
-    font: bold,
-    color: ratingDiff >= 0 ? COLORS.success : COLORS.danger,
-  });
-  pageTwo.drawText(`${copy.positiveReviews} : ${data.currentMonth.positiveReviews}`, {
-    x: 322,
-    y: y - 44,
-    size: 12,
-    font: bold,
-    color: COLORS.success,
-  });
-  pageTwo.drawText(`${copy.negativeReviews} : ${data.currentMonth.negativeReviews}`, {
-    x: 322,
-    y: y - 64,
-    size: 12,
-    font: bold,
-    color: COLORS.danger,
-  });
+  // ── PAGE 2 ─────────────────────────────────────────────────────────────────
 
-  y -= 120;
+  let y = PAGE.height - 58;
+
+  // Customer feedback section
   y = addSectionTitle(
     pageTwo,
     copy.customerFeedbackTitle,
@@ -993,6 +885,7 @@ export async function generateMonthlyReportPdf(
   const panelWidth = (PAGE.width - PAGE.margin * 2 - 16) / 2;
   const panelHeight = 138;
   const panelY = y - 138;
+
   drawCard(
     pageTwo,
     PAGE.margin,
@@ -1050,6 +943,7 @@ export async function generateMonthlyReportPdf(
     COLORS.danger,
   );
 
+  // Recommendations section
   y = panelY - 28;
   y = addSectionTitle(
     pageTwo,
@@ -1081,6 +975,7 @@ export async function generateMonthlyReportPdf(
     COLORS.gold,
   );
 
+  // Footers on all pages
   const pages = pdfDoc.getPages();
   pages.forEach((page, index) => {
     drawFooter(page, regular, index + 1, pages.length, copy);
