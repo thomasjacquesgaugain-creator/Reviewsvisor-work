@@ -662,30 +662,283 @@ IMPORTANT:
   FR -> { "key": "wait_time", "theme": "Temps d'attente" }
 - sentiment MUST always be one of: "positive", "mixed", "negative" — NEVER translate
 
-ROOT CAUSE ANALYSIS (TOP ISSUES ONLY)
+ROOT CAUSE ANALYSIS (FOR EACH ISSUE IN top_issues):
 
-For every issue returned in top_issues, perform an evidence-based root cause analysis using the Ishikawa (5M) framework.
+For each issue, you MUST always return EXACTLY 5 root_cause entries —
+one for each category below. Never return fewer than 5.
+LABEL RULE (MANDATORY)
+UNIQUE CATEGORY RULE (MANDATORY)
 
-Allowed category_key values: workforce | methods | equipment | materials | environment
+For each issue in "top_issues", the "root_causes" array MUST contain EXACTLY 5 entries and each Ishikawa category must appear ONCE and ONLY ONCE.
+The "label" field MUST contain ONLY the Ishikawa category name.
 
-Category selection rules:
-- workforce → staffing levels, responsiveness, professionalism, training, attitude
-- methods → workflow problems, scheduling, coordination failures, operational bottlenecks
-- equipment → broken equipment, slow systems, malfunctioning tools, technical failures
-- materials → products, ingredients, food quality, freshness, stock availability
-- environment → cleanliness, noise, layout, temperature, atmosphere, seating, parking
+Allowed values:
 
-STRICT RULES:
-- NEVER include a category without supporting review evidence
-- NEVER generate more than 3 categories
-- NEVER generate empty categories
-- A category with weak or missing evidence MUST be omitted
-- Generate 1 card if only one category is strongly supported
-- Generate 2 cards if two are strongly supported
-- Generate 3 cards only if three are strongly supported
-- Cards ranked: dominant → secondary → monitor
+* manpower
+* method
+* machine
+* material
+* environment
 
-Each root cause card must contain: label, importance, category, category_key, causes (2–3), evidence (1–3 real quotes)
+Mapping:
+
+* manpower → manpower
+* method → method
+* machine → machine
+* material → material
+* environment → environment
+
+Do NOT add descriptions, diagnoses, explanations, or extra text to the label.
+
+Examples:
+✅ "label": "manpower"
+✅ "label": "method"
+
+❌ "label": "manpower — Understaffing"
+❌ "label": "method — Scheduling Issues"
+❌ "label": "machine Problems"
+
+CAUSE-EVIDENCE STRICT MATCHING RULE (MANDATORY)
+
+Each evidence quote must directly and specifically support its paired cause —
+not just the general issue topic.
+
+Before assigning any quote to a cause, apply this test:
+"Does this quote specifically explain WHY this exact cause exists,
+ for this exact category, for this exact issue?"
+
+If the answer is NO → do not use that quote for that cause.
+
+The 3 failure patterns to avoid:
+
+FAILURE 1 — TOPIC MATCH ONLY (quote mentions the issue but not the cause)
+The quote is about the issue in general but does not point to the specific cause.
+❌ cause: "insufficient staffing"  
+   quote: "[negative comment about the issue]" 
+   → The quote describes the symptom, not evidence of understaffing specifically
+
+FAILURE 2 — POSITIVE OR MIXED QUOTE
+The quote contains praise or neutral observation, even if it briefly mentions the issue.
+❌ Any quote containing: "but", "however", "although", "même si", "mais", "pourtant"
+   followed by a complaint — the positive part disqualifies it unless the
+   complaint half DIRECTLY and SPECIFICALLY supports the cause
+✅ Only use the quote if the negative part alone is sufficient evidence
+
+FAILURE 3 — RECYCLED QUOTE
+The same quote appearing under multiple causes for the same issue.
+❌ Never assign the same quote to more than one cause across all categories
+   for the same issue
+✅ Each quote can only be used once — assign it to the single cause it
+   best and most directly supports
+
+
+  EVIDENCE PRE-FILTER (run BEFORE assigning any quote to any cause)
+
+Step 1 — SENTIMENT GATE
+Classify the full quote tone:
+  - Purely negative → PASS (eligible)
+  - Mixed (contains praise + complaint) → CONDITIONAL (see Step 2)
+  - Purely positive → FAIL → discard immediately, never use as evidence
+
+Step 2 — MIXED QUOTE SPLIT TEST
+For mixed quotes ("X is great but Y is bad"):
+  Extract ONLY the complaint clause.
+  Ask: does the complaint clause ALONE, without the praise context,
+  directly support the specific cause?
+  If YES → use only the complaint clause as the quote, not the full sentence
+  If NO  → FAIL → discard
+
+Step 3 — CAUSE SPECIFICITY TEST
+The (now filtered) quote must answer:
+  "Does this quote explain WHY this specific cause exists
+   in this specific category for this specific issue?"
+  
+  PASS examples (cause: "crowded seating layout", issue: "noise"):
+  ✅ "Tables are packed so tightly you hear every conversation around you"
+  ✅ "No space between tables, it was impossible to have a private conversation"
+  
+  FAIL examples:
+  ❌ "La salle très bruyante" → describes symptom, not the cause (layout)
+  ❌ "Nous ne nous entendons pas discuter" → describes symptom, not cause
+  ❌ "Ambiance conviviale, mais trop bruyante" → mixed + only symptom
+  ❌ "Le service est rapide, mais trop de bruit" → mentions a different topic
+
+Step 4 — UNIQUENESS CHECK
+Has this quote already been assigned to another cause in this issue?
+  YES → FAIL → find a different quote or drop the cause
+  NO  → PASS
+
+Step 5 — FINAL GATE
+Did the quote pass ALL of steps 1–4?
+  YES → include as evidence
+  NO  → evidence: [] and causes: [] for this cause
+
+SYMPTOM VS CAUSE DISTINCTION (MANDATORY)
+
+A quote that only describes the symptom of the issue is NOT valid evidence
+for any specific cause — even if it mentions the issue directly.
+
+Symptom quote (invalid for any cause):
+❌ "It was very noisy" → describes the issue itself, not what caused it
+❌ "The food was bad" → describes the issue itself
+❌ "We waited too long" → describes the issue itself
+
+Cause-supporting quote (valid):
+✅ "Only one waiter for 20 tables" → supports understaffing cause
+✅ "Ingredients tasted old and frozen" → supports ingredient quality cause
+✅ "We ordered and then nobody came back for 30 minutes" → supports process cause
+
+If the reviews only contain symptom quotes and no cause-specific quotes:
+→ ALL categories for this issue must have causes: [] and evidence: []
+→ Set confidence to 0–20 for all categories
+→ The ai_synthesis should note that evidence is insufficient to determine root causes
+
+CAUSE-EVIDENCE VALIDITY TEST (run for every cause before including it):
+
+Step 1 — Find quotes that mention this issue negatively
+Step 2 — Filter: does the quote point specifically to THIS category's cause?
+          (not just the issue in general, not a positive/mixed comment)
+Step 3 — Is this quote already used by another cause in this issue? → skip
+Step 4 — If 0 valid quotes remain after steps 1–3:
+          → causes: []
+          → evidence: []
+          → Do NOT include this cause at all
+
+QUOTE ASSIGNMENT PRIORITY RULE
+
+When multiple causes could claim the same quote:
+→ Assign it to the category with the highest confidence
+→ All other categories that relied on that quote must find a different one
+   or drop the cause entirely
+
+NO-EVIDENCE SUPPRESSION RULE (MANDATORY)
+
+confidence < 30 → causes: [], evidence: []
+confidence 30–59 → at least one quote must pass the validity test above
+confidence >= 60 → at least one quote must explicitly and directly support the cause
+
+Never invent, paraphrase, or construct quotes.
+Never use a quote from a positive review (4–5 stars or clearly praising tone).
+Never reuse a quote already assigned to another cause in the same issue.
+If no valid quote exists for a cause → remove the cause entirely.
+
+NO-EVIDENCE SUPPRESSION RULE (MANDATORY)
+
+If a category has insufficient evidence (confidence < 30):
+- The "causes" array MUST be empty: []
+- The "evidence" array MUST be empty: []
+- Do NOT invent hypothetical causes
+- Do NOT add placeholder causes like "Possible: ..."
+- Do NOT add generic causes to fill the array
+
+The only exception is when confidence >= 30 AND there is at least one
+direct or indirect review signal supporting the cause.
+
+Valid output for low-confidence category:
+✅ {
+  "label": "machine",
+  "importance": "monitor",
+  "category_key": "machine",
+  "confidence": 15,
+  "causes": [],
+  "evidence": []
+}
+
+❌ NEVER do this for low-confidence:
+{
+  "label": "machine",
+  "importance": "monitor", 
+  "category_key": "machine",
+  "confidence": 15,
+  "causes": ["Possible: equipment may be outdated"],
+  "evidence": []
+}
+
+CAUSE-EVIDENCE PAIRING RULE (MANDATORY)
+
+Every cause listed MUST have at least one supporting evidence quote.
+If you cannot find a direct negative review quote supporting a specific cause,
+do NOT include that cause — remove it entirely.
+
+Valid: cause present → evidence present
+Valid: no evidence → causes array is []
+❌ Invalid: cause present → evidence is []
+❌ Invalid: cause present → evidence is unrelated to the cause
+
+MULTI-CATEGORY ANALYSIS RULE
+
+An issue may have evidence for multiple Ishikawa categories.
+
+Do NOT force all evidence into a single category.
+
+Assign:
+
+* dominant → highest confidence category
+* secondary → second highest confidence category
+* monitor → remaining three categories
+
+If two or more categories have similar evidence strength, their confidence scores should be close.
+
+Confidence should reflect actual evidence, not category ranking.
+
+CAUSE QUALITY RULE
+
+For confidence >= 30:
+
+* Causes must be specific and relevant to the category.
+* Causes should be supported by review evidence whenever possible.
+* Avoid generic causes such as:
+
+  * "poor management"
+  * "service issues"
+  * "quality problems"
+
+Instead provide category-specific causes.
+
+Examples:
+
+manpower:
+✅ "staff appeared overwhelmed during peak hours"
+✅ "inconsistent employee knowledge"
+
+method:
+✅ "inefficient appointment scheduling process"
+✅ "slow checkout workflow"
+
+machine:
+✅ "payment terminals frequently malfunctioning"
+✅ "slow POS system"
+
+material:
+✅ "inconsistent ingredient freshness"
+✅ "stock shortages of popular items"
+
+environment:
+✅ "unclean dining area"
+✅ "crowded seating layout"
+
+EVIDENCE REQUIREMENT
+
+For confidence >= 60:
+
+* At least one cause should be clearly supported by evidence.
+* Evidence quotes must directly relate to the category.
+
+For confidence < 30:
+
+* Evidence must be an empty array [].
+* Causes must remain hypothetical.
+
+Do not invent evidence or operational details that cannot reasonably be inferred from the reviews.
+
+
+Validation:
+
+category_key values must be unique within an issue.
+label values must be unique within an issue.
+If a category has little or no evidence, still include it with a lower confidence score according to the confidence rules.
+Do not replace a missing category with a duplicate of another category.
+
 
 QUANTITY REQUIREMENTS:
 - top_issues: 3–5 items, sorted by count descending
@@ -694,7 +947,7 @@ QUANTITY REQUIREMENTS:
 - themes_industry: 3–6 industry-specific themes (REQUIRED if confidence >= 45%)
 
 Return EXACTLY this JSON shape:
-{
+{ 
   "top_issues": {
     "en": [
       {
@@ -705,13 +958,14 @@ Return EXACTLY this JSON shape:
         "ai_synthesis": "<summary of the issue and likely causes>",
         "root_causes": [
           {
-            "label": "Dominant Cause",
-            "importance": "dominant",
-            "category": "<display category>",
-            "category_key": "<workforce|methods|equipment|materials|environment>",
-            "causes": ["<specific cause>", "<specific cause>"],
-            "evidence": ["<review quote>", "<review quote>"]
-          }
+              "label": "<Category display name>",
+              "importance": "dominant|secondary|monitor",
+              "category": "<display category name>",
+              "category_key": "manpower|method|machine|material|environment",
+              "confidence": <0-100>,
+              "causes": ["<cause 1>", "<cause 2>"],
+              "evidence": ["<quote 1>", "<quote 2>"]
+            }
         ]
       }
     ],
@@ -724,12 +978,13 @@ Return EXACTLY this JSON shape:
         "ai_synthesis": "<translated synthesis>",
         "root_causes": [
           {
-            "label": "Dominant Cause",
-            "importance": "dominant",
-            "category": "<display category>",
-            "category_key": "<workforce|methods|equipment|materials|environment>",
-            "causes": ["<specific cause>", "<specific cause>"],
-            "evidence": ["<review quote>", "<review quote>"]
+            "label": "<Category display name>",
+            "importance": "dominant|secondary|monitor",
+            "category": "<display category name>",
+            "category_key": "manpower|method|machine|material|environment",
+            "confidence": <0-100>,
+            "causes": ["<cause 1>", "<cause 2>"],
+            "evidence": ["<quote 1>", "<quote 2>"]
           }
         ]
       }

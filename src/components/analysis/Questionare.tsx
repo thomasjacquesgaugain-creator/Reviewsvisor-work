@@ -12,7 +12,7 @@ export type IshikawaKey =
   | "method"
   | "machine"
   | "material"
-  | "measurement";
+  | "environment";
 
 export type IshikawaScores = Record<IshikawaKey, number | null>;
 
@@ -21,7 +21,7 @@ export const ISHIKAWA_CATEGORY_MAP: Record<IshikawaKey, string> = {
   method:      "method",
   machine:     "machine",
   material:    "material",
-  measurement: "measurement",
+  environment: "environment",
 };
 
 export const EFFORT_BY_5M: Record<IshikawaKey, "Low" | "Medium" | "High"> = {
@@ -29,7 +29,7 @@ export const EFFORT_BY_5M: Record<IshikawaKey, "Low" | "Medium" | "High"> = {
   method:      "Low",
   machine:     "High",
   material:    "High",
-  measurement: "Low",
+  environment: "Low",
 };
 
 export interface QuestionnaireResult {
@@ -89,7 +89,7 @@ const CATEGORY_STYLES: Record<
   method:      { icon: Share2,    accent: "#2563eb", soft: "#eaf1ff" },
   machine:     { icon: Wrench,    accent: "#64748b", soft: "#f1f5f9" },
   material:    { icon: Package,   accent: "#d97706", soft: "#fff4e0" },
-  measurement: { icon: Building2, accent: "#0d9488", soft: "#e6faf6" },
+  environment: { icon: Building2, accent: "#0d9488", soft: "#e6faf6" },
 };
 
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
@@ -284,11 +284,11 @@ const Questionnaire = ({
     { key: "method",      title: t("questionnaire.sections.method.title"),      subtitle: t("questionnaire.sections.method.subtitle") },
     { key: "machine",     title: t("questionnaire.sections.machine.title"),     subtitle: t("questionnaire.sections.machine.subtitle") },
     { key: "material",    title: t("questionnaire.sections.material.title"),    subtitle: t("questionnaire.sections.material.subtitle") },
-    { key: "measurement", title: t("questionnaire.sections.measurement.title"), subtitle: t("questionnaire.sections.measurement.subtitle") },
+    { key: "environment", title: t("questionnaire.sections.measurement.title"), subtitle: t("questionnaire.sections.measurement.subtitle") },
   ];
 
   /* ── validation — only require all answered ── */
-  const answeredCount = Object.values(scores).filter((v) => v !== null).length;
+  const answeredCount = SECTIONS.filter((s) => scores[s.key] !== null).length;
   const isComplete    = answeredCount === SECTIONS.length;
   const canSubmit     = isComplete;
 

@@ -2113,7 +2113,19 @@
       "problem":"Problème",
       "highImpact":"Impact élevé",
       "mediumImpact": "Impact modéré",
-      "primary":"Principale"
+      "primary":"Principale",
+      "userCausesTitle": "Causes identifiées via questionnaire",
+      "fromQuestionnaire": "Vous",
+      "confirmedByYou":"confirmé par vous",
+      "noCausesUserCategory": "Catégorie sélectionnée par vous",
+      "noCausesUserCategoryHint": "L'IA n'a pas identifié de causes spécifiques pour cette catégorie. Une investigation terrain est recommandée.",
+      "categories":{
+      "manpower":"Main-d'œuvre",
+      "method":  "Méthode",
+      "machine":"Machine",
+      "material":  "Matière",
+      "environment": "Milieu"
+      }
     },
     "syntheseAndDiagnostic": {
       "title": "Synthèse & diagnostic",
@@ -2180,6 +2192,16 @@
         "understaffed": "Effectif insuffisant pour gérer la demande"
       }
     },
+     "manpower": {
+      "name": "Main-d'œuvre",
+      "fallback": "Problèmes liés au comportement ou aux compétences du personnel",
+      "causes": {
+        "disrespectful": "Comportement irrespectueux ou impoli du personnel envers les clients",
+        "untrained": "Manque de formation ou compétences insuffisantes du personnel",
+        "inattentive": "Personnel inattentif ou négligent vis-à-vis des demandes clients",
+        "understaffed": "Effectif insuffisant pour gérer la demande"
+      }
+    },
     "process": {
       "name": "Processus",
       "fallback": "Dysfonctionnement dans le processus de service",
@@ -2201,7 +2223,27 @@
         "badPriority": "Mauvaise priorisation ou oubli de certaines demandes"
       }
     },
+     "method": {
+      "name": "Méthodes",
+      "fallback": "Méthodes de travail inadaptées impactant la qualité du service",
+      "causes": {
+        "coordination": "Manque de coordination entre les équipes de service",
+        "inconsistent": "Pratiques de service incohérentes selon les situations",
+        "noFollowUp": "Absence de suivi ou de réponse aux demandes clients",
+        "badPriority": "Mauvaise priorisation ou oubli de certaines demandes"
+      }
+    },
     "tools": {
+      "name": "Outils & systèmes",
+      "fallback": "Outils ou systèmes défaillants impactant le service",
+      "causes": {
+        "crashes": "Pannes ou dysfonctionnements des outils technologiques",
+        "payment": "Problèmes avec les systèmes de paiement ou de facturation",
+        "performance": "Performances insuffisantes des systèmes ou applications",
+        "outdated": "Outils obsolètes ne répondant plus aux besoins opérationnels"
+      }
+    },
+     "machine": {
       "name": "Outils & systèmes",
       "fallback": "Outils ou systèmes défaillants impactant le service",
       "causes": {

@@ -32,9 +32,9 @@ export type IshikawaKey =
   | "method"
   | "machine"
   | "material"
-  | "measurement";
+  | "environment";
 
-export type IshikawaScores = Record<IshikawaKey, number | null>;
+export type IshikawaScores = any;
 
 export interface QuestionnaireResult {
   paretoIssue:    {
