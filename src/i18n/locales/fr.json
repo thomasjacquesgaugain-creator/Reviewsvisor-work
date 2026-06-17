@@ -2125,7 +2125,10 @@
       "machine":"Machine",
       "material":  "Matière",
       "environment": "Milieu"
-      }
+      },
+      "dominant": "Cause dominante",
+      "secondary": "Cause secondaire",
+      "monitor": "À surveiller"
     },
     "syntheseAndDiagnostic": {
       "title": "Synthèse & diagnostic",
