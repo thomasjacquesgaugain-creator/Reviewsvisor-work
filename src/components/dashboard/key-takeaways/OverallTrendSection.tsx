@@ -9,6 +9,7 @@ import type { OverallTrendSectionProps, Review } from "./types";
 
 type Granularity = "day" | "week" | "month";
 const MIN_REVIEWS_FOR_TREND = 3;
+const TREND_WINDOW_DAYS = 60;
 
 const getNote = (r: Review): number => r.note || r.rating || 0;
 
@@ -98,20 +99,18 @@ export function OverallTrendSection({ reviews }: OverallTrendSectionProps) {
       return { summary: "", isPositive: false, isNegative: false, insufficientData: false };
     }
 
-    const now = new Date();
-    const endCurrent = new Date(now.getFullYear(), now.getMonth(), 0);
-    const startCurrent = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-    const startPrevious = new Date(now.getFullYear(), now.getMonth() - 4, 1);
-    const endPrevious = new Date(now.getFullYear(), now.getMonth() - 2, 0);
+    const today = new Date();
+    const last60Start = subDays(today, TREND_WINDOW_DAYS);
+    const prior60Start = subDays(today, TREND_WINDOW_DAYS * 2);
 
     const current = reviews.filter((r) => {
       const d = parseReviewDate(r);
-      return !!d && d >= startCurrent && d <= endCurrent;
+      return !!d && d >= last60Start && d <= today;
     });
 
     const previous = reviews.filter((r) => {
       const d = parseReviewDate(r);
-      return !!d && d >= startPrevious && d <= endPrevious;
+      return !!d && d >= prior60Start && d <= last60Start;
     });
     const currentValid = getValidRatedReviews(current);
     const previousValid = getValidRatedReviews(previous);

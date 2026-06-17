@@ -1,5 +1,5 @@
 import { CompleteAnalysisData, Review, QualitativeKeywordTheme } from "@/types/analysis";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, subDays } from "date-fns";
 import { cleanReviewText } from "@/utils/cleanReviewText";
 import { formatDiagnosticSummary, formatRecommendations } from "@/utils/formatDiagnosticSummary";
 import { 
@@ -22,6 +22,8 @@ export function transformAnalysisData(
   const positiveRatio = safeInsight?.positive_ratio || 0;
 
   const MIN_REVIEWS_PER_PERIOD = 3;
+  const TREND_WINDOW_DAYS = 90;
+
   
   let trend: 'up' | 'down' | 'stable' | 'insufficient' | 'partial' = 'stable';
   let trendValue: number | null = null;
@@ -51,17 +53,16 @@ export function transformAnalysisData(
         }))
         .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-      const now = new Date();
-      const endCurrent = new Date(now.getFullYear(), now.getMonth(), 0);
-      const startCurrent = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-      const startPrevious = new Date(now.getFullYear(), now.getMonth() - 4, 1);
-      const endPrevious = new Date(now.getFullYear(), now.getMonth() - 2, 0);
-      const currentReviews = sortedReviews.filter(
-        (r) => r.date >= startCurrent && r.date <= endCurrent,
+    const today = new Date();
+    const last90Start = subDays(today, TREND_WINDOW_DAYS);
+    const prior90Start = subDays(today, TREND_WINDOW_DAYS * 2);
+
+    const currentReviews = sortedReviews.filter(
+        (r) => r.date >= last90Start && r.date <= today,
       );
 
-      const previousReviews = sortedReviews.filter(
-        (r) => r.date >= startPrevious && r.date < endPrevious,
+    const previousReviews = sortedReviews.filter(
+        (r) => r.date >= prior90Start && r.date < last90Start,
       );
 
       if (
