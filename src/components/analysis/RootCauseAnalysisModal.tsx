@@ -47,7 +47,7 @@ export function RootCauseAnalysisModal({
   if (!issue) return null;
 
   const categories = (issue.root_causes ?? []).map((rc) => ({
-    name: rc.label,
+    name:rc.category_key,
     causes: (rc.causes ?? []).map((desc: string) => ({
       description: desc,
       probability: importanceToProbability(rc.importance),
@@ -124,7 +124,7 @@ export function RootCauseAnalysisModal({
                 >
                   <h4 className="mb-3 flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-100">
                     <span className="w-2 h-2 rounded-full bg-gray-400" />
-                    {category.name}
+                    {t(`analysis.ishikawa.categories.${category.name}`)}
                   </h4>
 
                   <div className="space-y-3">

@@ -849,6 +849,8 @@ Before writing the JSON for each issue, verify:
   □ No evidence quote is from a positive review or is a symptom-only quote
   □ confidence < 30 → causes: [] AND evidence: [] — no exceptions
   □ label contains ONLY the category name (no descriptions appended)
+  □ category key should strictly be from these [manpower, method, machine, material, environment]
+  □ Do not duplicate the category , each category should be displayed only one time for a issue
   □ Must return all the ishikawa categories , if no issues and no evidence found , return empty array of evidence and cause
 
 Allowed label values: manpower, method, machine, material, environment
