@@ -42,6 +42,7 @@ export interface ThemeAnalysis {
   score: number; // 0-1
   count: number;
   verbatims: string[];
+  sentiment:string
 }
 
 export interface QualitativeKeywordTheme {
