@@ -467,25 +467,19 @@ export function ScoreGlobalSection({
     if (!reviews?.length) {
       return { ratingChange: null, currentAvg: null, previousAvg: null, reason: "insufficient-data" };
     }
-    const now = new Date();
-
-    const endCurrent = new Date(now.getFullYear(), now.getMonth(), 0);
-
-    const startCurrent = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-
-    const startPrevious = new Date(now.getFullYear(), now.getMonth() - 4, 1);
-
-    const endPrevious = new Date(now.getFullYear(), now.getMonth() - 2, 0);
+    const today = new Date();
+    const last60Start = subDays(today, TREND_WINDOW_DAYS);
+    const prior60Start = subDays(today, TREND_WINDOW_DAYS * 2);
 
     const currentReviews = reviews.filter((r) => {
       const d = parseReviewDate(r);
-      return !!d && d >= startCurrent && d <= endCurrent;
+      return !!d && d >= last60Start && d <= today;
     });
 
-const previousReviews = reviews.filter((r) => {
-  const d = parseReviewDate(r);
-  return !!d && d >= startPrevious && d <= endPrevious;
-});
+    const previousReviews = reviews.filter((r) => {
+      const d = parseReviewDate(r);
+      return !!d && d >= prior60Start && d < last60Start;
+    });
 
     const currentValid = getValidRatedReviews(currentReviews);
     const previousValid = getValidRatedReviews(previousReviews);
