@@ -1920,7 +1920,11 @@
       "machine":"Machine",
       "material":  "Material",
       "environment": "Environment"
-    }},
+    },
+    "dominant": "Dominant Cause",
+      "secondary": "Secondary Cause",
+      "monitor": "Monitor"
+  },
     "syntheseAndDiagnostic": {
       "title": "Synthesis and Diagnostic",
       "averageRating": "Average Rating",

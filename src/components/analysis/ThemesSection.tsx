@@ -80,17 +80,25 @@ export function ThemesSection({ data }: ThemesSectionProps) {
     if (themeMap.size === 0) {
       return data;
     }
-
     const recomputed: ThemeAnalysis[] = Array.from(themeMap.entries()).map(
       ([themeName, value]) => {
         const sentimentAvg =
           value.sentimentCount > 0 ? value.sentimentSum / value.sentimentCount : 0;
         // Mapper un score de -1..1 vers 0..1
         const score = (sentimentAvg + 1) / 2;
+        let sentiment: "positive" | "negative" | "mixed";
+        if (sentimentAvg > 0.2) {
+          sentiment = "positive";
+        } else if (sentimentAvg < -0.2) {
+          sentiment = "negative";
+        } else {
+          sentiment = "mixed";
+        }
 
         return {
           theme: themeName,
           score,
+          sentiment,        // ✅ now present on every recomputed theme
           count: value.count,
           verbatims: value.verbatims,
         };
@@ -196,16 +204,19 @@ export function ThemesSection({ data }: ThemesSectionProps) {
             <div className="space-y-4">
               {effectiveThemes.map((theme, index) => {
                 const scorePercent = Math.round((theme.score || 0) * 100);
+
                 let polarityLabel = t("analysis.themes.polarity.mixed");
                 let polarityClass = "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/50";
 
-                if (scorePercent >= 70) {
+                if (theme.sentiment === "positive") {
                   polarityLabel = t("analysis.themes.polarity.positive");
                   polarityClass = "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-900/50";
-                } else if (scorePercent < 40) {
+                } else if (theme.sentiment === "negative") {
                   polarityLabel = t("analysis.themes.polarity.toWatch");
                   polarityClass = "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/50";
                 }
+                // theme.sentiment === "mixed" (or anything unrecognized) falls through to
+                // the amber default above — intentional, not an accident of the math.
 
                 return (
                   <div key={index} className="space-y-2">
