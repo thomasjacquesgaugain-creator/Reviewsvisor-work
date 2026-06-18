@@ -1443,7 +1443,15 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
   // PAGE 10 — SMART OBJECTIFS (one card per objective, full page each)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  const smartObjectives = data.smart_objectives ?? [];
+
+const smartObjectives = (data.smart_objectives ?? []).filter(obj =>
+  topIssues.some(issue =>
+    issue.key
+      ? issue.key === obj.pareto_cause?.key
+      : issue.theme.trim().toLowerCase() ===
+        obj.problem.trim().toLowerCase()
+  )
+);
   const lang = (data.report_language ?? 'fr') as 'en' | 'fr';
 
   // Resolve any field shape: plain string | { en, fr } object | JSON string
@@ -1611,36 +1619,51 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
       doc.text(statusLabel, MARGINS.left + CONTENT_WIDTH - statusW / 2 - 3, yPos + 7.5, { align: 'center' });
 
       yPos += hdrH;
+      yPos += 4;
 
       // ── Card body: stacked single-column layout ────────────────────────────
       const PAD = 6;
       const IW  = CONTENT_WIDTH - PAD * 2;
 
-      const problemLines = doc.splitTextToSize(problemTxt, IW);
-      const kpiLines     = doc.splitTextToSize(kpiTxt, IW);
-      // Pre-split action lines with FULL width (no truncation to 2 lines here)
-      const actionLines  = actionPlanItems.map((a: string) =>
-        doc.splitTextToSize(a, IW - 14) as string[]
-      );
-      const actionBlockH = actionPlanItems.length > 0
-        ? 6 + actionLines.reduce((s: number, l: string[]) => s + l.length * 4.5 + 6, 0)
-        : 0;
+    const problemLines = doc.splitTextToSize(problemTxt, IW);
+const kpiLines     = doc.splitTextToSize(kpiTxt, IW);
 
-      const pillH  = 7;  // height of current/target pill row
-      const trackH = 7;  // height of progress bar
+// ── Action plan constants — defined FIRST so cardH can use them ──────────
+const BULLET_R   = 3.5;
+const BULLET_CX  = MARGINS.left + PAD + BULLET_R + 1;
+const TEXT_LEFT  = MARGINS.left + PAD + BULLET_R * 2;
+const TEXT_MAX_W = MARGINS.left + PAD + IW - PAD - TEXT_LEFT;
+const ROW_PAD_V  = 4;
+const LINE_H     = 4.5;
+const ROW_GAP    = 2;
 
-      const cardH =
-        PAD +
-        8 + PAD +                                        // badges row (8mm)
-        PAD +                                            // divider gap
-        5 + problemLines.length * 4.5 + PAD +            // problem label + lines
-        5 + kpiLines.length * 4.5 + PAD +               // kpi label + lines
-        8 +                                              // progress label (5) + gap (3)
-        pillH + 4 +                                      // current/target pills row
-        trackH + 4 +                                     // progress bar
-        6 + PAD +                                        // deadline chip
-        (actionBlockH > 0 ? PAD + 6 + actionBlockH : 0) + // action plan
-        PAD;
+// Split using TEXT_MAX_W — same width used during render
+const actionLines = actionPlanItems.map((a: string) =>
+  doc.splitTextToSize(a, TEXT_MAX_W) as string[]
+);
+
+const actionBlockH = actionPlanItems.length > 0
+  ? PAD + 6 + actionLines.reduce(
+      (s: number, l: string[]) => s + l.length * LINE_H + ROW_PAD_V * 2 + ROW_GAP,
+      0
+    )
+  : 0;
+
+const pillH  = 7;
+const trackH = 7;
+
+const cardH =
+  PAD +
+  8 + PAD +
+  PAD +
+  5 + problemLines.length * 4.5 + PAD +
+  5 + kpiLines.length * 4.5 + PAD +
+  8 +
+  pillH + 4 +
+  trackH + 4 +
+  6 + PAD +
+  actionBlockH +
+  PAD;
 
       doc.setFillColor(250, 248, 255);
       doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, cardH, 3, 3, 'F');
@@ -1743,29 +1766,64 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
       );
       cy += pillH + 4;
 
-      // Progress bar
+      // ── Progress bar ─────────────────────────────────────────────────────────
       const trackW = IW;
       doc.setFillColor(219, 234, 254);
       doc.roundedRect(MARGINS.left + PAD, cy, trackW, trackH, 2, 2, 'F');
-      const fillColor: [number, number, number] =
-        safePct >= 70 ? GREEN_PRIMARY :
-        safePct >= 40 ? ([99, 102, 241] as [number,number,number]) :  // indigo
-        safePct >  0  ? ([167, 139, 250] as [number,number,number]) : // light purple
-                        ([200, 195, 220] as [number,number,number]);   // muted — not started
-      const renderPct = safePct === 0 ? 3 : safePct;
-      doc.setFillColor(...fillColor);
-      doc.roundedRect(MARGINS.left + PAD, cy, (renderPct / 100) * trackW, trackH, 2, 2, 'F');
-      doc.setTextColor(safePct > 15 ? 255 : 60);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      const barLabel = safePct === 0
-        ? (lang === 'fr' ? 'Debut' : 'Start')
-        : `${safePct}% (${lang === 'fr' ? 'reduit de' : 'reduced by'} ${reduced})`;
-      doc.text(
-        barLabel,
-        MARGINS.left + PAD + Math.max((renderPct / 100) * trackW - 10, 4), cy + 5
-      );
-      cy += trackH + 4;
+
+const fillColor: [number, number, number] =
+  safePct >= 70 ? GREEN_PRIMARY :
+  safePct >= 40 ? ([99, 102, 241] as [number, number, number]) :
+  safePct > 0 ? ([167, 139, 250] as [number, number, number]) :
+  ([200, 195, 220] as [number, number, number]);
+
+const renderPct = safePct === 0 ? 3 : safePct;
+const fillW = (renderPct / 100) * trackW;
+
+doc.setFillColor(...fillColor);
+doc.roundedRect(MARGINS.left + PAD, cy, fillW, trackH, 2, 2, 'F');
+
+// Build bar label
+const barLabel = safePct === 0
+  ? (lang === 'fr' ? 'Debut' : 'Start')
+  : `${safePct}% (${lang === 'fr' ? 'reduit de' : 'reduced by'} ${reduced})`;
+
+doc.setFont('helvetica', 'bold');
+doc.setFontSize(7);
+
+const textY = cy + trackH / 2;
+
+// For larger bars, center the label inside the bar
+if (fillW > 60) {
+  doc.setTextColor(255, 255, 255);
+
+  doc.text(
+    barLabel,
+    MARGINS.left + PAD + fillW / 2,
+    textY,
+    {
+      align: 'center',
+      baseline: 'middle',
+      maxWidth: fillW - 10,
+    }
+  );
+} else {
+  // Small bars: place label outside
+  doc.setTextColor(60, 60, 60);
+
+  doc.text(
+    barLabel,
+    MARGINS.left + PAD + fillW + 3,
+    textY,
+    {
+      align: 'left',
+      baseline: 'middle',
+      maxWidth: Math.max(trackW - fillW - 6, 20),
+    }
+  );
+}
+
+cy += trackH + 4;
 
       // Deadline chip
       doc.setFillColor(...COLORS.background);
@@ -1782,43 +1840,61 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
       cy += 6 + PAD;
 
       // ── Action plan ──────────────────────────────────────────────────────────
-      if (actionPlanItems.length > 0) {
-        doc.setDrawColor(210, 200, 240);
-        doc.setLineWidth(0.3);
-        doc.line(MARGINS.left + PAD, cy, MARGINS.left + CONTENT_WIDTH - PAD, cy);
-        cy += PAD;
+if (actionPlanItems.length > 0) {
+  doc.setDrawColor(210, 200, 240);
+  doc.setLineWidth(0.3);
+  doc.line(MARGINS.left + PAD, cy, MARGINS.left + CONTENT_WIDTH - PAD, cy);
+  cy += PAD;
 
-        doc.setTextColor(...PURPLE_PRIMARY);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
-        doc.text(lang === 'fr' ? "PLAN D'ACTION" : 'ACTION PLAN', MARGINS.left + PAD, cy);
-        cy += 6;
+  doc.setTextColor(...PURPLE_PRIMARY);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text(lang === 'fr' ? "PLAN D'ACTION" : 'ACTION PLAN', MARGINS.left + PAD, cy);
+  cy += 6;
 
-        actionLines.forEach((lines: string[], ai: number) => {
-          const itemH = lines.length * 4.5 + 6;
-          // Alternating row bg
-          doc.setFillColor(ai % 2 === 0 ? 245 : 250, ai % 2 === 0 ? 240 : 248, 255);
-          doc.roundedRect(MARGINS.left + PAD, cy - 1, IW, itemH, 1, 1, 'F');
+  const BULLET_OFFSET = 11;
+  const RIGHT_PAD = 4;
+  const TEXT_MAX_W = IW - BULLET_OFFSET - RIGHT_PAD;
 
-          // Bullet circle — vertically centered
-          const midY = cy + itemH / 2 - 1;
-          doc.setFillColor(...PURPLE_PRIMARY);
-          doc.circle(MARGINS.left + PAD + 4, midY, 3.5, 'F');
-          doc.setTextColor(255, 255, 255);
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(7);
-          doc.text(`${ai + 1}`, MARGINS.left + PAD + 4, midY + 1.3, { align: 'center' });
+  actionLines.forEach((lines: string[], ai: number) => {
+    const LINE_HEIGHT = 4.5;
+    const V_PAD = 6;
 
-          // Action text
-          doc.setTextColor(...COLORS.text);
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(8);
-          lines.forEach((line: string, li: number) => {
-            doc.text(line, MARGINS.left + PAD + 11, cy + 3.5 + li * 4.5);
-          });
-          cy += itemH;
-        });
-      }
+    // ✅ Join back to one string, then split ONCE at the correct width
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const fullText = lines.join(' ');
+    const safeLines: string[] = doc.splitTextToSize(fullText, TEXT_MAX_W);
+
+    const itemH = safeLines.length * LINE_HEIGHT + V_PAD;
+
+    // Alternating row bg
+    doc.setFillColor(ai % 2 === 0 ? 245 : 250, ai % 2 === 0 ? 240 : 248, 255);
+    doc.roundedRect(MARGINS.left + PAD, cy - 1, IW, itemH, 1, 1, 'F');
+
+    // Bullet circle — vertically centered in the row
+    const midY = cy - 1 + itemH / 2;
+    doc.setFillColor(...PURPLE_PRIMARY);
+    doc.circle(MARGINS.left + PAD + 4, midY, 3.5, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.text(`${ai + 1}`, MARGINS.left + PAD + 4, midY + 1.3, { align: 'center' });
+
+    // Action text — vertically centered as a block
+    const totalTextH = safeLines.length * LINE_HEIGHT;
+    const textBlockStartY = cy - 1 + (itemH - totalTextH) / 2 + LINE_HEIGHT - 1;
+
+    doc.setTextColor(...COLORS.text);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    safeLines.forEach((line: string, li: number) => {
+      doc.text(line, MARGINS.left + PAD + BULLET_OFFSET, textBlockStartY + li * LINE_HEIGHT);
+    });
+
+    cy += itemH;
+  });
+}
 
       yPos += cardH + 8;
     });
