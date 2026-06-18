@@ -3748,6 +3748,7 @@ const activeObjective =
                           </Button>
 
                           <DeleteEstablishmentButton
+                            title={t("establishment.deleteThisEstablishment")}
                             establishment={selectedEtab}
                             fallbackForActivePlace={
                               fallbackEstab
