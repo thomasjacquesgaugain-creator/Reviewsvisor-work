@@ -1415,6 +1415,7 @@
     "chooseAnotherEstablishment": "Choisir un autre établissement",
     "myEstablishments": "Mon Établissement",
     "analyzeThisEstablishment": "Analyser cet établissement",
+    "deleteThisEstablishment": "Supprimer cet établissement",
     "establishmentAnalysed": "Établissement analysé",
     "forgetThisEstablishment": "Oublier cet établissement",
     "selectedEstablishment": "Établissement sélectionné",
@@ -2125,7 +2126,10 @@
       "machine":"Machine",
       "material":  "Matière",
       "environment": "Milieu"
-      }
+      },
+      "dominant": "Cause dominante",
+      "secondary": "Cause secondaire",
+      "monitor": "À surveiller"
     },
     "syntheseAndDiagnostic": {
       "title": "Synthèse & diagnostic",

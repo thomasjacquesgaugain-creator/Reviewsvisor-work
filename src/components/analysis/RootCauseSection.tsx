@@ -42,91 +42,27 @@ interface AiRootCause {
   label:        string;
   importance:   string;        // "dominant" | "secondary" | "monitor"
   category:     string;        // display name, already in output language
-  category_key: string;        // "workforce"|"methods"|"equipment"|"materials"|"environment"
+  category_key: string;        // "manpower"|"method"|"machine"|"material"|"environment"
   confidence:   number;        // 0-100
   causes:       string[];
   evidence:     string[];
 }
 
+// "dominant" = highest-ranked evidence-backed card, "secondary" = second,
+// "monitor" = third. null = not an AI-ranked card at all (e.g. a pure
+// user/questionnaire-only "extra" card with no qualifying AI evidence).
+type Tier = "dominant" | "secondary" | "monitor" | null;
+
 // Internal enriched category shape used only inside this component
 interface ResolvedCategory extends RootCauseCategory {
-  isPrimary:    boolean;
-  _isMainCard:  boolean;  // AI confidence >= 60
-  _isExtraCard: boolean;  // user selected "Very Likely" but AI was not confident
+  isPrimary:        boolean;
+  _isMainCard:      boolean;  // AI confidence >= 60
+  _isExtraCard:     boolean;  // user selected "Very Likely" but AI was not confident
+  _isUserValidated: boolean;  // AI-confident card ALSO confirmed by user questionnaire
+  _tier:            Tier;     // dominant/secondary/monitor rank among AI-evidenced cards
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
-
-export function buildRootCauseFromAI(
-  problem: string,
-  aiRootCauses: AiRootCause[],
-  questionnaire?: Record<string, number>,
-  lang: "fr" | "en" = "fr",
-): { problem: string; categories: ResolvedCategory[]; summary: string } {
-  const userHighKeys = new Set(
-    Object.entries(questionnaire ?? {})
-      .filter(([, v]) => v >= 4)
-      .map(([k]) => k),
-  );
-
-  const aiByKey = new Map<string, AiRootCause>(
-    aiRootCauses.map((rc) => [rc.category_key, rc]),
-  );
-
-  const visibleKeys = new Set<string>([
-    ...aiRootCauses.filter((rc) => rc.confidence >= 60).map((rc) => rc.category_key),
-    ...userHighKeys,
-  ]);
-
-  const sorted = [...visibleKeys].sort((a, b) => {
-    const confA = aiByKey.get(a)?.confidence ?? 0;
-    const confB = aiByKey.get(b)?.confidence ?? 0;
-    return confB - confA;
-  });
-
-  const categories: ResolvedCategory[] = sorted.map((key, idx) => {
-    const rc          = aiByKey.get(key);
-    const isAiConf    = (rc?.confidence ?? 0) >= 60;
-    const isUserHigh  = userHighKeys.has(key);
-    const isExtraCard = isUserHigh && !isAiConf;
-    const effectiveConf = rc ? (isExtraCard ? 40 : rc.confidence) : 0;
-
-    return {
-      name:         rc?.category_key ?? key,
-      category_key: key,
-      causes: rc
-        ? rc.causes.map((desc, i) => ({
-            description: desc,
-            probability: isExtraCard ? "Possible" : confidenceToProbability(rc.confidence),
-            evidence:    i === 0 ? rc.evidence : [],
-            count:       Math.round((effectiveConf / 100) * 10),
-            confidence:  effectiveConf,
-          }))
-        : [],
-      isPrimary:    idx === 0,
-      _isMainCard:  isAiConf,
-      _isExtraCard: isExtraCard,
-    };
-  });
-
-  const importanceOrder: Record<string, number> = { dominant: 0, secondary: 1, monitor: 2 };
-  const sortedAI = [...aiRootCauses].sort((a, b) => {
-    const imp = (importanceOrder[a.importance] ?? 2) - (importanceOrder[b.importance] ?? 2);
-    return imp !== 0 ? imp : b.confidence - a.confidence;
-  });
-  const dominantCause = sortedAI[0];
-
-  const summary =
-    dominantCause && dominantCause.confidence >= 30
-      ? lang === "fr"
-        ? `Les causes principales de "${problem}" sont liées à ${dominantCause.category.toLowerCase()} (confiance ${dominantCause.confidence}%).`
-        : `The main causes of "${problem}" relate to ${dominantCause.category.toLowerCase()} (confidence ${dominantCause.confidence}%).`
-      : lang === "fr"
-      ? `Analyse insuffisante pour "${problem}" — investigation terrain recommandée.`
-      : `Insufficient signal for "${problem}" — on-site investigation recommended.`;
-
-  return { problem, categories, summary };
-}
 
 function confidenceToProbability(confidence: number): ProbabilityLevel {
   if (confidence >= 60) return "Probable";
@@ -143,6 +79,140 @@ function hasNewRootCauseShape(rootCauses: any[]): boolean {
       (rc) => typeof rc.confidence === "number" && typeof rc.category_key === "string",
     )
   );
+}
+
+/**
+ * Builds the final list of cards to render for one Pareto issue.
+ *
+ * Rules (per client requirements):
+ *  - Only categories with REAL evidence (causes.length > 0 AND evidence.length > 0
+ *    AND confidence >= 30) are eligible to become an AI-ranked card. This is a
+ *    frontend safety net against templated/empty-evidence entries slipping through
+ *    even if the backend prompt still occasionally produces them.
+ *  - AI-ranked cards are capped at 3 maximum, tiered dominant / secondary / monitor
+ *    by confidence rank — never more than 3 AI cards, never unlabeled.
+ *  - Any category the user rated "Very Likely" (>=4) in the questionnaire is ALWAYS
+ *    shown, even if it pushes the total above 3 and even if the AI had no evidence
+ *    for it. User-confirmed signal is never hidden.
+ *  - If a category is both AI-ranked (dominant/secondary/monitor) AND user-confirmed,
+ *    it is rendered as ONE merged card (never duplicated), with a "Confirmed" pill.
+ */
+function buildVisibleCategories(
+  rawRootCauses: AiRootCause[],
+  userHighKeys: Set<string>,
+): ResolvedCategory[] {
+  const aiByKey = new Map<string, AiRootCause>(
+    rawRootCauses.map((rc) => [rc.category_key, rc]),
+  );
+
+  // Evidence-required filter: a category only qualifies for an AI-ranked slot
+  // if it actually has supporting causes AND evidence AND confidence >= 30.
+  // This is what stops templated filler (e.g. generic "ventilation" causes
+  // with no real quotes) from ever becoming a visible card.
+  const evidencedCategories = rawRootCauses
+    .filter(
+      (rc) =>
+        rc.confidence >= 30 &&
+        Array.isArray(rc.causes) && rc.causes.length > 0 &&
+        Array.isArray(rc.evidence) && rc.evidence.length > 0,
+    )
+    .sort((a, b) => b.confidence - a.confidence);
+
+  // Cap at 3, tier by rank.
+  const aiTopThree = evidencedCategories.slice(0, 3);
+  const tierByKey = new Map<string, Tier>(
+    aiTopThree.map((rc, idx) => [
+      rc.category_key,
+      idx === 0 ? "dominant" : idx === 1 ? "secondary" : "monitor",
+    ]),
+  );
+  const aiVisibleKeys = aiTopThree.map((rc) => rc.category_key);
+
+  // User-confirmed categories are always included, merged by key (never duplicated)
+  // with any AI-ranked card for that same key.
+  const visibleKeys = new Set<string>([...aiVisibleKeys, ...userHighKeys]);
+
+  // Sort by confidence (user-only keys with no AI entry sort last, confidence 0).
+  const sorted = [...visibleKeys].sort((a, b) => {
+    const confA = aiByKey.get(a)?.confidence ?? 0;
+    const confB = aiByKey.get(b)?.confidence ?? 0;
+    return confB - confA;
+  });
+
+  return sorted.map((key, idx) => {
+    const rc          = aiByKey.get(key);
+    const tier         = tierByKey.get(key) ?? null;
+    const isAiConf     = tier !== null; // only evidenced top-3 cards count as "main"
+    const isUserHigh   = userHighKeys.has(key);
+    const isExtraCard  = isUserHigh && !isAiConf;
+    const effectiveConf = rc ? (isExtraCard ? 40 : rc.confidence) : 0;
+
+    return {
+      name:         rc?.category_key ?? key,
+      category_key: key,
+      causes: rc
+        ? rc.causes.map((desc, i) => ({
+            description: desc,
+            probability: isExtraCard ? "Possible" : confidenceToProbability(rc.confidence),
+            evidence:    i === 0 ? rc.evidence : [],
+            count:       Math.round((effectiveConf / 100) * 10),
+            confidence:  effectiveConf,
+          }))
+        : [],
+      isPrimary:        idx === 0,
+      _isMainCard:      isAiConf,
+      _isExtraCard:     isExtraCard,
+      _isUserValidated: isAiConf && isUserHigh,
+      _tier:            tier,
+    };
+  });
+}
+
+/**
+ * Legacy-shape builder (old AI output: 1-3 categories, no confidence field).
+ * Kept for backward compatibility with any insight rows generated before the
+ * 5-category confidence shape existed. No evidence-filtering needed here since
+ * the old shape never had templated-filler categories to begin with — it only
+ * ever returned categories the model chose to include.
+ */
+function buildLegacyVisibleCategories(
+  rawRootCauses: any[],
+  userHighKeys: Set<string>,
+): ResolvedCategory[] {
+  const importanceToProbability = (importance: string): ProbabilityLevel => {
+    if (importance === "dominant")  return "Probable";
+    if (importance === "secondary") return "Possible";
+    return "Occasionnelle";
+  };
+
+  const legacyByKey = new Map<string, any>(
+    rawRootCauses.map((rc: any) => [rc.category_key ?? rc.category, rc]),
+  );
+  userHighKeys.forEach((k) => {
+    if (!legacyByKey.has(k)) legacyByKey.set(k, null);
+  });
+
+  const importanceTier: Record<string, Tier> = {
+    dominant: "dominant",
+    secondary: "secondary",
+  };
+
+  return [...legacyByKey.entries()].map(([key, rc], idx) => ({
+    name:         rc?.category ?? key,
+    category_key: rc?.category_key ?? key,
+    causes: rc
+      ? (rc.causes ?? []).map((desc: string) => ({
+          description: desc,
+          probability: importanceToProbability(rc.importance),
+          count:       0,
+        }))
+      : [],
+    isPrimary:        idx === 0,
+    _isMainCard:      rc != null,
+    _isExtraCard:     rc == null || (userHighKeys.has(key) && rc.importance !== "dominant"),
+    _isUserValidated: rc != null && userHighKeys.has(key),
+    _tier:            rc ? (importanceTier[rc.importance] ?? "monitor") : null,
+  }));
 }
 
 // ─── DESIGN TOKENS ───────────────────────────────────────────────────────────
@@ -171,14 +241,12 @@ const CATEGORY_STYLES: Record<
   string,
   { color: string; soft: string; tint: string; icon: React.ElementType }
 > = {
-  
-  
   // ── new stable category_key values ───────────────────────────────────────
-  manpower: { color: "#6366f1", soft: "#eef0ff", tint: "#f7f7ff", icon: Users },
-  material:      { color: "#6366f1", soft: "#eef0ff", tint: "#f7f7ff", icon: Users },
-  method:        { color: "#2563eb", soft: "#eaf1ff", tint: "#f5f8ff", icon: Share2 },
-  machine:        { color: "#64748b", soft: "#f1f5f9", tint: "#fafbfc", icon: Wrench },
-  environment:    { color: "#0d9488", soft: "#e6faf6", tint: "#f5fdfb", icon: Building2 },
+  manpower:    { color: "#6366f1", soft: "#eef0ff", tint: "#f7f7ff", icon: Users },
+  material:    { color: "#6366f1", soft: "#eef0ff", tint: "#f7f7ff", icon: Users },
+  method:      { color: "#2563eb", soft: "#eaf1ff", tint: "#f5f8ff", icon: Share2 },
+  machine:     { color: "#64748b", soft: "#f1f5f9", tint: "#fafbfc", icon: Wrench },
+  environment: { color: "#0d9488", soft: "#e6faf6", tint: "#f5fdfb", icon: Building2 },
 };
 
 const DEFAULT_CAT_STYLE = {
@@ -214,20 +282,20 @@ const CauseCard = ({
   category,
   categoryKey,
   causes,
-  isPrimary,
+  tier,
   isExtraCard,
   isUserValidated,
   animDelay,
   t,
 }: {
-  category:        string;
-  categoryKey?:    string;
-  causes:          { description: string; probability: ProbabilityLevel }[];
-  isPrimary:       boolean;
-  isExtraCard?:    boolean;
+  category:         string;
+  categoryKey?:     string;
+  causes:           { description: string; probability: ProbabilityLevel }[];
+  tier:             Tier;
+  isExtraCard?:     boolean;
   isUserValidated?: boolean; // AI-confident card also confirmed by user
-  animDelay:       number;
-  t:               (k: string) => string;
+  animDelay:        number;
+  t:                (k: string) => string;
 }) => {
   // Resolve style: stable key first, display name fallback
   const catStyle =
@@ -236,7 +304,17 @@ const CauseCard = ({
     DEFAULT_CAT_STYLE;
   const Icon = catStyle.icon;
 
+  const isPrimary = tier === "dominant" && !isExtraCard;
   const borderColor = isExtraCard ? "#059669" : catStyle.color;
+
+  const tierLabel =
+    tier === "dominant"
+      ? (t("analysis.ishikawa.dominant") || "Cause dominante")
+      : tier === "secondary"
+      ? (t("analysis.ishikawa.secondary") || "Cause secondaire")
+      : tier === "monitor"
+      ? (t("analysis.ishikawa.monitor") || "À surveiller")
+      : null;
 
   return (
     <div
@@ -275,7 +353,7 @@ const CauseCard = ({
             display: "flex", alignItems: "center", gap: "6px",
             marginTop: "4px", minHeight: "18px", flexWrap: "wrap",
           }}>
-            {isPrimary && !isExtraCard && (
+            {tierLabel && !isExtraCard && (
               <span style={{
                 fontSize: "9px", fontWeight: 700,
                 color: catStyle.color,
@@ -284,7 +362,7 @@ const CauseCard = ({
                 padding: "2px 7px", borderRadius: "999px",
                 letterSpacing: "0.4px", textTransform: "uppercase", flexShrink: 0,
               }}>
-                {t("analysis.ishikawa.primary") || "Principale"}
+                {tierLabel}
               </span>
             )}
             {isExtraCard && (
@@ -313,60 +391,60 @@ const CauseCard = ({
       </div>
 
       {/* Causes list */}
-    {causes.length > 0 ? (
-      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-        {causes.map((cause, i) => (
-          <li key={i} style={{
-            display: "flex", alignItems: "flex-start",
-            justifyContent: "space-between", gap: "10px", padding: "4px 0",
-          }}>
-            <span style={{
-              display: "flex", alignItems: "flex-start", gap: "10px",
-              flex: 1, fontSize: "14px", color: COLORS.text2, lineHeight: 1.5,
+      {causes.length > 0 ? (
+        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+          {causes.map((cause, i) => (
+            <li key={i} style={{
+              display: "flex", alignItems: "flex-start",
+              justifyContent: "space-between", gap: "10px", padding: "4px 0",
             }}>
               <span style={{
-                width: "6px", height: "6px", borderRadius: "50%",
-                background: isExtraCard ? "#059669" : catStyle.color,
-                marginTop: "7px", flexShrink: 0,
-              }} />
-              {cause.description}
-            </span>
-          </li>
-        ))}
-      </ul>
-    ) : (
-      <div style={{
-        display: "flex",
-        alignItems: "flex-start",
-        gap: "10px",
-        padding: "10px 12px",
-        borderRadius: "12px",
-        background: "#f8fafc",
-        border: "1px dashed #cbd5e1",
-        marginTop: "4px",
-      }}>
-        <div>
-          <p style={{
-            fontSize: "13px",
-            fontWeight: 600,
-            color: "#64748b",
-            margin: "0 0 2px",
-            lineHeight: 1.4,
-          }}>
-            {t("analysis.ishikawa.noCausesUserCategory") || "Catégorie sélectionnée par vous"}
-          </p>
-          <p style={{
-            fontSize: "12.5px",
-            color: "#94a3b8",
-            margin: 0,
-            lineHeight: 1.5,
-          }}>
-            {t("analysis.ishikawa.noCausesUserCategoryHint") ||
-              "L'IA n'a pas identifié de causes spécifiques pour cette catégorie. Une investigation terrain est recommandée."}
-          </p>
+                display: "flex", alignItems: "flex-start", gap: "10px",
+                flex: 1, fontSize: "14px", color: COLORS.text2, lineHeight: 1.5,
+              }}>
+                <span style={{
+                  width: "6px", height: "6px", borderRadius: "50%",
+                  background: isExtraCard ? "#059669" : catStyle.color,
+                  marginTop: "7px", flexShrink: 0,
+                }} />
+                {cause.description}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: "10px",
+          padding: "10px 12px",
+          borderRadius: "12px",
+          background: "#f8fafc",
+          border: "1px dashed #cbd5e1",
+          marginTop: "4px",
+        }}>
+          <div>
+            <p style={{
+              fontSize: "13px",
+              fontWeight: 600,
+              color: "#64748b",
+              margin: "0 0 2px",
+              lineHeight: 1.4,
+            }}>
+              {t("analysis.ishikawa.noCausesUserCategory") || "Catégorie sélectionnée par vous"}
+            </p>
+            <p style={{
+              fontSize: "12.5px",
+              color: "#94a3b8",
+              margin: 0,
+              lineHeight: 1.5,
+            }}>
+              {t("analysis.ishikawa.noCausesUserCategoryHint") ||
+                "L'IA n'a pas identifié de causes spécifiques pour cette catégorie. Une investigation terrain est recommandée."}
+            </p>
+          </div>
         </div>
-      </div>
-    )}
+      )}
     </div>
   );
 };
@@ -395,13 +473,13 @@ export function RootCauseSection({
   const activeEstablishmentId  = useEstablishmentStore((s) => s.activeEstablishmentId);
   const selectedEstablishment  = useEstablishmentStore((s) => s.selectedEstablishment);
   const resolvedEstablishmentId = activeEstablishmentId ?? selectedEstablishment?.id ?? null;
-if (Array.isArray(paretoIssues) && paretoIssues.length > 0) {
-  paretoIssues.sort((a, b) => b.count - a.count);
-}
 
-const currentIssue =
-  paretoIssues?.length > 0 ? paretoIssues[currentStep] : null;
+  if (Array.isArray(paretoIssues) && paretoIssues.length > 0) {
+    paretoIssues.sort((a, b) => b.count - a.count);
+  }
 
+  const currentIssue =
+    paretoIssues?.length > 0 ? paretoIssues[currentStep] : null;
 
   useEffect(() => {
     setCurrentStep(0);
@@ -468,98 +546,12 @@ const currentIssue =
 
     const rawRootCauses: AiRootCause[] = currentIssue.root_causes ?? [];
 
-    // ── NEW PATH: edge fn returned all 5 categories with confidence ──────────
-    if (hasNewRootCauseShape(rawRootCauses)) {
-      // Index AI entries by category_key for O(1) merge lookup
-      const aiByKey = new Map<string, AiRootCause>(
-        rawRootCauses.map((rc) => [rc.category_key, rc]),
-      );
-
-      // Union: AI-confident (≥60) keys + ALL user "Very Likely" keys
-      // Using a Set guarantees no duplicate keys — same category_key
-      // can only appear once, merging AI + user signal into one card.
-      const visibleKeys = new Set<string>([
-        ...rawRootCauses.filter((rc) => rc.confidence >= 60).map((rc) => rc.category_key),
-        ...userHighKeys,
-      ]);
-
-      // Sort: highest AI confidence first; user-only keys (conf = 0) come last
-      const sorted = [...visibleKeys].sort((a, b) => {
-        const confA = aiByKey.get(a)?.confidence ?? 0;
-        const confB = aiByKey.get(b)?.confidence ?? 0;
-        return confB - confA;
-      });
-
-      const categories: ResolvedCategory[] = sorted.map((key, idx) => {
-        const rc          = aiByKey.get(key);
-        const isAiConf    = (rc?.confidence ?? 0) >= 60;
-        const isUserHigh  = userHighKeys.has(key);
-        // "extra" = user surfaced it AND AI was not confident (no duplicate: same key = same card)
-        const isExtraCard = isUserHigh && !isAiConf;
-        // When user boosted a low-confidence entry, treat confidence as 40
-        const effectiveConf = rc ? (isExtraCard ? 40 : rc.confidence) : 0;
-
-        return {
-          name:         rc?.category_key ?? key,
-          category_key: key,
-          causes: rc
-            ? rc.causes.map((desc, i) => ({
-                description: desc,
-                probability: isExtraCard
-                  ? "Possible"
-                  : confidenceToProbability(rc.confidence),
-                evidence:    i === 0 ? rc.evidence : [],
-                count:       Math.round((effectiveConf / 100) * 10),
-                confidence:  effectiveConf,
-              }))
-            : [],
-          isPrimary:    idx === 0,
-          _isMainCard:  isAiConf,
-          _isExtraCard: isExtraCard,
-          // Extra flag to show "Confirmed" pill on AI cards the user also validated
-          _isUserValidated: isAiConf && isUserHigh,
-        } as ResolvedCategory & { _isUserValidated: boolean };
-      });
-
-      return { categories, summary: currentIssue.ai_synthesis ?? "", userHighKeys };
-    }
-
-    // ── LEGACY PATH: old shape with 1–3 cats, no confidence field ───────────
-    const importanceToProbability = (importance: string): ProbabilityLevel => {
-      if (importance === "dominant")  return "Probable";
-      if (importance === "secondary") return "Possible";
-      return "Occasionnelle";
-    };
-
-    // Build a map from legacy AI output, then layer in any user-only keys
-    const legacyByKey = new Map<string, any>(
-      rawRootCauses.map((rc: any) => [rc.category_key ?? rc.category, rc]),
-    );
-    userHighKeys.forEach((k) => {
-      if (!legacyByKey.has(k)) legacyByKey.set(k, null);
-    });
-
-    const categories: ResolvedCategory[] = [...legacyByKey.entries()].map(
-      ([key, rc], idx) => ({
-        name:         rc?.category ?? key,
-        category_key: rc?.category_key ?? key,
-        causes: rc
-          ? (rc.causes ?? []).map((desc: string) => ({
-              description: desc,
-              probability: importanceToProbability(rc.importance),
-              count:       0,
-            }))
-          : [],
-        isPrimary:    idx === 0,
-        _isMainCard:  rc != null,
-        _isExtraCard: rc == null || (userHighKeys.has(key) && rc.importance !== "dominant"),
-        _isUserValidated: rc != null && userHighKeys.has(key),
-      } as ResolvedCategory & { _isUserValidated: boolean }),
-    );
+    const categories = hasNewRootCauseShape(rawRootCauses)
+      ? buildVisibleCategories(rawRootCauses, userHighKeys)
+      : buildLegacyVisibleCategories(rawRootCauses, userHighKeys);
 
     return { categories, summary: currentIssue.ai_synthesis ?? "", userHighKeys };
   }, [currentIssue, currentQuestionnaire, dbObjective]);
-
 
   const goToStep = (step: number) => {
     setCurrentStep(step);
@@ -603,10 +595,11 @@ const currentIssue =
 
   // ─── GRID LAYOUT HELPERS ──────────────────────────────────────────────────
   // Rule:
-  //   Row 1 → primary AI card + all "extra" (user-only) cards, up to 3 columns
-  //   Row 2+ → remaining AI-confident cards
-  // Because the Set-union dedup already merges same-key cards, there are never
-  // two cards for the same category — extra cards are genuinely new categories.
+  //   Row 1 → dominant AI card + all "extra" (user-only) cards, up to 3 columns
+  //   Row 2+ → remaining AI-ranked cards (secondary, monitor)
+  // Because the Set-union dedup already merges same-key cards in
+  // buildVisibleCategories, there are never two cards for the same category —
+  // extra cards are genuinely new categories the AI didn't have evidence for.
   const mainCards  = rootCauseAnalysis.categories.filter(
     (c) => !(c as any)._isExtraCard,
   );
@@ -884,12 +877,12 @@ const currentIssue =
                 {orderedCards.map((category, catIdx) => (
                   <CauseCard
                     key={(category as any).category_key ?? catIdx}
-                      category={
-                        t(`analysis.ishikawa.categories.${(category as any).category_key}`) || category.name
-                      }
+                    category={
+                      t(`analysis.ishikawa.categories.${(category as any).category_key}`) || category.name
+                    }
                     categoryKey={(category as any).category_key}
                     causes={category.causes}
-                    isPrimary={(category as ResolvedCategory)._isMainCard && catIdx === 0}
+                    tier={(category as ResolvedCategory)._tier}
                     isExtraCard={(category as ResolvedCategory)._isExtraCard}
                     isUserValidated={(category as any)._isUserValidated === true}
                     animDelay={0.05 + catIdx * 0.04}
