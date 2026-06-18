@@ -36,6 +36,7 @@ interface DeleteEstablishmentButtonProps {
 
   /** Extra classes forwarded to the default icon button. */
   className?: string;
+  title?: string;
 }
 
 /**
@@ -63,6 +64,7 @@ export function DeleteEstablishmentButton({
   onSuccess,
   trigger,
   className,
+  title,
 }: DeleteEstablishmentButtonProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -109,6 +111,7 @@ export function DeleteEstablishmentButton({
             className ??
             "shrink-0 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40"
           }
+          title={title}
           aria-label="Supprimer cet établissement"
         >
           <Trash2 className="h-4 w-4" />
