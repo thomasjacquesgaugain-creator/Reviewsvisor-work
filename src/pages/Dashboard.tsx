@@ -168,6 +168,48 @@ const getTranslatedEstablishmentType = (
 const DASH_TAB_NAV_BTN_CLASS =
   "inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 shadow-[0_2px_12px_rgba(15,23,42,0.08)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-900 hover:shadow-[0_8px_28px_rgba(37,99,235,0.14)] active:translate-y-0 active:scale-[0.98] active:shadow-[0_2px_10px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:shadow-slate-950/40 dark:hover:border-blue-500 dark:hover:bg-blue-950/40 dark:hover:text-blue-300 dark:focus-visible:ring-offset-slate-950";
 
+type SummaryTone = "red" | "amber" | "blue";
+type PriorityImpact = "High" | "Medium" | "Low";
+type PriorityEffort = "High" | "Medium" | "Low";
+
+const SUMMARY_TONE_STYLES: Record<
+  SummaryTone,
+  {
+    card: string;
+    badge: string;
+    dot: string;
+    title: string;
+    bullet: string;
+  }
+> = {
+  red: {
+    card: "bg-red-50/80 border-red-100 border-l-4 border-l-red-500",
+    badge: "bg-red-500 text-white",
+    dot: "bg-red-500",
+    title: "text-red-600",
+    bullet: "text-red-500",
+  },
+  amber: {
+    card: "bg-amber-50/80 border-amber-100 border-l-4 border-l-amber-500",
+    badge: "bg-amber-500 text-white",
+    dot: "bg-amber-500",
+    title: "text-amber-600",
+    bullet: "text-amber-500",
+  },
+  blue: {
+    card: "bg-blue-50/80 border-blue-100 border-l-4 border-l-blue-500",
+    badge: "bg-blue-500 text-white",
+    dot: "bg-blue-500",
+    title: "text-blue-600",
+    bullet: "text-blue-500",
+  },
+};
+
+const ISSUE_TONES: SummaryTone[] = ["red", "amber", "blue"];
+
+const getIssueTone = (index: number): SummaryTone =>
+  ISSUE_TONES[index % ISSUE_TONES.length];
+
 const Dashboard = () => {
   // ============================================
   // 1. TOUS LES HOOKS (useContext, useTranslation, etc.)
@@ -3395,9 +3437,83 @@ const activeObjective =
   ) || null;
 
     const progress = useSmartProgress(activeObjective);
-    
 
+    const summaryIssues = useMemo(() => {
+      return [...(analysisDataForTab?.paretoIssues ?? [])]
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3);
+    }, [analysisDataForTab?.paretoIssues]);
 
+    const orderedObjectivesByKey = useMemo(() => {
+      return new Map(
+        orderedObjectives
+          .filter((objective) => objective?.pareto_cause?.key)
+          .map((objective) => [
+            String(objective.pareto_cause.key).toLowerCase(),
+            objective,
+          ]),
+      );
+    }, [orderedObjectives]);
+
+    const getLocalizedObjectiveSynthesis = (objective: any) => {
+      if (!objective?.synthesis) return null;
+
+      const synthesis = objective.synthesis as Record<string, any>;
+      if (
+        typeof synthesis.top_priority === "string" ||
+        typeof synthesis.primary_friction === "string" ||
+        Array.isArray(synthesis.secondary_issues) ||
+        Array.isArray(synthesis.strengths_to_preserve)
+      ) {
+        return synthesis;
+      }
+
+      const localized =
+        synthesis?.[i18n.language] ??
+        synthesis?.fr ??
+        synthesis?.en ??
+        null;
+
+      return localized &&
+        typeof localized === "object" &&
+        !Array.isArray(localized)
+        ? localized
+        : null;
+    };
+
+    const orderedSynthesisCards = useMemo(() => {
+      return orderedObjectives
+        .map((objective, index) => {
+          const synthesis = getLocalizedObjectiveSynthesis(objective);
+          if (!synthesis) return null;
+
+          const issueLabel =
+            objective?.pareto_cause?.[i18n.language] ||
+            objective?.pareto_cause?.en ||
+            objective?.pareto_cause?.fr ||
+            t("dashboard.problemBadge", { number: index + 1 });
+
+          const percentage =
+            typeof objective?.pareto_percentage === "number"
+              ? objective.pareto_percentage
+              : typeof objective?.pareto_count === "number" &&
+                  typeof displayTotalAnalyzed === "number" &&
+                  displayTotalAnalyzed > 0
+                ? Math.round((objective.pareto_count / displayTotalAnalyzed) * 100)
+                : null;
+
+          return {
+            key: String(objective?.pareto_cause?.key ?? index).toLowerCase(),
+            issueLabel,
+            synthesis,
+            percentage,
+          };
+        })
+        .filter(Boolean);
+    }, [displayTotalAnalyzed, i18n.language, orderedObjectives, t]);
+
+    const primarySynthesisCard = orderedSynthesisCards[0] ?? null;
+    const additionalSynthesisCards = orderedSynthesisCards.slice(1);
 
   // If we have an etablissementId in URL, show analysis dashboard
   if (etablissementId) {
@@ -5956,178 +6072,237 @@ const activeObjective =
 
             {activeTab === "recommandations" && (
               <>
-                {/* SECTION 1 : Synthèse & priorités (carte maître) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
-                  <div className="col-span-1 md:col-span-2">
-                    <Card
-                      className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
-                      onClick={() =>
-                        setOpenCard(
-                          openCard === "synthesis" ? null : "synthesis",
-                        )
-                      }
-                    >
-                      <CardHeader className="relative text-center">
-                        <div className="flex flex-col items-center mb-2">
-                          <Lightbulb className="w-5 h-5 text-blue-500 mb-2" />
-                          <span className="text-lg font-semibold">
-                            {t(
-                              "dashboard.synthesisPriorities",
-                              "Synthèse & priorités",
-                            )}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 dark:text-slate-300">
+              
+                <Card className="mb-8 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-950">
+                  <CardHeader
+                    className="cursor-pointer border-b border-slate-100 px-6 py-5 dark:border-slate-800 sm:px-8"
+                    onClick={() =>
+                      setOpenCard(
+                        openCard === "synthesis" ? null : "synthesis",
+                      )
+                    }
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-violet-950/50 dark:text-violet-300">
+                        <Lightbulb className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <CardTitle className="text-[16px] font-[600]  text-slate-900 dark:text-slate-100">
+                          {t("dashboard.synthesisPriorities", "Summary & priorities")}
+                        </CardTitle>
+                        <p className="text-[12px] text-slate-500 dark:text-slate-400">
                           {t(
                             "dashboard.synthesisPrioritiesSubtitle",
-                            "Lecture stratégique des avis clients et points de focus prioritaires",
+                            "Strategic reading of customer reviews and key focus areas",
                           )}
                         </p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenCard(
-                              openCard === "synthesis" ? null : "synthesis",
-                            );
-                          }}
-                          className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-blue-50 dark:hover:bg-blue-950/40"
-                        >
-                          {openCard === "synthesis" ? (
-                            <ChevronUp className="w-3 h-3 text-blue-500" />
-                          ) : (
-                            <ChevronDown className="w-3 h-3 text-blue-500" />
-                          )}
-                        </Button>
-                      </CardHeader>
-                    </Card>
-                  </div>
-                </div>
-
-                {/* Contenu Synthèse & priorités - EN DESSOUS */}
-               {openCard === "synthesis" && (
-                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
-                    <CardHeader className="relative text-left">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Lightbulb className="w-5 h-5 text-blue-500" />
-                        <span className="text-lg font-semibold">
-                          {t("dashboard.synthesisPriorities", "Synthèse & priorités")}
-                        </span>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-slate-300">
-                        {t(
-                          "dashboard.synthesisPrioritiesSubtitle",
-                          "Lecture stratégique des avis clients et points de focus prioritaires",
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenCard(
+                            openCard === "synthesis" ? null : "synthesis",
+                          );
+                        }}
+                        className="h-8 w-8 shrink-0 p-0 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                      >
+                        {openCard === "synthesis" ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
                         )}
-                      </p>
-                    </CardHeader>
-                    <CardContent>
-                      {/* Empty state - no active objective or no synthesis */}
-                      {!activeObjective || !activeObjective.synthesis?.[i18n.language] ? (
-                        <div className="flex flex-col items-center justify-center py-12 text-center">
-                          <Lightbulb className="w-12 h-12 text-gray-300 dark:text-slate-600 mb-4" />
-                          <h4 className="font-semibold text-gray-500 dark:text-slate-400 mb-2">
-                            {t("dashboard.noSynthesisAvailable", "Aucune synthèse disponible")}
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  {openCard === "synthesis" && (
+                    <CardContent className="space-y-8 px-6 py-6 sm:px-8">
+                    {!primarySynthesisCard ? (
+                      <div className="flex flex-col items-center justify-center rounded-[24px] border border-dashed border-slate-200 bg-slate-50/80 py-14 text-center dark:border-slate-700 dark:bg-slate-900/50">
+                        <Lightbulb className="mb-4 h-12 w-12 text-slate-300 dark:text-slate-600" />
+                        <h4 className="mb-2 text-base font-semibold text-slate-600 dark:text-slate-300">
+                          {t("dashboard.noSynthesisAvailable", "No synthesis available")}
+                        </h4>
+                        <p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">
+                          {t(
+                            "dashboard.noSynthesisDescription",
+                            "Select an active objective or collect more reviews to generate a strategic synthesis.",
+                          )}
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          <h4 className="mb-3 text-sm font-semibold  text-slate-900 dark:text-slate-100">
+                            {t("dashboard.improvementAxesIdentified", "Improvement areas identified")}
                           </h4>
-                          <p className="text-sm text-gray-400 dark:text-slate-500 max-w-sm">
-                            {t(
-                              "dashboard.noSynthesisDescription",
-                              "Sélectionnez un objectif actif ou collectez davantage d'avis pour générer une synthèse stratégique.",
-                            )}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-8">
-                          {/* Section 1 - Axes d'amélioration identifiés */}
-                          {(() => {
-                            const synthesis = activeObjective.synthesis[i18n.language];
+                          <div className="space-y-3">
+                            <div className="rounded-[18px]  border-l-4 border-l-red-500 bg-red-50/80 p-4 dark:border-red-900/40 dark:bg-red-950/25">
+                              <div className="mb-2 flex items-center gap-2">
+                                <Badge className={SUMMARY_TONE_STYLES.red.badge}>
+                                  {t("dashboard.priorityAction", "Priority action")}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-slate-700 dark:text-slate-200">
+                                {primarySynthesisCard.synthesis.top_priority ||
+                                  t("dashboard.analyzeReviewsToIdentifyFrictionPoints")}
+                              </p>
+                              {primarySynthesisCard.synthesis.primary_friction && (
+                                <p className="mt-1 text-sm italic text-slate-500 dark:text-slate-400">
+                                  {primarySynthesisCard.synthesis.primary_friction}
+                                </p>
+                              )}
+                            </div>
 
-                            return (
-                              <div>
-                                <h4 className="font-semibold text-gray-800 dark:text-slate-100 mb-4">
-                                  {t("dashboard.improvementAxesIdentified", "Axes d'amélioration identifiés")}
-                                </h4>
-                                <div className="space-y-3">
-                                  {/* Action prioritaire */}
-                                  <div className="p-4 bg-red-50 dark:bg-red-950/30 rounded-lg border-l-4 border-red-500">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Badge className="bg-red-500 text-white text-xs">
-                                        {t("dashboard.priorityAction")}
-                                      </Badge>
-                                    </div>
-                                    <p className="text-sm text-gray-700 dark:text-slate-200">
-                                      {synthesis.top_priority || t("dashboard.analyzeReviewsToIdentifyFrictionPoints")}
-                                    </p>
-                                    {synthesis.primary_friction && (
-                                      <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 italic">
-                                        {synthesis.primary_friction}
-                                      </p>
+                            {additionalSynthesisCards.map((card, index) => {
+                              const tone = getIssueTone(index + 1);
+                              return (
+                                <div
+                                  key={card.key}
+                                  className={`rounded-[18px]  p-4 ${SUMMARY_TONE_STYLES[tone].card} dark:bg-slate-900/40`}
+                                >
+                                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                                    <Badge className={SUMMARY_TONE_STYLES[tone].badge}>
+                                      {t("dashboard.importantAction", "Important action")}
+                                    </Badge>
+                                    <span className="text-sm font-semibold">
+                                      {card.issueLabel}
+                                    </span>
+                                    {typeof card.percentage === "number" && (
+                                      <span className="text-sm text-slate-500 dark:text-slate-400">
+                                        - {t("recommendations.smart.negativeReviews", { percentage: Math.round(card.percentage) })}
+                                      </span>
                                     )}
                                   </div>
-
-                                  {/* Court terme */}
-                                  <div className="p-4 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border-l-4 border-yellow-500">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Badge className="bg-yellow-500 text-white text-xs">
-                                        {t("dashboard.shortTerm")}
-                                      </Badge>
-                                    </div>
-                                    <ul className="space-y-2">
-                                      {synthesis.secondary_issues?.map((issue, index) => (
-                                        <li
-                                          key={index}
-                                          className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2"
-                                        >
-                                          <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                                          {issue}
-                                        </li>
-                                      ))}
-                                      {synthesis.strengths_to_preserve?.map((strength, index) => (
-                                        <li
-                                          key={`strength-${index}`}
-                                          className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2"
-                                        >
-                                          <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                                          {t("dashboard.enhanceStrengths", { strength })}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-
-                                  {/* Gestion des avis */}
-                                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border-l-4 border-blue-500">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Badge className="bg-blue-500 text-white text-xs">
-                                        {t("dashboard.reviewManagement")}
-                                      </Badge>
-                                    </div>
-                                    <ul className="space-y-2">
-                                      <li className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2">
-                                        <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                                        {t("dashboard.respondSystematically")}
-                                      </li>
-                                      <li className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2">
-                                        <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                                        {t("dashboard.setUpRegularTracking")}
-                                      </li>
-                                    </ul>
-                                  </div>
+                                  <p className="text-sm text-slate-700 dark:text-slate-200">
+                                    {card.synthesis.top_priority ||
+                                      card.synthesis.primary_friction ||
+                                      card.synthesis.secondary_issues?.[0] ||
+                                      t("dashboard.analyzeReviewsToIdentifyFrictionPoints")}
+                                  </p>
                                 </div>
-                              </div>
-                            );
-                          })()}
+                              );
+                            })}
 
-                          {/* Séparateur visuel */}
-                          <div className="border-t border-gray-200 dark:border-slate-700"></div>
+                            <div className="rounded-[18px] border-l-4 border-l-amber-500 bg-amber-50/80 p-4 dark:border-amber-900/40 dark:bg-amber-950/25">
+                              <div className="mb-2 flex items-center gap-2">
+                                <Badge className={SUMMARY_TONE_STYLES.amber.badge}>
+                                  {t("dashboard.shortTerm", "Short term")}
+                                </Badge>
+                              </div>
+                              <ul className="space-y-2">
+                                {(primarySynthesisCard.synthesis.secondary_issues ?? []).map((issue: string, index: number) => (
+                                  <li key={`secondary-${index}`} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                    <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-500">
+                                      <Check className="h-2.5 w-2.5 stroke-[3] text-white" />
+                                    </div>
+                                    <span>{issue}</span>
+                                  </li>
+                                ))}
+                                {(primarySynthesisCard.synthesis.strengths_to_preserve ?? []).map((strength: string, index: number) => (
+                                  <li key={`strength-${index}`} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                      <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-500">
+                                      <Check className="h-2.5 w-2.5 stroke-[3] text-white" />
+                                    </div>                                    
+                                    <span>{t("dashboard.enhanceStrengths", { strength, defaultValue: `Strengths mentioned: ${strength}` })}</span>
+                                  </li>
+                                ))}
+                                {!primarySynthesisCard.synthesis.secondary_issues?.length && !primarySynthesisCard.synthesis.strengths_to_preserve?.length && (
+                                  <li className="text-sm text-slate-500 dark:text-slate-400">
+                                    {t("dashboard.noShortTermActions", "No short-term actions suggested yet.")}
+                                  </li>
+                                )}
+                              </ul>
+                            </div>
+
+                            <div className="rounded-[18px] border-l-4 border-l-blue-500 bg-blue-50/80 p-4 dark:border-blue-900/40 dark:bg-blue-950/25">
+                              <div className="mb-2 flex items-center gap-2">
+                                <Badge className={SUMMARY_TONE_STYLES.blue.badge}>
+                                  {t("dashboard.reviewManagement", "Review management")}
+                                </Badge>
+                              </div>
+                              <ul className="space-y-2">
+                                    <li className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                      <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-500">
+                                        <Check className="h-2.5 w-2.5 stroke-[3] text-white" />
+                                      </div>
+                                      <span>{t("dashboard.respondSystematically", "Reply to customer reviews (positive and negative) - good practice to maintain")}</span>
+                                    </li>
+                                    <li className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                      <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-500">
+                                        <Check className="h-2.5 w-2.5 stroke-[3] text-white" />
+                                      </div>                                  
+                                      <span>{t("dashboard.setUpRegularTracking", "Set up regular customer satisfaction tracking - to consider")}</span>
+                                    </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="mb-3 text-sm font-semibold  text-slate-900 dark:text-slate-100">
+                            {t("dashboard.mainCausesIdentified", "Main causes identified")}
+                          </h4>
+                          <div className="grid gap-3 md:grid-cols-3">
+                            {summaryIssues.map((issue, index) => {
+                              const tone = getIssueTone(index);
+                              const matchedObjective = orderedObjectivesByKey.get(
+                                String(issue.key ?? "").toLowerCase(),
+                              );
+                              if (!matchedObjective) return null;
+                              const issueSynthesis =
+                                getLocalizedObjectiveSynthesis(matchedObjective);
+                              const issueLabel =
+                                matchedObjective?.pareto_cause?.[i18n.language] ||
+                                matchedObjective?.pareto_cause?.en ||
+                                matchedObjective?.pareto_cause?.fr ||
+                                t("dashboard.problemBadge", { number: index + 1 });
+                              const rootCauseItems = (issue.root_causes ?? [])
+                                .flatMap((rc: any) => (rc.causes ?? []).map((cause: string) => String(cause || "").trim()))
+                                .filter(Boolean)
+                                .slice(0, 3);
+
+                              return (
+                                <div
+                                  key={issue.key ?? `${issue.name}-${index}`}
+                                  className={`rounded-[18px] border p-4 shadow-sm  dark:border-slate-700 dark:bg-slate-900/70`}
+                                >
+                                  <div className={`mb-3 pb-2 text-sm font-semibold border-b border-slate-200 dark:border-slate-700 ${SUMMARY_TONE_STYLES[tone].title}`}>
+                                    {issueLabel}
+                                  </div>
+                                  <ul className="space-y-2">
+                                    {(rootCauseItems.length > 0
+                                      ? rootCauseItems
+                                      : [issueSynthesis?.top_priority || primarySynthesisCard?.synthesis?.top_priority || t("dashboard.analyzeReviewsToIdentifyFrictionPoints")]
+                                    ).map((cause, causeIndex) => (
+                                      <li key={`${issue.key ?? index}-${causeIndex}`} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                        <div className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${SUMMARY_TONE_STYLES[tone].dot}`}>
+                                          <Check className="h-2.5 w-2.5 stroke-[3] text-white" />
+                                        </div>
+                                        <span>{cause}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className=" dark:border-slate-700">
 
                           <EffortMatrix analysisData={analysisDataForTab} />
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
 
+                        
+                      </>
+                    )}
+                    </CardContent>
+                  )}
+                </Card>
                 {/* SECTION 2 : SMART Objectives */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
                 <div className="col-span-1 md:col-span-2">
