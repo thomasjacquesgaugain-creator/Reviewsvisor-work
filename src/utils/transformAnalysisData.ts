@@ -233,7 +233,7 @@ export function transformAnalysisData(
       sentiment:  theme.sentiment || "mixed",      
       count:      Number(theme.count)      || 0,   
       importance: Number(theme.importance) || 50,  
-      verbatims:  theme.verbatims || [],
+      verbatims:  theme.evidence_quotes || [],
     });
 
     const universalThemes = rawUniversal.map(mapTheme);
@@ -243,77 +243,77 @@ export function transformAnalysisData(
     // ✅ Dedupe themes that appear in both universal and industry lists (e.g. "Wait Time"
     // showing up twice with near-identical data). Keep whichever copy has the higher count,
     // since that's usually the more complete/representative source object.
-    const dedupedThemesMap = new Map<string, any>();
-    for (const theme of themes) {
-      const dedupeKey = String(theme.theme || "").toLowerCase().trim();
-      const existing = dedupedThemesMap.get(dedupeKey);
-      if (!existing || theme.count > existing.count) {
-        dedupedThemesMap.set(dedupeKey, theme);
-      }
-    }
-    themes = Array.from(dedupedThemesMap.values());
+    // const dedupedThemesMap = new Map<string, any>();
+    // for (const theme of themes) {
+    //   const dedupeKey = String(theme.theme || "").toLowerCase().trim();
+    //   const existing = dedupedThemesMap.get(dedupeKey);
+    //   if (!existing || theme.count > existing.count) {
+    //     dedupedThemesMap.set(dedupeKey, theme);
+    //   }
+    // }
+    // themes = Array.from(dedupedThemesMap.values());
 
     // Generic connector words that shouldn't drive theme matching on their own.
     // Extend this list as you find more false-positive collisions.
-    const STOPWORDS = new Set(["the", "and", "for", "of", "a", "to", "with", "in", "on"]);
+    // const STOPWORDS = new Set(["the", "and", "for", "of", "a", "to", "with", "in", "on"]);
 
     // Fill missing verbatims from reviews
-    themes = themes.map(theme => {
-      if (theme.verbatims && theme.verbatims.length > 0) return theme;
+    // themes = themes.map(theme => {
+    //   if (theme.verbatims && theme.verbatims.length > 0) return theme;
 
-      const themeWords = String(theme.theme || "")
-        .toLowerCase()
-        .replace(/[^\w\s]/g, "")
-        .split(/\s+/)
-        .filter(w => w.length > 2 && !STOPWORDS.has(w));
+    //   const themeWords = String(theme.theme || "")
+    //     .toLowerCase()
+    //     .replace(/[^\w\s]/g, "")
+    //     .split(/\s+/)
+    //     .filter(w => w.length > 2 && !STOPWORDS.has(w));
 
-      if (themeWords.length === 0) {
-        return { ...theme, verbatims: [] };
-      }
+    //   if (themeWords.length === 0) {
+    //     return { ...theme, verbatims: [] };
+    //   }
 
       // ✅ Match at the SENTENCE level, not the whole review. This avoids pulling in
       // an entire multi-topic review just because one unrelated sentence happens to
       // contain a single shared word (e.g. "turnaround time" matching a "Wait Time"
       // theme via the word "time" alone, even though the sentence is about speed,
       // not waiting).
-      const matched = safeReviews
-        .flatMap(r => {
-          const text = cleanReviewText(r.texte || "");
-          if (!text) return [];
-          const rating    = normalizeRating(r.note || 0);
-          const sentiment = computeSentimentFromRating(rating);
+      // const matched = safeReviews
+      //   .flatMap(r => {
+      //     const text = cleanReviewText(r.texte || "");
+      //     if (!text) return [];
+      //     const rating    = normalizeRating(r.note || 0);
+      //     const sentiment = computeSentimentFromRating(rating);
 
-          const sentences = text
-            .split(/(?<=[.!?])\s+/)
-            .map(s => s.trim())
-            .filter(s => s.length > 0);
+      //     const sentences = text
+      //       .split(/(?<=[.!?])\s+/)
+      //       .map(s => s.trim())
+      //       .filter(s => s.length > 0);
 
-          return sentences
+      //     return sentences
             // ✅ ALL theme words must be present (AND), not just one (OR).
             // This is what stops "Customer Service" from matching any review
             // that merely contains the word "service" with no relation to staff,
             // and stops single generic words from colliding across themes.
-            .filter(s => themeWords.every(word => s.toLowerCase().includes(word)))
-            .map(s => ({ text: s, lower: s.toLowerCase(), sentiment }));
-        });
+        //     .filter(s => themeWords.every(word => s.toLowerCase().includes(word)))
+        //     .map(s => ({ text: s, lower: s.toLowerCase(), sentiment }));
+        // });
 
-      const positive = matched.filter(r => r.sentiment === 'positive');
-      const negative = matched.filter(r => r.sentiment === 'negative');
-      const neutral  = matched.filter(r => r.sentiment === 'neutral');
+      // const positive = matched.filter(r => r.sentiment === 'positive');
+      // const negative = matched.filter(r => r.sentiment === 'negative');
+      // const neutral  = matched.filter(r => r.sentiment === 'neutral');
 
       // ✅ Bucket selection now reads theme.sentiment (ground truth from source data),
       // not theme.score. Previously "mixed" themes collapsed to score === 0.5 by
       // default, which was indistinguishable from "no sentiment data" and caused
       // verbatim selection to behave inconsistently.
-      let selected: any[] =
-        theme.sentiment === "negative" ? [...negative.slice(0, 4), ...neutral.slice(0, 2)]
-        : theme.sentiment === "positive" ? [...positive.slice(0, 4), ...neutral.slice(0, 2)]
-        : [...positive.slice(0, 2), ...negative.slice(0, 2), ...neutral.slice(0, 2)]; // mixed: balanced on purpose
+    //   let selected: any[] =
+    //     theme.sentiment === "negative" ? [...negative.slice(0, 4), ...neutral.slice(0, 2)]
+    //     : theme.sentiment === "positive" ? [...positive.slice(0, 4), ...neutral.slice(0, 2)]
+    //     : [...positive.slice(0, 2), ...negative.slice(0, 2), ...neutral.slice(0, 2)]; // mixed: balanced on purpose
 
-      selected = selected.filter((v, i, self) => i === self.findIndex(x => x.text === v.text));
+    //   selected = selected.filter((v, i, self) => i === self.findIndex(x => x.text === v.text));
 
-      return { ...theme, verbatims: selected.slice(0, 5).map(v => v.text) };
-    });
+    //   return { ...theme, verbatims: selected.slice(0, 5).map(v => v.text) };
+    // });
   } else {
     // Fallback: derive themes from top_issues / top_praises
     const allThemes = new Map<string, { count: number; score: number }>();
