@@ -145,6 +145,7 @@ export const ActionPlanMultiObjective: React.FC<Props> = ({
 
   return (
     <div className="space-y-5">
+      <div className="h-px w-full bg-slate-200 dark:bg-slate-800" />
       <div className="flex flex-wrap gap-2 pb-1">
         {tabs.map((tab, i) => {
           const isActive = i === activeIndex;
@@ -163,13 +164,13 @@ export const ActionPlanMultiObjective: React.FC<Props> = ({
                 }
               `}
             >
-              {tab.allDone ? (
+              {/* {tab.allDone ? (
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-500">
                   <Check className="h-3 w-3 text-white" strokeWidth={3} />
                 </span>
               ) :  (
                 <span className="text-base leading-none">⏳</span>
-              ) }
+              ) } */}
 
               <span
                 className="h-2 w-2 shrink-0 rounded-full"
@@ -194,7 +195,9 @@ export const ActionPlanMultiObjective: React.FC<Props> = ({
         })}
       </div>
 
-      <div className="border border-gray-200 dark:border-slate-700 rounded-xl px-5 py-4">
+      <div className="h-px w-full bg-slate-200 dark:bg-slate-800" />
+
+      {/* <div className="border border-gray-200 dark:border-slate-700 rounded-xl px-5 py-4">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-semibold uppercase tracking-widest text-gray-500 dark:text-slate-500">
             {t("dashboard.planProgress")}
@@ -220,9 +223,9 @@ export const ActionPlanMultiObjective: React.FC<Props> = ({
             style={{ width: `${pct}%`, background: tabColor }}
           />
         </div>
-      </div>
+      </div> */}
 
-      <div className="space-y-3">
+      <div className="space-y-3 pt-1">
         {displayedActions.length === 0 ? (
           <div className="text-center py-10 text-gray-400 dark:text-slate-500 text-sm">
             {t("dashboard.noActions")}
@@ -238,17 +241,13 @@ export const ActionPlanMultiObjective: React.FC<Props> = ({
             return (
               <div
                 key={idx}
-                onClick={() =>
-                  activeObj.id && onToggleAction(activeObj.id, idx)
-                }
+                // onClick={() =>
+                //   activeObj.id && onToggleAction(activeObj.id, idx)
+                // }
                 style={{ borderLeftColor: cfg.borderColor }}
-                className={`flex items-start gap-4 px-4 py-4 rounded-xl border border-gray-200 dark:border-slate-800 border-l-4 cursor-pointer transition-colors ${
-                  isDone
-                    ? "bg-gray-50 dark:bg-slate-800/40"
-                    : "bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800/40"
-                }`}
+                className={`flex items-start gap-4 px-4 py-4 rounded-xl border border-gray-200 dark:border-slate-800 border-l-4  transition-colors `}
               >
-                <div
+                {/* <div
                   className={`w-6 h-6 rounded-md flex-shrink-0 flex items-center justify-center mt-0.5 border-2 transition-all ${
                     isDone
                       ? "border-transparent"
@@ -257,15 +256,11 @@ export const ActionPlanMultiObjective: React.FC<Props> = ({
                   style={isDone ? { background: tabColor } : {}}
                 >
                   {isDone && <Check className="w-3.5 h-3.5 text-white" />}
-                </div>
+                </div> */}
 
                 <div className="flex-1 min-w-0">
                   <p
-                    className={`text-sm font-semibold leading-snug ${
-                      isDone
-                        ? "line-through text-gray-400 dark:text-slate-500"
-                        : "text-gray-900 dark:text-slate-100"
-                    }`}
+                    className={`text-sm font-semibold leading-snug `}
                   >
                     {text}
                   </p>

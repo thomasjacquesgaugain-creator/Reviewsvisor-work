@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { parseISO, subDays, isAfter, isBefore } from "date-fns";
-import {  CheckCircle2 ,Circle } from "lucide-react";
   import { Trans } from "react-i18next";
 import {
   Accordion,
@@ -135,6 +134,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { KeyTakeawaysPanel } from "@/components/dashboard/KeyTakeawaysPanel";
 import { EffortMatrix } from "@/components/analysis/recommendation/EffortMatrix";
 import { ActionPlanMultiObjective } from "@/components/analysis/recommendation/ActionPlanMultiObjective";
+import { OperationalChecklistMultiObjective } from "@/components/analysis/recommendation/OperationalChecklistMultiObjective";
 import { analyzeRootCauses } from "@/utils/rootCauseAnalysis";
 import { RecommendationsSection } from "@/components/RecommendationsSection";
 import { getCurrentEstablishment } from "@/services/establishments";
@@ -292,7 +292,7 @@ const Dashboard = () => {
   const [establishmentCreatedAt, setEstablishmentCreatedAt] = useState<
     string | null
   >(null);
-   const { objectives, fetchObjectives, toggleAction } = useSmartStore();
+  const { objectives, fetchObjectives, toggleAction } = useSmartStore();
 
   useEffect(() => {
   if (!activeEstablishmentId) return;
@@ -6444,19 +6444,21 @@ const activeObjective =
 
                   {/* Checklist opérationnelle */}
                   <Card
-                    className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
+                    className="relative rounded-[18px] cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
                     onClick={() =>
                       setOpenCard(openCard === "checklist" ? null : "checklist")
                     }
                   >
                     <CardHeader className="relative text-center">
-                      <div className="flex flex-col items-center mb-2">
-                        <ClipboardList className="w-5 h-5 text-emerald-600 mb-2" />
-                        <span className="text-lg font-semibold">
+                      <div className="flex flex-col items-center">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-300">
+                        <List className="w-5 h-5 " />
+                        </div>
+                        <span className="text-[17px] font-[700]  text-slate-900 dark:text-slate-100">
                           {t("dashboard.operationalChecklist")}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-slate-300">
+                      <p className="text-[12px] text-slate-500 dark:text-slate-400">
                         {t("dashboard.concreteActions")}
                       </p>
                       <Button
@@ -6493,7 +6495,18 @@ const activeObjective =
                           <span className="text-[12px] text-slate-500 dark:text-slate-400">{t("dashboard.concreteTasks")}</span>
                         </div>
                       </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setOpenCard(null)}
+                        className="absolute right-3 top-3 h-8 w-8 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                        aria-label={t("common.close", "Close")}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </CardHeader>
+
                     <CardContent>
                       {orderedObjectives.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -6643,196 +6656,46 @@ const activeObjective =
                   </Card>
                 )} */}
                 {openCard === "checklist" && (
-                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
-                    <CardHeader className="relative text-left">
-                      <div className="flex items-center gap-2 mb-2">
-                        <ClipboardList className="w-5 h-5 text-emerald-600" />
-                        <span className="text-lg font-semibold dark:text-slate-100">
-                          {t("dashboard.operationalChecklist")}
-                        </span>
+                  <Card className="mb-8 rounded-[18px] border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+                    <CardHeader className="relative border-slate-200 pb-4 text-left dark:border-slate-800">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                            <List className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                              {t("dashboard.operationalChecklist")}
+                            </span>
+                            <p className="text-[12px] text-slate-500 dark:text-slate-400">
+                              {t("dashboard.routineToFollow")}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setOpenCard(null)}
+                          className="h-8 w-8 shrink-0 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                          aria-label={t("common.close", "Close")}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
 
-                      <p className="text-sm text-gray-600 dark:text-slate-300">
-                        {t("dashboard.concreteActions")}
-                      </p>
                     </CardHeader>
 
-
-                    <CardContent>
-                      {!activeObjective ? (
-                        <div className="text-center py-8 text-gray-500 dark:text-slate-400">
-                          <p className="text-sm">
-                            {t("recommendations.smart.noSmartActions")}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-8">
-                          {(() => {
-                            const objective = activeObjective;
-
-                            const lang = i18n.language.startsWith("fr")
-                              ? "fr"
-                              : "en";
-
-                            const actions = Array.isArray(objective.actions)
-                              ? objective.actions
-                              : [];
-
-                            const grouped = {
-                              daily: actions.filter(
-                                (a) => a.frequency === "daily"
-                              ),
-                              weekly: actions.filter(
-                                (a) => a.frequency === "weekly"
-                              ),
-                              monthly: actions.filter(
-                                (a) =>
-                                  a.frequency === "once" ||
-                                  a.frequency === "monthly"
-                              ),
-                            };
-
-                            const totalActions = actions.length;
-
-                            const completedActions = actions.filter(
-                              (a) => a.completed
-                            ).length;
-
-                            const progress =
-                              totalActions > 0
-                                ? Math.round(
-                                    (completedActions / totalActions) * 100
-                                  )
-                                : 0;
-
-                            const problemText =
-                              typeof objective.problem === "string"
-                                ? JSON.parse(objective.problem)?.[lang]
-                                : objective.problem?.[lang];
-
-                            const paretoCauseText =
-                              typeof objective.pareto_cause === "string"
-                                ? JSON.parse(objective.pareto_cause)?.[lang]
-                                : objective.pareto_cause?.[lang];
-
-                            return (
-                              <div
-                                key={objective.id}
-                                className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 bg-white dark:bg-slate-900"
-                              >
-                                {/* Objective header */}
-                                <div className="mb-5">
-                                  <div className="flex items-center justify-between gap-4 mb-2">
-                                    <div>
-                                      <h3 className="font-semibold text-gray-900 dark:text-slate-100">
-                                        {problemText ||
-                                          "SMART Objective"}
-                                      </h3>
-
-                                      {paretoCauseText && (
-                                        <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-                                          {t("dashboard.relatedIssue")} :
-                                          {" "}
-                                          {paretoCauseText}
-                                        </p>
-                                      )}
-                                    </div>
-
-                                    <Badge className="bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/60">
-                                      {completedActions}/{totalActions}
-                                    </Badge>
-                                  </div>
-                                </div>
-
-                                {/* Sections */}
-                                <div className="space-y-6">
-                                  {Object.entries(grouped).map(
-                                    ([frequency, list]) => {
-                                      if (!list.length) return null;
-
-                                      return (
-                                        <div key={frequency}>
-                                          <h4 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-slate-400 mb-3">
-                                            {t(`dashboard.${frequency}`)}
-                                          </h4>
-
-                                          <div className="space-y-2">
-                                            {list.map((action, index) => {
-                                              const actionText =
-                                                typeof action.text === "string"
-                                                  ? JSON.parse(action.text)?.[
-                                                      lang
-                                                    ]
-                                                  : action.text?.[lang];
-
-                                              const realIndex =
-                                                actions.findIndex(
-                                                  (a) =>
-                                                    JSON.stringify(a.text) ===
-                                                    JSON.stringify(action.text)
-                                                );
-
-                                              return (
-                                                <div
-                                                  key={`${objective.id}-${index}`}
-                                                  onClick={() =>
-                                                    toggleAction(
-                                                      objective.id!,
-                                                      realIndex
-                                                    )
-                                                  }
-                                                  className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-all"
-                                                >
-                                                  {/* Checkbox */}
-                                                  <div className="mt-0.5 shrink-0">
-                                                    {action.completed ? (
-                                                      <CheckCircle2 className="w-5 h-5 text-green-600" />
-                                                    ) : (
-                                                      <Circle className="w-5 h-5 text-gray-300 dark:text-slate-500" />
-                                                    )}
-                                                  </div>
-
-                                                  {/* Text */}
-                                                  <div className="flex-1">
-                                                    <p
-                                                      className={`text-sm leading-relaxed ${
-                                                        action.completed
-                                                          ? "line-through text-gray-400 dark:text-slate-500"
-                                                          : "text-gray-800 dark:text-slate-100"
-                                                      }`}
-                                                    >
-                                                      {actionText}
-                                                    </p>
-                                                  </div>
-
-                                                  {/* Frequency badge */}
-                                                  <Badge
-                                                    className={
-                                                      frequency === "daily"
-                                                        ? "bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-900/60"
-                                                        : frequency === "weekly"
-                                                          ? "bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/60"
-                                                          : frequency === "monthly"
-                                                            ? "bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-900/60"
-                                                            : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700"
-                                                    }
-                                                  >
-                                                    {t(`dashboard.${frequency}`)}
-                                                  </Badge>
-                                                </div>
-                                              );
-                                            })}
-                                          </div>
-                                        </div>
-                                      );
-                                    }
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      )}
+                    <CardContent className="space-y-6 px-5 py-5 sm:px-6">
+                      <OperationalChecklistMultiObjective
+                        objectives={orderedObjectives}
+                        language={i18n.language}
+                        onToggleAction={(objectiveId, actionIndex) =>
+                          toggleAction(objectiveId, actionIndex)
+                        }
+                        totalReviews={displayTotalAnalyzed ?? 0}
+                        t={t}
+                      />
                     </CardContent>
                   </Card>
                 )}
