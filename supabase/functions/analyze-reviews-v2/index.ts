@@ -1,23 +1,4 @@
-/**
- * Edge Function: analyze-reviews-v2
- * Version: v2-auto-universal
- *
- * Pipeline d'analyse en 2 passes :
- * - PASS A: Détection businessType + extraction thèmes universels + thèmes métier (si confidence >= 75)
- * - PASS B: Recommandations + reply templates
- *
- * Format de sortie JSON strict validé par Zod
- *
- * Changes vs previous version:
- * - CANONICAL_THEME_KEYS dictionary: keys are resolved from a hardcoded map,
- *   AI-generated keys are never trusted → consistent keys across re-runs
- * - normalizeSentiment(): sentiment values are always English (positive/mixed/negative)
- *   even on FR items — AI translations like "positif"/"mixte"/"négatif" are normalized
- * - enforceKeys() updated: uses resolveThemeKey() + normalizeSentiment() on every item
- * - getLanguageInstruction() updated: explicitly tells AI not to translate sentiment
- */
-
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import "https://deno.land/x/dotenv@v3.2.2/load.ts";
 
 type BusinessType =
@@ -51,6 +32,56 @@ type IssueSummary = {
   count?: number;
 };
 
+// ─── ISHIKAWA ────────────────────────────────────────────────────────────────
+
+const ISHIKAWA_CATEGORY_KEYS = ['manpower', 'method', 'machine', 'material', 'environment'] as const;
+type IshikawaCategoryKey = typeof ISHIKAWA_CATEGORY_KEYS[number];
+
+const ISHIKAWA_NORMALIZE: Record<string, IshikawaCategoryKey> = {
+  manpower: 'manpower', method: 'method', machine: 'machine', material: 'material', environment: 'environment',
+  people: 'manpower', human: 'manpower', staff: 'manpower', workforce: 'manpower', personnel: 'manpower',
+  process: 'method', procedure: 'method', workflow: 'method', system: 'method',
+  equipment: 'machine', machinery: 'machine', tools: 'machine', technology: 'machine',
+  materials: 'material', supplies: 'material', ingredients: 'material', inputs: 'material', resources: 'material',
+  surroundings: 'environment', space: 'environment', location: 'environment', place: 'environment',
+  facility: 'environment', facilities: 'environment', setting: 'environment',
+  humain: 'manpower', humains: 'manpower', main_oeuvre: 'manpower',
+  méthode: 'method', methode: 'method', machines: 'machine',
+  matériau: 'material', materiau: 'material', matériaux: 'material', materiaux: 'material',
+  matière: 'material', matiere: 'material',
+  milieu: 'environment', environnement: 'environment',
+};
+
+function normalizeIshikawaKey(raw: unknown): IshikawaCategoryKey | null {
+  const s = String(raw ?? '').toLowerCase().trim().replace(/[\s-]/g, '_');
+  const result = ISHIKAWA_NORMALIZE[s] ?? ISHIKAWA_NORMALIZE[s.replace(/_/g, '')] ?? null;
+  if (!result) console.warn(`[normalizeIshikawaKey] Unrecognized category_key "${raw}" — dropping.`);
+  return result;
+}
+
+function enforceRootCauses(rootCauses: any[]): any[] {
+  if (!Array.isArray(rootCauses)) return [];
+  const seen = new Set<IshikawaCategoryKey>();
+  const result: any[] = [];
+
+  for (const entry of rootCauses) {
+    const key = normalizeIshikawaKey(entry?.category_key);
+    if (!key) continue;
+    if (seen.has(key)) { console.warn(`[enforceRootCauses] Duplicate "${key}" — dropping.`); continue; }
+    seen.add(key);
+    result.push({ ...entry, category_key: key, label: key });
+  }
+
+  for (const key of ISHIKAWA_CATEGORY_KEYS) {
+    if (!seen.has(key)) {
+      result.push({ label: key, category: key, category_key: key, importance: 'monitor', confidence: 0, causes: [], evidence: [] });
+    }
+  }
+  return result;
+}
+
+// ─── CORS / HELPERS ──────────────────────────────────────────────────────────
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
@@ -66,24 +97,26 @@ function json(body: unknown, status = 200) {
 
 function env(key: string, fallback = "") {
   return Deno.env.get(key) ??
-         (key === "SUPABASE_URL" ? Deno.env.get("SB_URL") : undefined) ??
-         (key === "SUPABASE_SERVICE_ROLE_KEY" ? Deno.env.get("SB_SERVICE_ROLE_KEY") : undefined) ??
-         fallback;
+    (key === "SUPABASE_URL" ? Deno.env.get("SB_URL") : undefined) ??
+    (key === "SUPABASE_SERVICE_ROLE_KEY" ? Deno.env.get("SB_SERVICE_ROLE_KEY") : undefined) ??
+    fallback;
 }
 
-const SUPABASE_URL = env("SB_URL");
-const SERVICE_ROLE = env("SB_SERVICE_ROLE_KEY");
-const OPENAI_KEY   = env("OPENAI_API_KEY", "");
-const APP_URL = env("APP_URL", "https://reviewsvisor.com");
+const SUPABASE_URL  = env("SB_URL");
+const SERVICE_ROLE  = env("SB_SERVICE_ROLE_KEY");
+const OPENAI_KEY    = env("OPENAI_API_KEY", "");
+const APP_URL       = env("APP_URL", "https://reviewsvisor.com");
 
 const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false },
 });
 
+// ─── LANGUAGE / SLUG ─────────────────────────────────────────────────────────
+
 function normalizeLanguage(code: string | null | undefined): OutputLanguage {
-  const normalized = String(code || '').trim().toLowerCase();
-  if (normalized.startsWith('en')) return 'en';
-  if (normalized.startsWith('fr')) return 'fr';
+  const n = String(code || '').trim().toLowerCase();
+  if (n.startsWith('en')) return 'en';
+  if (n.startsWith('fr')) return 'fr';
   return 'fr';
 }
 
@@ -101,167 +134,97 @@ function slugify(text: string): string {
     .trim();
 }
 
-// ─── CANONICAL KEY DICTIONARY ────────────────────────────────────────────────
-// Single source of truth for theme keys.
-// AI-generated keys are NEVER trusted — always resolved through this map.
-//
-// ORDERING RULE — specific before generic, always:
-//   "service_quality" must be listed BEFORE "service"
-//   "food_presentation" must be listed BEFORE "food_quality"
-//   "food_quality" must be listed BEFORE "food"
-// The resolver picks the longest matching variant, so ordering here is a
-// documentation aid — but keep specific entries above generic ones anyway
-// for readability and to avoid future mistakes.
-//
-// When a theme falls through to slugify(), a console.warn is emitted.
-// Use those logs to grow this dictionary over time.
+// ─── CANONICAL THEME KEYS ────────────────────────────────────────────────────
 
 const CANONICAL_THEME_KEYS: Record<string, string[]> = {
-  // ── Universal themes ──────────────────────────────────────────────────────
-  cleanliness:            ['cleanliness', 'clean', 'hygiene', 'hygiène', 'propreté', 'proprete', 'sanitation'],
-  price:                  ['price', 'pricing', 'cost', 'value for money', 'prix', 'tarif', 'tarifs', 'rapport qualité prix', 'rapport qualite prix'],
-  wait_time:              ['wait time', 'waiting time', 'attente', "temps d'attente", 'temps attente', 'délai', 'delai', 'queue'],
-  communication:          ['communication', 'responsiveness', 'réactivité', 'reactivite', 'contact'],
-  after_sales:            ['after-sales service', 'after sales service', 'after-sales', 'after sales', 'sav', 'service après vente', 'service apres vente', 'après vente', 'apres vente', 'follow-up'],
-  trust:                  ['trust', 'confiance', 'reliability', 'fiabilité', 'fiabilite', 'honesty', 'honnêteté', 'honnetete'],
-
-  // ── Restaurant — price variants (specific before generic price) ───────────
-  service_price:          ['service price', 'service cost', 'service charge', 'prix du service', 'coût du service', 'cout du service'],
-  food_price:             ['food price', 'food cost', 'prix des plats', 'prix de la nourriture', 'coût des plats', 'cout des plats'],
-  drink_price:            ['drink price', 'drinks price', 'prix des boissons', 'prix des drinks'],
-
-  // ── Restaurant — food variants (specific before generic food_quality) ─────
-  food_presentation:      ['food presentation', 'dish presentation', 'plating', 'dressage', 'présentation des plats', 'presentation des plats', 'présentation plat'],
-  food_temperature:       ['food temperature', 'cold dish', 'cold food', 'cold dishes', 'plat froid', 'plats froids', 'nourriture froide', 'température des plats', 'temperature des plats'],
-  food_quality:           ['food quality', 'cuisine quality', 'dish quality', 'qualité des plats', 'qualite des plats', 'qualité cuisine', 'qualite cuisine', 'taste', 'flavor', 'flavour', 'goût', 'gout', 'food', 'dish', 'dishes', 'meal', 'cuisine', 'plats'],
-  food_variety:           ['food variety', 'menu variety', 'menu choice', 'variété des plats', 'variete des plats', 'choix des plats'],
-
-  // ── Restaurant — service variants (specific before generic service) ────────
-  service_speed:          ['service speed', 'slow service', 'fast service', 'speed of service', 'vitesse du service', 'rapidité du service', 'rapidite du service', 'service lent', 'service rapide'],
-  service_quality:        ['service quality', 'quality of service', 'qualité du service', 'qualite du service'],
-  service_attitude:       ['service attitude', 'rude staff', 'unfriendly staff', 'rude waiter', 'impoli', 'attitude du personnel', 'comportement personnel', 'unfriendly'],
-  service:                ['service', 'staff', 'server', 'waiter', 'personnel', 'équipe', 'equipe', 'team', 'serveur', 'serveuse'],
-
-  // ── Restaurant — other ────────────────────────────────────────────────────
-  noise_level:            ['noise level', 'noise', 'noisy', 'loud', 'bruit', 'bruyant', 'niveau sonore'],
-  ambiance:               ['ambiance', 'atmosphere', 'décor', 'decor', 'vibe', 'setting', 'environment', 'cadre'],
-  portions:               ['portions', 'portion size', 'quantity', 'quantité', 'quantite'],
-  menu_variety:           ['menu variety', 'menu', 'choice', 'options', 'variety', 'variété', 'variete', 'selection', 'carte'],
-  reservation:            ['reservation', 'booking', 'réservation', 'table booking'],
-
-  // ── Salon coiffure — specific before generic ──────────────────────────────
-  hair_color_result:      ['color result', 'colour result', 'résultat couleur', 'resultat couleur', 'résultat coloration', 'resultat coloration', 'color outcome'],
-  hair_cut_result:        ['haircut result', 'cut result', 'résultat coupe', 'resultat coupe', 'résultat de coupe'],
-  hair_quality:           ['hair quality', 'hair condition', 'qualité des cheveux', 'qualite des cheveux', 'état des cheveux', 'etat des cheveux', 'hair result', 'résultat coiffure', 'resultat coiffure', 'hairstyle', 'haircut', 'coupe', 'cut'],
-  colorist:               ['coloring service', 'colouring service', 'color service', 'coloration service', 'highlights', 'balayage', 'teinture', 'coloring', 'colouring', 'coloration', 'couleur'],
-  stylist_skill:          ['stylist skill', 'hairdresser skill', 'stylist expertise', 'technique coiffeur', 'expertise coiffeur', 'savoir-faire coiffeur', 'stylist', 'hairdresser', 'coiffeur', 'coiffeuse', 'skill', 'expertise', 'technique', 'savoir-faire'],
-  appointment:            ['appointment availability', 'prise de rendez-vous', 'appointment', 'availability', 'disponibilité', 'disponibilite', 'rendez-vous', 'rdv', 'schedule', 'booking'],
-
-  // ── Salle de sport — specific before generic ──────────────────────────────
-  equipment_quality:      ['equipment quality', 'machine quality', 'qualité des équipements', 'qualite des equipements', 'qualité des machines', 'qualite des machines', 'état des machines', 'etat des machines'],
-  equipment_variety:      ['equipment variety', 'machine variety', 'variété des équipements', 'variete des equipements', 'choix des machines'],
-  equipment:              ['equipment', 'machines', 'gear', 'matériel', 'materiel', 'appareil', 'appareils', 'équipements', 'equipements'],
-  coaching_quality:       ['coaching quality', 'trainer quality', 'qualité du coaching', 'qualite du coaching', 'qualité des coachs', 'qualite des coachs'],
-  coaching:               ['coaching', 'coach', 'trainer', 'personal trainer', 'instructor', 'entraîneur', 'entraineur', 'cours', 'classes'],
-  facilities:             ['facilities', 'locker room', 'showers', 'vestiaires', 'douches', 'changing room', 'sanitaires'],
-  crowd:                  ['crowd', 'crowded', 'busy', 'affluence', 'monde', 'fréquentation', 'frequentation', 'surpeuplé', 'surpeuple'],
-
-  // ── Institut beauté — specific before generic ─────────────────────────────
-  treatment_result:       ['treatment result', 'résultat soin', 'resultat soin', 'résultat du soin', 'resultat du soin', 'résultat traitement', 'resultat traitement'],
-  treatment_quality:      ['treatment quality', 'qualité du soin', 'qualite du soin', 'qualité des soins', 'qualite des soins', 'qualité traitement', 'treatment', 'soin', 'soins', 'facial', 'massage'],
-  waxing:                 ['waxing', 'epilation', 'épilation', 'hair removal', 'cire'],
-  nail_service:           ['nail service', 'nail art', 'manicure', 'pedicure', 'manucure', 'pédicure', 'pedicure', 'nails', 'nail', 'ongles'],
-
-  // ── Serrurier ─────────────────────────────────────────────────────────────
-  response_time:          ['response time', 'intervention time', 'délai intervention', 'delai intervention', 'rapidité intervention', 'rapidite intervention', 'emergency response', 'urgence'],
-  pricing_clarity:        ['pricing clarity', 'transparent pricing', 'prix transparents', 'transparence prix', 'devis', 'quote', 'invoice', 'facture'],
-  professionalism:        ['professionalism', 'professional', 'professionnalisme', 'sérieux', 'serieux', 'seriousness'],
-
-  // ── Retail chaussures ─────────────────────────────────────────────────────
-  product_variety:        ['product variety', 'product selection', 'stock variety', 'stock', 'choix', 'collection', 'range', 'assortiment'],
-  fit_comfort:            ['fit and comfort', 'fit comfort', 'comfort fit', 'fit', 'comfort', 'confort', 'taille', 'fitting', 'pointure'],
-  staff_knowledge:        ['staff knowledge', 'advice quality', 'knowledgeable staff', 'conseil', 'conseils', 'expertise vendeur'],
+  cleanliness:       ['cleanliness', 'clean', 'hygiene', 'hygiène', 'propreté', 'proprete', 'sanitation'],
+  price:             ['price', 'pricing', 'cost', 'value for money', 'prix', 'tarif', 'tarifs', 'rapport qualité prix', 'rapport qualite prix'],
+  wait_time:         ['wait time', 'waiting time', 'attente', "temps d'attente", 'temps attente', 'délai', 'delai', 'queue'],
+  communication:     ['communication', 'responsiveness', 'réactivité', 'reactivite', 'contact'],
+  after_sales:       ['after-sales service', 'after sales service', 'after-sales', 'after sales', 'sav', 'service après vente', 'service apres vente', 'après vente', 'apres vente', 'follow-up'],
+  trust:             ['trust', 'confiance', 'reliability', 'fiabilité', 'fiabilite', 'honesty', 'honnêteté', 'honnetete'],
+  service_price:     ['service price', 'service cost', 'service charge', 'prix du service', 'coût du service', 'cout du service'],
+  food_price:        ['food price', 'food cost', 'prix des plats', 'prix de la nourriture', 'coût des plats', 'cout des plats'],
+  drink_price:       ['drink price', 'drinks price', 'prix des boissons', 'prix des drinks'],
+  food_presentation: ['food presentation', 'dish presentation', 'plating', 'dressage', 'présentation des plats', 'presentation des plats', 'présentation plat'],
+  food_temperature:  ['food temperature', 'cold dish', 'cold food', 'cold dishes', 'plat froid', 'plats froids', 'nourriture froide', 'température des plats', 'temperature des plats'],
+  food_quality:      ['food quality', 'cuisine quality', 'dish quality', 'qualité des plats', 'qualite des plats', 'qualité cuisine', 'qualite cuisine', 'taste', 'flavor', 'flavour', 'goût', 'gout', 'food', 'dish', 'dishes', 'meal', 'cuisine', 'plats'],
+  food_variety:      ['food variety', 'menu variety', 'menu choice', 'variété des plats', 'variete des plats', 'choix des plats'],
+  service_speed:     ['service speed', 'slow service', 'fast service', 'speed of service', 'vitesse du service', 'rapidité du service', 'rapidite du service', 'service lent', 'service rapide'],
+  service_quality:   ['service quality', 'quality of service', 'qualité du service', 'qualite du service'],
+  service_attitude:  ['service attitude', 'rude staff', 'unfriendly staff', 'rude waiter', 'impoli', 'attitude du personnel', 'comportement personnel', 'unfriendly'],
+  service:           ['service', 'staff', 'server', 'waiter', 'personnel', 'équipe', 'equipe', 'team', 'serveur', 'serveuse'],
+  noise_level:       ['noise level', 'noise', 'noisy', 'loud', 'bruit', 'bruyant', 'niveau sonore'],
+  ambiance:          ['ambiance', 'atmosphere', 'décor', 'decor', 'vibe', 'setting', 'environment', 'cadre'],
+  portions:          ['portions', 'portion size', 'quantity', 'quantité', 'quantite'],
+  menu_variety:      ['menu variety', 'menu', 'choice', 'options', 'variety', 'variété', 'variete', 'selection', 'carte'],
+  reservation:       ['reservation', 'booking', 'réservation', 'table booking'],
+  hair_color_result: ['color result', 'colour result', 'résultat couleur', 'resultat couleur', 'résultat coloration', 'resultat coloration', 'color outcome'],
+  hair_cut_result:   ['haircut result', 'cut result', 'résultat coupe', 'resultat coupe', 'résultat de coupe'],
+  hair_quality:      ['hair quality', 'hair condition', 'qualité des cheveux', 'qualite des cheveux', 'état des cheveux', 'etat des cheveux', 'hair result', 'résultat coiffure', 'resultat coiffure', 'hairstyle', 'haircut', 'coupe', 'cut'],
+  colorist:          ['coloring service', 'colouring service', 'color service', 'coloration service', 'highlights', 'balayage', 'teinture', 'coloring', 'colouring', 'coloration', 'couleur'],
+  stylist_skill:     ['stylist skill', 'hairdresser skill', 'stylist expertise', 'technique coiffeur', 'expertise coiffeur', 'savoir-faire coiffeur', 'stylist', 'hairdresser', 'coiffeur', 'coiffeuse', 'skill', 'expertise', 'technique', 'savoir-faire'],
+  appointment:       ['appointment availability', 'prise de rendez-vous', 'appointment', 'availability', 'disponibilité', 'disponibilite', 'rendez-vous', 'rdv', 'schedule', 'booking'],
+  equipment_quality: ['equipment quality', 'machine quality', 'qualité des équipements', 'qualite des equipements', 'qualité des machines', 'qualite des machines', 'état des machines', 'etat des machines'],
+  equipment_variety: ['equipment variety', 'machine variety', 'variété des équipements', 'variete des equipements', 'choix des machines'],
+  equipment:         ['equipment', 'machines', 'gear', 'matériel', 'materiel', 'appareil', 'appareils', 'équipements', 'equipements'],
+  coaching_quality:  ['coaching quality', 'trainer quality', 'qualité du coaching', 'qualite du coaching', 'qualité des coachs', 'qualite des coachs'],
+  coaching:          ['coaching', 'coach', 'trainer', 'personal trainer', 'instructor', 'entraîneur', 'entraineur', 'cours', 'classes'],
+  facilities:        ['facilities', 'locker room', 'showers', 'vestiaires', 'douches', 'changing room', 'sanitaires'],
+  crowd:             ['crowd', 'crowded', 'busy', 'affluence', 'monde', 'fréquentation', 'frequentation', 'surpeuplé', 'surpeuple'],
+  treatment_result:  ['treatment result', 'résultat soin', 'resultat soin', 'résultat du soin', 'resultat du soin', 'résultat traitement', 'resultat traitement'],
+  treatment_quality: ['treatment quality', 'qualité du soin', 'qualite du soin', 'qualité des soins', 'qualite des soins', 'qualité traitement', 'treatment', 'soin', 'soins', 'facial', 'massage'],
+  waxing:            ['waxing', 'epilation', 'épilation', 'hair removal', 'cire'],
+  nail_service:      ['nail service', 'nail art', 'manicure', 'pedicure', 'manucure', 'pédicure', 'pedicure', 'nails', 'nail', 'ongles'],
+  response_time:     ['response time', 'intervention time', 'délai intervention', 'delai intervention', 'rapidité intervention', 'rapidite intervention', 'emergency response', 'urgence'],
+  pricing_clarity:   ['pricing clarity', 'transparent pricing', 'prix transparents', 'transparence prix', 'devis', 'quote', 'invoice', 'facture'],
+  professionalism:   ['professionalism', 'professional', 'professionnalisme', 'sérieux', 'serieux', 'seriousness'],
+  product_variety:   ['product variety', 'product selection', 'stock variety', 'stock', 'choix', 'collection', 'range', 'assortiment'],
+  fit_comfort:       ['fit and comfort', 'fit comfort', 'comfort fit', 'fit', 'comfort', 'confort', 'taille', 'fitting', 'pointure'],
+  staff_knowledge:   ['staff knowledge', 'advice quality', 'knowledgeable staff', 'conseil', 'conseils', 'expertise vendeur'],
 };
-
-// ─── REVERSE LOOKUP MAP ───────────────────────────────────────────────────────
-// Built once at module load. Maps every variant → canonical key.
 
 const THEME_TO_KEY: Map<string, string> = new Map();
 for (const [key, variants] of Object.entries(CANONICAL_THEME_KEYS)) {
-  for (const variant of variants) {
-    THEME_TO_KEY.set(variant.toLowerCase().trim(), key);
-  }
+  for (const variant of variants) THEME_TO_KEY.set(variant.toLowerCase().trim(), key);
 }
 
-/**
- * Resolves any AI-generated theme string to a stable canonical key.
- *
- * Resolution order:
- *   1. Exact match against THEME_TO_KEY
- *   2. Partial match — sorted by variant length DESC so the most specific
- *      variant always wins over a shorter generic one.
- *   3. slugify() fallback — logs a warning for dictionary growth.
- */
 function resolveThemeKey(theme: string): string {
   const normalized = theme.toLowerCase().trim();
-
-  // 1. Exact match
   const exact = THEME_TO_KEY.get(normalized);
   if (exact) return exact;
 
-  // 2. Partial match — collect ALL matches, pick longest variant
-  const partialMatches: Array<{ key: string; variantLength: number }> = [];
+  const matches: Array<{ key: string; variantLength: number }> = [];
   for (const [variant, key] of THEME_TO_KEY.entries()) {
     if (normalized.includes(variant) || variant.includes(normalized)) {
-      partialMatches.push({ key, variantLength: variant.length });
+      matches.push({ key, variantLength: variant.length });
     }
   }
-
-  if (partialMatches.length > 0) {
-    // Longest variant = most specific match wins
-    partialMatches.sort((a, b) => b.variantLength - a.variantLength);
-    return partialMatches[0].key;
+  if (matches.length > 0) {
+    matches.sort((a, b) => b.variantLength - a.variantLength);
+    return matches[0].key;
   }
 
-  // 3. Fallback: slugify
   const fallback = slugify(theme);
-  console.warn(
-    `[resolveThemeKey] No canonical key for theme "${theme}" → fallback slug: "${fallback}". ` +
-    `Add to CANONICAL_THEME_KEYS to pin this permanently.`
-  );
   return fallback;
 }
 
-// ─── SENTIMENT NORMALIZATION ─────────────────────────────────────────────────
+// ─── SENTIMENT ───────────────────────────────────────────────────────────────
+
 const SENTIMENT_NORMALIZE: Record<string, 'positive' | 'mixed' | 'negative'> = {
-  positive:   'positive',
-  mixed:      'mixed',
-  negative:   'negative',
-  positif:    'positive',
-  positifve:  'positive',
-  mixte:      'mixed',
-  négatif:    'negative',
-  negatif:    'negative',
-  positivo:   'positive',
-  negativo:   'negative',
-  mixto:      'mixed',
+  positive: 'positive', mixed: 'mixed', negative: 'negative',
+  positif: 'positive', positifve: 'positive', mixte: 'mixed',
+  négatif: 'negative', negatif: 'negative', positivo: 'positive',
+  negativo: 'negative', mixto: 'mixed',
 };
 
 function normalizeSentiment(raw: unknown): 'positive' | 'mixed' | 'negative' {
   const s = String(raw ?? '').toLowerCase().trim();
   const result = SENTIMENT_NORMALIZE[s];
-  if (!result) {
-    console.warn(`[normalizeSentiment] Unrecognized sentiment value "${raw}" — defaulting to "mixed".`);
-  }
+  if (!result) console.warn(`[normalizeSentiment] Unrecognized "${raw}" — defaulting to "mixed".`);
   return result ?? 'mixed';
 }
 
-/**
- * Enforces stable keys and normalized sentiment on all bilingual arrays.
- * - Keys resolved from CANONICAL_THEME_KEYS (AI key field ignored)
- * - FR keys always mirrored from EN by index
- * - sentiment normalized to English on ALL items in both EN and FR
- */
 function enforceKeys(bilingual: { en: any[]; fr: any[] }): { en: any[]; fr: any[] } {
   const enItems = Array.isArray(bilingual?.en) ? bilingual.en : [];
   const frItems = Array.isArray(bilingual?.fr) ? bilingual.fr : [];
@@ -270,90 +233,814 @@ function enforceKeys(bilingual: { en: any[]; fr: any[] }): { en: any[]; fr: any[
     ...item,
     key: resolveThemeKey(item.theme ?? ''),
     ...(item.sentiment !== undefined && { sentiment: normalizeSentiment(item.sentiment) }),
+    ...(item.root_causes !== undefined && { root_causes: enforceRootCauses(item.root_causes) }),
   }));
 
   const keyedFr = frItems.map((item, i) => ({
     ...item,
     key: keyedEn[i]?.key ?? resolveThemeKey(item.theme ?? ''),
     ...(item.sentiment !== undefined && { sentiment: normalizeSentiment(item.sentiment) }),
+    ...(item.root_causes !== undefined && { root_causes: enforceRootCauses(item.root_causes) }),
   }));
 
   return { en: keyedEn, fr: keyedFr };
 }
 
-// ─── LOCKED KEYS BUILDER ─────────────────────────────────────────────────────
-/**
- * Builds a theme→key map from previously saved review_insights data.
- * Covers top_issues, top_praises, themes_universal, themes_industry.
- * This map is passed to analyzePassA and injected into the prompt as
- * frozen constraints — the AI cannot change keys that already exist.
- */
+// ─── LOCKED KEYS ─────────────────────────────────────────────────────────────
+
 function buildLockedKeys(existingInsight: any): Record<string, string> {
   const locked: Record<string, string> = {};
-
   const sources = [
     existingInsight?.top_issues?.en,
     existingInsight?.top_praises?.en,
     existingInsight?.themes_universal?.en,
     existingInsight?.themes_industry?.en,
   ];
-
   for (const arr of sources) {
     if (!Array.isArray(arr)) continue;
     for (const item of arr) {
       if (!item?.key) continue;
-
-      // Index by theme display name (original behavior)
-      if (item.theme) {
-        locked[item.theme.toLowerCase().trim()] = item.key;
-      }
+      if (item.theme) locked[item.theme.toLowerCase().trim()] = item.key;
       locked[item.key.toLowerCase().trim()] = item.key;
       const variants = CANONICAL_THEME_KEYS[item.key];
       if (Array.isArray(variants)) {
-        for (const variant of variants) {
-          locked[variant.toLowerCase().trim()] = item.key;
-        }
+        for (const v of variants) locked[v.toLowerCase().trim()] = item.key;
       }
     }
   }
-
   return locked;
 }
 
-function getUniversalThemes(): { en: string[]; fr: string[] } {
+// ─── MISC HELPERS ────────────────────────────────────────────────────────────
+
+function getUniversalThemes() {
   return {
     en: ['Cleanliness', 'Price', 'Wait Time', 'Communication', 'After-sales Service', 'Trust'],
     fr: ['Propreté', 'Prix', 'Attente', 'Communication', 'SAV', 'Confiance'],
   };
 }
 
-function getFallbackSummaryOneLiner(establishmentName: string, reviewCount: number): { en: string; fr: string } {
+// ─── SECTOR-SPECIFIC THEME HINTS ─────────────────────────────────────────────
+// Used in Pass A to tell the model what kinds of industry-specific themes to
+// look for per business type, and more importantly what themes are meaningful
+// enough to surface in top_issues / top_strength.
+
+const SECTOR_THEME_HINTS: Record<BusinessType, { en: string[]; fr: string[] }> = {
+  restaurant: {
+    en: ['Food Quality', 'Food Temperature', 'Food Presentation', 'Portions', 'Food Variety',
+         'Service Speed', 'Service Attitude', 'Service Quality', 'Noise Level', 'Ambiance',
+         'Food Price', 'Drink Price', 'Reservation'],
+    fr: ['Qualité des plats', 'Température des plats', 'Présentation des plats', 'Portions', 'Variété des plats',
+         'Rapidité du service', 'Attitude du personnel', 'Qualité du service', 'Niveau sonore', 'Ambiance',
+         'Prix des plats', 'Prix des boissons', 'Réservation'],
+  },
+  salon_coiffure: {
+    en: ['Hair Quality', 'Hair Cut Result', 'Hair Color Result', 'Stylist Skill', 'Colorist',
+         'Appointment', 'Service Price', 'Service Quality', 'Service Attitude'],
+    fr: ['Qualité des cheveux', 'Résultat de coupe', 'Résultat coloration', 'Compétence du coiffeur', 'Coloration',
+         'Rendez-vous', 'Prix du service', 'Qualité du service', 'Attitude du personnel'],
+  },
+  salle_sport: {
+    en: ['Equipment Quality', 'Equipment Variety', 'Coaching Quality', 'Coaching', 'Facilities',
+         'Crowd', 'Cleanliness', 'Service Price'],
+    fr: ['Qualité des équipements', 'Variété des équipements', 'Qualité du coaching', 'Coaching', 'Vestiaires',
+         'Affluence', 'Propreté', 'Prix du service'],
+  },
+  serrurier: {
+    en: ['Response Time', 'Pricing Clarity', 'Professionalism', 'Trust', 'After-sales Service', 'Communication'],
+    fr: ['Délai d\'intervention', 'Transparence des prix', 'Professionnalisme', 'Confiance', 'SAV', 'Communication'],
+  },
+  retail_chaussures: {
+    en: ['Product Variety', 'Fit & Comfort', 'Staff Knowledge', 'Service Attitude', 'Price', 'Cleanliness'],
+    fr: ['Variété des produits', 'Confort et taille', 'Conseil vendeur', 'Attitude du personnel', 'Prix', 'Propreté'],
+  },
+  institut_beaute: {
+    en: ['Treatment Quality', 'Treatment Result', 'Waxing', 'Nail Service', 'Service Price',
+         'Service Attitude', 'Appointment', 'Cleanliness'],
+    fr: ['Qualité des soins', 'Résultat du soin', 'Épilation', 'Manucure / Ongles', 'Prix du service',
+         'Attitude du personnel', 'Rendez-vous', 'Propreté'],
+  },
+  autre: {
+    en: ['Service Quality', 'Service Attitude', 'Price', 'Communication', 'Professionalism', 'Wait Time'],
+    fr: ['Qualité du service', 'Attitude du personnel', 'Prix', 'Communication', 'Professionnalisme', 'Attente'],
+  },
+};
+
+function getFallbackSummaryOneLiner(name: string, count: number) {
   return {
-    en: `Analysis of ${reviewCount} reviews for ${establishmentName}`,
-    fr: `Analyse de ${reviewCount} avis pour ${establishmentName}`,
-  }; 
+    en: `Analysis of ${count} reviews for ${name}`,
+    fr: `Analyse de ${count} avis pour ${name}`,
+  };
 }
 
 function normalizeIssues(raw: unknown): IssueSummary[] {
   if (!Array.isArray(raw)) return [];
-  return raw
-    .map((item) => {
-      if (!item || typeof item !== "object") return null;
-      const issue = item as Record<string, unknown>;
-      const theme = typeof issue.theme === "string" ? issue.theme.trim() : "";
-      if (!theme) return null;
-      const count = typeof issue.count === "number"
-        ? issue.count
-        : typeof issue.count === "string"
-          ? Number(issue.count)
-          : undefined;
-      return {
-        theme,
-        count: Number.isFinite(count as number) ? (count as number) : undefined,
-      };
-    })
-    .filter((item): item is IssueSummary => item !== null);
+  return raw.map((item) => {
+    if (!item || typeof item !== "object") return null;
+    const issue = item as Record<string, unknown>;
+    const theme = typeof issue.theme === "string" ? issue.theme.trim() : "";
+    if (!theme) return null;
+    const count = typeof issue.count === "number" ? issue.count
+      : typeof issue.count === "string" ? Number(issue.count) : undefined;
+    return { theme, count: Number.isFinite(count as number) ? (count as number) : undefined };
+  }).filter((item): item is IssueSummary => item !== null);
 }
+
+function computeStats(rows: ReviewRow[]) {
+  const ratings = rows.map(r => r.rating ?? 0).filter(n => n > 0);
+  const total = rows.length;
+  const avg = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
+  const pos = rows.filter(r => (r.rating ?? 0) >= 4).length;
+  const neg = rows.filter(r => (r.rating ?? 0) <= 2).length;
+  const by_rating: Record<string, number> = {};
+  for (let i = 1; i <= 5; i++) by_rating[i] = rows.filter(r => (r.rating ?? 0) === i).length;
+  return {
+    total, by_rating,
+    positive_pct: total ? Math.round((pos / total) * 100) : 0,
+    negative_pct: total ? Math.round((neg / total) * 100) : 0,
+    overall: avg,
+  };
+}
+
+function detectBusinessType(
+  name: string,
+  googlePlacesTypes?: string[] | null,
+  reviewsTexts?: string[],
+): { type: BusinessType; confidence: number; candidates: Array<{ type: BusinessType; confidence: number }>; source: 'places' | 'keywords' | 'manual' } {
+  const combinedText = `${name} ${(reviewsTexts || []).join(' ')}`.toLowerCase();
+
+  const placesMapping: Record<string, BusinessType> = {
+    restaurant: 'restaurant', food: 'restaurant', cafe: 'restaurant',
+    hair_care: 'salon_coiffure', beauty_salon: 'salon_coiffure',
+    gym: 'salle_sport', health: 'salle_sport',
+    locksmith: 'serrurier', shoe_store: 'retail_chaussures', spa: 'institut_beaute',
+  };
+
+  const keywords: Record<BusinessType, string[]> = {
+    restaurant:       ['restaurant', 'diner', 'bistro', 'brasserie', 'cafe', 'bar', 'pizzeria', 'burger', 'sushi', 'cuisine', 'eat', 'meal', 'dish'],
+    salon_coiffure:   ['hairdresser', 'hair stylist', 'salon', 'barber', 'hair', 'coloring', 'cut', 'hairstyle'],
+    salle_sport:      ['gym', 'fitness', 'sport', 'bodybuilding', 'crossfit', 'yoga', 'coach'],
+    serrurier:        ['locksmith', 'locksmith service', 'repair', 'key', 'lock', 'emergency'],
+    retail_chaussures:['shoe', 'shoes', 'sneaker', 'sneakers', 'store', 'shop'],
+    institut_beaute:  ['beauty institute', 'beauty', 'esthetic', 'care', 'massage', 'hair removal'],
+    autre:            [],
+  };
+
+  if (googlePlacesTypes?.length) {
+    for (const t of googlePlacesTypes) {
+      const mapped = placesMapping[t.toLowerCase().replace(/\s+/g, '_')];
+      if (mapped) return { type: mapped, confidence: 90, candidates: [{ type: mapped, confidence: 90 }], source: 'places' };
+    }
+  }
+
+  const scores: Record<BusinessType, number> = {
+    restaurant: 0, salon_coiffure: 0, salle_sport: 0, serrurier: 0,
+    retail_chaussures: 0, institut_beaute: 0, autre: 0,
+  };
+
+  Object.entries(keywords).forEach(([type, words]) => {
+    words.forEach(word => {
+      if (combinedText.includes(word)) scores[type as BusinessType] += name.toLowerCase().includes(word) ? 3 : 1;
+    });
+  });
+
+  const sorted = Object.entries(scores)
+    .filter(([t]) => t !== 'autre')
+    .map(([type, score]) => ({ type: type as BusinessType, score }))
+    .sort((a, b) => b.score - a.score);
+
+  if (sorted[0].score === 0) return { type: 'autre', confidence: 0, candidates: [], source: 'keywords' };
+
+  const top = sorted[0];
+  const confidence = Math.min(100, Math.round((top.score / 10) * 100));
+  const candidates = sorted
+    .filter(s => s.score > 0).slice(0, 3)
+    .map(s => ({ type: s.type, confidence: Math.min(100, Math.round((s.score / 10) * 100)) }));
+
+  return { type: top.type, confidence, candidates, source: 'keywords' };
+}
+
+// ─── OPENAI CALL WRAPPER ─────────────────────────────────────────────────────
+
+async function callOpenAI(messages: any[], temperature = 0.2, model = "gpt-4o-mini"): Promise<any | null> {
+  if (!OPENAI_KEY) return null;
+  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "content-type": "application/json", "authorization": `Bearer ${OPENAI_KEY}` },
+    body: JSON.stringify({
+      model,
+      temperature,
+      response_format: { type: "json_object" },
+      messages,
+    }),
+  });
+  const data = await resp.json();
+  const txt = data.choices?.[0]?.message?.content ?? "{}";
+  try {
+    return JSON.parse(txt);
+  } catch (err) {
+    return null;
+  }
+}
+
+// ─── SHARED CONSTANTS ────────────────────────────────────────────────────────
+
+const SYSTEM_RULES = `OUTPUT RULES (apply to every pass):
+- Respond with valid JSON only — no markdown, no preamble
+- All field names exactly as specified
+- Keys: always English snake_case, identical in EN and FR branches
+- sentiment: always one of "positive" | "mixed" | "negative" — never translate
+- Quotes: verbatim from source reviews, never translated, FR branch = identical to EN branch`;
+
+const BILINGUAL_RULE = `BILINGUAL OUTPUT:
+- Generate both "en" and "fr" branches for every field
+- Translate only: theme names, descriptions, ai_synthesis, what_it_means, first_step, titles, reasons
+- Never translate: keys, sentiment values, count/impact numbers, or any review quotes`;
+
+// ─── BUSINESS TYPE CATEGORY CONTEXT ──────────────────────────────────────────
+// Used in Pass B and Pass C to give the model sector-specific lens for each
+// of the 5M Ishikawa categories. Without this, the model applies generic
+// descriptions that miss the real operational meaning for that business type.
+
+const BUSINESS_CATEGORY_CONTEXT: Record<BusinessType, string> = {
+  restaurant: `
+    manpower    → kitchen staff skill, waiter attentiveness, order accuracy, service attitude, chef consistency
+    method      → order flow, kitchen-to-table handoff, reservation handling, table turn process, billing process
+    machine     → kitchen equipment (ovens, fryers, grills), POS system, coffee machines, refrigeration
+    material    → ingredient freshness, sourcing quality, food temperature on arrival, portion consistency
+    environment → noise level, table spacing, cleanliness, lighting, ambiance, toilet condition`,
+
+  salon_coiffure: `
+    manpower    → stylist technique, colourist skill, consultation quality, punctuality, listening to client requests
+    method      → appointment scheduling, service sequencing, colour process timing, patch test procedures
+    machine     → hairdryers, colour processing equipment, styling tools condition, wash basins
+    material    → product quality (dyes, treatments, shampoos), product freshness, brands used
+    environment → salon cleanliness, waiting area comfort, music/noise level, privacy, ventilation`,
+
+  salle_sport: `
+    manpower    → coach expertise, trainer attentiveness, staff helpfulness, class instructor quality
+    method      → class scheduling, membership onboarding, equipment booking system, peak hour management
+    machine     → cardio machines, weight equipment, condition and maintenance, broken equipment response time
+    material    → consumables (towels, cleaning supplies), water/refreshment availability, product vending
+    environment → cleanliness, locker rooms, showers, temperature, crowding, ventilation`,
+
+  serrurier: `
+    manpower    → technician skill, punctuality, professionalism, honesty, communication clarity
+    method      → dispatch process, quote accuracy, job completion verification, invoicing transparency
+    machine     → tools condition, drilling equipment, key-cutting machines, diagnostic tools
+    material    → lock quality, replacement parts sourcing, parts availability
+    environment → worksite safety, tidiness after job, respect for client property`,
+
+  retail_chaussures: `
+    manpower    → staff product knowledge, fitting assistance quality, sales attitude, availability on floor
+    method      → stock management, returns/exchange process, checkout flow, size availability process
+    machine     → POS system, payment terminals, stock lookup systems
+    material    → shoe quality, stock condition, sizing accuracy, packaging
+    environment → store layout, cleanliness, fitting area comfort, lighting, changing room availability`,
+
+  institut_beaute: `
+    manpower    → therapist technique, consultation depth, hygiene standards, punctuality, aftercare advice quality
+    method      → treatment sequencing, appointment management, consent/patch test process, upsell pressure
+    machine     → treatment equipment condition (lasers, wax heaters, facial machines, steamers)
+    material    → product quality (waxes, creams, serums, oils), product freshness, brand transparency
+    environment → room cleanliness, ambiance, temperature, privacy, music, scent`,
+
+  autre: `
+    manpower    → staff skill, behaviour, attentiveness, communication, professionalism
+    method      → process flow, sequencing, coordination, handoffs, service delivery steps
+    machine     → tools, equipment, devices, technology used to deliver the service
+    material    → input quality, product condition, sourcing, consumables
+    environment → physical space, cleanliness, layout, atmosphere, comfort`,
+};
+
+// ─── PASS A — THEME EXTRACTION ───────────────────────────────────────────────
+// KEY CHANGE: top_issues and top_strength are now ranked from the COMBINED
+// pool of universal + industry themes. The model is explicitly told to prefer
+// sector-specific themes over generic ones when counts are equal, so a
+// restaurant's top issue will be "Food Temperature" not just "Service".
+
+async function analyzePassA(
+  placeName: string,
+  samples: string[],
+  totalReviews: number,
+  businessType: BusinessType,
+  businessTypeConfidence: number,
+  lockedKeys: Record<string, string> = {},
+) {
+  const universal = getUniversalThemes();
+  const sectorHints = SECTOR_THEME_HINTS[businessType] ?? SECTOR_THEME_HINTS['autre'];
+
+  const industryInstruction = businessTypeConfidence >= 45
+    ? `Also extract themes specific to the ${businessType} sector. Prioritise themes from this list if they appear in the reviews:
+   EN: ${sectorHints.en.join(', ')}
+   FR: ${sectorHints.fr.join(', ')}
+   You may add additional sector-specific themes not in the list above if the reviews clearly mention them.`
+    : `Do not invent industry-specific themes — focus on universal themes only.`;
+
+  const lockedKeysBlock = Object.keys(lockedKeys).length > 0
+    ? `LOCKED KEYS — reuse these exact keys for the same themes, no changes allowed:\n` +
+      Object.entries(lockedKeys)
+        .filter(([variant, key]) => variant !== key)
+        .map(([theme, key]) => `  "${theme}" → "${key}"`)
+        .join("\n")
+    : '';
+
+  return callOpenAI([
+    {
+      role: "system",
+      content: `You are a customer review analyst. Extract themes and classify them.
+${SYSTEM_RULES}
+${BILINGUAL_RULE}
+Do NOT include any quotes or evidence in this pass — that is handled separately.`,
+    },
+    {
+      role: "user",
+      content: `Business: ${placeName}
+Type: ${businessType} (confidence: ${businessTypeConfidence}%)
+Total reviews: ${totalReviews}
+
+Reviews (numbered, ${samples.length} total):
+${samples.map((t, i) => `${i + 1}. ${t}`).join("\n")}
+
+${lockedKeysBlock}
+
+COUNTING RULE:
+Go through each review and count how many mention each theme — directly or by implication.
+"count" = exact number of reviews. Do not estimate. Minimum 2 to include a theme.
+
+STEP 1 — EXTRACT ALL THEMES
+Extract two sets of themes (minimum count ≥ 2 for each):
+
+Universal themes — always check these six:
+  EN: ${universal.en.join(', ')}
+  FR: ${universal.fr.join(', ')}
+
+${industryInstruction}
+
+For each theme found: assign sentiment ("positive"|"mixed"|"negative"), importance (0–100), count.
+
+STEP 2 — RANK top_issues AND top_strength FROM THE COMBINED POOL
+top_issues  = 3–5 themes with the most negative mentions, sorted by count desc.
+top_strength = 3–5 themes with the most positive mentions, sorted by count desc.
+
+RANKING RULES FOR top_issues / top_strength:
+  • Draw from ALL themes found in Step 1 — both universal and industry-specific.
+  • When two themes have similar counts, PREFER the more sector-specific one.
+    Example: a restaurant with equal counts for "Service" and "Food Temperature"
+    → "Food Temperature" wins because it is specific and actionable for this sector.
+  • Do NOT default to generic themes ("Service", "Food", "Staff") if a more
+    specific theme ("Service Speed", "Food Quality", "Stylist Skill") has equal
+    or higher count. Generic themes are only used when no specific theme fits.
+  • Each theme in top_issues must have sentiment "negative" or "mixed".
+  • Each theme in top_strength must have sentiment "positive" or "mixed".
+
+Return this exact JSON shape (NO evidence_quotes or evidence arrays — leave them empty []):
+{
+  "top_issues": {
+    "en": [{ "key": "snake_case", "theme": "Name", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }],
+    "fr": [{ "key": "same_key_as_en", "theme": "Nom", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }]
+  },
+  "top_strength": {
+    "en": [{ "key": "snake_case", "theme": "Name", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }],
+    "fr": [{ "key": "same_key_as_en", "theme": "Nom", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }]
+  },
+  "themes_universal": {
+    "en": [{ "key": "snake_case", "theme": "Name", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "what_it_means": "...", "evidence_quotes": [] }],
+    "fr": [{ "key": "same_key_as_en", "theme": "Nom", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "what_it_means": "...", "evidence_quotes": [] }]
+  },
+  "themes_industry": {
+    "en": [{ "key": "snake_case", "theme": "Name", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "what_it_means": "...", "evidence_quotes": [] }],
+    "fr": [{ "key": "same_key_as_en", "theme": "Nom", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "what_it_means": "...", "evidence_quotes": [] }]
+  },
+  "summary": {
+    "en": { "one_liner": "...", "what_customers_love": [{ "theme": "...", "reason": "...", "count": 0 }], "what_customers_hate": [{ "theme": "...", "reason": "...", "count": 0 }] },
+    "fr": { "one_liner": "...", "what_customers_love": [{ "theme": "...", "reason": "...", "count": 0 }], "what_customers_hate": [{ "theme": "...", "reason": "...", "count": 0 }] }
+  }
+}`,
+    },
+  ]);
+}
+
+// ─── PASS B — EVIDENCE EXTRACTION ────────────────────────────────────────────
+// Receives businessType + businessTypeConfidence so the model can judge
+// quote relevance through the correct sector lens.
+
+async function analyzePassB(
+  samples: string[],
+  passAResult: any,
+  businessType: BusinessType,
+  businessTypeConfidence: number,
+) {
+  const themesForQuotes = {
+    themes_universal: passAResult?.themes_universal ?? { en: [], fr: [] },
+    themes_industry:  passAResult?.themes_industry  ?? { en: [], fr: [] },
+    top_strength:     passAResult?.top_strength     ?? { en: [], fr: [] },
+  };
+
+  return callOpenAI([
+    {
+      role: "system",
+      content: `You are extracting verbatim quotes from customer reviews to support pre-identified themes.
+${SYSTEM_RULES}
+
+Business type: ${businessType} (confidence: ${businessTypeConfidence}%)
+Use this context to understand what each theme means for this sector:
+${BUSINESS_CATEGORY_CONTEXT[businessType] ?? BUSINESS_CATEGORY_CONTEXT['autre']}
+
+QUOTE RULES — these are absolute, no exceptions:
+Q1. Every quote must be copied character-for-character from the numbered reviews below.
+    Never paraphrase, shorten, summarize, or construct a quote.
+
+Q2. Never translate quotes — ever.
+    A French review stays French. An English review stays English.
+    The FR branch of every theme must contain the EXACT SAME quotes as the EN branch.
+    Identical. Character for character. Not a translation — a copy.
+
+Q3. Sentiment matching for themes (evidence_quotes):
+    - sentiment="positive" → quotes where reviewer PRAISES this theme only
+    - sentiment="negative" → quotes where reviewer COMPLAINS about this theme only
+    - sentiment="mixed"    → quotes containing BOTH praise AND complaint in the SAME sentence
+                             If no such quote exists → evidence_quotes: []
+                             Do NOT combine one positive + one negative quote
+
+Q4. top_strength evidence → praise quotes only, even from mixed reviews.
+    Extract only the praise clause.
+
+Q5. If no valid verbatim quote exists for a theme → empty array []. Never invent.`,
+    },
+    {
+      role: "user",
+      content: `Reviews (numbered, ${samples.length} total):
+${samples.map((t, i) => `${i + 1}. ${t}`).join("\n")}
+
+Themes to fill with quotes:
+${JSON.stringify(themesForQuotes, null, 2)}
+
+For each theme in themes_universal and themes_industry:
+  → Fill evidence_quotes[] with verbatim quotes matching the theme's sentiment (rule Q3)
+  → EN and FR branches get identical quote arrays
+
+For each item in top_strength:
+  → Fill evidence[] with praise-only verbatim quotes (rule Q4)
+  → EN and FR branches get identical quote arrays
+
+Return this exact JSON shape with the same items, just with quotes added:
+{
+  "themes_universal": { "en": [...], "fr": [...] },
+  "themes_industry":  { "en": [...], "fr": [...] },
+  "top_strength":     { "en": [...], "fr": [...] }
+}`,
+    },
+  ]);
+}
+
+// ─── PASS C — ISHIKAWA ROOT CAUSES ───────────────────────────────────────────
+
+async function analyzePassC(
+  negativeTexts: string[],
+  topIssues: { en: any[]; fr: any[] },
+  businessType: BusinessType,
+  businessTypeConfidence: number,
+): Promise<{ en: any[]; fr: any[] }> {
+
+  if (!topIssues?.en?.length) return topIssues;
+
+  if (!negativeTexts.length) {
+    return {
+      en: topIssues.en.map(i => ({ ...i, root_causes: enforceRootCauses([]) })),
+      fr: topIssues.fr.map(i => ({ ...i, root_causes: enforceRootCauses([]) })),
+    };
+  }
+
+  const issueList = topIssues.en.map((issue: any) => ({
+    key:   issue.key,
+    theme: issue.theme,
+    count: issue.count ?? 0,
+  }));
+
+  const result = await callOpenAI([
+    {
+      role: "system",
+      content: `You are a root cause analyst using the Ishikawa (fishbone / 5M) method.
+${SYSTEM_RULES}
+
+You receive only negative reviews (rating 1–3), each numbered.
+Business type: ${businessType} (confidence: ${businessTypeConfidence}%)
+
+5M CATEGORIES for a ${businessType} business — use these sector-specific definitions:
+${BUSINESS_CATEGORY_CONTEXT[businessType] ?? BUSINESS_CATEGORY_CONTEXT['autre']}
+
+The category_key values you must use are always these exact strings:
+  manpower | method | machine | material | environment
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5-PHASE WORKFLOW — run ALL 5 phases per issue before the next
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PHASE 1 › QUOTE EXTRACTION
+  Scan every numbered review for complaints about the current issue.
+  For each matching review:
+    → Copy the complaint sentence verbatim — character for character
+    → Mixed review (praise + complaint): copy only the complaint clause
+  Store as a private list: [ (review_number, verbatim_quote), … ]
+  This list is the ONLY source allowed in evidence[]. Nothing else. Ever.
+
+PHASE 2 › CATEGORY MAPPING
+  For every Phase 1 quote, ask: which 5M categories does this complaint implicate?
+  Categories are NOT mutually exclusive — one quote can support several.
+  Use the sector-specific 5M definitions above when mapping.
+  Never let the issue name bias the mapping:
+    "Food Quality"   ≠ automatically Material
+    "Service Speed"  ≠ automatically Method only
+    "Wait Time"      ≠ automatically Method only
+
+PHASE 3 › CAUSE GENERATION
+  For each category with at least one supporting quote:
+    → Write a specific operational cause directly inferable from the evidence
+    → Explain WHY, not THAT
+    → Use the sector context: a cause for a ${businessType} should reflect
+       how that specific type of business operates
+
+  ✓ GOOD (specific, evidence-driven, sector-aware):
+      restaurant/method:   "No expediter role to check dish temperature before table delivery"
+      salon/manpower:      "Junior colourists apply permanent dye without senior sign-off"
+      gym/machine:         "Preventive maintenance schedule not followed — broken equipment stays in service"
+
+  ✗ BAD (generic — not allowed without explicit mention in a quote):
+      "Staff lacks training"       ← only if training is literally mentioned
+      "Low quality ingredients"    ← only if freshness/sourcing is literally mentioned
+      "Poor management"            ← never acceptable
+
+  Zero supporting quotes → causes: [], evidence: [], confidence: 0, importance: "monitor"
+
+PHASE 4 › CONFIDENCE SCORING
+  Calibrate strictly to number of unique supporting quotes:
+    0 quotes   → confidence: 0
+    1 quote    → confidence: 35–50
+    2 quotes   → confidence: 50–65
+    3–5 quotes → confidence: 65–80
+    6+ quotes  → confidence: 80–100
+  Never assign confidence ≥ 80 with fewer than 6 quotes.
+  Never assign confidence > 0 with 0 quotes.
+
+PHASE 5 › IMPORTANCE RANKING
+  Per issue, among all 5 categories:
+    most quotes  → importance: "dominant"   (exactly one per issue)
+    any quotes   → importance: "secondary"  (all others with evidence)
+    zero quotes  → importance: "monitor"
+  "dominant" must appear exactly once per issue.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HARD RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  R1. Exactly 5 root_cause objects per issue — one per 5M key.
+  R2. evidence[] = verbatim Phase 1 quotes only. Never paraphrase.
+  R3. One quote may appear in multiple categories if justified.
+  R4. confidence must match the Phase 4 bracket exactly.
+  R5. "dominant" appears exactly once per issue.
+  R6. FR causes[] = translated from EN causes[].
+  R7. FR evidence[] = IDENTICAL to EN evidence[], character for character. NEVER translate.
+  R8. Empty category: causes: [], evidence: [], confidence: 0, importance: "monitor".
+  R9. Never invent a quote. If no valid quote exists → empty array.`,
+    },
+    {
+      role: "user",
+      content: `NEGATIVE REVIEWS (${negativeTexts.length} total, all rated 1–3 stars):
+${negativeTexts.map((t, i) => `${i + 1}. ${t}`).join("\n")}
+
+ISSUES TO ANALYZE:
+${JSON.stringify(issueList, null, 2)}
+
+Run all 5 phases for each issue in order. Do not skip Phase 1.
+
+Return ONLY this JSON — no prose, no markdown:
+{
+  "top_issues": {
+    "en": [
+      {
+        "key":   "<from input — do not change>",
+        "theme": "<from input — do not change>",
+        "count": <from input — do not change>,
+        "root_causes": [
+          {
+            "label":        "manpower",
+            "category":     "manpower",
+            "category_key": "manpower",
+            "importance":   "dominant | secondary | monitor",
+            "confidence":   <0–100>,
+            "causes":   ["<specific operational cause for a ${businessType}>"],
+            "evidence": ["<verbatim quote from reviews above>"]
+          },
+          {
+            "label":        "method",
+            "category":     "method",
+            "category_key": "method",
+            "importance":   "dominant | secondary | monitor",
+            "confidence":   <0–100>,
+            "causes":   ["<specific operational cause>"],
+            "evidence": ["<verbatim quote>"]
+          },
+          {
+            "label":        "machine",
+            "category":     "machine",
+            "category_key": "machine",
+            "importance":   "dominant | secondary | monitor",
+            "confidence":   <0–100>,
+            "causes":   [],
+            "evidence": []
+          },
+          {
+            "label":        "material",
+            "category":     "material",
+            "category_key": "material",
+            "importance":   "dominant | secondary | monitor",
+            "confidence":   <0–100>,
+            "causes":   [],
+            "evidence": []
+          },
+          {
+            "label":        "environment",
+            "category":     "environment",
+            "category_key": "environment",
+            "importance":   "dominant | secondary | monitor",
+            "confidence":   <0–100>,
+            "causes":   [],
+            "evidence": []
+          }
+        ]
+      }
+    ],
+    "fr": [
+      {
+        "key":   "<same as EN>",
+        "theme": "<translated to French>",
+        "count": <same as EN>,
+        "root_causes": [
+          {
+            "label":        "manpower",
+            "category":     "manpower",
+            "category_key": "manpower",
+            "importance":   "<same as EN>",
+            "confidence":   <same as EN>,
+            "causes":   ["<French translation of EN cause>"],
+            "evidence": ["<IDENTICAL verbatim quote as EN — never translate>"]
+          },
+          {
+            "label":        "method",
+            "category":     "method",
+            "category_key": "method",
+            "importance":   "<same as EN>",
+            "confidence":   <same as EN>,
+            "causes":   ["<French translation of EN cause>"],
+            "evidence": ["<IDENTICAL verbatim quote as EN>"]
+          },
+          {
+            "label":        "machine",
+            "category":     "machine",
+            "category_key": "machine",
+            "importance":   "<same as EN>",
+            "confidence":   <same as EN>,
+            "causes":   [],
+            "evidence": []
+          },
+          {
+            "label":        "material",
+            "category":     "material",
+            "category_key": "material",
+            "importance":   "<same as EN>",
+            "confidence":   <same as EN>,
+            "causes":   [],
+            "evidence": []
+          },
+          {
+            "label":        "environment",
+            "category":     "environment",
+            "category_key": "environment",
+            "importance":   "<same as EN>",
+            "confidence":   <same as EN>,
+            "causes":   [],
+            "evidence": []
+          }
+        ]
+      }
+    ]
+  }
+}`,
+    },
+  ]);
+
+  // ── Shape guard: model may return { top_issues:{en,fr} } or {en,fr} directly
+  const raw = result?.top_issues ?? result;
+  if (!raw?.en) {
+    return topIssues;
+  }
+
+  const enItems: any[] = Array.isArray(raw.en) ? raw.en : [];
+  const frItems: any[] = Array.isArray(raw.fr) ? raw.fr : [];
+
+  // ── EN: spread original Pass A fields first — model only contributes root_causes
+  const enforcedEn = topIssues.en.map((orig: any, idx: number) => {
+    const modelItem = enItems[idx];
+    return {
+      ...orig,
+      root_causes: enforceRootCauses(modelItem?.root_causes ?? []),
+    };
+  });
+
+  // ── FR: same pattern + hard-mirror EN evidence[] into FR by category_key
+  const enforcedFr = topIssues.fr.map((orig: any, idx: number) => {
+    const modelItem     = frItems[idx];
+    const enCounterpart = enforcedEn[idx];
+
+    const frCauses: any[] = enforceRootCauses(modelItem?.root_causes ?? []);
+
+    const mirrored = frCauses.map((frCause: any) => {
+      const enCause = enCounterpart?.root_causes?.find(
+        (ec: any) => ec.category_key === frCause.category_key,
+      );
+      return {
+        ...frCause,
+        evidence: enCause?.evidence ?? frCause.evidence ?? [],
+      };
+    });
+
+    return {
+      ...orig,
+      root_causes: mirrored,
+    };
+  });
+
+  return { en: enforcedEn, fr: enforcedFr };
+}
+
+// ─── PASS D — RECOMMENDATIONS ────────────────────────────────────────────────
+
+async function analyzePassD(
+  placeName: string,
+  businessType: BusinessType,
+  businessTypeConfidence: number,
+  themesUniversal: { en: any[]; fr: any[] },
+  themesIndustry: { en: any[]; fr: any[] },
+  topIssues: { en: any[]; fr: any[] },
+  avgRating: number | null,
+) {
+  return callOpenAI([
+    {
+      role: "system",
+      content: `You are a customer experience consultant generating actionable recommendations.
+${SYSTEM_RULES}
+${BILINGUAL_RULE}`,
+    },
+    {
+      role: "user",
+      content: `Business: ${placeName}
+Type: ${businessType} (confidence: ${businessTypeConfidence}%)
+Average rating: ${avgRating?.toFixed(1) || 'N/A'}
+
+Universal themes: ${(themesUniversal?.en || []).map((t: any) => t.theme).join(', ') || 'None'}
+Industry themes:  ${(themesIndustry?.en  || []).map((t: any) => t.theme).join(', ') || 'None'}
+Priority issues:  ${(topIssues?.en       || []).map((t: any) => t.theme).join(', ') || 'None'}
+
+Generate:
+1. pain_points_prioritized: ranked issues with impact (0–100), ease (0–100), and a concrete first_step
+2. quick_wins_7_days: fast actions achievable in 7 days with expected results
+3. projects_30_days: structured initiatives for 30-day horizon
+4. reply_templates: positive / neutral / negative response templates for the ${businessType} sector
+
+Return this exact JSON shape:
+{
+  "pain_points_prioritized": {
+    "en": [{ "issue": "...", "why_it_matters": "...", "impact": 80, "ease": 60, "first_step": "..." }],
+    "fr": [{ "issue": "...", "why_it_matters": "...", "impact": 80, "ease": 60, "first_step": "..." }]
+  },
+  "recommendations": {
+    "en": {
+      "quick_wins_7_days": [{ "title": "...", "details": "...", "expected_result": "...", "priority": 1 }],
+      "projects_30_days":  [{ "title": "...", "details": "...", "expected_result": "...", "priority": 1 }]
+    },
+    "fr": {
+      "quick_wins_7_days": [{ "title": "...", "details": "...", "expected_result": "...", "priority": 1 }],
+      "projects_30_days":  [{ "title": "...", "details": "...", "expected_result": "...", "priority": 1 }]
+    }
+  },
+  "reply_templates": {
+    "en": {
+      "positive": [{ "title": "...", "reply": "...", "use_when": "..." }],
+      "neutral":  [{ "title": "...", "reply": "...", "use_when": "..." }],
+      "negative": [{ "title": "...", "reply": "...", "use_when": "..." }]
+    },
+    "fr": {
+      "positive": [{ "title": "...", "reply": "...", "use_when": "..." }],
+      "neutral":  [{ "title": "...", "reply": "...", "use_when": "..." }],
+      "negative": [{ "title": "...", "reply": "...", "use_when": "..." }]
+    }
+  }
+}`,
+    },
+  ], 0.3);
+}
+
+// ─── NOTIFICATION HELPERS ─────────────────────────────────────────────────────
 
 function shouldSendSignificantChangeNotification(
   previousAvgRating: number | null,
@@ -361,15 +1048,14 @@ function shouldSendSignificantChangeNotification(
   previousIssues: IssueSummary[],
   currentIssues: IssueSummary[],
 ): { send: boolean; reason: "rating_drop" | "major_issue" | null } {
-  const ratingDrop = (previousAvgRating ?? 0) - (currentAvgRating ?? 0);
-  if (previousAvgRating !== null && currentAvgRating !== null && ratingDrop > 0) {
+  if (previousAvgRating !== null && currentAvgRating !== null &&
+      (previousAvgRating - currentAvgRating) > 0) {
     return { send: true, reason: "rating_drop" };
   }
   const currentTop = currentIssues[0];
   if (currentTop) {
-    const previousThemes = new Set(previousIssues.map((issue) => issue.theme.toLowerCase()));
-    const isNewTheme = !previousThemes.has(currentTop.theme.toLowerCase());
-    if (isNewTheme) {
+    const previousThemes = new Set(previousIssues.map(i => i.theme.toLowerCase()));
+    if (!previousThemes.has(currentTop.theme.toLowerCase())) {
       return { send: true, reason: "major_issue" };
     }
   }
@@ -387,61 +1073,56 @@ function buildAlertEmailHtml(input: {
   issues: IssueSummary[];
   reason: "rating_drop" | "major_issue";
 }): string {
-  const isFrench = input.language === "fr";
-  const title = isFrench ? "Alerte de réputation" : "Reputation alert";
-  const greeting = isFrench ? "Bonjour" : "Hi";
-  const intro = isFrench
+  const fr = input.language === "fr";
+  const title = fr ? "Alerte de réputation" : "Reputation alert";
+  const greeting = fr ? "Bonjour" : "Hi";
+  const intro = fr
     ? "Un changement significatif a été détecté sur votre établissement."
     : "A significant change was detected for your establishment.";
-  const ratingLabel = isFrench ? "Note moyenne" : "Average rating";
-  const previousLabel = isFrench ? "Période précédente" : "Previous period";
-  const currentLabel = isFrench ? "Période actuelle" : "Current period";
-  const issuesLabel = isFrench ? "Points prioritaires" : "Top issues";
-  const ctaLabel = isFrench ? "Voir le tableau de bord" : "Open dashboard";
-  const reasonLabel = input.reason === "rating_drop"
-    ? (isFrench ? "Baisse de note détectée" : "Rating drop detected")
-    : (isFrench ? "Problème majeur détecté" : "Major issue detected");
-  const previousDisplay = input.previousAvg !== null ? input.previousAvg.toFixed(1) : "N/A";
-  const currentDisplay = input.currentAvg !== null ? input.currentAvg.toFixed(1) : "N/A";
-  const issueItems = input.issues.length > 0
-    ? input.issues.slice(0, 3).map((issue) => {
-        const countSuffix = typeof issue.count === "number" ? ` (${issue.count})` : "";
-        return `<li style="margin-bottom:8px;"><strong>${issue.theme}</strong>${countSuffix}</li>`;
-      }).join("")
-    : `<li style="color:#9CA3AF;">${isFrench ? "Aucun point prioritaire identifié." : "No top issues identified."}</li>`;
+  const ratingLabel    = fr ? "Note moyenne" : "Average rating";
+  const previousLabel  = fr ? "Période précédente" : "Previous period";
+  const currentLabel   = fr ? "Période actuelle" : "Current period";
+  const issuesLabel    = fr ? "Points prioritaires" : "Top issues";
+  const ctaLabel       = fr ? "Voir le tableau de bord" : "Open dashboard";
+  const reasonLabel    = input.reason === "rating_drop"
+    ? (fr ? "Baisse de note détectée" : "Rating drop detected")
+    : (fr ? "Problème majeur détecté" : "Major issue detected");
+  const prevDisplay    = input.previousAvg !== null ? input.previousAvg.toFixed(1) : "N/A";
+  const currDisplay    = input.currentAvg  !== null ? input.currentAvg.toFixed(1)  : "N/A";
+  const issueItems     = input.issues.length > 0
+    ? input.issues.slice(0, 3)
+        .map(i => `<li style="margin-bottom:8px;"><strong>${i.theme}</strong>${typeof i.count === "number" ? ` (${i.count})` : ""}</li>`)
+        .join("")
+    : `<li style="color:#9CA3AF;">${fr ? "Aucun point prioritaire identifié." : "No top issues identified."}</li>`;
 
   return `
-    <div style="font-family: Arial, Helvetica, sans-serif; background:#f8fafc; padding:24px;">
-      <div style="max-width:640px; margin:0 auto; background:#ffffff; border-radius:16px; overflow:hidden; border:1px solid #e5e7eb;">
-        <div style="background: linear-gradient(135deg, #2F6BFF 0%, #1E40AF 100%); color:#fff; padding:32px;">
-          <h1 style="margin:0; font-size:24px; line-height:1.2;">${title}</h1>
-          <p style="margin:8px 0 0 0; opacity:0.9;">${input.establishmentName} • ${input.reportMonthName}</p>
+    <div style="font-family:Arial,Helvetica,sans-serif;background:#f8fafc;padding:24px;">
+      <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
+        <div style="background:linear-gradient(135deg,#2F6BFF 0%,#1E40AF 100%);color:#fff;padding:32px;">
+          <h1 style="margin:0;font-size:24px;">${title}</h1>
+          <p style="margin:8px 0 0;opacity:.9;">${input.establishmentName} • ${input.reportMonthName}</p>
         </div>
-        <div style="padding:32px; color:#1f2937;">
-          <p style="margin:0 0 16px 0; font-size:16px;">${greeting} ${input.displayName},</p>
-          <p style="margin:0 0 16px 0; font-size:16px; line-height:1.7;">${intro}</p>
-          <div style="background:#f9fafb; border-radius:12px; padding:16px; margin-bottom:20px;">
-            <p style="margin:0 0 8px 0; font-size:14px; color:#6b7280;">${reasonLabel}</p>
-            <p style="margin:0; font-size:16px;">
-              ${ratingLabel}: <strong>${previousLabel}</strong> ${previousDisplay} → <strong>${currentLabel}</strong> ${currentDisplay}
-              ${input.reason === "rating_drop" ? `(${isFrench ? "baisse" : "drop"} ${input.ratingDrop.toFixed(1)})` : ""}
+        <div style="padding:32px;color:#1f2937;">
+          <p>${greeting} ${input.displayName},</p>
+          <p>${intro}</p>
+          <div style="background:#f9fafb;border-radius:12px;padding:16px;margin-bottom:20px;">
+            <p style="margin:0 0 8px;font-size:14px;color:#6b7280;">${reasonLabel}</p>
+            <p style="margin:0;">${ratingLabel}: <strong>${previousLabel}</strong> ${prevDisplay} → <strong>${currentLabel}</strong> ${currDisplay}
+              ${input.reason === "rating_drop" ? `(${fr ? "baisse" : "drop"} ${input.ratingDrop.toFixed(1)})` : ""}
             </p>
           </div>
-          <div style="background:#F9FAFB; border-radius:12px; padding:24px; margin-bottom:24px; border-left:4px solid #F59E0B;">
-            <h2 style="color:#1F2937; font-size:18px; font-weight:700; margin:0 0 16px 0;">${issuesLabel}</h2>
-            <ul style="margin:0; padding-left:20px; color:#374151; font-size:14px; line-height:1.8;">
-              ${issueItems}
-            </ul>
+          <div style="background:#F9FAFB;border-radius:12px;padding:24px;margin-bottom:24px;border-left:4px solid #F59E0B;">
+            <h2 style="font-size:18px;margin:0 0 16px;">${issuesLabel}</h2>
+            <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.8;">${issueItems}</ul>
           </div>
           <div style="text-align:center;">
-            <a href="${APP_URL}/tableau-de-bord" style="display:inline-block; background:#2F6BFF; color:#fff; text-decoration:none; padding:12px 24px; border-radius:8px; font-weight:600;">
+            <a href="${APP_URL}/tableau-de-bord" style="display:inline-block;background:#2F6BFF;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;">
               ${ctaLabel}
             </a>
           </div>
         </div>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 async function sendSignificantChangeNotification(input: {
@@ -460,653 +1141,24 @@ async function sendSignificantChangeNotification(input: {
     ? `Alerte de réputation - ${input.establishmentName}`
     : `Reputation alert - ${input.establishmentName}`;
   const html = buildAlertEmailHtml(input);
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${SERVICE_ROLE}`,
-    },
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SERVICE_ROLE}` },
     body: JSON.stringify({ to: [input.userEmail], subject, html }),
   });
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => "");
-    throw new Error(`send-email failed: ${response.status} ${errorText}`);
-  }
-}
-
-function detectBusinessType(
-  name: string,
-  googlePlacesTypes?: string[] | null,
-  reviewsTexts?: string[]
-): { type: BusinessType; confidence: number; candidates: Array<{type: BusinessType; confidence: number}>; source: 'places' | 'keywords' | 'manual' } {
-  const combinedText = `${name} ${(reviewsTexts || []).join(' ')}`.toLowerCase();
-
-  const placesMapping: Record<string, BusinessType> = {
-    'restaurant': 'restaurant', 'food': 'restaurant', 'cafe': 'restaurant',
-    'hair_care': 'salon_coiffure', 'beauty_salon': 'salon_coiffure',
-    'gym': 'salle_sport', 'health': 'salle_sport',
-    'locksmith': 'serrurier',
-    'shoe_store': 'retail_chaussures',
-    'spa': 'institut_beaute'
-  };
-
-  const keywords: Record<BusinessType, string[]> = {
-    restaurant: ['restaurant', 'diner', 'bistro', 'brasserie', 'cafe', 'bar', 'pizzeria', 'burger', 'sushi', 'cuisine', 'eat', 'meal', 'dish'],
-    salon_coiffure: ['hairdresser', 'hair stylist', 'salon', 'barber', 'hair', 'coloring', 'cut', 'hairstyle'],
-    salle_sport: ['gym', 'fitness', 'sport', 'bodybuilding', 'crossfit', 'yoga', 'coach'],
-    serrurier: ['locksmith', 'locksmith service', 'repair', 'key', 'lock', 'emergency'],
-    retail_chaussures: ['shoe', 'shoes', 'sneaker', 'sneakers', 'store', 'shop'],
-    institut_beaute: ['beauty institute', 'beauty', 'esthetic', 'care', 'massage', 'hair removal'],
-    autre: []
-  };
-
-  if (googlePlacesTypes && googlePlacesTypes.length > 0) {
-    for (const placeType of googlePlacesTypes) {
-      const normalized = placeType.toLowerCase().replace(/\s+/g, '_');
-      const mapped = placesMapping[normalized];
-      if (mapped) {
-        return { type: mapped, confidence: 90, candidates: [{ type: mapped, confidence: 90 }], source: 'places' };
-      }
-    }
-  }
-
-  const scores: Record<BusinessType, number> = {
-    restaurant: 0, salon_coiffure: 0, salle_sport: 0, serrurier: 0,
-    retail_chaussures: 0, institut_beaute: 0, autre: 0
-  };
-
-  Object.entries(keywords).forEach(([type, words]) => {
-    words.forEach(word => {
-      if (combinedText.includes(word)) {
-        scores[type as BusinessType] += name.toLowerCase().includes(word) ? 3 : 1;
-      }
-    });
-  });
-
-  const sorted = Object.entries(scores)
-    .filter(([t]) => t !== 'autre')
-    .map(([type, score]) => ({ type: type as BusinessType, score }))
-    .sort((a, b) => b.score - a.score);
-
-  if (sorted[0].score === 0) {
-    return { type: 'autre', confidence: 0, candidates: [], source: 'keywords' };
-  }
-
-  const top = sorted[0];
-  const confidence = Math.min(100, Math.round((top.score / 10) * 100));
-  const candidates = sorted
-    .filter(s => s.score > 0)
-    .slice(0, 3)
-    .map(s => ({ type: s.type, confidence: Math.min(100, Math.round((s.score / 10) * 100)) }));
-
-  return { type: top.type, confidence, candidates, source: 'keywords' };
-}
-
-function computeStats(rows: ReviewRow[]) {
-  const ratings = rows.map(r => r.rating ?? 0).filter(n => n > 0);
-  const total = rows.length;
-  const avg = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length) : null;
-  const pos = rows.filter(r => (r.rating ?? 0) >= 4).length;
-  const neg = rows.filter(r => (r.rating ?? 0) <= 2).length;
-  const positive_pct = total ? Math.round((pos / total) * 100) : 0;
-  const negative_pct = total ? Math.round((neg / total) * 100) : 0;
-  const by_rating: Record<string, number> = {};
-  for (let i = 1; i <= 5; i++) by_rating[i] = rows.filter(r => (r.rating ?? 0) === i).length;
-  return { total, by_rating, positive_pct, negative_pct, overall: avg };
-}
-
-// ─── LANGUAGE INSTRUCTION ────────────────────────────────────────────────────
-function getLanguageInstruction(): string {
-  return `
-Generate BOTH English and French content.
-
-IMPORTANT RULES:
-- DO NOT create root keys named "en" or "fr"
-- Keep all JSON field names exactly as provided
-- Each field must internally contain { "en": ..., "fr": ... }
-- The key in top_issues.fr[N] MUST be identical to top_issues.en[N].key
-- The key in top_strength.fr[N] MUST be identical to top_strength.en[N].key
-- Keys are NEVER translated — they are always English snake_case
-- sentiment values MUST always be in English: "positive", "mixed", or "negative"
-  DO NOT translate sentiment to French — "positif", "mixte", "négatif" are WRONG
-
-- Translate ONLY generated analysis content (theme names, descriptions, what_it_means, etc.)
-- Keep evidence_quotes in original review language
-- sentiment, importance, and count values should remain equivalent across EN and FR
-`;
-}
-
-// ─── PASS A ─────────────────────────────────────────────────────────────────
-async function analyzePassA(
-  placeName: string,
-  samples: string[],
-  totalReviews: number,
-  businessType: BusinessType,
-  businessTypeConfidence: number,
-  lockedKeys: Record<string, string> = {},  // ← frozen keys from previous run
-) {
-  if (!OPENAI_KEY) return null;
-
-  const universalThemes = getUniversalThemes();
-  const languageInstruction = getLanguageInstruction();
-  const industryThemesHint = businessTypeConfidence >= 45
-    ? `\nAlso extract 3–6 themes specific to the ${businessType} industry — these are REQUIRED when confidence >= 45%.`
-    : '\nFocus only on universal themes and do not invent industry-specific themes.';
-
-  // ─── Build locked keys instruction ────────────────────────────────────────
-  // If this place_id has been analyzed before, the existing theme→key pairs
-  // are injected here as hard constraints. The AI MUST reuse these exact keys
-  // for the same themes — it cannot rename, reslug, or change them.
-  const lockedKeysInstruction = Object.keys(lockedKeys).length > 0
-    ? `
-  LOCKED THEME KEYS — FROZEN, do NOT change under any circumstances:
-  ${Object.entries(lockedKeys)
-      // Deduplicate: only show theme display names, skip key→key entries
-      .filter(([variant, key]) => variant !== key)
-      .map(([theme, key]) => `- theme "${theme}" → key MUST be "${key}"`)
-      .join("\n")}
-  `
-    : '';
-
-  const prompt = [
-    {
-      role: "system",
-      content: `You are an expert analyst who synthesizes customer reviews.
-You must extract themes ONLY from the actual content of the reviews.
-Respond strictly with valid JSON.
-${languageInstruction}`,
-    },
-    {
-      role: "user",
-      content:
-`Business: ${placeName}
-Detected type: ${businessType} (confidence: ${businessTypeConfidence}%)
-Total reviews analyzed: ${totalReviews}
-
-Customer reviews:
-${samples.map((t, i) => `${i + 1}. ${t}`).join("\n")}
-
-${lockedKeysInstruction}
-
-COUNTING RULE — MANDATORY:
-You are shown exactly ${samples.length} reviews above, numbered 1 to ${samples.length}.
-For each theme, go through the reviews one by one and count how many explicitly mention it.
-"count" = the number of reviews that directly OR indirectly relate to this theme.
-Include reviews where the theme is implied, not just explicitly stated.
-Minimum count for inclusion: 2 reviews
-This is not an estimate. Count directly from the list above.
-Minimum count for inclusion: 2 reviews.
-
-INSTRUCTIONS:
-1. Extract ALL relevant UNIVERSAL themes found in the reviews:
-   EN: ${universalThemes.en.join(', ')}
-   FR: ${universalThemes.fr.join(', ')}
-   Only include a theme if at least 2 reviews mention it.
-
-2. ${industryThemesHint}
-
-3. For each theme, determine the sentiment (positive/mixed/negative) and importance (0–100)
-
-4. Include 1–2 short quotes as evidence (in the original review language)
-
-5. ${languageInstruction}
-6. Do strictly follow the counting rules 
-
-IMPORTANT:
-- Every theme MUST contain a stable "key"
-- The key MUST ALWAYS be in English snake_case
-- The SAME key MUST be used in both English and French versions
-- If the theme appears in the LOCKED THEME KEYS above, use the locked key — no exceptions
-- Example:
-  EN -> { "key": "wait_time", "theme": "Wait Time" }
-  FR -> { "key": "wait_time", "theme": "Temps d'attente" }
-- sentiment MUST always be one of: "positive", "mixed", "negative" — NEVER translate
-
-ROOT CAUSE ANALYSIS (FOR EACH ISSUE IN top_issues):
-════════════════════════════════════════════════════════
-ROOT CAUSE ANALYSIS — MANDATORY PIPELINE
-════════════════════════════════════════════════════════
-
-For each issue in top_issues, you MUST produce EXACTLY 5 root_cause entries,
-one per Ishikawa category: manpower, method, machine, material, environment.
-
-The output of each category MUST satisfy this chain:
-
-  [Pareto Issue] ← explained by → [Cause] ← proven by → [Evidence from reviews]
-
-If this chain cannot be fully established with REAL review quotes:
-  → causes: []
-  → evidence: []
-  → confidence: 0–29
-
-────────────────────────────────────────────────────────
-STEP 1 — REVIEW FILTERING PER ISSUE
-────────────────────────────────────────────────────────
-
-Before any analysis, filter the review list to ONLY reviews that discuss
-the current Pareto issue.
-
-A review is eligible for issue X if it:
-  ✅ Directly mentions issue X (e.g. "we waited 45 minutes" for Wait Time)
-  ✅ Indirectly implies issue X (e.g. "only one server for the whole room" for Wait Time)
-
-A review is NOT eligible if it:
-  ❌ Discusses a different problem entirely
-  ❌ Is a positive review praising an unrelated aspect
-  ❌ Only mentions the issue in passing without any complaint signal
-
-Work only with eligible reviews for each issue.
-Do not cross-use reviews from one issue's analysis into another issue's analysis.
-
-────────────────────────────────────────────────────────
-STEP 2 — EVIDENCE EXTRACTION (per eligible review)
-────────────────────────────────────────────────────────
-
-For each eligible review, extract the complaint clause only.
-
-RULE A — RATING GATE
-  Reviews rated 4–5 stars: eligible ONLY if the text contains an explicit
-  complaint directly about this issue. Otherwise discard.
-  Reviews rated 1–3 stars: eligible by default if they mention the issue.
-
-RULE B — SENTIMENT EXTRACTION
-  For purely negative text → use the full relevant sentence.
-  For mixed text ("X is great but Y is bad"):
-    → Extract ONLY the complaint clause: "Y is bad"
-    → Discard the praise part entirely
-    → Never include "but", "however", "mais", "pourtant" and what precedes it
-
-RULE C — QUOTE MUST BE VERBATIM
-  Quotes must be copied word-for-word from the review text above.
-  Never paraphrase, summarize, or construct a quote.
-  Never invent a quote that does not appear in the reviews.
-
-RULE D — SYMPTOM DISQUALIFICATION
-  A quote that only names the problem without pointing to a cause is invalid.
-
-  Symptom-only (INVALID as evidence for any cause):
-  ❌ "The food was terrible"        → names the issue, not the cause
-  ❌ "We waited too long"           → names the issue, not the cause
-  ❌ "The place was too noisy"      → names the issue, not the cause
-  ❌ "La salle très bruyante"       → symptom only
-  ❌ "Nous ne nous entendons pas"   → symptom only
-
-  Cause-pointing (VALID):
-  ✅ "Only one waiter for the entire room"     → points to understaffing (manpower)
-  ✅ "Ingredients tasted frozen and reheated" → points to material quality
-  ✅ "Nobody took our order for 30 minutes"   → points to process failure (method)
-  ✅ "Tables packed so tightly you hear everything" → points to layout (environment)
-  ✅ "The same cook mistake happened twice"   → points to training gap (manpower)
-
-────────────────────────────────────────────────────────
-STEP 3 — CATEGORY ASSIGNMENT
-────────────────────────────────────────────────────────
-
-Assign each extracted quote to the ONE Ishikawa category it best supports.
-Each quote may only be assigned to ONE category across the entire issue.
-
-Category definitions — assign strictly:
-
-  manpower    → causes involving PEOPLE: staffing levels, skills, training,
-                behavior, attention, knowledge of employees
-                ✅ "Only one employee at the counter"
-                ✅ "Staff seemed untrained, made the same mistake twice"
-                ❌ Never: equipment, layout, ingredients, procedures
-
-  method      → causes involving PROCESS: how tasks are organized, scheduled,
-                sequenced, communicated between staff or systems
-                ✅ "No system for managing the queue"
-                ✅ "Orders were taken but not passed to the kitchen"
-                ❌ Never: staff personality, broken equipment, physical space
-
-  machine     → causes involving EQUIPMENT: tools, appliances, software,
-                terminals, physical devices that are broken or missing
-                ✅ "The payment terminal was down"
-                ✅ "The coffee machine was out of service"
-                ❌ Never: staff behavior, recipes, ambiance
-
-  material    → causes involving INPUTS: ingredients, supplies, products,
-                consumables — quality, freshness, availability
-                ✅ "The meat tasted frozen and reheated"
-                ✅ "They ran out of the item we ordered"
-                ❌ Never: staff count, equipment, noise, layout
-
-  environment → causes involving PHYSICAL SPACE: layout, acoustics, temperature,
-                cleanliness, seating arrangement, lighting
-                ✅ "Tables are packed with no space between them"
-                ✅ "The room echoes badly, no acoustic treatment"
-                ❌ Never: staff skills, cooking methods, equipment malfunction
-
-CROSS-CATEGORY CONTAMINATION — NEVER ALLOWED:
-  A cause about staff goes in manpower — not method, not environment.
-  A cause about layout goes in environment — not manpower, not machine.
-  A cause about a broken tool goes in machine — not method, not material.
-
-────────────────────────────────────────────────────────
-STEP 4 — CAUSE GENERATION (per category)
-────────────────────────────────────────────────────────
-
-For each category, generate causes ONLY if you have at least one valid
-quote from Step 2 assigned to that category in Step 3.
-
-Cause must:
-  ✅ Directly explain the Pareto issue from this category's perspective
-  ✅ Be supported by the assigned quote(s)
-  ✅ Be specific to the issue (not generic like "poor management")
-  ✅ Be falsifiable — someone could investigate and confirm or deny it
-
-Cause must NOT:
-  ❌ Be hypothetical ("could be due to...", "may have...")
-  ❌ Be generic ("poor service", "quality issues", "bad management")
-  ❌ Contradict or be unrelated to its assigned quote
-  ❌ Exist without at least one supporting quote
-
-────────────────────────────────────────────────────────
-STEP 5 — CONFIDENCE SCORING
-────────────────────────────────────────────────────────
-
-Assign confidence based strictly on evidence volume and directness:
-
-  0–29  → No valid quote passed Steps 1–3 for this category
-          → causes: [], evidence: []
-
-  30–59 → 1 quote passed, indirectly supports the cause
-          → causes and evidence required
-
-  60–79 → 2+ quotes passed, clearly support the cause
-          → causes and evidence required
-
-  80–100 → Multiple explicit, direct quotes across several reviews
-           → causes and evidence required
-
-Never assign confidence >= 30 without a passing quote.
-Never assign confidence >= 60 without multiple passing quotes.
-
-────────────────────────────────────────────────────────
-STEP 6 — IMPORTANCE RANKING
-────────────────────────────────────────────────────────
-
-Rank the 5 categories by their confidence score:
-  dominant   → highest confidence category (only 1)
-  secondary  → second highest (only 1)
-  monitor    → all remaining categories (3)
-
-If two categories have equal confidence, rank by number of supporting quotes.
-
-────────────────────────────────────────────────────────
-STEP 7 — FINAL VALIDATION BEFORE OUTPUT
-────────────────────────────────────────────────────────
-
-Before writing the JSON for each issue, verify:
-
-  □ Exactly 5 root_cause entries present
-  □ Each category_key appears exactly once
-  □ Every quote in evidence[] is verbatim from the review list above
-  □ Every quote in evidence[] passed the Step 2 filters
-  □ Every quote appears in only ONE category across this issue
-  □ Every cause in causes[] has at least one paired quote in evidence[]
-  □ No cause exists without evidence (causes: [] when evidence: [])
-  □ No evidence quote is from a positive review or is a symptom-only quote
-  □ confidence < 30 → causes: [] AND evidence: [] — no exceptions
-  □ label contains ONLY the category name (no descriptions appended)
-  □ category key should strictly be from these [manpower, method, machine, material, environment]
-  □ Do not duplicate the category , each category should be displayed only one time for a issue
-  □ Must return all the ishikawa categories , if no issues and no evidence found , return empty array of evidence and cause
-
-Allowed label values: manpower, method, machine, material, environment
-
-
-QUOTE-CAUSE RELEVANCE HARD CHECK
-
-Before pairing a quote with a cause, ask:
-"If I read this quote without knowing the cause, would I naturally
- conclude this cause exists?"
-
-  ✅ "Nous avons attendu une heure et demie" → naturally implies wait/process failure
-  ❌ "Dommage pour l'œuf mimosa" → implies food quality, NOT order management
-  ❌ "Un service plus qu'expéditif" → praises speed, contradicts wait time cause
-
-If the answer is NO → the quote does not support this cause → discard it.
-If discarding leaves 0 quotes for this cause → remove the cause entirely.
-════════════════════════════════════════════════════════
-
-
-QUANTITY REQUIREMENTS:
-- top_issues: 3–5 items, sorted by count descending
-- top_strength: 3–5 items, sorted by count descending
-- themes_universal: all universal themes found (typically 4–7)
-- themes_industry: 3–6 industry-specific themes (REQUIRED if confidence >= 45%)
-
-Return EXACTLY this JSON shape:
-{ 
-  "top_issues": {
-    "en": [
-      {
-        "key": "<stable_slug_in_english_snake_case>",
-        "theme": "<theme>",
-        "count": <number>,
-        "impact": "<dominant|high|medium>",
-        "ai_synthesis": "<summary of the issue and likely causes>",
-        "root_causes": [
-          {
-              "label": "<Category display name>",
-              "importance": "dominant|secondary|monitor",
-              "category": "<display category name>",
-              "category_key": "manpower|method|machine|material|environment",
-              "confidence": <0-100>,
-              "causes": ["<cause 1>", "<cause 2>"],
-              "evidence": ["<quote 1>", "<quote 2>"]
-            }
-        ]
-      }
-    ],
-    "fr": [
-      {
-        "key": "<same key as EN — MUST match exactly>",
-        "theme": "<translated theme>",
-        "count": <number>,
-        "impact": "<dominant|high|medium>",
-        "ai_synthesis": "<translated synthesis>",
-        "root_causes": [
-          {
-            "label": "<Category display name>",
-            "importance": "dominant|secondary|monitor",
-            "category": "<display category name>",
-            "category_key": "manpower|method|machine|material|environment",
-            "confidence": <0-100>,
-            "causes": ["<cause 1>", "<cause 2>"],
-            "evidence": ["<quote 1>", "<quote 2>"]
-          }
-        ]
-      }
-    ]
-  },
-  "top_strength": {
-    "en": [
-      {
-        "key": "<slug>",
-        "theme": "<theme>",
-        "count": <number>,
-        "impact": "<dominant|high|medium>",
-        "ai_synthesis": "<summary explaining why customers praise this strength>",
-        "evidence": [
-          "<review quote>",
-          "<review quote>",
-          "<review quote>"
-        ]
-      }
-    ],
-    "fr": [
-      {
-        "key": "<same key as EN>",
-        "theme": "<translated theme>",
-        "count": <number>,
-        "impact": "<dominant|high|medium>",
-        "ai_synthesis": "<translated synthesis>",
-        "evidence": [
-          "<review quote>",
-          "<review quote>",
-          "<review quote>"
-        ]
-      }
-    ]
-  },
-  "themes_universal": {
-    "en": [{ "theme": "<name>", "sentiment": "<positive|mixed|negative>", "importance": <0-100>, "evidence_quotes": ["<quote>"], "what_it_means": "<explanation>", "count": <number> }],
-    "fr": [{ "theme": "<nom>", "sentiment": "<positive|mixed|negative>", "importance": <0-100>, "evidence_quotes": ["<citation>"], "what_it_means": "<explication>", "count": <number> }]
-  },
-  "themes_industry": {
-    "en": [{ "theme": "<name>", "sentiment": "<positive|mixed|negative>", "importance": <0-100>, "evidence_quotes": ["<quote>"], "what_it_means": "<explanation>", "count": <number> }],
-    "fr": [{ "theme": "<nom>", "sentiment": "<positive|mixed|negative>", "importance": <0-100>, "evidence_quotes": ["<citation>"], "what_it_means": "<explication>", "count": <number> }]
-  },
-  "summary": {
-    "en": {
-      "one_liner": "One-sentence summary",
-      "what_customers_love": [
-        { "theme": "<exact theme from top_strength.en[N].theme>", "reason": "<why from what_it_means>", "count": <from top_strength.en[N].count> }
-      ],
-      "what_customers_hate": [
-        { "theme": "<exact theme from top_issues.en[N].theme>", "reason": "<why from what_it_means>", "count": <from top_issues.en[N].count> }
-      ]
-    },
-    "fr": {
-      "one_liner": "Résumé en une phrase",
-      "what_customers_love": [
-        { "theme": "<thème exact de top_strength.fr[N].theme>", "reason": "<pourquoi>", "count": <count> }
-      ],
-      "what_customers_hate": [
-        { "theme": "<thème exact de top_issues.fr[N].theme>", "reason": "<pourquoi>", "count": <count> }
-      ]
-    }
-  }
-}`,
-    },
-  ];
-
-  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { "content-type": "application/json", "authorization": `Bearer ${OPENAI_KEY}` },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: prompt,
-    }),
-  });
-
-  const data = await resp.json();
-  const txt = data.choices?.[0]?.message?.content ?? "{}";
-  try {
-    return JSON.parse(txt);
-  } catch (err) {
-    console.error('[analyzePassA] ❌ Erreur parsing:', err);
-    return null;
-  }
-}
-
-// ─── PASS B ─────────────────────────────────────────────────────────────────
-async function analyzePassB(
-  placeName: string,
-  businessType: BusinessType,
-  businessTypeConfidence: number,
-  themesUniversal: { en: any[]; fr: any[] },
-  themesIndustry: { en: any[]; fr: any[] },
-  topIssues: { en: any[]; fr: any[] },
-  avgRating: number | null,
-) {
-  if (!OPENAI_KEY) return null;
-
-  const languageInstruction = getLanguageInstruction();
-
-  const prompt = [
-    {
-      role: "system",
-      content: `You are an expert consultant in customer experience improvement.
-Generate actionable recommendations and response templates tailored to the business sector.
-Respond ONLY with valid JSON — no markdown, no preamble.
-${languageInstruction}`,
-    },
-    {
-      role: "user",
-      content:
-`Business: ${placeName}
-Type: ${businessType} (confidence: ${businessTypeConfidence}%)
-Average rating: ${avgRating?.toFixed(1) || 'N/A'}
-
-Universal themes (EN): ${(themesUniversal?.en || []).map((t: any) => t.theme).join(', ') || 'None'}
-Universal themes (FR): ${(themesUniversal?.fr || []).map((t: any) => t.theme).join(', ') || 'Aucun'}
-
-Industry themes (EN): ${(themesIndustry?.en || []).map((t: any) => t.theme).join(', ') || 'None'}
-Industry themes (FR): ${(themesIndustry?.fr || []).map((t: any) => t.theme).join(', ') || 'Aucun'}
-
-Priority issues (EN): ${(topIssues?.en || []).map((t: any) => t.theme).join(', ') || 'None'}
-Priority issues (FR): ${(topIssues?.fr || []).map((t: any) => t.theme).join(', ') || 'Aucun'}
-
-Generate:
-1. Prioritized pain points (impact 0–100, ease 0–100, concrete first_step)
-2. Quick wins (7 days) – fast actions with expected results
-3. Projects (30 days) – more structured initiatives
-4. Reply templates (positive/neutral/negative) adapted to the ${businessType} sector
-5. ${languageInstruction}
-
-Return EXACTLY this JSON shape:
-{
-  "pain_points_prioritized": {
-    "en": [{ "issue": "Problem name", "why_it_matters": "Why it matters", "impact": 80, "ease": 60, "first_step": "First concrete action" }],
-    "fr": [{ "issue": "Nom du problème", "why_it_matters": "Pourquoi cela compte", "impact": 80, "ease": 60, "first_step": "Première action concrète" }]
-  },
-  "recommendations": {
-    "en": {
-      "quick_wins_7_days": [{ "title": "Action title", "details": "Details", "expected_result": "Expected result", "priority": 1 }],
-      "projects_30_days":  [{ "title": "Project title", "details": "Details", "expected_result": "Expected result", "priority": 1 }]
-    },
-    "fr": {
-      "quick_wins_7_days": [{ "title": "Titre action", "details": "Détails", "expected_result": "Résultat attendu", "priority": 1 }],
-      "projects_30_days":  [{ "title": "Titre projet", "details": "Détails", "expected_result": "Résultat attendu", "priority": 1 }]
-    }
-  },
-  "reply_templates": {
-    "en": {
-      "positive": [{ "title": "Template title", "reply": "Response text", "use_when": "When to use" }],
-      "neutral":  [{ "title": "Template title", "reply": "Response text", "use_when": "When to use" }],
-      "negative": [{ "title": "Template title", "reply": "Response text", "use_when": "When to use" }]
-    },
-    "fr": {
-      "positive": [{ "title": "Titre template", "reply": "Texte de réponse", "use_when": "Quand utiliser" }],
-      "neutral":  [{ "title": "Titre template", "reply": "Texte de réponse", "use_when": "Quand utiliser" }],
-      "negative": [{ "title": "Titre template", "reply": "Texte de réponse", "use_when": "Quand utiliser" }]
-    }
-  }
-}`,
-    },
-  ];
-
-  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { "content-type": "application/json", "authorization": `Bearer ${OPENAI_KEY}` },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      temperature: 0.3,
-      response_format: { type: "json_object" },
-      messages: prompt,
-    }),
-  });
-
-  const data = await resp.json();
-  const txt = data.choices?.[0]?.message?.content ?? "{}";
-  try {
-    return JSON.parse(txt);
-  } catch (err) {
-    console.error('[analyzePassB] ❌ Erreur parsing:', err);
-    return null;
+  if (!resp.ok) {
+    const err = await resp.text().catch(() => "");
+    throw new Error(`send-email failed: ${resp.status} ${err}`);
   }
 }
 
 // ─── MAIN HANDLER ────────────────────────────────────────────────────────────
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
+    // ── Auth ───────────────────────────────────────────────────────────────
     const auth = req.headers.get("Authorization") ?? "";
     let userId: string | null = null;
     if (auth.toLowerCase().startsWith("bearer ")) {
@@ -1115,136 +1167,115 @@ Deno.serve(async (req) => {
         userId = data.user?.id ?? null;
       } catch {}
     }
+    if (!userId) return json({ ok: false, error: "authentication_required" }, 401);
 
-    if (!userId) {
-      return json({ ok: false, error: "authentication_required" }, 401);
-    }
-
+    // ── User info ──────────────────────────────────────────────────────────
     const { data: userRecord } = await supabaseAdmin.auth.admin.getUserById(userId);
     const userEmail = userRecord.user?.email ?? "";
     const { data: userProfile } = await supabaseAdmin
-      .from('profiles')
-      .select('first_name, last_name, important_updates_enabled')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .from('profiles').select('first_name, last_name, important_updates_enabled')
+      .eq('user_id', userId).maybeSingle();
 
     const firstName = userProfile?.first_name || userRecord.user?.user_metadata?.first_name || "";
-    const lastName = userProfile?.last_name || userRecord.user?.user_metadata?.last_name || "";
+    const lastName  = userProfile?.last_name  || userRecord.user?.user_metadata?.last_name  || "";
     const displayName = [firstName, lastName].filter(Boolean).join(" ") || userEmail || "User";
     const importantUpdatesEnabled = userProfile?.important_updates_enabled === true;
 
+    // ── Request params ─────────────────────────────────────────────────────
     const { place_id, name, dryRun = false, language } = await req.json().catch(() => ({}));
     if (!place_id) return json({ ok: false, error: "missing_place_id" }, 400);
-
     const outputLanguage = normalizeLanguage(language);
 
+    // ── Establishment ──────────────────────────────────────────────────────
     let establishmentName = name || 'Établissement';
     let googlePlacesTypes: string[] | null = null;
-
     try {
       const { data: establishment } = await supabaseAdmin
-        .from('establishments')
-        .select('name, types')
-        .eq('place_id', place_id)
-        .eq('user_id', userId)
-        .maybeSingle();
-
+        .from('establishments').select('name, types')
+        .eq('place_id', place_id).eq('user_id', userId).maybeSingle();
       if (establishment?.name) establishmentName = establishment.name;
       if (establishment?.types) {
-        googlePlacesTypes = Array.isArray(establishment.types)
-          ? establishment.types
-          : [establishment.types];
+        googlePlacesTypes = Array.isArray(establishment.types) ? establishment.types : [establishment.types];
       }
-    } catch (err) {
-      console.warn('[analyze-reviews-v2] Erreur récupération établissement:', err);
-    }
+    } catch (err) { console.warn('[analyze-reviews-v2] Establishment fetch error:', err); }
 
+    // ── Reviews ────────────────────────────────────────────────────────────
     const { data: reviewsData, error: reviewsErr } = await supabaseAdmin
-      .from('reviews')
-      .select('text, rating')
-      .eq('place_id', place_id)
-      .eq('user_id', userId)
-      .order('published_at', { ascending: false })
-      .limit(300);
-
+      .from('reviews').select('text, rating')
+      .eq('place_id', place_id).eq('user_id', userId)
+      .order('published_at', { ascending: false }).limit(300);
     if (reviewsErr) throw new Error(`reviews_fetch_failed:${reviewsErr.message}`);
 
     const rows: ReviewRow[] = (reviewsData || []).map((r: any) => ({
-      user_id: userId,
-      place_id,
-      source: "google" as const,
+      user_id: userId, place_id, source: "google" as const,
       remote_id: r.id || crypto.randomUUID(),
-      rating: r.rating ?? null,
-      text: r.text ?? null,
-      language_code: null,
-      published_at: null,
-      author_name: null,
-      author_url: null,
-      author_photo_url: null,
-      like_count: null,
+      rating: r.rating ?? null, text: r.text ?? null,
+      language_code: null, published_at: null, author_name: null,
+      author_url: null, author_photo_url: null, like_count: null,
     }));
-
-    if (rows.length === 0) {
-      return json({ ok: false, error: "no_reviews_found" }, 400);
-    }
+    if (rows.length === 0) return json({ ok: false, error: "no_reviews_found" }, 400);
 
     const stats = computeStats(rows);
     const sampleTexts = rows.map(r => r.text ?? "").filter(Boolean);
-
+    const negativeTexts = rows
+      .filter(r => r.text && (r.rating ?? 3) <= 3)
+      .map(r => r.text!);
+    console.log(`[analyze-reviews-v2] ${negativeTexts.length}/${rows.length} negative reviews (rating <= 3) for Pass C`);
     const detection = detectBusinessType(establishmentName, googlePlacesTypes, sampleTexts);
-    console.log(`[analyze-reviews-v2] Détection: ${detection.type} (${detection.confidence}%) via ${detection.source}`);
+    console.log(`[analyze-reviews-v2] Business type: ${detection.type} (${detection.confidence}%) via ${detection.source}`);
 
-    // ─── Fetch existing insight to build locked keys ──────────────────────
-    // This runs BEFORE analyzePassA so existing theme→key pairs can be
-    // injected into the prompt as frozen constraints.
-    // On first run: returns null → lockedKeys is empty → no constraints.
-    // On re-runs: returns saved data → keys are locked → no drift.
+    // ── Locked keys from previous run ──────────────────────────────────────
     const { data: existingInsight } = await supabaseAdmin
       .from('review_insights')
-      .select('top_issues, top_praises, themes_universal, themes_industry')
-      .eq('place_id', place_id)
-      .eq('user_id', userId)
-      .maybeSingle();
+      .select('top_issues, top_praises, themes_universal, themes_industry, avg_rating')
+      .eq('place_id', place_id).eq('user_id', userId).maybeSingle();
 
     const lockedKeys = buildLockedKeys(existingInsight);
-    const lockedKeyCount = Object.keys(lockedKeys).length;
-    console.log(`[analyze-reviews-v2] Locked keys: ${lockedKeyCount} theme(s) frozen from previous run`);
 
-    // ─── Pass A ───────────────────────────────────────────────────────────
+    // ── Pass A: theme extraction ───────────────────────────────────────────
     const passAResult = await analyzePassA(
-      establishmentName,
-      sampleTexts,
-      rows.length,
-      detection.type,
-      detection.confidence,
-      lockedKeys,              // ← injected here
+      establishmentName, sampleTexts, rows.length,
+      detection.type, detection.confidence, lockedKeys,
     );
+    if (!passAResult) return json({ ok: false, error: "analysis_pass_a_failed" }, 500);
 
-    if (!passAResult) {
-      return json({ ok: false, error: "analysis_pass_a_failed" }, 500);
-    }
-    // ─── Enforce stable keys + normalize sentiment ────────────────────────
-    if (passAResult.top_issues)      passAResult.top_issues      = enforceKeys(passAResult.top_issues);
-    if (passAResult.top_strength)    passAResult.top_strength    = enforceKeys(passAResult.top_strength);
+    if (passAResult.top_issues)       passAResult.top_issues       = enforceKeys(passAResult.top_issues);
+    if (passAResult.top_strength)     passAResult.top_strength     = enforceKeys(passAResult.top_strength);
     if (passAResult.themes_universal) passAResult.themes_universal = enforceKeys(passAResult.themes_universal);
     if (passAResult.themes_industry)  passAResult.themes_industry  = enforceKeys(passAResult.themes_industry);
 
-    // ─── Pass B ───────────────────────────────────────────────────────────
+    // ── Pass B: evidence quotes ────────────────────────────────────────────
     const passBResult = await analyzePassB(
-      establishmentName,
+      sampleTexts,
+      passAResult,
       detection.type,
       detection.confidence,
+    );
+
+    if (passBResult?.themes_universal) passAResult.themes_universal = enforceKeys(passBResult.themes_universal);
+    if (passBResult?.themes_industry)  passAResult.themes_industry  = enforceKeys(passBResult.themes_industry);
+    if (passBResult?.top_strength)     passAResult.top_strength     = enforceKeys(passBResult.top_strength);
+
+    // ── Pass C: Ishikawa root causes ───────────────────────────────────────
+    const passCResult = await analyzePassC(
+      negativeTexts,
+      passAResult.top_issues ?? { en: [], fr: [] },
+      detection.type,
+      detection.confidence,
+    );
+    passAResult.top_issues = enforceKeys(passCResult);
+
+    // ── Pass D: recommendations ────────────────────────────────────────────
+    const passDResult = await analyzePassD(
+      establishmentName, detection.type, detection.confidence,
       { en: passAResult?.themes_universal?.en || [], fr: passAResult?.themes_universal?.fr || [] },
       { en: passAResult?.themes_industry?.en  || [], fr: passAResult?.themes_industry?.fr  || [] },
       { en: passAResult?.top_issues?.en       || [], fr: passAResult?.top_issues?.fr       || [] },
       stats.overall,
     );
+    if (!passDResult) return json({ ok: false, error: "analysis_pass_d_failed" }, 500);
 
-    if (!passBResult) {
-      return json({ ok: false, error: "analysis_pass_b_failed" }, 500);
-    }
-
-    // ─── Summary ──────────────────────────────────────────────────────────
+    // ── Summary ────────────────────────────────────────────────────────────
     const fallbackOneLiner = getFallbackSummaryOneLiner(establishmentName, rows.length);
     const summaryData = {
       en: {
@@ -1259,34 +1290,27 @@ Deno.serve(async (req) => {
       },
     };
 
-    // ─── Final analysis object ────────────────────────────────────────────
+    // ── Final analysis object ──────────────────────────────────────────────
     const analysisResult = {
       business_type:            detection.type,
       business_type_confidence: detection.confidence,
       business_type_candidates: detection.candidates,
-
-      top_praises: passAResult?.top_strength || { en: [], fr: [] },
-      top_issues:  passAResult?.top_issues   || { en: [], fr: [] },
-
-      summary: summaryData,
-
-      themes_universal: passAResult?.themes_universal || { en: [], fr: [] },
-      themes_industry:  detection.confidence >= 45
+      top_praises:              passAResult?.top_strength      || { en: [], fr: [] },
+      top_issues:               passAResult?.top_issues        || { en: [], fr: [] },
+      summary:                  summaryData,
+      themes_universal:         passAResult?.themes_universal  || { en: [], fr: [] },
+      themes_industry:          detection.confidence >= 45
         ? (passAResult?.themes_industry || { en: [], fr: [] })
         : { en: [], fr: [] },
-
-      pain_points_prioritized: passBResult?.pain_points_prioritized || { en: [], fr: [] },
-
-      recommendations: passBResult?.recommendations || {
+      pain_points_prioritized:  passDResult?.pain_points_prioritized || { en: [], fr: [] },
+      recommendations:          passDResult?.recommendations || {
         en: { quick_wins_7_days: [], projects_30_days: [] },
         fr: { quick_wins_7_days: [], projects_30_days: [] },
       },
-
-      reply_templates: passBResult?.reply_templates || {
+      reply_templates:          passDResult?.reply_templates || {
         en: { positive: [], neutral: [], negative: [] },
         fr: { positive: [], neutral: [], negative: [] },
       },
-
       kpis: {
         avg_rating:              stats.overall,
         total_reviews:           stats.total,
@@ -1295,92 +1319,54 @@ Deno.serve(async (req) => {
       },
     };
 
-    // ─── Notification logic ───────────────────────────────────────────────
-    // Re-use the already-fetched existingInsight (no extra DB call needed)
-    const previousAvgRating = dryRun ? null : (existingInsight as any)?.avg_rating ?? null;
-    const previousIssues = normalizeIssues(
-      (existingInsight as any)?.top_issues?.en || (existingInsight as any)?.top_issues || []
-    );
-    const currentIssues = normalizeIssues(passAResult?.top_issues?.en || []);
-
-    // Fetch avg_rating separately if needed (existingInsight select above didn't include it)
-    let prevAvgForNotif = previousAvgRating;
-    if (!dryRun && existingInsight) {
-      const { data: ratingRow } = await supabaseAdmin
-        .from('review_insights')
-        .select('avg_rating')
-        .eq('place_id', place_id)
-        .eq('user_id', userId)
-        .maybeSingle();
-      prevAvgForNotif = ratingRow?.avg_rating ?? null;
-    }
-
+    // ── Notification ───────────────────────────────────────────────────────
+    const prevAvg        = (existingInsight as any)?.avg_rating ?? null;
+    const previousIssues = normalizeIssues((existingInsight as any)?.top_issues?.en || []);
+    const currentIssues  = normalizeIssues(passAResult?.top_issues?.en || []);
     const notificationDecision = shouldSendSignificantChangeNotification(
-      prevAvgForNotif,
-      stats.overall,
-      previousIssues,
-      currentIssues,
+      prevAvg, stats.overall, previousIssues, currentIssues,
     );
 
-    // ─── Persist ──────────────────────────────────────────────────────────
+    // ── Persist ────────────────────────────────────────────────────────────
     if (!dryRun) {
       const payload = {
-        place_id,
-        user_id:          userId,
+        place_id, user_id: userId,
         last_analyzed_at: new Date().toISOString(),
         updated_at:       new Date().toISOString(),
         business_type:            detection.type,
         business_type_confidence: detection.confidence,
         business_type_candidates: detection.candidates,
         analysis_version: 'v2-auto-universal',
-        total_count:      stats.total,
-        avg_rating:       stats.overall,
-        positive_ratio:   stats.positive_pct / 100,
-
-        // Flat legacy themes array (retro-compat — uses EN branch)
+        total_count:  stats.total,
+        avg_rating:   stats.overall,
+        positive_ratio: stats.positive_pct / 100,
         themes: [
           ...(passAResult?.themes_universal?.en || []).map((t: any) => ({ theme: t.theme, count: Math.round(t.importance / 10) })),
           ...(passAResult?.themes_industry?.en  || []).map((t: any) => ({ theme: t.theme, count: Math.round(t.importance / 10) })),
         ],
-
-        top_praises:      passAResult?.top_strength || { en: [], fr: [] },
-        top_issues:       passAResult?.top_issues   || { en: [], fr: [] },
-
+        top_praises:      passAResult?.top_strength    || { en: [], fr: [] },
+        top_issues:       passAResult?.top_issues      || { en: [], fr: [] },
         summary:          summaryData,
-
         themes_universal: passAResult?.themes_universal || { en: [], fr: [] },
         themes_industry:  detection.confidence >= 45
           ? (passAResult?.themes_industry || { en: [], fr: [] })
           : { en: [], fr: [] },
-
-        pain_points_prioritized: passBResult?.pain_points_prioritized || { en: [], fr: [] },
-
+        pain_points_prioritized: passDResult?.pain_points_prioritized || { en: [], fr: [] },
         recommendations_quick_wins: {
-          en: passBResult?.recommendations?.en?.quick_wins_7_days || [],
-          fr: passBResult?.recommendations?.fr?.quick_wins_7_days || [],
+          en: passDResult?.recommendations?.en?.quick_wins_7_days || [],
+          fr: passDResult?.recommendations?.fr?.quick_wins_7_days || [],
         },
         recommendations_projects: {
-          en: passBResult?.recommendations?.en?.projects_30_days || [],
-          fr: passBResult?.recommendations?.fr?.projects_30_days || [],
+          en: passDResult?.recommendations?.en?.projects_30_days || [],
+          fr: passDResult?.recommendations?.fr?.projects_30_days || [],
         },
-
-        reply_templates: passBResult?.reply_templates || {
+        reply_templates: passDResult?.reply_templates || {
           en: { positive: [], neutral: [], negative: [] },
           fr: { positive: [], neutral: [], negative: [] },
         },
-
-        summary_one_liner: {
-          en: summaryData.en.one_liner,
-          fr: summaryData.fr.one_liner,
-        },
-        summary_what_customers_love: {
-          en: summaryData.en.what_customers_love,
-          fr: summaryData.fr.what_customers_love,
-        },
-        summary_what_customers_hate: {
-          en: summaryData.en.what_customers_hate,
-          fr: summaryData.fr.what_customers_hate,
-        },
+        summary_one_liner:           { en: summaryData.en.one_liner,           fr: summaryData.fr.one_liner           },
+        summary_what_customers_love: { en: summaryData.en.what_customers_love, fr: summaryData.fr.what_customers_love },
+        summary_what_customers_hate: { en: summaryData.en.what_customers_hate, fr: summaryData.fr.what_customers_hate },
       };
 
       const { data: upsertedInsight, error: insightError } = await supabaseAdmin
@@ -1388,94 +1374,43 @@ Deno.serve(async (req) => {
         .upsert(payload, { onConflict: 'user_id,place_id' })
         .select('place_id, user_id, last_analyzed_at');
 
-      if (insightError) {
-        console.error("❌ UPSERT FAILED:", insightError);
-      } else {
-        console.log("✅ review_insights saved:", upsertedInsight);
-      }
+      if (insightError) console.error("❌ UPSERT FAILED:", insightError);
+      else console.log("✅ review_insights saved:", upsertedInsight);
 
-      const qualitativeResponse = await fetch(
-        `${SUPABASE_URL}/functions/v1/qualitative-analysis`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${SERVICE_ROLE}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId,
-            placeId: place_id,
-            reviews: sampleTexts,
-            themesUniversal: passAResult?.themes_universal || {
-              en: [],
-              fr: [],
-            },
-            themesIndustry: passAResult?.themes_industry || { en: [], fr: [] },
-          }),
-        },
-      );
+      const qualResp = await fetch(`${SUPABASE_URL}/functions/v1/qualitative-analysis`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${SERVICE_ROLE}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId, placeId: place_id, reviews: sampleTexts,
+          themesUniversal: passAResult?.themes_universal || { en: [], fr: [] },
+          themesIndustry:  passAResult?.themes_industry  || { en: [], fr: [] },
+        }),
+      });
+      if (!qualResp.ok) throw new Error("qualitative-analysis failed");
 
-      if (!qualitativeResponse.ok) {
-        throw new Error("qualitative-analysis failed");
-      }
-
-      if (
-        importantUpdatesEnabled &&
-        notificationDecision.send &&
-        notificationDecision.reason &&
-        userEmail
-      ) {
+      if (importantUpdatesEnabled && notificationDecision.send && notificationDecision.reason && userEmail) {
         try {
-          const reportLocale = outputLanguage === "fr" ? "fr-FR" : "en-US";
-          const reportMonthName = new Intl.DateTimeFormat(reportLocale, {
-            month: "long",
-            year: "numeric",
-          }).format(new Date());
-
+          const locale = outputLanguage === "fr" ? "fr-FR" : "en-US";
+          const reportMonthName = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(new Date());
           await sendSignificantChangeNotification({
-            language: outputLanguage,
-            displayName,
-            userEmail,
-            establishmentName,
-            reportMonthName,
-            previousAvg: prevAvgForNotif,
-            currentAvg: stats.overall,
-            ratingDrop: (prevAvgForNotif ?? 0) - (stats.overall ?? 0),
-            issues: currentIssues,
-            reason: notificationDecision.reason,
+            language: outputLanguage, displayName, userEmail, establishmentName, reportMonthName,
+            previousAvg: prevAvg, currentAvg: stats.overall,
+            ratingDrop: (prevAvg ?? 0) - (stats.overall ?? 0),
+            issues: currentIssues, reason: notificationDecision.reason,
           });
-          console.log(
-            "[analyze-reviews-v2] Significant change notification sent",
-            {
-              reason: notificationDecision.reason,
-              userId,
-              place_id,
-            },
-          );
-        } catch (notificationError) {
-          console.error(
-            "[analyze-reviews-v2] Failed to send notification:",
-            notificationError,
-          );
+          console.log('[analyze-reviews-v2] Notification sent', { reason: notificationDecision.reason, userId, place_id });
+        } catch (notifErr) {
+          console.error('[analyze-reviews-v2] Notification failed:', notifErr);
         }
-      } else if (!importantUpdatesEnabled) {
-        console.log(
-          "[analyze-reviews-v2] Important updates notifications disabled for user",
-          { userId, place_id },
-        );
       }
 
-      await supabaseAdmin
-        .from('establishments')
-        .update({
-          business_type:            detection.type,
-          business_type_confidence: detection.confidence,
-          business_type_candidates: detection.candidates,
-          business_type_source:     detection.source,
-          analysis_version:         'v2-auto-universal',
-        })
-        .eq('place_id', place_id)
-        .eq('user_id', userId);
+      await supabaseAdmin.from('establishments').update({
+        business_type:            detection.type,
+        business_type_confidence: detection.confidence,
+        business_type_candidates: detection.candidates,
+        business_type_source:     detection.source,
+        analysis_version:         'v2-auto-universal',
+      }).eq('place_id', place_id).eq('user_id', userId);
     }
 
     return json({
