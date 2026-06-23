@@ -134,6 +134,7 @@ import { listAll } from "@/services/reviewsService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KeyTakeawaysPanel } from "@/components/dashboard/KeyTakeawaysPanel";
 import { EffortMatrix } from "@/components/analysis/recommendation/EffortMatrix";
+import { ActionPlanMultiObjective } from "@/components/analysis/recommendation/ActionPlanMultiObjective";
 import { analyzeRootCauses } from "@/utils/rootCauseAnalysis";
 import { RecommendationsSection } from "@/components/RecommendationsSection";
 import { getCurrentEstablishment } from "@/services/establishments";
@@ -3419,7 +3420,6 @@ const getLatestDate = (reviews: any[]): Date | null =>
       [analysisDataForTab?.paretoIssues]
     );
   
-    // ✅ MAP OBJECTIVES IN PARETO ORDER
     const orderedObjectives = useMemo(() => {
   return sortedPareto
     .map(p =>
@@ -6073,7 +6073,7 @@ const activeObjective =
             {activeTab === "recommandations" && (
               <>
               
-                <Card className="mb-8 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-950">
+                <Card className="mb-8 overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-950">
                   <CardHeader
                     className="cursor-pointer border-b border-slate-100 px-6 py-5 dark:border-slate-800 sm:px-8"
                     onClick={() =>
@@ -6121,7 +6121,7 @@ const activeObjective =
                   {openCard === "synthesis" && (
                     <CardContent className="space-y-8 px-6 py-6 sm:px-8">
                     {!primarySynthesisCard ? (
-                      <div className="flex flex-col items-center justify-center rounded-[24px] border border-dashed border-slate-200 bg-slate-50/80 py-14 text-center dark:border-slate-700 dark:bg-slate-900/50">
+                      <div className="flex flex-col items-center justify-center rounded-[18px] border border-dashed border-slate-200 bg-slate-50/80 py-14 text-center dark:border-slate-700 dark:bg-slate-900/50">
                         <Lightbulb className="mb-4 h-12 w-12 text-slate-300 dark:text-slate-600" />
                         <h4 className="mb-2 text-base font-semibold text-slate-600 dark:text-slate-300">
                           {t("dashboard.noSynthesisAvailable", "No synthesis available")}
@@ -6402,8 +6402,8 @@ const activeObjective =
                 {/* SECTION 2 : Plan d'actions (gauche) et Checklist opérationnelle (droite) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                   {/* Plan d'actions */}
-                  <Card
-                    className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
+                 <Card
+                    className="relative rounded-[18px] cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
                     onClick={() =>
                       setOpenCard(
                         openCard === "planActions" ? null : "planActions",
@@ -6411,13 +6411,15 @@ const activeObjective =
                     }
                   >
                     <CardHeader className="relative text-center">
-                      <div className="flex flex-col items-center mb-2">
-                        <ClipboardList className="w-5 h-5 text-indigo-500 mb-2" />
-                        <span className="text-lg font-semibold">
+                      <div className="flex flex-col items-center">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-violet-950/50 dark:text-violet-300">
+                          <ClipboardList className="w-5 h-5" />
+                        </div>
+                        <span className="text-[17px] font-[700]  text-slate-900 dark:text-slate-100">
                           {t("dashboard.actionPlan")}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-slate-300">
+                      <p className="text-[12px] text-slate-500 dark:text-slate-400">
                         {t("dashboard.followImprovementActions")}
                       </p>
                       <Button
@@ -6480,96 +6482,43 @@ const activeObjective =
 
                 {/* Contenu Plan d'actions - EN DESSOUS */}
                 {openCard === "planActions" && (
-                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
+                  <Card className="mb-8 rounded-[18px] dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="relative text-left">
                       <div className="flex items-center gap-2 mb-2">
-                        <ClipboardList className="w-5 h-5 text-indigo-500" />
-                        <span className="text-lg font-semibold">
-                          {t("dashboard.actionPlan")}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-slate-300">
-                        {t("dashboard.followImprovementActions")}
-                      </p>
-                    </CardHeader>
-                  <CardContent>
-                    {!activeObjective || !activeObjective.action_plan?.[i18n.language] ? (
-                      <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <ClipboardList className="w-12 h-12 text-gray-300 dark:text-slate-600 mb-4" />
-                        <h4 className="font-semibold text-gray-500 dark:text-slate-400 mb-2">
-                          {t("dashboard.noActionsAvailable", "Aucune action disponible")}
-                        </h4>
-                        <p className="text-sm text-gray-400 dark:text-slate-500 max-w-sm">
-                          {t(
-                            "dashboard.analyzeEstablishmentToGetActions",
-                            "Analysez votre établissement pour obtenir des actions personnalisées.",
-                          )}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {(() => {
-                          const actionPlan = activeObjective.action_plan[i18n.language];
-
-                          return (
-                            <div className="space-y-3">
-                              {actionPlan.map((action, index) => {
-                                const priorityBadgeClass =
-                                  action.priority.toLowerCase() === "high"
-                                    ? "bg-red-100 text-red-800 border-red-300"
-                                    : action.priority.toLowerCase() === "medium"
-                                      ? "bg-yellow-100 text-yellow-800 border-yellow-300"
-                                      : "bg-blue-100 text-blue-800 border-blue-300";
-
-                                const priorityLabel =
-                                  action.priority.toLowerCase() === "high"
-                                    ? t("dashboard.highPriority")
-                                    : action.priority.toLowerCase() === "medium"
-                                      ? t("dashboard.mediumPriority")
-                                      : t("dashboard.lowPriority");
-
-                                return (
-                                  <div
-                                    key={index}
-                                    className="p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-lg border border-indigo-200 dark:border-indigo-900/60"
-                                  >
-                                    <div className="flex items-start justify-between gap-3">
-                                      <div className="flex-1">
-                                        <p className="text-sm font-medium text-gray-900 dark:text-slate-100 mb-1">
-                                          {action.text}
-                                        </p>
-                                        <div className="flex items-center gap-2 mt-2">
-                                          <Badge
-                                            variant="outline"
-                                            className={`text-xs ${priorityBadgeClass}`}
-                                          >
-                                            {priorityLabel}
-                                          </Badge>
-                                          <span className="text-xs text-gray-500 dark:text-slate-400">
-                                            {activeObjective.pareto_cause?.[i18n.language]}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <div className="flex flex-col items-end gap-2" />
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          );
-                        })()}
-
-                        {/* Message d'information */}
-                        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-900/60">
-                          <p className="text-xs text-gray-600 dark:text-slate-300">
-                            {t("dashboard.actionPlanDescription")}
-                          </p>
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-violet-950/50 dark:text-violet-300">
+                          <ClipboardList className="w-5 h-5 text-indigo-500" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-lg font-semibold">{t("dashboard.actionPlan")}</span>
+                          <span className="text-[12px] text-slate-500 dark:text-slate-400">{t("dashboard.concreteTasks")}</span>
                         </div>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
+                    </CardHeader>
+                    <CardContent>
+                      {orderedObjectives.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                          <ClipboardList className="w-12 h-12 text-gray-300 dark:text-slate-600 mb-4" />
+                          <h4 className="font-semibold text-gray-500 dark:text-slate-400 mb-2">
+                            {t("dashboard.noActionsAvailable", "No actions available")}
+                          </h4>
+                          <p className="text-sm text-gray-400 dark:text-slate-500 max-w-sm">
+                            {t("dashboard.analyzeEstablishmentToGetActions")}
+                          </p>
+                        </div>
+                      ) : (
+                        <ActionPlanMultiObjective
+                          objectives={orderedObjectives}
+                          language={i18n.language}
+                          onToggleAction={(objectiveId, actionIndex) =>
+                            toggleAction(objectiveId, actionIndex)
+                          }
+                          totalReviews={displayTotalAnalyzed ?? 0}
+                          t={t}
+                        />
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Contenu Checklist opérationnelle - EN DESSOUS */}
                 {/* {openCard === "checklist" && (
