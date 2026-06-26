@@ -2359,11 +2359,30 @@
     "aiGeneratedGoals": "Objectifs générés par l’IA et validés par l’utilisateur",
     "mainIssue": "Problème principal : \"{{issue}}\"",
     "negativeReviews": "{{percentage}}% des avis négatifs",
-    "modalTitle": "Générateur d'objectif SMART",
+    "modalTitle": "Définir l'objectif SMART",
     "generating": "Génération de l'objectif SMART pour \"{{cause}}\"...",
+    "issue":"Problème",
+    "paretoSource":"Source Pareto",
+    "cause":"Cause (Ishikawa)",
     "reviewHint": "L'IA a généré cet objectif. Relisez-le et ajustez-le avant l'enregistrement.",
     "impact": "Impact",
     "effort": "Effort",
+    "contextAnalyzed":"Contexte analysé par l'IA",
+    "goalProposed":"Objectif proposé par l'IA",
+    "mainAction":"Action principale",
+    "whichIssue":"Quel problème, quelle action ??",
+    "issueToSolve":"Problème à résoudre",
+    "recommendedMainAction":"Action principale recommandée",
+    "howToMeasure":"Comment vous mesurez l'avancée ?",
+    "trackingIndicator":"Indicateur de suivi",
+    "unitOfMeasurement":"Unité de mesure",
+    "whereToStart":"D'où vous partez, où vous voulez aller ?",
+    "WhyGoalMatter":"Pourquoi cet objectif compte ?",
+    "ByWhen":"Pour quand et avec quelles révisions ?",
+    "whyImportant":"Pourquoi cet objectif est-il important ?",
+    "startDate":"Date de départ",
+    "targetDate":"Date cible",
+    "autoCalculated":"auto-calculé",
     "quadrant": "Quadrant",
     "impactValues": {
       "low": "Faible",
@@ -2378,8 +2397,10 @@
     },
     "problemToSolve": "Problème à résoudre",
     "kpiName": "Nom du KPI",
-    "current": "Actuel",
-    "target": "Cible",
+    "current": "Situation actuelle",
+    "target": "Objectif cible",
+    "targetImprovement":"Amélioration visée",
+    "aiJustification":"Justification IA",
     "auto": "(auto)",
     "unit": "Unité",
     "deadline": "Date limite",
@@ -2390,7 +2411,7 @@
     "saveObjective": "Enregistrer l'objectif",
     "saving": "Enregistrement...",
     "updating": "Mise à jour...",
-    "updateSmart": "Mettre à jour SMART",
+    "updateSmart": "Modifier l'objectif",
     "questionnaireMissing": "⚠️ Questionnaire manquant pour le prochain problème Pareto",
     "completeQuestionnaireFor": "Veuillez compléter le questionnaire pour : {{issue}}",
     "noIssuesLeft": "🎉 Aucun problème restant à résoudre",
@@ -2404,7 +2425,24 @@
     "pdcaTracking": "Suivi PDCA",
     "noParetoIssues": "Aucun problème Pareto disponible",
     "analyzeReviewsMessage": "Analysez les avis de votre établissement pour générer des objectifs SMART et un suivi PDCA",
-     "noSmartActions": "Aucune action SMART disponible pour le moment"
+     "noSmartActions": "Aucune action SMART disponible pour le moment",
+     "stepbar":{
+      "issueImpact":"Impact des problèmes",
+      "causeIdentified":"Causes Identifiées",
+      "targetGoal":"Objectif à atteindre",
+      "actionSteps":"Étapes du plan",
+      "validated":"validé"
+     },
+    "chooseIssue":"Choisissez un problème à traiter",
+    "mainIssueLabel":"PROBLÈME PRINCIPAL",
+    "completed":{
+      "title":"Objectif atteint",
+      "subtitle":"Cet objectif SMART a été complété avec succès. Le plan d'actions associé est clôturé."
+     },
+    "noObjective":{
+      "title":"Aucun objectif SMART disponible",
+      "subtitle":"Aucun objectif SMART n'a encore été créé pour <strong>{{issue}}</strong>. Remplissez le questionnaire pour en générer un."
+    }
   },
   
 "actionPlan": {
@@ -2475,11 +2513,13 @@
   },
   "smartCard": {
   "header": {
-    "title":     "Objectif SMART — {{cause}}",
+    "title": "Objectif à atteindre",
+    "subTitle": "Cadre d'objectif validé par l'IA pour ce problème",
     "pareto": "Depuis Pareto : \"{{cause}}{{percentageText}}\"",
     "negativeReviewsPercentage": " – {{percentage}}% des avis négatifs",
     "ishikawa":  "Ishikawa : {{category}}",
-    "validated": "(validé)"
+    "validated": "(validé)",
+    "smartTooltip":"Objectif SMART : méthode permettant de définir un objectif clair, mesurable et réaliste. Bénéfice : vous savez précisément quel résultat atteindre et comment le suivre."
   },
   "priority": {
     "high":   "Priorité haute",
@@ -2494,15 +2534,25 @@
   },
   "aiGenerated": "Généré par IA",
   "smart": {
-    "specific":   "Spécifique",
-    "measurable": "Mesurable",
-    "achievable": "Atteignable",
-    "relevant":   "Réaliste",
-    "temporal":   "Temporellement défini"
+    "specific":   "Objectif clair",
+    "measurable": "Mesuré par",
+    "achievable": "Objectif à accomplir",
+    "relevant":   "Pertinence",
+    "temporal":   "Échéance"
+  },
+  "goalSections":{
+    "specific":"Spécifique",
+    "realistic":"Réaliste",
+    "Measurable":"Mesurable",
+    "Timebound":"Temporellement défini",
+    "Achievable":"Atteignable",
+    "negativeReviewsMonth":"avis négatifs / mois",
+    "relevant":"Pertinent"
   },
   "temporal": {
     "deadline": "Échéance : {{date}}",
-    "duration": "Durée : {{months}} mois · Révision : 6 semaines"
+    "duration": "Durée : {{months}} mois · Révision : 6 semaines",
+    "months":"mois"
   },
   "achievable": {
     "noActions": "Aucune action définie",
@@ -2517,12 +2567,35 @@
     "overdue":         "{{days}}j de retard",
     "updateBtn":       "Mettre à jour la progression",
     "currentMentions": "Mentions actuelles :",
-    "saveBtn":         "Enregistrer"
+    "saveBtn":         "Enregistrer",
+    "autoStarted":"auto-mesuré · démarré le ",
+    "atteint":"Atteint",
+     "startLabel":"Départ",
+    "currentLabel":"Actuel",
+    "targetLabel":"Cible"
   },
   "pdca": {
-    "title": "PDCA — Suivi, exécution, amélioration continue",
+    "title": "Plan d'actions",
+    "subTitle": "Méthode d'exécution · généré automatiquement à partir de votre objectif SMART",
+    "planTitle": "Préparer",
+    "launchTitle": "Lancer",
+    "measureTitle": "Mesurer",
+    "adjustTitle": "Ajuster",
+    "managerDecision": "Décision du responsable",
+    "teamExecution":"Action de l'équipe sur le terrain",
+    "validateSmartGoal": "Valider l'objectif SMART",
+    "manual": "Manuel",
+    "object": "Objectif",
+    "current": "Actuel",
+    "fieldExecution": "Exécution terrain",
+    "autoMeasured": "Mesure automatique par Reviewsvisor",
+    "adjustInProgress": "Objectif en cours",
+    "start": "Début",
+    "forecast": "Fin prévue",
+    "targetShort": "Objectif",
+    "currentSituation": "Situation actuelle",
     "plan": {
-      "label":  "PLAN",
+      "label": "PLAN",
       "target": "Cible : {{current}} → {{target}} · {{months}} mois"
     },
     "do": {
@@ -2530,23 +2603,30 @@
       "tasks": "Tâches ({{completed}}/{{total}})"
     },
     "check": {
-      "label":       "CHECK",
+      "label": "CHECK",
       "kpiTracking": "Suivi KPI",
-      "target":      "cible {{value}}"
+      "target": "cible {{value}}"
     },
     "act": {
-      "label":    "ACT",
+      "label": "ACT",
       "decision": "Décision",
       "options": {
-        "effective":   "Efficace → standardiser",
-        "partial":     "Partiel → ajuster",
+        "effective": "Efficace → standardiser",
+        "partial": "Partiel → ajuster",
         "ineffective": "Inefficace → nouvelle action"
       },
       "trend": {
         "improvement": "Amélioration",
         "degradation": "Dégradation",
-        "stable":      "Stable"
+        "stable": "Stable"
       }
+    },
+    "pdcaTooltip": "PDCA : méthode d'exécution permettant de transformer un objectif en actions concrètes puis d'en mesurer les résultats. Bénéfice : vous améliorez vos performances grâce à un suivi continu et des ajustements réguliers.",
+    "status":{
+      "planValidated":"Plan validé",
+      "active":"Activé",
+      "auto":"Automatique",
+      "tracking":"Suivi"
     }
   }
 },

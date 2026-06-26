@@ -6304,7 +6304,7 @@ const activeObjective =
                   )}
                 </Card>
                 {/* SECTION 2 : SMART Objectives */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
                 <div className="col-span-1 md:col-span-2">
                   <Card
                     className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
@@ -6340,50 +6340,53 @@ const activeObjective =
                     </CardHeader>
                   </Card>
                 </div>
-              </div>
+              </div> */}
 
 
             {/* Contenu SMART — EN DESSOUS */}
-            {openCard === "smart" &&(analysisDataForTab?.paretoIssues?.length ?? 0) > 0 &&
+            {
+            // openCard === "smart"&&
+            (analysisDataForTab?.paretoIssues?.length ?? 0) > 0 &&
              (
-              <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
-                <CardHeader>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target className="w-5 h-5 text-blue-500" />
-                    <span className="text-lg font-semibold"> {t("recommendations.smart.smartObjectives")}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-slate-300">
-                    {t("recommendations.smart.aiGeneratedGoals")}
-                  </p>
+              // <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
+              //   <CardHeader>
+              //     <div className="flex items-center gap-2 mb-2">
+              //       <Target className="w-5 h-5 text-blue-500" />
+              //       <span className="text-lg font-semibold"> {t("recommendations.smart.smartObjectives")}</span>
+              //     </div>
+              //     <p className="text-sm text-gray-600 dark:text-slate-300">
+              //       {t("recommendations.smart.aiGeneratedGoals")}
+              //     </p>
 
-                  {/* Flow breadcrumb — matches image 2 from earlier */}
-                  <div className="flex items-center gap-2 mt-3 flex-wrap">
-                    <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
-                      {t("recommendations.smart.paretoAnalysis")}
-                    </span>
-                    <span className="text-xs text-gray-400 dark:text-slate-500">→</span>
-                    <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
-                      {t("recommendations.smart.ishikawaRootCauses")}
-                    </span>
-                    <span className="text-xs text-gray-400 dark:text-slate-500">→</span>
-                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
-                       {t("recommendations.smart.smartObjectiveGenerated")}
-                    </span>
-                    <span className="text-xs text-gray-400 dark:text-slate-500">→</span>
-                    <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                     {t("recommendations.smart.pdcaTracking")}
-                    </span>
-                  </div>
-                </CardHeader>
+              //     {/* Flow breadcrumb — matches image 2 from earlier */}
+              //     <div className="flex items-center gap-2 mt-3 flex-wrap">
+              //       <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
+              //         {t("recommendations.smart.paretoAnalysis")}
+              //       </span>
+              //       <span className="text-xs text-gray-400 dark:text-slate-500">→</span>
+              //       <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
+              //         {t("recommendations.smart.ishikawaRootCauses")}
+              //       </span>
+              //       <span className="text-xs text-gray-400 dark:text-slate-500">→</span>
+              //       <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
+              //          {t("recommendations.smart.smartObjectiveGenerated")}
+              //       </span>
+              //       <span className="text-xs text-gray-400 dark:text-slate-500">→</span>
+              //       <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
+              //        {t("recommendations.smart.pdcaTracking")}
+              //       </span>
+              //     </div>
+              //   </CardHeader>
 
-                <CardContent>
-                  <RecommendationsSection
-                    paretoCauses={analysisDataForTab?.paretoIssues}
-                  />
-                </CardContent>
-              </Card>
+              //   <CardContent>
+              <div className="mb-8">
+                <RecommendationsSection
+                  paretoCauses={analysisDataForTab?.paretoIssues}
+                />
+              </div>
+              //   </CardContent>
+              // </Card>
             )}
-
 
                 {openCard === "smart" && (analysisDataForTab?.paretoIssues?.length ?? 0) === 0 && (
                   <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
