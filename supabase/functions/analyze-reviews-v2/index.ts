@@ -182,6 +182,13 @@ const CANONICAL_THEME_KEYS: Record<string, string[]> = {
   product_variety:   ['product variety', 'product selection', 'stock variety', 'stock', 'choix', 'collection', 'range', 'assortiment'],
   fit_comfort:       ['fit and comfort', 'fit comfort', 'comfort fit', 'fit', 'comfort', 'confort', 'taille', 'fitting', 'pointure'],
   staff_knowledge:   ['staff knowledge', 'advice quality', 'knowledgeable staff', 'conseil', 'conseils', 'expertise vendeur'],
+  // ─ Auto repair / mechanic-leaning canonical themes (kept generic enough to
+  //   match across slightly different shop types — body shop, garage, tire shop) ─
+  diagnostic_accuracy: ['diagnostic accuracy', 'misdiagnosis', 'correct diagnosis', 'diagnostic correct', 'mauvais diagnostic', 'diagnostic erroné', 'diagnostic errone'],
+  repair_quality:      ['repair quality', 'repair correctness', 'qualité de la réparation', 'qualite de la reparation', 'mauvaise réparation', 'mauvaise reparation', 'workmanship'],
+  parts_quality:       ['parts quality', 'genuine parts', 'pièces détachées', 'pieces detachees', 'qualité des pièces', 'qualite des pieces', 'oem parts'],
+  turnaround_time:     ['turnaround time', 'repair time', 'délai de réparation', 'delai de reparation', 'temps de réparation', 'temps de reparation'],
+  warranty_comeback:   ['warranty', 'comeback', 'garantie', 'même panne', 'meme panne', 'repeat issue', 'recurring problem'],
 };
 
 const THEME_TO_KEY: Map<string, string> = new Map();
@@ -232,18 +239,77 @@ function enforceKeys(bilingual: { en: any[]; fr: any[] }): { en: any[]; fr: any[
   const keyedEn = enItems.map((item) => ({
     ...item,
     key: resolveThemeKey(item.theme ?? ''),
-    ...(item.sentiment !== undefined && { sentiment: normalizeSentiment(item.sentiment) }),
+    ...(item.sentiment !== undefined && { sentiment: reconcileSentiment(item) }),
     ...(item.root_causes !== undefined && { root_causes: enforceRootCauses(item.root_causes) }),
   }));
 
   const keyedFr = frItems.map((item, i) => ({
     ...item,
     key: keyedEn[i]?.key ?? resolveThemeKey(item.theme ?? ''),
-    ...(item.sentiment !== undefined && { sentiment: normalizeSentiment(item.sentiment) }),
+    ...(item.sentiment !== undefined && { sentiment: reconcileSentiment(item) }),
     ...(item.root_causes !== undefined && { root_causes: enforceRootCauses(item.root_causes) }),
   }));
 
   return { en: keyedEn, fr: keyedFr };
+}
+
+function reconcileSentiment(item: any): 'positive' | 'mixed' | 'negative' {
+  const pos = Number(item?.positive_count);
+  const neg = Number(item?.negative_count);
+  const hasCounts = Number.isFinite(pos) && Number.isFinite(neg) && (pos > 0 || neg > 0);
+
+  if (hasCounts) {
+    if (pos > 0 && neg === 0) return 'positive';
+    if (neg > 0 && pos === 0) return 'negative';
+    if (pos > 0 && neg > 0)   return 'mixed';
+  }
+  return normalizeSentiment(item?.sentiment);
+}
+
+// ─── TOP_ISSUES / TOP_STRENGTH MUTUAL EXCLUSIVITY ───────────────────────────
+
+function enforceTopListsMutualExclusivity(
+  topIssues: { en: any[]; fr: any[] },
+  topStrength: { en: any[]; fr: any[] },
+): { topIssues: { en: any[]; fr: any[] }; topStrength: { en: any[]; fr: any[] } } {
+  const issuesEn   = Array.isArray(topIssues?.en)   ? topIssues.en   : [];
+  const issuesFr   = Array.isArray(topIssues?.fr)   ? topIssues.fr   : [];
+  const strengthEn = Array.isArray(topStrength?.en) ? topStrength.en : [];
+  const strengthFr = Array.isArray(topStrength?.fr) ? topStrength.fr : [];
+
+  const issueCountByKey = new Map(issuesEn.map((i: any) => [i.key, i.count ?? 0]));
+  const strengthCountByKey = new Map(strengthEn.map((i: any) => [i.key, i.count ?? 0]));
+
+  const collidingKeys = new Set(
+    [...issueCountByKey.keys()].filter((k) => strengthCountByKey.has(k)),
+  );
+
+  if (collidingKeys.size > 0) {
+    for (const key of collidingKeys) {
+      console.warn(
+        `[enforceTopListsMutualExclusivity] Theme "${key}" appeared in both ` +
+        `top_issues (count=${issueCountByKey.get(key)}) and top_strength ` +
+        `(count=${strengthCountByKey.get(key)}) — resolving by higher count.`,
+      );
+    }
+  }
+
+  const keepInIssues = (key: string) => {
+    if (!collidingKeys.has(key)) return true;
+    const issueCount    = issueCountByKey.get(key) ?? 0;
+    const strengthCount = strengthCountByKey.get(key) ?? 0;
+    return issueCount >= strengthCount; // ties favor top_issues
+  };
+
+  const filteredIssuesEn   = issuesEn.filter((i: any) => keepInIssues(i.key));
+  const filteredIssuesFr   = issuesFr.filter((i: any) => keepInIssues(i.key));
+  const filteredStrengthEn = strengthEn.filter((i: any) => !collidingKeys.has(i.key) || !keepInIssues(i.key));
+  const filteredStrengthFr = strengthFr.filter((i: any) => !collidingKeys.has(i.key) || !keepInIssues(i.key));
+
+  return {
+    topIssues:   { en: filteredIssuesEn,   fr: filteredIssuesFr },
+    topStrength: { en: filteredStrengthEn, fr: filteredStrengthFr },
+  };
 }
 
 // ─── LOCKED KEYS ─────────────────────────────────────────────────────────────
@@ -281,9 +347,6 @@ function getUniversalThemes() {
 }
 
 // ─── SECTOR-SPECIFIC THEME HINTS ─────────────────────────────────────────────
-// Used in Pass A to tell the model what kinds of industry-specific themes to
-// look for per business type, and more importantly what themes are meaningful
-// enough to surface in top_issues / top_strength.
 
 const SECTOR_THEME_HINTS: Record<BusinessType, { en: string[]; fr: string[] }> = {
   restaurant: {
@@ -326,6 +389,137 @@ const SECTOR_THEME_HINTS: Record<BusinessType, { en: string[]; fr: string[] }> =
   },
 };
 
+const BUSINESS_CATEGORY_CONTEXT: Record<BusinessType, string> = {
+  restaurant: `
+    manpower    → kitchen staff skill, waiter attentiveness, order accuracy, service attitude, chef consistency
+    method      → order flow, kitchen-to-table handoff, reservation handling, table turn process, billing process
+    machine     → kitchen equipment (ovens, fryers, grills), POS system, coffee machines, refrigeration
+    material    → ingredient freshness, sourcing quality, food temperature on arrival, portion consistency
+    environment → noise level, table spacing, cleanliness, lighting, ambiance, toilet condition`,
+
+  salon_coiffure: `
+    manpower    → stylist technique, colourist skill, consultation quality, punctuality, listening to client requests
+    method      → appointment scheduling, service sequencing, colour process timing, patch test procedures
+    machine     → hairdryers, colour processing equipment, styling tools condition, wash basins
+    material    → product quality (dyes, treatments, shampoos), product freshness, brands used
+    environment → salon cleanliness, waiting area comfort, music/noise level, privacy, ventilation`,
+
+  salle_sport: `
+    manpower    → coach expertise, trainer attentiveness, staff helpfulness, class instructor quality
+    method      → class scheduling, membership onboarding, equipment booking system, peak hour management
+    machine     → cardio machines, weight equipment, condition and maintenance, broken equipment response time
+    material    → consumables (towels, cleaning supplies), water/refreshment availability, product vending
+    environment → cleanliness, locker rooms, showers, temperature, crowding, ventilation`,
+
+  serrurier: `
+    manpower    → technician skill, punctuality, professionalism, honesty, communication clarity
+    method      → dispatch process, quote accuracy, job completion verification, invoicing transparency
+    machine     → tools condition, drilling equipment, key-cutting machines, diagnostic tools
+    material    → lock quality, replacement parts sourcing, parts availability
+    environment → worksite safety, tidiness after job, respect for client property`,
+
+  retail_chaussures: `
+    manpower    → staff product knowledge, fitting assistance quality, sales attitude, availability on floor
+    method      → stock management, returns/exchange process, checkout flow, size availability process
+    machine     → POS system, payment terminals, stock lookup systems
+    material    → shoe quality, stock condition, sizing accuracy, packaging
+    environment → store layout, cleanliness, fitting area comfort, lighting, changing room availability`,
+
+  institut_beaute: `
+    manpower    → therapist technique, consultation depth, hygiene standards, punctuality, aftercare advice quality
+    method      → treatment sequencing, appointment management, consent/patch test process, upsell pressure
+    machine     → treatment equipment condition (lasers, wax heaters, facial machines, steamers)
+    material    → product quality (waxes, creams, serums, oils), product freshness, brand transparency
+    environment → room cleanliness, ambiance, temperature, privacy, music, scent`,
+
+  autre: `
+    manpower    → staff skill, behaviour, attentiveness, communication, professionalism
+    method      → process flow, sequencing, coordination, handoffs, service delivery steps
+    machine     → tools, equipment, devices, technology used to deliver the service
+    material    → input quality, product condition, sourcing, consumables
+    environment → physical space, cleanliness, layout, atmosphere, comfort`,
+};
+
+const KNOWN_SECTORS = new Set<BusinessType>(Object.keys(SECTOR_THEME_HINTS) as BusinessType[]);
+
+function isKnownSector(type: string): type is BusinessType {
+  return KNOWN_SECTORS.has(type as BusinessType);
+}
+
+function getSectorHints(businessType: string): { en: string[]; fr: string[] } | null {
+  return isKnownSector(businessType) ? SECTOR_THEME_HINTS[businessType] : null;
+}
+
+function getCategoryContext(businessType: string): string | null {
+  return isKnownSector(businessType) ? BUSINESS_CATEGORY_CONTEXT[businessType] : null;
+}
+
+function buildIndustryInstruction(businessType: string, businessTypeConfidence: number): string {
+  // Previously gated at <45, which suppressed industry-theme extraction for
+  // a large share of runs (the keyword-fallback detector rarely clears 45).
+  // The business type is already being passed in as trusted reference
+  // context by the caller, so this only blocks the genuinely-zero-signal
+  // case (confidence 0 — keyword detection found nothing at all, "autre"
+  // with no candidates). Any non-zero confidence is enough to attempt
+  // sector-specific extraction; a wrong guess at the type still produces
+  // more useful themes than refusing to look for industry themes at all.
+  if (businessTypeConfidence <= 0) {
+    return `Do not invent industry-specific themes — focus on universal themes only.`;
+  }
+
+  const hints = getSectorHints(businessType);
+
+  if (hints) {
+    return `This business is a ${businessType}. Extract as many genuinely sector-specific
+   themes as the reviews support — these are the heart of a useful analysis for
+   this business type, more so than the universal themes.
+   Prioritise themes from this list if they appear in the reviews:
+   EN: ${hints.en.join(', ')}
+   FR: ${hints.fr.join(', ')}
+   Add additional sector-specific themes not in the list above if the reviews
+   clearly mention something specific to how a ${businessType} operates.
+   Aim for at least 3-4 qualifying industry themes (count ≥ 2) if the review
+   content supports it — this directly determines whether top_issues can meet
+   its sector-theme quota below.`;
+  }
+
+  return `This business is a ${businessType}. There is no predefined theme list for
+   this exact business type. Do NOT default to generic, business-agnostic
+   themes — instead, reason about what actually matters operationally for a
+   ${businessType} and derive sector-specific themes directly from what
+   reviewers discuss. For example, for an auto repair shop the meaningful
+   sector themes would be things like diagnostic accuracy, repair
+   correctness/comebacks, parts quality (genuine vs aftermarket), turnaround
+   time, and quote/pricing transparency — NOT generic "service quality" or
+   "price" alone. Apply the same kind of trade-specific thinking to whatever
+   ${businessType} actually is.
+   Extract as many genuinely sector-specific themes as the reviews support —
+   these are the heart of a useful analysis for this business type, more so
+   than the universal themes.
+   Aim for at least 3-4 qualifying industry themes (count ≥ 2) if the review
+   content supports it — this directly determines whether top_issues can meet
+   its sector-theme quota below.`;
+}
+
+function buildCategoryContextBlock(businessType: string): string {
+  const curated = getCategoryContext(businessType);
+  if (curated) return curated;
+
+  return `
+    This business type ("${businessType}") has no predefined 5M definitions.
+    Reason about each category specifically for how a ${businessType}
+    actually operates — do not use generic, business-agnostic definitions.
+    For example, for an auto repair shop:
+      manpower    → technician skill, diagnostic accuracy, communication, honesty about needed work
+      method      → intake/diagnostic process, quoting process, repair workflow, quality-check before handover
+      machine     → diagnostic tools, lifts, specialized repair equipment, calibration tools
+      material    → parts quality (OEM vs aftermarket), parts availability/sourcing, fluids/consumables
+      environment → shop cleanliness, waiting area, safety, turnaround space
+    Apply the same kind of trade-specific reasoning to derive manpower /
+    method / machine / material / environment definitions for a
+    ${businessType}, grounded only in what the reviews actually describe.`;
+}
+
 function getFallbackSummaryOneLiner(name: string, count: number) {
   return {
     en: `Analysis of ${count} reviews for ${name}`,
@@ -362,19 +556,35 @@ function computeStats(rows: ReviewRow[]) {
   };
 }
 
+
+function sampleReviewTexts(rows: ReviewRow[], cap: number): string[] {
+  const withText = rows.filter(r => !!r.text);
+  if (withText.length <= cap) return withText.map(r => r.text!);
+
+  const low  = withText.filter(r => (r.rating ?? 0) <= 2);
+  const mid  = withText.filter(r => (r.rating ?? 0) === 3);
+  const high = withText.filter(r => (r.rating ?? 0) >= 4);
+
+  const total = withText.length;
+  const takeLow  = Math.min(low.length,  Math.ceil(cap * (low.length  / total)) || low.length);
+  const takeMid  = Math.min(mid.length,  Math.ceil(cap * (mid.length  / total)) || mid.length);
+  const remaining = Math.max(0, cap - takeLow - takeMid);
+  const takeHigh = Math.min(high.length, remaining);
+
+  const pick = (arr: ReviewRow[], n: number) => arr.slice(0, n).map(r => r.text!);
+  return [...pick(low, takeLow), ...pick(mid, takeMid), ...pick(high, takeHigh)];
+}
+
 function detectBusinessType(
   name: string,
-  googlePlacesTypes?: string[] | null,
+  outscraperType?: string | null,
   reviewsTexts?: string[],
-): { type: BusinessType; confidence: number; candidates: Array<{ type: BusinessType; confidence: number }>; source: 'places' | 'keywords' | 'manual' } {
-  const combinedText = `${name} ${(reviewsTexts || []).join(' ')}`.toLowerCase();
+): { type: string; confidence: number; candidates: Array<{ type: string; confidence: number }>; source: 'places' | 'keywords' | 'manual' } {
+  if (outscraperType) {
+    return { type: outscraperType, confidence: 90, candidates: [{ type: outscraperType, confidence: 90 }], source: 'places' };
+  }
 
-  const placesMapping: Record<string, BusinessType> = {
-    restaurant: 'restaurant', food: 'restaurant', cafe: 'restaurant',
-    hair_care: 'salon_coiffure', beauty_salon: 'salon_coiffure',
-    gym: 'salle_sport', health: 'salle_sport',
-    locksmith: 'serrurier', shoe_store: 'retail_chaussures', spa: 'institut_beaute',
-  };
+  const combinedText = `${name} ${(reviewsTexts || []).join(' ')}`.toLowerCase();
 
   const keywords: Record<BusinessType, string[]> = {
     restaurant:       ['restaurant', 'diner', 'bistro', 'brasserie', 'cafe', 'bar', 'pizzeria', 'burger', 'sushi', 'cuisine', 'eat', 'meal', 'dish'],
@@ -385,13 +595,6 @@ function detectBusinessType(
     institut_beaute:  ['beauty institute', 'beauty', 'esthetic', 'care', 'massage', 'hair removal'],
     autre:            [],
   };
-
-  if (googlePlacesTypes?.length) {
-    for (const t of googlePlacesTypes) {
-      const mapped = placesMapping[t.toLowerCase().replace(/\s+/g, '_')];
-      if (mapped) return { type: mapped, confidence: 90, candidates: [{ type: mapped, confidence: 90 }], source: 'places' };
-    }
-  }
 
   const scores: Record<BusinessType, number> = {
     restaurant: 0, salon_coiffure: 0, salle_sport: 0, serrurier: 0,
@@ -457,85 +660,16 @@ const BILINGUAL_RULE = `BILINGUAL OUTPUT:
 - Translate only: theme names, descriptions, ai_synthesis, what_it_means, first_step, titles, reasons
 - Never translate: keys, sentiment values, count/impact numbers, or any review quotes`;
 
-// ─── BUSINESS TYPE CATEGORY CONTEXT ──────────────────────────────────────────
-// Used in Pass B and Pass C to give the model sector-specific lens for each
-// of the 5M Ishikawa categories. Without this, the model applies generic
-// descriptions that miss the real operational meaning for that business type.
-
-const BUSINESS_CATEGORY_CONTEXT: Record<BusinessType, string> = {
-  restaurant: `
-    manpower    → kitchen staff skill, waiter attentiveness, order accuracy, service attitude, chef consistency
-    method      → order flow, kitchen-to-table handoff, reservation handling, table turn process, billing process
-    machine     → kitchen equipment (ovens, fryers, grills), POS system, coffee machines, refrigeration
-    material    → ingredient freshness, sourcing quality, food temperature on arrival, portion consistency
-    environment → noise level, table spacing, cleanliness, lighting, ambiance, toilet condition`,
-
-  salon_coiffure: `
-    manpower    → stylist technique, colourist skill, consultation quality, punctuality, listening to client requests
-    method      → appointment scheduling, service sequencing, colour process timing, patch test procedures
-    machine     → hairdryers, colour processing equipment, styling tools condition, wash basins
-    material    → product quality (dyes, treatments, shampoos), product freshness, brands used
-    environment → salon cleanliness, waiting area comfort, music/noise level, privacy, ventilation`,
-
-  salle_sport: `
-    manpower    → coach expertise, trainer attentiveness, staff helpfulness, class instructor quality
-    method      → class scheduling, membership onboarding, equipment booking system, peak hour management
-    machine     → cardio machines, weight equipment, condition and maintenance, broken equipment response time
-    material    → consumables (towels, cleaning supplies), water/refreshment availability, product vending
-    environment → cleanliness, locker rooms, showers, temperature, crowding, ventilation`,
-
-  serrurier: `
-    manpower    → technician skill, punctuality, professionalism, honesty, communication clarity
-    method      → dispatch process, quote accuracy, job completion verification, invoicing transparency
-    machine     → tools condition, drilling equipment, key-cutting machines, diagnostic tools
-    material    → lock quality, replacement parts sourcing, parts availability
-    environment → worksite safety, tidiness after job, respect for client property`,
-
-  retail_chaussures: `
-    manpower    → staff product knowledge, fitting assistance quality, sales attitude, availability on floor
-    method      → stock management, returns/exchange process, checkout flow, size availability process
-    machine     → POS system, payment terminals, stock lookup systems
-    material    → shoe quality, stock condition, sizing accuracy, packaging
-    environment → store layout, cleanliness, fitting area comfort, lighting, changing room availability`,
-
-  institut_beaute: `
-    manpower    → therapist technique, consultation depth, hygiene standards, punctuality, aftercare advice quality
-    method      → treatment sequencing, appointment management, consent/patch test process, upsell pressure
-    machine     → treatment equipment condition (lasers, wax heaters, facial machines, steamers)
-    material    → product quality (waxes, creams, serums, oils), product freshness, brand transparency
-    environment → room cleanliness, ambiance, temperature, privacy, music, scent`,
-
-  autre: `
-    manpower    → staff skill, behaviour, attentiveness, communication, professionalism
-    method      → process flow, sequencing, coordination, handoffs, service delivery steps
-    machine     → tools, equipment, devices, technology used to deliver the service
-    material    → input quality, product condition, sourcing, consumables
-    environment → physical space, cleanliness, layout, atmosphere, comfort`,
-};
-
-// ─── PASS A — THEME EXTRACTION ───────────────────────────────────────────────
-// KEY CHANGE: top_issues and top_strength are now ranked from the COMBINED
-// pool of universal + industry themes. The model is explicitly told to prefer
-// sector-specific themes over generic ones when counts are equal, so a
-// restaurant's top issue will be "Food Temperature" not just "Service".
-
 async function analyzePassA(
   placeName: string,
   samples: string[],
   totalReviews: number,
-  businessType: BusinessType,
+  businessType: string,
   businessTypeConfidence: number,
   lockedKeys: Record<string, string> = {},
 ) {
   const universal = getUniversalThemes();
-  const sectorHints = SECTOR_THEME_HINTS[businessType] ?? SECTOR_THEME_HINTS['autre'];
-
-  const industryInstruction = businessTypeConfidence >= 45
-    ? `Also extract themes specific to the ${businessType} sector. Prioritise themes from this list if they appear in the reviews:
-   EN: ${sectorHints.en.join(', ')}
-   FR: ${sectorHints.fr.join(', ')}
-   You may add additional sector-specific themes not in the list above if the reviews clearly mention them.`
-    : `Do not invent industry-specific themes — focus on universal themes only.`;
+  const industryInstruction = buildIndustryInstruction(businessType, businessTypeConfidence);
 
   const lockedKeysBlock = Object.keys(lockedKeys).length > 0
     ? `LOCKED KEYS — reuse these exact keys for the same themes, no changes allowed:\n` +
@@ -568,7 +702,7 @@ COUNTING RULE:
 Go through each review and count how many mention each theme — directly or by implication.
 "count" = exact number of reviews. Do not estimate. Minimum 2 to include a theme.
 
-STEP 1 — EXTRACT ALL THEMES
+EXTRACT ALL THEMES
 Extract two sets of themes (minimum count ≥ 2 for each):
 
 Universal themes — always check these six:
@@ -577,40 +711,42 @@ Universal themes — always check these six:
 
 ${industryInstruction}
 
-For each theme found: assign sentiment ("positive"|"mixed"|"negative"), importance (0–100), count.
+For each theme found: assign sentiment ("positive"|"mixed"|"negative"), importance (0–100),
+count, positive_count, negative_count.
+  • positive_count = number of reviews with a genuine positive mention of this theme.
+  • negative_count = number of reviews with a genuine negative mention of this theme.
+  • count = positive_count + negative_count (do not include neutral/no-opinion mentions).
+  • sentiment derives directly from the two counts: positive_count > 0 and
+    negative_count = 0 → "positive"; negative_count > 0 and positive_count = 0
+    → "negative"; both > 0 with neither negligible → "mixed". Do not assign
+    "mixed" just because you're unsure — only when both counts are real.
 
-STEP 2 — RANK top_issues AND top_strength FROM THE COMBINED POOL
-top_issues  = 3–5 themes with the most negative mentions, sorted by count desc.
-top_strength = 3–5 themes with the most positive mentions, sorted by count desc.
+SENTIMENT COVERAGE: don't let every theme collapse to the same sentiment.
+If the reviews contain real praise AND real complaints, themes_universal +
+themes_industry together must show a genuine mix of "positive", "negative",
+and "mixed" — never flatten everything to one bucket. Only an all-one-sided
+result is acceptable if the reviews themselves are genuinely one-sided.
+Never invent signal that isn't in the reviews.
 
-RANKING RULES FOR top_issues / top_strength:
-  • Draw from ALL themes found in Step 1 — both universal and industry-specific.
-  • When two themes have similar counts, PREFER the more sector-specific one.
-    Example: a restaurant with equal counts for "Service" and "Food Temperature"
-    → "Food Temperature" wins because it is specific and actionable for this sector.
-  • Do NOT default to generic themes ("Service", "Food", "Staff") if a more
-    specific theme ("Service Speed", "Food Quality", "Stylist Skill") has equal
-    or higher count. Generic themes are only used when no specific theme fits.
-  • Each theme in top_issues must have sentiment "negative" or "mixed".
-  • Each theme in top_strength must have sentiment "positive" or "mixed".
+RANKING RULE FOR top_strength:
+  top_strength = 3–5 themes with the most positive mentions, sorted by count desc.
+  • Draw from all themes found above. When counts are similar, prefer
+    the more sector-specific theme.
+  • top_strength themes must have sentiment "positive".
 
 Return this exact JSON shape (NO evidence_quotes or evidence arrays — leave them empty []):
 {
-  "top_issues": {
-    "en": [{ "key": "snake_case", "theme": "Name", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }],
-    "fr": [{ "key": "same_key_as_en", "theme": "Nom", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }]
-  },
   "top_strength": {
     "en": [{ "key": "snake_case", "theme": "Name", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }],
     "fr": [{ "key": "same_key_as_en", "theme": "Nom", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }]
   },
   "themes_universal": {
-    "en": [{ "key": "snake_case", "theme": "Name", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "what_it_means": "...", "evidence_quotes": [] }],
-    "fr": [{ "key": "same_key_as_en", "theme": "Nom", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "what_it_means": "...", "evidence_quotes": [] }]
+    "en": [{ "key": "snake_case", "theme": "Name", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "evidence_quotes": [] }],
+    "fr": [{ "key": "same_key_as_en", "theme": "Nom", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "evidence_quotes": [] }]
   },
   "themes_industry": {
-    "en": [{ "key": "snake_case", "theme": "Name", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "what_it_means": "...", "evidence_quotes": [] }],
-    "fr": [{ "key": "same_key_as_en", "theme": "Nom", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "what_it_means": "...", "evidence_quotes": [] }]
+    "en": [{ "key": "snake_case", "theme": "Name", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "evidence_quotes": [] }],
+    "fr": [{ "key": "same_key_as_en", "theme": "Nom", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "evidence_quotes": [] }]
   },
   "summary": {
     "en": { "one_liner": "...", "what_customers_love": [{ "theme": "...", "reason": "...", "count": 0 }], "what_customers_hate": [{ "theme": "...", "reason": "...", "count": 0 }] },
@@ -620,24 +756,165 @@ Return this exact JSON shape (NO evidence_quotes or evidence arrays — leave th
     },
   ]);
 }
+async function analyzeTopIssues(
+  negativeTexts: string[],
+  businessType: string,
+  businessTypeConfidence: number,
+) {
+  if (!negativeTexts.length) {
+    return { en: [], fr: [] };
+  }
 
-// ─── PASS B — EVIDENCE EXTRACTION ────────────────────────────────────────────
-// Receives businessType + businessTypeConfidence so the model can judge
-// quote relevance through the correct sector lens.
+  const industryInstruction = buildIndustryInstruction(businessType, businessTypeConfidence);
+
+  const result = await callOpenAI([
+    {
+      role: "system",
+      content: `You are a customer review analyst identifying the most significant
+problems a business should act on, based only on its negative reviews.
+${SYSTEM_RULES}
+${BILINGUAL_RULE}
+Do NOT include any quotes or evidence in this pass — root-cause evidence is handled separately.`,
+    },
+    {
+      role: "user",
+      content: `Business type: ${businessType} (confidence: ${businessTypeConfidence}%)
+
+NEGATIVE REVIEWS (${negativeTexts.length} total, rated 1–3 stars):
+${negativeTexts.map((t, i) => `${i + 1}. ${t}`).join("\n")}
+
+TASK
+Go through these negative reviews yourself, from scratch, and identify the
+most significant, recurring, operationally-fixable problems. Do this
+directly from the review text — do not assume any particular theme list,
+and do not limit yourself to generic complaint categories.
+
+COUNT REQUIREMENT (hard constraint):
+  • Return exactly 5 issues whenever the reviews support it.
+  • Only return 4 if you genuinely cannot find a 5th distinct, multi-review
+    problem — 4 is the floor, not a target. Never return fewer than 4.
+  • Never return more than 5, and never return 3 or fewer. If the negative
+    reviews only clearly support 2-3 distinct problems, broaden each issue
+    slightly (e.g. group closely related complaints into one slightly
+    broader issue, such as combining "cold food" and "slow plating" into a
+    single "food quality on arrival" issue) so the list still reaches 4,
+    rather than leaving real complaints in the reviews unrepresented.
+  • Do not invent a problem that isn't in the reviews just to hit the
+    count — broaden/merge real complaints first; only fall back to 4 if
+    even broadening still can't produce a 5th genuinely distinct issue.
+
+SECTOR WEIGHTING (apply during selection, not as a quota):
+${industryInstruction}
+When multiple real problems are roughly similar in frequency/severity,
+prefer the one that is more specific to how a ${businessType} actually
+operates over a generic complaint (e.g. prefer a concrete sector-specific
+problem actually present in the reviews over a generic "bad service" or
+"too expensive" framing, if both are genuinely supported). Never invent a
+sector-specific problem that isn't actually in the reviews just to satisfy
+this preference — only weight among problems that are really there.
+
+SELECTION RULES
+  • Each issue must be something multiple reviewers actually complain about
+    — not a single one-off complaint, unless it describes a severe incident.
+  • "count" = number of distinct negative reviews that raise this problem.
+    Count directly from the numbered reviews above — do not estimate.
+  • Rank the final list by how much each issue matters operationally: a mix
+    of how often the problem comes up AND how severe/damaging it sounds,
+    not raw count alone.
+  • impact: "dominant" for the single most damaging/frequent issue (use at
+    most once), "high" for clearly significant issues, "medium" for the rest.
+  • ai_synthesis: 1–2 sentences explaining what's actually going wrong and
+    why it matters for this business, grounded in what reviewers said.
+
+Return ONLY this JSON — no prose, no markdown:
+{
+  "en": [{ "key": "snake_case", "theme": "Short issue name", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }],
+  "fr": [{ "key": "same_key_as_en", "theme": "Nom court du problème", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }]
+}`,
+    },
+  ]);
+
+  if (!result?.en) return { en: [], fr: [] };
+  const keyed = enforceKeys({ en: result.en ?? [], fr: result.fr ?? [] });
+  return clampTopIssuesCount(keyed);
+}
+const TOP_ISSUES_MIN = 4;
+const TOP_ISSUES_MAX = 5;
+
+function impactRank(impact: unknown): number {
+  if (impact === 'dominant') return 2;
+  if (impact === 'high') return 1;
+  return 0; // 'medium' or anything unrecognized
+}
+
+function clampTopIssuesCount(topIssues: { en: any[]; fr: any[] }): { en: any[]; fr: any[] } {
+  const enItems = Array.isArray(topIssues?.en) ? topIssues.en : [];
+  const frItems = Array.isArray(topIssues?.fr) ? topIssues.fr : [];
+
+  if (enItems.length <= TOP_ISSUES_MAX) {
+    if (enItems.length < TOP_ISSUES_MIN) {
+      console.warn(
+        `[clampTopIssuesCount] Only ${enItems.length} issue(s) extracted from ` +
+        `negative reviews — below the ${TOP_ISSUES_MIN}-issue floor. Cannot ` +
+        `fabricate additional issues that aren't in the reviews; shipping ` +
+        `the list as-is. This usually means the negative review volume is ` +
+        `genuinely thin for this business.`,
+      );
+    }
+    return { en: enItems, fr: frItems };
+  }
+
+  // More than 5 — trim to the top 5 by impact tier, then count, desc.
+  const sortedEn = [...enItems].sort((a, b) => {
+    const impactDiff = impactRank(b.impact) - impactRank(a.impact);
+    if (impactDiff !== 0) return impactDiff;
+    return (Number(b.count) || 0) - (Number(a.count) || 0);
+  });
+  const keptEn = sortedEn.slice(0, TOP_ISSUES_MAX);
+  const keptKeys = new Set(keptEn.map((i: any) => i.key));
+  const keptFr = frItems.filter((i: any) => keptKeys.has(i.key));
+
+  console.warn(
+    `[clampTopIssuesCount] Model returned ${enItems.length} issues — trimmed ` +
+    `to top ${TOP_ISSUES_MAX} by impact/count.`,
+  );
+
+  return { en: keptEn, fr: keptFr };
+}
+
+
+type ThemeStub = { key: string; theme: string; sentiment?: string };
+
+function toThemeStubs(items: any[]): ThemeStub[] {
+  if (!Array.isArray(items)) return [];
+  return items.map((i) => ({ key: i.key, theme: i.theme, ...(i.sentiment !== undefined && { sentiment: i.sentiment }) }));
+}
+
+function mergeQuotesIntoOriginal(original: any[], quoted: any[] | undefined, quoteField: string): any[] {
+  const quotedByKey = new Map((quoted ?? []).map((q: any) => [q.key, q]));
+  return (original ?? []).map((item: any) => {
+    const match = quotedByKey.get(item.key);
+    return { ...item, [quoteField]: Array.isArray(match?.[quoteField]) ? match[quoteField] : [] };
+  });
+}
 
 async function analyzePassB(
   samples: string[],
   passAResult: any,
-  businessType: BusinessType,
+  businessType: string,
   businessTypeConfidence: number,
 ) {
+  const themesUniversalEn = passAResult?.themes_universal?.en ?? [];
+  const themesIndustryEn  = passAResult?.themes_industry?.en  ?? [];
+  const topStrengthEn     = passAResult?.top_strength?.en     ?? [];
+
   const themesForQuotes = {
-    themes_universal: passAResult?.themes_universal ?? { en: [], fr: [] },
-    themes_industry:  passAResult?.themes_industry  ?? { en: [], fr: [] },
-    top_strength:     passAResult?.top_strength     ?? { en: [], fr: [] },
+    themes_universal: toThemeStubs(themesUniversalEn),
+    themes_industry:  toThemeStubs(themesIndustryEn),
+    top_strength:     toThemeStubs(topStrengthEn),
   };
 
-  return callOpenAI([
+  const result = await callOpenAI([
     {
       role: "system",
       content: `You are extracting verbatim quotes from customer reviews to support pre-identified themes.
@@ -645,53 +922,108 @@ ${SYSTEM_RULES}
 
 Business type: ${businessType} (confidence: ${businessTypeConfidence}%)
 Use this context to understand what each theme means for this sector:
-${BUSINESS_CATEGORY_CONTEXT[businessType] ?? BUSINESS_CATEGORY_CONTEXT['autre']}
+${buildCategoryContextBlock(businessType)}
 
 QUOTE RULES — these are absolute, no exceptions:
 Q1. Every quote must be copied character-for-character from the numbered reviews below.
     Never paraphrase, shorten, summarize, or construct a quote.
 
-Q2. Never translate quotes — ever.
-    A French review stays French. An English review stays English.
-    The FR branch of every theme must contain the EXACT SAME quotes as the EN branch.
-    Identical. Character for character. Not a translation — a copy.
+Q2. Quotes are extracted once, in their original language. Do not translate
+    anything — work only with the language each review is written in.
 
-Q3. Sentiment matching for themes (evidence_quotes):
-    - sentiment="positive" → quotes where reviewer PRAISES this theme only
-    - sentiment="negative" → quotes where reviewer COMPLAINS about this theme only
-    - sentiment="mixed"    → quotes containing BOTH praise AND complaint in the SAME sentence
-                             If no such quote exists → evidence_quotes: []
-                             Do NOT combine one positive + one negative quote
+Q3. Sentiment matching for themes (evidence_quotes) — STRICT, no exceptions:
+    - sentiment="positive" → quotes where the reviewer PRAISES this theme ONLY.
+         A quote containing ANY complaint about this theme, however small,
+         is INVALID here — even if the overall tone is positive.
+    - sentiment="negative" → quotes where the reviewer COMPLAINS about this
+         theme ONLY. A quote containing ANY praise of this theme, however
+         small, is INVALID here.
+    - sentiment="mixed"    → the quote must itself contain BOTH an explicit
+         positive element AND an explicit negative element about THIS SAME
+         THEME, within one sentence or one tightly connected clause
+         (e.g. joined by "but", "however", "mais", "cependant", "même si").
+         STRICTLY FORBIDDEN for "mixed":
+           ✗ A quote that is purely positive about the theme
+           ✗ A quote that is purely negative about the theme
+           ✗ Stitching together one positive quote + one separate negative
+             quote (from the same or different reviews) to fake a mixed quote
+           ✗ A quote about one theme combined with a quote about another
+             theme, even if one is positive and one negative
+         If, and only if, no single sentence/clause anywhere in the reviews
+         satisfies this for a given mixed theme → evidence_quotes: [].
+         A mixed theme with no qualifying quote MUST be left empty rather
+         than filled with a one-sided quote. Do not relax this to "find
+         something close enough."
 
 Q4. top_strength evidence → praise quotes only, even from mixed reviews.
     Extract only the praise clause.
 
-Q5. If no valid verbatim quote exists for a theme → empty array []. Never invent.`,
+Q5. If no valid verbatim quote exists for a theme → empty array []. Never invent.
+
+Before finalizing each "mixed" theme's evidence_quotes, re-check every
+candidate quote against Q3 individually: does it, by itself, contain both a
+positive element and a negative element about this exact theme? If you have
+any doubt, leave it out rather than include a one-sided quote.`,
     },
     {
       role: "user",
       content: `Reviews (numbered, ${samples.length} total):
 ${samples.map((t, i) => `${i + 1}. ${t}`).join("\n")}
 
-Themes to fill with quotes:
+Themes to fill with quotes (key, theme, sentiment):
 ${JSON.stringify(themesForQuotes, null, 2)}
 
 For each theme in themes_universal and themes_industry:
   → Fill evidence_quotes[] with verbatim quotes matching the theme's sentiment (rule Q3)
-  → EN and FR branches get identical quote arrays
+  → For "mixed" themes specifically: each quote must individually contain
+    both a positive and a negative element about that theme — never a purely
+    positive quote, never a purely negative quote, never two quotes stitched
+    together. If none qualifies, evidence_quotes: [].
 
 For each item in top_strength:
   → Fill evidence[] with praise-only verbatim quotes (rule Q4)
-  → EN and FR branches get identical quote arrays
 
-Return this exact JSON shape with the same items, just with quotes added:
+Return ONLY the key and the quotes array for each item — no other fields:
 {
-  "themes_universal": { "en": [...], "fr": [...] },
-  "themes_industry":  { "en": [...], "fr": [...] },
-  "top_strength":     { "en": [...], "fr": [...] }
+  "themes_universal": [{ "key": "...", "evidence_quotes": [] }],
+  "themes_industry":  [{ "key": "...", "evidence_quotes": [] }],
+  "top_strength":     [{ "key": "...", "evidence": [] }]
 }`,
     },
   ]);
+
+  if (!result) return null;
+
+  // Reconstruct full bilingual shape: merge quotes back into the original
+  // (full-field) EN items by key, then mirror the identical quote arrays
+  // into FR — FR quotes are never translated, so there's nothing to ask the
+  // model for here, just a structural copy keyed by the same `key`.
+  const mergedUniversalEn = mergeQuotesIntoOriginal(themesUniversalEn, result.themes_universal, "evidence_quotes");
+  const mergedIndustryEn  = mergeQuotesIntoOriginal(themesIndustryEn,  result.themes_industry,  "evidence_quotes");
+  const mergedStrengthEn  = mergeQuotesIntoOriginal(topStrengthEn,     result.top_strength,     "evidence");
+
+  const quotesByKeyUniversal = new Map(mergedUniversalEn.map((i: any) => [i.key, i.evidence_quotes]));
+  const quotesByKeyIndustry  = new Map(mergedIndustryEn.map((i: any) => [i.key, i.evidence_quotes]));
+  const evidenceByKeyStrength = new Map(mergedStrengthEn.map((i: any) => [i.key, i.evidence]));
+
+  const mergedUniversalFr = (passAResult?.themes_universal?.fr ?? []).map((item: any) => ({
+    ...item,
+    evidence_quotes: quotesByKeyUniversal.get(item.key) ?? [],
+  }));
+  const mergedIndustryFr = (passAResult?.themes_industry?.fr ?? []).map((item: any) => ({
+    ...item,
+    evidence_quotes: quotesByKeyIndustry.get(item.key) ?? [],
+  }));
+  const mergedStrengthFr = (passAResult?.top_strength?.fr ?? []).map((item: any) => ({
+    ...item,
+    evidence: evidenceByKeyStrength.get(item.key) ?? [],
+  }));
+
+  return {
+    themes_universal: { en: mergedUniversalEn, fr: mergedUniversalFr },
+    themes_industry:  { en: mergedIndustryEn,  fr: mergedIndustryFr },
+    top_strength:     { en: mergedStrengthEn,  fr: mergedStrengthFr },
+  };
 }
 
 // ─── PASS C — ISHIKAWA ROOT CAUSES ───────────────────────────────────────────
@@ -699,7 +1031,7 @@ Return this exact JSON shape with the same items, just with quotes added:
 async function analyzePassC(
   negativeTexts: string[],
   topIssues: { en: any[]; fr: any[] },
-  businessType: BusinessType,
+  businessType: string,
   businessTypeConfidence: number,
 ): Promise<{ en: any[]; fr: any[] }> {
 
@@ -712,7 +1044,11 @@ async function analyzePassC(
     };
   }
 
-  const issueList = topIssues.en.map((issue: any) => ({
+  const issuesForIshikawa = topIssues.en;
+  const ishikawaKeys = new Set(issuesForIshikawa.map((i: any) => i.key));
+
+
+  const issueList = issuesForIshikawa.map((issue: any) => ({
     key:   issue.key,
     theme: issue.theme,
     count: issue.count ?? 0,
@@ -728,7 +1064,7 @@ You receive only negative reviews (rating 1–3), each numbered.
 Business type: ${businessType} (confidence: ${businessTypeConfidence}%)
 
 5M CATEGORIES for a ${businessType} business — use these sector-specific definitions:
-${BUSINESS_CATEGORY_CONTEXT[businessType] ?? BUSINESS_CATEGORY_CONTEXT['autre']}
+${buildCategoryContextBlock(businessType)}
 
 The category_key values you must use are always these exact strings:
   manpower | method | machine | material | environment
@@ -932,15 +1268,31 @@ Return ONLY this JSON — no prose, no markdown:
   // ── Shape guard: model may return { top_issues:{en,fr} } or {en,fr} directly
   const raw = result?.top_issues ?? result;
   if (!raw?.en) {
-    return topIssues;
+    // Model call failed/returned nothing usable — give every issue an empty
+    // root_causes shape rather than leaving the field undefined downstream.
+    return {
+      en: topIssues.en.map(i => ({ ...i, root_causes: enforceRootCauses([]) })),
+      fr: topIssues.fr.map(i => ({ ...i, root_causes: enforceRootCauses([]) })),
+    };
   }
 
   const enItems: any[] = Array.isArray(raw.en) ? raw.en : [];
   const frItems: any[] = Array.isArray(raw.fr) ? raw.fr : [];
 
-  // ── EN: spread original Pass A fields first — model only contributes root_causes
-  const enforcedEn = topIssues.en.map((orig: any, idx: number) => {
-    const modelItem = enItems[idx];
+  // Lookup by key (not index) — defensive: even though all 5 issues are now
+  // sent to the model, its response order isn't guaranteed to match input
+  // order, so key-based lookup is still the correct approach.
+  const enByKey = new Map(enItems.map((item: any) => [item.key, item]));
+  const frByKey = new Map(frItems.map((item: any) => [item.key, item]));
+
+  // ── EN: every issue is in ishikawaKeys now, so every issue gets the
+  // model's root_causes. Falls back to an empty Ishikawa shape only if the
+  // model's response happened to omit that specific key.
+  const enforcedEn = topIssues.en.map((orig: any) => {
+    if (!ishikawaKeys.has(orig.key)) {
+      return { ...orig, root_causes: enforceRootCauses([]) };
+    }
+    const modelItem = enByKey.get(orig.key);
     return {
       ...orig,
       root_causes: enforceRootCauses(modelItem?.root_causes ?? []),
@@ -948,9 +1300,12 @@ Return ONLY this JSON — no prose, no markdown:
   });
 
   // ── FR: same pattern + hard-mirror EN evidence[] into FR by category_key
-  const enforcedFr = topIssues.fr.map((orig: any, idx: number) => {
-    const modelItem     = frItems[idx];
-    const enCounterpart = enforcedEn[idx];
+  const enforcedFr = topIssues.fr.map((orig: any) => {
+    if (!ishikawaKeys.has(orig.key)) {
+      return { ...orig, root_causes: enforceRootCauses([]) };
+    }
+    const modelItem     = frByKey.get(orig.key);
+    const enCounterpart = enforcedEn.find((e: any) => e.key === orig.key);
 
     const frCauses: any[] = enforceRootCauses(modelItem?.root_causes ?? []);
 
@@ -977,7 +1332,7 @@ Return ONLY this JSON — no prose, no markdown:
 
 async function analyzePassD(
   placeName: string,
-  businessType: BusinessType,
+  businessType: string,
   businessTypeConfidence: number,
   themesUniversal: { en: any[]; fr: any[] },
   themesIndustry: { en: any[]; fr: any[] },
@@ -1188,16 +1543,18 @@ Deno.serve(async (req) => {
 
     // ── Establishment ──────────────────────────────────────────────────────
     let establishmentName = name || 'Établissement';
-    let googlePlacesTypes: string[] | null = null;
+    let googlePlacesTypes: string | null = null;
     try {
       const { data: establishment } = await supabaseAdmin
         .from('establishments').select('name, types')
         .eq('place_id', place_id).eq('user_id', userId).maybeSingle();
       if (establishment?.name) establishmentName = establishment.name;
       if (establishment?.types) {
-        googlePlacesTypes = Array.isArray(establishment.types) ? establishment.types : [establishment.types];
+        googlePlacesTypes = establishment.types?.[outputLanguage] ?? null;
       }
     } catch (err) { console.warn('[analyze-reviews-v2] Establishment fetch error:', err); }
+    console.log("the reviews are being fetched with langugage", outputLanguage);
+    console.log("the reviews are being fetched with langugage", googlePlacesTypes);
 
     // ── Reviews ────────────────────────────────────────────────────────────
     const { data: reviewsData, error: reviewsErr } = await supabaseAdmin
@@ -1224,6 +1581,25 @@ Deno.serve(async (req) => {
     const detection = detectBusinessType(establishmentName, googlePlacesTypes, sampleTexts);
     console.log(`[analyze-reviews-v2] Business type: ${detection.type} (${detection.confidence}%) via ${detection.source}`);
 
+    // Cap what actually gets interpolated into OpenAI prompts. Sending the
+    // full (up to 300) review set into Pass A and again into Pass B is the
+    // main driver of upstream payload-size errors. Stratified sampling keeps
+    // the rating distribution representative so negative reviews aren't
+    // crowded out by a flood of 5-star reviews when a place has many reviews.
+    const PROMPT_REVIEW_CAP = 300;
+    const promptSamples = sampleReviewTexts(rows, PROMPT_REVIEW_CAP);
+    const negativeRows = rows.filter(r => r.text && (r.rating ?? 3) <= 3);
+    const PROMPT_NEGATIVE_CAP = 300;
+    const promptNegativeTexts = negativeRows.length <= PROMPT_NEGATIVE_CAP
+      ? negativeTexts
+      : sampleReviewTexts(negativeRows, PROMPT_NEGATIVE_CAP);
+    if (promptSamples.length < sampleTexts.length) {
+      console.log(`[analyze-reviews-v2] Capped prompt sample: ${promptSamples.length}/${sampleTexts.length} reviews sent to Pass A/B`);
+    }
+    if (promptNegativeTexts.length < negativeTexts.length) {
+      console.log(`[analyze-reviews-v2] Capped negative sample: ${promptNegativeTexts.length}/${negativeTexts.length} reviews sent to Pass C`);
+    }
+
     // ── Locked keys from previous run ──────────────────────────────────────
     const { data: existingInsight } = await supabaseAdmin
       .from('review_insights')
@@ -1232,21 +1608,36 @@ Deno.serve(async (req) => {
 
     const lockedKeys = buildLockedKeys(existingInsight);
 
-    // ── Pass A: theme extraction ───────────────────────────────────────────
-    const passAResult = await analyzePassA(
-      establishmentName, sampleTexts, rows.length,
-      detection.type, detection.confidence, lockedKeys,
-    );
+    // ── Pass A: theme extraction  +  Top Issues: independent negative-review scan ──
+    const [passAResult, topIssuesResult] = await Promise.all([
+      analyzePassA(
+        establishmentName, promptSamples, rows.length,
+        detection.type, detection.confidence, lockedKeys,
+      ),
+      analyzeTopIssues(
+        promptNegativeTexts, detection.type, detection.confidence,
+      ),
+    ]);
     if (!passAResult) return json({ ok: false, error: "analysis_pass_a_failed" }, 500);
 
-    if (passAResult.top_issues)       passAResult.top_issues       = enforceKeys(passAResult.top_issues);
+    passAResult.top_issues = topIssuesResult ?? { en: [], fr: [] };
+
     if (passAResult.top_strength)     passAResult.top_strength     = enforceKeys(passAResult.top_strength);
     if (passAResult.themes_universal) passAResult.themes_universal = enforceKeys(passAResult.themes_universal);
     if (passAResult.themes_industry)  passAResult.themes_industry  = enforceKeys(passAResult.themes_industry);
+    // top_issues.
+    {
+      const resolved = enforceTopListsMutualExclusivity(
+        passAResult.top_issues   ?? { en: [], fr: [] },
+        passAResult.top_strength ?? { en: [], fr: [] },
+      );
+      passAResult.top_issues   = resolved.topIssues;
+      passAResult.top_strength = resolved.topStrength;
+    }
 
     // ── Pass B: evidence quotes ────────────────────────────────────────────
     const passBResult = await analyzePassB(
-      sampleTexts,
+      promptSamples,
       passAResult,
       detection.type,
       detection.confidence,
@@ -1255,10 +1646,18 @@ Deno.serve(async (req) => {
     if (passBResult?.themes_universal) passAResult.themes_universal = enforceKeys(passBResult.themes_universal);
     if (passBResult?.themes_industry)  passAResult.themes_industry  = enforceKeys(passBResult.themes_industry);
     if (passBResult?.top_strength)     passAResult.top_strength     = enforceKeys(passBResult.top_strength);
+    {
+      const resolved = enforceTopListsMutualExclusivity(
+        passAResult.top_issues   ?? { en: [], fr: [] },
+        passAResult.top_strength ?? { en: [], fr: [] },
+      );
+      passAResult.top_issues   = resolved.topIssues;
+      passAResult.top_strength = resolved.topStrength;
+    }
 
-    // ── Pass C: Ishikawa root causes ───────────────────────────────────────
+    // ── Pass C: Ishikawa root causes (all top_issues) ──────────────────────
     const passCResult = await analyzePassC(
-      negativeTexts,
+      promptNegativeTexts,
       passAResult.top_issues ?? { en: [], fr: [] },
       detection.type,
       detection.confidence,
@@ -1299,7 +1698,7 @@ Deno.serve(async (req) => {
       top_issues:               passAResult?.top_issues        || { en: [], fr: [] },
       summary:                  summaryData,
       themes_universal:         passAResult?.themes_universal  || { en: [], fr: [] },
-      themes_industry:          detection.confidence >= 45
+      themes_industry:          detection.confidence > 0
         ? (passAResult?.themes_industry || { en: [], fr: [] })
         : { en: [], fr: [] },
       pain_points_prioritized:  passDResult?.pain_points_prioritized || { en: [], fr: [] },
@@ -1348,7 +1747,7 @@ Deno.serve(async (req) => {
         top_issues:       passAResult?.top_issues      || { en: [], fr: [] },
         summary:          summaryData,
         themes_universal: passAResult?.themes_universal || { en: [], fr: [] },
-        themes_industry:  detection.confidence >= 45
+        themes_industry:  detection.confidence > 0
           ? (passAResult?.themes_industry || { en: [], fr: [] })
           : { en: [], fr: [] },
         pain_points_prioritized: passDResult?.pain_points_prioritized || { en: [], fr: [] },

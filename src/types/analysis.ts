@@ -73,6 +73,7 @@ export interface CompleteAnalysisData {
   themes: ThemeAnalysis[];
   qualitative: QualitativeData;
   diagnostic: DiagnosticSummary;
+  paretoIssuesForGraph: ParetoItem[];
 
 }
 
