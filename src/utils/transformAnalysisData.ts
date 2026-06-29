@@ -159,7 +159,7 @@ export function transformAnalysisData(
     (sum: number, issue: any) => sum + (Number(issue?.count) || 0), 0
   );
 
-  const paretoIssues = sourceIssues.map((_: any, index: number) => {
+  const paretoIssues = sourceIssues.slice(0,3).map((_: any, index: number) => {
     const enIssue       = enIssues[index]       || {};
     const frIssue       = frIssues[index]       || {};
     const localizedIssue = localizedIssues[index] || {};
@@ -178,7 +178,25 @@ export function transformAnalysisData(
       root_causes: localizedIssue.root_causes   || [],   // ✅ comes straight from API
     };
   });
+const paretoIssuesForGraph = sourceIssues.map((_: any, index: number) => {
+    const enIssue       = enIssues[index]       || {};
+    const frIssue       = frIssues[index]       || {};
+    const localizedIssue = localizedIssues[index] || {};
+    const count      = Number(enIssue.count ?? frIssue.count ?? 0) || 0;
+    const percentage = totalIssuesMentions > 0 ? (count / totalIssuesMentions) * 100 : 0;
 
+    return {
+      key:         enIssue.key || frIssue.key || localizedIssue.key || `issue_${index}`,
+      name:        localizedIssue.theme || localizedIssue.issue || "",
+      en:          enIssue.theme  || enIssue.issue  || "",
+      fr:          frIssue.theme  || frIssue.issue  || "",
+      count,
+      percentage,
+      impact:      localizedIssue.impact        || "medium",
+      ai_synthesis:localizedIssue.ai_synthesis  || "",
+      root_causes: localizedIssue.root_causes   || [],   // ✅ comes straight from API
+    };
+  });
   // ── PARETO STRENGTHS ───────────────────────────────────────
   const totalStrengthsMentions = (safeInsight?.top_praises || []).reduce(
     (sum: number, s: any) => sum + (Number(s.count) || 0), 0
@@ -211,16 +229,31 @@ export function transformAnalysisData(
 
     // ✅ Number() coercion so string counts/importance don't break math
     function computeThemeScore(theme: any, totalCount: number): number {
-      const count      = Number(theme.count)      || 0;
-      const importance = Number(theme.importance) || 50;
-      const frequency     = totalCount > 0 ? count / totalCount : 0;
-      const frequencyBoost = Math.sqrt(frequency);
-      const normalizedImportance = Math.max(0, Math.min(1, importance / 100));
-      const weight = frequencyBoost * 0.5 + normalizedImportance * 0.5;
-      if (theme.sentiment === "positive") return 0.5 + weight * 0.5;
-      if (theme.sentiment === "negative") return 0.5 - weight * 0.5;
-      return 0.5;
-    }
+  const count       = Number(theme.count)       || 0;
+  const importance  = Number(theme.importance)  || 50;
+  const posCount     = Number(theme.positive_count);
+  const negCount     = Number(theme.negative_count);
+  const hasSplit      = Number.isFinite(posCount) && Number.isFinite(negCount) && (posCount + negCount) > 0;
+
+  const frequency       = totalCount > 0 ? count / totalCount : 0;
+  const frequencyBoost  = Math.sqrt(frequency);
+  const normalizedImportance = Math.max(0, Math.min(1, importance / 100));
+  const weight = frequencyBoost * 0.5 + normalizedImportance * 0.5;
+
+  if (theme.sentiment === "positive") return 0.5 + weight * 0.5;
+  if (theme.sentiment === "negative") return 0.5 - weight * 0.5;
+
+  // "mixed": place the score proportionally based on the real split rather
+  // than pinning to the midpoint. ratio=1 (all positive) -> same ceiling as
+  // a "positive" theme; ratio=0 (all negative) -> same floor as "negative".
+  // Falls back to the old flat 0.5 only if no count split is available at
+  // all (e.g. legacy rows persisted before this field existed).
+  if (hasSplit) {
+    const ratio = posCount / (posCount + negCount); // 0..1
+    return 0.5 + (ratio - 0.5) * weight;
+  }
+  return 0.5;
+}
 
     const totalCountCheck =
       rawUniversal.reduce((sum: number, item: any) => sum + (Number(item.count) || 0), 0) +
@@ -437,6 +470,7 @@ export function transformAnalysisData(
     themes,
     qualitative,
     diagnostic,
+    paretoIssuesForGraph
   };
 }
 

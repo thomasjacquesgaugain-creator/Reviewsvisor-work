@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { loadGoogleMaps } from "@/lib/loadGoogleMaps";
 import { syncEstablishmentBilling } from "@/lib/establishmentBilling";
+import i18n from "@/i18n/config";
 
 export interface EstablishmentData {
   id?: string;
@@ -301,7 +302,7 @@ export async function getUserEstablishments(): Promise<EstablishmentData[]> {
     website: string | null;
     rating: number | null;
     user_ratings_total: number | null;
-    types: string | null;
+    types: any | null;
     created_at: string;
     updated_at: string;
     // is_active?: boolean | null;
@@ -318,7 +319,7 @@ export async function getUserEstablishments(): Promise<EstablishmentData[]> {
     website: row.website ?? undefined,
     rating: row.rating ?? undefined,
     user_ratings_total: row.user_ratings_total ?? undefined,
-    types: row.types ?? undefined,
+    types: row.types?.[i18n.language] ?? undefined,
     created_at: row.created_at,
     updated_at: row.updated_at,
   }));
@@ -329,7 +330,7 @@ export type UpdateEstablishmentPayload = {
   formatted_address?: string;
   phone?: string;
   website?: string;
-  types?: string | null;
+  types?: any | null;
 };
 
 /**
@@ -357,7 +358,7 @@ export async function updateEstablishment(
   if (payload.website !== undefined)
     update.website = payload.website.trim() || null;
   if (payload.types !== undefined)
-    update.types = payload.types?.trim() || null;
+    update.types = payload.types || null;
 
   if (Object.keys(update).length === 0) return;
 

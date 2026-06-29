@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -116,37 +116,78 @@ serve(async (req) => {
   const userId = user.id;
   const periodEnd = new Date(subscription.items.data[0]?.current_period_end * 1000).toISOString();
 
-  let establishmentId: string | null = null;
+let establishmentId: string | null = null;
 
-  if (pendingEtabPlaceId) {
-    const { data: est, error: etabError } = await supabaseAdmin
-      .from("establishments")
-      .upsert(
-        {
-          user_id: userId,
-          place_id: pendingEtabPlaceId,
-          name: pendingEtabName,
-          formatted_address: pendingEtabAddress,
-          phone: pendingEtabPhone,
-          website: pendingEtabWebsite,
-          rating: pendingEtabRating ? parseFloat(pendingEtabRating) : null,
-          lat: pendingEtabLat ? parseFloat(pendingEtabLat) : null,
-          lng: pendingEtabLng ? parseFloat(pendingEtabLng) : null,
-          types: pendingEtabType,
+if (pendingEtabPlaceId) {
+  // NEW: fetch resolved business type (en + fr) before writing the establishment
+  let typesJsonb: { en: string | null; fr: string | null } = {
+    en: pendingEtabType,
+    fr: null,
+  };
+
+  try {
+    const typeFnRes = await fetch(
+      `${Deno.env.get("SUPABASE_URL")}/functions/v1/outscraper-business-type`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // server-to-server call: use the service role key, not a user JWT
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
         },
-        { onConflict: "user_id,place_id" }
-      )
-      .select()
-      .single();
+        body: JSON.stringify({
+          placeId: pendingEtabPlaceId,
+          name: pendingEtabName,
+          address: pendingEtabAddress,
+        }),
+      },
+    );
 
-    if (etabError) {
-      logStep("Error saving establishment", { error: etabError.message });
-      throw etabError;
+    const typeData = await typeFnRes.json();
+    logStep("Business type fetch result", typeData);
+
+    if (typeData?.success && typeData?.types) {
+      typesJsonb = {
+        en: typeData.types.en ?? typesJsonb.en,
+        fr: typeData.types.fr ?? typesJsonb.fr,
+      };
+    } else {
+      logStep("Business type fetch returned no usable data", typeData);
     }
-
-    establishmentId = est.id;
-    logStep("Establishment saved", { establishmentId });
+  } catch (typeFetchErr) {
+    const message = typeFetchErr instanceof Error ? typeFetchErr.message : String(typeFetchErr);
+    logStep("Business type fetch error (non-fatal)", { error: message });
+    // non-fatal — proceed with fallback typesJsonb, don't block the establishment save
   }
+
+  const { data: est, error: etabError } = await supabaseAdmin
+    .from("establishments")
+    .upsert(
+      {
+        user_id: userId,
+        place_id: pendingEtabPlaceId,
+        name: pendingEtabName,
+        formatted_address: pendingEtabAddress,
+        phone: pendingEtabPhone,
+        website: pendingEtabWebsite,
+        rating: pendingEtabRating ? parseFloat(pendingEtabRating) : null,
+        lat: pendingEtabLat ? parseFloat(pendingEtabLat) : null,
+        lng: pendingEtabLng ? parseFloat(pendingEtabLng) : null,
+        types: typesJsonb, // jsonb: { en: "...", fr: "..." }
+      },
+      { onConflict: "user_id,place_id" }
+    )
+    .select()
+    .single();
+
+  if (etabError) {
+    logStep("Error saving establishment", { error: etabError.message });
+    throw etabError;
+  }
+
+  establishmentId = est.id;
+  logStep("Establishment saved", { establishmentId });
+}
 
   const { error: subscriptionError } = await supabaseAdmin
     .from("subscriptions")

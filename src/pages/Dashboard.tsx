@@ -2475,7 +2475,7 @@ const themes =issues.length > 0? issues
         website: row.website ?? undefined,
         phone: row.phone ?? undefined,
         rating: row.rating ?? null,
-        types: row.types ?? null,
+        types: row.types?.[i18n.language] ?? null,
         id:row.id?? null
         // is_active?: row.is_active ?? false,
       }));
@@ -2507,7 +2507,7 @@ const themes =issues.length > 0? issues
   useEffect(() => {
     loadEstablishmentsFromDB();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [user?.id , i18n.language]);
 
   // Écouter les événements de mise à jour
   useEffect(() => {
