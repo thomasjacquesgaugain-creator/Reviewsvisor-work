@@ -266,51 +266,6 @@ function reconcileSentiment(item: any): 'positive' | 'mixed' | 'negative' {
   return normalizeSentiment(item?.sentiment);
 }
 
-// ─── TOP_ISSUES / TOP_STRENGTH MUTUAL EXCLUSIVITY ───────────────────────────
-
-function enforceTopListsMutualExclusivity(
-  topIssues: { en: any[]; fr: any[] },
-  topStrength: { en: any[]; fr: any[] },
-): { topIssues: { en: any[]; fr: any[] }; topStrength: { en: any[]; fr: any[] } } {
-  const issuesEn   = Array.isArray(topIssues?.en)   ? topIssues.en   : [];
-  const issuesFr   = Array.isArray(topIssues?.fr)   ? topIssues.fr   : [];
-  const strengthEn = Array.isArray(topStrength?.en) ? topStrength.en : [];
-  const strengthFr = Array.isArray(topStrength?.fr) ? topStrength.fr : [];
-
-  const issueCountByKey = new Map(issuesEn.map((i: any) => [i.key, i.count ?? 0]));
-  const strengthCountByKey = new Map(strengthEn.map((i: any) => [i.key, i.count ?? 0]));
-
-  const collidingKeys = new Set(
-    [...issueCountByKey.keys()].filter((k) => strengthCountByKey.has(k)),
-  );
-
-  if (collidingKeys.size > 0) {
-    for (const key of collidingKeys) {
-      console.warn(
-        `[enforceTopListsMutualExclusivity] Theme "${key}" appeared in both ` +
-        `top_issues (count=${issueCountByKey.get(key)}) and top_strength ` +
-        `(count=${strengthCountByKey.get(key)}) — resolving by higher count.`,
-      );
-    }
-  }
-
-  const keepInIssues = (key: string) => {
-    if (!collidingKeys.has(key)) return true;
-    const issueCount    = issueCountByKey.get(key) ?? 0;
-    const strengthCount = strengthCountByKey.get(key) ?? 0;
-    return issueCount >= strengthCount; // ties favor top_issues
-  };
-
-  const filteredIssuesEn   = issuesEn.filter((i: any) => keepInIssues(i.key));
-  const filteredIssuesFr   = issuesFr.filter((i: any) => keepInIssues(i.key));
-  const filteredStrengthEn = strengthEn.filter((i: any) => !collidingKeys.has(i.key) || !keepInIssues(i.key));
-  const filteredStrengthFr = strengthFr.filter((i: any) => !collidingKeys.has(i.key) || !keepInIssues(i.key));
-
-  return {
-    topIssues:   { en: filteredIssuesEn,   fr: filteredIssuesFr },
-    topStrength: { en: filteredStrengthEn, fr: filteredStrengthFr },
-  };
-}
 
 // ─── LOCKED KEYS ─────────────────────────────────────────────────────────────
 
@@ -346,7 +301,6 @@ function getUniversalThemes() {
   };
 }
 
-// ─── SECTOR-SPECIFIC THEME HINTS ─────────────────────────────────────────────
 
 const SECTOR_THEME_HINTS: Record<BusinessType, { en: string[]; fr: string[] }> = {
   restaurant: {
@@ -455,14 +409,7 @@ function getCategoryContext(businessType: string): string | null {
 }
 
 function buildIndustryInstruction(businessType: string, businessTypeConfidence: number): string {
-  // Previously gated at <45, which suppressed industry-theme extraction for
-  // a large share of runs (the keyword-fallback detector rarely clears 45).
-  // The business type is already being passed in as trusted reference
-  // context by the caller, so this only blocks the genuinely-zero-signal
-  // case (confidence 0 — keyword detection found nothing at all, "autre"
-  // with no candidates). Any non-zero confidence is enough to attempt
-  // sector-specific extraction; a wrong guess at the type still produces
-  // more useful themes than refusing to look for industry themes at all.
+
   if (businessTypeConfidence <= 0) {
     return `Do not invent industry-specific themes — focus on universal themes only.`;
   }
@@ -501,6 +448,13 @@ function buildIndustryInstruction(businessType: string, businessTypeConfidence: 
    its sector-theme quota below.`;
 }
 
+/**
+ * Pass C / Ishikawa 5M context block. Same contract as
+ * buildIndustryInstruction: curated sectors get the hand-written
+ * definitions; anything else gets an instruction to reason about the 5M
+ * categories specifically for that business type rather than using the
+ * generic 'autre' definitions.
+ */
 function buildCategoryContextBlock(businessType: string): string {
   const curated = getCategoryContext(businessType);
   if (curated) return curated;
@@ -564,7 +518,6 @@ function sampleReviewTexts(rows: ReviewRow[], cap: number): string[] {
   const low  = withText.filter(r => (r.rating ?? 0) <= 2);
   const mid  = withText.filter(r => (r.rating ?? 0) === 3);
   const high = withText.filter(r => (r.rating ?? 0) >= 4);
-
   const total = withText.length;
   const takeLow  = Math.min(low.length,  Math.ceil(cap * (low.length  / total)) || low.length);
   const takeMid  = Math.min(mid.length,  Math.ceil(cap * (mid.length  / total)) || mid.length);
@@ -659,6 +612,9 @@ const BILINGUAL_RULE = `BILINGUAL OUTPUT:
 - Generate both "en" and "fr" branches for every field
 - Translate only: theme names, descriptions, ai_synthesis, what_it_means, first_step, titles, reasons
 - Never translate: keys, sentiment values, count/impact numbers, or any review quotes`;
+
+// ─── PASS A — THEME EXTRACTION ───────────────────────────────────────────────
+
 
 async function analyzePassA(
   placeName: string,
@@ -756,6 +712,10 @@ Return this exact JSON shape (NO evidence_quotes or evidence arrays — leave th
     },
   ]);
 }
+
+// ─── TOP ISSUES — DEDICATED PASS, INDEPENDENT OF THEME POOLS ────────────────
+
+
 async function analyzeTopIssues(
   negativeTexts: string[],
   businessType: string,
@@ -882,6 +842,102 @@ function clampTopIssuesCount(topIssues: { en: any[]; fr: any[] }): { en: any[]; 
   return { en: keptEn, fr: keptFr };
 }
 
+// ─── TOP-UP TO 5 ISSUES (HARD GUARANTEE) ────────────────────────────────────
+function qualifiesForTopUp(theme: any): boolean {
+  const sentiment = theme?.sentiment;
+  const negCount = Number(theme?.negative_count);
+  if (sentiment !== 'negative' && sentiment !== 'mixed') return false;
+  return Number.isFinite(negCount) && negCount >= 2;
+}
+
+function themeToIssueShape(theme: any): any {
+  const negCount = Number(theme.negative_count) || 0;
+  return {
+    key: theme.key,
+    theme: theme.theme,
+    count: negCount,
+    impact: 'medium' as const, // re-ranked for display below; never "dominant" by default since it wasn't the model's own top pick
+    ai_synthesis: theme.what_it_means ?? '',
+  };
+}
+
+function topUpTopIssuesTo5(
+  topIssues: { en: any[]; fr: any[] },
+  themesIndustry: { en: any[]; fr: any[] },
+  themesUniversal: { en: any[]; fr: any[] },
+): { en: any[]; fr: any[] } {
+  const issuesEn = Array.isArray(topIssues?.en) ? topIssues.en : [];
+  const issuesFr = Array.isArray(topIssues?.fr) ? topIssues.fr : [];
+
+  if (issuesEn.length >= TOP_ISSUES_MAX) {
+    return { en: issuesEn, fr: issuesFr };
+  }
+
+  const existingKeys = new Set(issuesEn.map((i: any) => i.key));
+  const industryEn  = Array.isArray(themesIndustry?.en)  ? themesIndustry.en  : [];
+  const universalEn = Array.isArray(themesUniversal?.en) ? themesUniversal.en : [];
+  const industryFr  = Array.isArray(themesIndustry?.fr)  ? themesIndustry.fr  : [];
+  const universalFr = Array.isArray(themesUniversal?.fr) ? themesUniversal.fr : [];
+
+  const rankDesc = (a: any, b: any) => (Number(b.negative_count) || 0) - (Number(a.negative_count) || 0);
+
+  const candidateIndustry = industryEn
+    .filter((t: any) => !existingKeys.has(t.key) && qualifiesForTopUp(t))
+    .sort(rankDesc);
+  const candidateUniversal = universalEn
+    .filter((t: any) => !existingKeys.has(t.key) && qualifiesForTopUp(t))
+    .sort(rankDesc);
+
+  const needed = TOP_ISSUES_MAX - issuesEn.length;
+  const toAdd: any[] = [...candidateIndustry, ...candidateUniversal].slice(0, needed);
+
+  if (toAdd.length > 0) {
+    console.log(
+      `[topUpTopIssuesTo5] Topping up top_issues from ${issuesEn.length} to ` +
+      `${issuesEn.length + toAdd.length} using ${Math.min(toAdd.length, candidateIndustry.length)} ` +
+      `industry + ${Math.max(0, toAdd.length - candidateIndustry.length)} universal theme(s).`,
+    );
+  } else if (issuesEn.length < TOP_ISSUES_MAX) {
+    console.warn(
+      `[topUpTopIssuesTo5] Only ${issuesEn.length} issue(s) and no further ` +
+      `qualifying themes available to top up — shipping as-is. Negative ` +
+      `review signal is genuinely thin for this business.`,
+    );
+  }
+
+  const addedEn = toAdd.map(themeToIssueShape);
+  const addedKeys = new Set(addedEn.map((i: any) => i.key));
+
+  const industryFrByKey  = new Map(industryFr.map((t: any) => [t.key, t]));
+  const universalFrByKey = new Map(universalFr.map((t: any) => [t.key, t]));
+  const addedFr = addedEn.map((enItem: any) => {
+    const frTheme = industryFrByKey.get(enItem.key) ?? universalFrByKey.get(enItem.key);
+    return frTheme ? themeToIssueShape(frTheme) : { ...enItem };
+  });
+
+  // Combine and re-sort by count desc for display; re-assign "dominant" to
+  // whichever single item now has the highest count (there should be
+  // exactly one "dominant" — analyzeTopIssues' own prompt already enforces
+  // this for its own items, and topped-up items default to "medium", so the
+  // existing dominant item, if any, is preserved unless a topped-up item
+  // genuinely has a higher count).
+  const combinedEn = [...issuesEn, ...addedEn].sort((a, b) => (Number(b.count) || 0) - (Number(a.count) || 0));
+  const combinedFr = [...issuesFr, ...addedFr].sort((a, b) => {
+    const aCount = combinedEn.find((e) => e.key === a.key)?.count ?? 0;
+    const bCount = combinedEn.find((e) => e.key === b.key)?.count ?? 0;
+    return (Number(bCount) || 0) - (Number(aCount) || 0);
+  });
+
+  if (combinedEn.length > 0 && !combinedEn.some((i: any) => i.impact === 'dominant')) {
+    combinedEn[0].impact = 'dominant';
+    const frMatch = combinedFr.find((i: any) => i.key === combinedEn[0].key);
+    if (frMatch) frMatch.impact = 'dominant';
+  }
+
+  return { en: combinedEn, fr: combinedFr };
+}
+
+// ─── PASS B — EVIDENCE EXTRACTION ────────────────────────────────────────────
 
 type ThemeStub = { key: string; theme: string; sentiment?: string };
 
@@ -1044,6 +1100,10 @@ async function analyzePassC(
     };
   }
 
+  // Every issue in top_issues gets the full Ishikawa workflow (no slicing
+  // by count). top_issues is normally exactly 5 items (4 only on a genuine
+  // shortfall — see clampTopIssuesCount) — this loop runs over whatever is
+  // actually there rather than hard-assuming a count.
   const issuesForIshikawa = topIssues.en;
   const ishikawaKeys = new Set(issuesForIshikawa.map((i: any) => i.key));
 
@@ -1609,6 +1669,11 @@ Deno.serve(async (req) => {
     const lockedKeys = buildLockedKeys(existingInsight);
 
     // ── Pass A: theme extraction  +  Top Issues: independent negative-review scan ──
+    // These two run in parallel — top_issues no longer depends on Pass A's
+    // theme pools at all (see analyzeTopIssues' comment block for why that
+    // coupling was removed), so there's no need to sequence them. Pass A
+    // covers themes_universal/themes_industry/top_strength/summary; the
+    // negative reviews are scanned independently for top_issues.
     const [passAResult, topIssuesResult] = await Promise.all([
       analyzePassA(
         establishmentName, promptSamples, rows.length,
@@ -1625,15 +1690,13 @@ Deno.serve(async (req) => {
     if (passAResult.top_strength)     passAResult.top_strength     = enforceKeys(passAResult.top_strength);
     if (passAResult.themes_universal) passAResult.themes_universal = enforceKeys(passAResult.themes_universal);
     if (passAResult.themes_industry)  passAResult.themes_industry  = enforceKeys(passAResult.themes_industry);
-    // top_issues.
-    {
-      const resolved = enforceTopListsMutualExclusivity(
-        passAResult.top_issues   ?? { en: [], fr: [] },
-        passAResult.top_strength ?? { en: [], fr: [] },
-      );
-      passAResult.top_issues   = resolved.topIssues;
-      passAResult.top_strength = resolved.topStrength;
-    }
+    // top_issues already had enforceKeys applied inside analyzeTopIssues.
+
+    passAResult.top_issues = topUpTopIssuesTo5(
+      passAResult.top_issues       ?? { en: [], fr: [] },
+      passAResult.themes_industry  ?? { en: [], fr: [] },
+      passAResult.themes_universal ?? { en: [], fr: [] },
+    );
 
     // ── Pass B: evidence quotes ────────────────────────────────────────────
     const passBResult = await analyzePassB(
@@ -1646,14 +1709,6 @@ Deno.serve(async (req) => {
     if (passBResult?.themes_universal) passAResult.themes_universal = enforceKeys(passBResult.themes_universal);
     if (passBResult?.themes_industry)  passAResult.themes_industry  = enforceKeys(passBResult.themes_industry);
     if (passBResult?.top_strength)     passAResult.top_strength     = enforceKeys(passBResult.top_strength);
-    {
-      const resolved = enforceTopListsMutualExclusivity(
-        passAResult.top_issues   ?? { en: [], fr: [] },
-        passAResult.top_strength ?? { en: [], fr: [] },
-      );
-      passAResult.top_issues   = resolved.topIssues;
-      passAResult.top_strength = resolved.topStrength;
-    }
 
     // ── Pass C: Ishikawa root causes (all top_issues) ──────────────────────
     const passCResult = await analyzePassC(
