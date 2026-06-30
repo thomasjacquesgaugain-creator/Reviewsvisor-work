@@ -1,10 +1,12 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import JSZip from "https://esm.sh/jszip@3.10.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Expose-Headers": "Content-Disposition",
 };
 
 type BillingInvoiceRow = {
@@ -23,15 +25,100 @@ type BillingInvoiceRow = {
   hosted_invoice_url: string | null;
 };
 
+type BillingPaymentMethod = {
+  brand: string | null;
+  last4: string | null;
+  exp_month: number | null;
+  exp_year: number | null;
+  cardholder_name: string | null;
+  funding: string | null;
+  country: string | null;
+};
+
+type BillingInformation = {
+  business_name: string | null;
+  name: string | null;
+  email: string | null;
+  currency: string | null;
+  tax_exempt: string | null;
+  tax_display: string | null;
+  tax_ids: string[];
+  address: {
+    line1: string | null;
+    line2: string | null;
+    postal_code: string | null;
+    city: string | null;
+    state: string | null;
+    country: string | null;
+  } | null;
+};
+
 type LocalSubscriptionRow = {
   provider_subscription_id: string | null;
   establishment?: { name?: string | null } | null;
+};
+
+type BillingReportsRequest = {
+  format?: "json" | "zip";
+  invoice_ids?: string[];
 };
 
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[BILLING-REPORTS] ${step}${detailsStr}`);
 };
+
+function sanitizeFileName(value: string) {
+  return value
+    .trim()
+    .replace(/[^\w.-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 80) || "invoice";
+}
+
+function formatTaxPercentage(value: number) {
+  return Number.isInteger(value)
+    ? String(value)
+    : String(value).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+}
+
+function getInvoiceTaxDisplay(invoices: Stripe.Invoice[]) {
+  for (const invoice of invoices) {
+    const invoiceWithTax = invoice as Stripe.Invoice & {
+      total_taxes?: Array<{
+        tax_rate_details?: {
+          tax_rate?: string | Stripe.TaxRate | null;
+        } | null;
+      }>;
+      account_country?: string | null;
+    };
+    const totalTax = invoiceWithTax.total_taxes?.[0];
+    const taxRate = totalTax?.tax_rate_details?.tax_rate;
+    const taxRateObject =
+      taxRate && typeof taxRate === "object" ? taxRate : null;
+    const fallbackTaxRate = invoiceWithTax.default_tax_rates?.[0] ?? null;
+    const rate = taxRateObject ?? fallbackTaxRate;
+    const country =
+      rate?.country ?? invoiceWithTax.customer_address?.country ?? invoiceWithTax.account_country ?? null;
+    const percentage =
+      rate?.effective_percentage ?? rate?.percentage ?? null;
+
+    if (country && typeof percentage === "number") {
+      return `${country.toUpperCase()} • ${formatTaxPercentage(percentage)} %`;
+    }
+  }
+
+  return null;
+}
+
+async function readRequestBody(req: Request): Promise<BillingReportsRequest> {
+  if (!req.headers.get("content-type")?.includes("application/json")) {
+    return {};
+  }
+
+  return await req.json().catch(() => ({}));
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -45,6 +132,7 @@ serve(async (req) => {
   );
 
   try {
+    const body = await readRequestBody(req);
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
@@ -63,14 +151,71 @@ serve(async (req) => {
 
     if (customers.data.length === 0) {
       logStep("No Stripe customer found", { email: user.email });
-      return new Response(JSON.stringify({ invoices: [] }), {
+      return new Response(JSON.stringify({
+        invoices: [],
+        payment_method: null,
+        billing_information: null,
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
 
-    const customerId = customers.data[0].id;
+    const customer = customers.data[0];
+    const customerId = customer.id;
     logStep("Found customer", { customerId });
+
+    const defaultPaymentMethodId =
+      typeof customer.invoice_settings.default_payment_method === "string"
+        ? customer.invoice_settings.default_payment_method
+        : customer.invoice_settings.default_payment_method?.id ?? null;
+
+    const stripePaymentMethod = defaultPaymentMethodId
+      ? await stripe.paymentMethods.retrieve(defaultPaymentMethodId)
+      : (
+          await stripe.paymentMethods.list({
+            customer: customerId,
+            type: "card",
+            limit: 1,
+          })
+        ).data[0] ?? null;
+
+    const card = stripePaymentMethod?.card ?? null;
+    const paymentMethod: BillingPaymentMethod | null =
+      stripePaymentMethod && card
+        ? {
+            brand: card.brand ?? null,
+            last4: card.last4 ?? null,
+            exp_month: card.exp_month ?? null,
+            exp_year: card.exp_year ?? null,
+            cardholder_name: stripePaymentMethod.billing_details?.name ?? customer.name ?? null,
+            funding: card.funding ?? null,
+            country: card.country ?? null,
+          }
+        : null;
+
+    const taxIds = await stripe.customers.listTaxIds(customerId, { limit: 10 });
+    const billingInformation: BillingInformation = {
+      business_name: customer.business_name ?? null,
+      name: customer.name ?? null,
+      email: customer.email ?? user.email ?? null,
+      currency: customer.currency?.toUpperCase() ?? null,
+      tax_exempt: customer.tax_exempt ?? null,
+      tax_display: null,
+      tax_ids: taxIds.data
+        .map((taxId) => taxId.value)
+        .filter((value): value is string => typeof value === "string" && value.length > 0),
+      address: customer.address
+        ? {
+            line1: customer.address.line1 ?? null,
+            line2: customer.address.line2 ?? null,
+            postal_code: customer.address.postal_code ?? null,
+            city: customer.address.city ?? null,
+            state: customer.address.state ?? null,
+            country: customer.address.country ?? null,
+          }
+        : null,
+    };
 
     const { data: dbSubscriptions, error: dbSubscriptionsError } = await supabaseClient
       .from("subscriptions")
@@ -86,7 +231,11 @@ serve(async (req) => {
       logStep("Error loading local subscriptions", {
         message: dbSubscriptionsError.message,
       });
-      return new Response(JSON.stringify({ invoices: [] }), {
+      return new Response(JSON.stringify({
+        invoices: [],
+        payment_method: paymentMethod,
+        billing_information: billingInformation,
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -111,6 +260,7 @@ serve(async (req) => {
     const invoices = await stripe.invoices.list({
       customer: customerId,
       limit: 100,
+      expand: ["data.total_taxes.tax_rate_details.tax_rate"],
     });
 
     const filteredInvoices = invoices.data.filter((invoice: Stripe.Invoice) => {
@@ -169,7 +319,73 @@ serve(async (req) => {
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
 
-    return new Response(JSON.stringify({ invoices: rows }), {
+    billingInformation.tax_display = getInvoiceTaxDisplay(filteredInvoices);
+
+    if (body.format === "zip") {
+      const requestedInvoiceIds = new Set(
+        (body.invoice_ids || [])
+          .filter((id): id is string => typeof id === "string" && id.trim().length > 0),
+      );
+      const invoicesForZip = rows.filter((invoice) => {
+        if (requestedInvoiceIds.size > 0 && !requestedInvoiceIds.has(invoice.invoice_id)) {
+          return false;
+        }
+
+        return !!(invoice.invoice_pdf_url || invoice.hosted_invoice_url);
+      });
+
+      if (invoicesForZip.length === 0) {
+        return new Response(JSON.stringify({ error: "No downloadable invoices found" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404,
+        });
+      }
+
+      const zip = new JSZip();
+
+      await Promise.all(
+        invoicesForZip.map(async (invoice) => {
+          const invoiceUrl = invoice.invoice_pdf_url || invoice.hosted_invoice_url;
+          if (!invoiceUrl) return;
+
+          const response = await fetch(invoiceUrl);
+          if (!response.ok) {
+            throw new Error(`Unable to download invoice ${invoice.invoice_id}`);
+          }
+
+          const contentType = response.headers.get("content-type") || "";
+          const extension =
+            contentType.includes("pdf") || invoice.invoice_pdf_url ? "pdf" :
+            contentType.includes("html") ? "html" :
+            "bin";
+          const invoiceDate = invoice.created_at.slice(0, 10);
+          const invoiceName = sanitizeFileName(invoice.invoice_number || invoice.invoice_id);
+          const establishmentName = sanitizeFileName(invoice.plan_name || "subscription");
+
+          zip.file(
+            `${invoiceDate}-${invoiceName}-${establishmentName}.${extension}`,
+            await response.arrayBuffer(),
+          );
+        }),
+      );
+
+      const zipBytes = await zip.generateAsync({ type: "uint8array" });
+
+      return new Response(zipBytes, {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/zip",
+          "Content-Disposition": `attachment; filename="reviewsvisor-invoices-${new Date().toISOString().slice(0, 10)}.zip"`,
+        },
+        status: 200,
+      });
+    }
+
+    return new Response(JSON.stringify({
+      invoices: rows,
+      payment_method: paymentMethod,
+      billing_information: billingInformation,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

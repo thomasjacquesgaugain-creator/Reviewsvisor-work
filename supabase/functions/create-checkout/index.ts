@@ -351,6 +351,9 @@ serve(async (req) => {
         mode: "subscription",
         automatic_tax: { enabled: true },
         billing_address_collection: "auto",
+        name_collection: {
+          business: { enabled: true },
+        },
         payment_method_types: ["card"],
         allow_promotion_codes: false,
         locale: language?language:'fr',
@@ -371,6 +374,7 @@ serve(async (req) => {
 
         sessionParams.customer_update = {
           address: "auto",
+          name: "auto",
         };
       } else {
         sessionParams.customer_email = userEmail || undefined;
