@@ -106,21 +106,21 @@ export function ChecklistConfigureModal({ open, onClose, actions, objectiveName,
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 bg-white">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 bg-white dark:bg-slate-900 dark:border-slate-800">
         <DialogHeader>
-          <div className="flex items-center gap-2 border-b p-4">
-            <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center text-sm">
+          <div className="flex items-center gap-2 border-b p-4 dark:border-slate-800">
+            <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center text-sm dark:bg-violet-950/40 dark:text-violet-300">
               <PencilIcon className="h-3.5 w-3.5" />
             </div>
             <div>
-              <DialogTitle className="text-[15px] font-semibold">
+              <DialogTitle className="text-[15px] font-semibold dark:text-slate-100">
                 {t("recommendations.smart.checklistTitle", { defaultValue: "Configure la checklist" })}
                 {" · "}
                 <span>{objectiveName}</span>
               </DialogTitle>
             </div>
           </div>
-          <p className="text-[13px] text-gray-600 m-4 p-3 bg-[#f3f1f7] rounded-[12px] border ">
+          <p className="text-[13px] text-gray-600 m-4 p-3 bg-[#f3f1f7] rounded-[12px] border dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300">
             {t("recommendations.smart.checklistSubtitle", {
               defaultValue: "Customize each task according to your activity rhythm. Settings will be saved for this goal.",
             })}
@@ -130,7 +130,7 @@ export function ChecklistConfigureModal({ open, onClose, actions, objectiveName,
         <div className=" space-y-5 p-4">
           {grouped.map(({ freq, items }) => (
             <div key={freq}>
-              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-[#dcfce7]">
+                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-[#dcfce7] dark:border-emerald-900/40">
                 <Calendar className="w-4 h-4 text-green-600" />
                 <span className="text-[11px] font-bold uppercase tracking-widest text-green-700">
                   {freqLabel[freq]}
@@ -143,9 +143,9 @@ export function ChecklistConfigureModal({ open, onClose, actions, objectiveName,
                   const isCustom = action.schedule === "custom_time" || action.schedule === "custom_date";
 
                   return (
-                    <div key={index} className="px-4 py-3 space-y-2 border border-gray-300 divide-gray-100 rounded-[12px]">
+                    <div key={index} className="px-4 py-3 space-y-2 border border-gray-300 divide-gray-100 rounded-[12px] dark:border-slate-700 dark:divide-slate-700 dark:bg-slate-900/60">
                       <div className="flex items-center gap-4">
-                        <p className="flex-1 text-[13px] font-semibold leading-snug text-slate-800">
+                          <p className="flex-1 text-[13px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
                           {getLocalizedText(action.text, lang)}
                         </p>
 
@@ -155,7 +155,7 @@ export function ChecklistConfigureModal({ open, onClose, actions, objectiveName,
                             onValueChange={(val) => updateSchedule(index, val)}
                           >
                             <SelectTrigger
-                              className={`${isCustom ? "w-[160px]" : "w-[180px]"} h-9 text-xs bg-white`}
+                              className={`${isCustom ? "w-[160px]" : "w-[180px]"} h-9 text-xs bg-white dark:bg-slate-900 dark:text-slate-100`}
                             >
                               <SelectValue />
                             </SelectTrigger>
@@ -171,7 +171,7 @@ export function ChecklistConfigureModal({ open, onClose, actions, objectiveName,
 
                           {isCustom && (
                             <Input
-                              className="h-9 w-[160px] text-xs"
+                              className="h-9 w-[160px] text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                               placeholder={
                                 freq === "monthly"
                                   ? t(
@@ -198,13 +198,13 @@ export function ChecklistConfigureModal({ open, onClose, actions, objectiveName,
         </div>
 
         <DialogFooter className="mt-4 flex justify-between gap-2 p-4 sm:justify-between">
-          <Button variant="outline" onClick={onClose} className="">
+          <Button variant="outline" onClick={onClose} className="dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
             {t("common.cancel", { defaultValue: "Cancel" })}
           </Button>
           <Button
             onClick={handleSave}
             disabled={saving}
-            className=" bg-blue-600 hover:bg-blue-700 text-white"
+            className=" bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-400"
           >
             {saving
               ? t("common.saving", { defaultValue: "Saving…" })

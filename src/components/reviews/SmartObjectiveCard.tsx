@@ -88,9 +88,9 @@ const targetChangePercentage =
 }, [objective.id, objective.current_progress, objective.current_value]);
 
   return (
-    <Card className="border rounded-[18px] border-gray-200 shadow-sm overflow-hidden">
+    <Card className="border rounded-[18px] border-gray-200 shadow-sm overflow-hidden dark:border-slate-800 dark:bg-slate-900">
       <CardContent className="p-0">
-        <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-3 border-b border-gray-100">
+        <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-3 border-b border-gray-100 dark:border-slate-800">
           <div className="flex items-start gap-2 flex-1 min-w-0">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-violet-950/50 dark:text-violet-300">
             <Target className={`h-5 w-5 shrink-0 ${
@@ -99,20 +99,20 @@ const targetChangePercentage =
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <p className="text-lg font-semibold text-slate-900">
+                <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                   {t("smartCard.header.title", {
                     defaultValue: "Target goal",
                   })}
                 </p>
 
-                <span className="text-sm italic text-slate-500">(SMART)</span>
+                <span className="text-sm italic text-slate-500 dark:text-slate-400">(SMART)</span>
 
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
                         type="button"
-                        className="text-violet-500 hover:text-violet-600 transition-colors"
+                      className="text-violet-500 hover:text-violet-600 transition-colors dark:text-violet-300 dark:hover:text-violet-200"
                       >
                         <Info className="h-4 w-4" />
                       </button>
@@ -120,7 +120,7 @@ const targetChangePercentage =
 
                     <TooltipContent
                       side="top"
-                      className="max-w-xs rounded-xl border bg-white p-4 text-sm leading-6 text-slate-700 shadow-xl"
+                    className="max-w-xs rounded-xl border bg-white p-4 text-sm leading-6 text-slate-700 shadow-xl dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                     >
                       {t("smartCard.header.smartTooltip", {
                         defaultValue:
@@ -131,7 +131,7 @@ const targetChangePercentage =
                 </TooltipProvider>
               </div>
 
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-gray-600 dark:text-slate-400">
     {t("smartCard.header.subTitle", {
       defaultValue: "Goal framework validated by AI for this issue",
     })}
@@ -144,7 +144,7 @@ const targetChangePercentage =
 
 <div className="px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-3">
 
-  <div className="rounded-2xl  border  p-3.5">
+  <div className="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-700 dark:bg-slate-900/60">
     <div className="flex items-center gap-2 mb-2">
       <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
         <Target className="w-3.5 h-3.5 text-blue-600" />
@@ -154,16 +154,16 @@ const targetChangePercentage =
       </span>
       <span className="text-[12px] text-gray-400 uppercase italic">({specific})</span>
     </div>
-    <p className="text-[13px] text-slate-800 leading-relaxed mb-0.5">
+    <p className="text-[13px] text-slate-800 leading-relaxed mb-0.5 dark:text-slate-100">
       {getLocalizedText(objective.problem, lang) || "—"}
     </p>
-    <p className="text-[12px] text-slate-700 leading-relaxed mb-1.5">
+    <p className="text-[12px] text-slate-700 leading-relaxed mb-1.5 dark:text-slate-300">
       {t("dashboard.action", { defaultValue: "Action" })}: {getLocalizedText(objective.actions[0]?.text ?? objective.actions[0], lang)}
     </p>
    
   </div>
 
-  <div className="rounded-2xl border  p-3.5">
+  <div className="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-700 dark:bg-slate-900/60">
     <div className="flex items-center gap-2 mb-2">
       <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
         <Sun className="w-3.5 h-3.5 text-purple-600" />
@@ -173,15 +173,15 @@ const targetChangePercentage =
       </span>
       <span className="text-[12px] text-gray-400 italic uppercase">({realistic})</span>
     </div>
-    <p className="text-[13px] text-slate-800 leading-relaxed mb-0.5">
+    <p className="text-[13px] text-slate-800 leading-relaxed mb-0.5 dark:text-slate-100">
       {getLocalizedText(objective.relevance_note, lang) || "—"}
     </p>
-    <p className="text-[12px] text-slate-600 leading-relaxed mb-1.5">
+    <p className="text-[12px] text-slate-600 leading-relaxed mb-1.5 dark:text-slate-300">
        {t("smartCard.expectedResult", { defaultValue: "Expected result" })} : {getLocalizedText(objective.expected_result, lang) || "—"}
     </p>
   </div>
 
-  <div className="rounded-2xl  border  p-3.5">
+  <div className="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-700 dark:bg-slate-900/60">
     <div className="flex items-center gap-2 mb-2">
       <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center shrink-0">
         <Gauge className="w-3.5 h-3.5 text-red-600" />
@@ -191,12 +191,12 @@ const targetChangePercentage =
       </span>
       <span className="text-[12px] text-gray-400 italic uppercase">({measuredBy})</span>
     </div>
-    <p className="text-[13px] text-slate-700 font-medium mb-1">
+    <p className="text-[13px] text-slate-700 font-medium mb-1 dark:text-slate-200">
       {getLocalizedText(objective.kpi_label, lang)}
     </p>
-    <p className="text-[11px] text-slate-400">
+    <p className="text-[11px] text-slate-400 dark:text-slate-400">
       {t("smartCard.goalSections.measurementUnit", { defaultValue: "Unit" })} :{" "}
-      <strong className="text-slate-600">
+      <strong className="text-slate-600 dark:text-slate-200">
         {getLocalizedText(objective.unit, lang) || t("smartCard.goalSections.negativeReviewsMonth", { defaultValue: "negative reviews / month" })}
       </strong>
       {" · "}
@@ -207,7 +207,7 @@ const targetChangePercentage =
     </p>
   </div>
 
-  <div className="rounded-2xl  border  p-3.5">
+  <div className="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-700 dark:bg-slate-900/60">
     <div className="flex items-center gap-2 mb-2">
       <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
         <Calendar className="w-3.5 h-3.5 text-orange-600" />
@@ -217,15 +217,15 @@ const targetChangePercentage =
       </span>
       <span className="text-[12px] text-gray-400 italic uppercase">({timeBound})</span>
     </div>
-    <p className="text-[13px] text-slate-800">
+    <p className="text-[13px] text-slate-800 dark:text-slate-100">
       {t("smartCard.temporal.from", { defaultValue: "From" })}{" "}
-      <strong>{startFmt}</strong>
+      <strong className="dark:text-slate-100">{startFmt}</strong>
       {" "}{t("smartCard.temporal.to", { defaultValue: "to" })}{" "}
-      <strong>{endFmt}</strong>
-      {" "}<span className="text-purple-600">({objective.duration_months} {t("smartCard.temporal.months", { defaultValue: "months" })})</span>
+      <strong className="dark:text-slate-100">{endFmt}</strong>
+      {" "}<span className="text-purple-600 dark:text-violet-300">({objective.duration_months} {t("smartCard.temporal.months", { defaultValue: "months" })})</span>
       {" · "}
       {t("smartCard.temporal.review", { defaultValue: "Review" })}{" "}
-      <strong> {t(`smartCard.temporal.reviewFrequency.${objective.review_frequency}`, {
+      <strong className="dark:text-slate-100"> {t(`smartCard.temporal.reviewFrequency.${objective.review_frequency}`, {
       defaultValue: objective.review_frequency ?? "—"
     })}</strong>
     </p>
@@ -243,48 +243,50 @@ const targetChangePercentage =
       </span>
               <span className="text-[12px] text-gray-400 italic uppercase">({achievable})</span>
             </div>
-            <p className="text-[13px] text-slate-800 font-semibold mb-1">
-              {t("smartCard.goalSections.currentSituation", {
-                defaultValue: "Current situation",
-              })}{" "}
-              : {objective.current_value} {getLocalizedText(objective.kpi_label, lang)}
-              {" → "}
-              {t("smartCard.goalSections.targetValue", {
-                defaultValue: "Target value",
-              })}{" "}
-              : {objective.target_value} {getLocalizedText(objective.kpi_label, lang)}
-              {" ("}
-              {targetChangePercentage > 0 ? "+" : ""}
-              {targetChangePercentage}%{")"}
-            </p>
-            <p className="text-[11px] text-slate-500">
-              {t("smartCard.goalSections.justification", { defaultValue: "AI justification" })} :{" "}
-              {getLocalizedText(objective.ai_justification, lang) || "—"}
+           <p className="mb-1 text-[13px] font-semibold text-slate-800 dark:text-slate-100">
+  {t("smartCard.goalSections.currentSituation", {
+    defaultValue: "Current situation",
+  })}{" "}
+  : {objective.current_value} {getLocalizedText(objective.kpi_label, lang)}
+  {" → "}
+  {t("smartCard.goalSections.targetValue", {
+    defaultValue: "Target value",
+  })}{" "}
+  : {objective.target_value} {getLocalizedText(objective.kpi_label, lang)}
+  {" ("}
+  {targetChangePercentage > 0 ? "+" : ""}
+  {targetChangePercentage}%{")"}
+</p>
 
-    </p>
+<p className="text-[11px] text-slate-500 dark:text-slate-400">
+  {t("smartCard.goalSections.justification", {
+    defaultValue: "AI justification",
+  })}{" "}
+  : {getLocalizedText(objective.ai_justification, lang) || "—"}
+</p>
   </div>
 </div>
 
         <div className="px-5 pb-5">
-          <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900/60">
 
             <div className="flex items-center justify-between mb-3">
               <div>
                 <div className="flex items-center gap-3">
-                  <p className="text-[16px] font-semibold text-black-700">
+                  <p className="text-[16px] font-semibold text-black-700 dark:text-slate-100">
                     {t("smartCard.progress.label", {
                       defaultValue: "Progression vers l'objectif",
                     })}
                   </p>
 
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
                     <RefreshCcw className="h-3.5 w-3.5" />
                     {t("smartCard.progress.cycle", {
                       defaultValue: "CYCLE N°1",
                     })}
                   </span>
                 </div>
-                <p className="text-[12px] text-gray-600">
+                <p className="text-[12px] text-gray-600 dark:text-slate-400">
                   {getLocalizedText(objective.kpi_label, lang)}
                   {" · "}
                   {t("smartCard.progress.autoStarted", { defaultValue: "auto-mesuré · démarré le" })}{" "}
@@ -306,63 +308,63 @@ const targetChangePercentage =
 
             <Progress value={progress.percentage} className="h-2 mb-2" />
             <div className="grid grid-cols-3 gap-2 mb-3 text-center">
-              <div className="p-2 bg-gray-50 rounded-lg">
-                <p className="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide">
+              <div className="p-2 bg-gray-50 rounded-lg dark:bg-slate-800/70">
+                <p className="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide dark:text-slate-400">
                   {t("smartCard.progress.startLabel", { defaultValue: "Départ" })}
                 </p>
-                <p className="text-sm font-bold text-gray-700">{objective.current_value}</p>
-                <p className="text-[10px] text-gray-400">
+                <p className="text-sm font-bold text-gray-700 dark:text-slate-100">{objective.current_value}</p>
+                <p className="text-[10px] text-gray-400 dark:text-slate-400">
                   {t("smartCard.goalSections.negativeReviewsMonth", { defaultValue: "avis négatifs / mois" })}
                 </p>
               </div>
-              <div className="p-2 bg-blue-50 rounded-lg border border-blue-100">
-                <p className="text-[10px] text-blue-500 mb-0.5 uppercase tracking-wide">
+              <div className="p-2 bg-blue-50 rounded-lg border border-blue-100 dark:bg-blue-950/30 dark:border-blue-900/40">
+                <p className="text-[10px] text-blue-500 mb-0.5 uppercase tracking-wide dark:text-blue-300">
                   {t("smartCard.progress.currentLabel", { defaultValue: "Actuel" })}
                 </p>
-                <p className="text-sm font-bold text-blue-700">
+                <p className="text-sm font-bold text-blue-700 dark:text-blue-300">
                   {objective.current_progress ?? objective.current_value}
                 </p>
-                <p className="text-[10px] text-blue-400">
+                <p className="text-[10px] text-blue-400 dark:text-blue-200">
                 {t("smartCard.goalSections.negativeReviewsMonth", { defaultValue: "avis négatifs / mois" })}
                 </p>
               </div>
-              <div className="p-2 bg-gray-50 rounded-lg">
-                <p className="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide">
+              <div className="p-2 bg-gray-50 rounded-lg dark:bg-slate-800/70">
+                <p className="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide dark:text-slate-400">
                   {t("smartCard.progress.targetLabel", { defaultValue: "Cible" })}
                 </p>
-                <p className="text-sm font-bold text-gray-700">{objective.target_value}</p>
-                <p className="text-[10px] text-gray-400">
+                <p className="text-sm font-bold text-gray-700 dark:text-slate-100">{objective.target_value}</p>
+                <p className="text-[10px] text-gray-400 dark:text-slate-400">
                   {t("smartCard.goalSections.negativeReviewsMonth", { defaultValue: "avis négatifs / mois" })}
                 </p>
               </div>
             </div>
 
 
-            <div className="flex justify-between text-[10px] text-gray-400">
+            <div className="flex justify-between text-[10px] text-gray-400 dark:text-slate-400">
               <span>{startFmt}</span>
               <span className="text-gray-300">← {objective.duration_months} mois →</span>
               <span className={progress.isOverdue ? "text-red-500" : ""}>{endFmt}</span>
             </div>
 
             {onUpdateProgress && objective.status === "in_progress" && (
-              <div className="pt-2 mt-2 border-t border-gray-100">
+            <div className="pt-2 mt-2 border-t border-gray-100 dark:border-slate-800">
                 <button
                   onClick={() => setShowProgress((p) => !p)}
-                  className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
+                  className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1 dark:text-blue-300 dark:hover:text-blue-200"
                 >
                   {t("smartCard.progress.updateBtn")}
                   {showProgress ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                 </button>
                 {showProgress && (
                   <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs text-gray-500">{t("smartCard.progress.currentMentions")}</span>
+                    <span className="text-xs text-gray-500 dark:text-slate-400">{t("smartCard.progress.currentMentions")}</span>
                     <input
                       type="number"
                       value={progressInput}
                       min={0}
                       max={objective.current_value}
                       onChange={(e) => setProgressInput(e.target.value)}
-                      className="w-16 text-xs border border-gray-200 rounded px-2 py-1 text-center"
+                      className="w-16 text-xs border border-gray-200 rounded px-2 py-1 text-center dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                     />
                     <button
                       onClick={() => {
@@ -372,7 +374,7 @@ const targetChangePercentage =
                           setShowProgress(false);
                         }
                       }}
-                      className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                      className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
                     >
                       {t("smartCard.progress.saveBtn")}
                     </button>

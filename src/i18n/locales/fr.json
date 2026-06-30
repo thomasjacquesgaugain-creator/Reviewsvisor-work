@@ -2387,6 +2387,7 @@
     "quadrant": "Quadrant",
     "checklistSubtitle":"Personnalisez chaque tâche selon le rythme de votre activité. Les paramètres seront sauvegardés pour cet objectif.",
     "checklistTitle":"Configurer la checklist",
+    "reanalyse":"Refaire l'analyse IA",
     "checklist": {
       "schedule": {
         "daily": {

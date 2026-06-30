@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Loader2, Check, X, RefreshCw,
+  Loader2, Check, X,
   CalendarDays, Pencil,
   Loader,
   Sparkles,
@@ -72,10 +72,10 @@ function SectionHeader({
         {letter}
       </span>
       <div className="flex flex-col min-w-0 pt-0.5">
-        <span className="text-sm font-bold text-gray-900 leading-tight">
+        <span className="text-sm font-bold text-gray-900 leading-tight dark:text-slate-100">
           {title}
         </span>
-        <span className={`text-xs font-normal leading-tight mt-0.5 ${subtitleColor}`}>
+        <span className={`text-xs font-normal leading-tight mt-0.5 ${subtitleColor} dark:text-slate-400`}>
           {subtitle}
         </span>
       </div>
@@ -103,9 +103,9 @@ function EditableTextarea({
         placeholder={placeholder}
         className="resize-none text-sm text-gray-800 border border-gray-200 rounded-xl
                    focus:border-violet-300 focus:ring-1 focus:ring-violet-200
-                   pr-8 bg-white leading-relaxed"
+                   pr-8 bg-white leading-relaxed dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-violet-400 dark:focus:ring-violet-500/30"
       />
-      <Pencil className="absolute bottom-2.5 right-2.5 h-3.5 w-3.5 text-gray-300
+      <Pencil className="absolute bottom-2.5 right-2.5 h-3.5 w-3.5 text-gray-300 dark:text-slate-600
                          opacity-0 group-focus-within:opacity-100
                          transition-opacity pointer-events-none" />
     </div>
@@ -167,7 +167,7 @@ const durationMonths = draftData?.deadline
 
   const AchievableSection = (
     <div style={{ borderTopColor: "#22C55E" }}
-      className="rounded-[10px] border border-grey-400 p-4 border-t-4 mt-4 mb-4">
+      className="rounded-[10px] border border-grey-400 p-4 border-t-4 mt-4 mb-4 dark:border-slate-700 dark:bg-slate-900/60">
       <SectionHeader
         letter="A"
         badgeBg="bg-green-500"
@@ -177,22 +177,22 @@ const durationMonths = draftData?.deadline
       <div className="space-y-3">
         <div className="grid grid-cols-3 gap-2">
           <div>
-            <Label className="text-xs text-gray-500 mb-1.5 block">
+            <Label className="text-xs text-gray-500 mb-1.5 block dark:text-slate-400">
               {t("recommendations.smart.current", { defaultValue: "Current situation" })}
             </Label>
             <Input
               type="number"
               value={draftData?.current_value ?? ""}
               onChange={(e) => updateDraft({ current_value: Number(e.target.value) })}
-              className="text-sm bg-white"
+              className="text-sm bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             />
-            <p className="text-[10px] text-gray-400 mt-0.5 truncate">{unitLabel}</p>
+            <p className="text-[10px] text-gray-400 mt-0.5 truncate dark:text-slate-500">{unitLabel}</p>
           </div>
           <div>
-            <Label className="text-xs text-gray-500 mb-1.5 block">
+            <Label className="text-xs text-gray-500 mb-1.5 block dark:text-slate-400">
               {t("recommendations.smart.target", { defaultValue: "Target" })}
               {draftData?.target_source === "computed" && (
-                <span className="ml-1 text-[10px] text-gray-400 italic">
+                <span className="ml-1 text-[10px] text-gray-400 italic dark:text-slate-500">
                   {t("recommendations.smart.auto", { defaultValue: "(auto)" })}
                 </span>
               )}
@@ -201,32 +201,32 @@ const durationMonths = draftData?.deadline
               type="number"
               value={draftData?.target_value ?? ""}
               onChange={(e) => updateDraft({ target_value: Number(e.target.value), target_source: "user_adjusted" })}
-              className="text-sm bg-white"
+              className="text-sm bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             />
-            <p className="text-[10px] text-gray-400 mt-0.5 truncate">{unitLabel}</p>
+            <p className="text-[10px] text-gray-400 mt-0.5 truncate dark:text-slate-500">{unitLabel}</p>
           </div>
           <div>
-            <Label className="text-xs text-gray-500 mb-1.5 block">
+            <Label className="text-xs text-gray-500 mb-1.5 block dark:text-slate-400">
               {t("recommendations.smart.targetImprovement", { defaultValue: "Target Improvement" })}
             </Label>
-            <div className={`flex bg-white items-center justify-between px-3 h-9 rounded-md border text-sm font-bold ${improvementPct <= 0 ? "bg-green-50 border-green-200 text-green-700" : "bg-red-50 border-red-200 text-red-600"
+            <div className={`flex bg-white items-center justify-between px-3 h-9 rounded-md border text-sm font-bold dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 ${improvementPct <= 0 ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-950/30 dark:border-green-900/40 dark:text-green-300" : "bg-red-50 border-red-200 text-red-600 dark:bg-red-950/30 dark:border-red-900/40 dark:text-red-300"
               }`}>
               {improvementPct > 0 ? "+" : ""}{improvementPct}%
-            <p className="text-[10px] text-gray-400 mt-0.5 text-center">
+            <p className="text-[10px] text-gray-400 mt-0.5 text-center dark:text-slate-500">
               {t("recommendations.smart.autoCalculated", { defaultValue: "auto-calculated" })}
             </p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-xl bg-green-50 border border-green-100 px-3 py-2.5">
+        <div className="rounded-xl bg-green-50 border border-green-100 px-3 py-2.5 dark:border-green-900/40 dark:bg-green-950/20">
           <div className="flex gap-2">
             <Loader className="w-2.5 h-2.5 text-purple-600" />
-          <p className="text-[9px] font-bold text-green-500 uppercase tracking-widest mb-1">
+          <p className="text-[9px] font-bold text-green-500 uppercase tracking-widest mb-1 dark:text-green-300">
             {t("recommendations.smart.aiJustification", { defaultValue: "AI Justification" })}
           </p>
             </div>
-          <p className="text-xs text-green-800 leading-relaxed">
+          <p className="text-xs text-green-800 leading-relaxed dark:text-green-200">
             {getLocalizedText(draftData?.ai_justification, lang) || "—"}
           </p>
         </div>
@@ -236,7 +236,7 @@ const durationMonths = draftData?.deadline
 
   const TimeBoundSection = (
     <div style={{ borderTopColor: "#FB923C" }}
-      className="rounded-[10px] border border-grey-400 p-4 border-t-4">
+      className="rounded-[10px] border border-grey-400 p-4 border-t-4 dark:border-slate-700 dark:bg-slate-900/60">
       <SectionHeader
         letter="T"
         badgeBg="bg-orange-400"
@@ -244,9 +244,9 @@ const durationMonths = draftData?.deadline
         subtitle={t("recommendations.smart.byWhen", { defaultValue: "By when and with what review cadence?" })}
         subtitleColor="text-slate-500" />
       <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2">
           <div>
-            <Label className="text-xs text-gray-500 mb-1.5 block">
+            <Label className="text-xs text-gray-500 mb-1.5 block dark:text-slate-400">
               {t("recommendations.smart.startDate", { defaultValue: "Start date" })}
             </Label>
             <DatePicker
@@ -257,7 +257,7 @@ const durationMonths = draftData?.deadline
             />
           </div>
           <div>
-            <Label className="text-xs text-gray-500 mb-1.5 block">
+            <Label className="text-xs text-gray-500 mb-1.5 block dark:text-slate-400">
               {t("recommendations.smart.targetDate", { defaultValue: "Target date" })}
             </Label>
             <DatePicker
@@ -271,19 +271,19 @@ const durationMonths = draftData?.deadline
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <Label className="text-xs text-gray-500 mb-1.5 block">
+            <Label className="text-xs text-gray-500 mb-1.5 block dark:text-slate-400">
               {t("recommendations.smart.durationMonths", { defaultValue: "Duration (months)" })}
             </Label>
-            <div className={`flex bg-white items-center justify-between px-3 h-9 rounded-md border text-sm font-bold text-purple-500`}>
+            <div className={`flex bg-white items-center justify-between px-3 h-9 rounded-md border text-sm font-bold text-purple-500 dark:border-slate-700 dark:bg-slate-900 dark:text-violet-300`}>
               {durationMonths}
-            <p className="text-[10px] text-gray-400 mt-0.5 text-center">
+            <p className="text-[10px] text-gray-400 mt-0.5 text-center dark:text-slate-500">
               {t("recommendations.smart.autoCalculated", { defaultValue: "auto-calculated" })}
             </p>
             </div>
           </div>
 
   <div>
-          <Label className="text-xs text-gray-500 mb-1.5 block">
+          <Label className="text-xs text-gray-500 mb-1.5 block dark:text-slate-400">
             {t("recommendations.smart.reviewFrequency", { defaultValue: "Review frequency" })}
           </Label>
           <Select
@@ -292,7 +292,7 @@ const durationMonths = draftData?.deadline
               updateDraft({ review_frequency: value as ReviewFrequency })
             }
           >
-            <SelectTrigger className="h-9 text-sm bg-white border rounded-md">
+            <SelectTrigger className="h-9 text-sm bg-white border rounded-md dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
               <SelectValue>
                 {t(
                   `smartCard.temporal.reviewFrequency.${draftData?.review_frequency ?? "every_4_weeks"}`,
@@ -318,17 +318,17 @@ const durationMonths = draftData?.deadline
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-xl w-full h-[92vh] p-0 gap-0 rounded-2xl border-0 shadow-2xl flex flex-col overflow-hidden">
 
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-300 bg-white z-10 shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-300 bg-white z-10 shrink-0 dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
               <Loader className="w-3.5 h-3.5 text-purple-600" />
             </div>
-            <span className="text-sm font-bold text-gray-800">
+            <span className="text-sm font-bold text-gray-800 dark:text-slate-100">
               {t("recommendations.smart.modalTitle", { defaultValue: "Define goal SMART" })}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 text-xs text-violet-600 bg-violet-50 border border-violet-200 px-2.5 py-1 rounded-full font-medium">
+            <span className="flex items-center gap-1.5 text-xs text-violet-600 bg-violet-50 border border-violet-200 px-2.5 py-1 rounded-full font-medium dark:bg-violet-950/30 dark:border-violet-900/40 dark:text-violet-300">
               <CalendarDays className="h-3 w-3" />
               {todayFmt}
             </span>
@@ -336,7 +336,7 @@ const durationMonths = draftData?.deadline
               onClick={onClose}
               className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
             >
-              <X className="h-4 w-4 text-gray-400" />
+              <X className="h-4 w-4 text-gray-400 dark:text-slate-500" />
             </button>
           </div>
         </div>
@@ -344,16 +344,16 @@ const durationMonths = draftData?.deadline
         {isGenerating && !updating && (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 px-4">
             <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
-            <p className="text-sm text-gray-500 text-center">
+            <p className="text-sm text-gray-500 text-center dark:text-slate-400">
               {t("recommendations.smart.generating", { cause: paretoCause })}
             </p>
           </div>
         )}
 
         {!isGenerating && draftData && (
-          <div className="flex-1 overflow-y-auto px-4 py-4 bg-white">
+          <div className="flex-1 overflow-y-auto px-4 py-4 bg-white dark:bg-slate-900">
 
-            <div className="rounded-2xl border border-violet-100 bg-violet-50/60 px-4 py-4 mb-5">
+            <div className="rounded-2xl border border-violet-100 bg-violet-50/60 px-4 py-4 mb-5 dark:border-violet-900/40 dark:bg-violet-950/20">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="h-3.5 w-3.5 text-violet-600" />
                 <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-violet-700">
@@ -366,27 +366,27 @@ const durationMonths = draftData?.deadline
               <div className="grid grid-cols-2 gap-x-8 gap-y-2.5">
 
                 <div className="grid grid-cols-[auto_1fr] items-center gap-x-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 whitespace-nowrap">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 whitespace-nowrap dark:text-slate-500">
                     {t("recommendations.smart.issue", { defaultValue: "Issue" })}
                   </span>
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="h-[7px] w-[7px] rounded-full bg-red-500 shrink-0" />
-                    <span className="text-[13px] font-semibold text-slate-900 truncate">
+                    <span className="text-[13px] font-semibold text-slate-900 truncate dark:text-slate-100">
                       {paretoCause || "—"}
                     </span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-[auto_1fr] items-center gap-x-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 whitespace-nowrap">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 whitespace-nowrap dark:text-slate-500">
                     {t("recommendations.smart.impact", { defaultValue: "Impact" })}
                   </span>
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className={`h-[7px] w-[7px] rounded-full shrink-0 ${draftData.impact?.toLowerCase() === "high" ? "bg-red-500" :
                         draftData.impact?.toLowerCase() === "medium" ? "bg-orange-500" : "bg-green-500"
                       }`} />
-                    <span className={`text-[13px] font-semibold ${draftData.impact?.toLowerCase() === "high" ? "text-red-600" :
-                        draftData.impact?.toLowerCase() === "medium" ? "text-orange-600" : "text-green-600"
+                    <span className={`text-[13px] font-semibold ${draftData.impact?.toLowerCase() === "high" ? "text-red-600 dark:text-red-300" :
+                        draftData.impact?.toLowerCase() === "medium" ? "text-orange-600 dark:text-orange-300" : "text-green-600 dark:text-green-300"
                       }`}>
                       {impactLabel || "—"}
                     </span>
@@ -394,10 +394,10 @@ const durationMonths = draftData?.deadline
                 </div>
 
                 <div className="grid grid-cols-[auto_1fr] items-start gap-x-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 whitespace-nowrap pt-[2px]">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 whitespace-nowrap pt-[2px] dark:text-slate-500">
                     {t("recommendations.smart.paretoSource", { defaultValue: "Pareto Source" })}
                   </span>
-                  <span className="text-[13px] font-medium text-slate-900 leading-[1.4]">
+                  <span className="text-[13px] font-medium text-slate-900 leading-[1.4] dark:text-slate-100">
                     {draftData.pareto_percentage != null
                       ? t("recommendations.smart.negativeReviews", { percentage: Math.round(draftData.pareto_percentage) })
                       : "—"}
@@ -406,10 +406,10 @@ const durationMonths = draftData?.deadline
                 </div>
 
                 <div className="grid grid-cols-[auto_1fr] items-start gap-x-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 whitespace-nowrap pt-[2px]">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 whitespace-nowrap pt-[2px] dark:text-slate-500">
                     {t("recommendations.smart.cause", { defaultValue: "Cause (Ishikawa)" })}
                   </span>
-                  <span className="text-[13px] font-medium text-slate-900 leading-[1.4]">
+                  <span className="text-[13px] font-medium text-slate-900 leading-[1.4] dark:text-slate-100">
                     {getLocalizedText(draftData.ishikawa_top_category, lang) || quadrantLabel || "—"}
                   </span>
                 </div>
@@ -417,7 +417,7 @@ const durationMonths = draftData?.deadline
               </div>
             </div>
 
-            <div className="rounded-xl border border-violet-100 bg-violet-50 px-3 py-2.5 mb-4">
+            <div className="rounded-xl border border-violet-100 bg-violet-50 px-3 py-2.5 mb-4 dark:border-violet-900/40 dark:bg-violet-950/20">
 
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex h-4 w-4 items-center justify-center rounded-full bg-violet-600">
@@ -428,15 +428,15 @@ const durationMonths = draftData?.deadline
                 </p>
               </div>
 
-              <p className="text-xs text-black-900 leading-relaxed font-medium">
+              <p className="text-xs text-black-900 leading-relaxed font-medium dark:text-slate-100">
                 {getLocalizedText(draftData.relevance_note, lang) || "—"}
               </p>
               {draftData.actions?.[0] && (
-                <div className="mt-2 px-2 py-2 bg-white rounded-[10px] border border-violet-200">
+                <div className="mt-2 px-2 py-2 bg-white rounded-[10px] border border-violet-200 dark:border-violet-900/40 dark:bg-slate-900">
                   <p className="text-[9px] font-bold text-violet-600 uppercase tracking-widest mb-1">
                     {t("recommendations.smart.mainAction", { defaultValue: "Main action" })}
                   </p>
-                  <p className="text-[11px] text-black-800">
+                  <p className="text-[11px] text-black-800 dark:text-slate-100">
                     {getLocalizedText(draftData.actions[0]?.text ?? draftData.actions[0], lang)}
                   </p>
                 </div>
@@ -446,7 +446,7 @@ const durationMonths = draftData?.deadline
             {showSmartDetail && (
               <div>
                 <div style={{ borderTopColor: "#3B82F6" }}
-                  className=" rounded-[10px] border border-grey-400 p-4 border-t-4">
+                  className=" rounded-[10px] border border-grey-400 p-4 border-t-4 dark:border-slate-700 dark:bg-slate-900/60">
                   <SectionHeader
                     letter="S"
                     badgeBg="bg-blue-500"
@@ -457,7 +457,7 @@ const durationMonths = draftData?.deadline
 
                   <div className="space-y-4">
                     <div>
-                      <p className="text-xs font-semibold text-gray-700 mb-1.5">
+                      <p className="text-xs font-semibold text-gray-700 mb-1.5 dark:text-slate-300">
                         {t("recommendations.smart.issueToSolve", { defaultValue: "Issue to solve" })}
                       </p>
                       <EditableTextarea
@@ -470,7 +470,7 @@ const durationMonths = draftData?.deadline
                     </div>
 
                     <div>
-                      <p className="text-xs font-semibold text-gray-700 mb-1.5">
+                      <p className="text-xs font-semibold text-gray-700 mb-1.5 dark:text-slate-300">
                         {t("recommendations.smart.recommendedMainAction", {
                           defaultValue: "Recommended main action",
                         })}
@@ -498,7 +498,7 @@ const durationMonths = draftData?.deadline
                 <Divider />
 
                  <div style={{ borderTopColor: "#EC4899" }}
-                  className=" rounded-[10px] border border-grey-400 p-4 border-t-4">
+                  className=" rounded-[10px] border border-grey-400 p-4 border-t-4 dark:border-slate-700 dark:bg-slate-900/60">
                 <SectionHeader letter="M"
                 badgeBg="bg-pink-500"
                 title={t("smartCard.goalSections.Measurable")}
@@ -506,23 +506,23 @@ const durationMonths = draftData?.deadline
                 subtitleColor="text-slate-500" />
                 <div className="space-y-3">
                   <div>
-                    <Label className="text-xs text-gray-500  mb-1.5 block">
+                    <Label className="text-xs text-gray-500  mb-1.5 block dark:text-slate-400">
                       {t("recommendations.smart.trackingIndicator", { defaultValue: "Tracking Indicator" })}
                     </Label>
                     <Input
                       value={getLocalizedText(draftData.kpi_label, lang)}
                       onChange={(e) => updateDraft({ kpi_label: updateLocalizedValue(draftData.kpi_label, e.target.value, lang) })}
-                      className="text-sm bg-white"
+                      className="text-sm bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                     />
                   </div>
                     <div>
-                      <Label className="text-xs text-gray-500 mb-1.5 block">
+                      <Label className="text-xs text-gray-500 mb-1.5 block dark:text-slate-400">
                         {t("recommendations.smart.unitOfMeasurement", { defaultValue: "Unit of measurement" })}
                       </Label>
                       <Input
                         value={getLocalizedText(draftData.unit, lang)}
                         onChange={(e) => updateDraft({ unit: updateLocalizedValue(draftData.unit, e.target.value, lang) })}
-                        className="text-sm bg-white"
+                        className="text-sm bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                         placeholder={t("smartCard.goalSections.negativeReviewsMonth", { defaultValue: "negative reviews / month" })}
                       />
                     </div>
@@ -536,7 +536,7 @@ const durationMonths = draftData?.deadline
                 <Divider />
 
                   <div style={{ borderTopColor: "#A855F7" }}
-                  className=" rounded-[10px] border border-grey-400 p-4 border-t-4">
+                  className=" rounded-[10px] border border-grey-400 p-4 border-t-4 dark:border-slate-700 dark:bg-slate-900/60">
                 <SectionHeader letter="R" 
                 badgeBg="bg-purple-500"
                  title={t("smartCard.goalSections.relevant")}
@@ -544,7 +544,7 @@ const durationMonths = draftData?.deadline
                   subtitleColor="text-slate-500" />
                 <div className="space-y-3">
                   <div>
-                    <Label className="text-xs text-gray-500 mb-1.5 block">
+                    <Label className="text-xs text-gray-500 mb-1.5 block dark:text-slate-400">
                       {t("recommendations.smart.whyImportant", { defaultValue: "Why is this goal important?" })}
                     </Label>
                     <EditableTextarea
@@ -552,7 +552,7 @@ const durationMonths = draftData?.deadline
                       onChange={(v) => updateDraft({ relevance_note: updateLocalizedValue(draftData.relevance_note, v, lang) })}
                       rows={2}
                     />
-                    <Label className="text-xs text-gray-500 mb-1.5 mt-1.5 block">
+                    <Label className="text-xs text-gray-500 mb-1.5 mt-1.5 block dark:text-slate-400">
                       {t("smartCard.expectedResult", { defaultValue: "Expected result" })}
                     </Label>
                     <EditableTextarea
@@ -580,12 +580,12 @@ const durationMonths = draftData?.deadline
             )}
 
             <div className="flex items-center justify-center mt-5 mb-2">
-              <button
-                type="button"
-                onClick={() => setShowSmartDetail((v) => !v)}
-                className="flex p-2 rounded-[6px] items-center justify-center border border-grey-600 w-full items-center gap-1 text-[11px] text-violet-700 hover:bg-violet-100 hover:text-gray-600 transition-colors"
-              >
-                {showSmartDetail?<ChevronUp className="h-4 w-4 text-gray-500" />:<ChevronDown className="h-4 w-4 text-gray-500" />}
+            <button
+              type="button"
+              onClick={() => setShowSmartDetail((v) => !v)}
+              className="flex p-2 rounded-[6px] items-center justify-center border border-grey-600 w-full items-center gap-1 text-[11px] text-violet-700 hover:bg-violet-100 hover:text-gray-600 transition-colors dark:border-slate-700 dark:text-violet-300 dark:hover:bg-slate-800 dark:hover:text-violet-200"
+            >
+                {showSmartDetail?<ChevronUp className="h-4 w-4 text-gray-500 dark:text-slate-400" />:<ChevronDown className="h-4 w-4 text-gray-500 dark:text-slate-400" />}
                 {showSmartDetail
                   ? `${t("recommendations.smart.hideDetail", { defaultValue: "Hide SMART detail" })}`
                   : `${t("recommendations.smart.showDetail", { defaultValue: "Show SMART detail" })}`}
@@ -596,7 +596,7 @@ const durationMonths = draftData?.deadline
         )}
 
         {!isGenerating && draftData && (
-          <div className="border-t border-gray-100 bg-white px-4 py-3 flex items-end justify-between gap-2 shrink-0">
+          <div className="border-t border-gray-100 bg-white px-4 py-3 flex items-end justify-between gap-2 shrink-0 dark:border-slate-800 dark:bg-slate-900">
             {/* <Button
               type="button"
               variant="outline"
@@ -611,7 +611,7 @@ const durationMonths = draftData?.deadline
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="text-xs text-gray-500 hover:text-gray-700"
+                className="text-xs text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200"
               >
                 {t("recommendations.smart.cancel", { defaultValue: "Cancel" })}
               </Button>
@@ -621,7 +621,7 @@ const durationMonths = draftData?.deadline
                 size="sm"
                 onClick={onSave}
                 disabled={isSaving}
-                className="bg-violet-600 hover:bg-violet-700 text-white text-xs gap-1.5 px-4"
+                className="bg-violet-600 hover:bg-violet-700 text-white text-xs gap-1.5 px-4 dark:bg-violet-500 dark:hover:bg-violet-400"
               >
                 {isSaving ? (
                   <><Loader2 className="h-3.5 w-3.5 animate-spin" />{t("recommendations.smart.saving", { defaultValue: "Saving…" })}</>

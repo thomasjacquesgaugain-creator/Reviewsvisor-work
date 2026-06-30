@@ -1,11 +1,11 @@
 // src/components/reviews/RecommendationsSection.tsx
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  Sparkles, Loader2, CheckCircle2,
+import { Loader2, CheckCircle2,
   ChevronDown, ChevronUp, Target, ListChecks, RefreshCw, Timer,
   Check,
-  Info
+  Info,
+  Loader
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -151,7 +151,7 @@ export function RecommendationsSection({ paretoCauses }: Props) {
         <CardContent className="p-0">
 
           <div className="flex items-center px-5 py-4 gap-4">
-            <div className="flex flex-1 items-center min-w-0 rounded-[10px] bg-slate-100 p-2">
+            <div className="flex flex-1 items-center min-w-0 rounded-[10px] bg-slate-100 p-2 dark:bg-slate-800/80">
               {steps.map((step, idx) => {
                 const isDone = step.status === "done";
                 const isActive = step.key === activeStepKey;
@@ -164,9 +164,9 @@ export function RecommendationsSection({ paretoCauses }: Props) {
                         type="button"
                         onClick={() => setActiveStepKey(step.key)}
                         className={`flex w-full items-center justify-center gap-2 rounded-[10px] px-4 py-2.5 transition-all ${isDone
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                             : isActive
-                              ? "bg-white border-2 border-gray-300 text-gray-800 shadow-sm dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
+                              ? "bg-white border-2 border-gray-300 text-gray-800 shadow-sm dark:bg-slate-100 dark:border-slate-300 dark:text-slate-900"
                               : "bg-gray-100 text-gray-400 dark:bg-slate-800 dark:text-slate-500"
                           }`}
                       >
@@ -194,7 +194,7 @@ export function RecommendationsSection({ paretoCauses }: Props) {
                     ) : (
                       <div
                         className={`flex w-full items-center justify-center gap-2 rounded-[10px] px-4 py-2.5 transition-all ${isDone
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                             : "bg-gray-100 text-gray-400 dark:bg-slate-800 dark:text-slate-500"
                           }`}
                       >
@@ -262,10 +262,10 @@ export function RecommendationsSection({ paretoCauses }: Props) {
                   {t("recommendations.smart.chooseIssue", { defaultValue: "Choisissez un problème à traiter" })}
                 </p>
                 <div className="flex items-center gap-2">
-                  {/* <button className="flex items-center gap-1.5 text-xs text-purple-600 hover:text-purple-700 dark:text-purple-400 px-3 py-1.5 rounded-full bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/30 border border-purple-200 dark:border-purple-800 transition-colors font-medium">
-                    <RefreshCw className="h-3 w-3" />
+                  <button  className="flex items-center gap-1.5 text-xs text-purple-600 hover:text-purple-700 dark:text-purple-400 px-3 py-1.5 rounded-full bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/30 border border-purple-200 dark:border-purple-800 transition-colors font-medium">
+                    <Loader className="w-3 h-3 text-purple-600" />
                     {t("recommendations.smart.reanalyse", { defaultValue: "Refaire l'analyse IA" })}
-                  </button> */}
+                  </button>
                   <span className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 px-3 py-1.5 rounded-full font-semibold border border-gray-200 dark:border-slate-700">
                     {validatedCount} / {sortedPareto.length}{" "}
                     {t("recommendations.smart.stepbar.validated", {
@@ -401,62 +401,67 @@ export function RecommendationsSection({ paretoCauses }: Props) {
       </Card>
       {expanded && (
         !tabObjective ? (
-          <Card className="border rounded-[18px] border-yellow-200 bg-yellow-50 shadow-sm dark:bg-yellow-900/10 dark:border-yellow-800">
-            <CardContent className="px-6 py-5">
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center bg-yellow justify-center rounded-2xl bg-gray-100 dark:bg-slate-700">
-                  <Timer className="h-6 w-6 text-gray-400 dark:text-slate-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-base font-semibold text-gray-700 dark:text-slate-200">
-                    {t("recommendations.smart.noObjective.title", {
-                      defaultValue: "No SMART objective available",
-                    })}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 leading-relaxed">
-                    <Trans
-                      i18nKey="recommendations.smart.noObjective.subtitle"
-                      values={{
-                        issue: tabIssue?.name ?? activeTab
-                      }}
-                      components={{
-                        strong: <strong className="font-semibold text-gray-900 dark:text-white" />,
-                      }}
-                    />
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <Card className="rounded-[18px] border border-yellow-200 bg-yellow-50 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+  <CardContent className="px-6 py-5">
+    <div className="flex items-start gap-4">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-yellow-100 dark:bg-slate-800">
+        <Timer className="h-6 w-6 text-yellow-600 dark:text-slate-300" />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="text-base font-semibold text-yellow-900 dark:text-slate-100">
+          {t("recommendations.smart.noObjective.title", {
+            defaultValue: "No SMART objective available",
+          })}
+        </p>
+
+        <p className="mt-1 text-sm leading-relaxed text-yellow-800 dark:text-slate-400">
+          <Trans
+            i18nKey="recommendations.smart.noObjective.subtitle"
+            values={{
+              issue: tabIssue?.name ?? activeTab,
+            }}
+            components={{
+              strong: (
+                <strong className="font-semibold text-yellow-900 dark:text-slate-200" />
+              ),
+            }}
+          />
+        </p>
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
         ) : tabObjective.status === "completed" ? (
-          <Card className="border rounded-[18px] border-green-200 bg-green-50 shadow-sm dark:bg-green-900/10 dark:border-green-800">
-            <CardContent className="px-6 py-5">
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900/30">
-                  <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-base font-semibold text-green-800 dark:text-green-300">
-                    {t("recommendations.smart.completed.title", {
-                      defaultValue: "Objectif atteint",
-                    })}
-                  </p>
-                  <p className="text-sm text-green-700 dark:text-green-400 mt-0.5">
-                    {t("recommendations.smart.completed.subtitle", {
-                      issue:
-                        tabObjective.pareto_cause?.[i18n.language] ??
-                        tabObjective.pareto_cause?.en ??
-                        "",
-                      defaultValue:
-                        "Cet objectif SMART a été complété avec succès. Le plan d'actions associé est clôturé.",
-                    })}
+      <Card className="rounded-[18px] border border-green-200 bg-green-50 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+  <CardContent className="px-6 py-5">
+    <div className="flex items-start gap-4">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-green-100 dark:bg-slate-800">
+        <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+      </div>
 
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="min-w-0 flex-1">
+        <p className="text-base font-semibold text-green-800 dark:text-slate-100">
+          {t("recommendations.smart.completed.title", {
+            defaultValue: "Objectif atteint",
+          })}
+        </p>
+
+        <p className="mt-0.5 text-sm text-green-700 dark:text-slate-400">
+          {t("recommendations.smart.completed.subtitle", {
+            issue:
+              tabObjective.pareto_cause?.[i18n.language] ??
+              tabObjective.pareto_cause?.en ??
+              "",
+            defaultValue:
+              "Cet objectif SMART a été complété avec succès. Le plan d'actions associé est clôturé.",
+          })}
+        </p>
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
         ) : (
           <>

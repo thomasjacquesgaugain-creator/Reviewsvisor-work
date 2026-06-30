@@ -2171,6 +2171,7 @@
     "autoCalculated":"auto-calculated",
     "quadrant": "Quadrant",
     "checklistTitle":"Configure checklist",
+    "reanalyse":"Redo AI ​​analysis",
     "checklist": {
       "schedule": {
         "daily": {

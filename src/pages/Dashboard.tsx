@@ -6073,7 +6073,7 @@ const activeObjective =
             {activeTab === "recommandations" && (
               <>
               
-                <Card className="mb-8 overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-950">
+                <Card className="mb-8 overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900 ">
                   <CardHeader
                     className="cursor-pointer border-b border-slate-100 px-6 py-5 dark:border-slate-800 sm:px-8"
                     onClick={() =>
