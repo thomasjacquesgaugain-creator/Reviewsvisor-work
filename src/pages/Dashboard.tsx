@@ -6659,37 +6659,6 @@ const activeObjective =
                   </Card>
                 )} */}
                 {openCard === "checklist" && (
-                  <Card className="mb-8 rounded-[18px] border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-                    <CardHeader className="relative border-slate-200 pb-4 text-left dark:border-slate-800">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
-                            <List className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                              {t("dashboard.operationalChecklist")}
-                            </span>
-                            <p className="text-[12px] text-slate-500 dark:text-slate-400">
-                              {t("dashboard.routineToFollow")}
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setOpenCard(null)}
-                          className="h-8 w-8 shrink-0 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                          aria-label={t("common.close", "Close")}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                    </CardHeader>
-
-                    <CardContent className="space-y-6 px-5 py-5 sm:px-6">
                       <OperationalChecklistMultiObjective
                         objectives={orderedObjectives}
                         language={i18n.language}
@@ -6698,9 +6667,8 @@ const activeObjective =
                         }
                         totalReviews={displayTotalAnalyzed ?? 0}
                         t={t}
+                        setOpenCard={setOpenCard}
                       />
-                    </CardContent>
-                  </Card>
                 )}
 
                 {/* SECTION 3 : Conseiller (pleine largeur, style éditorial/insight) */}
@@ -6810,7 +6778,7 @@ const activeObjective =
 
                 {/* Agent */}
                 <Card
-                  className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 mb-8 dark:bg-slate-900 dark:border-slate-800"
+                  className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 mb-8 dark:bg-slate-900 dark:border-slate-800 rounded-[18px]"
                   onClick={toggleAgentCard}
                 >
                   <CardHeader className="relative text-center">
@@ -6843,7 +6811,7 @@ const activeObjective =
 
                 {/* Contenu Agent - EN DESSOUS */}
                 {openCard === "agent" && (
-                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
+                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800 rounded-[18px]">
                     <CardHeader className="relative text-left">
                       <div className="flex items-center gap-2 mb-2">
                         <Bot className="w-5 h-5 text-purple-500" />

@@ -3,12 +3,14 @@
 
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
-import { Info, List, RefreshCw, BarChart2, CheckSquare, Goal, Target } from "lucide-react";
+import { Info, List, RefreshCw, BarChart2,Target } from "lucide-react";
 import type { SmartObjective } from "@/types/smart";
 import { useSmartProgress } from "@/hooks/useSmartProgress";
 import { format, type Locale } from "date-fns";
 import { fr, enUS, it, es, ptBR } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import { Button } from "../ui/button";
+import { useSmartStore } from "@/store/smartStore";
 
 interface Props {
   objective: SmartObjective;
@@ -26,7 +28,7 @@ const getLocalizedText = (value: any, language = "en"): string => {
 
 function GearItem({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-2 mt-1.5">
+    <div className="flex items-center gap-2 mt-1.5 mb-1.5">
       <Target height={12} width={12} />
       <span className="text-xs text-gray-500 italic">{label}</span>
     </div>
@@ -38,6 +40,7 @@ export function SmartActionPlanCard({ objective }: Props) {
   const lang = (i18n.language || "en").split("-")[0].toLowerCase();
   const locale = localeMap[lang] || enUS;
   const progress = useSmartProgress(objective);
+  const { updateObjectiveStatus } = useSmartStore();
 
   const startFmt = objective.created_at
     ? format(new Date(objective.created_at), "d MMMM yyyy", { locale })
@@ -109,10 +112,42 @@ export function SmartActionPlanCard({ objective }: Props) {
                     {getLocalizedText(objective.problem, lang) || "—"}
                   </p>
                   <GearItem label={t("smartCard.pdca.managerDecision", { defaultValue: "Manager decision" })} />
+                  {objective.status === "todo" && (
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        if (!objective.id) return;
+                        await updateObjectiveStatus(objective.id, "in_progress");
+                      }}
+                      className="bg-violet-600 hover:bg-violet-700 text-white text-xs gap-1.5 px-4"
+                    >
+                      <span>✓</span>
+                      {t("smartCard.pdca.status.activateLaunchPlan", {
+                        defaultValue: "Validate and launch the plan",
+                      })}
+                    </Button>
+                  )}
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-green-600 px-4 py-1.5 text-xs font-semibold text-white shrink-0 ml-4">
-                ✓ {t("smartCard.pdca.status.planValidated", { defaultValue: "Plan validated" })}
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold shrink-0 ml-4 border
+                ${objective.status === "todo"
+                    ? "bg-orange-50 border-orange-300 text-orange-700"
+                    : "bg-green-600 border-green-600 text-white"
+                  }`}
+              >
+                {objective.status === "todo" ? (
+                  t("smartCard.pdca.status.toBeValidated", {
+                    defaultValue: "To be validated",
+                  })
+                ) : (
+                  <>
+                    <span>✓</span>
+                    {t("smartCard.pdca.status.planValidated", {
+                      defaultValue: "Plan validated",
+                    })}
+                  </>
+                )}
               </span>
             </div>
           </div>
@@ -144,8 +179,24 @@ export function SmartActionPlanCard({ objective }: Props) {
 
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-green-600 px-4 py-1.5 text-xs font-semibold text-white shrink-0 ml-4 mt-0.5">
-                ✓ {t("smartCard.pdca.status.active", { defaultValue: "Active" })}
+          
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold shrink-0 ml-4 border
+                ${objective.status === "todo"
+                    ? "bg-orange-50 border-orange-300 text-orange-700"
+                    : "bg-green-600 border-green-600 text-white"
+                  }`}
+              >
+                {objective.status === "todo" ? (
+                  t("smartCard.pdca.status.pendingToActivate", {
+                    defaultValue: "To be validated",
+                  })
+                ) : (
+                  <>
+                    <span>✓</span>
+                    {t("smartCard.pdca.status.active", { defaultValue: "Active" })}
+                  </>
+                )}
               </span>
             </div>
           </div>
@@ -225,55 +276,61 @@ export function SmartActionPlanCard({ objective }: Props) {
                     </span>
                   </div>
 
-                  <div style={{ borderLeftColor: "#27aaeb" }} className="rounded-xl bg-blue-100 border border-green-100 border-l-4 px-4 py-3.5 space-y-2">
-                    <p className="text-sm font-bold text-gray-800 mb-1">
-                      {t("smartCard.pdca.adjustInProgress", { defaultValue: "Goal in progress" })}
-                    </p>
+                  <div style={{ borderLeftColor: objective.status === "todo" ? "#9a9aae" : "#27aaeb" }} className={`rounded-xl ${objective.status === "todo" ? "bg-[#f5f5f7]" : "bg-blue-100"} border border-green-100 border-l-4 px-4 py-3.5 space-y-2`}>
 
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-700 flex items-center gap-2">
-                        <span>🗓️</span>
-                        <span>
-                          {t("smartCard.pdca.start", { defaultValue: "Start" })} :{" "}
-                          <span className="font-semibold">{startFmt}</span>
-                        </span>
+                    {objective.status === "todo" ? <div className="text-gray-600 text-sm">
+                      ⏸{t("smartCard.pdca.waitingForPlan", { defaultValue: "Waiting for plan validation to start data collection." })}
+                    </div> : <>
+                      <p className="text-sm font-bold text-gray-800 mb-1">
+                        {t("smartCard.pdca.adjustInProgress", { defaultValue: "Goal in progress" })}
                       </p>
-                      <p className="text-sm text-gray-700 flex items-center gap-2">
-                        <span>🗓️</span>
-                        <span>
-                          {t("smartCard.pdca.forecast", { defaultValue: "Expected end" })} :{" "}
-                          <span className="font-semibold">{endFmt}</span>
-                        </span>
-                      </p>
-                    </div>
 
-                    <div className="border-t border-gray-100 pt-2 space-y-1">
-                      <p className="text-sm text-gray-700 flex items-center gap-2">
-                        <span>🎯</span>
-                        <span>
-                          {t("smartCard.pdca.targetShort", { defaultValue: "Objectif" })} :{" "}
-                          <span className="font-semibold">
-                            {objective.current_value} → {objective.target_value} {unitLabel}
+                      <div className="space-y-1">
+                        <p className="text-sm text-gray-700 flex items-center gap-2">
+                          <span>🗓️</span>
+                          <span>
+                            {t("smartCard.pdca.start", { defaultValue: "Start" })} :{" "}
+                            <span className="font-semibold">{startFmt}</span>
                           </span>
-                        </span>
-                      </p>
-                      <p className="text-sm text-gray-700 flex items-center gap-2">
-                        <span>📊</span>
-                        <span>
-                          {t("smartCard.pdca.currentSituation", { defaultValue: "Current situation" })} :{" "}
-                          <span className="font-semibold">
-                            {objective.current_progress ?? objective.current_value} {unitLabel}
+                        </p>
+                        <p className="text-sm text-gray-700 flex items-center gap-2">
+                          <span>🗓️</span>
+                          <span>
+                            {t("smartCard.pdca.forecast", { defaultValue: "Expected end" })} :{" "}
+                            <span className="font-semibold">{endFmt}</span>
                           </span>
-                        </span>
-                      </p>
-                      <p className="text-sm text-gray-700 flex items-center gap-2">
-                        <span>✅</span>
-                        <span>
-                          {t("smartCard.pdca.fieldExecution", { defaultValue: "Field execution" })} :{" "}
-                          <span className="font-semibold">{progress.percentage} %</span>
-                        </span>
-                      </p>
-                    </div>
+                        </p>
+                      </div>
+
+                      <div className="border-t border-gray-100 pt-2 space-y-1">
+                        <p className="text-sm text-gray-700 flex items-center gap-2">
+                          <span>🎯</span>
+                          <span>
+                            {t("smartCard.pdca.targetShort", { defaultValue: "Objectif" })} :{" "}
+                            <span className="font-semibold">
+                              {objective.current_value} → {objective.target_value} {unitLabel}
+                            </span>
+                          </span>
+                        </p>
+                        <p className="text-sm text-gray-700 flex items-center gap-2">
+                          <span>📊</span>
+                          <span>
+                            {t("smartCard.pdca.currentSituation", { defaultValue: "Current situation" })} :{" "}
+                            <span className="font-semibold">
+                              {objective.current_progress ?? objective.current_value} {unitLabel}
+                            </span>
+                          </span>
+                        </p>
+                        <p className="text-sm text-gray-700 flex items-center gap-2">
+                          <span>✅</span>
+                          <span>
+                            {t("smartCard.pdca.fieldExecution", { defaultValue: "Field execution" })} :{" "}
+                            <span className="font-semibold">{progress.percentage} %</span>
+                          </span>
+                        </p>
+                      </div>
+                    </>}
+
                   </div>
                 </div>
               </div>

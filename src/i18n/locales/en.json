@@ -388,6 +388,7 @@
     "shortTerm": "Short term",
     "mediumTerm": "Medium term",
     "operationalChecklist": "Operational checklist",
+    "configure":"Configure",
     "concreteActions": "Concrete prioritized actions to put in place",
     "routineToFollow":"Routine to follow in the field",
     "noActionsAvailable": "No actions available",
@@ -2169,6 +2170,43 @@
     "targetDate":"Target date",
     "autoCalculated":"auto-calculated",
     "quadrant": "Quadrant",
+    "checklistTitle":"Configure checklist",
+    "checklist": {
+      "schedule": {
+        "daily": {
+          "startOfDay": "Start of day",
+          "duringActivity": "During activity",
+          "endOfDay": "End of day",
+          "customTime": "Custom time"
+        },
+        "weekly": {
+          "monday": "Monday",
+          "tuesday": "Tuesday",
+          "wednesday": "Wednesday",
+          "thursday": "Thursday",
+          "friday": "Friday",
+          "saturday": "Saturday",
+          "sunday": "Sunday"
+        },
+        "monthly": {
+          "startOfMonth": "Start of month",
+          "midMonth": "Mid-month",
+          "endOfMonth": "End of month",
+          "customDate": "Custom date"
+        }
+      },
+      "configure":{
+        "dailyTasks":"Daily tasks",
+        "weeklyTasks":"Weekly tasks",
+        "monthlyTasks":"Monthly tasks",
+        "customDatePlaceholder":"ex: 1st Monday",
+        "saveSuccess":"Checklist configuration saved.",
+        "generatedOn": "Document generated {{date}}",
+        "footerBrand": "Reviewsvisor — Quality Advisor",
+        "downloadPDF":"Download PDF"
+      }
+    },
+    "checklistSubtitle":"Customize each task according to your activity rhythm. Settings will be saved for this goal.",
     "impactValues": {
       "low": "Low",
       "medium": "Medium",
@@ -2337,12 +2375,19 @@
   "temporal": {
     "deadline": "Deadline: {{date}}",
     "duration": "Duration: {{months}}mo · Review: 6 weeks",
-    "months":"months"
+    "months":"months",
+    "reviewFrequency": {
+      "every_week":      "Every week",
+      "every_2_weeks":   "Every 2 weeks",
+      "every_4_weeks":   "Every 4 weeks",
+      "every_3_months":  "Every 3 months"
+    }
   },
   "achievable": {
     "noActions": "No actions defined",
     "more":      "+ {{count}} more"
   },
+  "expectedResult":"Expected result",
   "progress": {
     "label":           "Progress toward goal",
     "mentionsNow":     "{{value}} mentions now",
@@ -2379,6 +2424,9 @@
     "forecast": "Expected end",
     "targetShort": "Target",
     "currentSituation": "Current situation",
+    "waitingForPlan":"Waiting for plan validation to start data collection.",
+    "checklistLocked":" Checklist locked",
+    "checklistLockedStatus":" The operational checklist will be available once validate and launch this plan.",
     "plan": {
       "label": "PLAN",
       "target": "Target: {{current}} → {{target}} · {{months}} months"
@@ -2411,7 +2459,10 @@
       "planValidated":"Plan validated",
       "active":"Active",
       "auto":"Automatic",
-      "tracking":"Tracking"
+      "tracking":"Tracking",
+      "toBeValidated":"To be validated",
+      "pendingToActivate":"Pending · to activate",
+      "activateLaunchPlan":"Validate and launch the plan"
     }
   }
 },

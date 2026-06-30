@@ -61,6 +61,13 @@ function getQuadrant(impact: string, effort: string): string {
   return "minor";
 }
 
+function defaultSchedule(frequency: string): string {
+  if (frequency === "daily")   return "start_of_day";
+  if (frequency === "weekly")  return "monday";
+  if (frequency === "monthly") return "start_of_month";
+  return "start_of_day";
+}
+
 /* ─────────────────────────────────────────────
    SYSTEM PROMPT — consultant persona
    Injected as the system message so the persona
@@ -335,14 +342,23 @@ Return EXACTLY this JSON shape:
     "en": "<specific metric>",
     "fr": "<métrique spécifique>"
   },
-  "unit": {
-    "en": "negative reviews | mentions | percent",
-    "fr": "avis négatifs | mentions | pourcentage"
+ "unit": {
+    "en": "<pick EXACTLY ONE: 'negative reviews' OR 'mentions' OR 'percent' — choose based on what fits the KPI>",
+    "fr": "<UN SEUL choix parmi : 'avis négatifs' OU 'mentions' OU 'pourcentage'>"
   },
   "relevance_note": {
     "en": "<why this matters — cite count, explain operational impact>",
     "fr": "<pourquoi cela compte — citer le nombre, expliquer l'impact>"
   },
+  "ai_justification": {
+  "en": "<Explain why the proposed SMART objective and action plan are the best approach based on the review evidence and root cause analysis. 1 concise sentence.>",
+  "fr": "<Version française>"
+  },
+  "expected_result": {
+  "en": "<Describe the expected business outcome after implementing this SMART objective. Base this directly on the relevance_note and explain what customers should experience differently. 1 concise sentence.>",
+  "fr": "<Version française>"
+  },
+  "review_frequency": "every_week | every_2_weeks | every_4_weeks | every_3_months",
   "action_plan": {
     "en": [
       { "text": "<one complete sentence: what + why with count + when + who>", "priority": "High | Medium | Low" },
@@ -363,7 +379,7 @@ Return EXACTLY this JSON shape:
         "en": "<short verifiable task derived from action_plan.en[0] — completable in one shift>",
         "fr": "<tâche courte et vérifiable>"
       },
-      "frequency": "daily | weekly | monthly | once",
+      "frequency": "daily | weekly | monthly",
       "action_plan_index": 0,
       "completed": false
     },
@@ -372,7 +388,7 @@ Return EXACTLY this JSON shape:
         "en": "<short verifiable task derived from action_plan.en[1]>",
         "fr": "<tâche courte et vérifiable>"
       },
-      "frequency": "daily | weekly | monthly | once",
+      "frequency": "daily | weekly | monthly",
       "action_plan_index": 1,
       "completed": false
     },
@@ -381,7 +397,7 @@ Return EXACTLY this JSON shape:
         "en": "<short verifiable task derived from action_plan.en[2]>",
         "fr": "<tâche courte et vérifiable>"
       },
-      "frequency": "daily | weekly | monthly | once",
+      "frequency": "daily | weekly | monthly",
       "action_plan_index": 2,
       "completed": false
     },
@@ -390,7 +406,7 @@ Return EXACTLY this JSON shape:
         "en": "<short verifiable task derived from action_plan.en[3]>",
         "fr": "<tâche courte et vérifiable>"
       },
-      "frequency": "daily | weekly | monthly | once",
+      "frequency": "daily | weekly | monthly",
       "action_plan_index": 3,
       "completed": false
     }
@@ -476,9 +492,9 @@ Return EXACTLY this JSON shape:
         en: `${paretoCauseEn} mentions`,
         fr: `Mentions ${paretoCauseFr}`,
       },
-      unit: aiFields.unit ?? {
-        en: "negative reviews",
-        fr: "avis négatifs",
+      unit: {
+        en: "negative reviews/month",
+        fr: "avis négatifs/mois",
       },
       relevance_note: aiFields.relevance_note ?? {
         en: "Improving this issue may increase customer satisfaction and loyalty.",
@@ -495,7 +511,15 @@ Return EXACTLY this JSON shape:
       action_plan: aiFields.action_plan ?? { en: [], fr: [] },
 
       // Checklist — short verifiable tasks mapped to action_plan items
-      actions: aiFields.actions ?? [],
+      // actions: aiFields.actions ?? [],
+      actions: (aiFields.actions ?? []).map((a: any) => ({
+        text: a.text,
+        frequency: a.frequency,
+        schedule: defaultSchedule(a.frequency), // always deterministic, never from AI
+        schedule_value: null, // only populated when user picks custom
+        action_plan_index: a.action_plan_index,
+        completed: false,
+      })),
 
       // Status
       status:           "todo",
@@ -503,8 +527,17 @@ Return EXACTLY this JSON shape:
       current_progress: computed_count,
 
       // AI metadata
-      ai_generated:  true,
+      ai_generated: true,
       ai_confidence: aiFields.ai_confidence ?? null,
+      ai_justification: aiFields.ai_justification ?? {
+        en: "",
+        fr: "",
+      },
+      expected_result: aiFields.expected_result ?? {
+        en: "",
+        fr: "",
+      },
+      review_frequency: aiFields.review_frequency ?? "every_4_weeks",
     };
 
     /* ── Upsert to smart_objectives table ── */

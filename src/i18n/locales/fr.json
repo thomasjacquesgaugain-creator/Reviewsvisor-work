@@ -286,6 +286,7 @@
     "negativeMentions": "Mentions négatives",
     "cumulativePercent": "Cumul %",
     "checklist": "Checklist d'amélioration",
+    "configure":"Configurer",
     "detailedAnalysis": "Analyse détaillée",
     "registeredSince": "Inscrit depuis le",
     "lastUpdate": "Dernière mise à jour",
@@ -2384,6 +2385,43 @@
     "targetDate":"Date cible",
     "autoCalculated":"auto-calculé",
     "quadrant": "Quadrant",
+    "checklistSubtitle":"Personnalisez chaque tâche selon le rythme de votre activité. Les paramètres seront sauvegardés pour cet objectif.",
+    "checklistTitle":"Configurer la checklist",
+    "checklist": {
+      "schedule": {
+        "daily": {
+          "startOfDay": "Début de la journée",
+          "duringActivity": "Pendant l'activité",
+          "endOfDay": "Fin de la journée",
+          "customTime": "Heure personnalisée"
+        },
+        "weekly": {
+          "monday": "Lundi",
+          "tuesday": "Mardi",
+          "wednesday": "Mercredi",
+          "thursday": "Jeudi",
+          "friday": "Vendredi",
+          "saturday": "Samedi",
+          "sunday": "Dimanche"
+        },
+        "monthly": {
+          "startOfMonth": "Début du mois",
+          "midMonth": "Milieu du mois",
+          "endOfMonth": "Fin du mois",
+          "customDate": "Date personnalisée"
+        }
+      },
+       "configure":{
+        "dailyTasks":"Tâches quotidiennes",
+        "weeklyTasks":"Tâches hebdomadaires",
+        "monthlyTasks":"Tâches mensuelles",
+        "customDatePlaceholder":"ex: 1er lundi",
+        "saveSuccess":"Configuration de la liste de contrôle enregistrée.",
+        "generatedOn": "Document généré le {{date}}",
+        "footerBrand": "Reviewsvisor — Conseiller Qualité",
+        "downloadPDF":"Télécharger le PDF"
+      }
+    },
     "impactValues": {
       "low": "Faible",
       "medium": "Moyen",
@@ -2425,7 +2463,7 @@
     "pdcaTracking": "Suivi PDCA",
     "noParetoIssues": "Aucun problème Pareto disponible",
     "analyzeReviewsMessage": "Analysez les avis de votre établissement pour générer des objectifs SMART et un suivi PDCA",
-     "noSmartActions": "Aucune action SMART disponible pour le moment",
+    "noSmartActions": "Aucune action SMART disponible pour le moment",
      "stepbar":{
       "issueImpact":"Impact des problèmes",
       "causeIdentified":"Causes Identifiées",
@@ -2552,12 +2590,19 @@
   "temporal": {
     "deadline": "Échéance : {{date}}",
     "duration": "Durée : {{months}} mois · Révision : 6 semaines",
-    "months":"mois"
+    "months":"mois",
+    "reviewFrequency": {
+      "every_week":      "Chaque semaine",
+      "every_2_weeks":   "Toutes les 2 semaines",
+      "every_4_weeks":   "Toutes les 4 semaines",
+      "every_3_months":  "Tous les 3 mois"
+    }
   },
   "achievable": {
     "noActions": "Aucune action définie",
     "more":      "+ {{count}} de plus"
   },
+  "expectedResult":"Résultat attendu",
   "progress": {
     "label":           "Progression vers l'objectif",
     "mentionsNow":     "{{value}} mentions actuellement",
@@ -2593,7 +2638,10 @@
     "start": "Début",
     "forecast": "Fin prévue",
     "targetShort": "Objectif",
-    "currentSituation": "Situation actuelle",
+    "currentSituation": "Situation actuelle",   
+    "waitingForPlan":"En attente de la validation du plan pour démarrer la collecte de données.",
+    "checklistLocked":" Liste de contrôle verrouillée",
+    "checklistLockedStatus":" La liste de contrôle opérationnelle sera disponible une fois ce plan validé et lancé.",
     "plan": {
       "label": "PLAN",
       "target": "Cible : {{current}} → {{target}} · {{months}} mois"
@@ -2626,7 +2674,10 @@
       "planValidated":"Plan validé",
       "active":"Activé",
       "auto":"Automatique",
-      "tracking":"Suivi"
+      "tracking":"Suivi",
+      "toBeValidated":"À valider",
+      "pendingToActivate":"En attente · à activer",
+      "activateLaunchPlan":"Valider et lancer le plan"
     }
   }
 },

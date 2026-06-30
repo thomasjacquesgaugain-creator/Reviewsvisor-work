@@ -1,7 +1,7 @@
 // src/components/reviews/SmartObjectiveCard.tsx
 // Card 2 — SMART objective details + progress
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -49,17 +49,15 @@ const LETTER: Record<string, { dot: string; label: string; text: string }> = {
   A: { dot: "bg-yellow-500", label: "text-yellow-700", text: "OBJECTIF À ACCOMPLIR" },
 };
 
-export function SmartObjectiveCard({ objective, onUpdateProgress }: Props) {  
+export function SmartObjectiveCard({ objective, onUpdateProgress }: Props) {    
   const { t, i18n } = useTranslation();
   const lang       = (i18n.language || "fr").split("-")[0].toLowerCase();
   const locale     = localeMap[lang] || fr;
   const progress   = useSmartProgress(objective);
-
   const [showProgress, setShowProgress] = useState(false);
   const [progressInput, setProgressInput] = useState(
     String(objective.current_progress ?? objective.current_value)
   );
-
   const deadlineFmt = objective.deadline
     ? format(new Date(objective.deadline), "d MMMM yyyy", { locale })
     : "—";
@@ -83,6 +81,11 @@ const targetChangePercentage =
   current !== 0
     ? Math.round(((target - current) / current) * 100)
     : 0;
+
+ useEffect(() => {
+  setProgressInput(String(objective.current_progress ?? objective.current_value));
+  setShowProgress(false); 
+}, [objective.id, objective.current_progress, objective.current_value]);
 
   return (
     <Card className="border rounded-[18px] border-gray-200 shadow-sm overflow-hidden">
@@ -151,8 +154,11 @@ const targetChangePercentage =
       </span>
       <span className="text-[12px] text-gray-400 uppercase italic">({specific})</span>
     </div>
-    <p className="text-[13px] text-slate-800 leading-relaxed mb-1.5">
+    <p className="text-[13px] text-slate-800 leading-relaxed mb-0.5">
       {getLocalizedText(objective.problem, lang) || "—"}
+    </p>
+    <p className="text-[12px] text-slate-700 leading-relaxed mb-1.5">
+      {t("dashboard.action", { defaultValue: "Action" })}: {getLocalizedText(objective.actions[0]?.text ?? objective.actions[0], lang)}
     </p>
    
   </div>
@@ -167,8 +173,11 @@ const targetChangePercentage =
       </span>
       <span className="text-[12px] text-gray-400 italic uppercase">({realistic})</span>
     </div>
-    <p className="text-[13px] text-slate-800 leading-relaxed mb-1.5">
+    <p className="text-[13px] text-slate-800 leading-relaxed mb-0.5">
       {getLocalizedText(objective.relevance_note, lang) || "—"}
+    </p>
+    <p className="text-[12px] text-slate-600 leading-relaxed mb-1.5">
+       {t("smartCard.expectedResult", { defaultValue: "Expected result" })} : {getLocalizedText(objective.expected_result, lang) || "—"}
     </p>
   </div>
 
@@ -214,9 +223,11 @@ const targetChangePercentage =
       {" "}{t("smartCard.temporal.to", { defaultValue: "to" })}{" "}
       <strong>{endFmt}</strong>
       {" "}<span className="text-purple-600">({objective.duration_months} {t("smartCard.temporal.months", { defaultValue: "months" })})</span>
-      {/* {" · "} */}
-      {/* {t("smartCard.temporal.review", { defaultValue: "Review" })}{" "}
-      <strong>{t("smartCard.goalSections.review", { defaultValue: "every 4 weeks" })}</strong> */}
+      {" · "}
+      {t("smartCard.temporal.review", { defaultValue: "Review" })}{" "}
+      <strong> {t(`smartCard.temporal.reviewFrequency.${objective.review_frequency}`, {
+      defaultValue: objective.review_frequency ?? "—"
+    })}</strong>
     </p>
   </div>
 </div>
@@ -248,7 +259,7 @@ const targetChangePercentage =
             </p>
             <p className="text-[11px] text-slate-500">
               {t("smartCard.goalSections.justification", { defaultValue: "AI justification" })} :{" "}
-              {getLocalizedText(objective.actions[0]?.text ?? objective.actions[0], lang)}
+              {getLocalizedText(objective.ai_justification, lang) || "—"}
 
     </p>
   </div>
@@ -333,7 +344,7 @@ const targetChangePercentage =
               <span className={progress.isOverdue ? "text-red-500" : ""}>{endFmt}</span>
             </div>
 
-            {onUpdateProgress && objective.status !== "completed" && (
+            {onUpdateProgress && objective.status === "in_progress" && (
               <div className="pt-2 mt-2 border-t border-gray-100">
                 <button
                   onClick={() => setShowProgress((p) => !p)}

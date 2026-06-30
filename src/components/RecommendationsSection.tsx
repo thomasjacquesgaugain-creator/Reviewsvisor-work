@@ -51,20 +51,20 @@ export function RecommendationsSection({ paretoCauses }: Props) {
     fetchObjectives(activeEstablishmentId);
   }, [activeEstablishmentId, fetchObjectives]);
 
-  useEffect(() => {
-    async function sync() {
-      if (!objectives.length) return;
-      const sorted = [...paretoCauses].sort((a, b) => b.count - a.count);
-      const next = sorted
-        .map((p) => objectives.find(
-          (o) => o.pareto_cause?.key?.toLowerCase() === p.key.toLowerCase()
-        ))
-        .find((o) => o && o.status !== "completed");
-      if (!next || next.status === "in_progress") return;
-      await updateObjectiveStatus(next.id, "in_progress");
-    }
-    sync();
-  }, [objectives, paretoCauses]);
+  // useEffect(() => {
+  //   async function sync() {
+  //     if (!objectives.length) return;
+  //     const sorted = [...paretoCauses].sort((a, b) => b.count - a.count);
+  //     const next = sorted
+  //       .map((p) => objectives.find(
+  //         (o) => o.pareto_cause?.key?.toLowerCase() === p.key.toLowerCase()
+  //       ))
+  //       .find((o) => o && o.status !== "completed");
+  //     if (!next || next.status === "in_progress") return;
+  //     await updateObjectiveStatus(next.id, "in_progress");
+  //   }
+  //   sync();
+  // }, [objectives, paretoCauses]);
 
   const safeObjectives = Array.isArray(objectives) ? objectives : [];
   const activeObjective = safeObjectives.find((o) => o.status === "in_progress") || null

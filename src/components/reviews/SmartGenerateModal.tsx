@@ -15,12 +15,13 @@ import {
   ChevronUp,
  
 } from "lucide-react";
-import type { SmartObjective } from "@/types/smart";
+import type { ReviewFrequency, SmartObjective } from "@/types/smart";
 import { useEffect, useState } from "react";
 import i18n from "@/i18n/config";
 import { DatePicker } from "@/components/ui/date-picker";
 import { differenceInMonths, format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 interface Props {
   open: boolean;
@@ -126,6 +127,13 @@ export function SmartGenerateModal({
 
   const [showSmartDetail, setShowSmartDetail] = useState(true);
 
+  const REVIEW_FREQUENCY_OPTIONS: { value: ReviewFrequency; labelKey: string; defaultLabel: string }[] = [
+  { value: "every_week",     labelKey: "smartCard.temporal.reviewFrequency.every_week",     defaultLabel: "Every week" },
+  { value: "every_2_weeks",  labelKey: "smartCard.temporal.reviewFrequency.every_2_weeks",  defaultLabel: "Every 2 weeks" },
+  { value: "every_4_weeks",  labelKey: "smartCard.temporal.reviewFrequency.every_4_weeks",  defaultLabel: "Every 4 weeks" },
+  { value: "every_3_months", labelKey: "smartCard.temporal.reviewFrequency.every_3_months", defaultLabel: "Every 3 months" },
+];
+
   useEffect(() => {
     if (open && updating && activeObjective) {
       updateDraft(activeObjective);
@@ -219,7 +227,7 @@ const durationMonths = draftData?.deadline
           </p>
             </div>
           <p className="text-xs text-green-800 leading-relaxed">
-            {getLocalizedText(draftData?.relevance_note, lang) || "—"}
+            {getLocalizedText(draftData?.ai_justification, lang) || "—"}
           </p>
         </div>
       </div>
@@ -273,6 +281,34 @@ const durationMonths = draftData?.deadline
             </p>
             </div>
           </div>
+
+  <div>
+          <Label className="text-xs text-gray-500 mb-1.5 block">
+            {t("recommendations.smart.reviewFrequency", { defaultValue: "Review frequency" })}
+          </Label>
+          <Select
+            value={draftData?.review_frequency ?? "every_4_weeks"}
+            onValueChange={(value) =>
+              updateDraft({ review_frequency: value as ReviewFrequency })
+            }
+          >
+            <SelectTrigger className="h-9 text-sm bg-white border rounded-md">
+              <SelectValue>
+                {t(
+                  `smartCard.temporal.reviewFrequency.${draftData?.review_frequency ?? "every_4_weeks"}`,
+                  { defaultValue: draftData?.review_frequency ?? "Every 4 weeks" }
+                )}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {REVIEW_FREQUENCY_OPTIONS.map(({ value, labelKey, defaultLabel }) => (
+                <SelectItem key={value} value={value} className="text-sm">
+                  {t(labelKey, { defaultValue: defaultLabel })}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         </div>
       </div>
     </div>
@@ -514,6 +550,14 @@ const durationMonths = draftData?.deadline
                     <EditableTextarea
                       value={getLocalizedText(draftData.relevance_note, lang)}
                       onChange={(v) => updateDraft({ relevance_note: updateLocalizedValue(draftData.relevance_note, v, lang) })}
+                      rows={2}
+                    />
+                    <Label className="text-xs text-gray-500 mb-1.5 mt-1.5 block">
+                      {t("smartCard.expectedResult", { defaultValue: "Expected result" })}
+                    </Label>
+                    <EditableTextarea
+                      value={getLocalizedText(draftData.expected_result, lang)}
+                      onChange={(v) => updateDraft({ expected_result: updateLocalizedValue(draftData.expected_result, v, lang) })}
                       rows={2}
                     />
                   </div>

@@ -11,6 +11,7 @@ import type {
   GenerateSmartPayload,
   IshikawaScores,
   QuestionnaireResult,
+  SmartAction,
 } from "@/types/smart";
 import type { ParetoItem } from "@/types/analysis";
 import type { RootCauseAnalysis } from "@/utils/rootCauseAnalysis";
@@ -165,7 +166,7 @@ interface SmartStore {
   updateObjective: (id: string, updates: Partial<SmartObjective>) => Promise<void>;
   toggleAction:    (id: string, actionIndex: number) => Promise<void>;
   updateProgress:  (id: string, current_progress: number) => Promise<void>;
-
+  saveActionSchedules: (objectiveId: string, updatedActions: SmartAction[]) => Promise<void>;
   saveQuestionnaireOnly: (
     establishmentId: string,
     paretoIssue:     ParetoItem,
@@ -266,6 +267,44 @@ export const useSmartStore = create<SmartStore>()(
           if (error) throw error;
         }
       },
+
+      saveActionSchedules: async (objectiveId, updatedActions) => {
+  const { error } = await db
+    .from("smart_objectives")
+    .update({
+      actions:    updatedActions,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", objectiveId);
+
+  if (error) {
+    console.error("saveActionSchedules error:", error);
+    toast.error(i18n.t("toasts.error"), {
+      description: i18n.t("checklist.configure.saveFailed", {
+        defaultValue: "Failed to save checklist configuration.",
+      }),
+    });
+    return;
+  }
+
+  set((state) => ({
+    objectives: state.objectives.map((obj) =>
+      obj.id === objectiveId
+        ? { ...obj, actions: updatedActions }
+        : obj
+    ),
+    currentDraft:
+      state.currentDraft?.id === objectiveId
+        ? { ...state.currentDraft, actions: updatedActions }
+        : state.currentDraft,
+  }));
+
+  toast.success(i18n.t("toasts.saved"), {
+    description: i18n.t("recommendations.smart.checklist.configure.saveSuccess", {
+      defaultValue: "Checklist configuration saved.",
+    }),
+  });
+},
 
       /* ─────────────────────────────────────────
          generateSmart
