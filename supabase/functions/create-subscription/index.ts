@@ -265,6 +265,12 @@ serve(async (req) => {
       mode: "subscription",
       payment_method_types: ["card"],
       billing_address_collection: "auto",
+      name_collection: {
+        business: { enabled: true },
+      },
+      customer_update: {
+        name: "auto",
+      },
       allow_promotion_codes: false,
       locale: "fr",
       ...(isEngagementPlan && { subscription_data: { trial_period_days: 14 } }),

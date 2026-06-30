@@ -161,9 +161,13 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
 
           {/* Main content */}
           <main className="flex-1 min-w-0">
+            {location.pathname === "/settings/billing" ? (
+              children
+            ) : (
             <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800">
               {children}
             </div>
+            )}
           </main>
         </div>
       </div>
