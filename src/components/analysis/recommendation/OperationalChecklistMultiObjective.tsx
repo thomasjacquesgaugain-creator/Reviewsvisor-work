@@ -188,7 +188,7 @@ export function OperationalChecklistMultiObjective({
   const totalCount = entries.length;
   const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const monthLabel = formatMonthLabel(new Date().toISOString(), language);
-  const isChecklistLocked = objective?.status !== "in_progress";
+  const isChecklistLocked = objective?.status === "todo";
 
   const sectionCounts = [
     {
@@ -285,7 +285,7 @@ export function OperationalChecklistMultiObjective({
                 {t("dashboard.configure", { defaultValue: "Configure" })}
               </Button>
             )}
-            <Button
+            {objective.status==="in_progress"&&<Button
               variant="outline"
               size="sm"
               onClick={() =>
@@ -301,7 +301,7 @@ export function OperationalChecklistMultiObjective({
             >
               <Download className="h-3.5 w-3.5" />
               {t("recommendations.smart.checklist.configure.downloadPDF", { defaultValue: "Imprimer / PDF" })}
-            </Button>
+            </Button>}
 
             <Button
               type="button"
@@ -388,7 +388,7 @@ export function OperationalChecklistMultiObjective({
                 </div>
               </div>
             )}
-
+            {objective.status!=="completed"&&
             <div className="overflow-hidden rounded-[24px] border border-emerald-200 bg-emerald-50/70 dark:border-emerald-900/40 dark:bg-emerald-950/15 mb-4">
               <div className="px-5 py-4">
                 <div className="flex items-end justify-between gap-4 rounded-2xl bg-emerald-50/70 px-1 pb-3 pt-1 dark:bg-emerald-950/10">
@@ -433,9 +433,27 @@ export function OperationalChecklistMultiObjective({
                   ))}
                 </div>
               </div>
-            </div>
+            </div>}
 
-            {sectionCounts.map((section) => {
+            {objective?.status === "completed" ? (
+              <div className="rounded-[24px] border border-emerald-200 bg-emerald-50/70 p-8 text-center dark:border-emerald-900/40 dark:bg-emerald-950/15">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-white">
+                  <Check className="h-6 w-6" strokeWidth={3} />
+                </div>
+                <p className="text-base font-semibold text-emerald-800 dark:text-emerald-300">
+                  {t("recommendations.smart.completed.title", {
+                    defaultValue: "This objective has already been completed.",
+                  })}
+                </p>
+                <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-400">
+                  {t("recommendations.smart.completed.subtitle", {
+                    defaultValue:
+                      "The operational checklist is no longer editable for this goal.",
+                  })}
+                </p>
+              </div>
+            ) : (
+              sectionCounts.map((section) => {
               if (!section.items.length) return null;
 
               return (
@@ -493,7 +511,8 @@ export function OperationalChecklistMultiObjective({
                   </div>
                 </section>
               );
-            })}
+            })
+            )}
           </div>
 
           {objective?.id && (

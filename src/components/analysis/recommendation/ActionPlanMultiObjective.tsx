@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Check, Sparkles } from "lucide-react";
+import { SmartObjective } from "@/types/smart";
 
 interface ObjectiveAction {
   text: string | Record<string, string>;
@@ -9,17 +10,9 @@ interface ObjectiveAction {
   reason?: string | Record<string, string>;
 }
 
-interface Objective {
-  id?: string;
-  pareto_cause?: Record<string, string> & { key?: string };
-  pareto_percentage?: number;
-  pareto_count?: number;
-  actions?: ObjectiveAction[];
-  action_plan?: Record<string, Array<{ text: string; priority: string }>>;
-}
 
 interface Props {
-  objectives: Objective[];
+  objectives: SmartObjective[];
   language: string;
   onToggleAction: (objectiveId: string, actionIndex: number) => void;
   totalReviews: number;
@@ -226,9 +219,26 @@ export const ActionPlanMultiObjective: React.FC<Props> = ({
       </div> */}
 
       <div className="space-y-3 pt-1">
-        {displayedActions.length === 0 ? (
+        {!activeObj ? (
           <div className="text-center py-10 text-gray-400 dark:text-slate-500 text-sm">
             {t("dashboard.noActions")}
+          </div>
+        ) : activeObj.status === "completed" ? (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-6 text-center dark:border-emerald-900/40 dark:bg-emerald-950/20">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-white">
+              <Check className="h-6 w-6" strokeWidth={3} />
+            </div>
+            <p className="text-base font-semibold text-emerald-800 dark:text-emerald-300">
+              {t("recommendations.smart.completed.title", {
+                defaultValue: "This objective has already been completed.",
+              })}
+            </p>
+            <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-400">
+              {t("recommendations.smart.completed.subtitle", {
+                defaultValue:
+                  "You can review the completed plan, but no further action is required.",
+              })}
+            </p>
           </div>
         ) : (
           displayedActions.map((action, idx) => {
