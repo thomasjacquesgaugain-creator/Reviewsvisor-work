@@ -5,10 +5,13 @@ import { Loader2, CheckCircle2,
   ChevronDown, ChevronUp, Target, ListChecks, RefreshCw, Timer,
   Check,
   Info,
-  Loader
+  Loader,
+  AlertTriangle,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { SmartObjectiveCard } from "./reviews/SmartObjectiveCard";
 import { SmartActionPlanCard } from "./reviews/SmartActionPlanCard";
 import { SmartGenerateModal } from "./reviews/SmartGenerateModal";
@@ -20,6 +23,7 @@ import i18n from "@/i18n/config";
 
 interface Props {
   paretoCauses: ParetoItem[];
+  onRedoAnalysis?: () => Promise<void>;
 }
 
 const getLocalizedText = (value: any, language = "en"): string => {
@@ -30,11 +34,11 @@ const getLocalizedText = (value: any, language = "en"): string => {
   return String(value);
 };
 
-export function RecommendationsSection({ paretoCauses }: Props) {
+export function RecommendationsSection({ paretoCauses, onRedoAnalysis }: Props) {
   const {
     objectives, currentDraft, isGenerating, isSaving,
     updateDraft, saveDraft, discardDraft, fetchObjectives,
-    updateProgress, toggleAction, updateObjectiveStatus,
+    updateProgress, toggleAction, updateObjectiveStatus, deleteObjectivesForEstablishment,
   } = useSmartStore();
 
   const activeEstablishmentId = useEstablishmentStore((s) => s.activeEstablishmentId);
@@ -44,6 +48,8 @@ export function RecommendationsSection({ paretoCauses }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [activeStepKey, setActiveStepKey] = useState<string>("targetGoal");
   const [modalOpen, setModalOpen] = useState(false);
+  const [redoModalOpen, setRedoModalOpen] = useState(false);
+  const [isRedoing, setIsRedoing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
@@ -130,6 +136,22 @@ export function RecommendationsSection({ paretoCauses }: Props) {
   };
   const handleSave = async () => { await saveDraft(); setIsUpdating(false); setModalOpen(false); };
   const handleClose = () => { discardDraft(); setModalOpen(false); setIsUpdating(false); };
+  const handleOpenRedo = () => setRedoModalOpen(true);
+  const handleCloseRedo = () => {
+    if (isRedoing) return;
+    setRedoModalOpen(false);
+  };
+  const handleLaunchRedo = async () => {
+    if (!activeEstablishmentId) return;
+    setIsRedoing(true);
+    try {
+      await deleteObjectivesForEstablishment(activeEstablishmentId);
+      await onRedoAnalysis?.();
+      setRedoModalOpen(false);
+    } finally {
+      setIsRedoing(false);
+    }
+  };
 
   const getDotColor = (issueKey: string) => {
     const obj = safeObjectives.find(
@@ -262,7 +284,11 @@ export function RecommendationsSection({ paretoCauses }: Props) {
                   {t("recommendations.smart.chooseIssue", { defaultValue: "Choisissez un problème à traiter" })}
                 </p>
                 <div className="flex items-center gap-2">
-                  <button  className="flex items-center gap-1.5 text-xs text-purple-600 hover:text-purple-700 dark:text-purple-400 px-3 py-1.5 rounded-full bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/30 border border-purple-200 dark:border-purple-800 transition-colors font-medium">
+                  <button
+                    type="button"
+                    onClick={handleOpenRedo}
+                    className="flex items-center gap-1.5 text-xs text-purple-600 hover:text-purple-700 dark:text-purple-400 px-3 py-1.5 rounded-full bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/30 border border-purple-200 dark:border-purple-800 transition-colors font-medium"
+                  >
                     <Loader className="w-3 h-3 text-purple-600" />
                     {t("recommendations.smart.reanalyse", { defaultValue: "Refaire l'analyse IA" })}
                   </button>
@@ -492,6 +518,154 @@ export function RecommendationsSection({ paretoCauses }: Props) {
         }
         activeObjective={tabObjective}
       />
+
+      <Dialog open={redoModalOpen} onOpenChange={(open) => {
+        if (!open) handleCloseRedo();
+      }}>
+        <DialogContent
+          hideCloseButton
+          className="max-w-[700px] border border-slate-200 bg-white p-0 shadow-[0_24px_80px_rgba(15,23,42,0.28)] dark:border-slate-800 dark:bg-slate-950"
+        >
+          <div className="flex items-start justify-between gap-0 border-b border-slate-200 px-6 py-4 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-300">
+                <Loader className="h-4 w-4" />
+              </div>
+              <div>
+                <h2 className="text-[18px] font-bold text-slate-900 dark:text-slate-100">
+                  {t("recommendations.smart.redoTitle", { defaultValue: "Redo AI analysis" })}
+                </h2>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCloseRedo}
+              disabled={isRedoing}
+              className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              aria-label={t("common.close", { defaultValue: "Close" })}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="space-y-2 px-6 py-0">
+            <p className="text-sm leading-6 text-slate-700 dark:text-slate-300">
+              {t("recommendations.smart.redoDescription", {
+                defaultValue: "AI will run a full analysis from the most recent data.",
+              })}
+            </p>
+
+            <div>
+              <p className="mb-2 text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t("recommendations.smart.willBeReset", {
+                  defaultValue: "The following will be reset:",
+                })}
+              </p>
+              <div className="space-y-1">
+                {[
+                  t("recommendations.smart.resetItems.ishikawa", {
+                    defaultValue: "Causes identified (Ishikawa)",
+                  }),
+                  t("recommendations.smart.resetItems.smartGoals", {
+                    defaultValue: "SMART goals",
+                  }),
+                  t("recommendations.smart.resetItems.actionPlan", {
+                    defaultValue: "Action plan (PDCA)",
+                  }),
+                  t("recommendations.smart.resetItems.checklist", {
+                    defaultValue: "Operational checklist",
+                  }),
+                  t("recommendations.smart.resetItems.progress", {
+                    defaultValue: "Execution progress",
+                  }),
+                  t("recommendations.smart.resetItems.validations", {
+                    defaultValue: "Pending validations",
+                  }),
+                ].map((item) => (
+                  <div key={item} className="flex items-start gap-3 text-[14px] text-slate-800 dark:text-slate-200">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white">
+                      <Check className="h-3 w-3 stroke-[3]" />
+                    </span>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[18px] border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+              <p className="mb-3 text-[13px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                {t("recommendations.smart.willBeKept", { defaultValue: "Will be kept" })}
+              </p>
+              <div className="space-y-1">
+                {[
+                  t("recommendations.smart.keepItems.reviews", {
+                    defaultValue: "Customer reviews",
+                  }),
+                  t("recommendations.smart.keepItems.history", {
+                    defaultValue: "Reviewsvisor history",
+                  }),
+                  t("recommendations.smart.keepItems.performance", {
+                    defaultValue: "Performance data",
+                  }),
+                ].map((item) => (
+                  <div key={item} className="flex items-start gap-2.5 text-[14px] text-slate-800 dark:text-slate-200">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
+                      <Check className="h-3 w-3 stroke-[3]" />
+                    </span>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[18px] border border-amber-300 border-l-4 border-l-amber-400 bg-amber-50 px-3 py-2 dark:border-amber-900/40 dark:bg-amber-950/20">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                </span>
+                <p className="text-[14px] leading-5 text-amber-800 dark:text-amber-200">
+                  {t("recommendations.smart.redoWarning", {
+                    defaultValue:
+                      "Warning: a new analysis will be generated. Current recommendations will be replaced and cannot be restored.",
+                  })}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-6 py-4 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCloseRedo}
+              disabled={isRedoing}
+className="rounded-2xl border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 dark:hover:text-white"            >
+              {t("common.cancel", { defaultValue: "Cancel" })}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleLaunchRedo}
+              disabled={isRedoing}
+              className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
+            >
+              {isRedoing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t("common.loading", { defaultValue: "Loading..." })}
+                </>
+              ) : (
+                <>
+                 <Loader className="mr-2 h-4 w-4 " />
+                  {t("recommendations.smart.launchNewAnalysis", {
+                  defaultValue: "Launch the new analysis",
+                })}
+                  </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

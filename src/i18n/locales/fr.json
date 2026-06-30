@@ -2388,6 +2388,25 @@
     "checklistSubtitle":"Personnalisez chaque tâche selon le rythme de votre activité. Les paramètres seront sauvegardés pour cet objectif.",
     "checklistTitle":"Configurer la checklist",
     "reanalyse":"Refaire l'analyse IA",
+     "redoTitle": "Relancer l'analyse IA",
+      "redoDescription": "L'IA va relancer une analyse complète à partir des données les plus récentes.",
+      "willBeReset": "Les éléments suivants seront réinitialisés :",
+      "willBeKept": "Seront conservés",
+      "launchNewAnalysis": "Lancer la nouvelle analyse",
+      "redoWarning": "Attention : une nouvelle analyse sera générée. Les recommandations actuelles seront remplacées et ne pourront pas être restaurées.",
+      "resetItems": {
+        "ishikawa": "Causes identifiées (Ishikawa)",
+        "smartGoals": "Objectifs SMART",
+        "actionPlan": "Plan d'action (PDCA)",
+        "checklist": "Checklist opérationnelle",
+        "progress": "Progression d'exécution",
+        "validations": "Validations en cours"
+      },
+      "keepItems": {
+        "reviews": "Avis clients",
+        "history": "Historique Reviewsvisor",
+        "performance": "Données de performance"
+      },
     "checklist": {
       "schedule": {
         "daily": {

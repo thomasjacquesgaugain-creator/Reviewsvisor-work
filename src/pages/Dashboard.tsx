@@ -307,6 +307,69 @@ const Dashboard = () => {
   setOpenCard("checklist");
 
   }
+
+  const refreshAnalysisData = async (placeId: string) => {
+    const { loadLatestAnalysis } = await import("@/services/analysisLoader");
+    const analysisResult = await loadLatestAnalysis(placeId, user!.id);
+
+    if (analysisResult.success && analysisResult.hasAnalysis && analysisResult.data) {
+      setInsight(analysisResult.data);
+      setHasAnalysis(true);
+    } else {
+      setInsight(null);
+      setHasAnalysis(false);
+    }
+
+    try {
+      const reviewsData = await listAll(placeId);
+      setAllReviewsForChart(reviewsData);
+      if (reviewsData.length > 0) {
+        setRecentReviews(reviewsData.slice(0, 3));
+        const bestReviews = reviewsData
+          .filter((r) => r.rating && r.rating >= 4)
+          .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+          .slice(0, 5);
+        setTopReviews(bestReviews);
+        const badReviews = reviewsData
+          .filter((r) => r.rating && r.rating <= 2)
+          .sort((a, b) => (a.rating || 0) - (b.rating || 0))
+          .slice(0, 5);
+        setWorstReviews(badReviews);
+      }
+    } catch (error) {
+      console.error("[Dashboard] Error reloading reviews after analysis:", error);
+    }
+  };
+
+  const handleRunAnalysis = async () => {
+    if (!selectedEtab?.place_id) {
+      console.error(t("errors.missingPlaceId"));
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      console.log(t("dashboard.startingAnalysis"), selectedEtab.place_id);
+      const { runAnalyzeV2 } = await import("@/lib/runAnalyze");
+      const result = await runAnalyzeV2({
+        place_id: selectedEtab.place_id,
+        name: selectedEtab.name,
+        address: selectedEtab.address,
+        language: i18n.language,
+      });
+
+      if (result.ok) {
+        console.log(t("dashboard.analysisComplete"), result);
+        toast.success(t("establishment.establishmentAnalysed"));
+        await refreshAnalysisData(selectedEtab.place_id);
+      }
+    } catch (error) {
+      console.error("[Dashboard] runAnalyzeV2 failed:", error);
+      toast.error(t("common.error"));
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
   
 
   // Review insights data — initialisation depuis snapshot pour affichage instantané (pas de flash 0/vide)
@@ -3715,146 +3778,13 @@ const activeObjective =
                         <div className="absolute bottom-0 right-0 flex gap-1"></div>
                         <div className="flex items-center gap-1 self-center flex-shrink-0">
                           {/* Bouton analyser établissement */}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={async () => {
-                              if (!selectedEtab?.place_id) {
-                                console.error(t("errors.missingPlaceId"));
-                                return;
-                              }
-
-                              setIsAnalyzing(true);
-                              try {
-                                console.log(
-                                  t("dashboard.startingAnalysis"),
-                                  selectedEtab.place_id,
-                                );
-                                const { runAnalyzeV2 } =
-                                  await import("@/lib/runAnalyze");
-                                const result = await runAnalyzeV2({
-                                  place_id: selectedEtab.place_id,
-                                  name: selectedEtab.name,
-                                  address: selectedEtab.address,
-                                  language: i18n.language,
-                                });
-
-                                if (result.ok) {
-                                  console.log(
-                                    t("dashboard.analysisComplete"),
-                                    result,
-                                  );
-                                toast.success(t("establishment.establishmentAnalysed"))
-                                  // Recharger les insights au lieu de recharger toute la page
-                                 const { loadLatestAnalysis } = await import(
-                                    "@/services/analysisLoader"
-                                  )
-                                  const analysisResult = await loadLatestAnalysis(
-                                    selectedEtab.place_id,
-                                    user!.id,
-                                  );
-
-                                  if (
-                                    analysisResult.success &&
-                                    analysisResult.hasAnalysis &&
-                                    analysisResult.data
-                                  ) {
-                                    setInsight(analysisResult.data);
-
-                                    setHasAnalysis(true);
-
-                                    console.log(
-                                      t("dashboard.insightsReloaded"),
-                                      analysisResult.data,
-                                    );
-                                  } else {
-                                    setInsight(null);
-                                    setHasAnalysis(false);
-                                  }
-
-                                  // Recharger aussi tous les avis (listAll = compte réel)
-                                  try {
-                                    const reviewsData = await listAll(
-                                      selectedEtab.place_id,
-                                    );
-                                    setAllReviewsForChart(reviewsData);
-                                    if (reviewsData.length > 0) {
-                                      setRecentReviews(reviewsData.slice(0, 3));
-                                      const bestReviews = reviewsData
-                                        .filter(
-                                          (r) => r.rating && r.rating >= 4,
-                                        )
-                                        .sort(
-                                          (a, b) =>
-                                            (b.rating || 0) - (a.rating || 0),
-                                        )
-                                        .slice(0, 5);
-                                      setTopReviews(bestReviews);
-                                      const badReviews = reviewsData
-                                        .filter(
-                                          (r) => r.rating && r.rating <= 2,
-                                        )
-                                        .sort(
-                                          (a, b) =>
-                                            (a.rating || 0) - (b.rating || 0),
-                                        )
-                                        .slice(0, 5);
-                                      setWorstReviews(badReviews);
-                                    }
-                                    const statsByPlatform: Record<
-                                      string,
-                                      {
-                                        count: number;
-                                        totalRating: number;
-                                        avgRating: number;
-                                      }
-                                    > = {};
-                                    reviewsData.forEach((review: any) => {
-                                      const source = review.source || "unknown";
-                                      if (!statsByPlatform[source]) {
-                                        statsByPlatform[source] = {
-                                          count: 0,
-                                          totalRating: 0,
-                                          avgRating: 0,
-                                        };
-                                      }
-                                      statsByPlatform[source].count++;
-                                      if (review.rating) {
-                                        statsByPlatform[source].totalRating +=
-                                          review.rating;
-                                      }
-                                    });
-                                    Object.keys(statsByPlatform).forEach(
-                                      (source) => {
-                                        const stat = statsByPlatform[source];
-                                        stat.avgRating =
-                                          stat.count > 0
-                                            ? stat.totalRating / stat.count
-                                            : 0;
-                                      },
-                                    );
-                                    setPlatformStats(statsByPlatform);
-                                  } catch (_) {}
-                                } else {
-                                  console.error(
-                                    t("dashboard.analysisError"),
-                                    result.error,
-                                  );
-                                  toast.error(t("dashboard.analysisError"))
-                                }
-                              } catch (error) {
-                                console.error(
-                                  t("dashboard.analysisErrorDuring"),
-                                  error,
-                                );
-                                toast.error(t("dashboard.analysisErrorDuring"))
-                              } finally {
-                                setIsAnalyzing(false);
-                              }
-                            }}
-                            disabled={isAnalyzing}
-                            className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 p-1 h-auto"
-                            title={t("establishment.analyzeThisEstablishment")}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRunAnalysis}
+                          disabled={isAnalyzing}
+                          className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 p-1 h-auto"
+                          title={t("establishment.analyzeThisEstablishment")}
                           >
                             {isAnalyzing ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -6382,6 +6312,7 @@ const activeObjective =
               <div className="mb-8">
                 <RecommendationsSection
                   paretoCauses={analysisDataForTab?.paretoIssues}
+                  onRedoAnalysis={handleRunAnalysis}
                 />
               </div>
               //   </CardContent>

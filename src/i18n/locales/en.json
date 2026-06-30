@@ -2172,6 +2172,25 @@
     "quadrant": "Quadrant",
     "checklistTitle":"Configure checklist",
     "reanalyse":"Redo AI ​​analysis",
+     "redoTitle": "Redo AI analysis",
+      "redoDescription": "AI will run a full analysis from the most recent data.",
+      "willBeReset": "The following will be reset:",
+      "willBeKept": "Will be kept",
+      "launchNewAnalysis": "Launch the new analysis",
+      "redoWarning": "Warning: a new analysis will be generated. Current recommendations will be replaced and cannot be restored.",
+      "resetItems": {
+        "ishikawa": "Causes identified (Ishikawa)",
+        "smartGoals": "SMART goals",
+        "actionPlan": "Action plan (PDCA)",
+        "checklist": "Operational checklist",
+        "progress": "Execution progress",
+        "validations": "Pending validations"
+      },
+      "keepItems": {
+        "reviews": "Customer reviews",
+        "history": "Reviewsvisor history",
+        "performance": "Performance data"
+    },
     "checklist": {
       "schedule": {
         "daily": {

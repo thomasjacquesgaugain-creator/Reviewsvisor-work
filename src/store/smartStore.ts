@@ -167,6 +167,7 @@ interface SmartStore {
   toggleAction:    (id: string, actionIndex: number) => Promise<void>;
   updateProgress:  (id: string, current_progress: number) => Promise<void>;
   saveActionSchedules: (objectiveId: string, updatedActions: SmartAction[]) => Promise<void>;
+  deleteObjectivesForEstablishment: (establishmentId: string) => Promise<void>;
   saveQuestionnaireOnly: (
     establishmentId: string,
     paretoIssue:     ParetoItem,
@@ -269,42 +270,66 @@ export const useSmartStore = create<SmartStore>()(
       },
 
       saveActionSchedules: async (objectiveId, updatedActions) => {
-  const { error } = await db
-    .from("smart_objectives")
-    .update({
-      actions:    updatedActions,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", objectiveId);
+        const { error } = await db
+          .from("smart_objectives")
+          .update({
+            actions: updatedActions,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", objectiveId);
 
-  if (error) {
-    console.error("saveActionSchedules error:", error);
-    toast.error(i18n.t("toasts.error"), {
-      description: i18n.t("checklist.configure.saveFailed", {
-        defaultValue: "Failed to save checklist configuration.",
-      }),
-    });
-    return;
-  }
+        if (error) {
+          console.error("saveActionSchedules error:", error);
+          toast.error(i18n.t("toasts.error"), {
+            description: i18n.t("checklist.configure.saveFailed", {
+              defaultValue: "Failed to save checklist configuration.",
+            }),
+          });
+          return;
+        }
 
-  set((state) => ({
-    objectives: state.objectives.map((obj) =>
-      obj.id === objectiveId
-        ? { ...obj, actions: updatedActions }
-        : obj
-    ),
-    currentDraft:
-      state.currentDraft?.id === objectiveId
-        ? { ...state.currentDraft, actions: updatedActions }
-        : state.currentDraft,
-  }));
+        set((state) => ({
+          objectives: state.objectives.map((obj) =>
+            obj.id === objectiveId
+              ? { ...obj, actions: updatedActions }
+              : obj
+          ),
+          currentDraft:
+            state.currentDraft?.id === objectiveId
+              ? { ...state.currentDraft, actions: updatedActions }
+              : state.currentDraft,
+        }));
 
-  toast.success(i18n.t("toasts.saved"), {
-    description: i18n.t("recommendations.smart.checklist.configure.saveSuccess", {
-      defaultValue: "Checklist configuration saved.",
-    }),
-  });
-},
+        toast.success(i18n.t("toasts.saved"), {
+          description: i18n.t("recommendations.smart.checklist.configure.saveSuccess", {
+            defaultValue: "Checklist configuration saved.",
+          }),
+        });
+      },
+
+      deleteObjectivesForEstablishment: async (establishmentId) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { error } = await db
+          .from("smart_objectives")
+          .delete()
+          .eq("establishment_id", establishmentId)
+          .eq("user_id", user.id);
+
+        if (error) {
+          console.error("deleteObjectivesForEstablishment error:", error);
+          throw error;
+        }
+
+        set((state) => ({
+          objectives: state.objectives.filter((obj) => obj.establishment_id !== establishmentId),
+          currentDraft:
+            state.currentDraft?.establishment_id === establishmentId
+              ? null
+              : state.currentDraft,
+        }));
+      },
 
       /* ─────────────────────────────────────────
          generateSmart
