@@ -676,13 +676,33 @@ count, positive_count, negative_count.
     negative_count = 0 → "positive"; negative_count > 0 and positive_count = 0
     → "negative"; both > 0 with neither negligible → "mixed". Do not assign
     "mixed" just because you're unsure — only when both counts are real.
+SENTIMENT ASSIGNMENT (STRICT)
 
-SENTIMENT COVERAGE: don't let every theme collapse to the same sentiment.
-If the reviews contain real praise AND real complaints, themes_universal +
-themes_industry together must show a genuine mix of "positive", "negative",
-and "mixed" — never flatten everything to one bucket. Only an all-one-sided
-result is acceptable if the reviews themselves are genuinely one-sided.
-Never invent signal that isn't in the reviews.
+Assign sentiment independently for every theme using the review evidence.
+
+• "positive" = almost all mentions of this theme are positive.
+• "negative" = almost all mentions of this theme are negative.
+• "mixed" = there are meaningful positive AND negative mentions of the same theme.
+
+Do NOT use "mixed" as a default when uncertain.
+
+A theme should only be marked "mixed" if BOTH positive_count > 0 AND negative_count > 0 and both represent meaningful customer feedback.
+
+SENTIMENT DISTRIBUTION (IMPORTANT)
+
+When the reviews contain both praise and complaints, the final theme list (themes_universal + themes_industry combined) should naturally contain a variety of sentiments:
+• some positive themes,
+• some negative themes,
+• some mixed themes (only when truly justified).
+
+Avoid pathological outputs such as:
+✗ every theme is "mixed"
+✗ every theme is "negative"
+✗ every theme is "positive"
+
+If the review dataset genuinely contains only praise or only complaints, then a single sentiment is acceptable. Otherwise, represent the actual diversity of customer opinion.
+
+Never change a theme's sentiment simply to satisfy this distribution rule. The sentiment must always be supported by the review counts.
 
 RANKING RULE FOR top_strength:
   top_strength = 3–5 themes with the most positive mentions, sorted by count desc.
@@ -786,10 +806,36 @@ SELECTION RULES
   • ai_synthesis: 1–2 sentences explaining what's actually going wrong and
     why it matters for this business, grounded in what reviewers said.
 
-Return ONLY this JSON — no prose, no markdown:
+TITLE RULES (VERY IMPORTANT)
+• "theme" must be a SHORT label only.
+• Maximum 2-4 words (never more than 30 characters where possible).
+• Do NOT describe the problem in a sentence.
+• Do NOT include causes, explanations, or conjunctions.
+• Think of it as a dashboard title.
+
+Good examples:
+✓ Slow Service
+✓ Food Quality
+✓ Long Wait Times
+✓ Order Accuracy
+✓ Staff Attitude
+✓ High Prices
+✓ Reservation Issues
+✓ Cold Food
+✓ Dirty Facilities
+✓ Equipment Failures
+✓ Poor Communication
+
+Bad examples:
+✗ Food quality and temperature were inconsistent
+✗ Customers frequently complained about slow service during busy hours
+✗ Staff were rude and inattentive
+✗ Long waiting times before food arrived
+
+Return ONLY this JSON:
 {
   "en": [{ "key": "snake_case", "theme": "Short issue name", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }],
-  "fr": [{ "key": "same_key_as_en", "theme": "Nom court du problème", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }]
+  "fr": [{ "key": "same_key_as_en", "theme": "Nom court", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }]
 }`,
     },
   ]);
