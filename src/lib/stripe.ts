@@ -29,6 +29,13 @@ export type SubscriptionStatus = {
   creator_bypass?: boolean;
 };
 
+type SubscriptionRow = NonNullable<SubscriptionStatus["subscriptions"]>[number];
+
+type SubscriptionMappingRow = {
+  provider_subscription_id: string | null;
+  establishment?: { name?: string | null } | { name?: string | null }[] | null;
+};
+
 export type BillingInvoice = {
   invoice_id: string;
   invoice_number: string | null;
@@ -44,6 +51,49 @@ export type BillingInvoice = {
   invoice_pdf_url: string | null;
   hosted_invoice_url: string | null;
 };
+
+export type BillingPaymentMethod = {
+  brand: string | null;
+  last4: string | null;
+  exp_month: number | null;
+  exp_year: number | null;
+  cardholder_name: string | null;
+  funding: string | null;
+  country: string | null;
+};
+
+export type BillingInformation = {
+  business_name: string | null;
+  name: string | null;
+  email: string | null;
+  currency: string | null;
+  tax_exempt: string | null;
+  tax_display: string | null;
+  tax_ids: string[];
+  address: {
+    line1: string | null;
+    line2: string | null;
+    postal_code: string | null;
+    city: string | null;
+    state: string | null;
+    country: string | null;
+  } | null;
+};
+
+export type BillingReportsResponse = {
+  invoices: BillingInvoice[];
+  payment_method: BillingPaymentMethod | null;
+  billing_information: BillingInformation | null;
+};
+
+function getFileNameFromContentDisposition(header: string | null): string | null {
+  if (!header) {
+    return null;
+  }
+
+  const match = header.match(/filename="([^"]+)"/i);
+  return match?.[1] || null;
+}
 
 // Aligné avec src/config/subscriptionPlans.ts (plan par défaut = Pro annuel engagement)
 export const STRIPE_PRODUCTS = {
@@ -92,14 +142,18 @@ export async function checkSubscription(): Promise<SubscriptionStatus> {
 
     const map: Record<string, string> = {};
 
-    (dbSubs || []).forEach((row: any) => {
+    (dbSubs || []).forEach((row: SubscriptionMappingRow) => {
+      const establishment = Array.isArray(row.establishment)
+        ? row.establishment[0]
+        : row.establishment;
+
       if (row.provider_subscription_id) {
         map[row.provider_subscription_id] =
-          row.establishment?.name ?? "—";
+          establishment?.name ?? "—";
       }
     });
 
-    const enrichedSubscriptions = data.subscriptions.map((sub: any) => ({
+    const enrichedSubscriptions = data.subscriptions.map((sub: SubscriptionRow) => ({
       ...sub,
       establishment_name: map[sub.subscription_id] ?? "—",
     }));
@@ -149,9 +203,9 @@ export async function createCustomerPortalSession(): Promise<string | null> {
   }
 }
 
-export async function listBillingInvoices(): Promise<BillingInvoice[]> {
+export async function getBillingReports(): Promise<BillingReportsResponse> {
   try {
-    const { data, error } = await supabase.functions.invoke<{ invoices: BillingInvoice[] }>(
+    const { data, error } = await supabase.functions.invoke<BillingReportsResponse>(
       "billing-reports",
     );
 
@@ -160,11 +214,58 @@ export async function listBillingInvoices(): Promise<BillingInvoice[]> {
       throw new Error(error.message);
     }
 
-    return data?.invoices ?? [];
+    return {
+      invoices: data?.invoices ?? [],
+      payment_method: data?.payment_method ?? null,
+      billing_information: data?.billing_information ?? null,
+    };
   } catch (err) {
     console.error("Error loading billing invoices:", err);
     throw err;
   }
+}
+
+export async function listBillingInvoices(): Promise<BillingInvoice[]> {
+  const reports = await getBillingReports();
+  return reports.invoices;
+}
+
+export async function downloadBillingInvoicesZip(
+  invoiceIds?: string[],
+): Promise<{ blob: Blob; fileName: string | null }> {
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+
+  if (sessionError || !sessionData.session?.access_token) {
+    throw new Error(sessionError?.message || "Authentication required");
+  }
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "http://127.0.0.1:54321";
+  const response = await fetch(`${supabaseUrl}/functions/v1/billing-reports`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${sessionData.session.access_token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      format: "zip",
+      invoice_ids: invoiceIds,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    throw new Error(
+      errorBody?.error || `Download failed with status ${response.status}`,
+    );
+  }
+
+  return {
+    blob: await response.blob(),
+    fileName: getFileNameFromContentDisposition(
+      response.headers.get("Content-Disposition"),
+    ),
+  };
 }
 
 /** Met à jour la quantité d'établissements supplémentaires facturés dans Stripe (après suppression d'un établissement). */
