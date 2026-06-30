@@ -16,6 +16,7 @@ interface ParetoSectionProps {
   strengths: ParetoItem[];
   themes?: ThemeAnalysis[];
   qualitative?: QualitativeData;
+  paretoGraph?: ParetoItem[];
 }
 
 // Composant personnalisé pour le tag "Seuil 80%" (callout à droite)
@@ -183,7 +184,7 @@ function generateStrengthsAnalysis(items: ParetoItem[],t: (key: string, opts?: a
   return <>{paragraphs}</>;
 }
 
-export function ParetoSection({ issues, strengths, themes = [], qualitative }: ParetoSectionProps) {
+export function ParetoSection({ issues, strengths, themes = [], qualitative , paretoGraph}: ParetoSectionProps) {
   const { t } = useTranslation();
   const { filteredReviews } = useAnalysisFilters();
   const [activeIssueIndex, setActiveIssueIndex] = useState<number | null>(null);

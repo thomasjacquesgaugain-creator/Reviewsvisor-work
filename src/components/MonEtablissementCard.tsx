@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
+import i18n from "@/i18n/config";
 import { getCurrentEstablishment } from "@/services/establishments";
 import {
   Etab,
@@ -89,7 +90,7 @@ export default function MonEtablissementCard({
           rating: establishment.rating || undefined,
           lat: establishment.lat || null,
           lng: establishment.lng || null,
-          types: (row.types as string) || undefined,
+          types: establishment.types?.[i18n.language] || undefined,
           last_reviews_import: (row.last_reviews_import as string) ?? null,
         });
       } else {
@@ -106,7 +107,7 @@ export default function MonEtablissementCard({
   // 1) Au mount, charger depuis la DB
   useEffect(() => {
     loadActiveEstablishment();
-  }, [loadActiveEstablishment]);
+  }, [loadActiveEstablishment,i18n.language]);
 
   // 2) Se mettre à jour quand on clique "Enregistrer" ou qu'on sélectionne un autre
   useEffect(() => {

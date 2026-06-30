@@ -125,23 +125,28 @@ const getThemeIcon = (name: string) => {
   return themes
     .map((theme) => {
       const count      = Number(theme.count)      || 0;
-      const importance = Number(theme.importance) || 50;  // coerce here too
-      const ratio      = Number(insight?.positive_ratio) || 0.7;
+      const importance = Number(theme.importance) || 50;
+      const positive = Number(theme.positive_count)||0;
+      const negative = Number(theme.negative_count)||0;
+      const total      = Number(theme.count)      || positive+negative;
+      
+      
+      // coerce here too
+      // const ratio      = Number(insight?.positive_ratio) || 0.7;
 
-      let positive = 0;
-      let negative = 0;
+      // let positive = 0;
+      // let negative = 0;
 
-      if (theme.reviews?.length) {
-        theme.reviews.forEach((r: any) => {
-          if (r.rating >= 4) positive++;
-          else if (r.rating <= 2) negative++;
-        });
-      } else {
-        positive = Math.round(count * ratio);
-        negative = Math.round(count * (1 - ratio));
-      }
-
-      const total = positive + negative;
+      // if (theme.reviews?.length) {
+      //   theme.reviews.forEach((r: any) => {
+      //     if (r.rating >= 4) positive++;
+      //     else if (r.rating <= 2) negative++;
+      //   });
+      // } else {
+      //   positive = Math.round(count * ratio);
+      //   negative = Math.round(count * (1 - ratio));
+      // }
+      // const total = positive + negative;
 
       return {
         ...theme,

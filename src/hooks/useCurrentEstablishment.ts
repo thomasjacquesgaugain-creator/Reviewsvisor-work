@@ -1,3 +1,4 @@
+import i18n from "@/i18n/config";
 import { useEstablishmentStore } from "@/store/establishmentStore";
 
 export interface CurrentEstablishment {
@@ -20,7 +21,7 @@ export function useCurrentEstablishment(): { establishment: CurrentEstablishment
         name: selectedEstablishment.name,
         place_id: selectedEstablishment.place_id,
         formatted_address: selectedEstablishment.formatted_address ?? null,
-        types: selectedEstablishment.types ?? null,
+        types: selectedEstablishment.types?.[i18n.language] ?? null,
       }
     : null;
   return { establishment, loading: false };

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EditableField } from "@/components/settings/EditableField";
 import { Loader2, Building2, ChevronDown } from "lucide-react";
-import { useTranslation,Trans } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import { toast } from "sonner";
 import { validatePhoneNumber, formatPhoneNumber } from "@/utils/phoneValidation";
 import {
@@ -23,8 +23,25 @@ import {
 } from "@/components/ui/select";
 import { Pencil, Check, X } from "lucide-react";
 
+type EstablishmentTypeValue = { en?: string | null; fr?: string | null } | string | null | undefined;
+
+function isBilingualType(value: EstablishmentTypeValue): value is { en?: string | null; fr?: string | null } {
+  return typeof value === "object" && value !== null;
+}
+
+function resolveEstablishmentTypeDisplay(value: EstablishmentTypeValue, uiLanguage: string): string {
+  if (!value) return "";
+
+  if (isBilingualType(value)) {
+    const preferred = uiLanguage.startsWith("fr") ? value.fr : value.en;
+    const fallback = uiLanguage.startsWith("fr") ? value.en : value.fr;
+    return (preferred || fallback || "").toString();
+  }
+  return value;
+}
+
 export function EstablishmentInfoSettings() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { activePlaceId } = useEstablishmentStore();
   const [establishments, setEstablishments] = useState<EstablishmentData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +64,16 @@ export function EstablishmentInfoSettings() {
       );
     },
     [t]
+  );
+  const getDisplayedEstablishmentType = useCallback(
+    (value: EstablishmentTypeValue): string => {
+      if (!value) return "";
+      if (isBilingualType(value)) {
+        return resolveEstablishmentTypeDisplay(value, i18n.language);
+      }
+      return getTranslatedEstablishmentType(value);
+    },
+    [i18n.language, getTranslatedEstablishmentType]
   );
 
   const loadEstablishments = useCallback(async (showLoading = true) => {
@@ -131,14 +158,51 @@ export function EstablishmentInfoSettings() {
     [displayedEstablishment?.id, loadEstablishments, t]
   );
 
+  // Builds the bilingual { en, fr } pair for a chosen canonical option (one
+  // of ESTABLISHMENT_TYPE_OPTIONS, e.g. "Salon de coiffure") and saves it.
+  // No translation API call: the FR label is the option itself (it's already
+  // a French canonical label), and the EN label is resolved by asking
+  // i18next for the same translation key explicitly in English via
+  // getFixedT("en") — independent of whatever language the UI is currently
+  // displayed in, so this works correctly even if the admin's own UI is set
+  // to French while saving.
   const handleSaveTypeEtablissement = useCallback(
-    async (value: string) => {
+    async (selectedOption: string) => {
       if (!displayedEstablishment?.id) return;
-      await updateEstablishment(displayedEstablishment.id, { types: value.trim() || null });
+
+      const trimmed = selectedOption.trim();
+      if (!trimmed) {
+        await updateEstablishment(displayedEstablishment.id, { types: null });
+        await loadEstablishments(false);
+        toast.success(t("settings.establishmentInformation.updatedEstablishmentType"));
+        return;
+      }
+
+      const translationKey = getEstablishmentTypeTranslationKey(trimmed);
+      const tEn = i18n.getFixedT("en");
+      const tFr = i18n.getFixedT("fr");
+
+      const bilingualTypes = translationKey
+        ? {
+            en: tEn(
+              `settings.establishmentInformation.establishmentTypesOptions.${translationKey}`,
+              { defaultValue: trimmed }
+            ),
+            fr: tFr(
+              `settings.establishmentInformation.establishmentTypesOptions.${translationKey}`,
+              { defaultValue: trimmed }
+            ),
+          }
+        : // Shouldn't happen since the dropdown only offers known options,
+          // but fall back to using the same string for both rather than
+          // dropping the value if an unrecognized option somehow gets here.
+          { en: trimmed, fr: trimmed };
+
+      await updateEstablishment(displayedEstablishment.id, { types: bilingualTypes });
       await loadEstablishments(false);
       toast.success(t("settings.establishmentInformation.updatedEstablishmentType"));
     },
-    [displayedEstablishment?.id, loadEstablishments, t]
+    [displayedEstablishment?.id, loadEstablishments, t, i18n]
   );
 
   if (loading) {
@@ -327,7 +391,9 @@ export function EstablishmentInfoSettings() {
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    setTypeEtablissementEditValue(displayedEstablishment.types ?? "");
+                    setTypeEtablissementEditValue(
+                      resolveEstablishmentTypeDisplay(displayedEstablishment.types, "fr")
+                    );
                     setEditingTypeEtablissement(false);
                   }}
                   disabled={savingTypeEtablissement}
@@ -344,7 +410,7 @@ export function EstablishmentInfoSettings() {
                 <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{t("settings.establishmentInformation.establishmentType")}</label>
                 <div className="text-sm text-gray-900 dark:text-slate-100">
                   {displayedEstablishment.types
-                    ? getTranslatedEstablishmentType(displayedEstablishment.types)
+                    ? getDisplayedEstablishmentType(displayedEstablishment.types)
                     : t("settings.establishmentInformation.informationNotProvided")}
                 </div>
               </div>
@@ -352,7 +418,9 @@ export function EstablishmentInfoSettings() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setTypeEtablissementEditValue(displayedEstablishment.types ?? "");
+                  setTypeEtablissementEditValue(
+                    resolveEstablishmentTypeDisplay(displayedEstablishment.types, "fr")
+                  );
                   setEditingTypeEtablissement(true);
                 }}
                 className="ml-4 flex-shrink-0"

@@ -305,10 +305,11 @@ function AnalysisContent({ data, reviews,insight, dynamicThemes = [], themeDefin
         {/* Section 5: Pareto des irritants & satisfactions */}
         {data.paretoIssues && data.paretoStrengths && (
           <ParetoSection 
-            issues={data.paretoIssues} 
+            issues={data.paretoIssuesForGraph} 
             strengths={data.paretoStrengths}
             themes={data.themes}
             qualitative={data.qualitative}
+            paretoGraph={data.paretoIssuesForGraph}
           />
         )}
         </section>
