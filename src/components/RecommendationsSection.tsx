@@ -24,6 +24,8 @@ import i18n from "@/i18n/config";
 interface Props {
   paretoCauses: ParetoItem[];
   onRedoAnalysis?: () => Promise<void>;
+  activeIssueKey?: string;
+  onActiveIssueChange?: (issueKey: string) => void;
 }
 
 const getLocalizedText = (value: any, language = "en"): string => {
@@ -34,7 +36,12 @@ const getLocalizedText = (value: any, language = "en"): string => {
   return String(value);
 };
 
-export function RecommendationsSection({ paretoCauses, onRedoAnalysis }: Props) {
+export function RecommendationsSection({
+  paretoCauses,
+  onRedoAnalysis,
+  activeIssueKey,
+  onActiveIssueChange,
+}: Props) {
   const {
     objectives, currentDraft, isGenerating, isSaving,
     updateDraft, saveDraft, discardDraft, fetchObjectives,
@@ -80,18 +87,32 @@ export function RecommendationsSection({ paretoCauses, onRedoAnalysis }: Props) 
     [paretoCauses]
   );
 
-  const [activeTab, setActiveTab] = useState("");
+  const [internalActiveTab, setInternalActiveTab] = useState("");
+  const activeTab = activeIssueKey ?? internalActiveTab;
+  const setActiveTab = (key: string) => {
+    onActiveIssueChange?.(key);
+    if (!onActiveIssueChange) {
+      setInternalActiveTab(key);
+    }
+  };
 
   useEffect(() => {
     if (!sortedPareto.length) {
-      setActiveTab("");
+      if (!activeIssueKey) {
+        setInternalActiveTab("");
+      }
       return;
     }
 
-    if (!sortedPareto.some((p) => p.key === activeTab)) {
-      setActiveTab(sortedPareto[0].key);
+    if (!sortedPareto.some((p) => p.key.toLowerCase() === activeTab.toLowerCase())) {
+      const nextKey = sortedPareto[0].key;
+      if (onActiveIssueChange) {
+        onActiveIssueChange(nextKey);
+      } else {
+        setInternalActiveTab(nextKey);
+      }
     }
-  }, [sortedPareto, activeTab]);
+  }, [sortedPareto, activeTab, activeIssueKey, onActiveIssueChange]);
 
   const tabObjective = safeObjectives.find(
     (o) => o.pareto_cause?.key?.toLowerCase() === activeTab.toLowerCase()
@@ -294,7 +315,7 @@ export function RecommendationsSection({ paretoCauses, onRedoAnalysis }: Props) 
                   </button>
                   <span className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 px-3 py-1.5 rounded-full font-semibold border border-gray-200 dark:border-slate-700">
                     {validatedCount} / {sortedPareto.length}{" "}
-                    {t("recommendations.smart.stepbar.validated", {
+                    {t("recommendations.smart.stepbar.causeValidated", {
                       defaultValue: "validé",
                     })}
                   </span>
@@ -640,7 +661,7 @@ export function RecommendationsSection({ paretoCauses, onRedoAnalysis }: Props) 
               variant="outline"
               onClick={handleCloseRedo}
               disabled={isRedoing}
-className="rounded-2xl border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 dark:hover:text-white"            >
+              className="rounded-2xl border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 dark:hover:text-white"            >
               {t("common.cancel", { defaultValue: "Cancel" })}
             </Button>
             <Button

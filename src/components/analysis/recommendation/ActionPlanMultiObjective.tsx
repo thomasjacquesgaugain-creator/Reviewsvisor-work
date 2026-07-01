@@ -12,11 +12,13 @@ interface ObjectiveAction {
 
 
 interface Props {
-  objectives: SmartObjective[];
+  objectives: SmartObjective[]; 
   language: string;
   onToggleAction: (objectiveId: string, actionIndex: number) => void;
   totalReviews: number;
   t: (key: string, opts?: Record<string, unknown>) => string;
+  activeIssueKey?: string;
+  onActiveIssueChange?: (issueKey: string) => void;
 }
 
 const TAB_COLORS = ["#7c3aed", "#f59e0b", "#3b82f6", "#10b981", "#ef4444"];
@@ -51,8 +53,10 @@ export const ActionPlanMultiObjective: React.FC<Props> = ({
   onToggleAction,
   totalReviews,
   t,
+  activeIssueKey,
+  onActiveIssueChange,
 }) => {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [internalActiveKey, setInternalActiveKey] = useState("");
   const lang = language.startsWith("fr") ? "fr" : "en";
 
   const tabs = useMemo(
@@ -74,6 +78,7 @@ export const ActionPlanMultiObjective: React.FC<Props> = ({
         const allDone = actions.length > 0 && doneCount === actions.length;
         const inProgress = doneCount > 0 && !allDone;
         return {
+          key: String(obj.pareto_cause?.key ?? label).toLowerCase(),
           label,
           pct,
           allDone,
@@ -84,7 +89,10 @@ export const ActionPlanMultiObjective: React.FC<Props> = ({
     [objectives, lang, totalReviews],
   );
 
-  const activeObj = objectives[activeIndex];
+  const activeKey =
+    (activeIssueKey ?? internalActiveKey ?? tabs[0]?.key ?? "").toLowerCase();
+  const activeIndex = tabs.findIndex((tab) => tab.key === activeKey);
+  const activeObj = activeIndex >= 0 ? objectives[activeIndex] : objectives[0];
   const actionPlanItems =
     activeObj?.action_plan?.[lang] ??
     activeObj?.action_plan?.en ??
@@ -103,7 +111,7 @@ export const ActionPlanMultiObjective: React.FC<Props> = ({
   const doneCount = displayedActions.filter((a) => a.completed).length;
   const totalCount = displayedActions.length;
   const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
-  const tabColor = tabs[activeIndex]?.color ?? "#7c3aed";
+  const tabColor = tabs[activeIndex]?.color ?? tabs[0]?.color ?? "#7c3aed";
 
   const getActionReason = (action: ObjectiveAction): string => {
     if (action.reason) {
@@ -147,7 +155,10 @@ export const ActionPlanMultiObjective: React.FC<Props> = ({
             <button
               key={i}
               type="button"
-              onClick={() => setActiveIndex(i)}
+              onClick={() => {
+                setInternalActiveKey(tab.key);
+                onActiveIssueChange?.(tab.key);
+              }}
               className={`
                 inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold select-none
                 transition-colors duration-150 border

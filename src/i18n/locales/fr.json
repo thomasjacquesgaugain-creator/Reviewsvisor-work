@@ -2440,6 +2440,9 @@
     "quadrant": "Quadrant",
     "checklistSubtitle":"Personnalisez chaque tâche selon le rythme de votre activité. Les paramètres seront sauvegardés pour cet objectif.",
     "checklistTitle":"Configurer la checklist",
+    "hideDetail":"Masquer le détails SMART",
+    "showDetail":"Afficher tout le détail SMART",
+    "validateGoal":"Valider l'objectif",
     "reanalyse":"Refaire l'analyse IA",
      "redoTitle": "Relancer l'analyse IA",
       "redoDescription": "L'IA va relancer une analyse complète à partir des données les plus récentes.",
@@ -2542,13 +2545,15 @@
       "causeIdentified":"Causes Identifiées",
       "targetGoal":"Objectif à atteindre",
       "actionSteps":"Étapes du plan",
-      "validated":"validé"
+      "validated":"validé",
+      "causeValidated":"Causes validées"
      },
     "chooseIssue":"Choisissez un problème à traiter",
     "mainIssueLabel":"PROBLÈME PRINCIPAL",
     "completed":{
       "title":"Objectif atteint",
-      "subtitle":"Cet objectif SMART a été complété avec succès. Le plan d'actions associé est clôturé."
+      "subtitle":"Cet objectif SMART a été complété avec succès. Le plan d'actions associé est clôturé.",
+      "checklist":"Cet objectif SMART a été atteint avec succès. La liste de contrôle opérationnelle n'est plus modifiable pour cet objectif."
      },
     "noObjective":{
       "title":"Aucun objectif SMART disponible",

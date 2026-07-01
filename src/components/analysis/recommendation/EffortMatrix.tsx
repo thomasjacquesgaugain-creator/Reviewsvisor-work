@@ -83,15 +83,21 @@ function buildMatrixRows(
   objectives: any[],
   language: string,
 ): MatrixRow[] {
-  const topIssues = [...paretoIssues]
-    .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
-    .slice(0, 3);
 
   const objectiveByKey = new Map<string, any>();
   (objectives ?? []).forEach((obj) => {
     const key = String(obj?.pareto_cause?.key ?? "").toLowerCase();
     if (key) objectiveByKey.set(key, obj);
   });
+
+  const issuesWithObjectives = (paretoIssues ?? []).filter((issue) => {
+    const issueKey = String(issue.key ?? "").toLowerCase();
+    return objectiveByKey.has(issueKey);
+  });
+
+  const topIssues = [...issuesWithObjectives]
+    .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
+    .slice(0, 3);
 
   const rows: MatrixRow[] = [];
   const seenRows = new Set<string>();
@@ -114,6 +120,7 @@ function buildMatrixRows(
             ? getEffortFromCategory(String(firstRc.category))
             : "medium";
         })();
+
     const rootCauseItems: string[] = (issue.root_causes ?? [])
       .flatMap((rc: any) =>
         (rc.causes ?? []).map((cause: string) => String(cause || "").trim())
@@ -140,11 +147,7 @@ function buildMatrixRows(
     });
   });
 
-  const score = (r: MatrixRow) =>
-    (r.impact === "high" ? 3 : r.impact === "medium" ? 2 : 1) * 10 +
-    (r.effort === "low"  ? 3 : r.effort === "medium" ? 2 : 1);
-
-  return rows.sort((a, b) => score(b) - score(a));
+  return rows;
 }
 
 export const EffortMatrix = ({ analysisData }: { analysisData: any }) => {

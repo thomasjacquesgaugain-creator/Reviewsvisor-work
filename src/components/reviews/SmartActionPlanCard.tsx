@@ -41,6 +41,12 @@ export function SmartActionPlanCard({ objective }: Props) {
   const locale = localeMap[lang] || enUS;
   const progress = useSmartProgress(objective);
   const { updateObjectiveStatus } = useSmartStore();
+  const checklistActions = objective.actions ?? [];
+  const checklistCompleted = checklistActions.filter((action) => action.completed).length;
+  const fieldExecutionProgress =
+    checklistActions.length > 0
+      ? Math.round((checklistCompleted / checklistActions.length) * 100)
+      : progress.percentage;
 
   const startFmt = objective.created_at
     ? format(new Date(objective.created_at), "d MMMM yyyy", { locale })
@@ -237,7 +243,7 @@ export function SmartActionPlanCard({ objective }: Props) {
                     <span className="inline-flex items-center rounded-full bg-white border border-gray-200 px-3 py-1 text-xs text-gray-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200">
                       {t("smartCard.pdca.fieldExecution", { defaultValue: "Field execution" })} :{" "}
                       <span className="font-semibold ml-1 text-violet-600">
-                        {progress.percentage} %
+                        {fieldExecutionProgress} %
                       </span>
                     </span>
                   </div>
@@ -325,7 +331,7 @@ export function SmartActionPlanCard({ objective }: Props) {
                           <span>✅</span>
                           <span>
                             {t("smartCard.pdca.fieldExecution", { defaultValue: "Field execution" })} :{" "}
-                            <span className="font-semibold">{progress.percentage} %</span>
+                            <span className="font-semibold">{fieldExecutionProgress} %</span>
                           </span>
                         </p>
                       </div>

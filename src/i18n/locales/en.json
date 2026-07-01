@@ -2225,13 +2225,16 @@
     "quadrant": "Quadrant",
     "checklistTitle":"Configure checklist",
     "reanalyse":"Redo AI ​​analysis",
-     "redoTitle": "Redo AI analysis",
-      "redoDescription": "AI will run a full analysis from the most recent data.",
-      "willBeReset": "The following will be reset:",
-      "willBeKept": "Will be kept",
-      "launchNewAnalysis": "Launch the new analysis",
-      "redoWarning": "Warning: a new analysis will be generated. Current recommendations will be replaced and cannot be restored.",
-      "resetItems": {
+    "redoTitle": "Redo AI analysis",
+    "redoDescription": "AI will run a full analysis from the most recent data.",
+    "willBeReset": "The following will be reset:",
+    "willBeKept": "Will be kept",
+    "launchNewAnalysis": "Launch the new analysis",
+    "hideDetail":"Hide SMART detail",
+    "showDetail":"Show full SMART detail",
+    "validateGoal":"Validate the goal",
+    "redoWarning": "Warning: a new analysis will be generated. Current recommendations will be replaced and cannot be restored.",
+    "resetItems": {
         "ishikawa": "Causes identified (Ishikawa)",
         "smartGoals": "SMART goals",
         "actionPlan": "Action plan (PDCA)",
@@ -2327,13 +2330,15 @@
       "causeIdentified":"Cause Identified",
       "targetGoal":"Target Goal",
       "actionSteps":"Plan Steps",
-      "validated":"Validated"
+      "validated":"Validated",
+      "causeValidated":"Causes validated"
      },
      "chooseIssue":"Choose an issue to address",
      "mainIssueLabel":"MAIN ISSUE",
      "completed":{
       "title":"Goal achieved",
-      "subtitle":"This SMART objective has been successfully completed. The associated action plan is closed."
+      "subtitle":"This SMART objective has been successfully completed. The associated action plan is closed.",
+      "checklist":"This SMART objective has been successfully completed. The operational checklist is no longer editable for this goal."
      },
      "noObjective":{
       "title":"No SMART objective available",

@@ -19,7 +19,7 @@ import type { ReviewFrequency, SmartObjective } from "@/types/smart";
 import { useEffect, useState } from "react";
 import i18n from "@/i18n/config";
 import { DatePicker } from "@/components/ui/date-picker";
-import { differenceInMonths, format } from "date-fns";
+import { differenceInCalendarDays, differenceInMonths, format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
@@ -125,7 +125,7 @@ export function SmartGenerateModal({
   const lang = (i18n.language?.startsWith("fr") ? "fr" : "en") as "en" | "fr";
   const locale = localeMap[lang] || enUS;
 
-  const [showSmartDetail, setShowSmartDetail] = useState(true);
+  const [showSmartDetail, setShowSmartDetail] = useState(false);
 
   const REVIEW_FREQUENCY_OPTIONS: { value: ReviewFrequency; labelKey: string; defaultLabel: string }[] = [
   { value: "every_week",     labelKey: "smartCard.temporal.reviewFrequency.every_week",     defaultLabel: "Every week" },
@@ -155,15 +155,6 @@ export function SmartGenerateModal({
 
   const unitLabel = getLocalizedText(draftData?.unit, lang)
     || t("smartCard.goalSections.negativeReviewsMonth", { defaultValue: "negative reviews / month" });
-
-const today = new Date();
-
-const durationMonths = draftData?.deadline
-  ? Math.max(
-      1,
-      differenceInMonths(new Date(draftData.deadline), today)
-    )
-  : "";
 
   const AchievableSection = (
     <div style={{ borderTopColor: "#22C55E" }}
@@ -262,7 +253,15 @@ const durationMonths = draftData?.deadline
             </Label>
             <DatePicker
               value={draftData?.deadline}
-              onChange={(date) => updateDraft({ deadline: date, deadline_source: "user_adjusted" })}
+              onChange={(date) => {
+                const start = draftData?.created_at ? new Date(draftData.created_at) : new Date();
+                const months = Math.max(1, Math.ceil(differenceInCalendarDays(new Date(date), start) / 30));
+                updateDraft({
+                  deadline: date,
+                  deadline_source: "user_adjusted",
+                  duration_months: months,
+                });
+              }}
               className="text-sm"
               disablePastDates
             />
@@ -275,7 +274,7 @@ const durationMonths = draftData?.deadline
               {t("recommendations.smart.durationMonths", { defaultValue: "Duration (months)" })}
             </Label>
             <div className={`flex bg-white items-center justify-between px-3 h-9 rounded-md border text-sm font-bold text-purple-500 dark:border-slate-700 dark:bg-slate-900 dark:text-violet-300`}>
-              {durationMonths}
+              {draftData?.duration_months ?? ""}
             <p className="text-[10px] text-gray-400 mt-0.5 text-center dark:text-slate-500">
               {t("recommendations.smart.autoCalculated", { defaultValue: "auto-calculated" })}
             </p>

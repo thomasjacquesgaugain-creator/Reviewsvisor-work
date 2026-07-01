@@ -81,9 +81,35 @@ export function ChecklistConfigureModal({ open, onClose, actions, objectiveName,
     );
   };
 
+  const getFallbackSchedule = (frequency?: string): ScheduleType => {
+    const normalized = String(frequency ?? "").toLowerCase();
+    if (normalized === "monthly") return "start_of_month";
+    if (normalized === "weekly") return "monday";
+    return "start_of_day";
+  };
+
   const handleSave = async () => {
+    const normalizedDraft = draft.map((action) => {
+      const isCustom =
+        action.schedule === "custom_time" || action.schedule === "custom_date";
+      const customValue = String(action.schedule_value ?? "").trim();
+
+      if (isCustom && !customValue) {
+        return {
+          ...action,
+          schedule: getFallbackSchedule(action.frequency),
+          schedule_value: null,
+        };
+      }
+
+      return {
+        ...action,
+        schedule_value: isCustom ? customValue : action.schedule_value ?? null,
+      };
+    });
+
     setSaving(true);
-    await onSave(draft);
+    await onSave(normalizedDraft);
     setSaving(false);
     onClose();
   };

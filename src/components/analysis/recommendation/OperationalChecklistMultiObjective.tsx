@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
+import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import {
   BarChart2,
   Calendar,
@@ -34,6 +34,8 @@ type Props = {
   totalReviews: number;
   t: (key: string, opts?: Record<string, unknown>) => string;
   setOpenCard: Dispatch<SetStateAction<string | null>>;
+  activeIssueKey?: string;
+  onActiveIssueChange?: (issueKey: string) => void;
 };
 
 const OBJECTIVE_TONES = [
@@ -123,20 +125,15 @@ export function OperationalChecklistMultiObjective({
   onToggleAction,
   totalReviews,
   t,
-  setOpenCard
+  setOpenCard,
+  activeIssueKey,
+  onActiveIssueChange,
 }: Props) {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [internalActiveKey, setInternalActiveKey] = useState("");
   const [showConfigure, setShowConfigure] = useState(false);
   const lang = language.startsWith("fr") ? "fr" : "en";
   const { saveActionSchedules } = useSmartStore();
   const { establishment: currentEstablishment } = useCurrentEstablishment();
-  
-
-  useEffect(() => {
-    if (activeIndex >= objectives.length) {
-      setActiveIndex(0);
-    }
-  }, [activeIndex, objectives.length]);
 
   const tabs = useMemo(
     () =>
@@ -158,6 +155,7 @@ export function OperationalChecklistMultiObjective({
         const inProgress = completed > 0 && !allDone;
 
         return {
+          key: String(objective?.pareto_cause?.key ?? label).toLowerCase(),
           label,
           pct,
           allDone,
@@ -168,7 +166,10 @@ export function OperationalChecklistMultiObjective({
     [lang, objectives, t, totalReviews],
   );
 
-  const objective = objectives[activeIndex] ?? objectives[0] ?? null;
+  const activeKey =
+    (activeIssueKey ?? internalActiveKey ?? tabs[0]?.key ?? "").toLowerCase();
+  const activeIndex = tabs.findIndex((tab) => tab.key === activeKey);
+  const objective = activeIndex >= 0 ? objectives[activeIndex] ?? null : objectives[0] ?? null;
   const actions = Array.isArray(objective?.actions) ? objective.actions : [];
 
   const entries = actions.map((action, actionIndex) => ({
@@ -331,7 +332,10 @@ export function OperationalChecklistMultiObjective({
                 <button
                   key={i}
                   type="button"
-                  onClick={() => setActiveIndex(i)}
+                  onClick={() => {
+                    setInternalActiveKey(tab.key);
+                    onActiveIssueChange?.(tab.key);
+                  }}
                   className={`
                 inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold select-none
                 transition-colors duration-150 border
@@ -446,7 +450,7 @@ export function OperationalChecklistMultiObjective({
                   })}
                 </p>
                 <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-400">
-                  {t("recommendations.smart.completed.subtitle", {
+                  {t("recommendations.smart.completed.checklist", {
                     defaultValue:
                       "The operational checklist is no longer editable for this goal.",
                   })}

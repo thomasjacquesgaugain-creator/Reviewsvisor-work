@@ -3482,6 +3482,19 @@ const getLatestDate = (reviews: any[]): Date | null =>
           .sort((a, b) => b.count - a.count),
       [analysisDataForTab?.paretoIssues]
     );
+
+    const [selectedParetoKey, setSelectedParetoKey] = useState<string>("");
+
+    useEffect(() => {
+      if (!sortedPareto.length) {
+        setSelectedParetoKey("");
+        return;
+      }
+
+      if (!sortedPareto.some((issue) => issue.key.toLowerCase() === selectedParetoKey.toLowerCase())) {
+        setSelectedParetoKey(sortedPareto[0].key);
+      }
+    }, [selectedParetoKey, sortedPareto]);
   
     const orderedObjectives = useMemo(() => {
   return sortedPareto
@@ -6313,6 +6326,8 @@ const activeObjective =
                 <RecommendationsSection
                   paretoCauses={analysisDataForTab?.paretoIssues}
                   onRedoAnalysis={handleRunAnalysis}
+                  activeIssueKey={selectedParetoKey}
+                  onActiveIssueChange={setSelectedParetoKey}
                 />
               </div>
               //   </CardContent>
@@ -6461,6 +6476,8 @@ const activeObjective =
                           }
                           totalReviews={displayTotalAnalyzed ?? 0}
                           t={t}
+                          activeIssueKey={selectedParetoKey}
+                          onActiveIssueChange={setSelectedParetoKey}
                         />
                       )}
                     </CardContent>
@@ -6599,6 +6616,8 @@ const activeObjective =
                         totalReviews={displayTotalAnalyzed ?? 0}
                         t={t}
                         setOpenCard={setOpenCard}
+                        activeIssueKey={selectedParetoKey}
+                        onActiveIssueChange={setSelectedParetoKey}
                       />
                 )}
 
