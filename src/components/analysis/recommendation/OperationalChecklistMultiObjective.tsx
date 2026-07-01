@@ -6,17 +6,20 @@ import {
   Download,
   List,
   PencilIcon,
+  Timer,
   X,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { ParetoItem } from "@/types/analysis";
 import type { SmartAction, ScheduleType, SmartObjective } from "@/types/smart";
 import { ChecklistConfigureModal } from "./ChecklistConfigureModal";
 import { useSmartStore } from "@/store/smartStore";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { generateChecklistPdf } from "@/utils/generateChecklistPdf";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
+import { Trans } from "react-i18next";
 
 type ChecklistAction = {
   text: string | Record<string, string>;
@@ -29,6 +32,7 @@ type ChecklistAction = {
 
 type Props = {
   objectives: SmartObjective[];
+  paretoCauses?: ParetoItem[];
   language: string;
   onToggleAction: (objectiveId: string, actionIndex: number) => void;
   totalReviews: number;
@@ -121,6 +125,7 @@ function scheduleLabel(
 
 export function OperationalChecklistMultiObjective({
   objectives,
+  paretoCauses,
   language,
   onToggleAction,
   totalReviews,
@@ -135,41 +140,73 @@ export function OperationalChecklistMultiObjective({
   const { saveActionSchedules } = useSmartStore();
   const { establishment: currentEstablishment } = useCurrentEstablishment();
 
-  const tabs = useMemo(
-    () =>
-      objectives.map((objective, index) => {
-        const label =
-          objective?.pareto_cause?.[lang] ||
-          objective?.pareto_cause?.en ||
-          objective?.pareto_cause?.fr ||
-          t("dashboard.problemBadge", { number: index + 1 });
-        const pct =
-          typeof objective?.pareto_percentage === "number"
+  const tabs = useMemo(() => {
+    const objectiveByKey = new Map(
+      objectives
+        .filter((objective) => objective.pareto_cause?.key)
+        .map((objective) => [String(objective.pareto_cause.key).toLowerCase(), objective]),
+    );
+
+    const sourceIssues = paretoCauses?.length
+      ? paretoCauses
+      : objectives.map((objective) => ({
+          key: objective.pareto_cause?.key ?? "",
+          name:
+            objective.pareto_cause?.[lang] ||
+            objective.pareto_cause?.en ||
+            objective.pareto_cause?.fr ||
+            t("dashboard.problemBadge", { number: 1 }),
+          en: objective.pareto_cause?.en ?? "",
+          fr: objective.pareto_cause?.fr ?? "",
+          count: objective.pareto_count ?? 0,
+          percentage:
+            typeof objective.pareto_percentage === "number"
+              ? objective.pareto_percentage
+              : totalReviews > 0 && typeof objective.pareto_count === "number"
+                ? (objective.pareto_count / totalReviews) * 100
+                : 0,
+        }));
+
+    return sourceIssues.map((issue, index) => {
+      const key = String(issue.key ?? issue.name ?? `issue-${index}`).toLowerCase();
+      const objective = objectiveByKey.get(key);
+      const label =
+        issue?.[lang as "en" | "fr"] ||
+        issue.en ||
+        issue.fr ||
+        issue.name ||
+        t("dashboard.problemBadge", { number: index + 1 });
+      const pct =
+        typeof issue.percentage === "number"
+          ? Math.round(issue.percentage)
+          : objective && typeof objective.pareto_percentage === "number"
             ? Math.round(objective.pareto_percentage)
-            : typeof objective?.pareto_count === "number" && totalReviews > 0
+            : objective && typeof objective.pareto_count === "number" && totalReviews > 0
               ? Math.round((objective.pareto_count / totalReviews) * 100)
               : null;
-        const actions = objective.actions ?? [];
-        const completed = actions.filter((action) => action.completed).length;
-        const allDone = actions.length > 0 && completed === actions.length;
-        const inProgress = completed > 0 && !allDone;
+      const actions = objective?.actions ?? [];
+      const completed = actions.filter((action) => action.completed).length;
+      const allDone = actions.length > 0 && completed === actions.length;
+      const inProgress = completed > 0 && !allDone;
 
-        return {
-          key: String(objective?.pareto_cause?.key ?? label).toLowerCase(),
-          label,
-          pct,
-          allDone,
-          inProgress,
-          color: OBJECTIVE_TONES[index % OBJECTIVE_TONES.length],
-        };
-      }),
-    [lang, objectives, t, totalReviews],
-  );
+      return {
+        key,
+        label,
+        pct,
+        allDone,
+        inProgress,
+        color: OBJECTIVE_TONES[index % OBJECTIVE_TONES.length],
+        objective,
+        issue,
+      };
+    });
+  }, [lang, objectives, paretoCauses, t, totalReviews]);
 
   const activeKey =
     (activeIssueKey ?? internalActiveKey ?? tabs[0]?.key ?? "").toLowerCase();
   const activeIndex = tabs.findIndex((tab) => tab.key === activeKey);
-  const objective = activeIndex >= 0 ? objectives[activeIndex] ?? null : objectives[0] ?? null;
+  const activeTab = activeIndex >= 0 ? tabs[activeIndex] : tabs[0];
+  const objective = activeTab?.objective ?? null;
   const actions = Array.isArray(objective?.actions) ? objective.actions : [];
 
   const entries = actions.map((action, actionIndex) => ({
@@ -190,6 +227,12 @@ export function OperationalChecklistMultiObjective({
   const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const monthLabel = formatMonthLabel(new Date().toISOString(), language);
   const isChecklistLocked = objective?.status === "todo";
+  const activeIssueLabel =
+    (activeTab?.issue as any)?.[lang] ||
+    (activeTab?.issue as any)?.en ||
+    (activeTab?.issue as any)?.fr ||
+    activeTab?.label ||
+    activeKey;
 
   const sectionCounts = [
     {
@@ -241,19 +284,16 @@ export function OperationalChecklistMultiObjective({
           </div>
         </div>
 
-      </CardHeader>
-      <CardContent className="space-y-6 px-5 py-5 sm:px-6">
-
-
-      <div className="rounded-[24px] border border-emerald-200 bg-emerald-50/70 p-8 text-center dark:border-emerald-900/40 dark:bg-emerald-950/15">
-        <List className="mx-auto mb-3 h-10 w-10 text-emerald-600 dark:text-emerald-300" />
-        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-          {t("recommendations.smart.noSmartActions")}
-        </p>
-      </div>
-      
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent className="space-y-6 px-5 py-5 sm:px-6">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <List className="w-12 h-12 text-gray-500 dark:text-slate-600 mb-4" />
+            <h4 className="font-semibold text-gray-500 dark:text-slate-400 mb-2">
+              {t("dashboard.noChecklistAvailable")}
+            </h4>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -286,7 +326,7 @@ export function OperationalChecklistMultiObjective({
                 {t("dashboard.configure", { defaultValue: "Configure" })}
               </Button>
             )}
-            {objective.status==="in_progress"&&<Button
+            {objective?.status==="in_progress"&&<Button
               variant="outline"
               size="sm"
               onClick={() =>
@@ -345,7 +385,7 @@ export function OperationalChecklistMultiObjective({
                     }
               `}
                 >
-                  {tab.allDone ? (
+                  {(tab.allDone||tab?.objective?.status==="completed") ? (
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-500">
                       <Check className="h-3 w-3 text-white" strokeWidth={3} />
                     </span>
@@ -392,7 +432,7 @@ export function OperationalChecklistMultiObjective({
                 </div>
               </div>
             )}
-            {objective.status!=="completed"&&
+            {objective?.status !== "completed" && objective &&
             <div className="overflow-hidden rounded-[24px] border border-emerald-200 bg-emerald-50/70 dark:border-emerald-900/40 dark:bg-emerald-950/15 mb-4">
               <div className="px-5 py-4">
                 <div className="flex items-end justify-between gap-4 rounded-2xl bg-emerald-50/70 px-1 pb-3 pt-1 dark:bg-emerald-950/10">
@@ -455,6 +495,36 @@ export function OperationalChecklistMultiObjective({
                       "The operational checklist is no longer editable for this goal.",
                   })}
                 </p>
+              </div>
+            ) : !objective ? (
+              <div className="rounded-[24px] border border-yellow-200 bg-yellow-50 px-6 py-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-yellow-100 dark:bg-slate-800">
+                    <Timer className="h-6 w-6 text-yellow-600 dark:text-slate-300" />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-base font-semibold text-yellow-900 dark:text-slate-100">
+                      {t("recommendations.smart.noChecklist.title", {
+                        defaultValue: "No SMART objective available",
+                      })}
+                      </p>
+
+                      <p className="mt-1 text-sm leading-relaxed text-yellow-800 dark:text-slate-400">
+                        <Trans
+                          i18nKey="recommendations.smart.noChecklist.subtitle"
+                          values={{
+                            issue: activeIssueLabel,
+                          }}
+                          components={{
+                            strong: (
+                              <strong className="font-semibold text-yellow-900 dark:text-slate-200" />
+                            ),
+                          }}
+                        />
+                      </p>
+                    </div>
+                  </div>
               </div>
             ) : (
               sectionCounts.map((section) => {

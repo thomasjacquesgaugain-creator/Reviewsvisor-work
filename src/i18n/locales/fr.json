@@ -492,6 +492,7 @@
     "concreteActions": "Actions concrètes et priorisées à mettre en place",
     "routineToFollow":"Routine à suivre sur le terrain",
     "noActionsAvailable": "Aucune action disponible",
+    "noChecklistAvailable":"Aucune liste de contrôle opérationnelle disponible",
     "analyzeEstablishmentToGetActions": "Analysez votre établissement pour obtenir des actions d'amélioration",
     "agent": "Conseiller",
     "askQuestion": "Posez une question sur vos avis...",
@@ -2558,6 +2559,14 @@
     "noObjective":{
       "title":"Aucun objectif SMART disponible",
       "subtitle":"Aucun objectif SMART n'a encore été créé pour <strong>{{issue}}</strong>. Remplissez le questionnaire pour en générer un."
+    },
+    "noActionPlan":{
+      "title":"Aucun plan d'action disponible",
+      "subtitle":"Aucun plan d'action n'a encore été créé pour <strong>{{issue}}</strong>. Veuillez remplir le questionnaire pour en générer un."
+    },
+    "noChecklist":{
+      "title":"Aucune liste de contrôle opérationnelle disponible",
+      "subtitle":"Aucune liste de contrôle opérationnelle n'a encore été créée pour <strong>{{issue}}</strong>. Veuillez remplir le questionnaire pour en générer une."
     }
   },
   

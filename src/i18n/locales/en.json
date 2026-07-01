@@ -392,6 +392,7 @@
     "concreteActions": "Concrete prioritized actions to put in place",
     "routineToFollow":"Routine to follow in the field",
     "noActionsAvailable": "No actions available",
+    "noChecklistAvailable":"No operational checklist available",
     "analyzeEstablishmentToGetActions": "Analyze your establishment to get improvement actions",
     "agent": "Advisor",
     "aiRespondReview": "AI assistant to respond to your reviews",
@@ -2343,6 +2344,14 @@
      "noObjective":{
       "title":"No SMART objective available",
       "subtitle":"No SMART objective has been created for <strong>{{issue}}</strong> yet. Complete the questionnaire to generate one."
+     },
+     "noActionPlan":{
+      "title":"No action plan available",
+      "subtitle":"No action plan has been created for <strong>{{issue}}</strong> yet. Complete the questionnaire to generate one."
+     },
+     "noChecklist":{
+      "title":"No operational checklist available",
+      "subtitle":"No operational checklist has been created for <strong>{{issue}}</strong> yet. Complete the questionnaire to generate one."
      }
   },
 

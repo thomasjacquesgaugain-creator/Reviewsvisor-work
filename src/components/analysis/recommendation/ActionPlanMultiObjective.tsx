@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from "react";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, Timer } from "lucide-react";
+import type { ParetoItem } from "@/types/analysis";
 import { SmartObjective } from "@/types/smart";
+import { Trans } from "react-i18next";
 
 interface ObjectiveAction {
   text: string | Record<string, string>;
@@ -13,6 +15,7 @@ interface ObjectiveAction {
 
 interface Props {
   objectives: SmartObjective[]; 
+  paretoCauses?: ParetoItem[];
   language: string;
   onToggleAction: (objectiveId: string, actionIndex: number) => void;
   totalReviews: number;
@@ -49,6 +52,7 @@ const PRIORITY_CONFIG: Record<
 
 export const ActionPlanMultiObjective: React.FC<Props> = ({
   objectives,
+  paretoCauses,
   language,
   onToggleAction,
   totalReviews,
@@ -59,40 +63,73 @@ export const ActionPlanMultiObjective: React.FC<Props> = ({
   const [internalActiveKey, setInternalActiveKey] = useState("");
   const lang = language.startsWith("fr") ? "fr" : "en";
 
-  const tabs = useMemo(
-    () =>
-      objectives.map((obj, i) => {
-        const label =
-          obj.pareto_cause?.[lang] ||
-          obj.pareto_cause?.en ||
-          obj.pareto_cause?.fr ||
-          `Issue ${i + 1}`;
-        const pct =
-          typeof obj.pareto_percentage === "number"
-            ? Math.round(obj.pareto_percentage)
-            : typeof obj.pareto_count === "number" && totalReviews > 0
-              ? Math.round((obj.pareto_count / totalReviews) * 100)
+  const tabs = useMemo(() => {
+    const objectiveByKey = new Map(
+      objectives
+        .filter((obj) => obj.pareto_cause?.key)
+        .map((obj) => [String(obj.pareto_cause.key).toLowerCase(), obj]),
+    );
+
+    const sourceIssues = paretoCauses?.length
+      ? paretoCauses
+      : objectives.map((obj) => ({
+          key: obj.pareto_cause?.key ?? "",
+          name:
+            obj.pareto_cause?.[lang] ||
+            obj.pareto_cause?.en ||
+            obj.pareto_cause?.fr ||
+            "Issue",
+          en: obj.pareto_cause?.en ?? "",
+          fr: obj.pareto_cause?.fr ?? "",
+          count: obj.pareto_count ?? 0,
+          percentage:
+            typeof obj.pareto_percentage === "number"
+              ? obj.pareto_percentage
+              : totalReviews > 0 && typeof obj.pareto_count === "number"
+                ? (obj.pareto_count / totalReviews) * 100
+                : 0,
+        }));
+
+    return sourceIssues.map((issue, i) => {
+      const key = String(issue.key ?? issue.name ?? `issue-${i}`).toLowerCase();
+      const objective = objectiveByKey.get(key);
+      const label =
+        issue?.[lang as "en" | "fr"] ||
+        issue.en ||
+        issue.fr ||
+        issue.name ||
+        `Issue ${i + 1}`;
+      const pct =
+        typeof issue.percentage === "number"
+          ? Math.round(issue.percentage)
+          : objective && typeof objective.pareto_percentage === "number"
+            ? Math.round(objective.pareto_percentage)
+            : objective && typeof objective.pareto_count === "number" && totalReviews > 0
+              ? Math.round((objective.pareto_count / totalReviews) * 100)
               : null;
-        const actions = obj.actions ?? [];
-        const doneCount = actions.filter((a) => a.completed).length;
-        const allDone = actions.length > 0 && doneCount === actions.length;
-        const inProgress = doneCount > 0 && !allDone;
-        return {
-          key: String(obj.pareto_cause?.key ?? label).toLowerCase(),
-          label,
-          pct,
-          allDone,
-          inProgress,
-          color: TAB_COLORS[i % TAB_COLORS.length],
-        };
-      }),
-    [objectives, lang, totalReviews],
-  );
+      const actions = objective?.actions ?? [];
+      const doneCount = actions.filter((a) => a.completed).length;
+      const allDone = actions.length > 0 && doneCount === actions.length;
+      const inProgress = doneCount > 0 && !allDone;
+
+      return {
+        key,
+        label,
+        pct,
+        allDone,
+        inProgress,
+        color: TAB_COLORS[i % TAB_COLORS.length],
+        objective,
+        issue,
+      };
+    });
+  }, [objectives, paretoCauses, lang, totalReviews]);
 
   const activeKey =
     (activeIssueKey ?? internalActiveKey ?? tabs[0]?.key ?? "").toLowerCase();
   const activeIndex = tabs.findIndex((tab) => tab.key === activeKey);
-  const activeObj = activeIndex >= 0 ? objectives[activeIndex] : objectives[0];
+  const activeTab = activeIndex >= 0 ? tabs[activeIndex] : tabs[0];
+  const activeObj = activeTab?.objective ?? null;
   const actionPlanItems =
     activeObj?.action_plan?.[lang] ??
     activeObj?.action_plan?.en ??
@@ -112,6 +149,12 @@ export const ActionPlanMultiObjective: React.FC<Props> = ({
   const totalCount = displayedActions.length;
   const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
   const tabColor = tabs[activeIndex]?.color ?? tabs[0]?.color ?? "#7c3aed";
+  const activeIssueLabel =
+    (activeTab?.issue as any)?.[lang] ||
+    (activeTab?.issue as any)?.en ||
+    (activeTab?.issue as any)?.fr ||
+    activeTab?.label ||
+    activeKey;
 
   const getActionReason = (action: ObjectiveAction): string => {
     if (action.reason) {
@@ -231,8 +274,33 @@ export const ActionPlanMultiObjective: React.FC<Props> = ({
 
       <div className="space-y-3 pt-1">
         {!activeObj ? (
-          <div className="text-center py-10 text-gray-400 dark:text-slate-500 text-sm">
-            {t("dashboard.noActions")}
+          <div className="rounded-xl border border-yellow-200 bg-yellow-50 px-6 py-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-yellow-100 dark:bg-slate-800">
+                <Timer className="h-6 w-6 text-yellow-600 dark:text-slate-300" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-base font-semibold text-yellow-900 dark:text-slate-100">
+                  {t("recommendations.smart.noActionPlan.title", {
+                    defaultValue: "No SMART objective available",
+                  })}
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-yellow-800 dark:text-slate-400">
+                  <Trans
+                    i18nKey="recommendations.smart.noActionPlan.subtitle"
+                    values={{
+                      issue: activeIssueLabel,
+                    }}
+                    components={{
+                      strong: (
+                        <strong className="font-semibold text-yellow-900 dark:text-slate-200" />
+                      ),
+                    }}
+                  />
+                </p>
+              </div>
+            </div>
           </div>
         ) : activeObj.status === "completed" ? (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-6 text-center dark:border-emerald-900/40 dark:bg-emerald-950/20">

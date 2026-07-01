@@ -342,7 +342,7 @@ const targetChangePercentage =
 
             <div className="flex justify-between text-[10px] text-gray-400 dark:text-slate-400">
               <span>{startFmt}</span>
-              <span className="text-gray-300">← {objective.duration_months} mois →</span>
+              <span className="text-gray-300">← {objective.duration_months} {t("smartCard.temporal.months")} →</span>
               <span className={progress.isOverdue ? "text-red-500" : ""}>{endFmt}</span>
             </div>
 

@@ -6463,13 +6463,14 @@ const activeObjective =
                           <h4 className="font-semibold text-gray-500 dark:text-slate-400 mb-2">
                             {t("dashboard.noActionsAvailable", "No actions available")}
                           </h4>
-                          <p className="text-sm text-gray-400 dark:text-slate-500 max-w-sm">
+                          {/* <p className="text-sm text-gray-400 dark:text-slate-500 max-w-sm">
                             {t("dashboard.analyzeEstablishmentToGetActions")}
-                          </p>
+                          </p> */}
                         </div>
                       ) : (
                         <ActionPlanMultiObjective
                           objectives={orderedObjectives}
+                          paretoCauses={analysisDataForTab?.paretoIssues}
                           language={i18n.language}
                           onToggleAction={(objectiveId, actionIndex) =>
                             toggleAction(objectiveId, actionIndex)
@@ -6609,6 +6610,7 @@ const activeObjective =
                 {openCard === "checklist" && (
                       <OperationalChecklistMultiObjective
                         objectives={orderedObjectives}
+                        paretoCauses={analysisDataForTab?.paretoIssues}
                         language={i18n.language}
                         onToggleAction={(objectiveId, actionIndex) =>
                           toggleAction(objectiveId, actionIndex)
