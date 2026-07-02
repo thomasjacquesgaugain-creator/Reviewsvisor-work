@@ -12,6 +12,11 @@ export type SmartQuadrant = "quick_win" | "strategic" | "minor" | "avoid";
 export type EffortSource  = "auto_detected" | "user_questionnaire";
 export type TargetSource  = "computed" | "user_adjusted";
 export type ActionFrequency = "daily" | "weekly" | "monthly" | "once";
+export type ReviewFrequency = "every_week" | "every_2_weeks" | "every_4_weeks" | "every_3_months"; 
+export type DailySchedule   = "start_of_day" | "during_activity" | "end_of_day" | "custom_time";
+export type WeeklySchedule  = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
+export type MonthlySchedule = "start_of_month" | "mid_month" | "end_of_month" | "custom_date";
+export type ScheduleType    = DailySchedule | WeeklySchedule | MonthlySchedule;
 
 /* ─────────────────────────────────────────────
    SMART ACTION
@@ -21,6 +26,8 @@ export interface SmartAction {
   text:        string;
   frequency:   ActionFrequency;
   completed:   boolean;
+  schedule:          ScheduleType;    
+  schedule_value:    string | null;  
 }
 
 /* ─────────────────────────────────────────────
@@ -111,6 +118,10 @@ export interface SmartObjective {
   // AI metadata
   ai_generated:  boolean;
   ai_confidence?: number;
+
+  ai_justification?: string; 
+  expected_result?:  string; 
+  review_frequency?: ReviewFrequency; 
 
   created_at?: string;
   updated_at?: string;

@@ -793,7 +793,7 @@ setShowPlanModal(true);
           </div>
         </div>
       </div>
-      {reviewCountLast12Months&&<PlanSelectionModal
+      {savedEtabForPlan &&<PlanSelectionModal
         open={showPlanModal}
         onClose={() => setShowPlanModal(false)}
         establishment={savedEtabForPlan}

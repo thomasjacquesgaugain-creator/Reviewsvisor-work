@@ -17,6 +17,7 @@ interface DatePickerProps {
   className?: string;
   disabled?: boolean;
   align?: "start" | "center" | "end";
+  disablePastDates?: boolean;
 }
 
 export function DatePicker({
@@ -26,6 +27,7 @@ export function DatePicker({
   className,
   disabled = false,
   align = "start",
+  disablePastDates = false,
 }: DatePickerProps) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
@@ -69,6 +71,11 @@ export function DatePicker({
             setOpen(false);
           }}
           locale={dateLocale}
+          disabled={
+            disablePastDates
+              ? (date) => date < new Date(new Date().setHours(0, 0, 0, 0))
+              : undefined
+          }
           initialFocus
         />
       </PopoverContent>

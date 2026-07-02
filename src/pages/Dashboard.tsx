@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { parseISO, subDays, isAfter, isBefore } from "date-fns";
-import {  CheckCircle2 ,Circle } from "lucide-react";
   import { Trans } from "react-i18next";
 import {
   Accordion,
@@ -134,6 +133,8 @@ import { listAll } from "@/services/reviewsService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KeyTakeawaysPanel } from "@/components/dashboard/KeyTakeawaysPanel";
 import { EffortMatrix } from "@/components/analysis/recommendation/EffortMatrix";
+import { ActionPlanMultiObjective } from "@/components/analysis/recommendation/ActionPlanMultiObjective";
+import { OperationalChecklistMultiObjective } from "@/components/analysis/recommendation/OperationalChecklistMultiObjective";
 import { analyzeRootCauses } from "@/utils/rootCauseAnalysis";
 import { RecommendationsSection } from "@/components/RecommendationsSection";
 import { getCurrentEstablishment } from "@/services/establishments";
@@ -167,6 +168,48 @@ const getTranslatedEstablishmentType = (
 
 const DASH_TAB_NAV_BTN_CLASS =
   "inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 shadow-[0_2px_12px_rgba(15,23,42,0.08)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-900 hover:shadow-[0_8px_28px_rgba(37,99,235,0.14)] active:translate-y-0 active:scale-[0.98] active:shadow-[0_2px_10px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:shadow-slate-950/40 dark:hover:border-blue-500 dark:hover:bg-blue-950/40 dark:hover:text-blue-300 dark:focus-visible:ring-offset-slate-950";
+
+type SummaryTone = "red" | "amber" | "blue";
+type PriorityImpact = "High" | "Medium" | "Low";
+type PriorityEffort = "High" | "Medium" | "Low";
+
+const SUMMARY_TONE_STYLES: Record<
+  SummaryTone,
+  {
+    card: string;
+    badge: string;
+    dot: string;
+    title: string;
+    bullet: string;
+  }
+> = {
+  red: {
+    card: "bg-red-50/80 border-red-100 border-l-4 border-l-red-500",
+    badge: "bg-red-500 text-white",
+    dot: "bg-red-500",
+    title: "text-red-600",
+    bullet: "text-red-500",
+  },
+  amber: {
+    card: "bg-amber-50/80 border-amber-100 border-l-4 border-l-amber-500",
+    badge: "bg-amber-500 text-white",
+    dot: "bg-amber-500",
+    title: "text-amber-600",
+    bullet: "text-amber-500",
+  },
+  blue: {
+    card: "bg-blue-50/80 border-blue-100 border-l-4 border-l-blue-500",
+    badge: "bg-blue-500 text-white",
+    dot: "bg-blue-500",
+    title: "text-blue-600",
+    bullet: "text-blue-500",
+  },
+};
+
+const ISSUE_TONES: SummaryTone[] = ["red", "amber", "blue"];
+
+const getIssueTone = (index: number): SummaryTone =>
+  ISSUE_TONES[index % ISSUE_TONES.length];
 
 const Dashboard = () => {
   // ============================================
@@ -249,7 +292,7 @@ const Dashboard = () => {
   const [establishmentCreatedAt, setEstablishmentCreatedAt] = useState<
     string | null
   >(null);
-   const { objectives, fetchObjectives, toggleAction } = useSmartStore();
+  const { objectives, fetchObjectives, toggleAction } = useSmartStore();
 
   useEffect(() => {
   if (!activeEstablishmentId) return;
@@ -264,6 +307,69 @@ const Dashboard = () => {
   setOpenCard("checklist");
 
   }
+
+  const refreshAnalysisData = async (placeId: string) => {
+    const { loadLatestAnalysis } = await import("@/services/analysisLoader");
+    const analysisResult = await loadLatestAnalysis(placeId, user!.id);
+
+    if (analysisResult.success && analysisResult.hasAnalysis && analysisResult.data) {
+      setInsight(analysisResult.data);
+      setHasAnalysis(true);
+    } else {
+      setInsight(null);
+      setHasAnalysis(false);
+    }
+
+    try {
+      const reviewsData = await listAll(placeId);
+      setAllReviewsForChart(reviewsData);
+      if (reviewsData.length > 0) {
+        setRecentReviews(reviewsData.slice(0, 3));
+        const bestReviews = reviewsData
+          .filter((r) => r.rating && r.rating >= 4)
+          .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+          .slice(0, 5);
+        setTopReviews(bestReviews);
+        const badReviews = reviewsData
+          .filter((r) => r.rating && r.rating <= 2)
+          .sort((a, b) => (a.rating || 0) - (b.rating || 0))
+          .slice(0, 5);
+        setWorstReviews(badReviews);
+      }
+    } catch (error) {
+      console.error("[Dashboard] Error reloading reviews after analysis:", error);
+    }
+  };
+
+  const handleRunAnalysis = async () => {
+    if (!selectedEtab?.place_id) {
+      console.error(t("errors.missingPlaceId"));
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      console.log(t("dashboard.startingAnalysis"), selectedEtab.place_id);
+      const { runAnalyzeV2 } = await import("@/lib/runAnalyze");
+      const result = await runAnalyzeV2({
+        place_id: selectedEtab.place_id,
+        name: selectedEtab.name,
+        address: selectedEtab.address,
+        language: i18n.language,
+      });
+
+      if (result.ok) {
+        console.log(t("dashboard.analysisComplete"), result);
+        toast.success(t("establishment.establishmentAnalysed"));
+        await refreshAnalysisData(selectedEtab.place_id);
+      }
+    } catch (error) {
+      console.error("[Dashboard] runAnalyzeV2 failed:", error);
+      toast.error(t("common.error"));
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
   
 
   // Review insights data — initialisation depuis snapshot pour affichage instantané (pas de flash 0/vide)
@@ -3376,8 +3482,20 @@ const getLatestDate = (reviews: any[]): Date | null =>
           .sort((a, b) => b.count - a.count),
       [analysisDataForTab?.paretoIssues]
     );
+
+    const [selectedParetoKey, setSelectedParetoKey] = useState<string>("");
+
+    useEffect(() => {
+      if (!sortedPareto.length) {
+        setSelectedParetoKey("");
+        return;
+      }
+
+      if (!sortedPareto.some((issue) => issue.key.toLowerCase() === selectedParetoKey.toLowerCase())) {
+        setSelectedParetoKey(sortedPareto[0].key);
+      }
+    }, [selectedParetoKey, sortedPareto]);
   
-    // ✅ MAP OBJECTIVES IN PARETO ORDER
     const orderedObjectives = useMemo(() => {
   return sortedPareto
     .map(p =>
@@ -3395,9 +3513,83 @@ const activeObjective =
   ) || null;
 
     const progress = useSmartProgress(activeObjective);
-    
 
+    const summaryIssues = useMemo(() => {
+      return [...(analysisDataForTab?.paretoIssues ?? [])]
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3);
+    }, [analysisDataForTab?.paretoIssues]);
 
+    const orderedObjectivesByKey = useMemo(() => {
+      return new Map(
+        orderedObjectives
+          .filter((objective) => objective?.pareto_cause?.key)
+          .map((objective) => [
+            String(objective.pareto_cause.key).toLowerCase(),
+            objective,
+          ]),
+      );
+    }, [orderedObjectives]);
+
+    const getLocalizedObjectiveSynthesis = (objective: any) => {
+      if (!objective?.synthesis) return null;
+
+      const synthesis = objective.synthesis as Record<string, any>;
+      if (
+        typeof synthesis.top_priority === "string" ||
+        typeof synthesis.primary_friction === "string" ||
+        Array.isArray(synthesis.secondary_issues) ||
+        Array.isArray(synthesis.strengths_to_preserve)
+      ) {
+        return synthesis;
+      }
+
+      const localized =
+        synthesis?.[i18n.language] ??
+        synthesis?.fr ??
+        synthesis?.en ??
+        null;
+
+      return localized &&
+        typeof localized === "object" &&
+        !Array.isArray(localized)
+        ? localized
+        : null;
+    };
+
+    const orderedSynthesisCards = useMemo(() => {
+      return orderedObjectives
+        .map((objective, index) => {
+          const synthesis = getLocalizedObjectiveSynthesis(objective);
+          if (!synthesis) return null;
+
+          const issueLabel =
+            objective?.pareto_cause?.[i18n.language] ||
+            objective?.pareto_cause?.en ||
+            objective?.pareto_cause?.fr ||
+            t("dashboard.problemBadge", { number: index + 1 });
+
+          const percentage =
+            typeof objective?.pareto_percentage === "number"
+              ? objective.pareto_percentage
+              : typeof objective?.pareto_count === "number" &&
+                  typeof displayTotalAnalyzed === "number" &&
+                  displayTotalAnalyzed > 0
+                ? Math.round((objective.pareto_count / displayTotalAnalyzed) * 100)
+                : null;
+
+          return {
+            key: String(objective?.pareto_cause?.key ?? index).toLowerCase(),
+            issueLabel,
+            synthesis,
+            percentage,
+          };
+        })
+        .filter(Boolean);
+    }, [displayTotalAnalyzed, i18n.language, orderedObjectives, t]);
+
+    const primarySynthesisCard = orderedSynthesisCards[0] ?? null;
+    const additionalSynthesisCards = orderedSynthesisCards.slice(1);
 
   // If we have an etablissementId in URL, show analysis dashboard
   if (etablissementId) {
@@ -3599,146 +3791,13 @@ const activeObjective =
                         <div className="absolute bottom-0 right-0 flex gap-1"></div>
                         <div className="flex items-center gap-1 self-center flex-shrink-0">
                           {/* Bouton analyser établissement */}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={async () => {
-                              if (!selectedEtab?.place_id) {
-                                console.error(t("errors.missingPlaceId"));
-                                return;
-                              }
-
-                              setIsAnalyzing(true);
-                              try {
-                                console.log(
-                                  t("dashboard.startingAnalysis"),
-                                  selectedEtab.place_id,
-                                );
-                                const { runAnalyzeV2 } =
-                                  await import("@/lib/runAnalyze");
-                                const result = await runAnalyzeV2({
-                                  place_id: selectedEtab.place_id,
-                                  name: selectedEtab.name,
-                                  address: selectedEtab.address,
-                                  language: i18n.language,
-                                });
-
-                                if (result.ok) {
-                                  console.log(
-                                    t("dashboard.analysisComplete"),
-                                    result,
-                                  );
-                                toast.success(t("establishment.establishmentAnalysed"))
-                                  // Recharger les insights au lieu de recharger toute la page
-                                 const { loadLatestAnalysis } = await import(
-                                    "@/services/analysisLoader"
-                                  )
-                                  const analysisResult = await loadLatestAnalysis(
-                                    selectedEtab.place_id,
-                                    user!.id,
-                                  );
-
-                                  if (
-                                    analysisResult.success &&
-                                    analysisResult.hasAnalysis &&
-                                    analysisResult.data
-                                  ) {
-                                    setInsight(analysisResult.data);
-
-                                    setHasAnalysis(true);
-
-                                    console.log(
-                                      t("dashboard.insightsReloaded"),
-                                      analysisResult.data,
-                                    );
-                                  } else {
-                                    setInsight(null);
-                                    setHasAnalysis(false);
-                                  }
-
-                                  // Recharger aussi tous les avis (listAll = compte réel)
-                                  try {
-                                    const reviewsData = await listAll(
-                                      selectedEtab.place_id,
-                                    );
-                                    setAllReviewsForChart(reviewsData);
-                                    if (reviewsData.length > 0) {
-                                      setRecentReviews(reviewsData.slice(0, 3));
-                                      const bestReviews = reviewsData
-                                        .filter(
-                                          (r) => r.rating && r.rating >= 4,
-                                        )
-                                        .sort(
-                                          (a, b) =>
-                                            (b.rating || 0) - (a.rating || 0),
-                                        )
-                                        .slice(0, 5);
-                                      setTopReviews(bestReviews);
-                                      const badReviews = reviewsData
-                                        .filter(
-                                          (r) => r.rating && r.rating <= 2,
-                                        )
-                                        .sort(
-                                          (a, b) =>
-                                            (a.rating || 0) - (b.rating || 0),
-                                        )
-                                        .slice(0, 5);
-                                      setWorstReviews(badReviews);
-                                    }
-                                    const statsByPlatform: Record<
-                                      string,
-                                      {
-                                        count: number;
-                                        totalRating: number;
-                                        avgRating: number;
-                                      }
-                                    > = {};
-                                    reviewsData.forEach((review: any) => {
-                                      const source = review.source || "unknown";
-                                      if (!statsByPlatform[source]) {
-                                        statsByPlatform[source] = {
-                                          count: 0,
-                                          totalRating: 0,
-                                          avgRating: 0,
-                                        };
-                                      }
-                                      statsByPlatform[source].count++;
-                                      if (review.rating) {
-                                        statsByPlatform[source].totalRating +=
-                                          review.rating;
-                                      }
-                                    });
-                                    Object.keys(statsByPlatform).forEach(
-                                      (source) => {
-                                        const stat = statsByPlatform[source];
-                                        stat.avgRating =
-                                          stat.count > 0
-                                            ? stat.totalRating / stat.count
-                                            : 0;
-                                      },
-                                    );
-                                    setPlatformStats(statsByPlatform);
-                                  } catch (_) {}
-                                } else {
-                                  console.error(
-                                    t("dashboard.analysisError"),
-                                    result.error,
-                                  );
-                                  toast.error(t("dashboard.analysisError"))
-                                }
-                              } catch (error) {
-                                console.error(
-                                  t("dashboard.analysisErrorDuring"),
-                                  error,
-                                );
-                                toast.error(t("dashboard.analysisErrorDuring"))
-                              } finally {
-                                setIsAnalyzing(false);
-                              }
-                            }}
-                            disabled={isAnalyzing}
-                            className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 p-1 h-auto"
-                            title={t("establishment.analyzeThisEstablishment")}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRunAnalysis}
+                          disabled={isAnalyzing}
+                          className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 p-1 h-auto"
+                          title={t("establishment.analyzeThisEstablishment")}
                           >
                             {isAnalyzing ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -5956,180 +6015,239 @@ const activeObjective =
 
             {activeTab === "recommandations" && (
               <>
-                {/* SECTION 1 : Synthèse & priorités (carte maître) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
-                  <div className="col-span-1 md:col-span-2">
-                    <Card
-                      className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
-                      onClick={() =>
-                        setOpenCard(
-                          openCard === "synthesis" ? null : "synthesis",
-                        )
-                      }
-                    >
-                      <CardHeader className="relative text-center">
-                        <div className="flex flex-col items-center mb-2">
-                          <Lightbulb className="w-5 h-5 text-blue-500 mb-2" />
-                          <span className="text-lg font-semibold">
-                            {t(
-                              "dashboard.synthesisPriorities",
-                              "Synthèse & priorités",
-                            )}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 dark:text-slate-300">
+              
+                <Card className="mb-8 overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900 ">
+                  <CardHeader
+                    className="cursor-pointer border-b border-slate-100 px-6 py-5 dark:border-slate-800 sm:px-8"
+                    onClick={() =>
+                      setOpenCard(
+                        openCard === "synthesis" ? null : "synthesis",
+                      )
+                    }
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-violet-950/50 dark:text-violet-300">
+                        <Lightbulb className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <CardTitle className="text-[16px] font-[600]  text-slate-900 dark:text-slate-100">
+                          {t("dashboard.synthesisPriorities", "Summary & priorities")}
+                        </CardTitle>
+                        <p className="text-[12px] text-slate-500 dark:text-slate-400">
                           {t(
                             "dashboard.synthesisPrioritiesSubtitle",
-                            "Lecture stratégique des avis clients et points de focus prioritaires",
+                            "Strategic reading of customer reviews and key focus areas",
                           )}
                         </p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenCard(
-                              openCard === "synthesis" ? null : "synthesis",
-                            );
-                          }}
-                          className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-blue-50 dark:hover:bg-blue-950/40"
-                        >
-                          {openCard === "synthesis" ? (
-                            <ChevronUp className="w-3 h-3 text-blue-500" />
-                          ) : (
-                            <ChevronDown className="w-3 h-3 text-blue-500" />
-                          )}
-                        </Button>
-                      </CardHeader>
-                    </Card>
-                  </div>
-                </div>
-
-                {/* Contenu Synthèse & priorités - EN DESSOUS */}
-               {openCard === "synthesis" && (
-                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
-                    <CardHeader className="relative text-left">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Lightbulb className="w-5 h-5 text-blue-500" />
-                        <span className="text-lg font-semibold">
-                          {t("dashboard.synthesisPriorities", "Synthèse & priorités")}
-                        </span>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-slate-300">
-                        {t(
-                          "dashboard.synthesisPrioritiesSubtitle",
-                          "Lecture stratégique des avis clients et points de focus prioritaires",
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenCard(
+                            openCard === "synthesis" ? null : "synthesis",
+                          );
+                        }}
+                        className="h-8 w-8 shrink-0 p-0 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                      >
+                        {openCard === "synthesis" ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
                         )}
-                      </p>
-                    </CardHeader>
-                    <CardContent>
-                      {/* Empty state - no active objective or no synthesis */}
-                      {!activeObjective || !activeObjective.synthesis?.[i18n.language] ? (
-                        <div className="flex flex-col items-center justify-center py-12 text-center">
-                          <Lightbulb className="w-12 h-12 text-gray-300 dark:text-slate-600 mb-4" />
-                          <h4 className="font-semibold text-gray-500 dark:text-slate-400 mb-2">
-                            {t("dashboard.noSynthesisAvailable", "Aucune synthèse disponible")}
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  {openCard === "synthesis" && (
+                    <CardContent className="space-y-8 px-6 py-6 sm:px-8">
+                    {!primarySynthesisCard ? (
+                      <div className="flex flex-col items-center justify-center rounded-[18px] border border-dashed border-slate-200 bg-slate-50/80 py-14 text-center dark:border-slate-700 dark:bg-slate-900/50">
+                        <Lightbulb className="mb-4 h-12 w-12 text-slate-300 dark:text-slate-600" />
+                        <h4 className="mb-2 text-base font-semibold text-slate-600 dark:text-slate-300">
+                          {t("dashboard.noSynthesisAvailable", "No synthesis available")}
+                        </h4>
+                        <p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">
+                          {t(
+                            "dashboard.noSynthesisDescription",
+                            "Select an active objective or collect more reviews to generate a strategic synthesis.",
+                          )}
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          <h4 className="mb-3 text-sm font-semibold  text-slate-900 dark:text-slate-100">
+                            {t("dashboard.improvementAxesIdentified", "Improvement areas identified")}
                           </h4>
-                          <p className="text-sm text-gray-400 dark:text-slate-500 max-w-sm">
-                            {t(
-                              "dashboard.noSynthesisDescription",
-                              "Sélectionnez un objectif actif ou collectez davantage d'avis pour générer une synthèse stratégique.",
-                            )}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-8">
-                          {/* Section 1 - Axes d'amélioration identifiés */}
-                          {(() => {
-                            const synthesis = activeObjective.synthesis[i18n.language];
+                          <div className="space-y-3">
+                            <div className="rounded-[18px]  border-l-4 border-l-red-500 bg-red-50/80 p-4 dark:border-red-900/40 dark:bg-red-950/25">
+                              <div className="mb-2 flex items-center gap-2">
+                                <Badge className={SUMMARY_TONE_STYLES.red.badge}>
+                                  {t("dashboard.priorityAction", "Priority action")}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-slate-700 dark:text-slate-200">
+                                {primarySynthesisCard.synthesis.top_priority ||
+                                  t("dashboard.analyzeReviewsToIdentifyFrictionPoints")}
+                              </p>
+                              {primarySynthesisCard.synthesis.primary_friction && (
+                                <p className="mt-1 text-sm italic text-slate-500 dark:text-slate-400">
+                                  {primarySynthesisCard.synthesis.primary_friction}
+                                </p>
+                              )}
+                            </div>
 
-                            return (
-                              <div>
-                                <h4 className="font-semibold text-gray-800 dark:text-slate-100 mb-4">
-                                  {t("dashboard.improvementAxesIdentified", "Axes d'amélioration identifiés")}
-                                </h4>
-                                <div className="space-y-3">
-                                  {/* Action prioritaire */}
-                                  <div className="p-4 bg-red-50 dark:bg-red-950/30 rounded-lg border-l-4 border-red-500">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Badge className="bg-red-500 text-white text-xs">
-                                        {t("dashboard.priorityAction")}
-                                      </Badge>
-                                    </div>
-                                    <p className="text-sm text-gray-700 dark:text-slate-200">
-                                      {synthesis.top_priority || t("dashboard.analyzeReviewsToIdentifyFrictionPoints")}
-                                    </p>
-                                    {synthesis.primary_friction && (
-                                      <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 italic">
-                                        {synthesis.primary_friction}
-                                      </p>
+                            {additionalSynthesisCards.map((card, index) => {
+                              const tone = getIssueTone(index + 1);
+                              return (
+                                <div
+                                  key={card.key}
+                                  className={`rounded-[18px]  p-4 ${SUMMARY_TONE_STYLES[tone].card} dark:bg-slate-900/40`}
+                                >
+                                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                                    <Badge className={SUMMARY_TONE_STYLES[tone].badge}>
+                                      {t("dashboard.importantAction", "Important action")}
+                                    </Badge>
+                                    <span className="text-sm font-semibold">
+                                      {card.issueLabel}
+                                    </span>
+                                    {typeof card.percentage === "number" && (
+                                      <span className="text-sm text-slate-500 dark:text-slate-400">
+                                        - {t("recommendations.smart.negativeReviews", { percentage: Math.round(card.percentage) })}
+                                      </span>
                                     )}
                                   </div>
-
-                                  {/* Court terme */}
-                                  <div className="p-4 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border-l-4 border-yellow-500">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Badge className="bg-yellow-500 text-white text-xs">
-                                        {t("dashboard.shortTerm")}
-                                      </Badge>
-                                    </div>
-                                    <ul className="space-y-2">
-                                      {synthesis.secondary_issues?.map((issue, index) => (
-                                        <li
-                                          key={index}
-                                          className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2"
-                                        >
-                                          <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                                          {issue}
-                                        </li>
-                                      ))}
-                                      {synthesis.strengths_to_preserve?.map((strength, index) => (
-                                        <li
-                                          key={`strength-${index}`}
-                                          className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2"
-                                        >
-                                          <CheckCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                                          {t("dashboard.enhanceStrengths", { strength })}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-
-                                  {/* Gestion des avis */}
-                                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border-l-4 border-blue-500">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Badge className="bg-blue-500 text-white text-xs">
-                                        {t("dashboard.reviewManagement")}
-                                      </Badge>
-                                    </div>
-                                    <ul className="space-y-2">
-                                      <li className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2">
-                                        <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                                        {t("dashboard.respondSystematically")}
-                                      </li>
-                                      <li className="text-sm text-gray-700 dark:text-slate-200 flex items-start gap-2">
-                                        <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                                        {t("dashboard.setUpRegularTracking")}
-                                      </li>
-                                    </ul>
-                                  </div>
+                                  <p className="text-sm text-slate-700 dark:text-slate-200">
+                                    {card.synthesis.top_priority ||
+                                      card.synthesis.primary_friction ||
+                                      card.synthesis.secondary_issues?.[0] ||
+                                      t("dashboard.analyzeReviewsToIdentifyFrictionPoints")}
+                                  </p>
                                 </div>
-                              </div>
-                            );
-                          })()}
+                              );
+                            })}
 
-                          {/* Séparateur visuel */}
-                          <div className="border-t border-gray-200 dark:border-slate-700"></div>
+                            <div className="rounded-[18px] border-l-4 border-l-amber-500 bg-amber-50/80 p-4 dark:border-amber-900/40 dark:bg-amber-950/25">
+                              <div className="mb-2 flex items-center gap-2">
+                                <Badge className={SUMMARY_TONE_STYLES.amber.badge}>
+                                  {t("dashboard.shortTerm", "Short term")}
+                                </Badge>
+                              </div>
+                              <ul className="space-y-2">
+                                {(primarySynthesisCard.synthesis.secondary_issues ?? []).map((issue: string, index: number) => (
+                                  <li key={`secondary-${index}`} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                    <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-500">
+                                      <Check className="h-2.5 w-2.5 stroke-[3] text-white" />
+                                    </div>
+                                    <span>{issue}</span>
+                                  </li>
+                                ))}
+                                {(primarySynthesisCard.synthesis.strengths_to_preserve ?? []).map((strength: string, index: number) => (
+                                  <li key={`strength-${index}`} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                      <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-500">
+                                      <Check className="h-2.5 w-2.5 stroke-[3] text-white" />
+                                    </div>                                    
+                                    <span>{t("dashboard.enhanceStrengths", { strength, defaultValue: `Strengths mentioned: ${strength}` })}</span>
+                                  </li>
+                                ))}
+                                {!primarySynthesisCard.synthesis.secondary_issues?.length && !primarySynthesisCard.synthesis.strengths_to_preserve?.length && (
+                                  <li className="text-sm text-slate-500 dark:text-slate-400">
+                                    {t("dashboard.noShortTermActions", "No short-term actions suggested yet.")}
+                                  </li>
+                                )}
+                              </ul>
+                            </div>
+
+                            <div className="rounded-[18px] border-l-4 border-l-blue-500 bg-blue-50/80 p-4 dark:border-blue-900/40 dark:bg-blue-950/25">
+                              <div className="mb-2 flex items-center gap-2">
+                                <Badge className={SUMMARY_TONE_STYLES.blue.badge}>
+                                  {t("dashboard.reviewManagement", "Review management")}
+                                </Badge>
+                              </div>
+                              <ul className="space-y-2">
+                                    <li className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                      <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-500">
+                                        <Check className="h-2.5 w-2.5 stroke-[3] text-white" />
+                                      </div>
+                                      <span>{t("dashboard.respondSystematically", "Reply to customer reviews (positive and negative) - good practice to maintain")}</span>
+                                    </li>
+                                    <li className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                      <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-500">
+                                        <Check className="h-2.5 w-2.5 stroke-[3] text-white" />
+                                      </div>                                  
+                                      <span>{t("dashboard.setUpRegularTracking", "Set up regular customer satisfaction tracking - to consider")}</span>
+                                    </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="mb-3 text-sm font-semibold  text-slate-900 dark:text-slate-100">
+                            {t("dashboard.mainCausesIdentified", "Main causes identified")}
+                          </h4>
+                          <div className="grid gap-3 md:grid-cols-3">
+                            {summaryIssues.map((issue, index) => {
+                              const tone = getIssueTone(index);
+                              const matchedObjective = orderedObjectivesByKey.get(
+                                String(issue.key ?? "").toLowerCase(),
+                              );
+                              if (!matchedObjective) return null;
+                              const issueSynthesis =
+                                getLocalizedObjectiveSynthesis(matchedObjective);
+                              const issueLabel =
+                                matchedObjective?.pareto_cause?.[i18n.language] ||
+                                matchedObjective?.pareto_cause?.en ||
+                                matchedObjective?.pareto_cause?.fr ||
+                                t("dashboard.problemBadge", { number: index + 1 });
+                              const rootCauseItems = (issue.root_causes ?? [])
+                                .flatMap((rc: any) => (rc.causes ?? []).map((cause: string) => String(cause || "").trim()))
+                                .filter(Boolean)
+                                .slice(0, 3);
+
+                              return (
+                                <div
+                                  key={issue.key ?? `${issue.name}-${index}`}
+                                  className={`rounded-[18px] border p-4 shadow-sm  dark:border-slate-700 dark:bg-slate-900/70`}
+                                >
+                                  <div className={`mb-3 pb-2 text-sm font-semibold border-b border-slate-200 dark:border-slate-700 ${SUMMARY_TONE_STYLES[tone].title}`}>
+                                    {issueLabel}
+                                  </div>
+                                  <ul className="space-y-2">
+                                    {(rootCauseItems.length > 0
+                                      ? rootCauseItems
+                                      : [issueSynthesis?.top_priority || primarySynthesisCard?.synthesis?.top_priority || t("dashboard.analyzeReviewsToIdentifyFrictionPoints")]
+                                    ).map((cause, causeIndex) => (
+                                      <li key={`${issue.key ?? index}-${causeIndex}`} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                        <div className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${SUMMARY_TONE_STYLES[tone].dot}`}>
+                                          <Check className="h-2.5 w-2.5 stroke-[3] text-white" />
+                                        </div>
+                                        <span>{cause}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className=" dark:border-slate-700">
 
                           <EffortMatrix analysisData={analysisDataForTab} />
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
 
+                        
+                      </>
+                    )}
+                    </CardContent>
+                  )}
+                </Card>
                 {/* SECTION 2 : SMART Objectives */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
                 <div className="col-span-1 md:col-span-2">
                   <Card
                     className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
@@ -6165,50 +6283,20 @@ const activeObjective =
                     </CardHeader>
                   </Card>
                 </div>
-              </div>
+              </div> */}
 
 
             {/* Contenu SMART — EN DESSOUS */}
-            {openCard === "smart" &&(analysisDataForTab?.paretoIssues?.length ?? 0) > 0 &&
-             (
-              <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
-                <CardHeader>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target className="w-5 h-5 text-blue-500" />
-                    <span className="text-lg font-semibold"> {t("recommendations.smart.smartObjectives")}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-slate-300">
-                    {t("recommendations.smart.aiGeneratedGoals")}
-                  </p>
-
-                  {/* Flow breadcrumb — matches image 2 from earlier */}
-                  <div className="flex items-center gap-2 mt-3 flex-wrap">
-                    <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
-                      {t("recommendations.smart.paretoAnalysis")}
-                    </span>
-                    <span className="text-xs text-gray-400 dark:text-slate-500">→</span>
-                    <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
-                      {t("recommendations.smart.ishikawaRootCauses")}
-                    </span>
-                    <span className="text-xs text-gray-400 dark:text-slate-500">→</span>
-                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
-                       {t("recommendations.smart.smartObjectiveGenerated")}
-                    </span>
-                    <span className="text-xs text-gray-400 dark:text-slate-500">→</span>
-                    <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                     {t("recommendations.smart.pdcaTracking")}
-                    </span>
-                  </div>
-                </CardHeader>
-
-                <CardContent>
-                  <RecommendationsSection
-                    paretoCauses={analysisDataForTab?.paretoIssues}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
+            
+              <div className="mb-8">
+                <RecommendationsSection
+                  paretoCauses={analysisDataForTab?.paretoIssues}
+                  onRedoAnalysis={handleRunAnalysis}
+                  activeIssueKey={selectedParetoKey}
+                  onActiveIssueChange={setSelectedParetoKey}
+                />
+              </div>
+              
 
                 {openCard === "smart" && (analysisDataForTab?.paretoIssues?.length ?? 0) === 0 && (
                   <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
@@ -6227,8 +6315,8 @@ const activeObjective =
                 {/* SECTION 2 : Plan d'actions (gauche) et Checklist opérationnelle (droite) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                   {/* Plan d'actions */}
-                  <Card
-                    className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
+                 <Card
+                    className="relative rounded-[18px] cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
                     onClick={() =>
                       setOpenCard(
                         openCard === "planActions" ? null : "planActions",
@@ -6236,13 +6324,15 @@ const activeObjective =
                     }
                   >
                     <CardHeader className="relative text-center">
-                      <div className="flex flex-col items-center mb-2">
-                        <ClipboardList className="w-5 h-5 text-indigo-500 mb-2" />
-                        <span className="text-lg font-semibold">
+                      <div className="flex flex-col items-center">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-violet-950/50 dark:text-violet-300">
+                          <ClipboardList className="w-5 h-5" />
+                        </div>
+                        <span className="text-[17px] font-[700]  text-slate-900 dark:text-slate-100">
                           {t("dashboard.actionPlan")}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-slate-300">
+                      <p className="text-[12px] text-slate-500 dark:text-slate-400">
                         {t("dashboard.followImprovementActions")}
                       </p>
                       <Button
@@ -6267,19 +6357,21 @@ const activeObjective =
 
                   {/* Checklist opérationnelle */}
                   <Card
-                    className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
+                    className="relative rounded-[18px] cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
                     onClick={() =>
                       setOpenCard(openCard === "checklist" ? null : "checklist")
                     }
                   >
                     <CardHeader className="relative text-center">
-                      <div className="flex flex-col items-center mb-2">
-                        <ClipboardList className="w-5 h-5 text-emerald-600 mb-2" />
-                        <span className="text-lg font-semibold">
+                      <div className="flex flex-col items-center">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-300">
+                        <List className="w-5 h-5 " />
+                        </div>
+                        <span className="text-[17px] font-[700]  text-slate-900 dark:text-slate-100">
                           {t("dashboard.operationalChecklist")}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-slate-300">
+                      <p className="text-[12px] text-slate-500 dark:text-slate-400">
                         {t("dashboard.concreteActions")}
                       </p>
                       <Button
@@ -6305,96 +6397,57 @@ const activeObjective =
 
                 {/* Contenu Plan d'actions - EN DESSOUS */}
                 {openCard === "planActions" && (
-                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
+                  <Card className="mb-8 rounded-[18px] dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="relative text-left">
                       <div className="flex items-center gap-2 mb-2">
-                        <ClipboardList className="w-5 h-5 text-indigo-500" />
-                        <span className="text-lg font-semibold">
-                          {t("dashboard.actionPlan")}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-slate-300">
-                        {t("dashboard.followImprovementActions")}
-                      </p>
-                    </CardHeader>
-                  <CardContent>
-                    {!activeObjective || !activeObjective.action_plan?.[i18n.language] ? (
-                      <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <ClipboardList className="w-12 h-12 text-gray-300 dark:text-slate-600 mb-4" />
-                        <h4 className="font-semibold text-gray-500 dark:text-slate-400 mb-2">
-                          {t("dashboard.noActionsAvailable", "Aucune action disponible")}
-                        </h4>
-                        <p className="text-sm text-gray-400 dark:text-slate-500 max-w-sm">
-                          {t(
-                            "dashboard.analyzeEstablishmentToGetActions",
-                            "Analysez votre établissement pour obtenir des actions personnalisées.",
-                          )}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {(() => {
-                          const actionPlan = activeObjective.action_plan[i18n.language];
-
-                          return (
-                            <div className="space-y-3">
-                              {actionPlan.map((action, index) => {
-                                const priorityBadgeClass =
-                                  action.priority.toLowerCase() === "high"
-                                    ? "bg-red-100 text-red-800 border-red-300"
-                                    : action.priority.toLowerCase() === "medium"
-                                      ? "bg-yellow-100 text-yellow-800 border-yellow-300"
-                                      : "bg-blue-100 text-blue-800 border-blue-300";
-
-                                const priorityLabel =
-                                  action.priority.toLowerCase() === "high"
-                                    ? t("dashboard.highPriority")
-                                    : action.priority.toLowerCase() === "medium"
-                                      ? t("dashboard.mediumPriority")
-                                      : t("dashboard.lowPriority");
-
-                                return (
-                                  <div
-                                    key={index}
-                                    className="p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-lg border border-indigo-200 dark:border-indigo-900/60"
-                                  >
-                                    <div className="flex items-start justify-between gap-3">
-                                      <div className="flex-1">
-                                        <p className="text-sm font-medium text-gray-900 dark:text-slate-100 mb-1">
-                                          {action.text}
-                                        </p>
-                                        <div className="flex items-center gap-2 mt-2">
-                                          <Badge
-                                            variant="outline"
-                                            className={`text-xs ${priorityBadgeClass}`}
-                                          >
-                                            {priorityLabel}
-                                          </Badge>
-                                          <span className="text-xs text-gray-500 dark:text-slate-400">
-                                            {activeObjective.pareto_cause?.[i18n.language]}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <div className="flex flex-col items-end gap-2" />
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          );
-                        })()}
-
-                        {/* Message d'information */}
-                        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-900/60">
-                          <p className="text-xs text-gray-600 dark:text-slate-300">
-                            {t("dashboard.actionPlanDescription")}
-                          </p>
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-violet-950/50 dark:text-violet-300">
+                          <ClipboardList className="w-5 h-5 text-indigo-500" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-lg font-semibold">{t("dashboard.actionPlan")}</span>
+                          <span className="text-[12px] text-slate-500 dark:text-slate-400">{t("dashboard.concreteTasks")}</span>
                         </div>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setOpenCard(null)}
+                        className="absolute right-3 top-3 h-8 w-8 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                        aria-label={t("common.close", "Close")}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </CardHeader>
+
+                    <CardContent>
+                      {orderedObjectives.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                          <ClipboardList className="w-12 h-12 text-gray-300 dark:text-slate-600 mb-4" />
+                          <h4 className="font-semibold text-gray-500 dark:text-slate-400 mb-2">
+                            {t("dashboard.noActionsAvailable", "No actions available")}
+                          </h4>
+                          {/* <p className="text-sm text-gray-400 dark:text-slate-500 max-w-sm">
+                            {t("dashboard.analyzeEstablishmentToGetActions")}
+                          </p> */}
+                        </div>
+                      ) : (
+                        <ActionPlanMultiObjective
+                          objectives={orderedObjectives}
+                          paretoCauses={analysisDataForTab?.paretoIssues}
+                          language={i18n.language}
+                          onToggleAction={(objectiveId, actionIndex) =>
+                            toggleAction(objectiveId, actionIndex)
+                          }
+                          totalReviews={displayTotalAnalyzed ?? 0}
+                          t={t}
+                          activeIssueKey={selectedParetoKey}
+                          onActiveIssueChange={setSelectedParetoKey}
+                        />
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Contenu Checklist opérationnelle - EN DESSOUS */}
                 {/* {openCard === "checklist" && (
@@ -6519,198 +6572,19 @@ const activeObjective =
                   </Card>
                 )} */}
                 {openCard === "checklist" && (
-                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
-                    <CardHeader className="relative text-left">
-                      <div className="flex items-center gap-2 mb-2">
-                        <ClipboardList className="w-5 h-5 text-emerald-600" />
-                        <span className="text-lg font-semibold dark:text-slate-100">
-                          {t("dashboard.operationalChecklist")}
-                        </span>
-                      </div>
-
-                      <p className="text-sm text-gray-600 dark:text-slate-300">
-                        {t("dashboard.concreteActions")}
-                      </p>
-                    </CardHeader>
-
-
-                    <CardContent>
-                      {!activeObjective ? (
-                        <div className="text-center py-8 text-gray-500 dark:text-slate-400">
-                          <p className="text-sm">
-                            {t("recommendations.smart.noSmartActions")}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-8">
-                          {(() => {
-                            const objective = activeObjective;
-
-                            const lang = i18n.language.startsWith("fr")
-                              ? "fr"
-                              : "en";
-
-                            const actions = Array.isArray(objective.actions)
-                              ? objective.actions
-                              : [];
-
-                            const grouped = {
-                              daily: actions.filter(
-                                (a) => a.frequency === "daily"
-                              ),
-                              weekly: actions.filter(
-                                (a) => a.frequency === "weekly"
-                              ),
-                              monthly: actions.filter(
-                                (a) =>
-                                  a.frequency === "once" ||
-                                  a.frequency === "monthly"
-                              ),
-                            };
-
-                            const totalActions = actions.length;
-
-                            const completedActions = actions.filter(
-                              (a) => a.completed
-                            ).length;
-
-                            const progress =
-                              totalActions > 0
-                                ? Math.round(
-                                    (completedActions / totalActions) * 100
-                                  )
-                                : 0;
-
-                            const problemText =
-                              typeof objective.problem === "string"
-                                ? JSON.parse(objective.problem)?.[lang]
-                                : objective.problem?.[lang];
-
-                            const paretoCauseText =
-                              typeof objective.pareto_cause === "string"
-                                ? JSON.parse(objective.pareto_cause)?.[lang]
-                                : objective.pareto_cause?.[lang];
-
-                            return (
-                              <div
-                                key={objective.id}
-                                className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 bg-white dark:bg-slate-900"
-                              >
-                                {/* Objective header */}
-                                <div className="mb-5">
-                                  <div className="flex items-center justify-between gap-4 mb-2">
-                                    <div>
-                                      <h3 className="font-semibold text-gray-900 dark:text-slate-100">
-                                        {problemText ||
-                                          "SMART Objective"}
-                                      </h3>
-
-                                      {paretoCauseText && (
-                                        <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-                                          {t("dashboard.relatedIssue")} :
-                                          {" "}
-                                          {paretoCauseText}
-                                        </p>
-                                      )}
-                                    </div>
-
-                                    <Badge className="bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/60">
-                                      {completedActions}/{totalActions}
-                                    </Badge>
-                                  </div>
-                                </div>
-
-                                {/* Sections */}
-                                <div className="space-y-6">
-                                  {Object.entries(grouped).map(
-                                    ([frequency, list]) => {
-                                      if (!list.length) return null;
-
-                                      return (
-                                        <div key={frequency}>
-                                          <h4 className="text-xs uppercase tracking-wide font-semibold text-gray-500 dark:text-slate-400 mb-3">
-                                            {t(`dashboard.${frequency}`)}
-                                          </h4>
-
-                                          <div className="space-y-2">
-                                            {list.map((action, index) => {
-                                              const actionText =
-                                                typeof action.text === "string"
-                                                  ? JSON.parse(action.text)?.[
-                                                      lang
-                                                    ]
-                                                  : action.text?.[lang];
-
-                                              const realIndex =
-                                                actions.findIndex(
-                                                  (a) =>
-                                                    JSON.stringify(a.text) ===
-                                                    JSON.stringify(action.text)
-                                                );
-
-                                              return (
-                                                <div
-                                                  key={`${objective.id}-${index}`}
-                                                  onClick={() =>
-                                                    toggleAction(
-                                                      objective.id!,
-                                                      realIndex
-                                                    )
-                                                  }
-                                                  className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-all"
-                                                >
-                                                  {/* Checkbox */}
-                                                  <div className="mt-0.5 shrink-0">
-                                                    {action.completed ? (
-                                                      <CheckCircle2 className="w-5 h-5 text-green-600" />
-                                                    ) : (
-                                                      <Circle className="w-5 h-5 text-gray-300 dark:text-slate-500" />
-                                                    )}
-                                                  </div>
-
-                                                  {/* Text */}
-                                                  <div className="flex-1">
-                                                    <p
-                                                      className={`text-sm leading-relaxed ${
-                                                        action.completed
-                                                          ? "line-through text-gray-400 dark:text-slate-500"
-                                                          : "text-gray-800 dark:text-slate-100"
-                                                      }`}
-                                                    >
-                                                      {actionText}
-                                                    </p>
-                                                  </div>
-
-                                                  {/* Frequency badge */}
-                                                  <Badge
-                                                    className={
-                                                      frequency === "daily"
-                                                        ? "bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-900/60"
-                                                        : frequency === "weekly"
-                                                          ? "bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/60"
-                                                          : frequency === "monthly"
-                                                            ? "bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-900/60"
-                                                            : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700"
-                                                    }
-                                                  >
-                                                    {t(`dashboard.${frequency}`)}
-                                                  </Badge>
-                                                </div>
-                                              );
-                                            })}
-                                          </div>
-                                        </div>
-                                      );
-                                    }
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                      <OperationalChecklistMultiObjective
+                        objectives={orderedObjectives}
+                        paretoCauses={analysisDataForTab?.paretoIssues}
+                        language={i18n.language}
+                        onToggleAction={(objectiveId, actionIndex) =>
+                          toggleAction(objectiveId, actionIndex)
+                        }
+                        totalReviews={displayTotalAnalyzed ?? 0}
+                        t={t}
+                        setOpenCard={setOpenCard}
+                        activeIssueKey={selectedParetoKey}
+                        onActiveIssueChange={setSelectedParetoKey}
+                      />
                 )}
 
                 {/* SECTION 3 : Conseiller (pleine largeur, style éditorial/insight) */}
@@ -6820,7 +6694,7 @@ const activeObjective =
 
                 {/* Agent */}
                 <Card
-                  className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 mb-8 dark:bg-slate-900 dark:border-slate-800"
+                  className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 mb-8 dark:bg-slate-900 dark:border-slate-800 rounded-[18px]"
                   onClick={toggleAgentCard}
                 >
                   <CardHeader className="relative text-center">
@@ -6853,7 +6727,7 @@ const activeObjective =
 
                 {/* Contenu Agent - EN DESSOUS */}
                 {openCard === "agent" && (
-                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
+                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800 rounded-[18px]">
                     <CardHeader className="relative text-left">
                       <div className="flex items-center gap-2 mb-2">
                         <Bot className="w-5 h-5 text-purple-500" />

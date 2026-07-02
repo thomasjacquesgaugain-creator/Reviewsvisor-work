@@ -1,110 +1,170 @@
-import { ParetoItem } from "@/types/analysis";
+import { useMemo } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
-import { useTranslation } from "react-i18next";
 import { useSmartStore } from "@/store/smartStore";
+import { ParetoItem } from "@/types/analysis";
+import { InfoIcon } from "lucide-react";
 
-// ── Effort from category name (5M/Ishikawa table) ───────────
-function getEffortFromCategory(category: string): "high" | "medium" | "low" {
-  const c = category.toLowerCase();
+type MatrixRow = {
+  action: string;
+  issue: string;
+  tone: SummaryTone;
+  impact: "high" | "medium" | "low";
+  effort: "high" | "medium" | "low";
+};
 
-  if (
-    c.includes("method") || c.includes("méthode") ||
-    c.includes("milieu") || c.includes("environment") ||
-    c.includes("environnement") || c.includes("measurement") ||
-    c.includes("mesure")
-  ) return "low";
+type SummaryTone = "red" | "amber" | "blue";
 
-  if (
-    c.includes("workforce") || c.includes("main-d") ||
-    c.includes("manpower") || c.includes("people") ||
-    c.includes("personnel") || c.includes("organization") ||
-    c.includes("skills") || c.includes("compétence") ||
-    c.includes("formation") || c.includes("training")
-  ) return "medium";
+const ISSUE_TONES: SummaryTone[] = ["red", "amber", "blue"];
 
-  if (
-    c.includes("machine") || c.includes("material") ||
-    c.includes("matière") || c.includes("matériel") ||
-    c.includes("equipment") || c.includes("système") ||
-    c.includes("system") || c.includes("outil") || c.includes("tool")
-  ) return "high";
+const SUMMARY_TONE_STYLES: Record<SummaryTone, { pill: string }> = {
+  red:   { pill: "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300" },
+  amber: { pill: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300" },
+  blue:  { pill: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300" },
+};
 
+const getIssueTone = (index: number): SummaryTone =>
+  ISSUE_TONES[index % ISSUE_TONES.length];
+
+function getLocalizedObjectiveSynthesis(objective: any, language: string) {
+  if (!objective) return null;
+  const synthesis = objective?.synthesis ?? objective?.ishikawa_synthesis ?? null;
+  if (!synthesis) return null;
+  const lang = language.split("-")[0].toLowerCase();
+  return synthesis[lang] ?? synthesis.en ?? synthesis.fr ?? synthesis ?? null;
+}
+
+function normalizeLevel(val: string | undefined): "high" | "medium" | "low" {
+  const v = (val ?? "").toLowerCase();
+  if (v === "high") return "high";
+  if (v === "low")  return "low";
   return "medium";
 }
 
-// ── Build matrix rows from paretoIssue.root_causes ──────────
-function buildMatrixFromRootCauses(issue: ParetoItem) {
-  const rows: {
-    action: string;
-    category: string;
-    impact: "high" | "medium" | "low";
-    effort: "high" | "medium" | "low";
-  }[] = [];
+function getEffortFromCategory(category: string): "high" | "medium" | "low" {
+  const v = category.toLowerCase();
+  if (v.includes("method") || v.includes("milieu") || v.includes("environment") ||
+      v.includes("environnement") || v.includes("measurement") || v.includes("mesure"))
+    return "low";
+  if (v.includes("machine") || v.includes("material") || v.includes("equipment") ||
+      v.includes("system") || v.includes("outil") || v.includes("tool"))
+    return "high";
+  return "medium";
+}
 
-  const usedActions = new Set<string>();
+function getIssueLabel(issue: ParetoItem, objective: any | null, language: string): string {
+  if (objective) {
+    return (
+      objective?.pareto_cause?.[language] ||
+      objective?.pareto_cause?.en ||
+      objective?.pareto_cause?.fr ||
+      ""
+    );
+  }
+  const lang = language.split("-")[0].toLowerCase();
+  if (lang === "fr") return issue.fr || issue.name || "";
+  return issue.en || issue.name || "";
+}
 
-  (issue.root_causes ?? []).forEach((rc: any) => {
-    // effort ← category name (per 5M table)
-    const effort = getEffortFromCategory(rc.category ?? "");
-    // impact ← importance field
-    const impact: "high" | "medium" | "low" =
-      rc.importance === "dominant"  ? "high"   :
-      rc.importance === "secondary" ? "medium" : "low";
+function getIssueToneClass(tone: SummaryTone) {
+  return SUMMARY_TONE_STYLES[tone].pill;
+}
 
-    (rc.causes ?? []).forEach((causeDesc: string) => {
-      if (usedActions.has(causeDesc)) return;
-      usedActions.add(causeDesc);
-      rows.push({
-        action:   causeDesc,
-        category: rc.category ?? "",
-        impact,
-        effort,
-      });
+function getLevelClass(level: "high" | "medium" | "low") {
+  return {
+    high:   "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+    medium: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+    low:    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+  }[level];
+}
+
+function buildMatrixRows(
+  paretoIssues: ParetoItem[],
+  objectives: any[],
+  language: string,
+): MatrixRow[] {
+
+  const objectiveByKey = new Map<string, any>();
+  (objectives ?? []).forEach((obj) => {
+    const key = String(obj?.pareto_cause?.key ?? "").toLowerCase();
+    if (key) objectiveByKey.set(key, obj);
+  });
+
+  const issuesWithObjectives = (paretoIssues ?? []).filter((issue) => {
+    const issueKey = String(issue.key ?? "").toLowerCase();
+    return objectiveByKey.has(issueKey);
+  });
+
+  const topIssues = [...issuesWithObjectives]
+    .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
+    .slice(0, 3);
+
+  const rows: MatrixRow[] = [];
+  const seenRows = new Set<string>();
+
+  topIssues.forEach((issue, issueIndex) => {
+    const issueKey      = String(issue.key ?? "").toLowerCase();
+    const objective     = objectiveByKey.get(issueKey) ?? null;
+    const tone          = getIssueTone(issueIndex);
+    const issueLabel    = getIssueLabel(issue, objective, language);
+
+    const impact: MatrixRow["impact"] = objective?.impact
+      ? normalizeLevel(objective.impact)
+      : "medium";
+
+    const effort: MatrixRow["effort"] = objective?.effort
+      ? normalizeLevel(objective.effort)
+      : (() => {
+          const firstRc = (issue.root_causes ?? [])[0];
+          return firstRc?.category
+            ? getEffortFromCategory(String(firstRc.category))
+            : "medium";
+        })();
+
+    const rootCauseItems: string[] = (issue.root_causes ?? [])
+      .flatMap((rc: any) =>
+        (rc.causes ?? []).map((cause: string) => String(cause || "").trim())
+      )
+      .filter(Boolean)
+      .slice(0, 3);
+
+    const causeTexts: string[] =
+      rootCauseItems.length > 0
+        ? rootCauseItems
+        : (() => {
+            const synthesis = getLocalizedObjectiveSynthesis(objective, language);
+            const topPriority = synthesis?.top_priority;
+            return topPriority ? [String(topPriority).trim()] : [];
+          })();
+
+    if (!causeTexts.length) return;
+
+    causeTexts.forEach((action) => {
+      const rowKey = `${issueLabel}|${action}`.toLowerCase();
+      if (seenRows.has(rowKey)) return;
+      seenRows.add(rowKey);
+      rows.push({ action, issue: issueLabel, tone, impact, effort });
     });
   });
 
-  // Sort: high impact + low effort first (quick wins at top)
-  const score = (r: typeof rows[number]) => {
-    const i = r.impact === "high" ? 3 : r.impact === "medium" ? 2 : 1;
-    const e = r.effort === "low"  ? 3 : r.effort === "medium" ? 2 : 1;
-    return i + e;
-  };
-
-  return rows.sort((a, b) => score(b) - score(a));
+  return rows;
 }
 
-// ── Badge styles ─────────────────────────────────────────────
-const impactStyle = {
-  high:   "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
-  medium: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-  low:    "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
-};
-
-const effortStyle = {
-  low:    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-  medium: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
-  high:   "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
-};
-
-// ── COMPONENT ────────────────────────────────────────────────
 export const EffortMatrix = ({ analysisData }: { analysisData: any }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { objectives } = useSmartStore();
 
-  const activeObjective = objectives.find(o => o.status === "in_progress");
+  const rows = useMemo(
+    () =>
+      buildMatrixRows(
+        analysisData?.paretoIssues ?? [],
+        objectives ?? [],
+        i18n.language,
+      ),
+    [analysisData?.paretoIssues, objectives, i18n.language],
+  );
 
-  const paretoIssues: ParetoItem[] = activeObjective
-    ? (analysisData?.paretoIssues ?? []).filter(
-        (p: ParetoItem) =>
-          p.key.toLowerCase() === activeObjective?.pareto_cause?.key?.toLowerCase()
-      )
-    : (() => {
-        const top = [...(analysisData?.paretoIssues ?? [])]
-          .sort((a: ParetoItem, b: ParetoItem) => b.count - a.count)[0];
-        return top ? [top] : [];
-      })();
-
-  if (!paretoIssues.length) {
+  if (!rows.length) {
     return (
       <p className="text-sm text-gray-500 dark:text-slate-400">
         {t("recommendations.smart.noParetoIssues")}
@@ -113,69 +173,77 @@ export const EffortMatrix = ({ analysisData }: { analysisData: any }) => {
   }
 
   return (
-    <div>
-      <h4 className="mb-4 font-semibold text-slate-800 dark:text-slate-100">
+    <>
+      <h4 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
         {t("dashboard.actionPrioritization")}
       </h4>
 
-      {paretoIssues.map((issue, idx) => {
-        if (!issue.root_causes?.length) return null;
-
-        const rows = buildMatrixFromRootCauses(issue);
-        if (!rows.length) return null;
-
-        return (
-          <div key={idx} className="mb-6">
-            <h5 className="mb-2 font-medium text-slate-700 dark:text-slate-300">
-              {issue.name}
-            </h5>
-
-            <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/60">
-                    <th className="text-left py-2 px-3 text-slate-600 dark:text-slate-300">
-                      {t("dashboard.action")}
-                    </th>
-                    <th className="text-center py-2 px-3 text-slate-600 dark:text-slate-300">
-                      {t("dashboard.impact")}
-                    </th>
-                    <th className="text-center py-2 px-3 text-slate-600 dark:text-slate-300">
-                      {t("dashboard.effort")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row, i) => (
-                    <tr
-                      key={i}
-                      className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white/95 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
+                <th className="px-4 py-3">ACTION</th>
+                <th className="px-4 py-3">{t("dashboard.issue")}</th>
+                <th className="px-4 py-3 text-center">IMPACT</th>
+                <th className="px-4 py-3 text-center">EFFORT</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, index) => (
+                <tr
+                  key={`${row.issue}-${row.action}-${index}`}
+                  className="border-t border-slate-100 dark:border-slate-800"
+                >
+                  <td className="px-4 py-4 align-top text-slate-700 dark:text-slate-200">
+                    {row.action}
+                  </td>
+                  <td className="px-4 py-4 align-top">
+                    <Badge
+                      variant="outline"
+                      className={`rounded-full px-3 py-1 font-semibold ${getIssueToneClass(row.tone)}`}
                     >
-                      <td className="py-2 px-3 text-slate-700 dark:text-slate-300">
-                        {row.action}
-                      </td>
-                      <td className="text-center py-2 px-3">
-                        <Badge className={impactStyle[row.impact]}>
-                          {t(`dashboard.${row.impact}`)}
-                        </Badge>
-                      </td>
-                      <td className="text-center py-2 px-3">
-                        <Badge className={effortStyle[row.effort]}>
-                          {t(`dashboard.${row.effort}`)}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      })}
+                      {row.issue}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-4 text-center align-top">
+                    <Badge
+                      variant="outline"
+                      className={`rounded-full px-3 py-1 font-semibold ${getLevelClass(row.impact)}`}
+                    >
+                      {t(`dashboard.${row.impact}`)}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-4 text-center align-top">
+                    <Badge
+                      variant="outline"
+                      className={`rounded-full px-3 py-1 font-semibold ${getLevelClass(row.effort)}`}
+                    >
+                      {t(`dashboard.${row.effort}`)}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-      <p className="mt-4 text-sm italic text-slate-500 dark:text-slate-400">
-        {t("dashboard.recommendedStartHighImpactLowEffort")}
-      </p>
-    </div>
+        <div className="border-t border-slate-100 px-4 py-3 dark:border-slate-800">
+          <div className="flex items-start gap-2">
+            <InfoIcon className="h-4 w-4 text-violet-500 mt-0.5 shrink-0" />
+            <p className="text-sm italic text-slate-600 dark:text-slate-400">
+              <Trans
+                i18nKey="dashboard.recommendedStartHighImpactLowEffort"
+                components={{
+                  strong: (
+                    <strong className="font-semibold not-italic text-slate-900 dark:text-slate-100" />
+                  ),
+                }}
+              />
+            </p>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };

@@ -282,6 +282,7 @@
     "month": "Month",
     "year": "Year",
     "daily":"Daily",
+    "tasks":"tasks",
     "once":"Monthly",
     "monthly":"Monthly",
     "weekly":"Weekly",
@@ -387,8 +388,11 @@
     "shortTerm": "Short term",
     "mediumTerm": "Medium term",
     "operationalChecklist": "Operational checklist",
-    "concreteActions": "Concrete and prioritized actions to implement",
+    "configure":"Configure",
+    "concreteActions": "Concrete prioritized actions to put in place",
+    "routineToFollow":"Routine to follow in the field",
     "noActionsAvailable": "No actions available",
+    "noChecklistAvailable":"No operational checklist available",
     "analyzeEstablishmentToGetActions": "Analyze your establishment to get improvement actions",
     "agent": "Advisor",
     "aiRespondReview": "AI assistant to respond to your reviews",
@@ -480,7 +484,12 @@
     },
     "withinMonths": "Within {{months}} months",
     "actionPlan": "Action plan",
-    "followImprovementActions": "Follow your improvement actions",
+    "followImprovementActions": "Track your improvement actions",
+    "concreteTasks": "Concrete tasks to execute",
+    "planProgress": "Plan Progress",
+    "actionsCompleted": "actions completed",
+    "noActions":"No actions for this objective yet.",
+    "AiRecommendation":"AI Recommendation",
     "improveWaitTime": "Improve wait time",
     "trainTeamCustomerService": "Train team in customer service",
     "respondToNegativeReviews": "Respond to negative reviews",
@@ -489,6 +498,7 @@
     "inProgress": "In progress",
     "toDo": "To do",
     "completed": "Completed",
+    "mainCausesIdentified":"Main causes identified",
     "actionPlanDescription": "Track the progress of your improvement actions to achieve your goals.",
     "reviewManagement": "Review management",
     "respondSystematically": "Respond systematically to customer reviews (positive and negative)",
@@ -505,7 +515,7 @@
     "notIdentified": "Not identified",
     "unspecifiedProblem": "Unspecified problem",
     "unspecifiedStrength": "Unspecified strength",
-    "actionPrioritization": "Action prioritization – Impact vs Effort",
+    "actionPrioritization": "Improvement action prioritization — Impact vs Effort",
     "action": "Action",
     "impact": "Impact",
     "effort": "Effort",
@@ -613,16 +623,17 @@
     "noAnalysisAvailable": "No analysis available for this establishment. Click \"Analyze\" in the location map to get started.",
     "importAndAnalyzeToSeeResults": "Report reviews and run an analysis to see the results",
     "synthesisPriorities": "Summary & priorities",
-    "synthesisPrioritiesSubtitle": "Strategic reading of customer reviews and priority focus points",
+    "synthesisPrioritiesSubtitle": "Strategic reading of customer reviews and key focus areas",
      "noSynthesisAvailable": "No synthesis available",
-    "noSynthesisDescription": "Select an active objective or collect more reviews to generate a strategic synthesis.",
-    "improvementAxesIdentified": "Identified areas for improvement",
+    "noSynthesisDescription": "Fill questionnaire to generate a strategic synthesis.",
+    "improvementAxesIdentified": "Improvement areas identified",
     "low": "Low",
     "medium": "Medium",
     "importGeneratePersonalizedActions": "Import your reviews to generate personalized actions",
     "noAdviceAvailable": "No advice available",
     "analyzeEstablishmentToGetAdvice": "Analyze your establishment to get personalized advice.",
-    "recommendedStartHighImpactLowEffort": "Suggestion for consideration: prioritize items with high impact and low effort based on your priorities.",
+    "issue":"Issue",
+    "recommendedStartHighImpactLowEffort": "Suggestion: prioritize actions with <strong>high impact</strong> and <strong>low effort</strong>.",
     "automatedSystemForReviews": "Automated customer review system",
     "toValidate": "To Validate",
     "proposedAutomaticResponse": "Suggested automatic reply",
@@ -2188,12 +2199,91 @@
     "aiGeneratedGoals": "AI-generated, user-validated goals",
     "mainIssue": "Main issue: \"{{issue}}\"",
     "negativeReviews": "{{percentage}}% of negative reviews",
-    "modalTitle": "SMART objective generator",
+    "modalTitle": "Define goal SMART",
     "generating": "Generating SMART objective for \"{{cause}}\"...",
+    "issue":"Issue",
+    "paretoSource":"Pareto Source",
+    "cause":"Cause (Ishikawa)",
     "reviewHint": "AI has generated this objective. Review and adjust before saving.",
     "impact": "Impact",
     "effort": "Effort",
+    "contextAnalyzed":"Context analyzed by AI",
+    "goalProposed":"Goal proposed by AI",
+    "mainAction":"Main Action",
+    "whichIssue":"Which issue, which action?",
+    "issueToSolve":"Issue to solve",
+    "recommendedMainAction":"Recommended main action",
+    "howToMeasure":"How do you measure progress?",
+    "trackingIndicator":"Tracking Indicator",
+    "unitOfMeasurement":"Unit of measurement",
+    "whereToStart":"Where you start from, where you want to go?",
+    "WhyGoalMatter":"Why does this goal matter?",
+    "ByWhen":"By when and with what review cadence?",
+    "whyImportant":"Why is this goal important?",
+    "startDate":"Start date",
+    "targetDate":"Target date",
+    "autoCalculated":"auto-calculated",
     "quadrant": "Quadrant",
+    "checklistTitle":"Configure checklist",
+    "reanalyse":"Redo AI ​​analysis",
+    "redoTitle": "Redo AI analysis",
+    "redoDescription": "AI will run a full analysis from the most recent data.",
+    "willBeReset": "The following will be reset:",
+    "willBeKept": "Will be kept",
+    "launchNewAnalysis": "Launch the new analysis",
+    "hideDetail":"Hide SMART detail",
+    "showDetail":"Show full SMART detail",
+    "validateGoal":"Validate the goal",
+    "redoWarning": "Warning: a new analysis will be generated. Current recommendations will be replaced and cannot be restored.",
+    "resetItems": {
+        "ishikawa": "Causes identified (Ishikawa)",
+        "smartGoals": "SMART goals",
+        "actionPlan": "Action plan (PDCA)",
+        "checklist": "Operational checklist",
+        "progress": "Execution progress",
+        "validations": "Pending validations"
+      },
+      "keepItems": {
+        "reviews": "Customer reviews",
+        "history": "Reviewsvisor history",
+        "performance": "Performance data"
+    },
+    "checklist": {
+      "schedule": {
+        "daily": {
+          "startOfDay": "Start of day",
+          "duringActivity": "During activity",
+          "endOfDay": "End of day",
+          "customTime": "Custom time"
+        },
+        "weekly": {
+          "monday": "Monday",
+          "tuesday": "Tuesday",
+          "wednesday": "Wednesday",
+          "thursday": "Thursday",
+          "friday": "Friday",
+          "saturday": "Saturday",
+          "sunday": "Sunday"
+        },
+        "monthly": {
+          "startOfMonth": "Start of month",
+          "midMonth": "Mid-month",
+          "endOfMonth": "End of month",
+          "customDate": "Custom date"
+        }
+      },
+      "configure":{
+        "dailyTasks":"Daily tasks",
+        "weeklyTasks":"Weekly tasks",
+        "monthlyTasks":"Monthly tasks",
+        "customDatePlaceholder":"ex: 1st Monday",
+        "saveSuccess":"Checklist configuration saved.",
+        "generatedOn": "Document generated {{date}}",
+        "footerBrand": "Reviewsvisor — Quality Advisor",
+        "downloadPDF":"Download PDF"
+      }
+    },
+    "checklistSubtitle":"Customize each task according to your activity rhythm. Settings will be saved for this goal.",
     "impactValues": {
       "low": "Low",
       "medium": "Medium",
@@ -2207,8 +2297,10 @@
     },
     "problemToSolve": "Problem to solve",
     "kpiName": "KPI name",
-    "current": "Current",
-    "target": "Target",
+    "current": "Current Situation",
+    "target": "Target Value",
+    "targetImprovement":"Target Improvement",
+    "aiJustification":"Ai Justification",
     "auto": "(auto)",
     "unit": "Unit",
     "deadline": "Deadline",
@@ -2219,7 +2311,7 @@
     "saveObjective": "Save objective",
     "saving": "Saving...",
     "updating": "Updating...",
-    "updateSmart": "Update SMART",
+    "updateSmart": "Modify Objective",
     "questionnaireMissing": "⚠️ Questionnaire missing for next Pareto issue",
     "completeQuestionnaireFor": "Please complete the questionnaire for: {{issue}}",
     "noIssuesLeft": "🎉 No issues left to resolve",
@@ -2233,7 +2325,36 @@
     "pdcaTracking": "PDCA tracking",
     "noParetoIssues": "No Pareto issues available",
     "analyzeReviewsMessage": "Analyze your establishment reviews to generate SMART objectives and PDCA tracking",
-     "noSmartActions": "No SMART actions available yet"
+     "noSmartActions": "No SMART actions available yet",
+     "stepbar":{
+      "issueImpact":"Issue Impact",
+      "causeIdentified":"Cause Identified",
+      "targetGoal":"Target Goal",
+      "actionSteps":"Plan Steps",
+      "validated":"Validated",
+      "causesValidated":"Causes validated",
+      "causeValidated":"Cause validated",
+      "causeToValidated":"Cause to be validate"
+     },
+     "chooseIssue":"Choose an issue to address",
+     "mainIssueLabel":"MAIN ISSUE",
+     "completed":{
+      "title":"Goal achieved",
+      "subtitle":"This SMART objective has been successfully completed. The associated action plan is closed.",
+      "checklist":"This SMART objective has been successfully completed. The operational checklist is no longer editable for this goal."
+     },
+     "noObjective":{
+      "title":"No SMART objective available",
+      "subtitle":"No SMART objective has been created for <strong>{{issue}}</strong> yet. Complete the questionnaire to generate one."
+     },
+     "noActionPlan":{
+      "title":"No action plan available",
+      "subtitle":"No action plan has been created for <strong>{{issue}}</strong> yet. Complete the questionnaire to generate one."
+     },
+     "noChecklist":{
+      "title":"No operational checklist available",
+      "subtitle":"No operational checklist has been created for <strong>{{issue}}</strong> yet. Complete the questionnaire to generate one."
+     }
   },
 
   "actionPlan": {
@@ -2304,11 +2425,13 @@
   },
   "smartCard": {
   "header": {
-    "title":     "SMART objective — {{cause}}",
+    "title": "Target goal",
+    "subTitle": "Goal framework validated by AI for this issue",
     "pareto": "From Pareto: \"{{cause}}{{percentageText}}\"",
     "negativeReviewsPercentage": " – {{percentage}}% of negative reviews",
     "ishikawa":  "Ishikawa: {{category}}",
-    "validated": "(validated)"
+    "validated": "(validated)",
+    "smartTooltip":"SMART goal: method for defining a clear, measurable and realistic goal. Benefit: you know exactly what result to reach and how to track it."
   },
   "priority": {
     "high":   "High priority",
@@ -2323,22 +2446,39 @@
   },
   "aiGenerated": "AI generated",
   "smart": {
-    "specific":   "Specific",
-    "measurable": "Measurable",
-    "achievable": "Achievable",
-    "relevant":   "Relevant",
-    "temporal":   "Time-bound"
+    "specific":   "CLEAR GOAL",
+    "measurable": "Measured by",
+    "achievable": "Goal to accomplish",
+    "relevant":   "Relevance",
+    "temporal":   "Deadline"
+  },
+  "goalSections":{
+    "specific":"Specific",
+    "realistic":"Realistic",
+    "Measurable":"Measurable",
+    "Timebound":"Time-bound",
+    "Achievable":"Achievable",
+    "negativeReviewsMonth":"negative reviews / month",
+    "relevant":"Relevant"
   },
   "temporal": {
     "deadline": "Deadline: {{date}}",
-    "duration": "Duration: {{months}}mo · Review: 6 weeks"
+    "duration": "Duration: {{months}}mo · Review: 6 weeks",
+    "months":"months",
+    "reviewFrequency": {
+      "every_week":      "Every week",
+      "every_2_weeks":   "Every 2 weeks",
+      "every_4_weeks":   "Every 4 weeks",
+      "every_3_months":  "Every 3 months"
+    }
   },
   "achievable": {
     "noActions": "No actions defined",
     "more":      "+ {{count}} more"
   },
+  "expectedResult":"Expected result",
   "progress": {
-    "label":           "Progress toward target",
+    "label":           "Progress toward goal",
     "mentionsNow":     "{{value}} mentions now",
     "start":           "Start: {{value}}",
     "target":          "Target: {{value}}",
@@ -2346,12 +2486,38 @@
     "overdue":         "{{days}}d overdue",
     "updateBtn":       "Update progress",
     "currentMentions": "Current mentions:",
-    "saveBtn":         "Save"
+    "saveBtn":         "Save",
+    "autoStarted":" auto-measured · started",
+    "atteint":"Reached",
+    "startLabel":"Start",
+    "currentLabel":"Current",
+    "targetLabel":"Target"
   },
   "pdca": {
-    "title": "PDCA — Monitoring, execution, continuous improvement",
+    "title": "Action plan",
+    "subTitle": "Execution method · automatically generated from your SMART goal",
+    "planTitle": "Prepare",
+    "launchTitle": "Launch",
+    "measureTitle": "Measure",
+    "adjustTitle": "Adjust",
+    "managerDecision": "Manager decision",
+    "teamExecution":"Team action on the ground",
+    "validateSmartGoal": "Validate SMART goal",
+    "manual": "Manual",
+    "object": "Objective",
+    "current": "Current",
+    "fieldExecution": "Field execution",
+    "autoMeasured": "Auto-measured by Reviewsvisor",
+    "adjustInProgress": "Goal in progress",
+    "start": "Start",
+    "forecast": "Expected end",
+    "targetShort": "Target",
+    "currentSituation": "Current situation",
+    "waitingForPlan":"Waiting for plan validation to start data collection.",
+    "checklistLocked":" Checklist locked",
+    "checklistLockedStatus":" The operational checklist will be available once validate and launch this plan.",
     "plan": {
-      "label":  "PLAN",
+      "label": "PLAN",
       "target": "Target: {{current}} → {{target}} · {{months}} months"
     },
     "do": {
@@ -2359,23 +2525,33 @@
       "tasks": "Tasks ({{completed}}/{{total}})"
     },
     "check": {
-      "label":       "CHECK",
+      "label": "CHECK",
       "kpiTracking": "KPI tracking",
-      "target":      "target {{value}}"
+      "target": "target {{value}}"
     },
     "act": {
-      "label":    "ACT",
+      "label": "ACT",
       "decision": "Decision",
       "options": {
-        "effective":   "Effective → standardize",
-        "partial":     "Partial → adjust",
+        "effective": "Effective → standardize",
+        "partial": "Partial → adjust",
         "ineffective": "Ineffective → new action"
       },
       "trend": {
         "improvement": "Improvement",
         "degradation": "Degradation",
-        "stable":      "Stable"
+        "stable": "Stable"
       }
+    },
+    "pdcaTooltip": "PDCA: execution method for turning a goal into concrete actions and measuring the results. Benefit: you improve performance through continuous tracking and regular adjustments.",
+    "status":{
+      "planValidated":"Plan validated",
+      "active":"Active",
+      "auto":"Automatic",
+      "tracking":"Tracking",
+      "toBeValidated":"To be validated",
+      "pendingToActivate":"Pending · to activate",
+      "activateLaunchPlan":"Validate and launch the plan"
     }
   }
 },
