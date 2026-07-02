@@ -187,35 +187,39 @@ export function generateChecklistPdf({
       doc.setDrawColor(180, 180, 180);
       doc.setLineWidth(1);
 
-      if (action.completed) {
-        doc.setFillColor(34, 197, 94);
-        doc.roundedRect(boxX, boxY, boxSize, boxSize, 2, 2, "FD");
+      // if (action.completed) {
+      //   doc.setFillColor(34, 197, 94);
+      //   doc.roundedRect(boxX, boxY, boxSize, boxSize, 2, 2, "FD");
 
-        const cx = boxX + boxSize / 2;
-        const cy = rowCenterY;
-        doc.setDrawColor(255, 255, 255);
-        doc.setLineWidth(1.6);
-        doc.line(
-          boxX + boxSize * 0.22,
-          cy,
-          cx - boxSize * 0.02,
-          boxY + boxSize * 0.72,
-        );
-        doc.line(
-          cx - boxSize * 0.02,
-          boxY + boxSize * 0.72,
-          boxX + boxSize * 0.82,
-          boxY + boxSize * 0.22,
-        );
-      } else {
-        doc.roundedRect(boxX, boxY, boxSize, boxSize, 2, 2, "S");
-      }
+      //   const cx = boxX + boxSize / 2;
+      //   const cy = rowCenterY;
+      //   doc.setDrawColor(255, 255, 255);
+      //   doc.setLineWidth(1.6);
+      //   doc.line(
+      //     boxX + boxSize * 0.22,
+      //     cy,
+      //     cx - boxSize * 0.02,
+      //     boxY + boxSize * 0.72,
+      //   );
+      //   doc.line(
+      //     cx - boxSize * 0.02,
+      //     boxY + boxSize * 0.72,
+      //     boxX + boxSize * 0.82,
+      //     boxY + boxSize * 0.22,
+      //   );
+      // } else {
+      //   doc.roundedRect(boxX, boxY, boxSize, boxSize, 2, 2, "S");
+      // }
+
+      doc.setDrawColor(180, 180, 180);
+      doc.setLineWidth(1);
+      doc.roundedRect(boxX, boxY, boxSize, boxSize, 2, 2, "S");
 
       const textX = marginX + checkSize + 12;
       const maxWidth = pageWidth - marginX - 90 - textX;
-      doc.setFont("helvetica", action.completed ? "italic" : "normal");
+      doc.setFont("helvetica", "normal");
       doc.setFontSize(10.5);
-      doc.setTextColor(...(action.completed ? gray : black));
+      doc.setTextColor(...black);
       const lines = doc.splitTextToSize(
         getLocalizedText(action.text, lang),
         maxWidth,

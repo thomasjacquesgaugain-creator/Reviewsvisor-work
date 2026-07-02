@@ -2332,7 +2332,9 @@
       "targetGoal":"Target Goal",
       "actionSteps":"Plan Steps",
       "validated":"Validated",
-      "causeValidated":"Causes validated"
+      "causesValidated":"Causes validated",
+      "causeValidated":"Cause validated",
+      "causeToValidated":"Cause to be validate"
      },
      "chooseIssue":"Choose an issue to address",
      "mainIssueLabel":"MAIN ISSUE",

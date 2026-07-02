@@ -16,6 +16,7 @@ import { SmartObjectiveCard } from "./reviews/SmartObjectiveCard";
 import { SmartActionPlanCard } from "./reviews/SmartActionPlanCard";
 import { SmartGenerateModal } from "./reviews/SmartGenerateModal";
 import { useSmartStore } from "@/store/smartStore";
+import { supabase } from "@/integrations/supabase/client";
 import type { ParetoItem } from "@/types/analysis";
 import { Trans, useTranslation } from "react-i18next";
 import { useEstablishmentStore } from "@/store/establishmentStore";
@@ -49,6 +50,7 @@ export function RecommendationsSection({
   } = useSmartStore();
 
   const activeEstablishmentId = useEstablishmentStore((s) => s.activeEstablishmentId);
+  const activePlaceId = useEstablishmentStore((s) => s.activePlaceId);
   const { t } = useTranslation();
   const lang = (i18n.language || "fr").split("-")[0].toLowerCase();
 
@@ -83,9 +85,9 @@ export function RecommendationsSection({
   const activeObjective = safeObjectives.find((o) => o.status === "in_progress") || null
 
   const sortedPareto = useMemo(
-    () => [...paretoCauses].sort((a, b) => b.count - a.count),
-    [paretoCauses]
-  );
+  () => [...(paretoCauses ?? [])].sort((a, b) => b.count - a.count),
+  [paretoCauses]
+);
 
   const [internalActiveTab, setInternalActiveTab] = useState("");
   const activeTab = activeIssueKey ?? internalActiveTab;
@@ -166,6 +168,20 @@ export function RecommendationsSection({
     if (!activeEstablishmentId) return;
     setIsRedoing(true);
     try {
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData.user) {
+        throw new Error("User not authenticated");
+      }
+      const { error: insightDeleteError } = await supabase
+        .from("review_insights")
+        .delete()
+        .eq("place_id", activePlaceId)
+        .eq("user_id", authData.user.id);
+
+      if (insightDeleteError) {
+        throw insightDeleteError;
+      }
+
       await deleteObjectivesForEstablishment(activeEstablishmentId);
       await onRedoAnalysis?.();
       setRedoModalOpen(false);
@@ -297,7 +313,9 @@ export function RecommendationsSection({
             </button>
           </div>
 
-          {expanded && (
+          {expanded &&
+           (sortedPareto.length>0) &&
+            (
             <>
               <div className="flex items-center justify-between px-5 pt-4 pb-2 ">
                 <p className="text-sm font-bold text-gray-700 dark:text-slate-200 flex items-center gap-2">
@@ -315,7 +333,7 @@ export function RecommendationsSection({
                   </button>
                   <span className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 px-3 py-1.5 rounded-full font-semibold border border-gray-200 dark:border-slate-700">
                     {validatedCount} / {sortedPareto.length}{" "}
-                    {t("recommendations.smart.stepbar.causeValidated", {
+                    {t("recommendations.smart.stepbar.causesValidated", {
                       defaultValue: "validé",
                     })}
                   </span>
@@ -392,21 +410,21 @@ export function RecommendationsSection({
                         </span>
                         {" "}
                         <span className="font-normal text-xs">
-                          {t("recommendations.smart.negativeReviews", { percentage: Math.round(((tabIssue.count ?? 0) / totalMentions) * 100) })}
+                          {t("recommendations.smart.negativeReviews", { percentage: Math.round(tabIssue.percentage ?? 0)})}
                         </span>
                       </p>
 
                       {isValidated ? (
                         <span className="inline-flex items-center gap-2 rounded-full bg-green-600 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shrink-0">
                           <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                          {t("recommendations.smart.stepbar.validated", {
+                          {t("recommendations.smart.stepbar.causeValidated", {
                             defaultValue: "VALIDATED",
                           })}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-2 rounded-full bg-yellow-600 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shrink-0">
                           <Info className="h-3.5 w-3.5" strokeWidth={3} />
-                          {t("dashboard.toValidate", {
+                          {t("recommendations.smart.stepbar.causeToValidated", {
                             defaultValue: "To Validate",
                           })}
                         </span>

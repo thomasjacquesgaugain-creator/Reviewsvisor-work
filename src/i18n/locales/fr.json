@@ -2547,7 +2547,9 @@
       "targetGoal":"Objectif à atteindre",
       "actionSteps":"Étapes du plan",
       "validated":"validé",
-      "causeValidated":"Causes validées"
+      "causesValidated":"Causes validées",
+      "causeValidated":"Cause validée",
+      "causeToValidated":"Cause à valider"
      },
     "chooseIssue":"Choisissez un problème à traiter",
     "mainIssueLabel":"PROBLÈME PRINCIPAL",
