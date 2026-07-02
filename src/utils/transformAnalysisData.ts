@@ -159,7 +159,7 @@ export function transformAnalysisData(
     (sum: number, issue: any) => sum + (Number(issue?.count) || 0), 0
   );
 
-  const paretoIssues = sourceIssues.slice(0,3).map((_: any, index: number) => {
+const mappedIssues = sourceIssues.map((_: any, index: number) => {
     const enIssue       = enIssues[index]       || {};
     const frIssue       = frIssues[index]       || {};
     const localizedIssue = localizedIssues[index] || {};
@@ -178,25 +178,16 @@ export function transformAnalysisData(
       root_causes: localizedIssue.root_causes   || [],   // ✅ comes straight from API
     };
   });
-const paretoIssuesForGraph = sourceIssues.map((_: any, index: number) => {
-    const enIssue       = enIssues[index]       || {};
-    const frIssue       = frIssues[index]       || {};
-    const localizedIssue = localizedIssues[index] || {};
-    const count      = Number(enIssue.count ?? frIssue.count ?? 0) || 0;
-    const percentage = totalIssuesMentions > 0 ? (count / totalIssuesMentions) * 100 : 0;
 
-    return {
-      key:         enIssue.key || frIssue.key || localizedIssue.key || `issue_${index}`,
-      name:        localizedIssue.theme || localizedIssue.issue || "",
-      en:          enIssue.theme  || enIssue.issue  || "",
-      fr:          frIssue.theme  || frIssue.issue  || "",
-      count,
-      percentage,
-      impact:      localizedIssue.impact        || "medium",
-      ai_synthesis:localizedIssue.ai_synthesis  || "",
-      root_causes: localizedIssue.root_causes   || [],   // ✅ comes straight from API
-    };
-  });
+
+const sortedIssues = [...mappedIssues].sort((a, b) => b.count - a.count);
+
+const paretoIssues = sortedIssues.slice(0, 3);
+const paretoIssuesForGraph = sortedIssues;
+
+console.log("paretoIssueforgraph",paretoIssuesForGraph)
+console.log("paretoIssue=",paretoIssues)
+
   // ── PARETO STRENGTHS ───────────────────────────────────────
   const totalStrengthsMentions = (safeInsight?.top_praises || []).reduce(
     (sum: number, s: any) => sum + (Number(s.count) || 0), 0

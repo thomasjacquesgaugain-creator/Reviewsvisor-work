@@ -232,27 +232,6 @@ function normalizeSentiment(raw: unknown): 'positive' | 'mixed' | 'negative' {
   return result ?? 'mixed';
 }
 
-function enforceKeys(bilingual: { en: any[]; fr: any[] }): { en: any[]; fr: any[] } {
-  const enItems = Array.isArray(bilingual?.en) ? bilingual.en : [];
-  const frItems = Array.isArray(bilingual?.fr) ? bilingual.fr : [];
-
-  const keyedEn = enItems.map((item) => ({
-    ...item,
-    key: resolveThemeKey(item.theme ?? ''),
-    ...(item.sentiment !== undefined && { sentiment: reconcileSentiment(item) }),
-    ...(item.root_causes !== undefined && { root_causes: enforceRootCauses(item.root_causes) }),
-  }));
-
-  const keyedFr = frItems.map((item, i) => ({
-    ...item,
-    key: keyedEn[i]?.key ?? resolveThemeKey(item.theme ?? ''),
-    ...(item.sentiment !== undefined && { sentiment: reconcileSentiment(item) }),
-    ...(item.root_causes !== undefined && { root_causes: enforceRootCauses(item.root_causes) }),
-  }));
-
-  return { en: keyedEn, fr: keyedFr };
-}
-
 function reconcileSentiment(item: any): 'positive' | 'mixed' | 'negative' {
   const pos = Number(item?.positive_count);
   const neg = Number(item?.negative_count);
@@ -266,30 +245,125 @@ function reconcileSentiment(item: any): 'positive' | 'mixed' | 'negative' {
   return normalizeSentiment(item?.sentiment);
 }
 
+function reconcileItemFields(items: any[]): any[] {
+  if (!Array.isArray(items)) return [];
+  return items.map((item) => ({
+    ...item,
+    ...(item.sentiment !== undefined && { sentiment: reconcileSentiment(item) }),
+    ...(item.root_causes !== undefined && { root_causes: enforceRootCauses(item.root_causes) }),
+  }));
+}
 
-// ─── LOCKED KEYS ─────────────────────────────────────────────────────────────
+/**
+ * Use ONLY for top_issues. Rewrites `key` via resolveThemeKey(theme) against
+ * the canonical vocabulary, and reconciles sentiment/root_causes.
+ */
+function enforceKeys(bilingual: { en: any[]; fr: any[] }): { en: any[]; fr: any[] } {
+  const enItems = Array.isArray(bilingual?.en) ? bilingual.en : [];
+  const frItems = Array.isArray(bilingual?.fr) ? bilingual.fr : [];
 
-function buildLockedKeys(existingInsight: any): Record<string, string> {
-  const locked: Record<string, string> = {};
-  const sources = [
-    existingInsight?.top_issues?.en,
-    existingInsight?.top_praises?.en,
-    existingInsight?.themes_universal?.en,
-    existingInsight?.themes_industry?.en,
-  ];
-  for (const arr of sources) {
-    if (!Array.isArray(arr)) continue;
-    for (const item of arr) {
-      if (!item?.key) continue;
-      if (item.theme) locked[item.theme.toLowerCase().trim()] = item.key;
-      locked[item.key.toLowerCase().trim()] = item.key;
-      const variants = CANONICAL_THEME_KEYS[item.key];
-      if (Array.isArray(variants)) {
-        for (const v of variants) locked[v.toLowerCase().trim()] = item.key;
+  const keyedEn = enItems.map((item) => ({ ...item, key: resolveThemeKey(item.theme ?? '') }));
+  const keyedFr = frItems.map((item, i) => ({
+    ...item,
+    key: keyedEn[i]?.key ?? resolveThemeKey(item.theme ?? ''),
+  }));
+
+  return { en: reconcileItemFields(keyedEn), fr: reconcileItemFields(keyedFr) };
+}
+
+/**
+ * Use for top_strength / themes_universal / themes_industry. Keeps the
+ * model-generated `key` exactly as-is — no cross-run persistence needed for
+ * these — only reconciles sentiment/root_causes.
+ */
+function reconcileThemeFields(bilingual: { en: any[]; fr: any[] }): { en: any[]; fr: any[] } {
+  const enItems = Array.isArray(bilingual?.en) ? bilingual.en : [];
+  const frItems = Array.isArray(bilingual?.fr) ? bilingual.fr : [];
+  return { en: reconcileItemFields(enItems), fr: reconcileItemFields(frItems) };
+}
+
+// ─── TOP ISSUES — KEY PERSISTENCE ACROSS RUNS ───────────────────────────────
+
+function normalizeThemeText(theme: string): string {
+  return String(theme ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function themeWordOverlap(a: string, b: string): number {
+  const wordsA = new Set(normalizeThemeText(a).split(' ').filter(Boolean));
+  const wordsB = new Set(normalizeThemeText(b).split(' ').filter(Boolean));
+  if (wordsA.size === 0 || wordsB.size === 0) return 0;
+  let intersection = 0;
+  for (const w of wordsA) if (wordsB.has(w)) intersection++;
+  const union = wordsA.size + wordsB.size - intersection;
+  return union === 0 ? 0 : intersection / union;
+}
+
+const TOP_ISSUE_MATCH_THRESHOLD = 0.5;
+
+/**
+ * Match each freshly-computed top_issue against the previous run's
+ * top_issues (from review_insights) so a recurring problem keeps the same
+ * `key` across recomputes, while a genuinely new problem keeps its
+ * freshly-assigned key. Match priority: (1) identical key, (2) identical
+ * normalized theme text, (3) word-overlap (Jaccard) >= threshold. Each
+ * previous issue can be consumed by at most one new issue (1:1 matching) so
+ * two new issues never collapse onto the same historical key.
+ */
+function reconcileTopIssueKeysWithPrevious(
+  newTopIssues: { en: any[]; fr: any[] },
+  previousTopIssuesEn: any[],
+): { en: any[]; fr: any[] } {
+  const newEn = Array.isArray(newTopIssues?.en) ? newTopIssues.en : [];
+  const newFr = Array.isArray(newTopIssues?.fr) ? newTopIssues.fr : [];
+  const previous = Array.isArray(previousTopIssuesEn) ? previousTopIssuesEn : [];
+
+  if (previous.length === 0 || newEn.length === 0) return { en: newEn, fr: newFr };
+
+  const usedPrevKeys = new Set<string>();
+  const keyRemap = new Map<string, string>(); // this-run key -> reused previous key
+
+  for (const issue of newEn) {
+    const originalKey = issue.key;
+    let bestMatch: any = null;
+    let bestScore = 0;
+
+    for (const prev of previous) {
+      if (!prev?.key || usedPrevKeys.has(prev.key)) continue;
+
+      if (prev.key === originalKey) { bestMatch = prev; bestScore = 1; break; }
+      if (normalizeThemeText(prev.theme) === normalizeThemeText(issue.theme)) {
+        bestMatch = prev; bestScore = 1; break;
+      }
+
+      const score = themeWordOverlap(prev.theme ?? '', issue.theme ?? '');
+      if (score > bestScore && score >= TOP_ISSUE_MATCH_THRESHOLD) {
+        bestScore = score;
+        bestMatch = prev;
       }
     }
+
+    if (bestMatch) {
+      usedPrevKeys.add(bestMatch.key);
+      keyRemap.set(originalKey, bestMatch.key);
+      issue.key = bestMatch.key;
+      console.log(`[reconcileTopIssueKeys] "${issue.theme}" matched previous "${bestMatch.theme}" (score ${bestScore.toFixed(2)}) — key reused: ${bestMatch.key}`);
+    } else {
+      console.log(`[reconcileTopIssueKeys] "${issue.theme}" is new — assigning fresh key: ${originalKey}`);
+    }
   }
-  return locked;
+
+  const remappedFr = newFr.map((item: any) => {
+    const reused = keyRemap.get(item.key);
+    return reused ? { ...item, key: reused } : item;
+  });
+
+  return { en: newEn, fr: remappedFr };
 }
 
 // ─── MISC HELPERS ────────────────────────────────────────────────────────────
@@ -622,18 +696,9 @@ async function analyzePassA(
   totalReviews: number,
   businessType: string,
   businessTypeConfidence: number,
-  lockedKeys: Record<string, string> = {},
 ) {
   const universal = getUniversalThemes();
   const industryInstruction = buildIndustryInstruction(businessType, businessTypeConfidence);
-
-  const lockedKeysBlock = Object.keys(lockedKeys).length > 0
-    ? `LOCKED KEYS — reuse these exact keys for the same themes, no changes allowed:\n` +
-      Object.entries(lockedKeys)
-        .filter(([variant, key]) => variant !== key)
-        .map(([theme, key]) => `  "${theme}" → "${key}"`)
-        .join("\n")
-    : '';
 
   return callOpenAI([
     {
@@ -649,10 +714,22 @@ Do NOT include any quotes or evidence in this pass — that is handled separatel
 Type: ${businessType} (confidence: ${businessTypeConfidence}%)
 Total reviews: ${totalReviews}
 
+Business activity is the PRIMARY context for this analysis.
+
+Interpret every review using the vocabulary, services and customer expectations of this business type.
+
+When naming themes:
+• use terminology customers naturally use for this industry for themes , strengths
+• prefer industry-standard vocabulary
+• avoid generic labels when a more specific industry label exists
+• avoid judgmental labels
+
+${industryInstruction}
+
+Reviews (numbered, ${samples.length} total):
+
 Reviews (numbered, ${samples.length} total):
 ${samples.map((t, i) => `${i + 1}. ${t}`).join("\n")}
-
-${lockedKeysBlock}
 
 COUNTING RULE:
 Go through each review and count how many mention each theme — directly or by implication.
@@ -661,9 +738,6 @@ Go through each review and count how many mention each theme — directly or by 
 EXTRACT ALL THEMES
 Extract two sets of themes (minimum count ≥ 2 for each):
 
-Universal themes — always check these six:
-  EN: ${universal.en.join(', ')}
-  FR: ${universal.fr.join(', ')}
 
 ${industryInstruction}
 
@@ -686,8 +760,29 @@ Assign sentiment independently for every theme using the review evidence.
 
 Do NOT use "mixed" as a default when uncertain.
 
-A theme should only be marked "mixed" if BOTH positive_count > 0 AND negative_count > 0 and both represent meaningful customer feedback.
+Do NOT classify a theme as mixed because of one isolated opposite review.
 
+Examples:
+
+positive_count = 28
+negative_count = 1
+→ Positive
+
+positive_count = 17
+negative_count = 2
+→ Positive
+
+positive_count = 3
+negative_count = 14
+→ Negative
+
+positive_count = 11
+negative_count = 9
+→ Mixed
+
+positive_count = 8
+negative_count = 7
+→ Mixed
 SENTIMENT DISTRIBUTION (IMPORTANT)
 
 When the reviews contain both praise and complaints, the final theme list (themes_universal + themes_industry combined) should naturally contain a variety of sentiments:
@@ -709,6 +804,39 @@ RANKING RULE FOR top_strength:
   • Draw from all themes found above. When counts are similar, prefer
     the more sector-specific theme.
   • top_strength themes must have sentiment "positive".
+
+FINAL THEME SELECTION (VERY IMPORTANT)
+
+The final returned themes (themes_universal + themes_industry) should represent the actual distribution of customer opinion, not just the dominant sentiment.
+
+
+Do NOT return lists consisting mostly or entirely of mixed themes simply because both positive and negative mentions exist.
+
+Prefer themes that are clearly one-sided when the evidence supports them.
+
+
+Avoid outputs like:
+
+✗ Mixed
+✗ Mixed
+✗ Mixed
+✗ Mixed
+✗ Mixed
+
+unless the reviews genuinely support that every returned theme has substantial positive and negative feedback.
+
+A theme should only be labelled "mixed" when BOTH positive_count and negative_count are significant.
+
+If a theme is overwhelmingly praised:
+→ sentiment = "positive"
+
+If a theme is overwhelmingly criticized:
+→ sentiment = "negative"
+
+Do not convert clearly positive or clearly negative themes into "mixed" simply because one or two opposite reviews exist.
+
+The objective is for the final theme lists to accurately reflect the diversity of customer opinion, giving users a clear picture of both strengths and weaknesses.
+
 
 Return this exact JSON shape (NO evidence_quotes or evidence arrays — leave them empty []):
 {
@@ -760,6 +888,17 @@ Do NOT include any quotes or evidence in this pass — root-cause evidence is ha
       role: "user",
       content: `Business type: ${businessType} (confidence: ${businessTypeConfidence}%)
 
+Business activity is the PRIMARY context for this analysis.
+
+Interpret every review using the vocabulary, services and customer expectations of this business type.
+
+When naming Pareto issues:
+• use industry-standard terminology
+• describe the customer's observable problem
+• avoid generic wording when a sector-specific term existsF
+
+${industryInstruction}
+
 NEGATIVE REVIEWS (${negativeTexts.length} total, rated 1–3 stars):
 ${negativeTexts.map((t, i) => `${i + 1}. ${t}`).join("\n")}
 
@@ -781,7 +920,96 @@ COUNT REQUIREMENT (hard constraint):
     rather than leaving real complaints in the reviews unrepresented.
   • Do not invent a problem that isn't in the reviews just to hit the
     count — broaden/merge real complaints first; only fall back to 4 if
-    even broadening still can't produce a 5th genuinely distinct issue.
+    even broadening still can't produce a 5th genuinely distinct issue.PARETO ISSUE DEFINITION (VERY IMPORTANT)
+
+A Pareto issue represents the CUSTOMER'S OBSERVABLE PROBLEM.
+
+Describe WHAT customers experienced.
+
+Do NOT describe WHY it happened.
+
+Do NOT infer staff competence, management quality, training level, intentions, negligence or business practices unless customers explicitly complain about those subjects.
+
+The Pareto issue must stay at the customer experience level.
+
+Examples:
+
+Hair Salon
+✓ Unsatisfactory Hair Results
+✓ Hair Colour Issues
+✓ Appointment Management
+✓ Long Waiting Times
+
+NOT
+✗ Incompetent Staff
+✗ Poor Staff Training
+✗ Unqualified Hairdresser
+
+Restaurant
+✓ Poor Service Quality
+✓ Slow Service
+✓ Food Temperature
+✓ Incorrect Orders
+
+NOT
+✗ Incompetent Waiters
+✗ Bad Kitchen Staff
+
+Auto Repair
+✓ Repair Not Resolved
+✓ Repair Quality
+✓ Diagnostic Accuracy
+✓ Repair Delays
+
+NOT
+✗ Incompetent Mechanics
+
+Pub / Bar
+✓ Customer Behaviour
+✓ Feeling of Insecurity
+✓ Incident Management
+
+NOT
+✗ Dangerous Customers
+✗ Unsafe Staff
+
+LABEL STYLE RULES
+
+Issue names must be:
+
+• factual
+• neutral
+• observable
+• business-oriented
+• based directly on customer experience
+
+Never use judgmental language.
+
+Avoid labels like:
+
+✗ incompetent
+✗ terrible
+✗ useless
+✗ dishonest
+✗ lazy
+✗ unprofessional
+
+Prefer neutral descriptions of the customer's experience.
+
+Example:
+
+✗ Incompetent Staff
+✓ Poor Service Quality
+
+✗ Bad Mechanic
+✓ Repair Quality
+
+✗ Dangerous Customers
+✓ Customer Behaviour
+
+✗ Bad Hairdresser
+✓ Unsatisfactory Hair Results
+  
 
 SECTOR WEIGHTING (apply during selection, not as a quota):
 ${industryInstruction}
@@ -1035,11 +1263,7 @@ Q2. Quotes are extracted once, in their original language. Do not translate
 
 Q3. Sentiment matching for themes (evidence_quotes) — STRICT, no exceptions:
     - sentiment="positive" → quotes where the reviewer PRAISES this theme ONLY.
-         A quote containing ANY complaint about this theme, however small,
-         is INVALID here — even if the overall tone is positive.
     - sentiment="negative" → quotes where the reviewer COMPLAINS about this
-         theme ONLY. A quote containing ANY praise of this theme, however
-         small, is INVALID here.
     - sentiment="mixed"    → the quote must itself contain BOTH an explicit
          positive element AND an explicit negative element about THIS SAME
          THEME, within one sentence or one tightly connected clause
@@ -1058,14 +1282,47 @@ Q3. Sentiment matching for themes (evidence_quotes) — STRICT, no exceptions:
          something close enough."
 
 Q4. top_strength evidence → praise quotes only, even from mixed reviews.
-    Extract only the praise clause.
+    Extract only the praise clause from original texts.
 
 Q5. If no valid verbatim quote exists for a theme → empty array []. Never invent.
 
 Before finalizing each "mixed" theme's evidence_quotes, re-check every
 candidate quote against Q3 individually: does it, by itself, contain both a
 positive element and a negative element about this exact theme? If you have
-any doubt, leave it out rather than include a one-sided quote.`,
+any doubt, leave it out rather than include a one-sided quote.
+
+THEME MATCHING (MOST IMPORTANT)
+
+Every extracted quote must satisfy BOTH conditions:
+
+1. The quote must explicitly discuss the assigned theme.
+2. The quote must match the required sentiment for that theme.
+
+Theme relevance always has higher priority than sentiment.
+
+Never choose a quote simply because it has the correct sentiment.
+
+Examples
+
+Theme: Food Quality
+✓ "The steak was dry and tasteless."
+✓ "The pizza was absolutely delicious."
+
+✗ "The waiter was very friendly."
+✗ "Beautiful atmosphere."
+
+Theme: Service Speed
+✓ "We waited over 40 minutes."
+✓ "Food arrived within five minutes."
+
+✗ "The burger was delicious."
+✗ "Restaurant was clean."
+
+If a quote is not primarily about the requested theme, it must never be used.
+
+
+
+`,
     },
     {
       role: "user",
@@ -1076,7 +1333,12 @@ Themes to fill with quotes (key, theme, sentiment):
 ${JSON.stringify(themesForQuotes, null, 2)}
 
 For each theme in themes_universal and themes_industry:
-  → Fill evidence_quotes[] with verbatim quotes matching the theme's sentiment (rule Q3)
+  →Fill evidence_quotes[] only with verbatim quotes that satisfy ALL of the following:
+
+1. The quote is primarily about the assigned theme.
+2. The quote supports the assigned sentiment.
+3. The quote contains sufficient wording to clearly identify the theme.
+4. If multiple candidate quotes exist, always choose the quote that is most specifically about the theme rather than a more general customer experience.
   → For "mixed" themes specifically: each quote must individually contain
     both a positive and a negative element about that theme — never a purely
     positive quote, never a purely negative quote, never two quotes stitched
@@ -1171,6 +1433,49 @@ Business type: ${businessType} (confidence: ${businessTypeConfidence}%)
 
 5M CATEGORIES for a ${businessType} business — use these sector-specific definitions:
 ${buildCategoryContextBlock(businessType)}
+
+Business type: ${businessType} (confidence: ${businessTypeConfidence}%)
+
+5M CATEGORIES for a ${businessType} business — use these sector-specific definitions:
+${buildCategoryContextBlock(businessType)}
+
+IMPORTANT: Separate customer problems from root causes.
+
+The issue describes WHAT customers experienced.
+The Ishikawa root cause analysis explains WHY that issue occurred.
+
+Never repeat the Pareto issue as a root cause.
+
+Good examples:
+
+Pareto Issue:
+• Poor Service Quality
+
+Possible Root Causes:
+✓ No service quality checklist
+✓ Orders are not verified before delivery
+✓ Staff receive inconsistent onboarding
+✓ Peak-hour staffing is insufficient
+
+Not:
+✗ Poor Service Quality
+✗ Incompetent Staff
+
+---
+
+Pareto Issue:
+• Unsatisfactory Hair Results
+
+Possible Root Causes:
+✓ Consultation process is inconsistent
+✓ Colour application procedure is not standardized
+✓ Junior stylists work without senior review
+
+Not:
+✗ Unsatisfactory Hair Results
+✗ Bad Hairdresser
+
+Always explain the operational reason behind the customer issue, not simply restate or rename the issue itself.
 
 The category_key values you must use are always these exact strings:
   manpower | method | machine | material | environment
@@ -1706,13 +2011,11 @@ Deno.serve(async (req) => {
       console.log(`[analyze-reviews-v2] Capped negative sample: ${promptNegativeTexts.length}/${negativeTexts.length} reviews sent to Pass C`);
     }
 
-    // ── Locked keys from previous run ──────────────────────────────────────
+    // ── Previous run's insight (for top_issues key persistence + notification diffing) ──
     const { data: existingInsight } = await supabaseAdmin
       .from('review_insights')
       .select('top_issues, top_praises, themes_universal, themes_industry, avg_rating')
       .eq('place_id', place_id).eq('user_id', userId).maybeSingle();
-
-    const lockedKeys = buildLockedKeys(existingInsight);
 
     // ── Pass A: theme extraction  +  Top Issues: independent negative-review scan ──
     // These two run in parallel — top_issues no longer depends on Pass A's
@@ -1723,7 +2026,7 @@ Deno.serve(async (req) => {
     const [passAResult, topIssuesResult] = await Promise.all([
       analyzePassA(
         establishmentName, promptSamples, rows.length,
-        detection.type, detection.confidence, lockedKeys,
+        detection.type, detection.confidence,
       ),
       analyzeTopIssues(
         promptNegativeTexts, detection.type, detection.confidence,
@@ -1733,15 +2036,30 @@ Deno.serve(async (req) => {
 
     passAResult.top_issues = topIssuesResult ?? { en: [], fr: [] };
 
-    if (passAResult.top_strength)     passAResult.top_strength     = enforceKeys(passAResult.top_strength);
-    if (passAResult.themes_universal) passAResult.themes_universal = enforceKeys(passAResult.themes_universal);
-    if (passAResult.themes_industry)  passAResult.themes_industry  = enforceKeys(passAResult.themes_industry);
+    // Themes: keep the model-generated key as-is (no cross-run persistence
+    // needed here) — only reconcile sentiment/root_causes.
+    if (passAResult.top_strength)     passAResult.top_strength     = reconcileThemeFields(passAResult.top_strength);
+    if (passAResult.themes_universal) passAResult.themes_universal = reconcileThemeFields(passAResult.themes_universal);
+    if (passAResult.themes_industry)  passAResult.themes_industry  = reconcileThemeFields(passAResult.themes_industry);
     // top_issues already had enforceKeys applied inside analyzeTopIssues.
 
     passAResult.top_issues = topUpTopIssuesTo5(
       passAResult.top_issues       ?? { en: [], fr: [] },
       passAResult.themes_industry  ?? { en: [], fr: [] },
       passAResult.themes_universal ?? { en: [], fr: [] },
+    );
+
+    // Top issues: reuse keys from the previous run for issues that are the
+    // same underlying problem (matched by key / theme text / word overlap);
+    // genuinely new issues keep their freshly-assigned key. Themes are
+    // deliberately excluded from this — only top_issues gets cross-run key
+    // persistence.
+    const previousTopIssuesEn = Array.isArray((existingInsight as any)?.top_issues?.en)
+      ? (existingInsight as any).top_issues.en
+      : [];
+    passAResult.top_issues = reconcileTopIssueKeysWithPrevious(
+      passAResult.top_issues,
+      previousTopIssuesEn,
     );
 
     // ── Pass B: evidence quotes ────────────────────────────────────────────
@@ -1752,18 +2070,21 @@ Deno.serve(async (req) => {
       detection.confidence,
     );
 
-    if (passBResult?.themes_universal) passAResult.themes_universal = enforceKeys(passBResult.themes_universal);
-    if (passBResult?.themes_industry)  passAResult.themes_industry  = enforceKeys(passBResult.themes_industry);
-    if (passBResult?.top_strength)     passAResult.top_strength     = enforceKeys(passBResult.top_strength);
+    if (passBResult?.themes_universal) passAResult.themes_universal = reconcileThemeFields(passBResult.themes_universal);
+    if (passBResult?.themes_industry)  passAResult.themes_industry  = reconcileThemeFields(passBResult.themes_industry);
+    if (passBResult?.top_strength)     passAResult.top_strength     = reconcileThemeFields(passBResult.top_strength);
 
     // ── Pass C: Ishikawa root causes (all top_issues) ──────────────────────
+    // analyzePassC preserves each issue's incoming `key` unchanged (it only
+    // adds root_causes), so the reconciled keys from above survive intact —
+    // no enforceKeys() call needed/wanted here.
     const passCResult = await analyzePassC(
       promptNegativeTexts,
       passAResult.top_issues ?? { en: [], fr: [] },
       detection.type,
       detection.confidence,
     );
-    passAResult.top_issues = enforceKeys(passCResult);
+    passAResult.top_issues = passCResult;
 
     // ── Pass D: recommendations ────────────────────────────────────────────
     const passDResult = await analyzePassD(
