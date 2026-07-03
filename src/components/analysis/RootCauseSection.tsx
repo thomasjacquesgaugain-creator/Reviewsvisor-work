@@ -217,7 +217,7 @@ function buildLegacyVisibleCategories(
 
 // ─── DESIGN TOKENS ───────────────────────────────────────────────────────────
 
-const COLORS = {
+const LIGHT_COLORS = {
   violet:       "#6d28d9",
   indigo:       "#6366f1",
   critical:     "#e11d48",
@@ -235,6 +235,51 @@ const COLORS = {
   surface2:     "#f8fafc",
   surface3:     "#f1f5f9",
 };
+
+const DARK_COLORS = {
+  violet:       "#a78bfa",
+  indigo:       "#818cf8",
+  critical:     "#fb7185",
+  criticalSoft: "rgba(127, 29, 29, 0.35)",
+  criticalText: "#fda4af",
+  warning:      "#f59e0b",
+  warningSoft:  "rgba(120, 53, 15, 0.35)",
+  warningText:  "#fcd34d",
+  text:         "#f8fafc",
+  text2:        "#cbd5e1",
+  text3:        "#94a3b8",
+  text4:        "#64748b",
+  border:       "#334155",
+  surface:      "#0f172a",
+  surface2:     "#111827",
+  surface3:     "#1e293b",
+};
+
+function useIsDarkMode() {
+  const [isDark, setIsDark] = useState(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
+  );
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const root = document.documentElement;
+    const update = () => setIsDark(root.classList.contains("dark"));
+
+    update();
+
+    const observer = new MutationObserver(update);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+
+    return () => observer.disconnect();
+  }, []);
+
+  return isDark;
+}
+
+function getThemeColors(isDark: boolean) {
+  return isDark ? DARK_COLORS : LIGHT_COLORS;
+}
 
 // Covers both legacy display-name keys AND new category_key values
 const CATEGORY_STYLES: Record<
@@ -259,20 +304,36 @@ const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
    PROBABILITY CONFIG
 ───────────────────────────────────────────── */
 
-const probabilityConfig: Record<
+function getProbabilityConfig(
+  isDark: boolean,
+): Record<
   ProbabilityLevel,
   { label: string; color: string; bg: string; border: string; icon: React.ElementType }
-> = {
-  Probable: {
-    label: "probable", color: "#be123c", bg: "#fff1f3", border: "#fda4af", icon: AlertCircle,
-  },
-  Possible: {
-    label: "possible", color: "#b45309", bg: "#fffaf0", border: "#fcd34d", icon: Clock,
-  },
-  Occasionnelle: {
-    label: "occasional", color: "#1d4ed8", bg: "#eff6ff", border: "#93c5fd", icon: HelpCircle,
-  },
-};
+> {
+  return isDark
+    ? {
+        Probable: {
+          label: "probable", color: "#fda4af", bg: "rgba(127, 29, 29, 0.35)", border: "#7f1d1d", icon: AlertCircle,
+        },
+        Possible: {
+          label: "possible", color: "#fcd34d", bg: "rgba(120, 53, 15, 0.35)", border: "#92400e", icon: Clock,
+        },
+        Occasionnelle: {
+          label: "occasional", color: "#93c5fd", bg: "rgba(30, 64, 175, 0.24)", border: "#1d4ed8", icon: HelpCircle,
+        },
+      }
+    : {
+        Probable: {
+          label: "probable", color: "#be123c", bg: "#fff1f3", border: "#fda4af", icon: AlertCircle,
+        },
+        Possible: {
+          label: "possible", color: "#b45309", bg: "#fffaf0", border: "#fcd34d", icon: Clock,
+        },
+        Occasionnelle: {
+          label: "occasional", color: "#1d4ed8", bg: "#eff6ff", border: "#93c5fd", icon: HelpCircle,
+        },
+      };
+}
 
 /* ─────────────────────────────────────────────
    CAUSE CARD
@@ -285,6 +346,7 @@ const CauseCard = ({
   tier,
   isExtraCard,
   isUserValidated,
+  colors,
   animDelay,
   t,
 }: {
@@ -294,6 +356,7 @@ const CauseCard = ({
   tier:             Tier;
   isExtraCard?:     boolean;
   isUserValidated?: boolean; // AI-confident card also confirmed by user
+  colors:           typeof LIGHT_COLORS;
   animDelay:        number;
   t:                (k: string) => string;
 }) => {
@@ -306,6 +369,9 @@ const CauseCard = ({
 
   const isPrimary = tier === "dominant" && !isExtraCard;
   const borderColor = isExtraCard ? "#059669" : catStyle.color;
+  const iconBg = colors.surface === "#0f172a"
+    ? (isExtraCard ? "rgba(5,150,105,0.16)" : "rgba(99,102,241,0.16)")
+    : (isExtraCard ? "#f0fdf4" : catStyle.soft);
 
   const tierLabel =
     tier === "dominant"
@@ -320,7 +386,7 @@ const CauseCard = ({
     <div
       className="rv-cause-card"
       style={{
-        background:   COLORS.surface,
+        background:   colors.surface,
         border:       `${isPrimary ? 2 : 1.5}px solid ${borderColor}`,
         borderRadius: "18px",
         padding:      "20px 20px 18px",
@@ -334,18 +400,18 @@ const CauseCard = ({
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "14px" }}>
         <span style={{
           width: "44px", height: "44px", borderRadius: "13px",
-          background: isExtraCard ? "#f0fdf4" : catStyle.soft,
+          background: iconBg,
           color:      isExtraCard ? "#059669" : catStyle.color,
           display:    "inline-flex", alignItems: "center", justifyContent: "center",
           flexShrink: 0,
-          boxShadow:  "inset 0 0 0 1px rgba(30,27,75,0.03)",
+          boxShadow:  isExtraCard ? "inset 0 0 0 1px rgba(5,150,105,0.12)" : "inset 0 0 0 1px rgba(30,27,75,0.03)",
         }}>
           <Icon size={21} />
         </span>
         <div style={{ minWidth: 0 }}>
           <div style={{
             fontSize: "16.5px", fontWeight: 700, lineHeight: 1.15,
-            letterSpacing: "-0.015em", color: COLORS.text,
+            letterSpacing: "-0.015em", color: colors.text,
           }}>
             {category}
           </div>
@@ -357,7 +423,7 @@ const CauseCard = ({
               <span style={{
                 fontSize: "9px", fontWeight: 700,
                 color: catStyle.color,
-                background: COLORS.surface,
+                background: colors.surface,
                 border: `1px solid ${catStyle.color}`,
                 padding: "2px 7px", borderRadius: "999px",
                 letterSpacing: "0.4px", textTransform: "uppercase", flexShrink: 0,
@@ -368,7 +434,8 @@ const CauseCard = ({
             {isExtraCard && (
               <span style={{
                 fontSize: "9px", fontWeight: 700, color: "#059669",
-                background: "#f0fdf4", border: "1px solid #6ee7b7",
+                background: colors.surface === "#0f172a" ? "rgba(5,150,105,0.14)" : "#f0fdf4",
+                border: "1px solid rgba(110,231,183,0.8)",
                 padding: "2px 7px", borderRadius: "999px",
                 letterSpacing: "0.4px", textTransform: "uppercase", flexShrink: 0,
               }}>
@@ -379,7 +446,8 @@ const CauseCard = ({
             {isUserValidated && !isExtraCard && (
               <span style={{
                 fontSize: "9px", fontWeight: 700, color: "#059669",
-                background: "#f0fdf4", border: "1px solid #6ee7b7",
+                background: colors.surface === "#0f172a" ? "rgba(5,150,105,0.14)" : "#f0fdf4",
+                border: "1px solid rgba(110,231,183,0.8)",
                 padding: "2px 7px", borderRadius: "999px",
                 letterSpacing: "0.4px", textTransform: "uppercase", flexShrink: 0,
               }}>
@@ -400,7 +468,7 @@ const CauseCard = ({
             }}>
               <span style={{
                 display: "flex", alignItems: "flex-start", gap: "10px",
-                flex: 1, fontSize: "14px", color: COLORS.text2, lineHeight: 1.5,
+                flex: 1, fontSize: "14px", color: colors.text2, lineHeight: 1.5,
               }}>
                 <span style={{
                   width: "6px", height: "6px", borderRadius: "50%",
@@ -419,15 +487,15 @@ const CauseCard = ({
           gap: "10px",
           padding: "10px 12px",
           borderRadius: "12px",
-          background: "#f8fafc",
-          border: "1px dashed #cbd5e1",
+          background: colors.surface === "#0f172a" ? "rgba(15,23,42,0.95)" : "#f8fafc",
+          border: colors.surface === "#0f172a" ? "1px dashed #475569" : "1px dashed #cbd5e1",
           marginTop: "4px",
         }}>
           <div>
             <p style={{
               fontSize: "13px",
               fontWeight: 600,
-              color: "#64748b",
+              color: colors.text2,
               margin: "0 0 2px",
               lineHeight: 1.4,
             }}>
@@ -435,7 +503,7 @@ const CauseCard = ({
             </p>
             <p style={{
               fontSize: "12.5px",
-              color: "#94a3b8",
+              color: colors.text3,
               margin: 0,
               lineHeight: 1.5,
             }}>
@@ -469,6 +537,9 @@ export function RootCauseSection({
   const [showQuestionnaire, setShowQuestionnaire]   = useState(false);
   const [questionnaireSkipped, setQuestionnaireSkipped] = useState(false);
   const { t } = useTranslation();
+  const isDark = useIsDarkMode();
+  const colors = getThemeColors(isDark);
+  const probabilityConfig = getProbabilityConfig(isDark);
 
   const activeEstablishmentId  = useEstablishmentStore((s) => s.activeEstablishmentId);
   const selectedEstablishment  = useEstablishmentStore((s) => s.selectedEstablishment);
@@ -625,20 +696,28 @@ export function RootCauseSection({
         }
         .rv-cause-card:hover {
           transform: translateY(-3px);
-          box-shadow: 0 14px 32px -10px rgba(80,60,140,0.16);
+          box-shadow: ${isDark
+            ? "0 14px 32px -10px rgba(2,6,23,0.45)"
+            : "0 14px 32px -10px rgba(80,60,140,0.16)"};
         }
         .rv-btn-synth:hover {
           transform: translateY(-2px);
-          box-shadow: 0 12px 26px -6px rgba(124,58,237,0.55) !important;
+          box-shadow: ${isDark
+            ? "0 12px 26px -6px rgba(2,6,23,0.55)"
+            : "0 12px 26px -6px rgba(124,58,237,0.55)"} !important;
         }
       `}</style>
 
       <div style={{
-        background:     "linear-gradient(165deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.92) 100%)",
-        border:         "1px solid rgba(255,255,255,0.7)",
+        background:     isDark
+          ? "linear-gradient(165deg, rgba(15,23,42,0.92) 0%, rgba(15,23,42,0.98) 100%)"
+          : "linear-gradient(165deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.92) 100%)",
+        border:         isDark ? "1px solid rgba(51,65,85,0.9)" : "1px solid rgba(255,255,255,0.7)",
         borderRadius:   "30px",
         padding:        "36px",
-        boxShadow:      "0 30px 70px -25px rgba(80,60,140,0.3)",
+        boxShadow:      isDark
+          ? "0 30px 70px -25px rgba(2,6,23,0.7)"
+          : "0 30px 70px -25px rgba(80,60,140,0.3)",
         backdropFilter: "blur(8px)",
       }}>
 
@@ -646,7 +725,9 @@ export function RootCauseSection({
         <div style={{ display: "flex", alignItems: "center", gap: "18px", marginBottom: "26px", padding: "0 2px" }}>
           <div style={{
             width: "62px", height: "62px", borderRadius: "18px",
-            background: "linear-gradient(150deg, #9b6cf0, #6366f1)",
+            background: isDark
+              ? "linear-gradient(150deg, #a855f7, #6366f1)"
+              : "linear-gradient(150deg, #9b6cf0, #6366f1)",
             display: "inline-flex", alignItems: "center", justifyContent: "center",
             color: "white", flexShrink: 0,
             boxShadow: "0 10px 24px -6px rgba(124,58,237,0.45), inset 0 1px 0 rgba(255,255,255,0.25)",
@@ -656,32 +737,34 @@ export function RootCauseSection({
           <div>
             <h2 style={{
               fontSize: "28px", fontWeight: 700, letterSpacing: "-0.03em",
-              lineHeight: 1.05, color: COLORS.text, margin: 0,
+              lineHeight: 1.05, color: colors.text, margin: 0,
             }}>
               {t("analysis.ishikawa.title") || "Diagnostic IA des causes"}
             </h2>
-            <p style={{ fontSize: "14px", color: COLORS.text2, marginTop: "6px", maxWidth: "620px" }}>
+            <p style={{ fontSize: "14px", color: colors.text2, marginTop: "6px", maxWidth: "620px" }}>
               {t("analysis.ishikawa.subtitle") || "Identifiez les causes probables de vos problèmes détectés."}
             </p>
           </div>
-          <span style={{ marginLeft: "auto", fontSize: "13px", color: COLORS.text3, fontWeight: 500 }}>
+          <span style={{ marginLeft: "auto", fontSize: "13px", color: colors.text3, fontWeight: 500 }}>
             {currentStep + 1} / {paretoIssues.length}
           </span>
         </div>
 
         {/* ── MAIN CARD ── */}
         <div style={{
-          background:   COLORS.surface,
+          background:   colors.surface,
           borderRadius: "24px",
-          border:       `1px solid ${COLORS.border}`,
-          boxShadow:    "0 4px 20px -6px rgba(80,60,140,0.1), 0 1px 3px rgba(30,27,75,0.04)",
+          border:       `1px solid ${colors.border}`,
+          boxShadow:    isDark
+            ? "0 4px 20px -6px rgba(2,6,23,0.35), 0 1px 3px rgba(2,6,23,0.45)"
+            : "0 4px 20px -6px rgba(80,60,140,0.1), 0 1px 3px rgba(30,27,75,0.04)",
           overflow:     "hidden",
         }}>
 
           {/* ── PROBLEM TABS ── */}
           <div style={{
             display: "flex", gap: 0, padding: "0 16px",
-            borderBottom: `1px solid ${COLORS.border}`,
+            borderBottom: `1px solid ${colors.border}`,
             overflowX: "auto", scrollbarWidth: "none",
           }}>
             {paretoIssues.map((issue, idx) => {
@@ -696,20 +779,20 @@ export function RootCauseSection({
                     display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "9px",
                     fontFamily: "inherit", fontSize: "14px",
                     fontWeight: isActive ? 600 : 500,
-                    color: isActive ? COLORS.text : COLORS.text3,
+                    color: isActive ? colors.text : colors.text3,
                     transition: `color 0.2s ${EASE}`,
                     whiteSpace: "nowrap", letterSpacing: "-0.01em", position: "relative",
                   }}
                 >
                   <span style={{
                     width: "8px", height: "8px", borderRadius: "50%", flexShrink: 0,
-                    background: issue.percentage >= 30 ? COLORS.critical : COLORS.warning,
+                    background: issue.percentage >= 30 ? colors.critical : colors.warning,
                   }} />
                   <span>{issue.name}</span>
                   {isActive && (
                     <span style={{
                       position: "absolute", bottom: "-1px", left: "16px", right: "16px",
-                      height: "2.5px", background: COLORS.indigo, borderRadius: "3px 3px 0 0",
+                      height: "2.5px", background: colors.indigo, borderRadius: "3px 3px 0 0",
                     }} />
                   )}
                 </button>
@@ -721,7 +804,7 @@ export function RootCauseSection({
           <div style={{ padding: "24px 26px" }}>
             <div style={{
               display: "inline-flex", alignItems: "center", gap: "7px",
-              fontSize: "11px", fontWeight: 700, color: COLORS.indigo,
+              fontSize: "11px", fontWeight: 700, color: colors.indigo,
               letterSpacing: "1px", textTransform: "uppercase", marginBottom: "14px",
             }}>
               <AlertCircle size={15} />
@@ -729,9 +812,11 @@ export function RootCauseSection({
             </div>
 
             <div style={{
-              border: `1.5px solid ${currentIssue.percentage >= 30 ? COLORS.critical : COLORS.warning}`,
+              border: `1.5px solid ${currentIssue.percentage >= 30 ? colors.critical : colors.warning}`,
               borderRadius: "18px", padding: "22px 24px",
-              background: "linear-gradient(180deg, #fdfdff 0%, #fbfbfe 100%)",
+              background: isDark
+                ? "linear-gradient(180deg, rgba(15,23,42,0.96) 0%, rgba(15,23,42,0.9) 100%)"
+                : "linear-gradient(180deg, #fdfdff 0%, #fbfbfe 100%)",
               animation: `rvPaneFade 0.35s ${EASE}`,
             }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: "18px" }}>
@@ -740,20 +825,24 @@ export function RootCauseSection({
                   display: "inline-flex", alignItems: "center", justifyContent: "center",
                   flexShrink: 0,
                   background: currentIssue.percentage >= 30
-                    ? "linear-gradient(150deg, #fff0f3, #ffe0e7)"
-                    : "linear-gradient(150deg, #fff8ec, #ffeecc)",
-                  color: currentIssue.percentage >= 30 ? COLORS.critical : COLORS.warning,
+                    ? (isDark
+                        ? "linear-gradient(150deg, rgba(127,29,29,0.45), rgba(127,29,29,0.25))"
+                        : "linear-gradient(150deg, #fff0f3, #ffe0e7)")
+                    : (isDark
+                        ? "linear-gradient(150deg, rgba(120,53,15,0.45), rgba(120,53,15,0.25))"
+                        : "linear-gradient(150deg, #fff8ec, #ffeecc)"),
+                  color: currentIssue.percentage >= 30 ? colors.critical : colors.warning,
                 }}>
                   <AlertCircle size={30} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0, paddingTop: "2px" }}>
                   <div style={{
                     fontSize: "25px", fontWeight: 700, letterSpacing: "-0.025em",
-                    lineHeight: 1.15, color: COLORS.text,
+                    lineHeight: 1.15, color: colors.text,
                   }}>
                     {currentIssue.name}
                   </div>
-                  <div style={{ fontSize: "15px", color: COLORS.text2, marginTop: "8px", lineHeight: 1.5 }}>
+                  <div style={{ fontSize: "15px", color: colors.text2, marginTop: "8px", lineHeight: 1.5 }}>
                     {currentIssue.percentage.toFixed(0)}%{" "}
                     {t("dashboard.negativeMentions") || "des mentions négatives"}
                   </div>
@@ -762,8 +851,8 @@ export function RootCauseSection({
                       display: "inline-flex", alignItems: "center", gap: "7px",
                       padding: "7px 14px", borderRadius: "999px",
                       fontSize: "13px", fontWeight: 600,
-                      background: currentIssue.percentage >= 30 ? COLORS.criticalSoft : COLORS.warningSoft,
-                      color:      currentIssue.percentage >= 30 ? COLORS.criticalText : COLORS.warningText,
+                      background: currentIssue.percentage >= 30 ? colors.criticalSoft : colors.warningSoft,
+                      color:      currentIssue.percentage >= 30 ? colors.criticalText : colors.warningText,
                     }}>
                       {currentIssue.percentage >= 30
                         ? <AlertCircle size={14} />
@@ -772,7 +861,7 @@ export function RootCauseSection({
                         ? t("analysis.ishikawa.highImpact")   || "Impact élevé"
                         : t("analysis.ishikawa.mediumImpact") || "Impact modéré"}
                     </span>
-                    <span style={{ fontSize: "13px", color: COLORS.text3 }}>
+                    <span style={{ fontSize: "13px", color: colors.text3 }}>
                       {t("analysis.ishikawa.dataSrc") || "Source: avis clients"}
                     </span>
                   </div>
@@ -786,13 +875,17 @@ export function RootCauseSection({
             <div style={{ padding: "0 26px 16px" }}>
               <div style={{
                 display: "flex", alignItems: "center", gap: "14px",
-                borderRadius: "16px", border: "1px solid #e8e4fb",
-                background: "linear-gradient(135deg, #f4f0fe 0%, #eef1fe 100%)",
+                borderRadius: "16px", border: isDark ? "1px solid rgba(129,140,248,0.25)" : "1px solid #e8e4fb",
+                background: isDark
+                  ? "linear-gradient(135deg, rgba(30,41,59,0.96) 0%, rgba(15,23,42,0.96) 100%)"
+                  : "linear-gradient(135deg, #f4f0fe 0%, #eef1fe 100%)",
                 padding: "14px 18px",
               }}>
                 <span style={{
                   width: "36px", height: "36px", borderRadius: "10px",
-                  background: "linear-gradient(145deg, #8b5cf6, #6366f1)",
+                  background: isDark
+                    ? "linear-gradient(145deg, #a78bfa, #6366f1)"
+                    : "linear-gradient(145deg, #8b5cf6, #6366f1)",
                   display: "inline-flex", alignItems: "center", justifyContent: "center",
                   color: "white", flexShrink: 0,
                   boxShadow: "0 4px 10px -3px rgba(124,58,237,0.4)",
@@ -806,10 +899,10 @@ export function RootCauseSection({
                   </svg>
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: "13.5px", fontWeight: 600, color: COLORS.violet, margin: "0 0 2px" }}>
+                  <p style={{ fontSize: "13.5px", fontWeight: 600, color: colors.violet, margin: "0 0 2px" }}>
                     {t("analysis.ishikawa.questionareWarning") || "Questionnaire non complété"}
                   </p>
-                  <p style={{ fontSize: "13px", color: COLORS.text2, margin: 0 }}>
+                  <p style={{ fontSize: "13px", color: colors.text2, margin: 0 }}>
                     {t("analysis.ishikawa.recommendMessage") || "Complétez le questionnaire pour affiner le diagnostic."}
                   </p>
                 </div>
@@ -858,7 +951,7 @@ export function RootCauseSection({
           <div style={{ padding: "0 26px 24px" }}>
             <div style={{
               display: "inline-flex", alignItems: "center", gap: "7px",
-              fontSize: "11px", fontWeight: 700, color: COLORS.indigo,
+              fontSize: "11px", fontWeight: 700, color: colors.indigo,
               letterSpacing: "1px", textTransform: "uppercase", marginBottom: "14px",
             }}>
               <Target size={15} />
@@ -887,14 +980,15 @@ export function RootCauseSection({
                     isUserValidated={(category as any)._isUserValidated === true}
                     animDelay={0.05 + catIdx * 0.04}
                     t={t}
+                    colors={colors}
                   />
                 ))}
               </div>
             ) : (
               <div style={{
-                padding: "24px", background: COLORS.surface2,
-                border: `1px solid ${COLORS.border}`, borderRadius: "18px",
-                textAlign: "center", color: COLORS.text3,
+                padding: "24px", background: colors.surface2,
+                border: `1px solid ${colors.border}`, borderRadius: "18px",
+                textAlign: "center", color: colors.text3,
               }}>
                 <p>{t("analysis.pareto.rootCause.noCauses") || "Aucune cause spécifique identifiée."}</p>
                 <p style={{ fontSize: "13px", marginTop: "8px" }}>
@@ -905,9 +999,9 @@ export function RootCauseSection({
 
             <div style={{
               display: "inline-flex", alignItems: "center", gap: "7px",
-              marginTop: "16px", fontSize: "12.5px", color: COLORS.text3,
+              marginTop: "16px", fontSize: "12.5px", color: colors.text3,
             }}>
-              <HelpCircle size={14} color={COLORS.text4} />
+              <HelpCircle size={14} color={colors.text4} />
               <span>{t("analysis.ishikawa.dataSrc") || "Basé sur l'analyse des avis clients"}</span>
             </div>
           </div>
@@ -915,13 +1009,15 @@ export function RootCauseSection({
           {/* ── AI SYNTHESIS BOX ── */}
           <div style={{ padding: "0 26px 26px" }}>
             <div style={{
-              background: "linear-gradient(135deg, #f4f0fe 0%, #eef1fe 100%)",
-              border: "1px solid #e8e4fb", borderRadius: "20px",
+              background: isDark
+                ? "linear-gradient(135deg, rgba(30,41,59,0.96) 0%, rgba(15,23,42,0.96) 100%)"
+                : "linear-gradient(135deg, #f4f0fe 0%, #eef1fe 100%)",
+              border: isDark ? "1px solid rgba(129,140,248,0.25)" : "1px solid #e8e4fb", borderRadius: "20px",
               padding: "24px 26px", position: "relative", overflow: "hidden",
               animation: `rvPaneFade 0.35s ${EASE} 0.1s backwards`,
             }}>
               <div style={{
-                fontSize: "11px", fontWeight: 700, color: COLORS.violet,
+                fontSize: "11px", fontWeight: 700, color: colors.violet,
                 letterSpacing: "1px", textTransform: "uppercase", marginBottom: "14px",
               }}>
                 {t("analysis.ishikawa.automatedSummary") || "Synthèse IA"}
@@ -931,7 +1027,9 @@ export function RootCauseSection({
                 {/* AI avatar */}
                 <div style={{
                   width: "44px", height: "44px", borderRadius: "50%",
-                  background: "linear-gradient(145deg, #8b5cf6, #6366f1)",
+                  background: isDark
+                    ? "linear-gradient(145deg, #a78bfa, #6366f1)"
+                    : "linear-gradient(145deg, #8b5cf6, #6366f1)",
                   display: "inline-flex", alignItems: "center", justifyContent: "center",
                   color: "white", flexShrink: 0,
                   boxShadow: "0 6px 16px -4px rgba(124,58,237,0.4)",
@@ -943,7 +1041,7 @@ export function RootCauseSection({
                   <p style={{
                     fontSize: "17px", lineHeight: 1.5, marginBottom: "18px",
                     maxWidth: "560px", letterSpacing: "-0.01em",
-                    fontWeight: 500, color: COLORS.text,
+                    fontWeight: 500, color: colors.text,
                   }}>
                     {rootCauseAnalysis.summary}
                   </p>
@@ -991,9 +1089,9 @@ export function RootCauseSection({
                   {questionnaireSubmitted && currentQuestionnaire && (
                     <div style={{
                       marginTop: "12px", display: "inline-flex", alignItems: "center", gap: "8px",
-                      borderRadius: "10px", border: "1px solid #6ee7b7",
-                      background: "#f0fdf4", padding: "8px 12px",
-                      fontSize: "12px", color: "#065f46",
+                      borderRadius: "10px", border: isDark ? "1px solid rgba(110,231,183,0.35)" : "1px solid #6ee7b7",
+                      background: isDark ? "rgba(6,95,70,0.2)" : "#f0fdf4", padding: "8px 12px",
+                      fontSize: "12px", color: isDark ? "#a7f3d0" : "#065f46",
                     }}>
                       <span>✅</span>
                       <span>
@@ -1009,8 +1107,8 @@ export function RootCauseSection({
                   {questionnaireSkipped && !questionnaireSubmitted && (
                     <div style={{
                       marginTop: "12px", borderRadius: "10px",
-                      border: "1px solid #fcd34d", background: COLORS.warningSoft,
-                      padding: "8px 12px", fontSize: "12px", color: COLORS.warningText,
+                      border: isDark ? "1px solid rgba(250,204,21,0.35)" : "1px solid #fcd34d", background: colors.warningSoft,
+                      padding: "8px 12px", fontSize: "12px", color: colors.warningText,
                     }}>
                       ⚠️ {t("analysis.ishikawa.questionareSkipped") || "Questionnaire ignoré."}{" "}
                       {t("analysis.ishikawa.recommendMessage")}
@@ -1024,11 +1122,11 @@ export function RootCauseSection({
           {/* ── PROBABILITY LEGEND ── */}
           <div style={{
             padding: "16px 26px 24px",
-            borderTop: `1px solid ${COLORS.border}`,
-            background: COLORS.surface2,
+            borderTop: `1px solid ${colors.border}`,
+            background: colors.surface2,
           }}>
             <div style={{
-              fontSize: "11px", fontWeight: 700, color: COLORS.indigo,
+              fontSize: "11px", fontWeight: 700, color: colors.indigo,
               letterSpacing: "1px", textTransform: "uppercase", marginBottom: "12px",
             }}>
               {t("analysis.ishikawa.probabilityLevel") || "Niveau de probabilité"}
@@ -1048,7 +1146,7 @@ export function RootCauseSection({
                       <Icon size={12} />
                       {t(`analysis.pareto.rootCause.probability.${cfg.label}`) || level}
                     </span>
-                    <span style={{ fontSize: "13px", color: COLORS.text2 }}>
+                    <span style={{ fontSize: "13px", color: colors.text2 }}>
                       {level === "Probable"
                         ? t("analysis.ishikawa.causeMentioned")  || "Cause fréquemment mentionnée"
                         : level === "Possible"

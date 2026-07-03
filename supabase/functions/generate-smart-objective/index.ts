@@ -103,6 +103,20 @@ STRICT RULES — violations are not acceptable:
 5. Do not use marketing language or corporate platitudes.
 
 6. All output must be in BOTH English and French, in the exact JSON structure requested.
+
+7. COST HIERARCHY — this is mandatory and applies to every action_plan you generate:
+   - ALWAYS exhaust free or low-cost operational fixes before proposing anything that costs money or requires structural/physical changes.
+   - Low-cost operational levers include: reorganizing seating or layout, reallocating tables, adjusting staff scheduling or floor positioning, changing music/volume settings, adjusting opening procedures, staff reminders or verbal protocols, reshuffling the room, changing service timing, monitoring and logging a specific metric.
+   - Reviews alone (without operational, financial, or technical audit data) are NEVER sufficient justification for recommending: acoustic/soundproofing panels, renovations, structural changes, new equipment purchases, or any other capital expenditure.
+   - You may ONLY propose a costly or structural action if BOTH of these are true: (a) at least 3 of the action_plan items are already low-cost/operational, AND (b) the review evidence is overwhelming (very high mention count relative to total reviews) AND the synthesis explicitly states operational fixes are unlikely to fully resolve it. Even then, phrase it as a longer-term/secondary item, never as the first or primary action.
+   - Default assumption: the business is small and cannot easily fund renovations or new fixed installations. Do not suggest these unless the fixed values explicitly indicate High impact AND High effort AND the complaint volume is severe.
+
+8. ROLE NAMING — never invent specific job titles that a small independent business is unlikely to have (e.g. "Operations Manager", "Training Coordinator", "Head of Guest Experience"). Only use one of these generic roles, or omit a name and use a role-neutral phrasing:
+   - Establishment Manager
+   - Restaurant Manager
+   - Team Leader
+   - Staff
+   If you are unsure who should own an action, phrase it without a named role (e.g. "to be assigned this week") rather than inventing a title.
 `;
 
 /* ─────────────────────────────────────────────
@@ -294,20 +308,29 @@ SECTION 2 — SMART OBJECTIVE FIELDS
 - relevance_note: why reducing this specific issue improves experience and rating — cite the count ${computed_count}
 
 SECTION 3 — ACTION PLAN (4–5 items)
-Each item is one complete sentence that covers WHAT to do (specific and concrete), WHY it matters (cite review count as evidence), WHEN exactly to do it, and WHO by role name is responsible.
+Each item is one complete sentence that covers WHAT to do (specific and concrete), WHY it matters (cite review count as evidence), WHEN exactly to do it, and WHO is responsible (generic role, or left unassigned).
+
 Rules:
 - Every sentence must address a DIFFERENT operational angle of "${paretoCauseEn}"
-- Never write "consult your team", "improve service", "discuss with staff" — always name the specific action, the specific role, the specific timing
+- Never write "consult your team", "improve service", "discuss with staff" — always name the specific action and specific timing
 - Each sentence must be executable THIS WEEK in a ${insight.business_type}
+- Use ONLY these roles when assigning ownership: "Establishment Manager", "Restaurant Manager", "Team Leader", "Staff" — or leave it role-neutral (e.g. "to be assigned this week"). Never invent titles like "Operations Manager" or "Training Coordinator".
+- COST ORDER IS MANDATORY: order the items from lowest-cost/operational to highest-cost. At least the first 3 items must be zero- or low-cost operational actions (layout, seating, staff briefing/reminders, scheduling, monitoring, table allocation, volume/settings adjustments, etc.).
+- Do NOT recommend paid structural work, renovations, acoustic/soundproofing panels, or new equipment purchases UNLESS the fixed Impact level is "High" AND Effort level is "High" AND you have already listed at least 3 operational actions. If you do include one, it must be the LAST item, explicitly framed as a secondary/longer-term step ("if the above does not resolve it within [timeframe]...").
 - action_plan.en and action_plan.fr must have the same number of items
 - actions array must have exactly one checklist task per action_plan item — same count, same order, action_plan_index must match
 - Priority per item: High / Medium / Low based on impact on "${paretoCauseEn}"
 
-Good sentence example for wait time:
-"Install a bell at the kitchen pass this week — 24 reviews report cold and late dishes because plates sit uncollected for 5–10 minutes with no alert system — the kitchen manager purchases and installs it before Friday and briefs the kitchen team on firing it every time a dish is plated."
+Good sentence example for a noisy dining room (operational-first):
+"Move the four largest tables away from the bar speaker and toward the back wall this week — 10 reviews mention noise disrupting conversation — the Restaurant Manager reorganizes the floor plan before Friday's dinner service and briefs Staff to keep music at a lower fixed volume during peak hours."
 
-Bad example (never do this):
-"Improve coordination between kitchen and dining room."
+Good sentence example for wait time:
+"Set up a visible pass-ready signal (bell or light) at the kitchen pass this week — 24 reviews report cold and late dishes because plates sit uncollected for 5–10 minutes with no alert system — the Restaurant Manager installs it before Friday and briefs Staff to use it every time a dish is plated."
+
+Bad examples (never do this):
+- "Improve coordination between kitchen and dining room." (too vague)
+- "Install acoustic panels in the dining room this week." (costly/structural as a first action, not justified by reviews alone)
+- "...the Operations Manager will oversee this." (invented job title)
 
 SECTION 4 — OPERATIONAL CHECKLIST (5–7 items)
 Short, verifiable tasks derived directly from the action_plan above.
