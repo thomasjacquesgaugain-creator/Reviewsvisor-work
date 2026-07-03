@@ -94,6 +94,62 @@ const CATEGORY_STYLES: Record<
 
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 
+const LIGHT_COLORS = {
+  surface: "#ffffff",
+  surface2: "#f8fafc",
+  surface3: "#f1f5f9",
+  border: "#eef0f7",
+  text: "#1e1b4b",
+  text2: "#5b6478",
+  text3: "#9aa1b4",
+  text4: "#c3c8d6",
+  overlay: "rgba(30,27,75,0.5)",
+  button: "#8b5cf6",
+  button2: "#6d28d9",
+  buttonDisabled: "#c3c8d6",
+};
+
+const DARK_COLORS = {
+  surface: "#0f172a",
+  surface2: "#111827",
+  surface3: "#1e293b",
+  border: "#334155",
+  text: "#f8fafc",
+  text2: "#cbd5e1",
+  text3: "#94a3b8",
+  text4: "#64748b",
+  overlay: "rgba(2,6,23,0.72)",
+  button: "#a78bfa",
+  button2: "#7c3aed",
+  buttonDisabled: "#475569",
+};
+
+function useIsDarkMode() {
+  const [isDark, setIsDark] = useState(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
+  );
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const root = document.documentElement;
+    const update = () => setIsDark(root.classList.contains("dark"));
+
+    update();
+
+    const observer = new MutationObserver(update);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+
+    return () => observer.disconnect();
+  }, []);
+
+  return isDark;
+}
+
+function getThemeColors(isDark: boolean) {
+  return isDark ? DARK_COLORS : LIGHT_COLORS;
+}
+
 /* ─────────────────────────────────────────────
    SEGMENT CONTROL
 ───────────────────────────────────────────── */
@@ -103,21 +159,23 @@ const SegmentControl = ({
   value,
   onChange,
   options,
+  colors,
 }: {
   categoryKey: IshikawaKey;
   value: number | null;
   onChange: (val: number) => void;
   options: { label: string; value: number }[];
+  colors: typeof LIGHT_COLORS;
 }) => {
   const accent = CATEGORY_STYLES[categoryKey].accent;
   return (
     <div style={{
       display: "flex",
-      background: "#f8fafc",
+      background: colors.surface2,
       borderRadius: "11px",
       padding: "4px",
       gap: "2px",
-      border: "1px solid #eef0f7",
+      border: `1px solid ${colors.border}`,
     }}>
       {options.map((opt) => {
         const sel = value === opt.value;
@@ -130,16 +188,16 @@ const SegmentControl = ({
               flex: 1,
               padding: "9px 4px",
               border: sel ? `1.5px solid ${accent}` : "1.5px solid transparent",
-              background: sel ? "#ffffff" : "transparent",
+              background: sel ? colors.surface : "transparent",
               borderRadius: "8px",
               cursor: "pointer",
               fontFamily: "inherit",
               fontSize: "12px",
-              color: sel ? accent : "#9aa1b4",
+              color: sel ? accent : colors.text3,
               fontWeight: sel ? 600 : 500,
               transition: `all 0.2s ${EASE}`,
               whiteSpace: "nowrap",
-              boxShadow: sel ? "0 2px 6px rgba(30,27,75,0.08)" : "none",
+              boxShadow: sel ? (colors.surface === "#0f172a" ? "0 2px 8px rgba(2,6,23,0.45)" : "0 2px 6px rgba(30,27,75,0.08)") : "none",
               transform: sel ? "translateY(-0.5px)" : "none",
               letterSpacing: "-0.005em",
             }}
@@ -158,6 +216,7 @@ const SegmentControl = ({
 
 const QuestionRow = ({
   sectionKey, title, subtitle, value, onChange, options, animDelay,
+  colors,
 }: {
   sectionKey: IshikawaKey;
   title: string;
@@ -166,29 +225,39 @@ const QuestionRow = ({
   onChange: (val: number) => void;
   options: { label: string; value: number }[];
   animDelay: number;
+  colors: typeof LIGHT_COLORS;
 }) => {
   const s = CATEGORY_STYLES[sectionKey];
   const Icon = s.icon;
+  const iconBg = colors.surface === "#0f172a"
+    ? (
+      sectionKey === "manpower" ? "rgba(99,102,241,0.16)"
+      : sectionKey === "method" ? "rgba(37,99,235,0.16)"
+      : sectionKey === "machine" ? "rgba(100,116,139,0.18)"
+      : sectionKey === "material" ? "rgba(217,119,6,0.16)"
+      : "rgba(13,148,136,0.16)"
+    )
+    : s.soft;
   return (
     <div style={{
       padding: "16px 0 14px",
-      borderBottom: "1px solid #eef0f7",
+      borderBottom: `1px solid ${colors.border}`,
       animation: `wqFade 0.4s ${EASE} ${animDelay}s backwards`,
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
         <span style={{
           width: "30px", height: "30px", borderRadius: "9px",
-          background: s.soft, color: s.accent,
+          background: iconBg, color: s.accent,
           display: "inline-flex", alignItems: "center", justifyContent: "center",
           flexShrink: 0,
         }}>
           <Icon size={15} />
         </span>
-        <span style={{ fontSize: "14px", fontWeight: 600, color: "#1e1b4b", lineHeight: 1.2 }}>
+        <span style={{ fontSize: "14px", fontWeight: 600, color: colors.text, lineHeight: 1.2 }}>
           {title}
         </span>
       </div>
-      <div style={{ fontSize: "13.5px", color: "#5b6478", lineHeight: 1.5, marginBottom: "10px" }}>
+      <div style={{ fontSize: "13.5px", color: colors.text2, lineHeight: 1.5, marginBottom: "10px" }}>
         {subtitle}
       </div>
       <SegmentControl
@@ -196,6 +265,7 @@ const QuestionRow = ({
         value={value}
         onChange={onChange}
         options={options}
+        colors={colors}
       />
     </div>
   );
@@ -222,10 +292,11 @@ const Questionnaire = ({
 }: Props) => {
 
   const [scores, setScores] = useState<IshikawaScores>(
-    initialScores ?? { manpower: null, method: null, machine: null, material: null, measurement: null }
-  );
+initialScores ?? { manpower: null, method: null, machine: null, material: null, environment: null }  );
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isDark = useIsDarkMode();
+  const colors = getThemeColors(isDark);
 
   // Animate in/out without touching body scroll at all
   const [mounted, setMounted]   = useState(false);  // in DOM?
@@ -250,7 +321,7 @@ const Questionnaire = ({
   // sync scores when issue changes
   useEffect(() => {
     setScores(initialScores ?? {
-      manpower: null, method: null, machine: null, material: null, measurement: null,
+      manpower: null, method: null, machine: null, material: null, environment: null,
     });
   }, [initialScores]);
 
@@ -327,7 +398,7 @@ const Questionnaire = ({
           to   { opacity: 1; transform: translateY(0); }
         }
         @keyframes rvSpin { to { transform: rotate(360deg); } }
-        .rv-wz-close:hover  { background: #f1f5f9 !important; color: #1e1b4b !important; }
+        .rv-wz-close:hover  { background: ${isDark ? "rgba(51,65,85,0.85)" : "#f1f5f9"} !important; color: ${isDark ? "#f8fafc" : "#1e1b4b"} !important; }
         .rv-wz-body::-webkit-scrollbar { display: none; }
         .rv-wz-body { scrollbar-width: none; }
         .rv-wz-body > div:last-child { border-bottom: none !important; padding-bottom: 8px; }
@@ -340,7 +411,7 @@ const Questionnaire = ({
           position: "fixed",
           inset: 0,
           zIndex: 9998,
-          background: "rgba(30,27,75,0.5)",
+          background: colors.overlay,
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
           opacity: visible ? 1 : 0,
@@ -367,15 +438,15 @@ const Questionnaire = ({
           onClick={(e) => e.stopPropagation()}
           style={{
             pointerEvents: "auto",           // re-enable inside the panel
-            background: "#ffffff",
+            background: colors.surface,
             borderRadius: "22px",
             maxWidth: "580px",
             width: "100%",
             maxHeight: "92vh",
             display: "flex",
             flexDirection: "column",
-            boxShadow: "0 24px 60px rgba(30,27,75,0.2)",
-            border: "1px solid #eef0f7",
+            boxShadow: isDark ? "0 24px 60px rgba(2,6,23,0.65)" : "0 24px 60px rgba(30,27,75,0.2)",
+            border: `1px solid ${colors.border}`,
             transform: visible ? "translateY(0) scale(1)" : "translateY(20px) scale(0.97)",
             transition: `transform 0.4s ${EASE}`,
             overflow: "hidden",             // clips radius; inner body scrolls itself
@@ -385,7 +456,7 @@ const Questionnaire = ({
           {/* ── HEADER (fixed) ── */}
           <div style={{
             padding: "20px 24px 18px",
-            borderBottom: "1px solid #eef0f7",
+            borderBottom: `1px solid ${colors.border}`,
             display: "flex",
             alignItems: "flex-start",
             justifyContent: "space-between",
@@ -393,15 +464,15 @@ const Questionnaire = ({
             flexShrink: 0,
           }}>
             <div>
-              <div style={{ fontSize: "17px", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.2, color: "#1e1b4b" }}>
+              <div style={{ fontSize: "17px", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.2, color: colors.text }}>
                 {t("analysis.ishikawa.refineTitle") || "Affiner le diagnostic"}
               </div>
-              <div style={{ fontSize: "13px", color: "#5b6478", marginTop: "6px", lineHeight: 1.4, maxWidth: "460px" }}>
+              <div style={{ fontSize: "13px", color: colors.text2, marginTop: "6px", lineHeight: 1.4, maxWidth: "460px" }}>
                 {t("questionnaire.help") || "Aidez à confirmer les causes du problème détecté."}
               </div>
-              <div style={{ fontSize: "12px", color: "#9aa1b4", marginTop: "8px", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+              <div style={{ fontSize: "12px", color: colors.text3, marginTop: "8px", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
                 {t("analysis.ishikawa.problem") || "Problème"}{" · "}
-                <strong style={{ color: "#6366f1", fontWeight: 700, textTransform: "none", letterSpacing: 0, fontSize: "13px" }}>
+                <strong style={{ color: colors.button, fontWeight: 700, textTransform: "none", letterSpacing: 0, fontSize: "13px" }}>
                   {problemTitle}
                 </strong>
               </div>
@@ -415,7 +486,7 @@ const Questionnaire = ({
                 background: "transparent", border: "none", cursor: "pointer",
                 width: "32px", height: "32px", borderRadius: "9px",
                 display: "inline-flex", alignItems: "center", justifyContent: "center",
-                color: "#9aa1b4", transition: "background 0.15s, color 0.15s", flexShrink: 0,
+                color: colors.text3, transition: "background 0.15s, color 0.15s", flexShrink: 0,
               }}
             >
               <X size={18} />
@@ -425,7 +496,7 @@ const Questionnaire = ({
           {/* ── BODY (scrollable on its own — does NOT touch window scroll) ── */}
           <div
             className="rv-wz-body"
-            style={{ flex: 1, overflowY: "auto", padding: "6px 24px 12px" }}
+            style={{ flex: 1, overflowY: "auto", padding: "6px 24px 12px", background: colors.surface }}
           >
             {SECTIONS.map((sec, i) => (
               <QuestionRow
@@ -437,6 +508,7 @@ const Questionnaire = ({
                 onChange={(val) => handleChange(sec.key, val)}
                 options={OPTIONS}
                 animDelay={0.04 + i * 0.03}
+                colors={colors}
               />
             ))}
 
@@ -445,8 +517,8 @@ const Questionnaire = ({
           {/* ── FOOTER (fixed) ── */}
           <div style={{
             padding: "14px 24px 16px",
-            borderTop: "1px solid #eef0f7",
-            background: "#f8fafc",
+            borderTop: `1px solid ${colors.border}`,
+            background: colors.surface2,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -456,14 +528,14 @@ const Questionnaire = ({
           }}>
             {/* Progress */}
             <div style={{ flex: 1, minWidth: "140px" }}>
-              <span style={{ fontSize: "11.5px", color: "#5b6478", display: "block", marginBottom: "5px" }}>
-                <strong style={{ color: "#1e1b4b" }}>{answeredCount}</strong> / 5{" "}
+              <span style={{ fontSize: "11.5px", color: colors.text2, display: "block", marginBottom: "5px" }}>
+                <strong style={{ color: colors.text }}>{answeredCount}</strong> / 5{" "}
                 {t("questionnaire.answers") || "réponses"}
               </span>
-              <div style={{ height: "4px", background: "#f1f5f9", borderRadius: "999px", overflow: "hidden" }}>
+              <div style={{ height: "4px", background: colors.surface3, borderRadius: "999px", overflow: "hidden" }}>
                 <div style={{
                   height: "100%",
-                  background: "linear-gradient(90deg, #8b5cf6, #6366f1)",
+                  background: `linear-gradient(90deg, ${colors.button}, ${colors.button2})`,
                   borderRadius: "999px",
                   width: `${(answeredCount / 5) * 100}%`,
                   transition: `width 0.5s ${EASE}`,
@@ -478,7 +550,7 @@ const Questionnaire = ({
                 onClick={() => { onSkip(); onClose(); }}
                 style={{
                   background: "transparent", border: "none", cursor: "pointer",
-                  fontSize: "12.5px", color: "#9aa1b4", textDecoration: "underline",
+                  fontSize: "12.5px", color: colors.text3, textDecoration: "underline",
                   fontFamily: "inherit",
                 }}
               >
@@ -498,7 +570,7 @@ const Questionnaire = ({
                 padding: "11px 18px", borderRadius: "11px",
                 fontSize: "13.5px", fontWeight: 600, color: "white",
                 background: canSubmit && !isSubmitting
-                  ? "linear-gradient(145deg, #8b5cf6, #6d28d9)" : "#c3c8d6",
+                  ? `linear-gradient(145deg, ${colors.button}, ${colors.button2})` : colors.buttonDisabled,
                 boxShadow: canSubmit && !isSubmitting
                   ? "0 6px 16px -5px rgba(124,58,237,0.5)" : "none",
                 transition: `transform 0.2s ${EASE}`,

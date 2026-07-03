@@ -23,9 +23,9 @@ const probabilityConfig = (t: (key: string) => string): Record<
   ProbabilityLevel,
   { label: string; color: string; icon: typeof AlertCircle }
 > => ({
-  Probable:     { label: t("analysis.pareto.rootCause.probability.probable"),  color: "bg-red-100 text-red-700 border-red-300",     icon: AlertCircle },
-  Possible:     { label: t("analysis.pareto.rootCause.probability.possible"),  color: "bg-amber-100 text-amber-700 border-amber-300", icon: Clock },
-  Occasionnelle:{ label: t("analysis.pareto.rootCause.probability.occasional"),color: "bg-blue-100 text-blue-700 border-blue-300",   icon: HelpCircle },
+  Probable:     { label: t("analysis.pareto.rootCause.probability.probable"),  color: "bg-red-100 text-red-700 border-red-300 dark:bg-red-950/35 dark:text-red-200 dark:border-red-900/60",     icon: AlertCircle },
+  Possible:     { label: t("analysis.pareto.rootCause.probability.possible"),  color: "bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-950/35 dark:text-amber-200 dark:border-amber-900/60", icon: Clock },
+  Occasionnelle:{ label: t("analysis.pareto.rootCause.probability.occasional"),color: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-950/35 dark:text-blue-200 dark:border-blue-900/60",   icon: HelpCircle },
 });
 
 export function RootCauseAnalysisModal({
@@ -61,7 +61,7 @@ export function RootCauseAnalysisModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto border border-slate-200 bg-white text-slate-900 shadow-xl dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
 
         {/* ── HEADER + STEPPER DOTS ── */}
         <DialogHeader>
@@ -69,7 +69,7 @@ export function RootCauseAnalysisModal({
             <DialogTitle className="text-xl font-bold text-slate-900 dark:text-slate-100">
               {t("analysis.pareto.rootCause.title", { problem: issue.name })}
             </DialogTitle>
-            <span className="text-sm text-slate-400 whitespace-nowrap shrink-0">
+            <span className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap shrink-0">
               {currentStep + 1} / {total}
             </span>
           </div>
@@ -96,9 +96,9 @@ export function RootCauseAnalysisModal({
         <div className="space-y-6 mt-4">
 
           {/* ── SUMMARY ── */}
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/30 dark:border-blue-900/50">
+              <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0 dark:text-blue-300" />
               <div>
                 <h3 className="mb-2 font-semibold text-slate-900 dark:text-slate-100">
                   {t("analysis.pareto.rootCause.summary")}
