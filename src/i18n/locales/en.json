@@ -2574,6 +2574,7 @@
         "noChange":    "No significant change expected"
       },
     "actionsProgress": "Actions Progress",
+    "workDone":"Is the work getting done?",
     "actionsCompleted": "{{completed}}/{{total}} actions completed",
     "focus": "Focus: {{cause}}",
     "actionTracking": "Action tracking",
@@ -2585,6 +2586,28 @@
     "accessible": "Accessible",
     "realistic": "Realistic",
     "achievable": "Achievable",
-    "ambitious": "Ambitious"
-    }
+    "ambitious": "Ambitious",
+    "exploreTheDetails":"Explore the details",
+    "detailBehindYourGoals":"The detail behind your goals, open it if needed",
+    "progress":"Progress",
+    "criticalReviews":"Critical reviews",
+    "whereToAct":"Where to act",
+    "planProgress":"Plan Progress",
+    "planProgressDesc":"The work done, and its real effect on your goals",
+    "criticalReviewsDesc":"The negative reviews that explain your results",
+    "whereToActFirst":"Where to act first",
+    "whereToActFirstDesc":"The levers that will earn the most points",
+    "impactPriority":"If you fix these, here is where you will gain the most, in priority order:",
+    "impactValues":{
+      "high":"High impact",
+      "low":"Low impact",
+      "medium":"Medium impact"
+    },
+    "currentRatingText": "Estimated range based on your current rating ({{rating}}) and each theme's share of your negative reviews.",
+    "goalsProgress":"Goals progress",
+    "problemImproving":"Is the problem actually improving?",
+    "actualReduction":"Actual reduction of negative reviews",
+    "progressFormulaExample": "Progress = (start - current) ÷ (start - target) — e.g. {{label}}: ({{start}} - {{current}}) ÷ ({{start}} - {{target}}) = {{percentage}}%",
+    "planEffectNote": "{{actionsPercentage}}% of the plan done for {{progressPercentage}}% result: the effect follows with a slight lag, which is normal. If a goal's bar stays low while the actions move ahead, the plan needs adjusting."
+  }
 }

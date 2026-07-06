@@ -2789,6 +2789,7 @@
       "noChange":    "Aucun changement significatif attendu"
     },
     "actionsProgress": "Progression des actions",
+    "workDone":"Est-ce que le travail est fait ?",
     "actionsCompleted": "{{completed}}/{{total}} actions complétées",
     "focus": "Focus : {{cause}}",
     "actionTracking": "Suivi des actions",
@@ -2800,6 +2801,28 @@
      "accessible": "Accessible",
     "realistic": "Réaliste",
     "achievable": "Atteignable",
-    "ambitious": "Ambitieux"
+    "ambitious": "Ambitieux",
+    "exploreTheDetails":"Explorer les détails",
+    "detailBehindYourGoals":"Le détail derrière vos objectifs, à ouvrir si besoin",
+    "progress":"Avancement",
+    "criticalReviews":"Avis critiques",
+    "whereToAct":"Où agir",
+    "planProgress":"Avancement du plan",
+    "planProgressDesc":"Le travail réalisé, et son effet réel sur vos objectifs",
+    "criticalReviewsDesc":"Les avis négatifs qui expliquent vos résultats",
+    "whereToActFirst":"Où agir en premier",
+    "whereToActFirstDesc":"Les leviers qui rapporteront le plus de points",
+    "impactPriority":"Si vous corrigez ces points, voici où vous gagnerez le plus, par ordre de priorité:",
+     "impactValues":{
+      "high":"Impact élevé",
+      "low":"Impact moyen",
+      "medium":"Impact faible"
+    },
+    "currentRatingText": "Fourchette estimée à partir de votre note actuelle ({{rating}}) et de la part de chaque thème dans vos avis négatifs.",
+    "goalsProgress":"Progression des objectifs",
+    "problemImproving":"Est-ce que le problème s'améliore réellement ?",
+    "actualReduction":"Réduction réelle des avis négatifs",
+    "progressFormulaExample": "Progression = (départ - actuel) ÷ (départ - cible) — ex. {{label}} : ({{start}} - {{current}}) ÷ ({{start}} - {{target}}) = {{percentage}} %",
+    "planEffectNote": "{{actionsPercentage}}% du plan réalisé pour {{progressPercentage}}% de résultat : l'effet suit avec un léger décalage, c'est normal. Si une barre d'objectif reste basse alors que les actions avancent, le plan est à ajuster."
   }
 }

@@ -143,6 +143,7 @@ import { useSmartStore } from "@/store/smartStore";
 import { DeleteEstablishmentButton } from "@/components/DeleteEstablishmentButton";
 import { getEstablishmentTypeTranslationKey } from "@/utils/establishmentTypeMapping";
 import { AppPageBackground } from "@/components/AppPageBackground";
+import { GoalInsightsSection } from "@/components/dashboard/GoalInsightsSection";
 
 const GRANULARITY_LABEL_KEYS: Record<Granularity, string> = {
   jour: "dashboard.day",
@@ -3512,7 +3513,7 @@ const activeObjective =
     o => o.status !== "completed"
   ) || null;
 
-    const progress = useSmartProgress(activeObjective);
+    const progress = useSmartProgress(objectives);
 
     const summaryIssues = useMemo(() => {
       return [...(analysisDataForTab?.paretoIssues ?? [])]
@@ -10660,7 +10661,7 @@ const activeObjective =
                   </CardContent>
                 </Card>
 
-                <div className="grid md:grid-cols-3 gap-6 mb-6">
+                {/* <div className="grid md:grid-cols-3 gap-6 mb-6">
                   <Card
                     className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
                     onClick={() =>
@@ -10768,11 +10769,23 @@ const activeObjective =
                       </Button>
                     </CardContent>
                   </Card>
-                </div>
+                </div> */}
 
-                {openCard === "progression" && (
+                <GoalInsightsSection
+                  openCard={openCard}
+                  setOpenCard={setOpenCard}
+                  progress={progress}
+                  linkedReviews={linkedReviews}
+                  projectedStats={projectedStats}
+                  language={i18n.language}
+                  t={t}
+                  renderReviewText={highlightReviewText}
+                  paretoCauses={analysisDataForTab?.paretoIssues}
+                  objectives={objectives}
+                />
+
+                {/* {openCard === "progression" && (
                   <>
-                  {/* Actionable progress */}
                   <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="pb-1">
                       <CardTitle className="text-xl">
@@ -10798,7 +10811,6 @@ const activeObjective =
 
                         return (
                           <div className="space-y-3">
-                            {/* Stats */}
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="text-xs text-muted-foreground mt-1">
@@ -10814,7 +10826,6 @@ const activeObjective =
                               </span>
                             </div>
 
-                            {/* Progress bar */}
                             <div className="h-3 bg-muted rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-green-600 rounded-full transition-all duration-500"
@@ -10824,7 +10835,6 @@ const activeObjective =
                               />
                             </div>
 
-                            {/* Optional status */}
                             <div className="flex items-center justify-between text-xs text-muted-foreground">
                               <span>
                                 {activeObjective?.pareto_cause
@@ -10857,7 +10867,6 @@ const activeObjective =
                       })()}
                     </CardContent>
                   </Card>
-                   {/* objectives progress */}
                   <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="pb-1">
                       <CardTitle className="text-xl">
@@ -10888,9 +10897,9 @@ const activeObjective =
 
                 </>
 
-                )}
+                )} */}
 
-                {openCard === "avisLies" && (
+                {/* {openCard === "avisLies" && (
                   <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader>
                       <CardTitle className="text-xl">
@@ -10943,9 +10952,9 @@ const activeObjective =
                       </div>
                     </CardContent>
                   </Card>
-                )}
+                )} */}
 
-                {openCard === "impact" && (
+                {/* {openCard === "impact" && (
                   <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="pb-1">
                       <CardTitle className="text-xl">
@@ -11003,7 +11012,7 @@ const activeObjective =
                       </div>
                     </CardContent>
                   </Card>
-                )}
+                )} */}
               </>
             )}
 
