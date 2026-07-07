@@ -249,6 +249,8 @@ function formatTaxPercentage(value: number) {
 
 function normalizePdfText(value: string | null | undefined) {
   return (value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[\u2013\u2014]/g, "-")
     .replace(/\u2022/g, "-")
     .replace(/\s+/g, " ")
