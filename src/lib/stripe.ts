@@ -232,6 +232,7 @@ export async function listBillingInvoices(): Promise<BillingInvoice[]> {
 
 export async function downloadBillingInvoicesZip(
   invoiceIds?: string[],
+  language?: string,
 ): Promise<{ blob: Blob; fileName: string | null }> {
   const { data: sessionData, error: sessionError } =
     await supabase.auth.getSession();
@@ -250,6 +251,47 @@ export async function downloadBillingInvoicesZip(
     body: JSON.stringify({
       format: "zip",
       invoice_ids: invoiceIds,
+      language,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    throw new Error(
+      errorBody?.error || `Download failed with status ${response.status}`,
+    );
+  }
+
+  return {
+    blob: await response.blob(),
+    fileName: getFileNameFromContentDisposition(
+      response.headers.get("Content-Disposition"),
+    ),
+  };
+}
+
+export async function downloadBillingInvoicePdf(
+  invoiceId: string,
+  language?: string,
+): Promise<{ blob: Blob; fileName: string | null }> {
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+
+  if (sessionError || !sessionData.session?.access_token) {
+    throw new Error(sessionError?.message || "Authentication required");
+  }
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "http://127.0.0.1:54321";
+  const response = await fetch(`${supabaseUrl}/functions/v1/billing-reports`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${sessionData.session.access_token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      format: "pdf",
+      invoice_ids: [invoiceId],
+      language,
     }),
   });
 

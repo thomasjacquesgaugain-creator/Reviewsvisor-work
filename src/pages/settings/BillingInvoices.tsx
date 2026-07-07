@@ -9,6 +9,7 @@ import { format, subMonths, startOfMonth, endOfMonth, Locale } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import {
+  downloadBillingInvoicePdf,
   downloadBillingInvoicesZip,
   getBillingReports,
   type BillingInformation,
@@ -93,13 +94,6 @@ function getBillingInvoiceDownloadUrl(invoice: BillingInvoice) {
   return invoice.invoice_pdf_url || invoice.hosted_invoice_url;
 }
 
-function openBillingInvoice(invoice: BillingInvoice) {
-  const downloadUrl = getBillingInvoiceDownloadUrl(invoice);
-  if (downloadUrl) {
-    window.open(downloadUrl, "_blank", "noopener,noreferrer");
-  }
-}
-
 function saveBlob(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -128,6 +122,7 @@ export function BillingInvoicesTable({
   const { invoices, paymentMethod, billingInformation, loading, error } = useBillingInvoices();
   const [invoiceSearch, setInvoiceSearch] = useState("");
   const [downloadingAll, setDownloadingAll] = useState(false);
+  const [downloadingInvoiceIds, setDownloadingInvoiceIds] = useState<Set<string>>(new Set());
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -173,6 +168,7 @@ export function BillingInvoicesTable({
     try {
       const { blob, fileName } = await downloadBillingInvoicesZip(
         downloadableInvoices.map((invoice) => invoice.invoice_id),
+        i18n.resolvedLanguage || i18n.language,
       );
       saveBlob(
         blob,
@@ -183,6 +179,31 @@ export function BillingInvoicesTable({
       setDownloadError(message);
     } finally {
       setDownloadingAll(false);
+    }
+  };
+
+  const handleDownloadInvoice = async (invoice: BillingInvoice) => {
+    setDownloadingInvoiceIds((current) => new Set(current).add(invoice.invoice_id));
+    setDownloadError(null);
+
+    try {
+      const { blob, fileName } = await downloadBillingInvoicePdf(
+        invoice.invoice_id,
+        i18n.resolvedLanguage || i18n.language,
+      );
+      saveBlob(
+        blob,
+        fileName || `${invoice.invoice_number || invoice.invoice_id}.pdf`,
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setDownloadError(message);
+    } finally {
+      setDownloadingInvoiceIds((current) => {
+        const next = new Set(current);
+        next.delete(invoice.invoice_id);
+        return next;
+      });
     }
   };
 
@@ -236,30 +257,38 @@ export function BillingInvoicesTable({
             {error}
           </div>
         ) : filteredInvoices.length > 0 ? (
-          filteredInvoices.map((invoice) => (
-            <div
-              key={invoice.invoice_id}
-              className="grid gap-4 border-t border-slate-100 px-5 py-3.5 text-sm lg:grid-cols-[1.1fr_0.9fr_1.8fr_0.8fr_0.7fr_0.6fr] lg:items-center"
-            >
-              <p className="text-sm font-semibold text-slate-900">{invoice.invoice_number || invoice.invoice_id}</p>
-              <p className="text-sm text-slate-500">{formatDate(invoice.created_at)}</p>
-              <p className="text-sm text-slate-500">{invoice.plan_name || "Subscription invoice"}</p>
-              <p className="text-sm font-semibold text-slate-900">{formatBillingInvoiceAmount(invoice)}</p>
-              <span className={`inline-flex items-center gap-2 text-sm font-medium capitalize ${invoice.status === "paid" ? "text-emerald-700" : "text-red-700"}`}>
-                <span className={`h-2 w-2 rounded-full ${invoice.status === "paid" ? "bg-emerald-600" : "bg-red-600"}`}/>
-                {t(`settings.BillingAndSubscription.invoices.payStatus.${invoice.status.toLowerCase()}`, invoice.status)}
-              </span>
-              <Button
-                variant="outline"
-                className="h-8 gap-1 rounded-lg px-3 text-xs font-medium"
-                disabled={!getBillingInvoiceDownloadUrl(invoice)}
-                onClick={() => openBillingInvoice(invoice)}
+          filteredInvoices.map((invoice) => {
+            const isDownloadingInvoice = downloadingInvoiceIds.has(invoice.invoice_id);
+
+            return (
+              <div
+                key={invoice.invoice_id}
+                className="grid gap-4 border-t border-slate-100 px-5 py-3.5 text-sm lg:grid-cols-[1.1fr_0.9fr_1.8fr_0.8fr_0.7fr_0.6fr] lg:items-center"
               >
-                <Download className="h-4 w-4" />
-                PDF
-              </Button>
-            </div>
-          ))
+                <p className="text-sm font-semibold text-slate-900">{invoice.invoice_number || invoice.invoice_id}</p>
+                <p className="text-sm text-slate-500">{formatDate(invoice.created_at)}</p>
+                <p className="text-sm text-slate-500">{invoice.plan_name || "Subscription invoice"}</p>
+                <p className="text-sm font-semibold text-slate-900">{formatBillingInvoiceAmount(invoice)}</p>
+                <span className={`inline-flex items-center gap-2 text-sm font-medium capitalize ${invoice.status === "paid" ? "text-emerald-700" : "text-red-700"}`}>
+                  <span className={`h-2 w-2 rounded-full ${invoice.status === "paid" ? "bg-emerald-600" : "bg-red-600"}`}/>
+                  {t(`settings.BillingAndSubscription.invoices.payStatus.${invoice.status.toLowerCase()}`, invoice.status)}
+                </span>
+                <Button
+                  variant="outline"
+                  className="h-8 gap-1 rounded-lg px-3 text-xs font-medium"
+                  disabled={isDownloadingInvoice}
+                  onClick={() => handleDownloadInvoice(invoice)}
+                >
+                  {isDownloadingInvoice ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                  PDF
+                </Button>
+              </div>
+            );
+          })
         ) : (
           <div className="border-t border-slate-100 px-5 py-10 text-sm font-medium text-slate-500">
             {t("settings.BillingAndSubscription.invoices.noInvoiceAvailable")}
@@ -279,6 +308,8 @@ export function BillingInvoices() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { invoices, loading, error } = useBillingInvoices();
+  const [downloadingInvoiceIds, setDownloadingInvoiceIds] = useState<Set<string>>(new Set());
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const localeMap: Record<string, Locale> = {
     fr,
@@ -315,6 +346,31 @@ export function BillingInvoices() {
       currency: currency.toUpperCase(),
     }).format(amount / 100);
 
+  const handleDownloadInvoice = async (invoice: BillingInvoice) => {
+    setDownloadingInvoiceIds((current) => new Set(current).add(invoice.invoice_id));
+    setDownloadError(null);
+
+    try {
+      const { blob, fileName } = await downloadBillingInvoicePdf(
+        invoice.invoice_id,
+        i18n.resolvedLanguage || i18n.language,
+      );
+      saveBlob(
+        blob,
+        fileName || `${invoice.invoice_number || invoice.invoice_id}.pdf`,
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setDownloadError(message);
+    } finally {
+      setDownloadingInvoiceIds((current) => {
+        const next = new Set(current);
+        next.delete(invoice.invoice_id);
+        return next;
+      });
+    }
+  };
+
   return (
     <div className="p-8 text-gray-900 dark:text-slate-100">
       <div className="mb-6">
@@ -348,6 +404,12 @@ export function BillingInvoices() {
         </Card>
       ) : (
         <div className="space-y-6">
+          {downloadError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+              {downloadError}
+            </div>
+          )}
+
           {months.map((month) => {
             const monthInvoices = invoicesByMonth[month.monthKey] ?? [];
 
@@ -378,8 +440,7 @@ export function BillingInvoices() {
                 <div className="space-y-3 p-5">
                   {monthInvoices.length > 0 ? (
                     monthInvoices.map((invoice) => {
-                      const downloadUrl =
-                        invoice.invoice_pdf_url || invoice.hosted_invoice_url;
+                      const isDownloadingInvoice = downloadingInvoiceIds.has(invoice.invoice_id);
                       const statusClass =
                         statusStyles[invoice.status] || "bg-gray-100 text-gray-700";
 
@@ -425,14 +486,14 @@ export function BillingInvoices() {
                               variant="outline"
                               size="sm"
                               className="gap-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
-                              disabled={!downloadUrl}
-                              onClick={() => {
-                                if (downloadUrl) {
-                                  window.open(downloadUrl, "_blank", "noopener,noreferrer");
-                                }
-                              }}
+                              disabled={isDownloadingInvoice}
+                              onClick={() => handleDownloadInvoice(invoice)}
                             >
-                              <Download className="h-4 w-4" />
+                              {isDownloadingInvoice ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Download className="h-4 w-4" />
+                              )}
                               {t("settings.myMonthlyInvoices.download")}
                             </Button>
                           </div>
