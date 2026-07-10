@@ -103,6 +103,15 @@ const getPriorityStatus = (
   };
 };
 
+const getNumberLocale = (language: string | undefined) =>
+  language?.toLowerCase().startsWith("fr") ? "fr-FR" : "en-US";
+
+const formatLocalizedNumber = (
+  value: number,
+  locale: string,
+  options: Intl.NumberFormatOptions = {},
+) => new Intl.NumberFormat(locale, options).format(value);
+
 export function GoalInsightsSection({
   openCard,
   setOpenCard,
@@ -119,6 +128,7 @@ export function GoalInsightsSection({
 
   const selectedTab = openCard ?? "progression";
   const lang = language.startsWith("fr") ? "fr" : "en";
+  const numberLocale = getNumberLocale(language);
 
   const actions = useMemo(
     () => objectives.flatMap((objective) => objective.actions ?? []),
@@ -201,7 +211,7 @@ export function GoalInsightsSection({
       const trendLabel =
         trendPct === 0
           ? t("objective.stable", { defaultValue: "stable" })
-          : `${trendPct > 0 ? "+" : ""}${trendPct}%`;
+          : `${trendPct > 0 ? "+" : ""}${formatLocalizedNumber(Math.abs(trendPct), numberLocale, { maximumFractionDigits: 0 })}%`;
 
       return {
         key: key || `priority-${index}`,
@@ -298,7 +308,7 @@ export function GoalInsightsSection({
               </p>
             </div>
             <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
-              {actionsPercentage}%
+              {formatLocalizedNumber(actionsPercentage, numberLocale, { maximumFractionDigits: 0 })}%
             </div>
           </div>
 
@@ -328,7 +338,7 @@ export function GoalInsightsSection({
               </p>
             </div>
             <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
-              {Math.round(progress.percentage)}%
+              {formatLocalizedNumber(Math.round(progress.percentage), numberLocale, { maximumFractionDigits: 0 })}%
             </div>
           </div>
 
@@ -355,10 +365,10 @@ export function GoalInsightsSection({
                     </p>
                   </div>
                   <div className="flex-1 basis-0 text-center text-sm text-slate-500 dark:text-slate-400">
-                    {goal.start} → {goal.current} → {goal.target}
+                    {formatLocalizedNumber(goal.start, numberLocale, { maximumFractionDigits: 0 })} → {formatLocalizedNumber(goal.current, numberLocale, { maximumFractionDigits: 0 })} → {formatLocalizedNumber(goal.target, numberLocale, { maximumFractionDigits: 0 })}
                   </div>
                   <div className={`flex-1 basis-0 text-right text-sm font-semibold ${color.text}`}>
-                    {pct}%
+                    {formatLocalizedNumber(pct, numberLocale, { maximumFractionDigits: 0 })}%
                   </div>
                 </div>
               );
@@ -369,10 +379,10 @@ export function GoalInsightsSection({
             <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
               {t("objective.progressFormulaExample", {
                 label: exampleGoal.label,
-                start: exampleGoal.start,
-                current: exampleGoal.current,
-                target: exampleGoal.target,
-                percentage: exampleGoalPct,
+                start: formatLocalizedNumber(exampleGoal.start, numberLocale, { maximumFractionDigits: 0 }),
+                current: formatLocalizedNumber(exampleGoal.current, numberLocale, { maximumFractionDigits: 0 }),
+                target: formatLocalizedNumber(exampleGoal.target, numberLocale, { maximumFractionDigits: 0 }),
+                percentage: formatLocalizedNumber(exampleGoalPct, numberLocale, { maximumFractionDigits: 0 }),
               })}
             </p>
           )}
@@ -444,7 +454,7 @@ export function GoalInsightsSection({
                   />
                 </div>
                 <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                  {item.count} {t("dashboard.mentionsInNegativeReviews")}
+                  {formatLocalizedNumber(item.count, numberLocale, { maximumFractionDigits: 0 })} {t("dashboard.mentionsInNegativeReviews")}
                 </div>
               </div>
             ))}
@@ -453,12 +463,16 @@ export function GoalInsightsSection({
           {projectedStats && (
             <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20">
               <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {t("dashboard.projectedRating")}: {projectedStats.low.toFixed(1)} -{" "}
-                {projectedStats.high.toFixed(1)}
+                {t("dashboard.projectedRating")}:{" "}
+                {formatLocalizedNumber(projectedStats.low, numberLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} -{" "}
+                {formatLocalizedNumber(projectedStats.high, numberLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
               </div>
               <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 {t("objective.currentRatingText", {
-                  rating: projectedStats.current.toFixed(1),
+                  rating: formatLocalizedNumber(projectedStats.current, numberLocale, {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  }),
                 })}
               </div>
             </div>
@@ -521,7 +535,7 @@ export function GoalInsightsSection({
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-sm">
                       <span className="font-semibold text-slate-500 dark:text-slate-400">
-                        {row.start} → {row.current}
+                        {formatLocalizedNumber(row.start, numberLocale, { maximumFractionDigits: 0 })} → {formatLocalizedNumber(row.current, numberLocale, { maximumFractionDigits: 0 })}
                       </span>
                       <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${Math.abs(row.trendPct) > 0 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" : Math.abs(row.trendPct) < 0 ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>
                         {row.trendLabel}

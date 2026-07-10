@@ -31,6 +31,15 @@ type SmartSimulatorData = {
   combinedReviews: number;
 };
 
+const getNumberLocale = (language: string | undefined) =>
+  language?.toLowerCase().startsWith("fr") ? "fr-FR" : "en-US";
+
+const formatLocalizedNumber = (
+  value: number,
+  locale: string,
+  options: Intl.NumberFormatOptions = {},
+) => new Intl.NumberFormat(locale, options).format(value);
+
 type Props = {
   t: (key: string, opts?: Record<string, unknown>) => string;
   language: string;
@@ -63,6 +72,23 @@ export function ObjectiveSimulatorCard({
   smartSimulator,
 }: Props) {
   const monthsLabel = language.startsWith("fr") ? "mois" : "months";
+  const numberLocale = getNumberLocale(language);
+
+  const formatRating = (value: number) =>
+    formatLocalizedNumber(value, numberLocale, {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
+
+  const formatCount = (value: number) =>
+    formatLocalizedNumber(value, numberLocale, { maximumFractionDigits: 0 });
+
+  const formatRate = (value: number) =>
+    formatLocalizedNumber(value, numberLocale, {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
+
   const ratingProgressPct = useMemo(() => {
     const effectiveStartRating =
       smartSimulator.startRating ?? smartSimulator.currentRating;
@@ -213,14 +239,14 @@ export function ObjectiveSimulatorCard({
                   ) : (
                     <>
                       <span className="font-bold leading-none text-slate-900 dark:text-slate-100">
-                        {item.displayText}
+                        {formatRating(Number(item.displayText))}
                       </span>
                       <span className="text-sm font-medium opacity-70">/5</span>
                     </>
                   )
                 ) : (
                   <>
-                    {item?.value?.toFixed(1)}
+                    {formatRating(Number(item?.value ?? 0))}
                     <span className="text-sm font-medium opacity-70">/5</span>
                   </>
                 )}
@@ -240,7 +266,7 @@ export function ObjectiveSimulatorCard({
               {t("objective.simulator.startDate", { defaultValue: "Start" })} · {startDateText}
             </span>
             <span>
-              {t("dashboard.progressPercentage")} {ratingProgressPct}%
+              {t("dashboard.progressPercentage")} {formatCount(ratingProgressPct)}%
             </span>
             <span>
               {t("objective.simulator.targetDate")} · {targetDateText}
@@ -356,7 +382,7 @@ export function ObjectiveSimulatorCard({
                   </p>
                 </div>
                 <span className="text-xl font-bold text-violet-700 dark:text-violet-300">
-                  {targetRatingDisplay}
+                  {formatRating(targetRating)}
                 </span>
               </div>
               <input
@@ -421,7 +447,7 @@ export function ObjectiveSimulatorCard({
               defaultValue: "To reach",
             })}{" "}
             <span className="font-semibold text-slate-900 dark:text-slate-100">
-              {targetRatingDisplay}
+              {formatRating(Number(targetRatingDisplay))}
             </span>{" "}
             {t("objective.simulator.toReachTargetWithin", {
               defaultValue: "within",
@@ -513,8 +539,8 @@ export function ObjectiveSimulatorCard({
                 <Trans
                   i18nKey="objective.simulator.operationalGainRange"
                   values={{
-                    low: smartSimulator.operationalLow.toFixed(2),
-                    high: smartSimulator.operationalHigh.toFixed(2),
+                    low: formatLocalizedNumber(smartSimulator.operationalLow, numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                    high: formatLocalizedNumber(smartSimulator.operationalHigh, numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
                   }}
                   components={{
                     gain: (
@@ -536,7 +562,7 @@ export function ObjectiveSimulatorCard({
 
                   <p className="mt-2 text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
                     {t("objective.simulator.approxReviews", {
-                      count: smartSimulator.combinedReviews,
+                      count: formatCount(smartSimulator.combinedReviews),
                       defaultValue: "≈ {{count}} 5★ reviews",
                     })}
                   </p>
