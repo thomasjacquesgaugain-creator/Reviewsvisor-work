@@ -2859,7 +2859,9 @@
       "ambitious":"Ambitieux",
       "hard":"Difficile",
       "veryHard":"Très difficile",
-      "realistic":"Réaliste"   
+      "realistic":"Réaliste",
+      "noReviewsFound":"Aucun avis trouvé",
+      "addReviewsPrompt":"Veuillez ajouter des avis pour débloquer le simulateur."   
     },
     "topPriorities": "3 objectifs prioritaires",
     "topPrioritiesDesc": "Résultat observé et exécution du plan, pour chaque combat en cours",

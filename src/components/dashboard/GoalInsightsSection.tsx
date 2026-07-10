@@ -427,9 +427,14 @@ export function GoalInsightsSection({
     impact: (
       <div className="space-y-4">
         <div className="bg-white dark:border-slate-800 dark:bg-slate-900">
-          <p className="text-sm text-slate-900 dark:text-slate-100">
+          {paretoCauses?.length>0?  <p className="text-sm text-slate-900 dark:text-slate-100">
             {t("objective.impactPriority")}
+          </p>:
+            <p className="rounded-[18px] border border-slate-200 bg-white p-5 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+            {t("dashboard.keyTakeaways.overallScore.noData")}
           </p>
+          }
+        
           <div className="mt-4 space-y-4">
             {paretoCauses?.map((item, index) => (
               <div
@@ -504,8 +509,8 @@ export function GoalInsightsSection({
               </p>
             </div>
           </div>
-          <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
-            <div className="grid grid-cols-[1.25fr_1fr_0.8fr] gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:border-slate-800 dark:bg-slate-950/40">
+          <div className="mt-4 overflow-hidden rounded-2xl ">
+            <div className="grid grid-cols-[1.25fr_1fr_0.8fr] gap-3 border-b border-slate-200  px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:border-slate-800 dark:bg-slate-950/40">
               <div>{t("objective.objectiveColumn", { defaultValue: "Objective" })}</div>
               <div>{t("objective.trendColumn", { defaultValue: "Trend" })}</div>
               <div>{t("objective.statusColumn", { defaultValue: "Status" })}</div>

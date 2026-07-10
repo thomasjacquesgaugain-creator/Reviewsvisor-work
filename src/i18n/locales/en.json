@@ -2672,7 +2672,9 @@
       "ambitious":"Ambitious",
       "hard":"Hard",
       "veryHard":"Very hard",
-      "realistic":"Realistic"
+      "realistic":"Realistic",
+      "noReviewsFound":"No reviews found",
+      "addReviewsPrompt":"Please add reviews to unlock the simulator."
     },
   "topPriorities": "Top 3 priorities",
   "topPrioritiesDesc": "Observed result and plan execution, for each ongoing battle",

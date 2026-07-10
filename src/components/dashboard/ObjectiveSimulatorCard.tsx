@@ -73,6 +73,7 @@ export function ObjectiveSimulatorCard({
 }: Props) {
   const monthsLabel = language.startsWith("fr") ? "mois" : "months";
   const numberLocale = getNumberLocale(language);
+  const hasReviews = smartSimulator.totalReviews > 0;
 
   const formatRating = (value: number) =>
     formatLocalizedNumber(value, numberLocale, {
@@ -200,6 +201,22 @@ export function ObjectiveSimulatorCard({
         </div>
       </CardHeader>
 
+      {!hasReviews ? (
+        <CardContent className="px-6 pb-6 pt-4 sm:px-7">
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950/30 dark:text-slate-300">
+            <p className="font-semibold text-slate-900 dark:text-slate-100">
+              {t("objective.simulator.noReviewsFound", {
+                defaultValue: "No reviews found",
+              })}
+            </p>
+            <p className="mt-1">
+              {t("objective.simulator.addReviewsPrompt", {
+                defaultValue: "Please add reviews to unlock the simulator.",
+              })}
+            </p>
+          </div>
+        </CardContent>
+      ) : (
       <CardContent className="space-y-6 p-6 sm:p-7">
         <div className="grid gap-3 md:grid-cols-3">
           {[
@@ -578,7 +595,7 @@ export function ObjectiveSimulatorCard({
                 <Trans
                   i18nKey="objective.simulator.recommendedPathNote"
                   components={{
-                    strong: <span className="font-semibold text-slate-900" />,
+                    strong: <span className="font-semibold text-slate-900 dark:text-slate-200/80" />,
                   }}
                 />
               </p>
@@ -586,6 +603,7 @@ export function ObjectiveSimulatorCard({
           </div>
         </div>
       </CardContent>
+      )}
     </Card>
   );
 }
