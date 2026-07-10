@@ -333,7 +333,6 @@ const Dashboard = () => {
   const latestObjectiveStartDateText = useMemo(() => {
     const rawDate =
       latestStartedObjective?.start_time ??
-      latestStartedObjective?.created_at ??
       null;
 
     if (!rawDate) return t("objective.simulator.notAvailable", { defaultValue: "Not available" });
@@ -350,6 +349,14 @@ const Dashboard = () => {
 
     return Number(latestStartedObjective.start_rating).toFixed(1);
   }, [latestStartedObjective?.start_rating, t]);
+
+    const latestObjectiveStatus = useMemo(() => {
+    if (latestStartedObjective?.status == null) {
+      return t("objective.simulator.notAvailable", { defaultValue: "Not available" });
+    }
+
+    return latestStartedObjective.status;
+  }, [latestStartedObjective?.status, t]);
 
   function handleClickActionPlan(){
    setActiveTab("recommandations"); // third tab id
@@ -10935,6 +10942,7 @@ const activeObjective =
                   startDateText={latestObjectiveStartDateText}
                   targetDateText={targetDateText}
                   smartSimulator={smartSimulator}
+                  statusText={latestObjectiveStatus}
                 />
 
                 <GoalInsightsSection
