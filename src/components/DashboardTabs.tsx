@@ -20,7 +20,7 @@ export const DashboardTabs = ({ activeTab, onTabChange }: DashboardTabsProps) =>
 
   return (
     <div
-      className="mb-6 flex w-full gap-1 rounded-xl bg-white p-1.5 dark:bg-slate-900"
+      className="mb-6 flex w-full gap-1 rounded-2xl bg-white p-1.5 dark:bg-slate-900"
       style={{
         boxShadow: "0 4px 14px rgba(0, 0, 0, 0.06)",
       }}
@@ -35,7 +35,7 @@ export const DashboardTabs = ({ activeTab, onTabChange }: DashboardTabsProps) =>
             onClick={() => onTabChange(tab.id)}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm transition-all duration-150",
+              "flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm transition-all duration-150",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C7D2FE] focus-visible:ring-offset-2 dark:focus-visible:ring-slate-500 dark:focus-visible:ring-offset-slate-900",
               isActive
                 ? "border-[#C7D2FE] bg-[#E5EDFF] font-bold text-[#15151f] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"

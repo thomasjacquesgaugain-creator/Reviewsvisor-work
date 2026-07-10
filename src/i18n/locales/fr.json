@@ -496,7 +496,9 @@
     "analyzeEstablishmentToGetActions": "Analysez votre établissement pour obtenir des actions d'amélioration",
     "agent": "Conseiller",
     "askQuestion": "Posez une question sur vos avis...",
-    "aiRespondReview": "Assistant IA pour répondre à vos avis",
+    "aiRespondReviewTitle": "Bonjour, je suis votre Conseiller Reviewsvisor.",
+    "aiRespondReviewDescription": "Je suis là pour répondre à vos questions concernant vos avis clients et votre activité.",
+    "aiAssistant": "Assistant IA",
     "aiAssistantForReviews": "Votre assistant IA pour gérer vos avis",
     "agentWelcomeMessage": "Bonjour ! Je suis votre assistant IA. Je peux vous aider à analyser vos avis, générer des réponses et vous fournir des insights pour améliorer votre établissement.",
     "agentCapabilities": "Fonctionnalités",
@@ -1721,7 +1723,7 @@
     "subtitle": "Trouvez des réponses rapides à vos questions et découvrez comment utiliser",
     "subtitle2": "efficacement.",
     "aiAssistance": "Assistance IA",
-    "frequentQuestions": "Questions fréquentes",
+    "frequentQuestions": "Demandez à votre Conseiller",
     "frequentQuestionsHint": "Cliquez sur une question ci-dessous pour la poser instantanément, ou saisissez tout ce qui concerne vos avis, votre note ou vos problèmes clients.",
     "needHelp": "Besoin d'aide ?",
     "teamHere": "Notre équipe est là pour vous accompagner dans l'utilisation de",
@@ -1740,7 +1742,12 @@
     "faq7Question": "Comment puis-je obtenir plus d'avis positifs ?",
     "faq8Question": "Est-ce que j'augmenterais mon chiffre d'affaires avec une meilleure note ?",
     "faq9Question": "Comment réduire rapidement les avis négatifs ?",
-    "faq10Question": "Où est-ce que je perds le plus de clients aujourd'hui ?"
+    "faq10Question": "Où est-ce que je perds le plus de clients aujourd'hui ?",
+    "faq11Question": "Par quoi dois-je commencer pour améliorer ma réputation ?",
+    "faq12Question": "Quel problème client me coûte le plus d'avis négatifs ?",
+    "faq13Question": "Quelle amélioration aurait le plus d'impact sur mon chiffre d'affaires ?",
+    "faq14Question": "Quels sont les sujets que mes clients apprécient le plus ?",
+    "faq15Question": "Quel est mon plus gros levier de croissance aujourd'hui ?"
   },
   "features": {
     "badge": "IA • Insights • Action",
