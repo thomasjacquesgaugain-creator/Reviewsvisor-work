@@ -53,6 +53,7 @@ type Props = {
   startDateText: string;
   targetDateText: string;
   smartSimulator: SmartSimulatorData;
+  statusText:string;
 };
 
 const TIMEFRAMES = [3, 6, 12] as const;
@@ -70,6 +71,7 @@ export function ObjectiveSimulatorCard({
   startDateText,
   targetDateText,
   smartSimulator,
+  statusText
 }: Props) {
   const monthsLabel = language.startsWith("fr") ? "mois" : "months";
   const numberLocale = getNumberLocale(language);
@@ -409,13 +411,13 @@ export function ObjectiveSimulatorCard({
                 step={0.1}
                 value={targetRating}
                 onChange={(e) => setTargetRating(parseFloat(e.target.value))}
-                disabled={smartSimulator.startRating !== null}
-                className={`rv-slider ${smartSimulator.startRating !== null
+                disabled={smartSimulator.startRating !== null && statusText!=="completed"}
+                className={`rv-slider ${smartSimulator.startRating !== null && statusText!=="completed"
                   ? "cursor-not-allowed opacity-60"
                   : "cursor-pointer"
                   }`}
                 style={{
-                  cursor: smartSimulator.startRating !== null ? "not-allowed" : "pointer",
+                  cursor: (smartSimulator.startRating !== null && statusText!=="completed") ? "not-allowed" : "pointer",
                   ["--pct" as any]: `${(() => {
                     const min = Number(
                       Math.min(5, Math.ceil(smartSimulator.currentRating * 10 + 1) / 10).toFixed(1),
