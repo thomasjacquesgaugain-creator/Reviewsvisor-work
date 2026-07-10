@@ -112,6 +112,8 @@ export interface SmartObjective {
 
   // Progress
   current_progress?: number;
+  start_rating?: number;
+  start_time?: string;
   status:            SmartStatus;
   priority:          SmartPriority;
 

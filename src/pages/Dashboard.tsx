@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { parseISO, subDays, isAfter, isBefore } from "date-fns";
+import { addMonths, parseISO, subDays, isAfter, isBefore } from "date-fns";
   import { Trans } from "react-i18next";
 import {
   Accordion,
@@ -143,6 +143,8 @@ import { useSmartStore } from "@/store/smartStore";
 import { DeleteEstablishmentButton } from "@/components/DeleteEstablishmentButton";
 import { getEstablishmentTypeTranslationKey } from "@/utils/establishmentTypeMapping";
 import { AppPageBackground } from "@/components/AppPageBackground";
+import { GoalInsightsSection } from "@/components/dashboard/GoalInsightsSection";
+import { ObjectiveSimulatorCard } from "@/components/dashboard/ObjectiveSimulatorCard";
 
 const GRANULARITY_LABEL_KEYS: Record<Granularity, string> = {
   jour: "dashboard.day",
@@ -301,11 +303,57 @@ const Dashboard = () => {
 }, [fetchObjectives, activeEstablishmentId]);
 
   const safeObjectives = Array.isArray(objectives) ? objectives : [];
+  const latestStartedObjective = useMemo(() => {
+    const candidates = safeObjectives
+      .filter((obj) => typeof obj?.start_rating === "number")
+      .map((obj) => {
+        const timestamp = new Date(
+          obj.start_time ?? obj.created_at ?? 0,
+        ).getTime();
+
+        return { obj, timestamp };
+      })
+      .filter(({ timestamp }) => Number.isFinite(timestamp) && timestamp > 0)
+      .sort((a, b) => b.timestamp - a.timestamp);
+
+    return candidates[0]?.obj ?? null;
+  }, [safeObjectives]);
+
+  const simulatorLocale =
+    i18n.language === "fr"
+      ? fr
+      : i18n.language === "it"
+        ? it
+        : i18n.language === "es"
+          ? es
+          : i18n.language === "pt"
+            ? ptBR
+            : enUS;
+
+  const latestObjectiveStartDateText = useMemo(() => {
+    const rawDate =
+      latestStartedObjective?.start_time ??
+      latestStartedObjective?.created_at ??
+      null;
+
+    if (!rawDate) return t("objective.simulator.notAvailable", { defaultValue: "Not available" });
+
+    return format(new Date(rawDate), "d MMMM yyyy", {
+      locale: simulatorLocale,
+    });
+  }, [latestStartedObjective, simulatorLocale, t]);
+
+  const latestObjectiveStartRatingText = useMemo(() => {
+    if (latestStartedObjective?.start_rating == null) {
+      return t("objective.simulator.notAvailable", { defaultValue: "Not available" });
+    }
+
+    return Number(latestStartedObjective.start_rating).toFixed(1);
+  }, [latestStartedObjective?.start_rating, t]);
 
   function handleClickActionPlan(){
    setActiveTab("recommandations"); // third tab id
   setOpenCard("checklist");
-
   }
 
   const refreshAnalysisData = async (placeId: string) => {
@@ -512,6 +560,7 @@ const Dashboard = () => {
   >({});
 
   const [targetRating, setTargetRating] = useState<number>(4.5);
+  const [simulatorTimeframe, setSimulatorTimeframe] = useState<3 | 6 | 12>(6);
 
   const currentAvgRatingForTarget = useMemo(() => {
     const hasAnyReviews = allReviewsForChart.length > 0;
@@ -566,38 +615,24 @@ const Dashboard = () => {
   }, [currentAvgRatingForTarget, targetRating]);
 
   const targetDateText = useMemo(() => {
-    const current = Number(currentAvgRatingForTarget.toFixed(1));
-    const target = Number(targetRating.toFixed(1));
-    const delta = Math.max(0, target - current);
+    const rawDate =
+      latestStartedObjective?.start_time ??
+      latestStartedObjective?.created_at ??
+      null;
 
-    const now = Date.now();
-    const ninetyDaysMs = 90 * 24 * 60 * 60 * 1000;
-    const last90DaysCount = allReviewsForChart.reduce((acc, r: any) => {
-      const ds =
-        r?.published_at ||
-        r?.create_time ||
-        r?.raw?.createTime ||
-        r?.inserted_at;
-      const ts = ds ? new Date(ds).getTime() : 0;
-      if (ts > 0 && now - ts <= ninetyDaysMs) return acc + 1;
-      return acc;
-    }, 0);
-    const reviewsPerMonth = last90DaysCount / 3;
-
-    if (delta < 0.3) return t("dashboard.targetDateText.oneMonth");
-    if (delta < 0.5) return t("dashboard.targetDateText.twoMonths");
-
-    if (delta < 0.8) {
-      // Si peu d'avis/mois, viser plutôt le haut de la fourchette
-      if (reviewsPerMonth > 0 && reviewsPerMonth < 5) {
-        return t("dashboard.targetDateText.fourMonths");
-      }
-      return t("dashboard.targetDateText.threeToFourMonths");
+    if (!rawDate) {
+      return t("objective.simulator.notAvailable", {
+        defaultValue: "Not available",
+      });
     }
 
-    // Ambitieux
-    return t("dashboard.targetDateText.sixMonthsOrMore");
-  }, [currentAvgRatingForTarget, targetRating, allReviewsForChart, t]);
+    const startDate = new Date(rawDate);
+    const endDate = addMonths(startDate, simulatorTimeframe);
+
+    return format(endDate, "d MMMM yyyy", {
+      locale: simulatorLocale,
+    });
+  }, [latestStartedObjective, simulatorLocale, simulatorTimeframe, t]);
 
   const renderGroupedReviewRow = (
     review: any,
@@ -1476,25 +1511,6 @@ const themes =issues.length > 0? issues
         })
         .sort((a, b) => b.impact - a.impact);
     }, [issueImpactMap, allReviewsForChart]);
-
-
-  const projectedStats = useMemo(() => {
-    if (!issueImpactList.length) return null;
-
-    const current = Number(currentAvgRatingForTarget.toFixed(1));
-
-    const totalImpact = issueImpactList.reduce(
-      (sum, i) => sum + i.impact,
-      0
-    );
-
-    return {
-      totalImpact,
-      current,
-      low: Math.min(5, current + totalImpact * 0.85),
-      high: Math.min(5, current + totalImpact),
-    };
-  }, [issueImpactList, currentAvgRatingForTarget]);
 
 
   // const impactStats = useMemo(() => {
@@ -3315,6 +3331,48 @@ const sortedStrength = [...topStrengths].sort(
 
   console.log("analysis data for tab" , analysisDataForTab)
 
+  const projectedStats = useMemo(() => {
+    if (!issueImpactList.length) return null;
+
+    const paretoKeys = new Set(
+      (analysisDataForTab?.paretoIssues ?? [])
+        .flatMap((item: any) => [
+          item?.key,
+          item?.name,
+          item?.en,
+          item?.fr,
+        ])
+        .filter(Boolean)
+        .map((value) =>
+          String(value)
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/\p{Diacritic}/gu, ""),
+        ),
+    );
+
+    const normalizedIssues = issueImpactList.filter((item) => {
+      if (paretoKeys.size === 0) return true;
+      const itemKey = String(item.key || item.label || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "");
+      return paretoKeys.has(itemKey);
+    });
+
+    if (!normalizedIssues.length) return null;
+
+    const current = Number(currentAvgRatingForTarget.toFixed(1));
+    const totalImpact = normalizedIssues.reduce((sum, i) => sum + i.impact, 0);
+
+    return {
+      totalImpact,
+      current,
+      low: Math.min(5, current + totalImpact * 0.85),
+      high: Math.min(5, current + totalImpact),
+    };
+  }, [analysisDataForTab?.paretoIssues, issueImpactList, currentAvgRatingForTarget]);
+
 
   // Map top issues to Pareto data format
   const paretoData =
@@ -3507,12 +3565,106 @@ const getLatestDate = (reviews: any[]): Date | null =>
     .filter(Boolean);
 }, [sortedPareto, safeObjectives]);
 
+    const smartSimulator = useMemo(() => {
+    const currentRating = Number(
+      (displayAvgRating ?? currentAvgRatingForTarget ?? 0).toFixed(1),
+    );
+    const startRating = latestStartedObjective?.start_rating != null
+      ? Number(Number(latestStartedObjective.start_rating).toFixed(1))
+      : null;
+    
+    const target = Number(targetRating.toFixed(1));
+    const totalReviews = allReviewsForChart.length;
+
+    const recent90DaysCount = allReviewsForChart.reduce((acc, r: any) => {
+      const ds =
+        r?.published_at ||
+        r?.create_time ||
+        r?.raw?.createTime ||
+        r?.inserted_at;
+      const ts = ds ? new Date(ds).getTime() : 0;
+      if (ts > 0 && Date.now() - ts <= 90 * 24 * 60 * 60 * 1000) {
+        return acc + 1;
+      }
+      return acc;
+    }, 0);
+
+    const yourPace = recent90DaysCount / 3;
+    const gapToTarget = Math.max(0, target - currentRating);
+    const denominator = 5 - target;
+    const fiveStarReviewsNeeded =
+      gapToTarget > 0
+        ? denominator <= 0
+          ? Number.POSITIVE_INFINITY
+          : (totalReviews * gapToTarget) / denominator
+        : 0;
+   const requiredPace =
+  simulatorTimeframe > 0 ? fiveStarReviewsNeeded / simulatorTimeframe : 0;
+const feasibility =
+  yourPace > 0 ? requiredPace / yourPace : Number.POSITIVE_INFINITY;
+
+    const operationalLow = projectedStats
+      ? Math.max(0, projectedStats.low - currentRating)
+      : 0;
+    const operationalHigh = projectedStats
+      ? Math.max(0, projectedStats.high - currentRating)
+      : 0;
+
+    const themes = (analysisDataForTab?.paretoIssues ?? [])
+      .slice(0, 3)
+      .map((item: any) => item?.name || item?.label || item?.key)
+      .filter(Boolean);
+
+    const operationalGainEstimate = projectedStats ? projectedStats.totalImpact * 0.5 : 0;
+   
+    
+const combinedRatingBaseline = Math.min(5, currentRating + operationalGainEstimate);
+
+const combinedGapToTarget = Math.max(0, target - combinedRatingBaseline);
+
+const combinedFiveStarReviewsNeeded =
+  combinedGapToTarget > 0
+    ? denominator <= 0
+      ? Number.POSITIVE_INFINITY
+      : (totalReviews * combinedGapToTarget) / denominator
+    : 0;
+
+const combinedReviews = Number.isFinite(combinedFiveStarReviewsNeeded)
+  ? Math.max(1, Math.round(combinedFiveStarReviewsNeeded))
+  : Number.POSITIVE_INFINITY;
+    // const combinedReviews = Math.max(1, Math.round(fiveStarReviewsNeeded * 0.6));
+    return {
+      currentRating,
+      startRating,
+      target,
+      totalReviews,
+      yourPace,
+      fiveStarReviewsNeeded,
+      requiredPace,
+      feasibility,
+      operationalLow,
+      operationalHigh,
+      themes,
+      combinedReviews,
+    };
+  }, [
+    allReviewsForChart,
+    currentAvgRatingForTarget,
+    displayAvgRating,
+    analysisDataForTab?.paretoIssues,
+    projectedStats,
+    latestStartedObjective?.start_rating,
+    ratingChange,
+    simulatorTimeframe,
+    targetRating,
+  ]);  
+
 const activeObjective =
   orderedObjectives.find(
     o => o.status !== "completed"
   ) || null;
 
-    const progress = useSmartProgress(activeObjective);
+    const progress = useSmartProgress(objectives);
 
     const summaryIssues = useMemo(() => {
       return [...(analysisDataForTab?.paretoIssues ?? [])]
@@ -10360,7 +10512,7 @@ const activeObjective =
             {activeTab === "objectif" && (
               <>
                 {/* Objectif */}
-                <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
+                <Card className="mb-8 hidden dark:bg-slate-900 dark:border-slate-800">
                   <CardHeader>
                     <CardTitle className="text-xl">
                       {t("dashboard.objective")}
@@ -10660,7 +10812,7 @@ const activeObjective =
                   </CardContent>
                 </Card>
 
-                <div className="grid md:grid-cols-3 gap-6 mb-6">
+                {/* <div className="grid md:grid-cols-3 gap-6 mb-6">
                   <Card
                     className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 dark:bg-slate-900 dark:border-slate-800"
                     onClick={() =>
@@ -10768,11 +10920,39 @@ const activeObjective =
                       </Button>
                     </CardContent>
                   </Card>
-                </div>
+                </div> */}
 
-                {openCard === "progression" && (
+                <ObjectiveSimulatorCard
+                  t={t}
+                  language={i18n.language}
+                  targetDifficulty={targetDifficulty}
+                  targetRating={targetRating}
+                  targetRatingDisplay={targetRatingDisplay}
+                  setTargetRating={setTargetRating}
+                  simulatorTimeframe={simulatorTimeframe}
+                  setSimulatorTimeframe={setSimulatorTimeframe}
+                  startRatingText={latestObjectiveStartRatingText}
+                  startDateText={latestObjectiveStartDateText}
+                  targetDateText={targetDateText}
+                  smartSimulator={smartSimulator}
+                />
+
+                <GoalInsightsSection
+                  openCard={openCard}
+                  setOpenCard={setOpenCard}
+                  progress={progress}
+                  linkedReviews={linkedReviews}
+                  projectedStats={projectedStats}
+                  language={i18n.language}
+                  t={t}
+                  renderReviewText={highlightReviewText}
+                  paretoCauses={analysisDataForTab?.paretoIssues}
+                  objectives={objectives}
+                  handleClick={handleClickActionPlan}
+                />
+
+                {/* {openCard === "progression" && (
                   <>
-                  {/* Actionable progress */}
                   <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="pb-1">
                       <CardTitle className="text-xl">
@@ -10798,7 +10978,6 @@ const activeObjective =
 
                         return (
                           <div className="space-y-3">
-                            {/* Stats */}
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="text-xs text-muted-foreground mt-1">
@@ -10814,7 +10993,6 @@ const activeObjective =
                               </span>
                             </div>
 
-                            {/* Progress bar */}
                             <div className="h-3 bg-muted rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-green-600 rounded-full transition-all duration-500"
@@ -10824,7 +11002,6 @@ const activeObjective =
                               />
                             </div>
 
-                            {/* Optional status */}
                             <div className="flex items-center justify-between text-xs text-muted-foreground">
                               <span>
                                 {activeObjective?.pareto_cause
@@ -10857,7 +11034,6 @@ const activeObjective =
                       })()}
                     </CardContent>
                   </Card>
-                   {/* objectives progress */}
                   <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="pb-1">
                       <CardTitle className="text-xl">
@@ -10888,9 +11064,9 @@ const activeObjective =
 
                 </>
 
-                )}
+                )} */}
 
-                {openCard === "avisLies" && (
+                {/* {openCard === "avisLies" && (
                   <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader>
                       <CardTitle className="text-xl">
@@ -10943,9 +11119,9 @@ const activeObjective =
                       </div>
                     </CardContent>
                   </Card>
-                )}
+                )} */}
 
-                {openCard === "impact" && (
+                {/* {openCard === "impact" && (
                   <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800">
                     <CardHeader className="pb-1">
                       <CardTitle className="text-xl">
@@ -11003,7 +11179,7 @@ const activeObjective =
                       </div>
                     </CardContent>
                   </Card>
-                )}
+                )} */}
               </>
             )}
 

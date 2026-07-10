@@ -11,6 +11,7 @@ import { fr, enUS, it, es, ptBR } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { Button } from "../ui/button";
 import { useSmartStore } from "@/store/smartStore";
+import { useEstablishmentStore } from "@/store/establishmentStore";
 
 interface Props {
   objective: SmartObjective;
@@ -41,6 +42,9 @@ export function SmartActionPlanCard({ objective }: Props) {
   const locale = localeMap[lang] || enUS;
   const progress = useSmartProgress(objective);
   const { updateObjectiveStatus } = useSmartStore();
+  const currentGoogleRating = useEstablishmentStore(
+    (s) => s.selectedEstablishment?.rating ?? null,
+  );
   const checklistActions = objective.actions ?? [];
   const checklistCompleted = checklistActions.filter((action) => action.completed).length;
   const fieldExecutionProgress =
@@ -123,7 +127,10 @@ export function SmartActionPlanCard({ objective }: Props) {
                       size="sm"
                       onClick={async () => {
                         if (!objective.id) return;
-                        await updateObjectiveStatus(objective.id, "in_progress");
+                        await updateObjectiveStatus(objective.id, "in_progress", {
+                          start_rating: currentGoogleRating ?? undefined,
+                          start_time: new Date().toISOString(),
+                        });
                       }}
                       className="bg-violet-600 hover:bg-violet-700 text-white text-xs gap-1.5 px-4 dark:bg-violet-500 dark:hover:bg-violet-400"
                     >
