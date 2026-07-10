@@ -14,6 +14,7 @@ const Accueil = lazy(() => import("./pages/Accueil"));
 const Login = lazy(() => import("./pages/Login"));
 const TableauDeBord = lazy(() => import("./pages/TableauDeBord"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AdvisorPage = lazy(() => import("./pages/Advisor"));
 const Etablissement = lazy(() => import("./pages/Etablissement"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const BillingSuccess = lazy(() => import("./pages/BillingSuccess"));
@@ -183,6 +184,11 @@ const App = () => {
             <Route path="/dashboard" element={
               <Protected>
                 <Dashboard />
+              </Protected>
+            } />
+            <Route path="/advisor" element={
+              <Protected>
+                <AdvisorPage />
               </Protected>
             } />
             {/* <Route path="/compte" element={

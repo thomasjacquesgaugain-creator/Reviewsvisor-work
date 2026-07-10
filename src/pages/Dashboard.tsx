@@ -1,5 +1,5 @@
 import { AnalyseDashboard } from "@/components/AnalyseDashboard";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -145,6 +145,7 @@ import { getEstablishmentTypeTranslationKey } from "@/utils/establishmentTypeMap
 import { AppPageBackground } from "@/components/AppPageBackground";
 import { GoalInsightsSection } from "@/components/dashboard/GoalInsightsSection";
 import { ObjectiveSimulatorCard } from "@/components/dashboard/ObjectiveSimulatorCard";
+import { setAdvisorReturnPath } from "@/utils/advisorNavigation";
 
 const GRANULARITY_LABEL_KEYS: Record<Granularity, string> = {
   jour: "dashboard.day",
@@ -271,11 +272,19 @@ const Dashboard = () => {
   );
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState("key-takeaways");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const returnTab = sessionStorage.getItem("advisorReturnTab");
+    if (returnTab) {
+      setActiveTab(returnTab);
+      sessionStorage.removeItem("advisorReturnTab");
+    }
+  }, []);
 
   useEffect(() => {
     if (activeTab !== "recommandations") {
       setOpenCard(null);
-      resetAgent();
     }
   }, [activeTab]);
 
@@ -541,22 +550,6 @@ const Dashboard = () => {
   const [aiGeneratedResponses, setAiGeneratedResponses] = useState<
     Record<string, string>
   >({});
-  const [agentQuestion, setAgentQuestion] = useState("");
-  const [agentAnswer, setAgentAnswer] = useState("");
-  const [isAgentLoading, setIsAgentLoading] = useState(false);
-  const agentQuestionInputRef = useRef<HTMLInputElement | null>(null);
-
-  const resetAgent = () => {
-    setAgentQuestion("");
-    setAgentAnswer("");
-    setIsAgentLoading(false);
-  };
-
-  const toggleAgentCard = () => {
-    resetAgent();
-    setOpenCard(openCard === "agent" ? null : "agent");
-  };
-
   // Réinitialiser displayCount quand le filtre change
   useEffect(() => {
     setDisplayCount(10);
@@ -3776,7 +3769,7 @@ const activeObjective =
         <div className="relative z-10">
           <div className="container mx-auto px-4 py-8">
             {/* Header */}
-            <div className="mb-8 bg-white dark:bg-slate-900 shadow-sm dark:shadow-slate-950/40 rounded-lg p-4 border border-transparent dark:border-slate-800">
+            <div className="mb-8 bg-white dark:bg-slate-900 shadow-sm dark:shadow-slate-950/40 rounded-2xl p-4 border border-transparent dark:border-slate-800">
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <div className="flex items-center gap-2">
@@ -3799,11 +3792,11 @@ const activeObjective =
 
                 {/* Carte établissement au milieu */}
                 {selectedEtab && (
-                  <Card className="w-full max-w-[600px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                  <Card className="w-full max-w-[600px] bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
                     <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           <div className="relative flex-shrink-0">
-                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
                               <Building2 className="w-5 h-5 text-blue-600" />
                             </div>
                             {/* Flèche vers le bas en haut à droite de l'icône */}
@@ -3992,7 +3985,16 @@ const activeObjective =
                     </CardContent>
                   </Card>
                 )}
-
+                <button
+                  onClick={() => {
+                    setAdvisorReturnPath("/dashboard", activeTab);
+                    navigate("/advisor");
+                  }}
+                  className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 font-semibold text-slate-800 transition-colors hover:border-violet-300 hover:bg-violet-50"
+                >
+                  <Bot className="h-5 w-5 text-violet-500" />
+                  {t("dashboard.agent")}
+                </button>
                 {/* Bouton Télécharger le rapport */}
                 {(selectedEtab || selectedEstablishment) && (
                   <Button
@@ -6851,377 +6853,6 @@ const activeObjective =
                   </Card>
                 )}
 
-                {/* Agent */}
-                <Card
-                  className="relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 mb-8 dark:bg-slate-900 dark:border-slate-800 rounded-[18px]"
-                  onClick={toggleAgentCard}
-                >
-                  <CardHeader className="relative text-center">
-                    <div className="flex flex-col items-center mb-2">
-                      <Bot className="w-5 h-5 text-purple-500 mb-2" />
-                      <span className="text-lg font-semibold">
-                        {t("dashboard.agent")}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-slate-300">
-                      {t("dashboard.aiRespondReview")}
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleAgentCard();
-                      }}
-                      className="absolute bottom-2 right-2 h-6 w-6 p-0 hover:bg-purple-50 dark:hover:bg-purple-950/40"
-                    >
-                      {openCard === "agent" ? (
-                        <ChevronUp className="w-3 h-3 text-purple-500" />
-                      ) : (
-                        <ChevronDown className="w-3 h-3 text-purple-500" />
-                      )}
-                    </Button>
-                  </CardHeader>
-                </Card>
-
-                {/* Contenu Agent - EN DESSOUS */}
-                {openCard === "agent" && (
-                  <Card className="mb-8 dark:bg-slate-900 dark:border-slate-800 rounded-[18px]">
-                    <CardHeader className="relative text-left">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Bot className="w-5 h-5 text-purple-500" />
-                        <span className="text-lg font-semibold">
-                          {t("dashboard.agent")}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-slate-300">
-                        {t("dashboard.aiRespondReview")}
-                      </p>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {/* Formulaire de saisie - Style comme Assistance IA */}
-                        <div className="bg-card border border-border/60 rounded-lg p-4 shadow-sm mb-4">
-                          <div className="flex gap-3">
-                            {/* Bordure bleue à gauche */}
-                            <div className="w-1 bg-gradient-to-b from-blue-500 to-blue-500/30 rounded-full shrink-0" />
-
-                            <form
-                              onSubmit={async (e) => {
-                                e.preventDefault();
-
-                                if (!agentQuestion.trim()) {
-                                  toastHook({
-                                    title: t("aiAssistance.emptyQuestion"),
-                                    description: t(
-                                      "aiAssistance.pleaseAskQuestion",
-                                    ),
-                                    variant: "destructive",
-                                  });
-                                  return;
-                                }
-
-                                setIsAgentLoading(true);
-                                setAgentAnswer(
-                                  t("aiAssistance.analysisInProgress"),
-                                );
-
-                                try {
-                                  // Préparer les données de l'établissement pour le contexte
-                                  const currentEstab =
-                                    selectedEtab || selectedEstablishment;
-                                  const totalReviews =
-                                    allReviewsForChart.length;
-                                  const positiveReviews =
-                                    allReviewsForChart.filter(
-                                      (r: any) => (r?.rating ?? 0) >= 4,
-                                    ).length;
-                                  const negativeReviews =
-                                    allReviewsForChart.filter(
-                                      (r: any) => (r?.rating ?? 0) <= 2,
-                                    ).length;
-                                  const avgRating =
-                                    insight?.avg_rating ??
-                                    (totalReviews > 0
-                                      ? allReviewsForChart.reduce(
-                                          (sum: number, r: any) =>
-                                            sum + (r?.rating ?? 0),
-                                          0,
-                                        ) / totalReviews
-                                      : 0);
-
-                                  // Extraire les thèmes négatifs et positifs
-                                  const topIssues = insight?.top_issues || [];
-                                  const topPraises = insight?.top_praises || [];
-                                  const themes = insight?.themes || [];
-
-                                  // Extraire quelques exemples d'avis récents (positifs et négatifs)
-                                  const recentNegativeReviews =
-                                    allReviewsForChart
-                                      .filter((r: any) => (r?.rating ?? 0) <= 2)
-                                      .slice(0, 5)
-                                      .map((r: any) => ({
-                                        rating: r?.rating ?? 0,
-                                        text:
-                                          extractOriginalText(r?.text || "") ||
-                                          "",
-                                        author: r?.author || "Anonyme",
-                                        date:
-                                          r?.published_at ||
-                                          r?.create_time ||
-                                          r?.inserted_at ||
-                                          "",
-                                      }));
-
-                                  const recentPositiveReviews =
-                                    allReviewsForChart
-                                      .filter((r: any) => (r?.rating ?? 0) >= 4)
-                                      .slice(0, 3)
-                                      .map((r: any) => ({
-                                        rating: r?.rating ?? 0,
-                                        text:
-                                          extractOriginalText(r?.text || "") ||
-                                          "",
-                                        author: r?.author || "Anonyme",
-                                        date:
-                                          r?.published_at ||
-                                          r?.create_time ||
-                                          r?.inserted_at ||
-                                          "",
-                                      }));
-
-                                  // Construire le contexte pour l'IA
-                                  const establishmentContext = {
-                                    name:
-                                      currentEstab?.name || "l'établissement",
-                                    totalReviews,
-                                    positiveReviews,
-                                    negativeReviews,
-                                    avgRating: avgRating.toFixed(1),
-                                    topIssues: topIssues.slice(0, 10),
-                                    topPraises: topPraises.slice(0, 10),
-                                    themes: themes.slice(0, 15),
-                                    recentNegativeReviews,
-                                    recentPositiveReviews,
-                                  };
-
-                                  const { data, error } =
-                                    await supabase.functions.invoke(
-                                      "ai-assistance",
-                                      {
-                                        body: {
-                                          question: agentQuestion.trim(),
-                                          establishmentContext,
-                                          language: i18n.language,
-                                        },
-                                      },
-                                    );
-
-                                  if (error) {
-                                    console.error("Erreur:", error);
-                                    setAgentAnswer(
-                                      t("aiAssistance.errorOccurred"),
-                                    );
-                                    toastHook({
-                                      title: t("common.error"),
-                                      description: t(
-                                        "aiAssistance.cannotContactAI",
-                                      ),
-                                      variant: "destructive",
-                                    });
-                                    return;
-                                  }
-
-                                  if (data?.error) {
-                                    setAgentAnswer(data.error);
-                                    if (
-                                      data.error.includes("Trop de requêtes") ||
-                                      data.error.includes(
-                                        t("aiAssistance.tooManyRequests"),
-                                      )
-                                    ) {
-                                      toastHook({
-                                        title: t("aiAssistance.limitReached"),
-                                        description: data.error,
-                                        variant: "destructive",
-                                      });
-                                    }
-                                    return;
-                                  }
-
-                                  setAgentAnswer(
-                                    data?.answer ||
-                                      t("aiAssistance.noAnswerReceived"),
-                                  );
-                                } catch (err) {
-                                  console.error("Erreur inattendue:", err);
-                                  setAgentAnswer(t("errors.generic"));
-                                  toastHook({
-                                    title: t("common.error"),
-                                    description: t("errors.generic"),
-                                    variant: "destructive",
-                                  });
-                                } finally {
-                                  setIsAgentLoading(false);
-                                }
-                              }}
-                              className="flex-1 flex gap-2"
-                            >
-                              <Input
-                                ref={agentQuestionInputRef}
-                                type="text"
-                                placeholder={t("dashboard.askQuestion")}
-                                value={agentQuestion}
-                                onChange={(e) =>
-                                  setAgentQuestion(e.target.value)
-                                }
-                                disabled={isAgentLoading}
-                                className="flex-1 bg-background border-border"
-                              />
-                              {agentQuestion.trim() && (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  disabled={isAgentLoading}
-                                  onClick={() => {
-                                    resetAgent();
-                                    agentQuestionInputRef.current?.focus();
-                                  }}
-                                  className="shrink-0"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              )}
-                              <Button
-                                type="submit"
-                                disabled={isAgentLoading}
-                                className="bg-blue-500 hover:bg-blue-600 text-white shrink-0"
-                              >
-                                {isAgentLoading ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Send className="h-4 w-4" />
-                                )}
-                                <span className="ml-2">
-                                  {t("aiAssistance.ask")}
-                                </span>
-                              </Button>
-                            </form>
-                          </div>
-                        </div>
-
-                        {/* Zone de réponse - identique à Assistance IA */}
-                        {agentAnswer && (
-                          <div className="p-4 bg-white dark:bg-slate-900 border border-border rounded-md mb-4">
-                            <div
-                              className="text-foreground whitespace-pre-wrap text-sm leading-relaxed"
-                              dangerouslySetInnerHTML={{
-                                __html: agentAnswer
-                                  // Convertir **texte** en <strong>texte</strong>
-                                  .replace(
-                                    /\*\*([^*]+)\*\*/g,
-                                    "<strong>$1</strong>",
-                                  )
-                                  // Convertir les sauts de ligne en <br />
-                                  .replace(/\n/g, "<br />"),
-                              }}
-                            />
-                          </div>
-                        )}
-
-                        {/* Séparateur */}
-                        <div className="border-t border-border/60 my-8" />
-
-                        {/* Section Questions fréquentes */}
-                        <div className="flex items-center gap-3 mb-5">
-                          <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                            <Info className="w-5 h-5 text-blue-500" />
-                          </div>
-                          <div>
-                            <h2 className="text-xl md:text-2xl font-bold text-foreground">
-                              {t("help.frequentQuestions")}
-                            </h2>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              {t("help.frequentQuestionsHint")}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="w-full space-y-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setAgentQuestion(t("help.faq6Question"));
-                              setAgentAnswer("");
-                              agentQuestionInputRef.current?.focus();
-                            }}
-                            className="w-full cursor-pointer border border-border/50 rounded-lg px-4 py-4 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                          >
-                            <p className="font-medium text-foreground text-left">
-                              {t("help.faq6Question")}
-                            </p>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setAgentQuestion(t("help.faq7Question"));
-                              setAgentAnswer("");
-                              agentQuestionInputRef.current?.focus();
-                            }}
-                            className="w-full cursor-pointer border border-border/50 rounded-lg px-4 py-4 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                          >
-                            <p className="font-medium text-foreground text-left">
-                              {t("help.faq7Question")}
-                            </p>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setAgentQuestion(t("help.faq8Question"));
-                              setAgentAnswer("");
-                              agentQuestionInputRef.current?.focus();
-                            }}
-                            className="w-full cursor-pointer border border-border/50 rounded-lg px-4 py-4 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                          >
-                            <p className="font-medium text-foreground text-left">
-                              {t("help.faq8Question")}
-                            </p>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setAgentQuestion(t("help.faq9Question"));
-                              setAgentAnswer("");
-                              agentQuestionInputRef.current?.focus();
-                            }}
-                            className="w-full cursor-pointer border border-border/50 rounded-lg px-4 py-4 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                          >
-                            <p className="font-medium text-foreground text-left">
-                              {t("help.faq9Question")}
-                            </p>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setAgentQuestion(t("help.faq10Question"));
-                              setAgentAnswer("");
-                              agentQuestionInputRef.current?.focus();
-                            }}
-                            className="w-full cursor-pointer border border-border/50 rounded-lg px-4 py-4 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                          >
-                            <p className="font-medium text-foreground text-left">
-                              {t("help.faq10Question")}
-                            </p>
-                          </button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
               </>
             )}
 
