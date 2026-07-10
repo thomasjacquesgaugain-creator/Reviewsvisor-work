@@ -46,7 +46,7 @@ export function RecommendationsSection({
   const {
     objectives, currentDraft, isGenerating, isSaving,
     updateDraft, saveDraft, discardDraft, fetchObjectives,
-    updateProgress, toggleAction, updateObjectiveStatus, deleteObjectivesForEstablishment,
+    updateProgress, toggleAction,deleteObjectivesForEstablishment,
   } = useSmartStore();
 
   const activeEstablishmentId = useEstablishmentStore((s) => s.activeEstablishmentId);

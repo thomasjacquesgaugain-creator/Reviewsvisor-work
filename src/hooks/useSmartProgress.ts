@@ -3,7 +3,8 @@
 import { useMemo } from 'react'
 import type { SmartObjective, SmartProgress } from '@/types/smart'
 
-// Per-objective gap stats, reused when aggregating across the full list.
+// Per-objective gap stats, shared by both the single-objective and
+// collective calculations below.
 function getObjectiveStats(obj: SmartObjective) {
   const current = obj.current_progress ?? obj.current_value
   const start = obj.current_value
@@ -12,8 +13,8 @@ function getObjectiveStats(obj: SmartObjective) {
   const totalGap = Math.abs(start - target)
   const closedGap = Math.abs(start - current)
   // Signed version (not abs) lets us tell improvement from degradation when
-  // combining objectives: current < start is progress (e.g. fewer negative
-  // reviews), current > start is regression.
+  // combining multiple objectives: current < start is progress (e.g. fewer
+  // negative reviews), current > start is regression.
   const signedGap = start - current
 
   const now = new Date()
@@ -27,11 +28,19 @@ function getObjectiveStats(obj: SmartObjective) {
   return { totalGap, closedGap, signedGap, daysRemaining, isOverdue }
 }
 
-export function useSmartProgress(objectives: SmartObjective[]): SmartProgress {
+// Call with a single active objective to get that objective's own progress,
+// exactly like before.
+export function useSmartProgress(obj: SmartObjective): SmartProgress
+// Call with the full list of objectives to get the collective progress
+// across all of them.
+export function useSmartProgress(objectives: SmartObjective[]): SmartProgress
+export function useSmartProgress(
+  input: SmartObjective | SmartObjective[]
+): SmartProgress {
   return useMemo(() => {
-    const validObjectives = (objectives ?? []).filter(Boolean)
+    const objectives = Array.isArray(input) ? input.filter(Boolean) : input ? [input] : []
 
-    if (validObjectives.length === 0) {
+    if (objectives.length === 0) {
       return {
         percentage: 0,
         label: 'stable',
@@ -40,23 +49,25 @@ export function useSmartProgress(objectives: SmartObjective[]): SmartProgress {
       }
     }
 
-    const stats = validObjectives.map(getObjectiveStats)
+    const stats = objectives.map(getObjectiveStats)
 
-    // Combined progress = total gap closed across every objective / total gap
-    // that existed across every objective.
+    // Progress = how much of the total gap has been closed. For a single
+    // objective this is identical to the original single-objective formula;
+    // for multiple objectives the gaps are combined first.
     const totalGap = stats.reduce((sum, s) => sum + s.totalGap, 0)
     const totalClosedGap = stats.reduce((sum, s) => sum + s.closedGap, 0)
     const percentage =
       totalGap === 0 ? 100 : Math.min(100, Math.round((totalClosedGap / totalGap) * 100))
 
-    // Most urgent deadline across all objectives.
+    // Most urgent deadline across whichever objective(s) were passed in.
     const daysRemaining = Math.min(...stats.map((s) => s.daysRemaining))
 
-    // Overdue if any objective is overdue.
+    // Overdue if any objective in the set is overdue.
     const isOverdue = stats.some((s) => s.isOverdue)
 
-    // Overall trend: sum the signed gaps: positive means the group is net
-    // improving, negative means net degrading, zero means no net movement.
+    // Trend label: sum the signed gaps. For a single objective this reduces
+    // to the same current-vs-start comparison as before; for multiple
+    // objectives it reflects the net direction across all of them.
     const totalSignedGap = stats.reduce((sum, s) => sum + s.signedGap, 0)
     const label =
       totalSignedGap > 0 ? 'improvement' : totalSignedGap < 0 ? 'degradation' : 'stable'
@@ -67,5 +78,5 @@ export function useSmartProgress(objectives: SmartObjective[]): SmartProgress {
       daysRemaining,
       isOverdue,
     }
-  }, [objectives])
+  }, [input])
 }

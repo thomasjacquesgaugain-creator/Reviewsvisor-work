@@ -177,6 +177,7 @@ interface SmartStore {
   updateObjectiveStatus: (
     objectiveId: string,
     status:      ObjectiveStatus,
+    updates?:    Partial<Pick<SmartObjective, "start_rating" | "start_time">>,
   ) => Promise<SmartObjective | null>;
 
   resetAllData: () => void;
@@ -566,14 +567,18 @@ export const useSmartStore = create<SmartStore>()(
         }
       },
 
-      updateObjectiveStatus: async (objectiveId, status) => {
+      updateObjectiveStatus: async (objectiveId, status, updates = {}) => {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (!session?.user) throw new Error("User not authenticated");
 
           const { data, error } = await db
             .from("smart_objectives")
-            .update({ status, updated_at: new Date().toISOString() })
+            .update({
+              status,
+              ...updates,
+              updated_at: new Date().toISOString(),
+            })
             .eq("id", objectiveId)
             .eq("user_id", session.user.id)
             .select()
@@ -583,7 +588,7 @@ export const useSmartStore = create<SmartStore>()(
 
           set((state) => ({
             objectives: state.objectives.map((obj) =>
-              obj.id === objectiveId ? { ...obj, status } : obj
+              obj.id === objectiveId ? { ...obj, status, ...updates } : obj
             ),
           }));
 

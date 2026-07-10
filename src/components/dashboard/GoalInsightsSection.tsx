@@ -4,6 +4,7 @@ import {
   Check,
   Gauge,
   Info,
+  Target,
   TrendingUp,
 } from "lucide-react";
 
@@ -30,6 +31,7 @@ type Props = {
   renderReviewText?: (text: string) => ReactNode;
   paretoCauses?: ParetoItem[];
   objectives: SmartObjective[];
+  handleClick?: () => void;
 };
 
 const goalProgressPct = (goal: { start: number; current: number; target: number }) => {
@@ -58,6 +60,49 @@ const getGoalColor = (pct: number) => {
   };
 };
 
+const getPriorityStatus = (
+  trendPct: number,
+  progressPct: number,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+) => {
+
+  if (progressPct >= 100) {
+    return {
+      label: t("objective.completed", { defaultValue: "Completed" }),
+      className:
+        "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+      dotClass: "bg-emerald-500",
+    };
+  }
+
+  if (trendPct >= 50) {
+    return {
+      label: t("objective.onTrack", { defaultValue: "On track" }),
+      className:
+        "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+      dotClass: "bg-emerald-500",
+    };
+  }
+
+  if (trendPct > 0) {
+    return {
+      label: t("objective.notEnoughImpact", {
+        defaultValue: "Not enough impact",
+      }),
+      className:
+        "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+      dotClass: "bg-amber-500",
+    };
+  }
+
+  return {
+    label: t("objective.notStarted", { defaultValue: "Not started" }),
+    className:
+      "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+    dotClass: "bg-slate-300 dark:bg-slate-500",
+  };
+};
+
 export function GoalInsightsSection({
   openCard,
   setOpenCard,
@@ -69,6 +114,7 @@ export function GoalInsightsSection({
   renderReviewText,
   paretoCauses,
   objectives,
+  handleClick
 }: Props) {
 
   const selectedTab = openCard ?? "progression";
@@ -86,6 +132,7 @@ export function GoalInsightsSection({
   const objectiveGoals = useMemo(
     () =>
       objectives.map((objective) => {
+        const key = String(objective?.pareto_cause?.key ?? "").toLowerCase();
         const label =
           objective?.pareto_cause?.[lang] ||
           objective?.pareto_cause?.en ||
@@ -94,10 +141,80 @@ export function GoalInsightsSection({
         const start = objective?.current_value ?? 0;
         const current = objective?.current_progress ?? objective?.current_value ?? 0;
         const target = objective?.target_value ?? 0;
-        return { id: objective?.id, label, start, current, target };
+        const percentage =
+          typeof objective?.pareto_percentage === "number"
+            ? objective.pareto_percentage
+            : typeof objective?.pareto_count === "number" &&
+              objective.pareto_count > 0
+              ? objective.pareto_count
+              : 0;
+        return { id: objective?.id, key, label, start, current, target, percentage };
       }),
     [objectives, lang, t],
   );
+
+  const objectiveGoalMap = useMemo(
+    () => new Map(objectiveGoals.map((goal) => [goal.key, goal])),
+    [objectiveGoals],
+  );
+
+  const priorityRows = useMemo(() => {
+    const normalizedKey = (item: ParetoItem | any) =>
+      String(item?.key ?? item?.name ?? item?.label ?? "")
+        .trim()
+        .toLowerCase();
+
+    const sortedCauses = [...(paretoCauses ?? [])]
+      .sort(
+        (a, b) => (b.count ?? b.percentage ?? 0) - (a.count ?? a.percentage ?? 0),
+      )
+      .filter((item, index, list) => {
+        const key = normalizedKey(item);
+        if (!key) return true;
+
+        return (
+          index ===
+          list.findIndex((candidate) => normalizedKey(candidate) === key)
+        );
+      });
+    return sortedCauses.slice(0, 3).map((item, index) => {
+      const key = normalizedKey(item);
+      const goal = objectiveGoalMap.get(key) || null;
+      const sourceItem = item as ParetoItem & { label?: string };
+
+      const label =
+        sourceItem?.[lang as "en" | "fr"] ||
+        sourceItem?.name ||
+        sourceItem?.label ||
+        goal?.label ||
+        t("objective.actionTracking");
+
+      const start = goal?.start ?? item.count ?? item.percentage ?? 0;
+      const current = goal?.current ?? item.count ?? item.percentage ?? start;
+      const target = goal?.target ?? current;
+      const progressPct = goal ? goalProgressPct(goal) : 0;
+      const trendPct = goal && start > 0 ? Math.round(((current - start) / start) * 100) : 0;
+      const status = goal
+        ? getPriorityStatus(Math.abs(trendPct), progressPct, t)
+        : getPriorityStatus(0, 0, t);
+
+      const trendLabel =
+        trendPct === 0
+          ? t("objective.stable", { defaultValue: "stable" })
+          : `${trendPct > 0 ? "+" : ""}${trendPct}%`;
+
+      return {
+        key: key || `priority-${index}`,
+        label,
+        start,
+        current,
+        target,
+        trendPct,
+        trendLabel,
+        status,
+      };
+    });
+  }, [paretoCauses, objectiveGoalMap, lang, t]);
 
   const exampleGoal = useMemo(() => {
     if (objectiveGoals.length === 0) return null;
@@ -304,7 +421,7 @@ export function GoalInsightsSection({
             {t("objective.impactPriority")}
           </p>
           <div className="mt-4 space-y-4">
-            {paretoCauses.map((item, index) => (
+            {paretoCauses?.map((item, index) => (
               <div
                 key={item.key}
                 className="rounded-2xl border border-slate-100 p-4 dark:border-slate-800"
@@ -353,6 +470,84 @@ export function GoalInsightsSection({
 
   return (
     <div className="space-y-6">
+      <div>
+        <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">
+              <Target className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[22px] font-semibold text-slate-900 dark:text-slate-100">
+                {t("objective.topPriorities", {
+                  defaultValue: "Top 3 priorities",
+                })}
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {t("objective.topPrioritiesDesc", {
+                  defaultValue:
+                    "Observed result and plan execution, for each ongoing battle",
+                })}
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+            <div className="grid grid-cols-[1.25fr_1fr_0.8fr] gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:border-slate-800 dark:bg-slate-950/40">
+              <div>{t("objective.objectiveColumn", { defaultValue: "Objective" })}</div>
+              <div>{t("objective.trendColumn", { defaultValue: "Trend" })}</div>
+              <div>{t("objective.statusColumn", { defaultValue: "Status" })}</div>
+            </div>
+            <div className="divide-y divide-slate-200 dark:divide-slate-800">
+              {priorityRows.length === 0 ? (
+                <div className="px-4 py-5 text-sm text-slate-500 dark:text-slate-400">
+                  {t("objective.noPriorities", {
+                    defaultValue: "No priorities available yet.",
+                  })}
+                </div>
+              ) : (
+                priorityRows.map((row) => (
+                  <button
+                    key={row.key}
+                    type="button"
+                    onClick={handleClick}
+                    className="grid w-full grid-cols-[1.25fr_1fr_0.8fr] items-center gap-3 px-4 py-4 text-left transition hover:bg-slate-50 dark:hover:bg-slate-950/40"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={`h-3 w-3 shrink-0 rounded-full ${row.status.dotClass}`} />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          {row.label}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <span className="font-semibold text-slate-500 dark:text-slate-400">
+                        {row.start} → {row.current}
+                      </span>
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${Math.abs(row.trendPct) > 0 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" : Math.abs(row.trendPct) < 0 ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>
+                        {row.trendLabel}
+                      </span>
+                    </div>
+                    <div>
+                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${row.status.className}`}>
+                        {row.status.label}
+                      </span>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+          <div className="mt-4 flex items-start gap-2 border-t border-dashed border-slate-200 pt-3 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+            <p>
+              {t("objective.topPrioritiesNote", {
+                defaultValue:
+                  '"Not enough impact" means the plan is moving, but the result is not following yet. Click a row to open its action plan in Recommendations.',
+              })}
+            </p>
+          </div>
+        </div>
+      </div>
       <Card className="rounded-[28px] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <CardContent className="p-0">
           <div className="px-5 py-5 sm:px-6">
@@ -387,8 +582,8 @@ export function GoalInsightsSection({
                     type="button"
                     onClick={() => setOpenCard(tab.key as string)}
                     className={`flex items-center justify-center gap-2 rounded-[14px] px-4 py-3 text-sm font-semibold transition-all ${isActive
-                        ? "bg-white text-violet-700 shadow-sm dark:bg-slate-100 dark:text-violet-700"
-                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                      ? "bg-white text-violet-700 shadow-sm dark:bg-slate-100 dark:text-violet-700"
+                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                       }`}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
