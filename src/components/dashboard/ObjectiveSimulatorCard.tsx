@@ -9,13 +9,6 @@ import {
 } from "@/components/ui/popover";
 import { Trans } from "react-i18next";
 
-type TargetDifficulty = {
-  label: string;
-  badgeClassName: string;
-  cardClassName: string;
-  labelClassName: string;
-};
-
 type SmartSimulatorData = {
   currentRating: number;
   startRating: number;
@@ -43,17 +36,15 @@ const formatLocalizedNumber = (
 type Props = {
   t: (key: string, opts?: Record<string, unknown>) => string;
   language: string;
-  targetDifficulty: TargetDifficulty;
   targetRating: number;
-  targetRatingDisplay: string;
-  setTargetRating: Dispatch<SetStateAction<number>>;
   simulatorTimeframe: 3 | 6 | 12;
   setSimulatorTimeframe: Dispatch<SetStateAction<3 | 6 | 12>>;
   startRatingText: string;
   startDateText: string;
   targetDateText: string;
   smartSimulator: SmartSimulatorData;
-  statusText:string;
+  simulatorTargetRating: number;
+  setSimulatorTargetRating: Dispatch<SetStateAction<number>>;
 };
 
 const TIMEFRAMES = [3, 6, 12] as const;
@@ -61,17 +52,15 @@ const TIMEFRAMES = [3, 6, 12] as const;
 export function ObjectiveSimulatorCard({
   t,
   language,
-  targetDifficulty,
   targetRating,
-  targetRatingDisplay,
-  setTargetRating,
   simulatorTimeframe,
   setSimulatorTimeframe,
   startRatingText,
   startDateText,
   targetDateText,
   smartSimulator,
-  statusText
+  simulatorTargetRating,
+  setSimulatorTargetRating
 }: Props) {
   const monthsLabel = language.startsWith("fr") ? "mois" : "months";
   const numberLocale = getNumberLocale(language);
@@ -401,7 +390,7 @@ export function ObjectiveSimulatorCard({
                   </p>
                 </div>
                 <span className="text-xl font-bold text-violet-700 dark:text-violet-300">
-                  {formatRating(targetRating)}
+                  {formatRating(simulatorTargetRating)}
                 </span>
               </div>
               <input
@@ -409,21 +398,17 @@ export function ObjectiveSimulatorCard({
                 min={Number(Math.min(5, Math.ceil(smartSimulator.currentRating * 10 + 1) / 10).toFixed(1))}
                 max={5}
                 step={0.1}
-                value={targetRating}
-                onChange={(e) => setTargetRating(parseFloat(e.target.value))}
-                disabled={smartSimulator.startRating !== null && statusText!=="completed"}
-                className={`rv-slider ${smartSimulator.startRating !== null && statusText!=="completed"
-                  ? "cursor-not-allowed opacity-60"
-                  : "cursor-pointer"
-                  }`}
+                value={simulatorTargetRating}
+                onChange={(e) => setSimulatorTargetRating(parseFloat(e.target.value))}
+                className={`rv-slider "cursor-pointer"}`}
                 style={{
-                  cursor: (smartSimulator.startRating !== null && statusText!=="completed") ? "not-allowed" : "pointer",
+                  cursor:"pointer",
                   ["--pct" as any]: `${(() => {
                     const min = Number(
                       Math.min(5, Math.ceil(smartSimulator.currentRating * 10 + 1) / 10).toFixed(1),
                     );
                     const max = 5;
-                    const value = Number(targetRating);
+                    const value = Number(simulatorTargetRating);
 
                     return ((value - min) / (max - min)) * 100;
                   })()}%`,
@@ -466,7 +451,7 @@ export function ObjectiveSimulatorCard({
               defaultValue: "To reach",
             })}{" "}
             <span className="font-semibold text-slate-900 dark:text-slate-100">
-              {formatRating(Number(targetRatingDisplay))}
+              {formatRating(Number(simulatorTargetRating))}
             </span>{" "}
             {t("objective.simulator.toReachTargetWithin", {
               defaultValue: "within",
