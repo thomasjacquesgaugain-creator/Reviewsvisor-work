@@ -359,14 +359,6 @@ const Dashboard = () => {
     return Number(latestStartedObjective.start_rating).toFixed(1);
   }, [latestStartedObjective?.start_rating, t]);
 
-    const latestObjectiveStatus = useMemo(() => {
-    if (latestStartedObjective?.status == null) {
-      return t("objective.simulator.notAvailable", { defaultValue: "Not available" });
-    }
-
-    return latestStartedObjective.status;
-  }, [latestStartedObjective?.status, t]);
-
   function handleClickActionPlan(){
    setActiveTab("recommandations"); // third tab id
   setOpenCard("checklist");
@@ -559,7 +551,8 @@ const Dashboard = () => {
     Record<string, boolean>
   >({});
 
-  const [targetRating, setTargetRating] = useState<number>(4.5);
+  const [targetRating, setTargetRating] = useState<number>(4.2);
+  const [simulatorTargetRating, setSimulatorTargetRating] = useState<number>(4.2);
   const [simulatorTimeframe, setSimulatorTimeframe] = useState<3 | 6 | 12>(6);
 
   const currentAvgRatingForTarget = useMemo(() => {
@@ -568,13 +561,13 @@ const Dashboard = () => {
   }, [allReviewsForChart.length, insight?.avg_rating]);
 
   const targetRatingDisplay = useMemo(
-    () => targetRating.toFixed(1),
+    () => targetRating?.toFixed(1),
     [targetRating],
   );
 
   const targetDifficulty = useMemo(() => {
     const current = Number(currentAvgRatingForTarget.toFixed(1));
-    const target = Number(targetRating.toFixed(1));
+    const target = Number(targetRating?.toFixed(1));
     const delta = Math.max(0, target - current);
 
     // Progression exponentielle (non affichée) : utilisée pour refléter que chaque 0.1 devient plus "difficile"
@@ -741,8 +734,8 @@ const Dashboard = () => {
       </React.Fragment>
     );
   };
-
-  useEffect(() => {
+  
+  useEffect(() => {    
     const minTarget = Math.min(5, Math.max(1, currentAvgRatingForTarget));
     setTargetRating((prev) => (prev < minTarget ? minTarget : prev));
   }, [currentAvgRatingForTarget]);
@@ -837,7 +830,7 @@ const Dashboard = () => {
     // 4) Évolution de la note vers l'objectif (25%)
     const noteInitiale = progressBaselineRating;
     const noteActuelle = Number(currentAvgRatingForTarget.toFixed(1));
-    const noteCible = Number(targetRating.toFixed(1));
+    const noteCible = Number(targetRating?.toFixed(1));
     const denom = noteInitiale != null ? noteCible - noteInitiale : 0;
     const ratingRatio =
       denom > 0 && noteInitiale != null && noteActuelle > noteInitiale
@@ -3373,6 +3366,14 @@ const sortedStrength = [...topStrengths].sort(
     };
   }, [analysisDataForTab?.paretoIssues, issueImpactList, currentAvgRatingForTarget]);
 
+useEffect(() => {
+  if (projectedStats?.low != null && Number.isFinite(projectedStats.low)) {
+    setTargetRating(Number(projectedStats.low.toFixed(1)));
+  } else {
+    setTargetRating(Number((displayAvgRating ?? currentAvgRatingForTarget ?? 0).toFixed(1)));
+  }
+}, [projectedStats?.low, displayAvgRating, currentAvgRatingForTarget]);
+
 
   // Map top issues to Pareto data format
   const paretoData =
@@ -3573,7 +3574,7 @@ const getLatestDate = (reviews: any[]): Date | null =>
       ? Number(Number(latestStartedObjective.start_rating).toFixed(1))
       : null;
     
-    const target = Number(targetRating.toFixed(1));
+    const target = Number(simulatorTargetRating.toFixed(1));
     const totalReviews = allReviewsForChart.length;
 
     const recent90DaysCount = allReviewsForChart.reduce((acc, r: any) => {
@@ -3656,7 +3657,7 @@ const combinedReviews = Number.isFinite(combinedFiveStarReviewsNeeded)
     latestStartedObjective?.start_rating,
     ratingChange,
     simulatorTimeframe,
-    targetRating,
+    simulatorTargetRating,
   ]);  
 
 const activeObjective =
@@ -10169,7 +10170,7 @@ const activeObjective =
                         <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
                           <p className="text-lg font-medium text-foreground">
                             {t("dashboard.reachAverageRating", {
-                              rating: targetRating.toFixed(1),
+                              rating: targetRating?.toFixed(1),
                             })}
                           </p>
                         </div>
@@ -10563,17 +10564,15 @@ const activeObjective =
                 <ObjectiveSimulatorCard
                   t={t}
                   language={i18n.language}
-                  targetDifficulty={targetDifficulty}
                   targetRating={targetRating}
-                  targetRatingDisplay={targetRatingDisplay}
-                  setTargetRating={setTargetRating}
                   simulatorTimeframe={simulatorTimeframe}
                   setSimulatorTimeframe={setSimulatorTimeframe}
                   startRatingText={latestObjectiveStartRatingText}
                   startDateText={latestObjectiveStartDateText}
                   targetDateText={targetDateText}
                   smartSimulator={smartSimulator}
-                  statusText={latestObjectiveStatus}
+                  simulatorTargetRating={simulatorTargetRating}
+                  setSimulatorTargetRating={setSimulatorTargetRating}
                 />
 
                 <GoalInsightsSection
