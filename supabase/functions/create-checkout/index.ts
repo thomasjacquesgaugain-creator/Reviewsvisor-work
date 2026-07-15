@@ -82,18 +82,12 @@ serve(async (req) => {
     logStep("Function started");
 
     const body = await req.json().catch(() => ({}));
-    console.log("body----->", body)
     const emailFromBody = body.email;
-    const { priceId: priceIdFromBody,language, pendingUser, pendingEstablishment } = body;
+    const { priceId: priceIdFromBody, language, pendingEstablishment } = body;
 
     let userEmail = emailFromBody;
     let customerId: string | undefined;
     let userId: string | undefined;
-
-    if (pendingUser?.email) {
-      userEmail = pendingUser.email;
-      logStep("Using pendingUser email", { email: userEmail });
-    }
 
     const authHeader = req.headers.get("Authorization");
     if (authHeader) {
@@ -135,14 +129,7 @@ serve(async (req) => {
       return errorResponse("PRICE_ID_INVALID", "Le price ID est un placeholder.", 400);
     }
 
-    // const LIVE_TO_TEST = buildLiveToTest();
     const PRICE_ID_TO_PRODUCT_KEY = buildPriceIdToProductKey();
-
-    // if (stripeMode === "TEST" && LIVE_TO_TEST[priceId]) {
-    //   const testPriceId = LIVE_TO_TEST[priceId];
-    //   logStep("LIVE priceId replaced by TEST mapping", { from: priceId, to: testPriceId });
-    //   priceId = testPriceId;
-    // }
 
     logStep("Inputs", {
       userId: userId ?? "anonymous",
@@ -152,7 +139,6 @@ serve(async (req) => {
       hasPendingEstablishment: !!pendingEstablishment,
     });
 
-    const additionalEstablishmentPriceId = getPriceIds().addon;
     const origin = req.headers.get("origin") || Deno.env.get("APP_URL") || Deno.env.get("SITE_URL") || "https://reviewsvisor.fr";
 
     // ======= ADMIN BYPASS =======
@@ -242,13 +228,13 @@ serve(async (req) => {
           .from("profiles")
           .upsert(
             {
+              id: userId,
               user_id: userId,
               current_establishment_id: establishmentId,
+              onboarding_status: "active",
               updated_at: new Date().toISOString(),
             },
-            {
-              onConflict: "user_id",
-            },
+            { onConflict: "id" },
           );
 
         if (profileError) {
@@ -274,18 +260,6 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Count existing establishments (for addon line items)
-    // let additionalEstablishments = 0;
-    // if (userId) {
-    //   const { count: establishmentCount } = await supabaseClient
-    //     .from("establishments")
-    //     .select("*", { count: "exact", head: true })
-    //     .eq("user_id", userId);
-    //   const totalEstablishments = establishmentCount || 0;
-    //   additionalEstablishments = Math.max(0, totalEstablishments - 1);
-    //   logStep("Establishment count", { total: totalEstablishments, additional: additionalEstablishments });
-    // }
-
     if (userEmail) {
       const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
       if (customers.data.length > 0) {
@@ -298,32 +272,23 @@ serve(async (req) => {
       { price: priceId, quantity: 1 },
     ];
 
-    // if (additionalEstablishments > 0 && additionalEstablishmentPriceId) {
-    //   lineItems.push({ price: additionalEstablishmentPriceId, quantity: additionalEstablishments });
-    //   logStep("Adding additional establishments", { quantity: additionalEstablishments });
-    // }
-
     const cancelUrl = `${origin}/billing/cancel`;
     const successUrl = `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`;
 
-    // Build metadata for both pendingUser (account creation) and pendingEstablishment (save after payment)
+    // REMOVED: the old pendingUser/pending_user_password block. It sent a
+    // PLAINTEXT PASSWORD into Stripe's metadata (visible in the Stripe
+    // Dashboard to anyone with access, and via the API to anyone holding
+    // the key) — a real security issue. It's also unused: accounts are now
+    // created immediately at signup (see Inscription.tsx), so there's
+    // never a "pending user" to carry through checkout anymore — by the
+    // time anyone reaches this function, userId is already resolved above
+    // via the Authorization header.
     const sessionMetadata: Record<string, string> = {};
     const subscriptionMetadata: Record<string, string> = {};
 
-    if (pendingUser) {
-      const puMeta = {
-        pending_user_email: safeMetaStr(pendingUser.email),
-        pending_user_firstName: safeMetaStr(pendingUser.firstName),
-        pending_user_lastName: safeMetaStr(pendingUser.lastName),
-        pending_user_company: safeMetaStr(pendingUser.establishmentName || pendingUser.company),
-        pending_user_address: safeMetaStr(pendingUser.address),
-        pending_user_password: safeMetaStr(pendingUser.password),
-        ...(pendingUser.establishmentType && {
-          pending_user_establishment_type: safeMetaStr(pendingUser.establishmentType),
-        }),
-      };
-      Object.assign(sessionMetadata, puMeta);
-      Object.assign(subscriptionMetadata, puMeta);
+    if (userId) {
+      sessionMetadata.pending_etab_user_id = safeMetaStr(userId);
+      subscriptionMetadata.pending_etab_user_id = safeMetaStr(userId);
     }
 
     if (pendingEstablishment) {
@@ -337,7 +302,6 @@ serve(async (req) => {
         pending_etab_lat:        safeMetaStr(pendingEstablishment.lat),
         pending_etab_lng:        safeMetaStr(pendingEstablishment.lng),
         pending_etab_type:       safeMetaStr(pendingEstablishment.type_etablissement),
-        pending_etab_user_id:    safeMetaStr(userId),
       };
       Object.assign(sessionMetadata, etabMeta);
       Object.assign(subscriptionMetadata, etabMeta);

@@ -6,6 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -17,18 +19,37 @@ serve(async (req) => {
     if (!email) {
       throw new Error("Email is required");
     }
+    if (typeof email !== "string" || !EMAIL_RE.test(email.trim())) {
+      throw new Error("A valid email is required");
+    }
+    const normalizedEmail = email.trim().toLowerCase();
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
+    const PER_PAGE = 1000;
+    let page = 1;
+    let userExists = false;
 
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (error) throw error;
+    while (true) {
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage: PER_PAGE,
+      });
 
-    const userExists = data.users.some(user => user.email === email);
+      if (error) throw error;
+
+      // FIX: case-insensitive comparison (was user.email === email)
+      userExists = data.users.some(
+        (user) => user.email?.toLowerCase() === normalizedEmail
+      );
+      if (userExists) break;
+
+      if (data.users.length < PER_PAGE) break; // last page reached
+      page += 1;
+    }
 
     return new Response(
       JSON.stringify({ exists: userExists }),

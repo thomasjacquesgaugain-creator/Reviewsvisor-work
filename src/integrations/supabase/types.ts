@@ -343,7 +343,8 @@ export type Database = {
           preferred_language: string
           role: string
           updated_at: string
-          user_id: string
+          user_id: string,
+          onboarding_status:any
         }
         Insert: {
           company?: string | null

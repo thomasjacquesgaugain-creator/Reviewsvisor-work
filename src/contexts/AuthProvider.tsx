@@ -26,13 +26,9 @@ type AuthCtx = {
 
 function getDisplayName(user: User | null, profile: Profile | null): string {
   if (!user) return "Invité";
-  
-  // Priority 1: profiles.display_name
   if (profile?.display_name?.trim()) {
     return capitalizeName(profile.display_name.trim());
   }
-  
-  // Priority 2: profiles.first_name + last_name (from database)
   if (profile) {
     const firstName = profile.first_name?.trim() || "";
     const lastName = profile.last_name?.trim() || "";
@@ -40,32 +36,22 @@ function getDisplayName(user: User | null, profile: Profile | null): string {
       return capitalizeName(`${firstName} ${lastName}`.trim());
     }
   }
-  
-  // Priority 3: user_metadata first_name + last_name
   const m = user.user_metadata ?? {};
   const firstName = m.first_name?.trim() || "";
   const lastName = m.last_name?.trim() || "";
-  
   if (firstName || lastName) {
     return capitalizeName(`${firstName} ${lastName}`.trim());
   }
-  
-  // Priority 4: user_metadata.name or full_name (OAuth)
   if (m.name?.trim()) return capitalizeName(m.name.trim());
   if (m.full_name?.trim()) return capitalizeName(m.full_name.trim());
-  
-  // Priority 5: given_name + family_name (Google OAuth)
   const givenName = m.given_name?.trim() || "";
   const familyName = m.family_name?.trim() || "";
   if (givenName || familyName) {
     return capitalizeName(`${givenName} ${familyName}`.trim());
   }
-  
-  // Priority 6: email fallback (ne pas capitaliser l'email)
   if (user.email) {
     return user.email.split("@")[0];
   }
-  
   return "Invité";
 }
 
@@ -86,17 +72,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const hasBootstrappedRef = useRef(false);
 
-  const applyPreferredLanguage = async (preferredLanguage: SupportedLanguage | null) => {
+  const applyPreferredLanguage = async (
+    preferredLanguage: SupportedLanguage | null,
+    isInitialLoad: boolean,
+  ) => {
     if (!preferredLanguage) return;
+    if (!isInitialLoad) return;
 
     if (preferredLanguage !== i18n.language) {
       await i18n.changeLanguage(preferredLanguage);
     }
-
     localStorage.setItem(LANGUAGE_STORAGE_KEY, preferredLanguage);
   };
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, isInitialLoad: boolean) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -109,7 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           ? data.preferred_language as SupportedLanguage
           : null;
 
-        await applyPreferredLanguage(preferredLanguage);
+        await applyPreferredLanguage(preferredLanguage, isInitialLoad);
 
         setProfile({
           id: data.id,
@@ -130,6 +119,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const hydrateSession = async (
     nextSession: Session | null,
     shouldBlockUi: boolean,
+    isInitialLoad: boolean,
   ) => {
     setSession(nextSession);
 
@@ -138,7 +128,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(true);
       }
 
-      await fetchProfile(nextSession.user.id);
+      await fetchProfile(nextSession.user.id, isInitialLoad);
 
       if (shouldBlockUi) {
         setLoading(false);
@@ -167,14 +157,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
         return;
       }
-
-      void hydrateSession(nextSession, false);
+      void hydrateSession(nextSession, false, !hasBootstrappedRef.current);
     });
 
     void supabase.auth
       .getSession()
       .then(({ data: { session: nextSession } }) =>
-        hydrateSession(nextSession, true),
+        hydrateSession(nextSession, true, true),
       )
       .finally(() => {
         hasBootstrappedRef.current = true;
@@ -187,16 +176,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const refreshProfile = async () => {
     if (session?.user) {
-      await fetchProfile(session.user.id);
+      await fetchProfile(session.user.id, false);
     }
   };
 
   const signOut = async () => {
     try {
-      // Déconnexion Supabase (supprime automatiquement ses propres tokens)
       await supabase.auth.signOut();
-
-      // Nettoyer les données d'établissement pour éviter qu'un autre utilisateur les voie
       localStorage.removeItem('mon-etablissement');
       localStorage.removeItem('mes-etablissements');
       useSmartStore.persist.clearStorage();
@@ -204,7 +190,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     } finally {
-      // Force le nettoyage de l'état local
       setSession(null);
       setProfile(null);
       useEstablishmentStore.getState().clearSelectedEstablishment();
