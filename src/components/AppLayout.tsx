@@ -10,11 +10,9 @@ export function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
   
   // Pages où on ne veut pas afficher le footer ou la navbar
-  const hideFooterPaths = ['/debug', '/api/auth/callback/google', '/reset-password', '/mot-de-passe-oublie', '/connexion', '/login'];
+  const hideFooterPaths = ['/debug', '/api/auth/callback/google', '/reset-password', '/mot-de-passe-oublie', '/connexion', '/login', '/inscription'];
   const shouldHideFooter = hideFooterPaths.some(path => location.pathname.startsWith(path));
-  
-  // Pages où on ne veut pas afficher la navbar (comme les callbacks OAuth, pages auth standalone)
-  const hideNavBarPaths = ['/api/auth/callback/google', '/reset-password', '/mot-de-passe-oublie', '/connexion', '/login'];
+  const hideNavBarPaths = ['/api/auth/callback/google', '/reset-password', '/mot-de-passe-oublie', '/connexion', '/login', '/inscription'];
   const shouldHideNavBar = hideNavBarPaths.some(path => location.pathname.startsWith(path));
 
   return (

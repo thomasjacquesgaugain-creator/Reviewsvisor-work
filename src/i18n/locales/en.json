@@ -61,6 +61,14 @@
     "french": "French",
     "english": "English"
   },
+  
+  "Signup": {
+   "establishmentSubtitle": "Find your establishment to continue",
+    "establishmentRequiredNotice": "Add your first establishment to unlock the dashboard and ReviewsVisor's AI features.",
+    "checkingEstablishment": "Checking...",
+    "registerEstablishment": "Register establishment"
+  },
+
   "auth": {
     "login": "Log in",
     "logout": "Sign out",
@@ -154,7 +162,29 @@
     "alreadyHaveAccount": "Already have an account?",
     "redirectingToLogin": "Redirecting to login page...",
     "continueToSubscription": "Continue to subscription",
-    "createAccount":"Create account"
+    "createAccount":"Create account",
+     "verifyEmailTitle": "Verify your email",
+      "codeSentTo": "A 6-digit code was sent to",
+      "verificationCode": "Verification code",
+      "verify": "Verify",
+      "verifying": "Verifying...",
+      "didntReceiveCode": "Didn't receive the code?",
+      "resendCode": "Resend code",
+      "resendIn": "Resend in {{seconds}}s",
+      "sendingCode": "Sending...",
+      "resendCodeSuccess": "A new code has been sent.",
+      "wrongEmail": "Wrong email address?",
+      "restartSignup": "Restart sign up",
+      "haveActiveAccount": "Already have an active account?",
+      "signIn": "Sign in",
+      "codeMinDigits": "The code must contain 6 digits.",
+      "codeExpired": "This code has expired. Request a new one.",
+      "codeInvalid": "Invalid code. Please try again.",
+      "confirmLeaveTitle": "Leave sign up?",
+      "confirmLeaveMessage": "This will close your account creation process. You'll need to sign up again from the beginning.",
+      "confirmLeaveCancel": "Cancel",
+      "confirmLeaveConfirm": "Leave"
+      
   },
   "nav": {
     "home": "Home",
@@ -167,6 +197,7 @@
     "about": "About",
     "features": "Features"
   },
+  
   "footer": {
     "legal": "Legal",
     "legalNotice": "Legal notice",
