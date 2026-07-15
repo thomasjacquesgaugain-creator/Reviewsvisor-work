@@ -60,6 +60,12 @@
     "french": "Français",
     "english": "Anglais"
   },
+   "Signup": {
+     "establishmentSubtitle": "Trouvez votre établissement pour continuer",
+    "establishmentRequiredNotice": "Ajoutez votre premier établissement pour débloquer le tableau de bord et les fonctionnalités IA de ReviewsVisor.",
+    "checkingEstablishment": "Vérification...",
+    "registerEstablishment": "Enregistrer l'établissement"
+  },
   "auth": {
     "login": "Se connecter",
     "logout": "Déconnexion",
@@ -173,7 +179,29 @@
     "pleaseReconnect": "Veuillez vous reconnecter",
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
     "redirectingToLogin": "Redirection vers la page de connexion...",
-    "createAccount":"Créer un compte"
+    "createAccount":"Créer un compte",
+     "verifyEmailTitle": "Vérifiez votre email",
+    "codeSentTo": "Un code à 6 chiffres a été envoyé à",
+    "verificationCode": "Code de vérification",
+    "verify": "Vérifier",
+    "verifying": "Vérification...",
+    "didntReceiveCode": "Vous n'avez pas reçu le code ?",
+    "resendCode": "Renvoyer le code",
+    "resendIn": "Renvoyer dans {{seconds}}s",
+    "sendingCode": "Envoi...",
+    "resendCodeSuccess": "Un nouveau code a été envoyé.",
+    "wrongEmail": "Mauvaise adresse email ?",
+    "restartSignup": "Recommencer l'inscription",
+    "haveActiveAccount": "Vous avez déjà un compte actif ?",
+    "signIn": "Se connecter",
+    "codeMinDigits": "Le code doit contenir 6 chiffres.",
+    "codeExpired": "Ce code a expiré. Demandez-en un nouveau.",
+    "codeInvalid": "Code invalide. Veuillez réessayer.",
+    "confirmLeaveTitle": "Quitter l'inscription ?",
+    "confirmLeaveMessage": "Cette action fermera votre processus de création de compte. Vous devrez recommencer l'inscription depuis le début.",
+    "confirmLeaveCancel": "Annuler",
+    "confirmLeaveConfirm": "Quitter"
+    
   },
   "nav": {
     "home": "Accueil",

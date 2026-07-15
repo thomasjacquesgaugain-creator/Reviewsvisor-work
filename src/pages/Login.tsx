@@ -104,7 +104,7 @@ const Login = () => {
         }
       } else {
         // Connexion
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -113,7 +113,7 @@ const Login = () => {
           // Vider les champs email et mot de passe
           setEmail("");
           setPassword("");
-          
+
           // Afficher un message d'erreur sur la page et en toast
           const errorMessage = t("auth.invalidCredentials");
           setLoginError(errorMessage);
@@ -122,7 +122,31 @@ const Login = () => {
           toast.success(t("auth.loginSuccess"), {
             description: t("auth.loginSuccessDesc"),
           });
-          navigate('/tableau-de-bord');
+          let redirectTo = "/tableau-de-bord";
+
+          if (signInData.user) {
+            const { data: profile, error: profileError } = await supabase
+              .from("profiles")
+              .select("onboarding_status")
+              .eq("id", signInData.user.id)
+              .maybeSingle();
+
+            if (profileError) {
+              console.error("Failed to load onboarding_status:", profileError);
+              redirectTo = "/inscription/verifier-email";
+            } else {
+              const status = profile?.onboarding_status ?? "email_pending";
+              if (status === "email_pending") {
+                redirectTo = "/inscription/verifier-email";
+              } else if (status === "email_verified") {
+                redirectTo = "/inscription/etablissement";
+              } else {
+                redirectTo = "/tableau-de-bord";
+              }
+            }
+          }
+
+          navigate(redirectTo);
         }
       }
     } catch (error) {

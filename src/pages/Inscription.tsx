@@ -153,12 +153,17 @@ async function onSubmit(formData: InscriptionFormData) {
     localStorage.removeItem("subscribed_ok");
     localStorage.removeItem("subscribed_email");
 
+    sessionStorage.setItem("pending_verification_email", formData.email.trim());
+
     toast({
       title: t("auth.signupSuccess") || "Compte créé !",
-      description: "Bienvenue ! Ajoutez votre établissement pour commencer.",
+      description: t(
+        "auth.checkYourEmailForCode",
+        "Vérifiez votre boîte mail pour le code de confirmation.",
+      ),
     });
 
-    navigate("/etablissement");
+     navigate("/inscription/verifier-email", { state: { email: formData.email.trim() } });
 
   } catch (err) {
     console.error("Erreur inattendue:", err);

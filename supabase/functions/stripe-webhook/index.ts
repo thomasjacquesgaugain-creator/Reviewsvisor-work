@@ -32,19 +32,25 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}`, details ? JSON.stringify(details) : "");
 };
 
-async function getUserIdFromSubscription(subscriptionId: string): Promise<string | null> {
-  const { data, error } = await supabaseAdmin
-    .from("subscriptions")
-    .select("user_id")
-    .eq("provider_subscription_id", subscriptionId)
-    .maybeSingle();
 
-  if (error) {
-    logStep("Error loading subscription row", { error: error.message, subscriptionId });
-    return null;
+async function findUserIdByEmail(email: string): Promise<string | null> {
+  const normalizedEmail = email.trim().toLowerCase();
+  const PER_PAGE = 1000;
+  let page = 1;
+
+  while (true) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: PER_PAGE });
+    if (error) {
+      logStep("listUsers error during email lookup", { error: error.message, email });
+      return null;
+    }
+
+    const match = data.users.find((u) => u.email?.toLowerCase() === normalizedEmail);
+    if (match) return match.id;
+
+    if (data.users.length < PER_PAGE) return null; // last page reached, no match
+    page += 1;
   }
-
-  return data?.user_id ?? null;
 }
 
 serve(async (req) => {
@@ -105,15 +111,24 @@ serve(async (req) => {
 
   const customerEmail = session.customer_email || session.customer_details?.email;
 
-  const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-  const user = existingUsers.users.find((u) => u.email === customerEmail);
 
-  if (!user) {
-    logStep("User not found", { email: customerEmail });
-    return new Response(JSON.stringify({ received: true }), { status: 200 });
+  let userId: string | null = metadata.pending_etab_user_id || null;
+
+  if (!userId && customerEmail) {
+    logStep("No pending_etab_user_id in metadata — falling back to email lookup", { email: customerEmail });
+    userId = await findUserIdByEmail(customerEmail);
   }
 
-  const userId = user.id;
+  if (!userId) {
+    logStep("Could not resolve a user for this payment — needs manual follow-up", {
+      email: customerEmail,
+      sessionId: session.id,
+    });
+    return new Response(JSON.stringify({ received: true, warning: "user_not_resolved" }), { status: 200 });
+  }
+
+  logStep("User resolved", { userId });
+
   const periodEnd = new Date(subscription.items.data[0]?.current_period_end * 1000).toISOString();
 
 let establishmentId: string | null = null;
@@ -188,6 +203,29 @@ if (pendingEtabPlaceId) {
   establishmentId = est.id;
   logStep("Establishment saved", { establishmentId });
 }
+  const profileUpsertPayload: Record<string, unknown> = {
+    id: userId,
+    user_id: userId,
+    onboarding_status: "active",
+    updated_at: new Date().toISOString(),
+  };
+  if (establishmentId) {
+    profileUpsertPayload.current_establishment_id = establishmentId;
+  }
+
+  const { error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .upsert(profileUpsertPayload, { onConflict: "id" });
+
+  if (profileError) {
+    logStep("Error activating profile / updating current establishment", {
+      error: profileError.message,
+      userId,
+      establishmentId,
+    });
+  } else {
+    logStep("Profile activated", { userId, establishmentId });
+  }
 
   const { error: subscriptionError } = await supabaseAdmin
     .from("subscriptions")
@@ -211,34 +249,6 @@ if (pendingEtabPlaceId) {
     throw subscriptionError;
   }
 
-  if (establishmentId) {
-  const { error: profileError } = await supabaseAdmin
-    .from("profiles")
-    .upsert(
-      {
-        user_id: userId,
-        current_establishment_id: establishmentId,
-        updated_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "user_id",
-      }
-    );
-
-  if (profileError) {
-    logStep("Error updating current establishment", {
-      error: profileError.message,
-      userId,
-      establishmentId,
-    });
-  } else {
-    logStep("Current establishment updated", {
-      userId,
-      establishmentId,
-    });
-  }
-}
-
   await supabaseAdmin.from("user_entitlements").upsert(
     {
       user_id: userId,
@@ -257,24 +267,6 @@ if (pendingEtabPlaceId) {
     if (event.type === "customer.subscription.updated") {
       const subscription = event.data.object as Stripe.Subscription;
       logStep("Subscription updated", { subscriptionId: subscription.id, status: subscription.status });
-
-      // const resolvedUserId = await getUserIdFromSubscription(subscription.id);
-      // if (!resolvedUserId) {
-      //   logStep("No subscription row found for update", { subscriptionId: subscription.id });
-      // } else {
-      //   const { error } = await supabaseAdmin
-      //     .from("user_entitlements")
-      //     .update({
-      //       pro_status: subscription.status === "active" ? "active" : "inactive",
-      //       pro_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      //       updated_at: new Date().toISOString(),
-      //     })
-      //     .eq("user_id", resolvedUserId);
-
-      //   if (error) {
-      //     logStep("Error updating subscription status", { error: error.message });
-      //   }
-      // }
 
       const { error: subscriptionUpdateError } = await supabaseAdmin
         .from("subscriptions")
@@ -295,23 +287,6 @@ if (pendingEtabPlaceId) {
     if (event.type === "customer.subscription.deleted") {
       const subscription = event.data.object as Stripe.Subscription;
       logStep("Subscription deleted", { subscriptionId: subscription.id });
-
-      // const resolvedUserId = await getUserIdFromSubscription(subscription.id);
-      // if (!resolvedUserId) {
-      //   logStep("No subscription row found for delete", { subscriptionId: subscription.id });
-      // } else {
-      //   const { error } = await supabaseAdmin
-      //     .from("user_entitlements")
-      //     .update({
-      //       pro_status: "canceled",
-      //       updated_at: new Date().toISOString(),
-      //     })
-      //     .eq("user_id", resolvedUserId);
-
-      //   if (error) {
-      //     logStep("Error updating canceled subscription", { error: error.message });
-      //   }
-      // }
 
       const { error: subscriptionDeleteError } = await supabaseAdmin
         .from("subscriptions")

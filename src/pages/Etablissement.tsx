@@ -13,7 +13,8 @@ import {
   EVT_LIST_UPDATED,
 } from "@/types/etablissement";
 import { Button } from "@/components/ui/button";
-import { Building2, Home, LogOut, X, AlertTriangle, Building, CheckCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Building2, Home, LogOut, X, AlertTriangle, Building, CheckCircle, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCurrentEstablishment } from "@/hooks/useCurrentEstablishment";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -24,10 +25,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { mapGoogleTypeToCategory } from "@/utils/establishmentTypeMapping";
 import { PlanSelectionModal } from "@/components/PlanSelectionModal";
 import { AppPageBackground } from "@/components/AppPageBackground";
-export default function EtablissementPage() {
+interface EtablissementPageProps {
+  mode?: "app" | "signup";
+  onContinue?: (selected: Etab) => void;
+}
+
+export default function EtablissementPage({ mode = "app", onContinue }: EtablissementPageProps = {}) {
+  const isSignupMode = mode === "signup";
   const { displayName, loading, signOut } = useAuth();
   const [selected, setSelected] = useState<Etab | null>(null);
-  const [showSearch, setShowSearch] = useState(false);
+  const [showSearch, setShowSearch] = useState(isSignupMode);
   const [showImportBar, setShowImportBar] = useState(false);
   const [showReviewsVisual, setShowReviewsVisual] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
@@ -76,6 +83,7 @@ export default function EtablissementPage() {
   // Sync the local establishment card from the DB (source of truth)
   // IMPORTANT: préserver le rating local si la DB n'en a pas
   useEffect(() => {
+    if (isSignupMode) return;
     const syncFromDb = async () => {
       try {
         const est = await getCurrentEstablishment();
@@ -386,6 +394,7 @@ setShowPlanModal(true);
 
   // Vérifier s'il y a des établissements enregistrés dans la DB
   useEffect(() => {
+    if (isSignupMode) return;
     const checkRegisteredEstablishments = async () => {
       try {
         const {
@@ -644,6 +653,89 @@ setShowPlanModal(true);
     window.addEventListener("reviews:imported", onImported);
     return () => window.removeEventListener("reviews:imported", onImported);
   }, [currentEstablishment?.place_id]);
+  if (isSignupMode) {
+    return (
+      <div className="relative min-h-screen overflow-hidden px-4 py-12">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-purple-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+          <div className="absolute top-20 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-purple-200 dark:from-blue-900/30 dark:to-purple-900/30 rounded-full blur-3xl opacity-30" />
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-orange-200 to-yellow-200 dark:from-orange-900/20 dark:to-yellow-900/20 rounded-full blur-3xl opacity-40" />
+          <div className="absolute bottom-20 right-20 w-60 h-60 bg-gradient-to-bl from-blue-300 to-cyan-300 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-full blur-2xl opacity-25" />
+        </div>
+
+        <div className="relative z-10 w-full max-w-md mx-auto">
+          <Card className="w-full bg-white/90 dark:bg-white/[0.05] backdrop-blur-sm dark:backdrop-blur-xl border-0 dark:border dark:border-white/[0.08] shadow-xl dark:shadow-2xl rounded-3xl overflow-hidden">
+            <CardHeader className="space-y-2 text-center pb-2">
+              <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                <Building2 className="h-6 w-6 text-primary" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+                {t("establishment.title")}
+              </CardTitle>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                {t("Signup.establishmentSubtitle", "Trouvez votre établissement pour continuer")}
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-start gap-2 rounded-xl bg-primary/5 border border-primary/10 px-3 py-2.5">
+                <Info className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {t(
+                    "Signup.establishmentRequiredNotice",
+                    "Ajoutez votre premier établissement pour débloquer le tableau de bord et les fonctionnalités IA de ReviewsVisor.",
+                  )}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="relative">
+                  <input
+                    id="places-input"
+                    className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-3 py-3 h-12 text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder={t("establishment.searchPlaceholder")}
+                  />
+                </div>
+
+                {placesError && (
+                  <div className="text-sm text-destructive">{placesError}</div>
+                )}
+
+                <div className="text-xs text-muted-foreground">
+                  {t("establishment.poweredByGoogle")}
+                </div>
+
+                {selected && (
+                  <div className="flex items-center gap-2 rounded-xl border border-primary/25 bg-primary/10 px-3 py-2 text-primary">
+                    <CheckCircle className="h-4 w-4 shrink-0" />
+                    <span className="text-sm">{t("establishment.selected")}</span>
+                    <strong className="text-foreground text-sm">{selected.name}</strong>
+                  </div>
+                )}
+              </div>
+
+              <Button
+                type="button"
+                disabled={!selected || fetchingReviewCount}
+                onClick={async () => {
+                  if (!selected) return;
+                  setFetchingReviewCount(true);
+                  try {
+                    await onContinue?.(selected);
+                  } finally {
+                    setFetchingReviewCount(false);
+                  }
+                }}
+                className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-medium"
+              >
+                {fetchingReviewCount
+                  ? t("Signup.checkingEstablishment", "Vérification...")
+                  : t("Signup.registerEstablishment", "Enregistrer l'établissement")}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-page-shell">
@@ -793,12 +885,14 @@ setShowPlanModal(true);
           </div>
         </div>
       </div>
-      {savedEtabForPlan &&<PlanSelectionModal
-        open={showPlanModal}
-        onClose={() => setShowPlanModal(false)}
-        establishment={savedEtabForPlan}
-        reviewCountLast12Months={reviewCountLast12Months}
-      />}
+      {savedEtabForPlan && (
+        <PlanSelectionModal
+          open={showPlanModal}
+          onClose={() => setShowPlanModal(false)}
+          establishment={savedEtabForPlan}
+          reviewCountLast12Months={reviewCountLast12Months}
+        />
+      )}
     </div>
   );
 }

@@ -46,7 +46,8 @@ const BillingSettings = lazy(() => import("./pages/settings/BillingSettings").th
 const Reports = lazy(() => import("./pages/settings/Reports").then(m => ({ default: m.Reports })));
 const BillingInvoices = lazy(() => import("./pages/settings/BillingInvoices").then(m => ({ default: m.BillingInvoices })));
 const CustomizationSettings = lazy(() => import("./pages/settings/CustomizationSettings").then(m => ({ default: m.CustomizationSettings })));
-
+import InscriptionEtablissement from "@/pages/InscriptionEtablissement";
+import VerifyEmailOtp from "./pages/VerifyEmailOtp";
 const ScrollToTop = () => {
   const location = useLocation();
 
@@ -156,6 +157,8 @@ const App = () => {
             <Route path="/mentions-legales" element={<MentionsLegales />} />
             <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
             <Route path="/politique-cookies" element={<PolitiqueCookies />} />
+             <Route path="/inscription/etablissement" element={<InscriptionEtablissement />} />
+             <Route path="/inscription/verifier-email" element={<VerifyEmailOtp />} />
             <Route path="/inscription" element={
               <RequireGuest>
                 <Inscription />
