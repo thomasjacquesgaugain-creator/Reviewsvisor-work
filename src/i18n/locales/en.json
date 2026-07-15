@@ -257,6 +257,8 @@
     "importReviews": "Import reviews",
     "analyzeReviews": "Analyze reviews",
     "downloadReport": "Download report",
+    "noReportAvailable": "No report available",
+    "importReviewsToGenerateReport": "Import reviews to generate report",
     "paretoProblems": "Pareto Diagram - Problem Analysis",
     "paretoProblemsDescription": "Identification of the 20% of problems that generate 80% of dissatisfaction",
     "paretoStrengths": "Pareto Diagram - Strength Analysis",
