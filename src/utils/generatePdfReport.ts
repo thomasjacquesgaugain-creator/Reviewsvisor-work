@@ -34,6 +34,7 @@ interface Theme {
   score?: number;
   what_it_means?: string;
   evidence_quotes?: string[];
+  verbatims?: string[];
 }
 
 interface PainPoint {
@@ -235,6 +236,42 @@ function getCategoryColor(categoryKey: string): [number, number, number] {
     environment: [20, 184, 166],
   };
   return map[categoryKey] ?? COLORS.secondary;
+}
+
+function cleanVerbatim(text: string): string {
+  return text
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function sanitizePdfText(text: string): string {
+  return cleanVerbatim(
+    text
+      // Remove emoji / surrogate pairs that jsPDF's core fonts don't render well.
+      .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')
+      // Remove other non-printable control characters.
+      .replace(/[\u0000-\u001F\u007F]/g, ' ')
+      // Normalize curly quotes to plain ASCII quotes for cleaner wrapping.
+      .replace(/[“”]/g, '"')
+      .replace(/[‘’]/g, "'")
+  );
+}
+
+function getThemeVerbatims(theme: Theme): string[] {
+  const rawQuotes = Array.isArray(theme.verbatims) && theme.verbatims.length > 0
+    ? theme.verbatims
+    : Array.isArray(theme.evidence_quotes) && theme.evidence_quotes.length > 0
+      ? theme.evidence_quotes
+      : [];
+
+  return Array.from(
+    new Set(
+      rawQuotes
+        .map((quote) => sanitizePdfText(String(quote)))
+        .filter(Boolean)
+    )
+  );
 }
 
 // ─── REUSABLE TABLE RENDERER ──────────────────────────────────────────────────
@@ -767,93 +804,213 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
   yPos += 12;
 
   // Universal + Industry themes with sentiment
-  const allThemes = [
-    ...themesUniv.slice(0, 3),
-    ...themesInd.slice(0, 3),
-  ].filter(Boolean);
+  const themeMap = new Map<string, Theme>();
+  [...themesUniv.slice(0, 3), ...themesInd.slice(0, 3)]
+    .filter(Boolean)
+    .forEach((theme) => {
+      const key = (theme.theme || '').trim().toLowerCase() || `${theme.theme}-${theme.count || theme.importance || 0}`;
+      const existing = themeMap.get(key);
 
-  if (allThemes.length > 0) {
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...COLORS.text);
-    doc.text('Themes recurrents avec sentiment', MARGINS.left, yPos);
-    yPos += 8;
-
-    const maxCount = Math.max(...allThemes.map(t => t.count || t.importance || 1));
-    const tTableW   = CONTENT_WIDTH;
-    const tThemeW   = 70;
-    const tSentW    = 28;
-    const tMentionW = 22;
-    const tBarW     = tTableW - tThemeW - tSentW - tMentionW;
-    const tHdrH     = 9;
-    const tRowH     = 11;
-
-    doc.setFillColor(...BLUE_PRIMARY);
-    doc.roundedRect(MARGINS.left, yPos, tTableW, tHdrH, 1, 1, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(8.5);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Theme',     MARGINS.left + 4,                          yPos + 6);
-    doc.text('Sentiment', MARGINS.left + tThemeW + tSentW / 2,       yPos + 6, { align: 'center' });
-    doc.text('Mentions',  MARGINS.left + tThemeW + tSentW + tMentionW / 2, yPos + 6, { align: 'center' });
-    doc.text('Frequence', MARGINS.left + tThemeW + tSentW + tMentionW + tBarW / 2, yPos + 6, { align: 'center' });
-    yPos += tHdrH;
-
-    const tRowsStartY = yPos;
-    allThemes.forEach((theme, idx) => {
-      const count = theme.count || theme.importance || 0;
-      const bg: [number, number, number] = idx % 2 === 0 ? BLUE_PALE : ROW_WHITE;
-
-      doc.setFillColor(...bg);
-      doc.rect(MARGINS.left, yPos, tTableW, tRowH, 'F');
-      doc.setDrawColor(...BLUE_LIGHT);
-      doc.setLineWidth(0.3);
-      doc.line(MARGINS.left, yPos + tRowH, MARGINS.left + tTableW, yPos + tRowH);
-
-      // Theme name
-      doc.setTextColor(...COLORS.text);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.5);
-      doc.text(doc.splitTextToSize(theme.theme, tThemeW - 8)[0], MARGINS.left + 4, yPos + 7);
-
-      // Sentiment badge
-      const sentBg    = getSentimentBg(theme.sentiment);
-      const sentColor = getSentimentColor(theme.sentiment);
-      const sentLabel = theme.sentiment === 'positive' ? 'Positif'
-        : theme.sentiment === 'negative' ? 'Negatif' : 'Mixte';
-      const sentX = MARGINS.left + tThemeW + 2;
-      doc.setFillColor(...sentBg);
-      doc.roundedRect(sentX, yPos + 2.5, tSentW - 4, 6, 1, 1, 'F');
-      doc.setTextColor(...sentColor);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      doc.text(sentLabel, sentX + (tSentW - 4) / 2, yPos + 7, { align: 'center' });
-
-      // Count badge
-      const cntX = MARGINS.left + tThemeW + tSentW + 2;
-      doc.setFillColor(219, 234, 254);
-      doc.roundedRect(cntX, yPos + 2.5, tMentionW - 4, 6, 1, 1, 'F');
-      doc.setTextColor(30, 64, 175);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
-      doc.text(`${count}`, cntX + (tMentionW - 4) / 2, yPos + 7, { align: 'center' });
-
-      // Frequency bar
-      const barTrackX = MARGINS.left + tThemeW + tSentW + tMentionW + 4;
-      const barTrackW = tBarW - 8;
-      doc.setFillColor(219, 234, 254);
-      doc.roundedRect(barTrackX, yPos + 3, barTrackW, 5, 1, 1, 'F');
-      if (count > 0) {
-        doc.setFillColor(...BLUE_PRIMARY);
-        doc.roundedRect(barTrackX, yPos + 3, (count / maxCount) * barTrackW, 5, 1, 1, 'F');
+      if (!existing) {
+        themeMap.set(key, {
+          ...theme,
+          verbatims: getThemeVerbatims(theme),
+        });
+        return;
       }
 
-      yPos += tRowH;
+      const mergedQuotes = Array.from(
+        new Set([
+          ...getThemeVerbatims(existing),
+          ...getThemeVerbatims(theme),
+        ])
+      );
+
+      themeMap.set(key, {
+        ...existing,
+        count: Math.max(existing.count ?? 0, theme.count ?? 0),
+        importance: Math.max(existing.importance ?? 0, theme.importance ?? 0),
+        score: Math.max(existing.score ?? 0, theme.score ?? 0),
+        sentiment: existing.sentiment ?? theme.sentiment,
+        verbatims: mergedQuotes,
+      });
     });
 
-    doc.setDrawColor(...BLUE_PRIMARY);
-    doc.setLineWidth(0);
-    doc.roundedRect(MARGINS.left, tRowsStartY - tHdrH, tTableW, tHdrH + tRowH * allThemes.length, 1, 1, 'S');
+  const allThemes = Array.from(themeMap.values()).sort(
+    (a, b) => (b.count || b.importance || 0) - (a.count || a.importance || 0)
+  );
+
+  if (allThemes.length > 0) {
+    const renderThemesHeader = (startY: number): number => {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...COLORS.text);
+      doc.text('Themes recurrents avec sentiment et evidence quotes', MARGINS.left, startY);
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(...COLORS.textLight);
+      doc.text(
+        'Les evidence quotes ci-dessous illustrent des avis reels associes a chaque theme.',
+        MARGINS.left,
+        startY + 6
+      );
+
+      return startY + 14;
+    };
+
+    yPos = renderThemesHeader(yPos);
+
+    const themeCardGap = 4;
+    const themeCardW = (CONTENT_WIDTH - themeCardGap) / 2;
+    const rowLimit = PAGE_HEIGHT - MARGINS.bottom - 4;
+    const maxCount = Math.max(
+      1,
+      ...allThemes.map((t) => t.count || t.importance || 0)
+    );
+
+    const themeSentimentLabel = (sentiment?: string) => (
+      sentiment === 'positive' ? 'Positif'
+        : sentiment === 'negative' ? 'Negatif'
+        : 'Mixte'
+    );
+
+    for (let i = 0; i < allThemes.length; i += 2) {
+      const rowThemes = allThemes.slice(i, i + 2).map((theme) => {
+        const quotes = getThemeVerbatims(theme).slice(0, 2);
+        const wrappedQuotes = quotes.length > 0
+          ? quotes.map((quote) => {
+              const quoteTxt = truncateText(cleanVerbatim(quote), 180);
+              return doc.splitTextToSize(`"${quoteTxt}"`, themeCardW - 16).slice(0, 3) as string[];
+            })
+          : [];
+
+        const quoteLineCount = wrappedQuotes.reduce((sum, lines) => sum + lines.length, 0);
+        const cardH = Math.max(
+          48,
+          47 + (quotes.length === 0 ? 6 : quoteLineCount * 4.4 + Math.max(0, quotes.length - 1) * 1.5)
+        );
+
+        return {
+          theme,
+          quotes,
+          wrappedQuotes,
+          cardH,
+        };
+      });
+
+      const rowH = Math.max(...rowThemes.map((row) => row.cardH));
+
+      if (yPos + rowH > rowLimit) {
+        pageNumber = addNewPage(doc, pageNumber);
+        yPos = MARGINS.top;
+        yPos = renderThemesHeader(yPos);
+      }
+
+      rowThemes.forEach((row, colIdx) => {
+        const { theme, quotes, wrappedQuotes } = row;
+        const cardX = MARGINS.left + colIdx * (themeCardW + themeCardGap);
+        const count = theme.count || theme.importance || 0;
+        const accentColor = getSentimentColor(theme.sentiment);
+        const sentBg = getSentimentBg(theme.sentiment);
+        const sentColor = getSentimentColor(theme.sentiment);
+        const sentLabel = themeSentimentLabel(theme.sentiment);
+
+        doc.setFillColor(...ROW_WHITE);
+        doc.roundedRect(cardX, yPos, themeCardW, rowH, 2, 2, 'F');
+        doc.setDrawColor(...BLUE_LIGHT);
+        doc.setLineWidth(0.4);
+        doc.roundedRect(cardX, yPos, themeCardW, rowH, 2, 2, "S");
+
+        doc.setFillColor(...accentColor);
+        doc.roundedRect(cardX, yPos, 3, rowH, 1, 1, "F");
+
+        doc.setFillColor(...accentColor);
+        doc.rect(cardX + 1, yPos, 2, rowH, "F"); 
+
+        doc.setTextColor(...COLORS.text);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.7);
+        const themeLines = doc.splitTextToSize(truncateText(theme.theme, 38), themeCardW - 12);
+        doc.text(themeLines.slice(0, 2), cardX + 6, yPos + 7);
+
+        const badgeY = yPos + 13 + Math.max(0, (themeLines.length - 1) * 3.2);
+        const badgeH = 6.5;
+        const sentW = 28;
+        const countW = 30;
+        const sentX = cardX + 6;
+        const countX = cardX + themeCardW - countW - 6;
+
+        doc.setFillColor(...sentBg);
+        doc.roundedRect(sentX, badgeY, sentW, badgeH, 1, 1, 'F');
+        doc.setTextColor(...sentColor);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.8);
+        doc.text(sentLabel, sentX + sentW / 2, badgeY + 4.6, { align: 'center' });
+
+        doc.setFillColor(219, 234, 254);
+        doc.roundedRect(countX, badgeY, countW, badgeH, 1, 1, 'F');
+        doc.setTextColor(30, 64, 175);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.8);
+        doc.text(`${count} mentions`, countX + countW / 2, badgeY + 4.6, { align: 'center' });
+
+        const freqLabelY = badgeY + 11;
+        doc.setTextColor(...COLORS.textLight);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.text('Frequency', cardX + 6, freqLabelY);
+
+        const freqTrackY = freqLabelY + 3;
+        const freqTrackX = cardX + 6;
+        const freqTrackW = themeCardW - 12;
+        const freqTrackH = 2.5;
+        doc.setFillColor(219, 234, 254);
+        doc.roundedRect(freqTrackX, freqTrackY, freqTrackW, freqTrackH, 1, 1, 'F');
+        if (count > 0) {
+          doc.setFillColor(...BLUE_PRIMARY);
+          doc.roundedRect(
+            freqTrackX,
+            freqTrackY,
+            (count / maxCount) * freqTrackW,
+            freqTrackH,
+            1,
+            1,
+            'F'
+          );
+        }
+
+        const evidenceY = freqTrackY + 9;
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.25);
+        doc.line(cardX + 6, evidenceY, cardX + themeCardW - 6, evidenceY);
+
+        doc.setTextColor(...COLORS.textLight);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.text('Evidence quotes', cardX + 6, evidenceY + 4);
+
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(6.8);
+
+        if (quotes.length === 0) {
+          doc.setTextColor(...COLORS.textLight);
+          doc.text('Aucun evidence quote disponible.', cardX + 6, evidenceY + 10);
+        } else {
+          let quoteY = evidenceY + 9;
+
+          wrappedQuotes.forEach((quoteLines) => {
+            doc.setTextColor(95, 99, 112);
+            doc.text('-', cardX + 6, quoteY);
+            doc.text(quoteLines, cardX + 9, quoteY);
+
+            quoteY += Math.max(6, quoteLines.length * 3.7) + 1.5;
+          });
+        }
+      });
+
+      yPos += rowH + 4;
+    }
   }
 
   addFooter(doc, pageNumber);
