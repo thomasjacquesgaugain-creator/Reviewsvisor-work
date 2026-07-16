@@ -414,7 +414,7 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
 
   // AI one-liner under the line
   if (oneLiner) {
-    doc.setFontSize(10);
+    doc.setFontSize(8.5);
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(191, 219, 254);
     const oneLinerLines = doc.splitTextToSize(`"${oneLiner}"`, 140);
@@ -1924,28 +1924,46 @@ const smartObjectives = (data.smart_objectives ?? []).filter(obj =>
         : 'Objectives defined based on priority causes identified by AI',
       MARGINS.left, yPos
     );
-    yPos += 14;
+    yPos += 9;
 
     // ── One objective per card, stacked vertically ──────────────────────────
-    smartObjectives.slice(0, 3).forEach((obj, objIdx) => {
+    const issueCards = topIssues.slice(0, 3).map((issue) => ({
+      issue,
+      objective: smartObjectives.find((obj) =>
+        issue.key
+          ? issue.key === obj.pareto_cause?.key
+          : issue.theme.trim().toLowerCase() === obj.problem.trim().toLowerCase()
+      ),
+    }));
 
-      // New page if not enough room for a card (~100mm)
-      if (yPos > PAGE_HEIGHT - MARGINS.bottom - 100) {
+    issueCards.forEach(({ issue, objective }, objIdx) => {
+
+      const hasObjective = Boolean(objective);
+      const estimatedCardH = hasObjective ? 180 : 42;
+
+      // New page if not enough room for a card
+      if (yPos > PAGE_HEIGHT - MARGINS.bottom - estimatedCardH) {
         pageNumber = addNewPage(doc, pageNumber);
-        yPos = MARGINS.top + 6;
+        yPos = MARGINS.top + 2;
       }
 
-      const causeName  = t((obj as any).pareto_cause) || (obj as any).pareto_cause?.key || '';
-      const problemTxt = t((obj as any).problem);
-      const kpiTxt     = t((obj as any).kpi_label);
-      const synthTxt   = t((obj as any).synthesis);
-      const unitTxt    = (() => {
-        // unit is "negative reviews | mentions | percent" — just take first segment
-        const raw = t((obj as any).unit);
-        return raw.split('|')[0].trim();
-      })();
-
-      const actionPlanItems = resolveActionPlan(obj).slice(0, 4);
+      const obj = (objective ?? {}) as any;
+      const issueName = truncateText(issue.theme || issue.key || '', 38);
+      const causeName  = hasObjective
+        ? t(obj.pareto_cause) || obj.pareto_cause?.key || issueName
+        : issueName;
+      const statusStr = hasObjective ? String(obj.status ?? 'todo').toLowerCase() : 'todo';
+      const statusLabel =
+        statusStr === 'completed'   ? (lang === 'fr' ? 'Termine'    : 'Completed')   :
+        statusStr === 'done'        ? (lang === 'fr' ? 'Termine'    : 'Done')        :
+        statusStr === 'in_progress' ? (lang === 'fr' ? 'En cours'   : 'In progress') :
+                                      (lang === 'fr' ? 'A faire'    : 'To do');
+      const statusColor: [number, number, number] =
+        statusStr === "completed" || statusStr === "done"
+          ? GREEN_PRIMARY
+          : statusStr === "in_progress"
+            ? COLORS.warning
+            : COLORS.textLight;
 
       // Deadline
       const deadlineDate = (obj as any).deadline
@@ -1959,7 +1977,6 @@ const smartObjectives = (data.smart_objectives ?? []).filter(obj =>
       const currentProgress = (obj as any).current_progress ?? 0;
       const targetVal      = (obj as any).computed_target ?? (obj as any).target_value ?? 0;
       const paretoCount    = (obj as any).pareto_count ?? currentVal;
-      const durationMonths = (obj as any).duration_months ?? 3;
 
       // Progress = current_value - current_progress (issues reduced so far)
       // baseline = pareto_count (starting number of issues)
@@ -1971,7 +1988,6 @@ const smartObjectives = (data.smart_objectives ?? []).filter(obj =>
 
       const impactStr = String((obj as any).impact ?? '').toLowerCase();
       const effortStr = String((obj as any).effort ?? '').toLowerCase();
-      const statusStr = String((obj as any).status ?? 'todo');
 
       const impactColor: [number, number, number] =
         impactStr === 'high'   ? RED_PRIMARY :
@@ -1980,88 +1996,187 @@ const smartObjectives = (data.smart_objectives ?? []).filter(obj =>
         effortStr === 'high'   ? RED_PRIMARY :
         effortStr === 'medium' ? COLORS.warning : GREEN_PRIMARY;
 
-      const statusLabel =
-        statusStr === 'done'        ? (lang === 'fr' ? 'Termine'    : 'Done')        :
-        statusStr === 'in_progress' ? (lang === 'fr' ? 'En cours'   : 'In progress') :
-                                      (lang === 'fr' ? 'A faire'    : 'To do');
-      const statusColor: [number, number, number] =
-        statusStr === 'done'        ? GREEN_PRIMARY :
-        statusStr === 'in_progress' ? COLORS.warning :
-                                      COLORS.textLight;
-
       // ── Card header ────────────────────────────────────────────────────────
-      const hdrH = 12;
+      const hdrH = 10;
+      const headerCenterY = yPos + hdrH / 2;
+
+      // Header background
       doc.setFillColor(...PURPLE_PRIMARY);
-      doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, hdrH, 3, 3, 'F');
-
-      // Index circle
+      doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, hdrH, 3, 3, "F");
+      const circleX = MARGINS.left + 8;
       doc.setFillColor(255, 255, 255);
-      doc.circle(MARGINS.left + 8, yPos + 6, 4.5, 'F');
+      doc.circle(circleX, headerCenterY, 4.5, "F");
+
       doc.setTextColor(...PURPLE_PRIMARY);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
-      doc.text(`${objIdx + 1}`, MARGINS.left + 8, yPos + 7.5, { align: 'center' });
+      doc.text(`${objIdx + 1}`, circleX, headerCenterY + 1.1, {
+        align: "center",
+      });
 
-      // Cause name
+      // --------------------
+      // Cause Name
+      // --------------------
       doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.text(truncateText(causeName, 38), MARGINS.left + 18, yPos + 8);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text(
+        truncateText(causeName, 38),
+        MARGINS.left + 18,
+        headerCenterY + 1,
+      );
 
-      // Status badge
-      doc.setFillColor(...statusColor);
+      // --------------------
+      // Status Badge
+      // --------------------
       const statusW = 22;
-      doc.roundedRect(MARGINS.left + CONTENT_WIDTH - statusW - 3, yPos + 3, statusW, 6, 2, 2, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6.5);
-      doc.text(statusLabel, MARGINS.left + CONTENT_WIDTH - statusW / 2 - 3, yPos + 7.5, { align: 'center' });
+      const statusH = 6;
+      const statusX = MARGINS.left + CONTENT_WIDTH - statusW - 3;
+      const statusY = headerCenterY - statusH / 2;
 
-      yPos += hdrH;
-      yPos += 4;
+      doc.setFillColor(...statusColor);
+      doc.roundedRect(statusX, statusY, statusW, statusH, 2, 2, "F");
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.5);
+      doc.text(statusLabel, statusX + statusW / 2, headerCenterY + 0.8, {
+        align: "center",
+      });
+
+      yPos += hdrH + 3;
 
       // ── Card body: stacked single-column layout ────────────────────────────
-      const PAD = 6;
-      const IW  = CONTENT_WIDTH - PAD * 2;
+      if (!hasObjective) {
+        const missingCardH = 34;
+        doc.setFillColor(255, 250, 223);
+        doc.roundedRect(MARGINS.left + 2, yPos, CONTENT_WIDTH - 4, missingCardH, 3, 3, 'F');
+        doc.setDrawColor(...COLORS.warning);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(MARGINS.left + 2, yPos, CONTENT_WIDTH - 4, missingCardH, 3, 3, 'S');
 
-    const problemLines = doc.splitTextToSize(problemTxt, IW);
-const kpiLines     = doc.splitTextToSize(kpiTxt, IW);
+        doc.setTextColor(...COLORS.warning);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.text(
+          lang === 'fr' ? 'Aucun objectif SMART disponible' : 'No SMART objective available',
+          MARGINS.left + 7,
+          yPos + 12
+        );
 
-// ── Action plan constants — defined FIRST so cardH can use them ──────────
-const BULLET_R   = 3.5;
-const BULLET_CX  = MARGINS.left + PAD + BULLET_R + 1;
-const TEXT_LEFT  = MARGINS.left + PAD + BULLET_R * 2;
-const TEXT_MAX_W = MARGINS.left + PAD + IW - PAD - TEXT_LEFT;
-const ROW_PAD_V  = 4;
-const LINE_H     = 4.5;
-const ROW_GAP    = 2;
+        doc.setTextColor(...COLORS.textLight);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.6);
+        const missingSub = lang === 'fr'
+          ? `Le probleme "${issueName}" n a pas encore d objectif SMART.`
+          : `The issue "${issueName}" has no SMART objective yet.`;
+        const missingLines = doc.splitTextToSize(missingSub, CONTENT_WIDTH - 16);
+        missingLines.slice(0, 2).forEach((line: string, idx: number) => {
+          doc.text(line, MARGINS.left + 7, yPos + 19 + idx * 4.2);
+        });
 
-// Split using TEXT_MAX_W — same width used during render
-const actionLines = actionPlanItems.map((a: string) =>
-  doc.splitTextToSize(a, TEXT_MAX_W) as string[]
-);
+        yPos += missingCardH + 8;
+        return;
+      }
 
-const actionBlockH = actionPlanItems.length > 0
-  ? PAD + 6 + actionLines.reduce(
-      (s: number, l: string[]) => s + l.length * LINE_H + ROW_PAD_V * 2 + ROW_GAP,
-      0
+      const PAD = 4.5;
+      const IW = CONTENT_WIDTH - PAD * 2;
+
+      const problemTxt = hasObjective ? t(obj.problem) : '';
+      const kpiTxt = hasObjective ? t(obj.kpi_label) : '';
+      const unitTxt = hasObjective
+        ? (() => {
+            const raw = t(obj.unit);
+            return raw.split('|')[0].trim();
+          })()
+        : '';
+      const actionPlanItems = hasObjective ? resolveActionPlan(obj).slice(0, 4) : [];
+
+      const problemLines = doc.splitTextToSize(problemTxt, IW);
+      const kpiLines = doc.splitTextToSize(kpiTxt, IW);
+
+
+const localizedSmartText = (value: unknown): string => {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    const f = value as Record<string, unknown>;
+    return String(f[lang] ?? f.en ?? f.fr ?? Object.values(f)[0] ?? '');
+  }
+  return String(value);
+};
+
+const objectiveActions = Array.isArray((obj as any).actions) ? ((obj as any).actions as any[]) : [];
+const launchActions = objectiveActions.length > 0
+  ? objectiveActions.slice(0, 2).map((a: any) => localizedSmartText(a?.text ?? a))
+  : actionPlanItems.slice(0, 2);
+const checklistCompleted = objectiveActions.filter((a: any) => a?.completed).length;
+const fieldExecutionProgress = objectiveActions.length > 0
+  ? Math.round((checklistCompleted / objectiveActions.length) * 100)
+  : safePct;
+
+const startFmt = (obj as any).created_at
+  ? new Date((obj as any).created_at).toLocaleDateString(
+      lang === 'fr' ? 'fr-FR' : 'en-GB',
+      { day: 'numeric', month: 'long', year: 'numeric' }
     )
-  : 0;
+  : '';
 
-const pillH  = 7;
-const trackH = 7;
+const pdcaInnerW = IW - 10;
+const pdcaPlanLines = doc.splitTextToSize(problemTxt || (lang === 'fr' ? 'Plan a definir' : 'Plan to define'), pdcaInnerW) as string[];
+const pdcaDoLines = launchActions.length > 0
+  ? launchActions.flatMap((a: string) => doc.splitTextToSize(a, pdcaInnerW) as string[])
+  : doc.splitTextToSize(lang === 'fr' ? 'Aucune action renseignee' : 'No action provided', pdcaInnerW) as string[];
+const pdcaCheckLines = [
+  `${lang === 'fr' ? 'KPI' : 'KPI'}: ${kpiTxt}`,
+  `${lang === 'fr' ? 'Objectif' : 'Objective'}: ${targetVal} ${unitTxt}`,
+  `${lang === 'fr' ? 'Current' : 'Current'}: ${(obj as any).current_progress ?? currentVal} ${unitTxt}`,
+  `${lang === 'fr' ? 'Field execution' : 'Field execution'}: ${fieldExecutionProgress}%`,
+].flatMap((line: string) => doc.splitTextToSize(line, pdcaInnerW) as string[]);
+const pdcaActLines = statusStr === 'todo'
+  ? doc.splitTextToSize(
+      lang === 'fr'
+        ? 'En attente de validation du plan pour lancer la collecte de donnees.'
+        : 'Waiting for plan validation to start data collection.',
+      pdcaInnerW
+    ) as string[]
+  : [
+      `${lang === 'fr' ? 'Start' : 'Start'}: ${startFmt || (lang === 'fr' ? 'A definir' : 'To define')}`,
+      `${lang === 'fr' ? 'Expected end' : 'Expected end'}: ${deadlineDate || (lang === 'fr' ? 'A definir' : 'To define')}`,
+      `${lang === 'fr' ? 'Target' : 'Target'}: ${currentVal} ${unitTxt} -> ${targetVal} ${unitTxt}`,
+      `${lang === 'fr' ? 'Current situation' : 'Current situation'}: ${(obj as any).current_progress ?? currentVal} ${unitTxt}`,
+      `${lang === 'fr' ? 'Field execution' : 'Field execution'}: ${fieldExecutionProgress}%`,
+    ].flatMap((line: string) => doc.splitTextToSize(line, pdcaInnerW) as string[]);
+
+const measurePdcaStepHeight = (lines: string[], minHeight: number): number =>
+  Math.max(minHeight, PAD + 10 + lines.length * 4.2);
+
+const pdcaStepHeights = [
+  measurePdcaStepHeight(pdcaPlanLines, 21),
+  measurePdcaStepHeight(pdcaDoLines, 22),
+  measurePdcaStepHeight(pdcaCheckLines, 24),
+  measurePdcaStepHeight(pdcaActLines, 24),
+];
+
+const pdcaBlockH =
+  8 +
+  pdcaStepHeights.reduce((sum, h) => sum + h, 0) +
+  7;
+
+const pillH  = 6;
+const trackH = 6;
 
 const cardH =
   PAD +
-  8 + PAD +
+  7 + PAD +
   PAD +
-  5 + problemLines.length * 4.5 + PAD +
-  5 + kpiLines.length * 4.5 + PAD +
-  8 +
-  pillH + 4 +
-  trackH + 4 +
-  6 + PAD +
-  actionBlockH +
+  4 + problemLines.length * 4 + PAD +
+  4 + kpiLines.length * 4 + PAD +
+  6 +
+  pillH + 3 +
+  trackH + 3 +
+  5 + PAD +
+  pdcaBlockH +
   PAD;
 
       doc.setFillColor(250, 248, 255);
@@ -2073,7 +2188,7 @@ const cardH =
       let cy = yPos + PAD;
 
       // ── Badges row: Impact / Effort / Ishikawa ──────────────────────────────
-      const badgeH  = 8;
+      const badgeH  = 6.5;
       const badge3W = (IW - 6) / 3;
       const bX      = MARGINS.left + PAD;
 
@@ -2081,15 +2196,15 @@ const cardH =
       doc.roundedRect(bX, cy, badge3W, badgeH, 2, 2, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
-      doc.text(`Impact : ${(obj as any).impact ?? ''}`, bX + badge3W / 2, cy + 5.5, { align: 'center' });
+      doc.setFontSize(6.8);
+      doc.text(`Impact : ${(obj as any).impact ?? ''}`, bX + badge3W / 2, cy + 4.8, { align: 'center' });
 
       doc.setFillColor(...effortColor);
       doc.roundedRect(bX + badge3W + 3, cy, badge3W, badgeH, 2, 2, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
-      doc.text(`Effort : ${(obj as any).effort ?? ''}`, bX + badge3W + 3 + badge3W / 2, cy + 5.5, { align: 'center' });
+      doc.setFontSize(6.8);
+      doc.text(`Effort : ${(obj as any).effort ?? ''}`, bX + badge3W + 3 + badge3W / 2, cy + 4.8, { align: 'center' });
 
       const ishiCat   = String((obj as any).ishikawa_top_category ?? '').toUpperCase();
       const ishiColor = getCategoryColor((obj as any).ishikawa_top_category ?? '');
@@ -2097,10 +2212,10 @@ const cardH =
       doc.roundedRect(bX + (badge3W + 3) * 2, cy, badge3W, badgeH, 2, 2, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
-      doc.text(ishiCat || '—', bX + (badge3W + 3) * 2 + badge3W / 2, cy + 5.5, { align: 'center' });
+      doc.setFontSize(6.8);
+      doc.text(ishiCat || '—', bX + (badge3W + 3) * 2 + badge3W / 2, cy + 4.8, { align: 'center' });
 
-      cy += badgeH + PAD;
+      cy += badgeH + 3;
 
       // Divider
       doc.setDrawColor(210, 200, 240);
@@ -2111,33 +2226,33 @@ const cardH =
       // ── Problem ──────────────────────────────────────────────────────────────
       doc.setTextColor(...PURPLE_PRIMARY);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.text(lang === 'fr' ? 'PROBLEME' : 'PROBLEM', MARGINS.left + PAD, cy);
-      cy += 5;
+      doc.setFontSize(7.2);
+      doc.text(lang === 'fr' ? 'OBJECTIF CLAIR' : 'CLEAR GOAL', MARGINS.left + PAD, cy);
+      cy += 4.2;
       doc.setTextColor(...COLORS.text);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.5);
-      problemLines.forEach((line: string) => { doc.text(line, MARGINS.left + PAD, cy); cy += 4.5; });
-      cy += PAD;
+      doc.setFontSize(7.6);
+      problemLines.forEach((line: string) => { doc.text(line, MARGINS.left + PAD, cy); cy += 4.0; });
+      cy += 3;
 
       // ── KPI ──────────────────────────────────────────────────────────────────
       doc.setTextColor(...PURPLE_PRIMARY);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.text(lang === 'fr' ? 'KPI SUIVI' : 'KPI TRACKED', MARGINS.left + PAD, cy);
-      cy += 5;
+      doc.setFontSize(7.2);
+      doc.text(lang === 'fr' ? 'MESURÉ PAR' : 'MEASURED BY', MARGINS.left + PAD, cy);
+      cy += 4.2;
       doc.setTextColor(...COLORS.text);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.5);
-      kpiLines.forEach((line: string) => { doc.text(line, MARGINS.left + PAD, cy); cy += 4.5; });
-      cy += PAD;
+      doc.setFontSize(7.6);
+      kpiLines.forEach((line: string) => { doc.text(line, MARGINS.left + PAD, cy); cy += 4.0; });
+      cy += 3;
 
       // ── Progress ─────────────────────────────────────────────────────────────
       doc.setTextColor(...PURPLE_PRIMARY);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
+      doc.setFontSize(7.2);
       doc.text(lang === 'fr' ? 'PROGRESSION' : 'PROGRESS', MARGINS.left + PAD, cy);
-      cy += 5;
+      cy += 4.2;
 
       // Current → Target pills
       const halfIW = (IW - 6) / 2;
@@ -2145,10 +2260,10 @@ const cardH =
       doc.roundedRect(MARGINS.left + PAD, cy, halfIW, pillH, 2, 2, 'F');
       doc.setTextColor(...PURPLE_PRIMARY);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
+      doc.setFontSize(6.9);
       doc.text(
         `${lang === 'fr' ? 'Actuel' : 'Current'}: ${currentVal} ${unitTxt}`,
-        MARGINS.left + PAD + halfIW / 2, cy + 5, { align: 'center' }
+        MARGINS.left + PAD + halfIW / 2, cy + 4.1, { align: 'center' }
       );
       doc.setTextColor(...COLORS.textLight);
       doc.setFont('helvetica', 'normal');
@@ -2158,12 +2273,12 @@ const cardH =
       doc.roundedRect(MARGINS.left + PAD + halfIW + 6, cy, halfIW, pillH, 2, 2, 'F');
       doc.setTextColor(...GREEN_PRIMARY);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
+      doc.setFontSize(6.9);
       doc.text(
         `${lang === 'fr' ? 'Cible' : 'Target'}: ${targetVal} ${unitTxt}`,
-        MARGINS.left + PAD + halfIW + 6 + halfIW / 2, cy + 5, { align: 'center' }
+        MARGINS.left + PAD + halfIW + 6 + halfIW / 2, cy + 4.1, { align: 'center' }
       );
-      cy += pillH + 4;
+      cy += pillH + 3;
 
       // ── Progress bar ─────────────────────────────────────────────────────────
       const trackW = IW;
@@ -2222,80 +2337,133 @@ if (fillW > 60) {
   );
 }
 
-cy += trackH + 4;
+      cy += trackH + 4;
 
-      // Deadline chip
-      doc.setFillColor(...COLORS.background);
-      doc.roundedRect(MARGINS.left + PAD, cy, IW, 6, 1, 1, 'F');
+      doc.setFillColor(...PURPLE_PALE);
+      doc.roundedRect(MARGINS.left + PAD, cy, IW, 7, 2, 2, 'F');
+      doc.setTextColor(...PURPLE_PRIMARY);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.2);
+      doc.text(
+        lang === 'fr' ? "Cycle PDCA" : "PDCA cycle",
+        MARGINS.left + PAD + 4,
+        cy + 4.8
+      );
       doc.setTextColor(...COLORS.textLight);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
       doc.text(
         lang === 'fr'
-          ? `Echeance : ${deadlineDate}  (${durationMonths} mois)`
-          : `Deadline: ${deadlineDate}  (${durationMonths} mo.)`,
-        MARGINS.left + PAD + IW / 2, cy + 4.3, { align: 'center' }
+          ? "Planifier, executer, verifier, ajuster"
+          : "Plan, do, check, act",
+        MARGINS.left + PAD + IW - 4,
+        cy + 4.8,
+        { align: 'right' }
       );
-      cy += 6 + PAD;
+      cy += 11;
 
-      // ── Action plan ──────────────────────────────────────────────────────────
-if (actionPlanItems.length > 0) {
-  doc.setDrawColor(210, 200, 240);
-  doc.setLineWidth(0.3);
-  doc.line(MARGINS.left + PAD, cy, MARGINS.left + CONTENT_WIDTH - PAD, cy);
-  cy += PAD;
+      const pdcaGap = 3;
+      const pdcaSteps = [
+        {
+          number: '1',
+          title: lang === 'fr' ? 'Plan' : 'Plan',
+          subtitle: lang === 'fr' ? 'Decision manager' : 'Manager decision',
+          accent: PURPLE_PRIMARY,
+          fill: PURPLE_PALE,
+          lines: pdcaPlanLines,
+          badge: ishiCat || '—',
+        },
+        {
+          number: '2',
+          title: lang === 'fr' ? 'Do' : 'Do',
+          subtitle: lang === 'fr' ? 'Action terrain' : 'Field action',
+          accent: ORANGE_PRIMARY,
+          fill: ORANGE_PALE,
+          lines: pdcaDoLines,
+          badge: actionPlanItems.length > 0
+            ? (lang === 'fr' ? 'Actions' : 'Actions')
+            : (lang === 'fr' ? 'Aucune' : 'None'),
+        },
+        {
+          number: '3',
+          title: lang === 'fr' ? 'Check' : 'Check',
+          subtitle: lang === 'fr' ? 'Mesure automatique' : 'Automatic measure',
+          accent: COLORS.warning,
+          fill: [255, 249, 219] as [number, number, number],
+          lines: pdcaCheckLines,
+          badge: lang === 'fr' ? 'Automatique' : 'Automatic',
+        },
+        {
+          number: '4',
+          title: lang === 'fr' ? 'Act' : 'Act',
+          subtitle: lang === 'fr' ? 'Ajustement' : 'Adjustment',
+          accent: GREEN_PRIMARY,
+          fill: GREEN_PALE,
+          lines: pdcaActLines,
+          badge: lang === 'fr' ? 'Suivi' : 'Tracking',
+        },
+      ] as const;
 
-  doc.setTextColor(...PURPLE_PRIMARY);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.text(lang === 'fr' ? "PLAN D'ACTION" : 'ACTION PLAN', MARGINS.left + PAD, cy);
-  cy += 6;
+      pdcaSteps.forEach((step, stepIdx) => {
+        const stepH = pdcaStepHeights[stepIdx];
+        doc.setFillColor(...step.fill);
+        doc.setDrawColor(...step.accent);
+        doc.setLineWidth(0.4);
+        doc.roundedRect(MARGINS.left + PAD, cy, IW, stepH, 2, 2, 'F');
+        doc.roundedRect(MARGINS.left + PAD, cy, IW, stepH, 2, 2, 'S');
 
-  const BULLET_OFFSET = 11;
-  const RIGHT_PAD = 4;
-  const TEXT_MAX_W = IW - BULLET_OFFSET - RIGHT_PAD;
+        doc.setFillColor(...step.accent);
+        doc.circle(MARGINS.left + PAD + 6, cy + 6, 3.3, 'F');
+        doc.setTextColor(...COLORS.white);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.text(step.number, MARGINS.left + PAD + 6, cy + 7.1, { align: 'center' });
 
-  actionLines.forEach((lines: string[], ai: number) => {
-    const LINE_HEIGHT = 4.5;
-    const V_PAD = 6;
+        doc.setTextColor(...step.accent);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.6);
+        doc.text(step.title, MARGINS.left + PAD + 13, cy + 5.2);
+        doc.setTextColor(...COLORS.textLight);
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(6.3);
+        doc.text(`(${step.subtitle})`, MARGINS.left + PAD + 13, cy + 9.6);
 
-    // ✅ Join back to one string, then split ONCE at the correct width
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    const fullText = lines.join(' ');
-    const safeLines: string[] = doc.splitTextToSize(fullText, TEXT_MAX_W);
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(...step.accent);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(MARGINS.left + PAD + IW - 26, cy + 3.4, 22, 5.5, 2, 2, 'F');
+        doc.setTextColor(...step.accent);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.5);
+        doc.text(truncateText(step.badge, 18), MARGINS.left + PAD + IW - 15, cy + 7.1, { align: 'center' });
 
-    const itemH = safeLines.length * LINE_HEIGHT + V_PAD;
+        const bodyY = cy + 15;
+        doc.setTextColor(...COLORS.text);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.0);
 
-    // Alternating row bg
-    doc.setFillColor(ai % 2 === 0 ? 245 : 250, ai % 2 === 0 ? 240 : 248, 255);
-    doc.roundedRect(MARGINS.left + PAD, cy - 1, IW, itemH, 1, 1, 'F');
+        if (stepIdx === 2) {
+          const barTrackW = IW - 12;
+          const barTrackH = 5.5;
+          const barY = bodyY + 1.5;
+          const barPct = Math.min(100, Math.max(0, fieldExecutionProgress));
+          const barFillW = Math.max(4, (barPct / 100) * barTrackW);
 
-    // Bullet circle — vertically centered in the row
-    const midY = cy - 1 + itemH / 2;
-    doc.setFillColor(...PURPLE_PRIMARY);
-    doc.circle(MARGINS.left + PAD + 4, midY, 3.5, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.text(`${ai + 1}`, MARGINS.left + PAD + 4, midY + 1.3, { align: 'center' });
+          step.lines.forEach((line, lineIdx) => {
+            doc.text(line, MARGINS.left + PAD + 4, bodyY + lineIdx * 3.8);
+          });
+        } else {
+          let lineY = bodyY;
+          step.lines.forEach((line) => {
+            doc.text(line, MARGINS.left + PAD + 4, lineY);
+            lineY += 3.8;
+          });
+        }
 
-    // Action text — vertically centered as a block
-    const totalTextH = safeLines.length * LINE_HEIGHT;
-    const textBlockStartY = cy - 1 + (itemH - totalTextH) / 2 + LINE_HEIGHT - 1;
+        cy += stepH + 2.5;
+      });
 
-    doc.setTextColor(...COLORS.text);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    safeLines.forEach((line: string, li: number) => {
-      doc.text(line, MARGINS.left + PAD + BULLET_OFFSET, textBlockStartY + li * LINE_HEIGHT);
-    });
-
-    cy += itemH;
-  });
-}
-
-      yPos += cardH + 8;
+      yPos += cardH + 6;
     });
 
     // // ── Ishikawa 5M aggregated scores — on same or new page ─────────────────
