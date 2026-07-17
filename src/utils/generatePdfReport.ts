@@ -1413,24 +1413,37 @@ else {
   yPos += 12;
 
   if (painPoints.length > 0) {
+    const synthesisMap = new Map<string, string>();
+    topIssues.forEach((ti) => {
+      if (ti.ai_synthesis) {
+        synthesisMap.set(ti.theme.trim().toLowerCase(), ti.ai_synthesis);
+        synthesisMap.set(ti.key.trim().toLowerCase(), ti.ai_synthesis);
+      }
+    });
+    const getSynthesis = (issue: string): string => {
+      const norm = issue.trim().toLowerCase();
+      return synthesisMap.get(norm) ?? '';
+    };
     const ppTableW  = CONTENT_WIDTH;
-    const ppIssueW  = 75;
-    const ppImpactW = 25;
-    const ppEaseW   = 25;
-    const ppStepW   = ppTableW - ppIssueW - ppImpactW - ppEaseW;
+    const ppIssueW  = 50;
+    const ppImpactW = 24;
+    const ppEaseW   = 18;
+    const ppStepW   = 30;
+    const ppSynthesisW = ppTableW - ppIssueW - ppImpactW - ppEaseW - ppStepW;
     const ppHdrH    = 9;
-    const ppRowH    = 22;
+    const ppRowH    = 34;
 
     // Header
     doc.setFillColor(...COLORS.warning);
     doc.roundedRect(MARGINS.left, yPos, ppTableW, ppHdrH, 1, 1, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(8.5);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('Probleme',        MARGINS.left + 4,                                   yPos + 6);
-    doc.text('Impact',          MARGINS.left + ppIssueW + ppImpactW / 2,            yPos + 6, { align: 'center' });
-    doc.text('Facilite',        MARGINS.left + ppIssueW + ppImpactW + ppEaseW / 2,  yPos + 6, { align: 'center' });
-    doc.text('Premiere action', MARGINS.left + ppIssueW + ppImpactW + ppEaseW + 4,  yPos + 6);
+    doc.text('Probleme',        MARGINS.left + 4,                                                         yPos + 6);
+    doc.text('Impact',          MARGINS.left + ppIssueW + ppImpactW / 2,                                  yPos + 6, { align: 'center' });
+    doc.text('Facilite',        MARGINS.left + ppIssueW + ppImpactW + ppEaseW / 2,                        yPos + 6, { align: 'center' });
+    doc.text('Prem. action',    MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW / 2,              yPos + 6, { align: 'center' });
+    doc.text('Analyse IA',      MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW + ppSynthesisW / 2, yPos + 6, { align: 'center' });
     yPos += ppHdrH;
 
     const ppStartY = yPos;
@@ -1442,56 +1455,76 @@ else {
       doc.setDrawColor(220, 220, 220);
       doc.setLineWidth(0.3);
       if (idx > 0) doc.line(MARGINS.left, yPos, MARGINS.left + ppTableW, yPos);
-      doc.line(MARGINS.left + ppIssueW,                    yPos, MARGINS.left + ppIssueW,                    yPos + ppRowH);
-      doc.line(MARGINS.left + ppIssueW + ppImpactW,        yPos, MARGINS.left + ppIssueW + ppImpactW,        yPos + ppRowH);
-      doc.line(MARGINS.left + ppIssueW + ppImpactW + ppEaseW, yPos, MARGINS.left + ppIssueW + ppImpactW + ppEaseW, yPos + ppRowH);
+      doc.line(MARGINS.left + ppIssueW,                                  yPos, MARGINS.left + ppIssueW,                                  yPos + ppRowH);
+      doc.line(MARGINS.left + ppIssueW + ppImpactW,                     yPos, MARGINS.left + ppIssueW + ppImpactW,                     yPos + ppRowH);
+      doc.line(MARGINS.left + ppIssueW + ppImpactW + ppEaseW,           yPos, MARGINS.left + ppIssueW + ppImpactW + ppEaseW,           yPos + ppRowH);
+      doc.line(MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW, yPos, MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW, yPos + ppRowH);
 
       // Issue
       doc.setTextColor(...COLORS.text);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.5);
-      doc.text(truncateText(pp.issue, 30), MARGINS.left + 4, yPos + 7);
+      doc.setFontSize(8);
+      doc.text(truncateText(pp.issue, 25), MARGINS.left + 4, yPos + 7);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
       doc.setTextColor(...COLORS.textLight);
       const whyLines = doc.splitTextToSize(pp.why_it_matters || '', ppIssueW - 8);
       doc.text(whyLines[0] || '', MARGINS.left + 4, yPos + 13);
       if (whyLines[1]) doc.text(whyLines[1], MARGINS.left + 4, yPos + 17);
+      if (whyLines[2]) doc.text(whyLines[2], MARGINS.left + 4, yPos + 21);
 
       // Impact bar
-      const impactX = MARGINS.left + ppIssueW + 3;
+      const impactX = MARGINS.left + ppIssueW + 2;
       const impactColor = getImpactColor(pp.impact);
       doc.setFillColor(...impactColor);
-      doc.roundedRect(impactX, yPos + 4, 12, 5, 1, 1, 'F');
+      doc.roundedRect(impactX, yPos + 4, 11, 5, 1, 1, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      doc.text(`${pp.impact}`, impactX + 6, yPos + 8, { align: 'center' });
+      doc.setFontSize(6.5);
+      doc.text(`${pp.impact}`, impactX + 5.5, yPos + 8, { align: 'center' });
       doc.setTextColor(...COLORS.textLight);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6.5);
-      doc.text('/100', impactX + 14, yPos + 8);
+      doc.setFontSize(6);
+      doc.setFontSize(5.5);
+      doc.text('/100', impactX + 5.5, yPos + 13, {
+        align: 'center',
+      });
 
       // Ease
-      const easeX = MARGINS.left + ppIssueW + ppImpactW + 3;
+      const easeX = MARGINS.left + ppIssueW + ppImpactW + 2;
       const easeLabel = getEaseLabel(pp.ease);
       const easeColor: [number, number, number] = pp.ease >= 70 ? GREEN_PRIMARY : pp.ease >= 40 ? COLORS.warning : RED_PRIMARY;
       doc.setFillColor(...easeColor);
-      doc.roundedRect(easeX, yPos + 4, ppEaseW - 6, 5, 1, 1, 'F');
+      doc.roundedRect(easeX, yPos + 4, ppEaseW - 4, 5, 1, 1, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      doc.text(easeLabel, easeX + (ppEaseW - 6) / 2, yPos + 8, { align: 'center' });
+      doc.setFontSize(6.5);
+      doc.text(easeLabel, easeX + (ppEaseW - 4) / 2, yPos + 8, { align: 'center' });
 
       // First step
-      const stepX = MARGINS.left + ppIssueW + ppImpactW + ppEaseW + 4;
+      const stepX = MARGINS.left + ppIssueW + ppImpactW + ppEaseW + 3;
       doc.setTextColor(...COLORS.text);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.5);
+      doc.setFontSize(6.5);
       const stepLines = doc.splitTextToSize(pp.first_step || '', ppStepW - 8);
-      stepLines.slice(0, 3).forEach((line: string, li: number) => {
-        doc.text(line, stepX, yPos + 7 + li * 4.5);
+      stepLines.slice(0, 4).forEach((line: string, li: number) => {
+        doc.text(line, stepX, yPos + 7 + li * 4);
       });
+
+      // AI Synthesis
+      const synthX = MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW + 3;
+      const synthesis = sanitizePdfText(getSynthesis(pp.issue));
+      if (synthesis) {
+        doc.setFillColor(...BLUE_PALE);
+        doc.roundedRect(synthX - 1, yPos + 2, ppSynthesisW - 4, ppRowH - 4, 1, 1, 'F');
+        doc.setTextColor(...BLUE_DARK);
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(6);
+        const synthLines = doc.splitTextToSize(synthesis, ppSynthesisW - 8);
+        synthLines.slice(0, 5).forEach((line: string, li: number) => {
+          doc.text(line, synthX + 2, yPos + 7 + li * 3.8);
+        });
+      }
 
       yPos += ppRowH;
     });
