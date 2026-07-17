@@ -1025,7 +1025,7 @@ const issuesWithRootCauses = topIssues.filter(
 
 if (issuesWithRootCauses.length > 0) {
 
-  issuesWithRootCauses.slice(0, 2).forEach((issue) => {
+  issuesWithRootCauses.slice(0, 3).forEach((issue) => {
 
     pageNumber = addNewPage(doc, pageNumber);
     yPos = MARGINS.top;
@@ -2779,6 +2779,257 @@ if (fillW > 60) {
   doc.setFont('helvetica', 'normal');
   doc.text('Responsable : ______________________________', MARGINS.left + 10, yPos + 26);
   doc.text('Date : ______________', MARGINS.left + 10, yPos + 35);
+
+
+
+  pageNumber = addNewPage(doc, pageNumber);
+  yPos = MARGINS.top;
+ 
+  const roadmapLang = (data.report_language ?? 'fr') as 'en' | 'fr';
+ 
+  const roadmapText = (field: unknown): string => {
+    if (!field) return '';
+    if (typeof field === 'string') {
+      try {
+        const p = JSON.parse(field);
+        if (p && typeof p === 'object') {
+          const obj = p as Record<string, unknown>;
+          return String(obj[roadmapLang] ?? obj.fr ?? obj.en ?? field);
+        }
+      } catch {}
+      return field;
+    }
+    if (typeof field === 'object') {
+      const f = field as Record<string, unknown>;
+      return String(f[roadmapLang] ?? f.fr ?? f.en ?? '');
+    }
+    return String(field);
+  };
+ 
+  yPos = addSectionTitle(
+    doc,
+    roadmapLang === 'fr' ? "Feuille de route d'amelioration" : 'Improvement Roadmap',
+    yPos,
+    PURPLE_PRIMARY
+  );
+ 
+  const roadmapIntroLines = doc.splitTextToSize(
+    roadmapLang === 'fr'
+      ? "Les 3 priorites identifiees par l'IA, chacune avec un objectif SMART, une echeance cible, les KPI a suivre et la progression attendue."
+      : "The 3 priorities identified by AI, each with a SMART objective, a target deadline, KPIs to monitor, and expected progress.",
+    CONTENT_WIDTH
+  );
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(9);
+  doc.setTextColor(...COLORS.textLight);
+  doc.text(roadmapIntroLines, MARGINS.left, yPos);
+  yPos += roadmapIntroLines.length * 4.5 + 8;
+ 
+  // Source of truth: issues from the Root Cause Analysis section (i.e. those
+  // that actually have root_causes populated), capped to 3. This keeps the
+  // roadmap in sync with the Ishikawa analysis instead of the raw top_issues
+  // list, which may include issues never analyzed for root cause.
+  const roadmapRootCauseIssues = topIssues
+    .filter((i: any) => i.root_causes && i.root_causes.length > 0)
+    .slice(0, 3);
+ 
+  // Group SMART objectives by their matching issue key — an issue can have
+  // zero, one, or multiple objectives linked to it.
+  const roadmapObjectivesByKey = new Map<string, any[]>();
+  (data.smart_objectives ?? []).forEach((obj: any) => {
+    if (!obj.pareto_cause?.key && !obj.problem) return;
+    const key = String(obj.pareto_cause?.key ?? obj.problem ?? '').trim().toLowerCase();
+    const existing = roadmapObjectivesByKey.get(key) ?? [];
+    existing.push(obj);
+    roadmapObjectivesByKey.set(key, existing);
+  });
+ 
+  const roadmapIssues = roadmapRootCauseIssues;
+ 
+  if (roadmapIssues.length === 0) {
+    doc.setFillColor(250, 250, 250);
+    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 30, 3, 3, 'F');
+    doc.setDrawColor(...COLORS.textLight);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 30, 3, 3, 'S');
+    doc.setTextColor(...COLORS.textLight);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text(
+      roadmapLang === 'fr' ? 'Aucune priorite identifiee' : 'No priorities identified',
+      PAGE_WIDTH / 2, yPos + 17, { align: 'center' }
+    );
+  } else {
+    roadmapIssues.forEach((issue: any, idx: number) => {
+      const matchKey = String(issue.key ?? issue.theme ?? '').trim().toLowerCase();
+      const matchedObjectives: any[] = roadmapObjectivesByKey.get(matchKey) ?? [];
+      const hasMultiple = matchedObjectives.length > 1;
+ 
+      // ── No SMART objective generated for this issue yet ─────────────────────
+      if (matchedObjectives.length === 0) {
+        const priorityName = issue.theme;
+        const roadmapCardH = 34;
+ 
+        if (yPos + roadmapCardH > PAGE_HEIGHT - MARGINS.bottom - 5) {
+          addFooter(doc, pageNumber);
+          pageNumber = addNewPage(doc, pageNumber);
+          yPos = MARGINS.top;
+        }
+ 
+        // Card shell (neutral gray — nothing generated yet)
+        doc.setFillColor(248, 248, 248);
+        doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, roadmapCardH, 3, 3, 'F');
+        doc.setDrawColor(...COLORS.textLight);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, roadmapCardH, 3, 3, 'S');
+ 
+        // Rank badge
+        doc.setFillColor(...COLORS.textLight);
+        doc.circle(MARGINS.left + 10, yPos + 10, 6, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text(`${idx + 1}`, MARGINS.left + 10, yPos + 12, { align: 'center' });
+ 
+        // Priority name + tag
+        doc.setTextColor(...COLORS.text);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text(truncateText(priorityName, 40), MARGINS.left + 20, yPos + 8);
+ 
+        doc.setTextColor(...COLORS.textLight);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text(
+          roadmapLang === 'fr' ? `PRIORITE ${idx + 1}` : `PRIORITY ${idx + 1}`,
+          MARGINS.left + 20, yPos + 13.5
+        );
+ 
+        doc.setTextColor(...COLORS.textLight);
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(8.3);
+        doc.text(
+          roadmapLang === 'fr'
+            ? "Aucun objectif SMART n'a encore ete genere pour cette priorite."
+            : 'No SMART objective has been generated for this priority yet.',
+          MARGINS.left + 20, yPos + 22
+        );
+ 
+        yPos += roadmapCardH + 6;
+        return;
+      }
+ 
+      // ── One full card per SMART objective linked to this issue ─────────────
+      matchedObjectives.forEach((obj: any, objIdx: number) => {
+        const priorityName = roadmapText(obj.pareto_cause) || obj.pareto_cause?.key || issue.theme;
+        const badgeLabel = hasMultiple ? `${idx + 1}.${objIdx + 1}` : `${idx + 1}`;
+ 
+        const smartObjective = roadmapText(obj.problem);
+        const kpiText        = roadmapText(obj.kpi_label);
+        const unitText       = roadmapText(obj.unit).split('|')[0].trim();
+        const currentVal     = obj.current_value ?? 0;
+        const targetVal      = obj.computed_target ?? obj.target_value ?? 0;
+        const deadlineDate   = obj.deadline
+          ? new Date(obj.deadline).toLocaleDateString(
+              roadmapLang === 'fr' ? 'fr-FR' : 'en-GB',
+              { day: 'numeric', month: 'long', year: 'numeric' }
+            )
+          : '—';
+ 
+        const roadmapSmartLines = doc.splitTextToSize(smartObjective, CONTENT_WIDTH - 20);
+        const roadmapCardH = 20 + roadmapSmartLines.length * 4.2 + 24 + 6;
+ 
+        if (yPos + roadmapCardH > PAGE_HEIGHT - MARGINS.bottom - 5) {
+          addFooter(doc, pageNumber);
+          pageNumber = addNewPage(doc, pageNumber);
+          yPos = MARGINS.top;
+        }
+ 
+        // Card shell
+        doc.setFillColor(250, 248, 255);
+        doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, roadmapCardH, 3, 3, 'F');
+        doc.setDrawColor(...PURPLE_PRIMARY);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, roadmapCardH, 3, 3, 'S');
+ 
+        // Rank badge
+        doc.setFillColor(...PURPLE_PRIMARY);
+        doc.circle(MARGINS.left + 10, yPos + 10, 6, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(hasMultiple ? 8.5 : 11);
+        doc.text(badgeLabel, MARGINS.left + 10, yPos + 12, { align: 'center' });
+ 
+        // Priority name + tag
+        doc.setTextColor(...COLORS.text);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text(truncateText(priorityName, 40), MARGINS.left + 20, yPos + 8);
+ 
+        doc.setTextColor(...PURPLE_PRIMARY);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text(
+          roadmapLang === 'fr' ? `PRIORITE ${badgeLabel}` : `PRIORITY ${badgeLabel}`,
+          MARGINS.left + 20, yPos + 13.5
+        );
+ 
+        let roadmapCy = yPos + 20;
+ 
+        // SMART objective
+        doc.setTextColor(...PURPLE_PRIMARY);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text(roadmapLang === 'fr' ? 'OBJECTIF SMART' : 'SMART OBJECTIVE', MARGINS.left + 6, roadmapCy);
+        roadmapCy += 4.5;
+        doc.setTextColor(...COLORS.text);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.3);
+        doc.text(roadmapSmartLines, MARGINS.left + 6, roadmapCy);
+        roadmapCy += roadmapSmartLines.length * 4.2 + 4;
+ 
+        // 3 metric boxes: deadline / KPI / expected progress
+        const roadmapBoxGap = 4;
+        const roadmapBoxW = (CONTENT_WIDTH - 12 - roadmapBoxGap * 2) / 3;
+        const roadmapBoxH = 20;
+        const roadmapBoxY = roadmapCy;
+ 
+        const drawRoadmapMetricBox = (x: number, label: string, value: string) => {
+          doc.setFillColor(...BLUE_PALE);
+          doc.roundedRect(x, roadmapBoxY, roadmapBoxW, roadmapBoxH, 2, 2, 'F');
+          doc.setTextColor(...BLUE_DARK);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(6.8);
+          doc.text(label, x + roadmapBoxW / 2, roadmapBoxY + 6, { align: 'center' });
+          doc.setTextColor(...COLORS.text);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(8);
+          const roadmapVLines = doc.splitTextToSize(value, roadmapBoxW - 6);
+          doc.text(roadmapVLines.slice(0, 2), x + roadmapBoxW / 2, roadmapBoxY + 12, { align: 'center' });
+        };
+ 
+        drawRoadmapMetricBox(
+          MARGINS.left + 6,
+          roadmapLang === 'fr' ? 'ECHEANCE CIBLE' : 'TARGET DATE',
+          deadlineDate
+        );
+        drawRoadmapMetricBox(
+          MARGINS.left + 6 + roadmapBoxW + roadmapBoxGap,
+          'KPI',
+          truncateText(kpiText, 45) || '—'
+        );
+        drawRoadmapMetricBox(
+          MARGINS.left + 6 + (roadmapBoxW + roadmapBoxGap) * 2,
+          roadmapLang === 'fr' ? 'PROGRESSION ATTENDUE' : 'EXPECTED PROGRESS',
+          `${currentVal} -> ${targetVal} ${unitText}`
+        );
+ 
+        yPos += roadmapCardH + 6;
+      });
+    });
+  }
+ 
+  addFooter(doc, pageNumber);
 
   
   // ═══════════════════════════════════════════════════════════════════════════
