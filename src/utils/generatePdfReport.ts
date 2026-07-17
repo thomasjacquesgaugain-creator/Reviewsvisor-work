@@ -2499,287 +2499,336 @@ if (fillW > 60) {
       yPos += cardH + 6;
     });
 
-    // // ── Ishikawa 5M aggregated scores — on same or new page ─────────────────
-    // if (yPos > PAGE_HEIGHT - MARGINS.bottom - 55) {
-    //   pageNumber = addNewPage(doc, pageNumber);
-    //   yPos = MARGINS.top + 6;
-    // }
-
-    // // Aggregate scores
-    // const scoreKeys = ['manpower', 'method', 'machine', 'material', 'measurement'] as const;
-    // const scoreTotals: Record<string, number> = {};
-    // const scoreLabels: Record<string, string> = {
-    //   manpower:    lang === 'fr' ? 'Main-d\'oeuvre' : 'Manpower',
-    //   method:      lang === 'fr' ? 'Methodes'       : 'Methods',
-    //   machine:     lang === 'fr' ? 'Machines'       : 'Machines',
-    //   material:    lang === 'fr' ? 'Materiaux'      : 'Materials',
-    //   measurement: lang === 'fr' ? 'Mesure'         : 'Measurement',
-    // };
-
-    // smartObjectives.forEach(obj => {
-    //   scoreKeys.forEach(k => {
-    //     scoreTotals[k] = (scoreTotals[k] ?? 0) + ((obj as any).questionnaire_scores?.[k] ?? 0);
-    //   });
-    // });
-
-    // const maxScore = Math.max(...Object.values(scoreTotals), 1);
-
-    // // Section label
-    // doc.setFontSize(11);
-    // doc.setFont('helvetica', 'bold');
-    // doc.setTextColor(...COLORS.text);
-    // doc.text(
-    //   lang === 'fr' ? 'Scores Ishikawa (5M) — Vue globale' : 'Ishikawa (5M) Scores — Overview',
-    //   MARGINS.left, yPos
-    // );
-    // yPos += 8;
-
-    // const barH   = 9;
-    // const barGap = 5;
-    // const labelW = 38;
-    // const scoreBarW = CONTENT_WIDTH - labelW - 24;
-
-    // scoreKeys.forEach(k => {
-    //   const val      = scoreTotals[k] ?? 0;
-    //   const fillPct  = val / maxScore;
-    //   const fillColor: [number, number, number] =
-    //     fillPct >= 0.75 ? RED_PRIMARY :
-    //     fillPct >= 0.45 ? COLORS.warning : GREEN_PRIMARY;
-
-    //   // Label
-    //   doc.setTextColor(...COLORS.text);
-    //   doc.setFont('helvetica', 'normal');
-    //   doc.setFontSize(8.5);
-    //   doc.text(scoreLabels[k], MARGINS.left, yPos + barH - 2);
-
-    //   // Track background
-    //   doc.setFillColor(219, 234, 254);
-    //   doc.roundedRect(MARGINS.left + labelW, yPos, scoreBarW, barH, 2, 2, 'F');
-
-    //   // Fill
-    //   if (fillPct > 0) {
-    //     doc.setFillColor(...fillColor);
-    //     doc.roundedRect(MARGINS.left + labelW, yPos, fillPct * scoreBarW, barH, 2, 2, 'F');
-    //   }
-
-    //   // Value badge
-    //   doc.setFillColor(...COLORS.background);
-    //   doc.roundedRect(MARGINS.left + labelW + scoreBarW + 2, yPos + 1, 14, barH - 2, 1, 1, 'F');
-    //   doc.setTextColor(...COLORS.text);
-    //   doc.setFont('helvetica', 'bold');
-    //   doc.setFontSize(8);
-    //   doc.text(`${val}`, MARGINS.left + labelW + scoreBarW + 9, yPos + barH - 2, { align: 'center' });
-
-    //   yPos += barH + barGap;
-    // });
-
-    // yPos += 4;
-    // // Note
-    // doc.setTextColor(...COLORS.textLight);
-    // doc.setFont('helvetica', 'italic');
-    // doc.setFontSize(7.5);
-    // doc.text(
-    //   lang === 'fr'
-    //     ? 'Scores plus eleves = categories ayant le plus contribue aux problemes identifies.'
-    //     : 'Higher scores = categories that contributed most to identified issues.',
-    //   MARGINS.left, yPos
-    // );
-
-    // addFooter(doc, pageNumber);
   }
 
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // PAGE 9 — PLAN EQUIPE (operational poster)
+  // PAGE 9 — Operational Checlist
   // ═══════════════════════════════════════════════════════════════════════════
+
+
+
+
+
+ 
+
+
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  const checklistLang = (data.report_language ?? "fr") as "en" | "fr";
+
+  const checklistText = (field: unknown): string => {
+    if (!field) return "";
+    if (typeof field === "string") {
+      try {
+        const parsed = JSON.parse(field);
+        if (parsed && typeof parsed === "object") {
+          const obj = parsed as Record<string, unknown>;
+          return String(obj[checklistLang] ?? obj.fr ?? obj.en ?? field);
+        }
+      } catch {}
+      return field;
+    }
+    if (typeof field === "object") {
+      const obj = field as Record<string, unknown>;
+      return String(obj[checklistLang] ?? obj.fr ?? obj.en ?? "");
+    }
+    return String(field);
+  };
+
+  const checklistNormalizeFrequency = (frequency?: string) => {
+    const value = String(frequency ?? "").toLowerCase();
+    if (value === "weekly") return "weekly";
+    if (value === "monthly" || value === "once") return "monthly";
+    return "daily";
+  };
+
+  const checklistScheduleLabel = (action: any): string => {
+    if (!action?.schedule) return "";
+    const isCustom =
+      action.schedule === "custom_time" || action.schedule === "custom_date";
+    if (isCustom && action.schedule_value) return action.schedule_value;
+
+    const labels: Record<string, string> = {
+      start_of_day: checklistLang === "fr" ? "Debut de journee" : "Start of day",
+      during_activity:
+        checklistLang === "fr" ? "Pendant l'activite" : "During activity",
+      end_of_day: checklistLang === "fr" ? "Fin de journee" : "End of day",
+      custom_time: checklistLang === "fr" ? "Heure personnalisee" : "Custom time",
+      monday: checklistLang === "fr" ? "Lundi" : "Monday",
+      tuesday: checklistLang === "fr" ? "Mardi" : "Tuesday",
+      wednesday: checklistLang === "fr" ? "Mercredi" : "Wednesday",
+      thursday: checklistLang === "fr" ? "Jeudi" : "Thursday",
+      friday: checklistLang === "fr" ? "Vendredi" : "Friday",
+      saturday: checklistLang === "fr" ? "Samedi" : "Saturday",
+      sunday: checklistLang === "fr" ? "Dimanche" : "Sunday",
+      start_of_month:
+        checklistLang === "fr" ? "Debut de mois" : "Start of month",
+      mid_month: checklistLang === "fr" ? "Mi-mois" : "Mid-month",
+      end_of_month:
+        checklistLang === "fr" ? "Fin de mois" : "End of month",
+      custom_date: checklistLang === "fr" ? "Date personnalisee" : "Custom date",
+    };
+
+    return labels[action.schedule] ?? String(action.schedule);
+  };
+
+  const checklistObjectives = topIssues.slice(0, 3).map((issue, idx) => {
+    const matchKey = String(issue.key ?? issue.theme ?? "").trim().toLowerCase();
+    const objective = (data.smart_objectives ?? []).find((obj) => {
+      const objectiveKey = String(obj.pareto_cause?.key ?? obj.problem ?? "")
+        .trim()
+        .toLowerCase();
+      return objectiveKey === matchKey;
+    });
+
+    const issueName = checklistText(issue.theme || issue.key || `Issue ${idx + 1}`);
+    const status = String(objective?.status ?? "todo").toLowerCase();
+    const actions = Array.isArray(objective?.actions) ? objective!.actions : [];
+    const entries = actions.map((action) => ({
+      ...action,
+      frequency: checklistNormalizeFrequency(action.frequency),
+      text: checklistText(action.text),
+    }));
+    const grouped = {
+      daily: entries.filter((item) => item.frequency === "daily"),
+      weekly: entries.filter((item) => item.frequency === "weekly"),
+      monthly: entries.filter((item) => item.frequency === "monthly"),
+    };
+    const totalCount = entries.length;
+    const completedCount = entries.filter((item) => item.completed).length;
+    const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+    const issuePct =
+      issue.count && data.totalReviews > 0
+        ? Math.round((issue.count / data.totalReviews) * 100)
+        : null;
+
+    return { issueName, issuePct, objective, status, progress, grouped };
+  });
 
   pageNumber = addNewPage(doc, pageNumber);
   yPos = MARGINS.top;
+  yPos = addSectionTitle(
+    doc,
+    checklistLang === "fr" ? "Checklist operationnelle" : "Operational checklist",
+    yPos,
+    GREEN_PRIMARY,
+  );
 
-  doc.setFillColor(...COLORS.primary);
-  doc.rect(0, 0, PAGE_WIDTH, 55, 'F');
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(16);
-  doc.setFont('helvetica', 'bold');
-  doc.text('PLAN D\'ACTION OPERATIONNEL', PAGE_WIDTH / 2, 18, { align: 'center' });
-  doc.setFontSize(12);
-  doc.text('OBJECTIFS & CHECKLIST EQUIPE', PAGE_WIDTH / 2, 28, { align: 'center' });
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'normal');
-  doc.text(truncateText(data.establishmentName, 45), PAGE_WIDTH / 2, 40, { align: 'center' });
-  doc.setFontSize(10);
-  doc.text(new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }), PAGE_WIDTH / 2, 50, { align: 'center' });
-
-  yPos = 65;
-
-  doc.setFillColor(245, 247, 250);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 12, 2, 2, 'F');
-  doc.setTextColor(...COLORS.primary);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'italic');
-  doc.text('"Notre objectif : offrir une experience client irreprochable, chaque jour."', PAGE_WIDTH / 2, yPos + 8, { align: 'center' });
-  yPos += 20;
-
-  // Objectives — real data
-  doc.setFillColor(...COLORS.primary);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 8, 1, 1, 'F');
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('OBJECTIFS PRIORITAIRES', MARGINS.left + 5, yPos + 5.5);
-  yPos += 12;
-
-  const objectives: Array<any> = data.smart_objectives;
-
-  // if (topIssues.length > 0) {
-  //   objectives.push({
-  //     title: `Ameliorer : ${truncateText(topIssues[0].theme, 22)}`,
-  //     indicator: `${topIssues[0].count} mentions negatives a reduire`
-  //   });
-  // }
-  // if (quickWins.length > 0) {
-  //   objectives.push({
-  //     title: truncateText(quickWins[0].title, 28),
-  //     indicator: truncateText(quickWins[0].expected_result, 35)
-  //   });
-  // } else {
-  //   objectives.push({
-  //     title: data.avgRating < 4 ? 'Augmenter la note globale' : 'Fideliser les clients',
-  //     indicator: data.avgRating < 4
-  //       ? `Objectif : ${Math.min(5, data.avgRating + 0.5).toFixed(1)}/5 en 3 mois`
-  //       : '+20% d\'avis 5 etoiles'
-  //   });
-  // }
-  // objectives.push({
-  //   title: 'Collecter plus d\'avis',
-  //   indicator: '+5 avis/semaine minimum'
-  // });
-
-  const colWidth = (CONTENT_WIDTH - 10) / 3;
-  objectives.slice(0, 3).forEach((obj, idx) => {
-    const colX = MARGINS.left + idx * (colWidth + 5);
-    doc.setFillColor(...COLORS.background);
-    doc.roundedRect(colX, yPos, colWidth, 35, 2, 2, 'F');
-    doc.setDrawColor(...COLORS.primary);
-    doc.setLineWidth(0.5);
-    doc.roundedRect(colX, yPos, colWidth, 35, 2, 2, 'S');
-    doc.setTextColor(...COLORS.primary);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Obj. ${idx + 1}`, colX + colWidth / 2, yPos + 8, { align: 'center' });
-    doc.setTextColor(...COLORS.text);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.text(doc.splitTextToSize(obj.pareto_cause?.[i18n.language], colWidth - 6)[0], colX + 3, yPos + 16);
-    doc.setTextColor(...COLORS.success);
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.text(doc.splitTextToSize(obj.problem?.[i18n.language], colWidth - 6)[0], colX + 3, yPos + 30);
-  });
-
-  yPos += 42;
-
-  // Checklist — real first_steps from pain_points
-  doc.setFillColor(...COLORS.success);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 8, 1, 1, 'F');
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('ACTIONS A METTRE EN OEUVRE', MARGINS.left + 5, yPos + 5.5);
-  yPos += 12;
-
-  const checklistActions: string[] =
-  (objectives ?? [])
-    .flatMap(obj =>
-      (obj.actions ?? [])
-        .map(action =>
-          i18n.language === 'fr'
-            ? action?.text?.fr
-            : action?.text?.en
-        )
-        .filter(Boolean)
-    )
-    .slice(0, 8);
-
-  const halfColWidth = (CONTENT_WIDTH - 5) / 2;
-  const halfItems = Math.ceil(checklistActions.length / 2);
-
-  checklistActions.forEach((action, idx) => {
-    const isLeft = idx < halfItems;
-    const colX   = isLeft ? MARGINS.left : MARGINS.left + halfColWidth + 5;
-    const rowIdx = isLeft ? idx : idx - halfItems;
-    const itemY  = yPos + rowIdx * 12;
-
-    doc.setDrawColor(...COLORS.textLight);
-    doc.setLineWidth(0.3);
-    doc.rect(colX, itemY, 4, 4, 'S');
-
-    doc.setTextColor(...COLORS.text);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    const lines = doc.splitTextToSize(action, halfColWidth - 10);
-    doc.text(lines, colX + 6, itemY + 3);
-  });
-
-  yPos += halfItems * 12 + 8;
-
-  // Team rituals
-  doc.setFillColor(...COLORS.warning);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 8, 1, 1, 'F');
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('RITUELS D\'EQUIPE', MARGINS.left + 5, yPos + 5.5);
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(9.2);
+  doc.setTextColor(...COLORS.textLight);
+  doc.text(
+    checklistLang === "fr"
+      ? "Routine a suivre sur le terrain"
+      : "Routine to follow in the field",
+    MARGINS.left,
+    yPos,
+  );
   yPos += 10;
 
-  const rituals = [
-    { icon: '1', text: 'Brief quotidien (2 min avant service)' },
-    { icon: '2', text: 'Lecture des avis 1x par semaine' },
-    { icon: '3', text: 'Suivi mensuel avec Reviewsvisor' },
-  ];
+  const checklistSectionTitle = (key: "daily" | "weekly" | "monthly") =>
+    checklistLang === "fr"
+      ? key === "daily"
+        ? "QUOTIDIEN"
+        : key === "weekly"
+          ? "HEBDOMADAIRE"
+          : "MENSUEL"
+      : key === "daily"
+        ? "DAILY"
+        : key === "weekly"
+          ? "WEEKLY"
+          : "MONTHLY";
 
-  doc.setFillColor(...COLORS.background);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 20, 2, 2, 'F');
+  checklistObjectives.forEach((entry, idx) => {
+    const hasObjective = Boolean(entry.objective);
+    const accent =
+      entry.status === "completed"
+        ? GREEN_PRIMARY
+        : entry.status === "in_progress"
+          ? ORANGE_PRIMARY
+          : ([148, 163, 184] as [number, number, number]);
+    const pale =
+      entry.status === "completed"
+        ? GREEN_PALE
+        : entry.status === "in_progress"
+          ? ORANGE_PALE
+          : ([248, 250, 252] as [number, number, number]);
+    const taskWrapWidth = CONTENT_WIDTH - 24;
+    const groupedSections = [
+      { title: checklistSectionTitle("daily"), items: entry.grouped.daily },
+      { title: checklistSectionTitle("weekly"), items: entry.grouped.weekly },
+      { title: checklistSectionTitle("monthly"), items: entry.grouped.monthly },
+    ];
+    const estimatedTasksHeight = hasObjective
+      ? groupedSections.reduce((sum, section) => {
+          if (!section.items.length) return sum + 6;
+          const itemsHeight = section.items.reduce((acc, item) => {
+            const lines = doc.splitTextToSize(item.text || "", taskWrapWidth) as string[];
+            return acc + Math.max(6, lines.length * 3.9 + 4.2);
+          }, 0);
+          return sum + 8 + itemsHeight + 3;
+        }, 22)
+      : 22;
+    const cardH = hasObjective ? Math.max(52, estimatedTasksHeight) : 30;
 
-  rituals.forEach((ritual, idx) => {
-    const ritualX = MARGINS.left + (idx + 0.5) * (CONTENT_WIDTH / 3);
-    doc.setFillColor(...COLORS.primary);
-    doc.circle(ritualX, yPos + 6, 3.5, 'F');
-    doc.setTextColor(...COLORS.white);
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'bold');
-    doc.text(ritual.icon, ritualX, yPos + 7.5, { align: 'center' });
+    if (yPos + cardH > PAGE_HEIGHT - MARGINS.bottom - 10) {
+      pageNumber = addNewPage(doc, pageNumber);
+      yPos = MARGINS.top;
+    }
+
+    doc.setFillColor(...pale);
+    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, cardH, 4, 4, "F");
+    doc.setDrawColor(...accent);
+    doc.setLineWidth(0.7);
+    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, cardH, 4, 4, "S");
+
+    doc.setFillColor(...accent);
+    doc.circle(MARGINS.left + 7, yPos + 8, 3.8, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.6);
+    doc.text(String(idx + 1), MARGINS.left + 7, yPos + 9.1, { align: "center" });
+
     doc.setTextColor(...COLORS.text);
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.text(doc.splitTextToSize(ritual.text, CONTENT_WIDTH / 3 * 0.8), ritualX, yPos + 14, { align: 'center' });
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.2);
+    doc.text(truncateText(entry.issueName, 40), MARGINS.left + 16, yPos + 7.2);
+
+    const statusLabel =
+      entry.status === "completed"
+        ? checklistLang === "fr"
+          ? "Termine"
+          : "Completed"
+        : entry.status === "in_progress"
+          ? checklistLang === "fr"
+            ? "En cours"
+            : "In progress"
+          : checklistLang === "fr"
+            ? "A faire"
+            : "To do";
+
+    const badgeW = Math.max(18, doc.getTextWidth(statusLabel) + 8);
+    const badgeX = MARGINS.left + CONTENT_WIDTH - badgeW - 5;
+    doc.setFillColor(...accent);
+    doc.roundedRect(badgeX, yPos + 4, badgeW, 7, 2.5, 2.5, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(6.6);
+    doc.text(statusLabel, badgeX + badgeW / 2, yPos + 9.2, { align: "center" });
+
+    yPos += 13;
+
+    if (!hasObjective) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.2);
+      doc.setTextColor(...COLORS.textLight);
+      doc.text(
+        checklistLang === "fr" ? "Aucun objectif SMART disponible" : "No SMART objective available",
+        MARGINS.left + 6,
+        yPos + 5,
+      );
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(7.4);
+      doc.text(
+        checklistLang === "fr"
+          ? "La checklist sera disponible une fois l'objectif SMART genere."
+          : "The checklist will be available once the SMART objective is generated.",
+        MARGINS.left + 6,
+        yPos + 11,
+      );
+      yPos += cardH + 6;
+      return;
+    }
+
+    yPos += 2;
+
+    const summaryBoxes = [
+      { title: checklistSectionTitle("daily"), value: entry.grouped.daily.length },
+      { title: checklistSectionTitle("weekly"), value: entry.grouped.weekly.length },
+      { title: checklistSectionTitle("monthly"), value: entry.grouped.monthly.length },
+    ];
+
+    const summaryInset = 2;
+    const summaryGap = 4;
+    const summaryW = (CONTENT_WIDTH - summaryInset * 2 - summaryGap * 2) / 3;
+    summaryBoxes.forEach((box, boxIdx) => {
+      const x = MARGINS.left + summaryInset + boxIdx * (summaryW + summaryGap);
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(...GREEN_LIGHT);
+      doc.setLineWidth(0.4);
+      doc.roundedRect(x, yPos, summaryW, 11, 2.8, 2.8, "FD");
+      doc.setTextColor(...COLORS.textLight);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.2);
+      doc.text(box.title, x + 3, yPos + 4.4);
+      doc.setTextColor(...accent);
+      doc.setFontSize(8.8);
+      doc.text(`${box.value}`, x + 3, yPos + 8.3);
+    });
+    yPos += 15;
+
+    groupedSections.forEach((section) => {
+      if (!section.items.length) return;
+
+      doc.setTextColor(...accent);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.2);
+      doc.text(section.title, MARGINS.left + 6, yPos + 2.5);
+      doc.setTextColor(...COLORS.textLight);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.text(String(section.items.length), PAGE_WIDTH - MARGINS.right - 6, yPos + 2.5, { align: "right" });
+      doc.setDrawColor(...GREEN_LIGHT);
+      doc.setLineWidth(0.35);
+      doc.line(MARGINS.left + 6, yPos + 4, PAGE_WIDTH - MARGINS.right - 6, yPos + 4);
+      yPos += 7;
+
+      section.items.forEach((item: any) => {
+        const lines = doc.splitTextToSize(item.text || "", taskWrapWidth) as string[];
+        const rowHeight = Math.max(6.4, lines.length * 3.9 + 3.5);
+
+        if (yPos + rowHeight > PAGE_HEIGHT - MARGINS.bottom - 10) {
+          pageNumber = addNewPage(doc, pageNumber);
+          yPos = MARGINS.top;
+        }
+
+        doc.setDrawColor(191, 203, 217);
+        doc.setLineWidth(0.35);
+        doc.roundedRect(MARGINS.left + 6, yPos + 0.6, 4.2, 4.2, 1, 1, "S");
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.7);
+        doc.setTextColor(...COLORS.text);
+        let lineY = yPos + 3.4;
+        lines.forEach((line: string, lineIdx: number) => {
+          doc.text(line, MARGINS.left + 12, lineY + lineIdx * 3.8);
+        });
+
+        const badgeText = checklistScheduleLabel(item);
+        if (badgeText) {
+          const badgeH = 6.4;
+          const badgeW = Math.min(20, Math.max(12, doc.getTextWidth(badgeText) + 5));
+          const badgeX = PAGE_WIDTH - MARGINS.right - badgeW - 2;
+          doc.setFillColor(255, 255, 255);
+          doc.setDrawColor(...GREEN_LIGHT);
+          doc.setLineWidth(0.35);
+          doc.roundedRect(badgeX, yPos + 0.2, badgeW, badgeH, 2.5, 2.5, "FD");
+          doc.setTextColor(...accent);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(5.8);
+          doc.text(badgeText, badgeX + badgeW / 2, yPos + 4.7, { align: "center" });
+        }
+
+        yPos += rowHeight + 1.5;
+      });
+    });
+
+    yPos += 4;
   });
 
-  yPos += 23;
-
-  // Signature zone
-  doc.setFillColor(...COLORS.secondary);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 8, 1, 1, 'F');
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('ENGAGEMENT EQUIPE', MARGINS.left + 5, yPos + 5.5);
-  yPos += 10;
-
-  doc.setFillColor(...COLORS.white);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 40, 2, 2, 'F');
-  doc.setDrawColor(...COLORS.textLight);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 40, 2, 2, 'S');
-  doc.setTextColor(...COLORS.text);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'italic');
-  doc.text('"Nous nous engageons a appliquer ces actions au quotidien."', PAGE_WIDTH / 2, yPos + 12, { align: 'center' });
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Responsable : ______________________________', MARGINS.left + 10, yPos + 26);
-  doc.text('Date : ______________', MARGINS.left + 10, yPos + 35);
-
+  // PAGE 10 — Improvement roadmap
+  // ═══════════════════════════════════════════════════════════════════════════
 
 
   pageNumber = addNewPage(doc, pageNumber);
