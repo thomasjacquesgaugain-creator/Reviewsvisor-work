@@ -91,6 +91,7 @@ interface BilingualString {
 
 interface ReportData {
   establishmentName: string;
+  establishmentType:string;
   totalReviews: number;
   avgRating: number;
   positiveRatio: number;
@@ -603,6 +604,7 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
   const oneLiner      = ad?.summary?.one_liner ?? ad?.summary_one_liner ?? data.summary ?? '';
   const customersLove = ad?.summary?.what_customers_love ?? ad?.summary_what_customers_love ?? [];
   const customersHate = ad?.summary?.what_customers_hate ?? ad?.summary_what_customers_hate ?? [];
+  const establishmentType=data?.establishmentType??'';
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PAGE 1 — COVER
@@ -639,14 +641,14 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
   doc.text(truncateText(data.establishmentName, 40), PAGE_WIDTH / 2, 140, { align: 'center' });
 
   // Business type badge
-  if (ad?.business_type) {
+  if (establishmentType) {
     doc.setFillColor(...BLUE_PALE);
     doc.roundedRect(PAGE_WIDTH / 2 - 25, 145, 50, 8, 2, 2, 'F');
     doc.setTextColor(...BLUE_PRIMARY);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
     doc.text(
-      ad.business_type.replace(/_/g, ' ').toUpperCase(),
+      establishmentType.replace(/_/g, ' ').toUpperCase(),
       PAGE_WIDTH / 2, 150, { align: 'center' }
     );
   }
