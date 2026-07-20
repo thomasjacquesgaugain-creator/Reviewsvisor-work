@@ -302,6 +302,8 @@
     "importReviews": "Importer des avis",
     "analyzeReviews": "Analyser les avis",
     "downloadReport": "Télécharger le rapport",
+    "noReportAvailable": "Aucun rapport disponible",
+    "importReviewsToGenerateReport": "Importez des avis pour générer un rapport",
     "reportDownloaded": "Rapport téléchargé",
     "reportGeneratedSuccess": "Rapport généré avec succès",
     "reportGenerationError": "Erreur lors de la génération du rapport",
