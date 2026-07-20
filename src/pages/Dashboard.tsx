@@ -4017,7 +4017,6 @@ const activeObjective =
                         });
                         return;
                       }
-
                       if (!hasReviews || allReviewsForChart.length === 0) {
                         toast.info(t("dashboard.noReportAvailable"), {
                           description: t(
@@ -4034,6 +4033,7 @@ const activeObjective =
                         const reportData = {
                           establishmentName:
                             currentEstab.name || "Établissement",
+                          establishmentType:currentEstab?.types,
                           totalReviews:
                             totalAnalyzed || allReviewsForChart.length,
                           avgRating: avgRating,
