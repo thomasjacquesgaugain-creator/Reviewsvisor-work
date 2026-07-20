@@ -129,6 +129,7 @@ async function onSubmit(formData: InscriptionFormData) {
           role: "worker",
           preferred_language: currentLanguage,
           updated_at: new Date().toISOString(),
+          onboarding_status:"email_verified"
         },
         { onConflict: "id" }
       );
@@ -163,7 +164,8 @@ async function onSubmit(formData: InscriptionFormData) {
       ),
     });
 
-     navigate("/inscription/verifier-email", { state: { email: formData.email.trim() } });
+    //  navigate("/inscription/verifier-email", { state: { email: formData.email.trim() } });
+     navigate("/inscription/etablissement");
 
   } catch (err) {
     console.error("Erreur inattendue:", err);
