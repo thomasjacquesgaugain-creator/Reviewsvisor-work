@@ -129,7 +129,7 @@ async function onSubmit(formData: InscriptionFormData) {
           role: "worker",
           preferred_language: currentLanguage,
           updated_at: new Date().toISOString(),
-          onboarding_status:"email_verified"
+          // onboarding_status:"email_verified"   :- only uncomment to bypass otp flow
         },
         { onConflict: "id" }
       );
@@ -164,8 +164,8 @@ async function onSubmit(formData: InscriptionFormData) {
       ),
     });
 
-    //  navigate("/inscription/verifier-email", { state: { email: formData.email.trim() } });
-     navigate("/inscription/etablissement");
+     navigate("/inscription/verifier-email", { state: { email: formData.email.trim() } });
+    //  navigate("/inscription/etablissement");  uncomment comment this line and comment line above this to bypass otp flow
 
   } catch (err) {
     console.error("Erreur inattendue:", err);
