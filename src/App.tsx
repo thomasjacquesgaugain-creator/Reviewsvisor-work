@@ -76,13 +76,15 @@ const StripeReturnDetector = () => {
       sessionStorage.removeItem("stripeCheckoutStarted");
       return;
     }
+    if (location.pathname === "/billing/cancel") {
+      sessionStorage.removeItem("stripeCheckoutStarted");
+      return;
+    }
     // Ne vérifier que si on n'est pas déjà sur la page d'annulation
-    if (location.pathname !== "/billing/cancel") {
-      console.log("Checking stripe return");
-      if (sessionStorage.getItem("stripeCheckoutStarted") === "true") {
-        sessionStorage.removeItem("stripeCheckoutStarted");
-        navigate("/billing/cancel");
-      }
+    console.log("Checking stripe return");
+    if (sessionStorage.getItem("stripeCheckoutStarted") === "true") {
+      sessionStorage.removeItem("stripeCheckoutStarted");
+      navigate("/billing/cancel");
     }
   }, [location.pathname, navigate]);
 
