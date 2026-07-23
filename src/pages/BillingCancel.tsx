@@ -22,12 +22,12 @@ export default function BillingCancel() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Button 
+            {/* <Button 
               className="w-full" 
               onClick={() => navigate("/onboarding")}
             >
               {t("billing.retryPayment")}
-            </Button>
+            </Button> */}
             <Button 
               variant="outline" 
               className="w-full" 

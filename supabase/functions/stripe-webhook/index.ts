@@ -99,6 +99,7 @@ serve(async (req) => {
   const pendingEtabLat = metadata.pending_etab_lat || null;
   const pendingEtabLng = metadata.pending_etab_lng || null;
   const pendingEtabType = metadata.pending_etab_type || null;
+  const isFirstEstablishment = metadata.is_first_establishment === "true";
 
   const subscriptionId = session.subscription as string;
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
@@ -107,7 +108,7 @@ serve(async (req) => {
   const PRICE_TO_PLAN = getPriceToPlanMap();
   const planKey = PRICE_TO_PLAN[priceId] || "basic_monthly";
 
-  logStep("Subscription details", { subscriptionId, priceId, planKey });
+  logStep("Subscription details", { subscriptionId, priceId, planKey, isFirstEstablishment });
 
   const customerEmail = session.customer_email || session.customer_details?.email;
 
@@ -225,6 +226,45 @@ if (pendingEtabPlaceId) {
     });
   } else {
     logStep("Profile activated", { userId, establishmentId });
+  }
+  if (isFirstEstablishment) {
+    try {
+      const welcomeEmail = customerEmail;
+
+      let firstName = "";
+      let lastName = "";
+      const { data: nameProfile, error: nameError } = await supabaseAdmin
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (nameError) {
+        logStep("Could not fetch name for welcome email (non-fatal)", { error: nameError.message });
+      } else {
+        firstName = nameProfile?.first_name || "";
+        lastName = nameProfile?.last_name || "";
+      }
+
+      if (welcomeEmail) {
+        const { error: welcomeError } = await supabaseAdmin.functions.invoke(
+          "send-welcome-email",
+          { body: { email: welcomeEmail, userId, firstName, lastName } }
+        );
+        if (welcomeError) {
+          logStep("Welcome email failed (non-fatal)", { error: welcomeError.message });
+        } else {
+          logStep("Welcome email sent", { email: welcomeEmail });
+        }
+      } else {
+        logStep("Skipped welcome email — no resolved customer email", { userId });
+      }
+    } catch (welcomeErr) {
+      const message = welcomeErr instanceof Error ? welcomeErr.message : String(welcomeErr);
+      logStep("Welcome email failed (non-fatal, exception)", { error: message });
+    }
+  } else {
+    logStep("Skipped welcome email — not first establishment", { userId });
   }
 
   const { error: subscriptionError } = await supabaseAdmin
