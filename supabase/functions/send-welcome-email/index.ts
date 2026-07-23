@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -8,10 +9,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const supabaseAdmin = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  { auth: { persistSession: false } }
+);
+
 interface WelcomeEmailRequest {
   email: string;
-  firstName: string;
-  lastName: string;
+  userId: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -20,20 +28,88 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, firstName, lastName }: WelcomeEmailRequest = await req.json();
+    const { email, userId, firstName = "", lastName = "" }: WelcomeEmailRequest = await req.json();
 
     console.log("Tentative d'envoi d'email à:", email);
-    console.log("Données utilisateur:", { email, firstName, lastName });
+    console.log("Données utilisateur:", { email, userId, firstName, lastName });
+
+    // Fetch preferred language from profiles, fallback to 'fr'
+    let language = "fr";
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("preferred_language")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profileError) {
+      console.warn("Could not fetch preferred_language, defaulting to fr:", profileError.message);
+    } else if (profile?.preferred_language === "en") {
+      language = "en";
+    }
 
     const appUrl = "https://reviewsvisor.com";
     const dashboardUrl = `${appUrl}/tableau-de-bord`;
 
-    console.log("Appel API Resend pour envoyer l'email de bienvenue");
-    const emailResponse = await resend.emails.send({
-      from: "Reviewsvisor <contact@reviewsvisor.fr>",
-      to: [email],
-      subject: "Bienvenue sur Reviewsvisor – Confirmation de votre compte",
-      html: `
+    const subject =
+      language === "en"
+        ? "Welcome to Reviewsvisor – Account Confirmation"
+        : "Bienvenue sur Reviewsvisor – Confirmation de votre compte";
+
+    const html =
+      language === "en"
+        ? `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
+          <div style="background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #2F6BFF; font-size: 24px; margin: 0 0 8px 0;">
+                Your Reviewsvisor account has been created 🎉
+              </h1>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+              <p style="color: #374151; font-size: 16px; line-height: 1.7; margin: 0 0 16px 0;">
+                Hi ${firstName} ${lastName},
+              </p>
+              <p style="color: #374151; font-size: 16px; line-height: 1.7; margin: 0 0 16px 0;">
+                Thanks for signing up. Your account is now ready — you can access your dashboard and start analyzing your customer reviews.
+              </p>
+            </div>
+
+            <!--
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="${dashboardUrl}"
+                 style="background: #2F6BFF; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block;">
+                Go to my dashboard
+              </a>
+            </div>
+            -->
+
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 24px; margin-top: 32px;">
+              <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0;">
+                If you have any questions, feel free to reach out.
+              </p>
+              <p style="color: #6b7280; font-size: 14px; margin: 12px 0 0 0;">
+                See you soon,<br>
+                <strong style="color: #374151;">The Reviewsvisor Team</strong>
+              </p>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: 20px;">
+            <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+              © ${new Date().getFullYear()} Reviewsvisor. All rights reserved.
+            </p>
+          </div>
+        </body>
+        </html>
+      `
+        : `
         <!DOCTYPE html>
         <html lang="fr">
         <head>
@@ -47,7 +123,7 @@ const handler = async (req: Request): Promise<Response> => {
                 Votre compte Reviewsvisor a bien été créé 🎉
               </h1>
             </div>
-            
+
             <div style="margin-bottom: 24px;">
               <p style="color: #374151; font-size: 16px; line-height: 1.7; margin: 0 0 16px 0;">
                 Bonjour ${firstName} ${lastName},
@@ -56,14 +132,16 @@ const handler = async (req: Request): Promise<Response> => {
                 Merci de votre inscription. Votre compte est maintenant prêt, vous pouvez accéder à votre tableau de bord et commencer à analyser vos avis clients.
               </p>
             </div>
-            
+
+            <!--
             <div style="text-align: center; margin: 32px 0;">
-              <a href="${dashboardUrl}" 
+              <a href="${dashboardUrl}"
                  style="background: #2F6BFF; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block;">
                 Accéder à mon tableau de bord
               </a>
             </div>
-            
+            -->
+
             <div style="border-top: 1px solid #e5e7eb; padding-top: 24px; margin-top: 32px;">
               <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0;">
                 Si vous avez des questions, n'hésitez pas à nous contacter.
@@ -74,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
               </p>
             </div>
           </div>
-          
+
           <div style="text-align: center; margin-top: 20px;">
             <p style="color: #9ca3af; font-size: 12px; margin: 0;">
               © ${new Date().getFullYear()} Reviewsvisor. Tous droits réservés.
@@ -82,7 +160,14 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
         </body>
         </html>
-      `,
+      `;
+
+    console.log("Appel API Resend pour envoyer l'email de bienvenue, langue:", language);
+    const emailResponse = await resend.emails.send({
+      from: "Reviewsvisor <contact@reviewsvisor.fr>",
+      to: [email],
+      subject,
+      html,
     });
 
     console.log("Réponse Resend:", emailResponse);

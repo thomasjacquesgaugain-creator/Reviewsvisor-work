@@ -83,11 +83,13 @@ serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const emailFromBody = body.email;
-    const { priceId: priceIdFromBody, language, pendingEstablishment } = body;
+    const { priceId: priceIdFromBody, language, pendingEstablishment, isFirstEstablishment } = body;
 
     let userEmail = emailFromBody;
     let customerId: string | undefined;
     let userId: string | undefined;
+    let userFirstName = "";
+    let userLastName = "";
 
     const authHeader = req.headers.get("Authorization");
     if (authHeader) {
@@ -97,6 +99,8 @@ serve(async (req) => {
         if (data.user?.email) {
           userEmail = data.user.email;
           userId = data.user.id;
+          userFirstName = data.user.user_metadata?.first_name || "";
+          userLastName = data.user.user_metadata?.last_name || "";
           logStep("User authenticated", { email: userEmail, userId });
         }
       } catch (e) {
@@ -137,6 +141,7 @@ serve(async (req) => {
       priceId,
       stripeMode,
       hasPendingEstablishment: !!pendingEstablishment,
+      isFirstEstablishment: !!isFirstEstablishment,
     });
 
     const origin = req.headers.get("origin") || Deno.env.get("APP_URL") || Deno.env.get("SITE_URL") || "https://reviewsvisor.fr";
@@ -189,6 +194,46 @@ serve(async (req) => {
         logStep("Admin bypass: saving establishment directly", {
           place_id: pendingEstablishment.place_id,
         });
+        let typesJsonb: { en: string | null; fr: string | null } = {
+          en: pendingEstablishment.type_etablissement || null,
+          fr: null,
+        };
+
+        try {
+          const typeFnRes = await fetch(
+            `${Deno.env.get("SUPABASE_URL")}/functions/v1/outscraper-business-type`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                // server-to-server call: use the service role key, not a user JWT
+                Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              },
+              body: JSON.stringify({
+                placeId: pendingEstablishment.place_id,
+                name: pendingEstablishment.name,
+                address: pendingEstablishment.address,
+              }),
+            },
+          );
+
+          const typeData = await typeFnRes.json();
+          logStep("Business type fetch result (admin bypass)", typeData);
+
+          if (typeData?.success && typeData?.types) {
+            typesJsonb = {
+              en: typeData.types.en ?? typesJsonb.en,
+              fr: typeData.types.fr ?? typesJsonb.fr,
+            };
+          } else {
+            logStep("Business type fetch returned no usable data (admin bypass)", typeData);
+          }
+        } catch (typeFetchErr) {
+          const message = typeFetchErr instanceof Error ? typeFetchErr.message : String(typeFetchErr);
+          logStep("Business type fetch error (admin bypass, non-fatal)", { error: message });
+          // non-fatal — proceed with fallback typesJsonb, don't block the establishment save
+        }
+
         const { data: establishment, error: establishmentError } =
           await supabaseClient
             .from("establishments")
@@ -204,7 +249,7 @@ serve(async (req) => {
                 rating: pendingEstablishment.rating || null,
                 lat: pendingEstablishment.lat || null,
                 lng: pendingEstablishment.lng || null,
-                types: pendingEstablishment.type_etablissement || null,
+                types: typesJsonb, 
               },
               { onConflict: "user_id,place_id", ignoreDuplicates: false },
             )
@@ -248,9 +293,32 @@ serve(async (req) => {
             userId,
             establishmentId,
           });
+
+          if (isFirstEstablishment && userEmail) {
+            try {
+              const { error: welcomeError } = await supabaseClient.functions.invoke(
+                "send-welcome-email",
+                { body: { email: userEmail, userId, firstName: userFirstName, lastName: userLastName } }
+              );
+              if (welcomeError) {
+                logStep("Welcome email failed (admin bypass, non-fatal)", { error: welcomeError.message });
+              } else {
+                logStep("Welcome email sent (admin bypass)", { email: userEmail });
+              }
+            } catch (welcomeErr) {
+              const message =
+                welcomeErr instanceof Error ? welcomeErr.message : String(welcomeErr);
+              logStep("Welcome email failed (admin bypass, non-fatal)", {
+                error: message,
+              });
+            }
+          } else {
+            logStep("Skipped welcome email (admin bypass) — not first establishment", {
+              userId,
+            });
+          }
         }
       }
-
       const successUrl = `${origin}/billing/success?session_id=admin_bypass_${Date.now()}`;
       return new Response(JSON.stringify({ url: successUrl }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -290,6 +358,11 @@ serve(async (req) => {
       sessionMetadata.pending_etab_user_id = safeMetaStr(userId);
       subscriptionMetadata.pending_etab_user_id = safeMetaStr(userId);
     }
+
+    // Carries through to the webhook so it knows whether to trigger the
+    // welcome email (only on a user's very first establishment).
+    sessionMetadata.is_first_establishment = isFirstEstablishment ? "true" : "false";
+    subscriptionMetadata.is_first_establishment = isFirstEstablishment ? "true" : "false";
 
     if (pendingEstablishment) {
       const etabMeta = {
