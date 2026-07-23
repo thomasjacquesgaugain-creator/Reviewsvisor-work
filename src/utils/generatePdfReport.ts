@@ -1088,18 +1088,18 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
 
     for (let i = 0; i < allThemes.length; i += 2) {
       const rowThemes = allThemes.slice(i, i + 2).map((theme) => {
-        const quotes = getThemeVerbatims(theme).slice(0, 2);
+        const quotes = getThemeVerbatims(theme).slice(0,2);
         const wrappedQuotes = quotes.length > 0
           ? quotes.map((quote) => {
-              const quoteTxt = truncateText(cleanVerbatim(quote), 180);
-              return doc.splitTextToSize(`"${quoteTxt}"`, themeCardW - 16).slice(0, 3) as string[];
+              const quoteTxt = truncateText(cleanVerbatim(quote), 320);
+              return doc.splitTextToSize(`"${quoteTxt}"`, themeCardW - 16) as string[];
             })
           : [];
 
         const quoteLineCount = wrappedQuotes.reduce((sum, lines) => sum + lines.length, 0);
         const cardH = Math.max(
           48,
-          47 + (quotes.length === 0 ? 6 : quoteLineCount * 4.4 + Math.max(0, quotes.length - 1) * 1.5)
+          47 + (quotes.length === 0 ? 6 : quoteLineCount * 4.1 + Math.max(0, quotes.length - 1) * 1.5)
         );
 
         return {
@@ -1215,7 +1215,7 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
             doc.text('-', cardX + 6, quoteY);
             doc.text(quoteLines, cardX + 9, quoteY);
 
-            quoteY += Math.max(6, quoteLines.length * 3.7) + 1.5;
+            quoteY += Math.max(6, quoteLines.length * 3.6) + 1.5;
           });
         }
       });
@@ -1398,7 +1398,7 @@ if (issuesWithRootCauses.length > 0) {
 
       const evidenceLineCount =
         evidenceLines.reduce(
-          (a, lines) => a + Math.min(lines.length, 3),
+          (a, lines) => a + lines.length,
           0
         );
 
@@ -1410,7 +1410,7 @@ if (issuesWithRootCauses.length > 0) {
 
       const rcCardH = Math.max(
         48,
-        22 + totalLines * 4
+        22 + totalLines * 3.8
       );
 
       // ─────────────────────────────────────
@@ -1574,7 +1574,7 @@ if (issuesWithRootCauses.length > 0) {
 
       evidenceLines.forEach(lines => {
 
-        lines.slice(0, 2).forEach((line: string) => {
+        lines.slice(0,2).forEach((line: string) => {
 
           doc.text(
             line,
