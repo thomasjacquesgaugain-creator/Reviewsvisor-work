@@ -1654,187 +1654,145 @@ else {
       const norm = issue.trim().toLowerCase();
       return synthesisMap.get(norm) ?? "";
     };
-    const ppTableW = CONTENT_WIDTH;
-    const ppIssueW = 50;
-    const ppImpactW = 24;
-    const ppEaseW = 18;
-    const ppStepW = 30;
-    const ppSynthesisW = ppTableW - ppIssueW - ppImpactW - ppEaseW - ppStepW;
-    const ppHdrH = 9;
-    const ppRowH = 34;
 
-    // Header
+    // Truncate AI analysis to the first sentence (up to the first ".").
+    // If no period exists the full text is returned unchanged.
+    const firstSentence = (text: string): string => {
+      const dotIdx = text.indexOf('.');
+      return dotIdx !== -1 ? text.slice(0, dotIdx + 1).trim() : text.trim();
+    };
+
+    // ── Simplified 5-column table: Issue | Impact | Ease | First Action | AI ──
+    // Row height is computed per-row from actual AI line count.
+    const ppTableW     = CONTENT_WIDTH;
+    const ppIssueW     = 45;
+    const ppImpactW    = 20;
+    const ppEaseW      = 20;
+    const ppStepW      = 38;
+    const ppSynthesisW = ppTableW - ppIssueW - ppImpactW - ppEaseW - ppStepW;
+    const ppHdrH       = 9;
+    const PP_ROW_MIN   = 16;   // minimum row height (mm)
+    const PP_LINE_H    = 4.0;  // line height for AI text (mm)
+    const PP_PAD_V     = 6;    // total vertical padding inside a row (mm)
+
+    // ── Header ──────────────────────────────────────────────────────────────
     doc.setFillColor(...COLORS.warning);
     doc.roundedRect(MARGINS.left, yPos, ppTableW, ppHdrH, 1, 1, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
-    doc.text(S.ppHeaderIssue, MARGINS.left + 4, yPos + 6);
-    doc.text(
-      S.ppHeaderImpact,
-      MARGINS.left + ppIssueW + ppImpactW / 2,
-      yPos + 6,
-      { align: "center" },
-    );
-    doc.text(
-      S.ppHeaderEase,
-      MARGINS.left + ppIssueW + ppImpactW + ppEaseW / 2,
-      yPos + 6,
-      { align: "center" },
-    );
-    doc.text(
-      S.ppHeaderFirstAction,
-      MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW / 2,
-      yPos + 6,
-      { align: "center" },
-    );
-    doc.text(
-      S.ppHeaderAiAnalysis,
-      MARGINS.left +
-        ppIssueW +
-        ppImpactW +
-        ppEaseW +
-        ppStepW +
-        ppSynthesisW / 2,
-      yPos + 6,
-      { align: "center" },
-    );
+    doc.text(S.ppHeaderIssue,       MARGINS.left + 4,                                                           yPos + 6);
+    doc.text(S.ppHeaderImpact,      MARGINS.left + ppIssueW + ppImpactW / 2,                                    yPos + 6, { align: "center" });
+    doc.text(S.ppHeaderEase,        MARGINS.left + ppIssueW + ppImpactW + ppEaseW / 2,                          yPos + 6, { align: "center" });
+    doc.text(S.ppHeaderFirstAction, MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW / 2,                yPos + 6, { align: "center" });
+    doc.text(S.ppHeaderAiAnalysis,  MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW + ppSynthesisW / 2, yPos + 6, { align: "center" });
     yPos += ppHdrH;
 
+    // ── Rows — height adapts to AI analysis content ──────────────────────────
     const ppStartY = yPos;
+    const rowHeights: number[] = [];
+
     painPoints.forEach((pp, idx) => {
-      const bg: [number, number, number] =
-        idx % 2 === 0 ? ORANGE_PALE : ROW_WHITE;
+      // Pre-compute both text columns so row height fits whichever is taller.
+
+      // AI analysis — first sentence only
+      const rawSynth   = sanitizePdfText(getSynthesis(pp.issue));
+      const synthText  = rawSynth ? firstSentence(rawSynth) : "";
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(6.5);
+      const synthLines = synthText
+        ? (doc.splitTextToSize(synthText, ppSynthesisW - 8) as string[])
+        : [];
+
+      // First action — full text, no truncation
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(6.5);
+      const stepLines  = doc.splitTextToSize(pp.first_step || "", ppStepW - 6) as string[];
+
+      // Row height = padding + tallest column × line-height, at least PP_ROW_MIN
+      const contentLines = Math.max(synthLines.length, stepLines.length);
+      const ppRowH = Math.max(PP_ROW_MIN, PP_PAD_V + contentLines * PP_LINE_H);
+      rowHeights.push(ppRowH);
+
+      const bg: [number, number, number] = idx % 2 === 0 ? ORANGE_PALE : ROW_WHITE;
       doc.setFillColor(...bg);
       doc.rect(MARGINS.left, yPos, ppTableW, ppRowH, "F");
 
+      // Dividers
       doc.setDrawColor(220, 220, 220);
       doc.setLineWidth(0.3);
       if (idx > 0) doc.line(MARGINS.left, yPos, MARGINS.left + ppTableW, yPos);
-      doc.line(
-        MARGINS.left + ppIssueW,
-        yPos,
-        MARGINS.left + ppIssueW,
-        yPos + ppRowH,
-      );
-      doc.line(
-        MARGINS.left + ppIssueW + ppImpactW,
-        yPos,
-        MARGINS.left + ppIssueW + ppImpactW,
-        yPos + ppRowH,
-      );
-      doc.line(
-        MARGINS.left + ppIssueW + ppImpactW + ppEaseW,
-        yPos,
-        MARGINS.left + ppIssueW + ppImpactW + ppEaseW,
-        yPos + ppRowH,
-      );
-      doc.line(
-        MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW,
-        yPos,
-        MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW,
-        yPos + ppRowH,
-      );
+      doc.line(MARGINS.left + ppIssueW,                                 yPos, MARGINS.left + ppIssueW,                                 yPos + ppRowH);
+      doc.line(MARGINS.left + ppIssueW + ppImpactW,                     yPos, MARGINS.left + ppIssueW + ppImpactW,                     yPos + ppRowH);
+      doc.line(MARGINS.left + ppIssueW + ppImpactW + ppEaseW,           yPos, MARGINS.left + ppIssueW + ppImpactW + ppEaseW,           yPos + ppRowH);
+      doc.line(MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW, yPos, MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW, yPos + ppRowH);
 
-      // Issue
+      const midY = yPos + ppRowH / 2 + 1.5; // vertical centre of row
+
+      // ── Issue (bold title only) ──
       doc.setTextColor(...COLORS.text);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      doc.text(truncateText(pp.issue, 25), MARGINS.left + 4, yPos + 7);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      doc.setTextColor(...COLORS.textLight);
-      const whyLines = doc.splitTextToSize(
-        pp.why_it_matters || "",
-        ppIssueW - 8,
-      );
-      doc.text(whyLines[0] || "", MARGINS.left + 4, yPos + 13);
-      if (whyLines[1]) doc.text(whyLines[1], MARGINS.left + 4, yPos + 17);
-      if (whyLines[2]) doc.text(whyLines[2], MARGINS.left + 4, yPos + 21);
+      doc.setFontSize(7.5);
+      const issueLines  = doc.splitTextToSize(pp.issue, ppIssueW - 8) as string[];
+      const issueStartY = midY - ((Math.min(issueLines.length, 2) - 1) * 4) / 2;
+      issueLines.slice(0, 2).forEach((line, li) => {
+        doc.text(line, MARGINS.left + 4, issueStartY + li * 4);
+      });
 
-      // Impact bar
-      const impactX = MARGINS.left + ppIssueW + 2;
-      const impactColor = getImpactColor(pp.impact);
+      // ── Impact — coloured badge ──
+      const impactX      = MARGINS.left + ppIssueW + 2;
+      const impactColor  = getImpactColor(pp.impact);
+      const impactBadgeW = ppImpactW - 6;
       doc.setFillColor(...impactColor);
-      doc.roundedRect(impactX, yPos + 4, 11, 5, 1, 1, "F");
+      doc.roundedRect(impactX, midY - 4, impactBadgeW, 7, 1.5, 1.5, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(6.5);
-      doc.text(`${pp.impact}`, impactX + 5.5, yPos + 8, { align: "center" });
-      doc.setTextColor(...COLORS.textLight);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(6);
-      doc.setFontSize(5.5);
-      doc.text("/100", impactX + 5.5, yPos + 13, {
-        align: "center",
-      });
+      doc.setFontSize(7.5);
+      doc.text(`${pp.impact}/100`, impactX + impactBadgeW / 2, midY + 0.5, { align: "center" });
 
-      // Ease
-      const easeX = MARGINS.left + ppIssueW + ppImpactW + 2;
-      const easeLabel = getEaseLabel(pp.ease);
+      // ── Difficulty — coloured label badge ──
+      const easeX      = MARGINS.left + ppIssueW + ppImpactW + 2;
+      const easeLabel  = getEaseLabel(pp.ease);
       const easeColor: [number, number, number] =
-        pp.ease >= 70
-          ? GREEN_PRIMARY
-          : pp.ease >= 40
-            ? COLORS.warning
-            : RED_PRIMARY;
+        pp.ease >= 70 ? GREEN_PRIMARY : pp.ease >= 40 ? COLORS.warning : RED_PRIMARY;
+      const easeBadgeW = ppEaseW - 4;
       doc.setFillColor(...easeColor);
-      doc.roundedRect(easeX, yPos + 4, ppEaseW - 4, 5, 1, 1, "F");
+      doc.roundedRect(easeX, midY - 4, easeBadgeW, 7, 1.5, 1.5, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(6.5);
-      doc.text(easeLabel, easeX + (ppEaseW - 4) / 2, yPos + 8, {
-        align: "center",
-      });
+      doc.text(easeLabel, easeX + easeBadgeW / 2, midY + 0.5, { align: "center" });
 
-      // First step
-      const stepX = MARGINS.left + ppIssueW + ppImpactW + ppEaseW + 3;
+      // ── First recommended action — full text, top-aligned ──
+      const stepX      = MARGINS.left + ppIssueW + ppImpactW + ppEaseW + 3;
+      const stepStartY = yPos + PP_PAD_V / 2 + PP_LINE_H * 0.8;
       doc.setTextColor(...COLORS.text);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(6.5);
-      const stepLines = doc.splitTextToSize(pp.first_step || "", ppStepW - 8);
-      stepLines.slice(0, 4).forEach((line: string, li: number) => {
-        doc.text(line, stepX, yPos + 7 + li * 4);
+      stepLines.forEach((line, li) => {
+        doc.text(line, stepX, stepStartY + li * PP_LINE_H);
       });
 
-      // AI Synthesis
-      const synthX =
-        MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW + 3;
-      const synthesis = sanitizePdfText(getSynthesis(pp.issue));
-      if (synthesis) {
-        doc.setFillColor(...BLUE_PALE);
-        doc.roundedRect(
-          synthX - 1,
-          yPos + 2,
-          ppSynthesisW - 4,
-          ppRowH - 4,
-          1,
-          1,
-          "F",
-        );
+      // ── AI analysis — first sentence only, height-driven ──
+      if (synthLines.length > 0) {
+        const synthX      = MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW + 3;
+        const synthStartY = yPos + PP_PAD_V / 2 + PP_LINE_H * 0.8; // top-aligned with top padding
         doc.setTextColor(...BLUE_DARK);
         doc.setFont("helvetica", "italic");
-        doc.setFontSize(6);
-        const synthLines = doc.splitTextToSize(synthesis, ppSynthesisW - 8);
-        synthLines.slice(0, 5).forEach((line: string, li: number) => {
-          doc.text(line, synthX + 2, yPos + 7 + li * 3.8);
+        doc.setFontSize(6.5);
+        synthLines.forEach((line, li) => {
+          doc.text(line, synthX, synthStartY + li * PP_LINE_H);
         });
       }
 
       yPos += ppRowH;
     });
 
+    // Outer border spans the full accumulated height of all rows
+    const totalRowsH = rowHeights.reduce((a, b) => a + b, 0);
     doc.setDrawColor(...COLORS.warning);
     doc.setLineWidth(0.6);
-    doc.roundedRect(
-      MARGINS.left,
-      ppStartY - ppHdrH,
-      ppTableW,
-      ppHdrH + ppRowH * painPoints.length,
-      1,
-      1,
-      "S",
-    );
+    doc.roundedRect(MARGINS.left, ppStartY - ppHdrH, ppTableW, ppHdrH + totalRowsH, 1, 1, "S");
   } else {
     doc.setTextColor(...COLORS.textLight);
     doc.setFontSize(10);
