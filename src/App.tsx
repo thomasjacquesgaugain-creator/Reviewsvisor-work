@@ -70,8 +70,6 @@ const StripeReturnDetector = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Removed key in case of billing sucess to avoid redirection on billing/cancel page after successful payment
-    // Laisser la page de succès tranquille et purger le flag
     if (location.pathname === "/billing/success") {
       sessionStorage.removeItem("stripeCheckoutStarted");
       return;
@@ -80,12 +78,28 @@ const StripeReturnDetector = () => {
       sessionStorage.removeItem("stripeCheckoutStarted");
       return;
     }
-    // Ne vérifier que si on n'est pas déjà sur la page d'annulation
-    console.log("Checking stripe return");
     if (sessionStorage.getItem("stripeCheckoutStarted") === "true") {
       sessionStorage.removeItem("stripeCheckoutStarted");
       navigate("/billing/cancel");
     }
+  }, [location.pathname, navigate]);
+  useEffect(() => {
+    function handlePageShow(event: PageTransitionEvent) {
+      if (!event.persisted) return;
+
+      if (location.pathname === "/billing/success" || location.pathname === "/billing/cancel") {
+        sessionStorage.removeItem("stripeCheckoutStarted");
+        return;
+      }
+
+      if (sessionStorage.getItem("stripeCheckoutStarted") === "true") {
+        sessionStorage.removeItem("stripeCheckoutStarted");
+        navigate("/billing/cancel");
+      }
+    }
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
   }, [location.pathname, navigate]);
 
   return null;
