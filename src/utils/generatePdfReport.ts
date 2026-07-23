@@ -1857,309 +1857,309 @@ else {
   // PAGE 6 — RECOMMANDATIONS (real quick_wins + projects)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  pageNumber = addNewPage(doc, pageNumber);
-  yPos = MARGINS.top;
+  // pageNumber = addNewPage(doc, pageNumber);
+  // yPos = MARGINS.top;
 
-  const page6Lang = reportLang;
-  const page6Text = (field: unknown): string => {
-    if (!field) return "";
-    if (typeof field === "string") {
-      try {
-        const parsed = JSON.parse(field);
-        if (parsed && typeof parsed === "object") {
-          const obj = parsed as Record<string, unknown>;
-          return String(obj[page6Lang] ?? obj.fr ?? obj.en ?? field);
-        }
-      } catch {}
-      return field;
-    }
-    if (typeof field === "object") {
-      const obj = field as Record<string, unknown>;
-      return String(obj[page6Lang] ?? obj.fr ?? obj.en ?? "");
-    }
-    return String(field);
-  };
+  // const page6Lang = reportLang;
+  // const page6Text = (field: unknown): string => {
+  //   if (!field) return "";
+  //   if (typeof field === "string") {
+  //     try {
+  //       const parsed = JSON.parse(field);
+  //       if (parsed && typeof parsed === "object") {
+  //         const obj = parsed as Record<string, unknown>;
+  //         return String(obj[page6Lang] ?? obj.fr ?? obj.en ?? field);
+  //       }
+  //     } catch {}
+  //     return field;
+  //   }
+  //   if (typeof field === "object") {
+  //     const obj = field as Record<string, unknown>;
+  //     return String(obj[page6Lang] ?? obj.fr ?? obj.en ?? "");
+  //   }
+  //   return String(field);
+  // };
 
-  const page6ResolveActionPlan = (obj: SmartObjective): string[] => {
-    const raw: unknown[] =
-      (obj.action_plan as any)?.[page6Lang] ??
-      (obj.action_plan as any)?.fr ??
-      (obj.action_plan as any)?.en ??
-      [];
+  // const page6ResolveActionPlan = (obj: SmartObjective): string[] => {
+  //   const raw: unknown[] =
+  //     (obj.action_plan as any)?.[page6Lang] ??
+  //     (obj.action_plan as any)?.fr ??
+  //     (obj.action_plan as any)?.en ??
+  //     [];
 
-    if (Array.isArray(raw) && raw.length > 0) {
-      return raw
-        .map((item) => {
-          if (typeof item === "string") return item;
-          if (item && typeof item === "object") {
-            const o = item as Record<string, unknown>;
-            if (typeof o.text === "string") return o.text;
-            if (o.title) return page6Text(o.title);
-            return page6Text(item);
-          }
-          return String(item);
-        })
-        .filter(Boolean);
-    }
+  //   if (Array.isArray(raw) && raw.length > 0) {
+  //     return raw
+  //       .map((item) => {
+  //         if (typeof item === "string") return item;
+  //         if (item && typeof item === "object") {
+  //           const o = item as Record<string, unknown>;
+  //           if (typeof o.text === "string") return o.text;
+  //           if (o.title) return page6Text(o.title);
+  //           return page6Text(item);
+  //         }
+  //         return String(item);
+  //       })
+  //       .filter(Boolean);
+  //   }
 
-    if (Array.isArray((obj as any).actions)) {
-      return ((obj as any).actions as any[])
-        .map((a) => {
-          if (typeof a === "string") return a;
-          if (typeof a?.text === "string") return a.text;
-          if (a?.title) return page6Text(a.title);
-          return page6Text(a);
-        })
-        .filter(Boolean);
-    }
+  //   if (Array.isArray((obj as any).actions)) {
+  //     return ((obj as any).actions as any[])
+  //       .map((a) => {
+  //         if (typeof a === "string") return a;
+  //         if (typeof a?.text === "string") return a.text;
+  //         if (a?.title) return page6Text(a.title);
+  //         return page6Text(a);
+  //       })
+  //       .filter(Boolean);
+  //   }
 
-    return [];
-  };
+  //   return [];
+  // };
 
-  const smartObjectivesByKey = new Map(
-    (data.smart_objectives ?? [])
-      .filter((obj) => obj.pareto_cause?.key || obj.problem)
-      .map((obj) => {
-        const key = String(obj.pareto_cause?.key ?? obj.problem ?? "")
-          .trim()
-          .toLowerCase();
-        return [key, obj] as const;
-      }),
-  );
+  // const smartObjectivesByKey = new Map(
+  //   (data.smart_objectives ?? [])
+  //     .filter((obj) => obj.pareto_cause?.key || obj.problem)
+  //     .map((obj) => {
+  //       const key = String(obj.pareto_cause?.key ?? obj.problem ?? "")
+  //         .trim()
+  //         .toLowerCase();
+  //       return [key, obj] as const;
+  //     }),
+  // );
 
-  const page6Objectives = topIssues.slice(0, 3).map((issue, idx) => {
-    const matchKey = String(issue.key ?? issue.theme ?? "")
-      .trim()
-      .toLowerCase();
-    const objective = smartObjectivesByKey.get(matchKey);
-    return {
-      issue,
-      objective,
-      issueName: page6Text(issue.theme || issue.key || `Issue ${idx + 1}`),
-      issuePct:
-        issue.count && data.totalReviews > 0
-          ? Math.round((issue.count / data.totalReviews) * 100)
-          : null,
-      actionPlanItems: objective
-        ? page6ResolveActionPlan(objective).slice(0, 4)
-        : [],
-      kpiText: objective ? page6Text(objective.kpi_label) : "",
-      status: String(objective?.status ?? "todo").toLowerCase(),
-      priority: String(objective?.priority ?? "").toLowerCase(),
-      currentProgress: objective
-        ? ((objective as any).current_progress ?? 0)
-        : 0,
-      currentValue: objective ? ((objective as any).current_value ?? 0) : 0,
-      isMissing: !objective,
-    };
-  });
+  // const page6Objectives = topIssues.slice(0, 3).map((issue, idx) => {
+  //   const matchKey = String(issue.key ?? issue.theme ?? "")
+  //     .trim()
+  //     .toLowerCase();
+  //   const objective = smartObjectivesByKey.get(matchKey);
+  //   return {
+  //     issue,
+  //     objective,
+  //     issueName: page6Text(issue.theme || issue.key || `Issue ${idx + 1}`),
+  //     issuePct:
+  //       issue.count && data.totalReviews > 0
+  //         ? Math.round((issue.count / data.totalReviews) * 100)
+  //         : null,
+  //     actionPlanItems: objective
+  //       ? page6ResolveActionPlan(objective).slice(0, 4)
+  //       : [],
+  //     kpiText: objective ? page6Text(objective.kpi_label) : "",
+  //     status: String(objective?.status ?? "todo").toLowerCase(),
+  //     priority: String(objective?.priority ?? "").toLowerCase(),
+  //     currentProgress: objective
+  //       ? ((objective as any).current_progress ?? 0)
+  //       : 0,
+  //     currentValue: objective ? ((objective as any).current_value ?? 0) : 0,
+  //     isMissing: !objective,
+  //   };
+  // });
 
-  yPos = addSectionTitle(
-    doc,
-    page6Lang === "fr" ? "Plan d'action recommande" : "Recommended action plan",
-    yPos,
-    COLORS.success,
-  );
+  // yPos = addSectionTitle(
+  //   doc,
+  //   page6Lang === "fr" ? "Plan d'action recommande" : "Recommended action plan",
+  //   yPos,
+  //   COLORS.success,
+  // );
 
-  if (page6Objectives.length === 0) {
-    const emptyText =
-      page6Lang === "fr" ? "Aucune action disponible" : "No actions available";
-    const emptySub =
-      page6Lang === "fr"
-        ? "Aucun objectif SMART n a encore ete genere pour cet etablissement."
-        : "No SMART objective has been created for this establishment yet.";
-    const emptyBoxH = 34;
-    doc.setFillColor(250, 250, 250);
-    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, emptyBoxH, 3, 3, "F");
-    doc.setDrawColor(...COLORS.textLight);
-    doc.setLineWidth(0.4);
-    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, emptyBoxH, 3, 3, "S");
-    doc.setTextColor(...COLORS.textLight);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text(emptyText, PAGE_WIDTH / 2, yPos + 15, { align: "center" });
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.text(emptySub, PAGE_WIDTH / 2, yPos + 22, { align: "center" });
-  } else {
-    page6Objectives.forEach((entry, idx) => {
-      const issueName = entry.issueName;
-      const issuePct = entry.issuePct;
-      const actionPlanItems = entry.actionPlanItems;
-      const kpiText = entry.kpiText;
-      const status = entry.status;
-      const priority = entry.priority;
-      const isMissing = entry.isMissing;
-      const accent =
-        status === "completed"
-          ? GREEN_PRIMARY
-          : status === "in_progress"
-            ? COLORS.warning
-            : ([156, 163, 175] as [number, number, number]);
-      const pale =
-        status === "completed"
-          ? GREEN_PALE
-          : status === "in_progress"
-            ? ([255, 248, 219] as [number, number, number])
-            : ([243, 244, 246] as [number, number, number]);
-      const statusLabel =
-        status === "completed"
-          ? page6Lang === "fr"
-            ? "Termine"
-            : "Completed"
-          : status === "in_progress"
-            ? page6Lang === "fr"
-              ? "En cours"
-              : "In progress"
-            : page6Lang === "fr"
-              ? "A faire"
-              : "To do";
+  // if (page6Objectives.length === 0) {
+  //   const emptyText =
+  //     page6Lang === "fr" ? "Aucune action disponible" : "No actions available";
+  //   const emptySub =
+  //     page6Lang === "fr"
+  //       ? "Aucun objectif SMART n a encore ete genere pour cet etablissement."
+  //       : "No SMART objective has been created for this establishment yet.";
+  //   const emptyBoxH = 34;
+  //   doc.setFillColor(250, 250, 250);
+  //   doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, emptyBoxH, 3, 3, "F");
+  //   doc.setDrawColor(...COLORS.textLight);
+  //   doc.setLineWidth(0.4);
+  //   doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, emptyBoxH, 3, 3, "S");
+  //   doc.setTextColor(...COLORS.textLight);
+  //   doc.setFont("helvetica", "bold");
+  //   doc.setFontSize(10);
+  //   doc.text(emptyText, PAGE_WIDTH / 2, yPos + 15, { align: "center" });
+  //   doc.setFont("helvetica", "normal");
+  //   doc.setFontSize(8);
+  //   doc.text(emptySub, PAGE_WIDTH / 2, yPos + 22, { align: "center" });
+  // } else {
+  //   page6Objectives.forEach((entry, idx) => {
+  //     const issueName = entry.issueName;
+  //     const issuePct = entry.issuePct;
+  //     const actionPlanItems = entry.actionPlanItems;
+  //     const kpiText = entry.kpiText;
+  //     const status = entry.status;
+  //     const priority = entry.priority;
+  //     const isMissing = entry.isMissing;
+  //     const accent =
+  //       status === "completed"
+  //         ? GREEN_PRIMARY
+  //         : status === "in_progress"
+  //           ? COLORS.warning
+  //           : ([156, 163, 175] as [number, number, number]);
+  //     const pale =
+  //       status === "completed"
+  //         ? GREEN_PALE
+  //         : status === "in_progress"
+  //           ? ([255, 248, 219] as [number, number, number])
+  //           : ([243, 244, 246] as [number, number, number]);
+  //     const statusLabel =
+  //       status === "completed"
+  //         ? page6Lang === "fr"
+  //           ? "Termine"
+  //           : "Completed"
+  //         : status === "in_progress"
+  //           ? page6Lang === "fr"
+  //             ? "En cours"
+  //             : "In progress"
+  //           : page6Lang === "fr"
+  //             ? "A faire"
+  //             : "To do";
 
-      const actionTextX = MARGINS.left + 12;
-      const actionWrapWidth = CONTENT_WIDTH - 12;
+  //     const actionTextX = MARGINS.left + 12;
+  //     const actionWrapWidth = CONTENT_WIDTH - 12;
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.2);
+  //     doc.setFont("helvetica", "normal");
+  //     doc.setFontSize(8.2);
 
-      const actionBlocks =
-        actionPlanItems.length > 0
-          ? actionPlanItems.map(
-              (item) => doc.splitTextToSize(item, actionWrapWidth) as string[],
-            )
-          : [];
+  //     const actionBlocks =
+  //       actionPlanItems.length > 0
+  //         ? actionPlanItems.map(
+  //             (item) => doc.splitTextToSize(item, actionWrapWidth) as string[],
+  //           )
+  //         : [];
 
-      const actionListH = actionBlocks.reduce(
-        (sum, lines) => sum + lines.length * 4.1 + 1.5,
-        0,
-      );
+  //     const actionListH = actionBlocks.reduce(
+  //       (sum, lines) => sum + lines.length * 4.1 + 1.5,
+  //       0,
+  //     );
 
-      const cardH = 24 + actionListH + 4;
-      if (yPos + cardH > PAGE_HEIGHT - MARGINS.bottom - 10) {
-        pageNumber = addNewPage(doc, pageNumber);
-        yPos = MARGINS.top;
-      }
+  //     const cardH = 24 + actionListH + 4;
+  //     if (yPos + cardH > PAGE_HEIGHT - MARGINS.bottom - 10) {
+  //       pageNumber = addNewPage(doc, pageNumber);
+  //       yPos = MARGINS.top;
+  //     }
 
-      const cardRadius = 3;
-      const accentWidth = 1.8;
+  //     const cardRadius = 3;
+  //     const accentWidth = 1.8;
 
-      doc.setFillColor(...accent);
-      doc.roundedRect(
-        MARGINS.left,
-        yPos,
-        CONTENT_WIDTH,
-        cardH,
-        cardRadius,
-        cardRadius,
-        "F",
-      );
+  //     doc.setFillColor(...accent);
+  //     doc.roundedRect(
+  //       MARGINS.left,
+  //       yPos,
+  //       CONTENT_WIDTH,
+  //       cardH,
+  //       cardRadius,
+  //       cardRadius,
+  //       "F",
+  //     );
 
-      doc.setFillColor(...pale);
-      doc.roundedRect(
-        MARGINS.left + accentWidth,
-        yPos,
-        CONTENT_WIDTH - accentWidth,
-        cardH,
-        cardRadius,
-        cardRadius,
-        "F",
-      );
+  //     doc.setFillColor(...pale);
+  //     doc.roundedRect(
+  //       MARGINS.left + accentWidth,
+  //       yPos,
+  //       CONTENT_WIDTH - accentWidth,
+  //       cardH,
+  //       cardRadius,
+  //       cardRadius,
+  //       "F",
+  //     );
 
-      doc.setDrawColor(...accent);
-      doc.setLineWidth(0.6);
-      doc.roundedRect(
-        MARGINS.left,
-        yPos,
-        CONTENT_WIDTH,
-        cardH,
-        cardRadius,
-        cardRadius,
-        "S",
-      );
+  //     doc.setDrawColor(...accent);
+  //     doc.setLineWidth(0.6);
+  //     doc.roundedRect(
+  //       MARGINS.left,
+  //       yPos,
+  //       CONTENT_WIDTH,
+  //       cardH,
+  //       cardRadius,
+  //       cardRadius,
+  //       "S",
+  //     );
 
-      doc.setTextColor(...COLORS.text);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      const displayedTitle = truncateText(issueName, 36);
-      doc.text(displayedTitle, MARGINS.left + 6, yPos + 8);
+  //     doc.setTextColor(...COLORS.text);
+  //     doc.setFont("helvetica", "bold");
+  //     doc.setFontSize(10);
+  //     const displayedTitle = truncateText(issueName, 36);
+  //     doc.text(displayedTitle, MARGINS.left + 6, yPos + 8);
 
-      doc.setFillColor(...accent);
-      doc.roundedRect(
-        MARGINS.left + CONTENT_WIDTH - 28,
-        yPos + 4,
-        20,
-        6,
-        2,
-        2,
-        "F",
-      );
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(6.8);
-      doc.text(statusLabel, MARGINS.left + CONTENT_WIDTH - 18, yPos + 8, {
-        align: "center",
-      });
+  //     doc.setFillColor(...accent);
+  //     doc.roundedRect(
+  //       MARGINS.left + CONTENT_WIDTH - 28,
+  //       yPos + 4,
+  //       20,
+  //       6,
+  //       2,
+  //       2,
+  //       "F",
+  //     );
+  //     doc.setTextColor(255, 255, 255);
+  //     doc.setFont("helvetica", "bold");
+  //     doc.setFontSize(6.8);
+  //     doc.text(statusLabel, MARGINS.left + CONTENT_WIDTH - 18, yPos + 8, {
+  //       align: "center",
+  //     });
 
-      if (actionBlocks.length > 0) {
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(...accent);
-        doc.setFontSize(8);
-        doc.text(
-          page6Lang === "fr" ? "Actions cles" : "Key actions",
-          MARGINS.left + 6,
-          yPos + 13,
-        );
-      } else {
-        doc.setFont("helvetica", "italic");
-        doc.setTextColor(...COLORS.textLight);
-        doc.setFontSize(8);
-        doc.text(
-          page6Lang === "fr"
-            ? "Aucune action disponible"
-            : "No action items available",
-          MARGINS.left + 6,
-          yPos + 13,
-        );
-      }
+  //     if (actionBlocks.length > 0) {
+  //       doc.setFont("helvetica", "bold");
+  //       doc.setTextColor(...accent);
+  //       doc.setFontSize(8);
+  //       doc.text(
+  //         page6Lang === "fr" ? "Actions cles" : "Key actions",
+  //         MARGINS.left + 6,
+  //         yPos + 13,
+  //       );
+  //     } else {
+  //       doc.setFont("helvetica", "italic");
+  //       doc.setTextColor(...COLORS.textLight);
+  //       doc.setFontSize(8);
+  //       doc.text(
+  //         page6Lang === "fr"
+  //           ? "Aucune action disponible"
+  //           : "No action items available",
+  //         MARGINS.left + 6,
+  //         yPos + 13,
+  //       );
+  //     }
 
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(...COLORS.text);
-      doc.setFontSize(8.2);
-      let lineY = yPos + 17;
-      actionBlocks.forEach((lines, actionIdx) => {
-        doc.setFillColor(...accent);
-        doc.roundedRect(
-          MARGINS.left + 5.5,
-          lineY - 2.4,
-          5.5,
-          5.5,
-          1.5,
-          1.5,
-          "F",
-        );
-        doc.setTextColor(255, 255, 255);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(6.8);
-        doc.text(String(actionIdx + 1), MARGINS.left + 8.75, lineY + 1.6, {
-          align: "center",
-        });
+  //     doc.setFont("helvetica", "normal");
+  //     doc.setTextColor(...COLORS.text);
+  //     doc.setFontSize(8.2);
+  //     let lineY = yPos + 17;
+  //     actionBlocks.forEach((lines, actionIdx) => {
+  //       doc.setFillColor(...accent);
+  //       doc.roundedRect(
+  //         MARGINS.left + 5.5,
+  //         lineY - 2.4,
+  //         5.5,
+  //         5.5,
+  //         1.5,
+  //         1.5,
+  //         "F",
+  //       );
+  //       doc.setTextColor(255, 255, 255);
+  //       doc.setFont("helvetica", "bold");
+  //       doc.setFontSize(6.8);
+  //       doc.text(String(actionIdx + 1), MARGINS.left + 8.75, lineY + 1.6, {
+  //         align: "center",
+  //       });
 
-        doc.setTextColor(...COLORS.text);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8.2);
-        lines.forEach((ln, lineIdx) => {
-          doc.text(ln, actionTextX, lineY + lineIdx * 4.1);
-        });
-        lineY += lines.length * 4.1 + 2.2;
-      });
+  //       doc.setTextColor(...COLORS.text);
+  //       doc.setFont("helvetica", "normal");
+  //       doc.setFontSize(8.2);
+  //       lines.forEach((ln, lineIdx) => {
+  //         doc.text(ln, actionTextX, lineY + lineIdx * 4.1);
+  //       });
+  //       lineY += lines.length * 4.1 + 2.2;
+  //     });
 
-      doc.setTextColor(...COLORS.textLight);
-      doc.setFontSize(7.8);
+  //     doc.setTextColor(...COLORS.textLight);
+  //     doc.setFontSize(7.8);
 
-      yPos += cardH + 4;
-    });
-  }
+  //     yPos += cardH + 4;
+  //   });
+  // }
 
-  addFooter(doc, pageNumber);
+  // addFooter(doc, pageNumber);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PAGE 10 — SMART OBJECTIFS (one card per objective, full page each)
@@ -2905,7 +2905,7 @@ if (fillW > 60) {
   yPos = MARGINS.top;
   yPos = addSectionTitle(
     doc,
-    checklistLang === "fr" ? "Checklist operationnelle" : "Operational checklist",
+    checklistLang === "fr" ? "Checklist operationnelle/Plan d'action recommande" : "Operational checklist/Recommended action plan",
     yPos,
     GREEN_PRIMARY,
   );
