@@ -172,7 +172,7 @@ const TXT = {
     noIssuesFound: 'Aucun probleme majeur identifie',
     loveHateTitle: "Ce que vos clients aiment et n'aiment pas",
     mentions: 'mentions',
-    detailedAnalysisTitle: 'Analyse Detaillee',
+    detailedAnalysisTitle: 'Résumé et analyse des thèmes',
     ratingDistribution: 'Repartition des avis par note',
     recurringThemesTitle: 'Themes recurrents avec sentiment et evidence quotes',
     recurringThemesSubtitle: 'Les evidence quotes ci-dessous illustrent des avis reels associes a chaque theme.',
@@ -243,7 +243,7 @@ const TXT = {
     noIssuesFound: 'No major issue identified',
     loveHateTitle: 'What your customers love and dislike',
     mentions: 'mentions',
-    detailedAnalysisTitle: 'Detailed Analysis',
+    detailedAnalysisTitle: 'Summary and theme analysis',
     ratingDistribution: 'Review distribution by rating',
     recurringThemesTitle: 'Recurring themes with sentiment and evidence quotes',
     recurringThemesSubtitle: 'The evidence quotes below illustrate real reviews associated with each theme.',
@@ -833,104 +833,104 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
   // PAGE 3 — SYNTHESE CLIENT (real data)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  pageNumber = addNewPage(doc, pageNumber);
-  yPos = MARGINS.top;
-  yPos = addSectionTitle(doc, S.synthesisTitle, yPos);
+  // pageNumber = addNewPage(doc, pageNumber);
+  // yPos = MARGINS.top;
+  // yPos = addSectionTitle(doc, S.synthesisTitle, yPos);
 
-  // AI one-liner banner
-  if (oneLiner) {
-    const bannerLines = doc.splitTextToSize(`"${oneLiner}"`, CONTENT_WIDTH - 16);
-    const bannerH = Math.max(16, 8 + bannerLines.length * 5);
-    doc.setFillColor(...BLUE_PALE);
-    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, bannerH, 3, 3, 'F');
-    doc.setFillColor(...BLUE_PRIMARY);
-    doc.rect(MARGINS.left, yPos, 3, bannerH, 'F');
-    doc.setTextColor(...BLUE_DARK);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'italic');
-    doc.text(bannerLines, MARGINS.left + 8, yPos + 6);
-    yPos += bannerH + 10;
-  }
+  // // AI one-liner banner
+  // if (oneLiner) {
+  //   const bannerLines = doc.splitTextToSize(`"${oneLiner}"`, CONTENT_WIDTH - 16);
+  //   const bannerH = Math.max(16, 8 + bannerLines.length * 5);
+  //   doc.setFillColor(...BLUE_PALE);
+  //   doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, bannerH, 3, 3, 'F');
+  //   doc.setFillColor(...BLUE_PRIMARY);
+  //   doc.rect(MARGINS.left, yPos, 3, bannerH, 'F');
+  //   doc.setTextColor(...BLUE_DARK);
+  //   doc.setFontSize(9);
+  //   doc.setFont('helvetica', 'italic');
+  //   doc.text(bannerLines, MARGINS.left + 8, yPos + 6);
+  //   yPos += bannerH + 10;
+  // }
 
-  // Points forts from real top_praises
-  const strengthRows = topPraises.slice(0, 4).map(s => ({
-    label: s.theme, count: s.count
-  }));
-  yPos = drawSectionTable(
-    doc, yPos,
-    S.mostAppreciated,
-    strengthRows,
-    S.noStrengthsFound,
-    GREEN_PRIMARY, GREEN_PALE, GREEN_LIGHT,
-    [220, 252, 231], [22, 101, 52], GREEN_PRIMARY
-  );
+  // // Points forts from real top_praises
+  // const strengthRows = topPraises.slice(0, 4).map(s => ({
+  //   label: s.theme, count: s.count
+  // }));
+  // yPos = drawSectionTable(
+  //   doc, yPos,
+  //   S.mostAppreciated,
+  //   strengthRows,
+  //   S.noStrengthsFound,
+  //   GREEN_PRIMARY, GREEN_PALE, GREEN_LIGHT,
+  //   [220, 252, 231], [22, 101, 52], GREEN_PRIMARY
+  // );
 
-  // Points de friction from real top_issues
-  const issueRows = topIssues.slice(0, 4).map(i => ({
-    label: i.theme, count: i.count
-  }));
-  yPos = drawSectionTable(
-    doc, yPos,
-    S.mainFrictionPoints,
-    issueRows,
-    S.noIssuesFound,
-    RED_PRIMARY, RED_PALE, RED_LIGHT,
-    [254, 226, 226], [153, 27, 27], RED_PRIMARY
-  );
+  // // Points de friction from real top_issues
+  // const issueRows = topIssues.slice(0, 4).map(i => ({
+  //   label: i.theme, count: i.count
+  // }));
+  // yPos = drawSectionTable(
+  //   doc, yPos,
+  //   S.mainFrictionPoints,
+  //   issueRows,
+  //   S.noIssuesFound,
+  //   RED_PRIMARY, RED_PALE, RED_LIGHT,
+  //   [254, 226, 226], [153, 27, 27], RED_PRIMARY
+  // );
 
-  // What customers love/hate from summary
-  if (customersLove.length > 0 || customersHate.length > 0) {
-    const impactHdrH = 9;
-    doc.setFillColor(...BLUE_PRIMARY);
-    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, impactHdrH, 1, 1, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text(S.loveHateTitle, MARGINS.left + 5, yPos + 6);
-    yPos += impactHdrH;
+  // // What customers love/hate from summary
+  // if (customersLove.length > 0 || customersHate.length > 0) {
+  //   const impactHdrH = 9;
+  //   doc.setFillColor(...BLUE_PRIMARY);
+  //   doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, impactHdrH, 1, 1, 'F');
+  //   doc.setTextColor(255, 255, 255);
+  //   doc.setFontSize(9);
+  //   doc.setFont('helvetica', 'bold');
+  //   doc.text(S.loveHateTitle, MARGINS.left + 5, yPos + 6);
+  //   yPos += impactHdrH;
 
-    const allItems = [
-      ...customersLove.slice(0, 2).map(l => ({ ...l, type: 'love' as const })),
-      ...customersHate.slice(0, 2).map(h => ({ ...h, type: 'hate' as const })),
-    ];
+  //   const allItems = [
+  //     ...customersLove.slice(0, 2).map(l => ({ ...l, type: 'love' as const })),
+  //     ...customersHate.slice(0, 2).map(h => ({ ...h, type: 'hate' as const })),
+  //   ];
 
-    allItems.forEach((item, idx) => {
-      const rowH = 13;
-      const bg: [number, number, number] = item.type === 'love' ? GREEN_PALE : RED_PALE;
-      doc.setFillColor(...bg);
-      doc.rect(MARGINS.left, yPos, CONTENT_WIDTH, rowH, 'F');
-      doc.setDrawColor(220, 220, 220);
-      doc.setLineWidth(0.3);
-      if (idx > 0) doc.line(MARGINS.left, yPos, MARGINS.left + CONTENT_WIDTH, yPos);
+  //   allItems.forEach((item, idx) => {
+  //     const rowH = 13;
+  //     const bg: [number, number, number] = item.type === 'love' ? GREEN_PALE : RED_PALE;
+  //     doc.setFillColor(...bg);
+  //     doc.rect(MARGINS.left, yPos, CONTENT_WIDTH, rowH, 'F');
+  //     doc.setDrawColor(220, 220, 220);
+  //     doc.setLineWidth(0.3);
+  //     if (idx > 0) doc.line(MARGINS.left, yPos, MARGINS.left + CONTENT_WIDTH, yPos);
 
-      const iconColor: [number, number, number] = item.type === 'love' ? GREEN_PRIMARY : RED_PRIMARY;
-      const icon = item.type === 'love' ? '+' : '-';
-      doc.setFillColor(...iconColor);
-      doc.circle(MARGINS.left + 6, yPos + 6.5, 3.5, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.text(icon, MARGINS.left + 6, yPos + 7.5, { align: 'center' });
+  //     const iconColor: [number, number, number] = item.type === 'love' ? GREEN_PRIMARY : RED_PRIMARY;
+  //     const icon = item.type === 'love' ? '+' : '-';
+  //     doc.setFillColor(...iconColor);
+  //     doc.circle(MARGINS.left + 6, yPos + 6.5, 3.5, 'F');
+  //     doc.setTextColor(255, 255, 255);
+  //     doc.setFont('helvetica', 'bold');
+  //     doc.setFontSize(9);
+  //     doc.text(icon, MARGINS.left + 6, yPos + 7.5, { align: 'center' });
 
-      doc.setTextColor(...COLORS.text);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.5);
-      doc.text(truncateText(item.theme, 30), MARGINS.left + 14, yPos + 6);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.5);
-      doc.setTextColor(...COLORS.textLight);
-      doc.text(truncateText(item.reason || '', 70), MARGINS.left + 14, yPos + 11);
+  //     doc.setTextColor(...COLORS.text);
+  //     doc.setFont('helvetica', 'bold');
+  //     doc.setFontSize(8.5);
+  //     doc.text(truncateText(item.theme, 30), MARGINS.left + 14, yPos + 6);
+  //     doc.setFont('helvetica', 'normal');
+  //     doc.setFontSize(7.5);
+  //     doc.setTextColor(...COLORS.textLight);
+  //     doc.text(truncateText(item.reason || '', 70), MARGINS.left + 14, yPos + 11);
 
-      yPos += rowH;
-    });
+  //     yPos += rowH;
+  //   });
 
-    doc.setDrawColor(...BLUE_PRIMARY);
-    doc.setLineWidth(0);
-    doc.roundedRect(MARGINS.left, yPos - allItems.length * 13 - impactHdrH,
-      CONTENT_WIDTH, impactHdrH + allItems.length * 13, 1, 1, 'S');
-  }
+  //   doc.setDrawColor(...BLUE_PRIMARY);
+  //   doc.setLineWidth(0);
+  //   doc.roundedRect(MARGINS.left, yPos - allItems.length * 13 - impactHdrH,
+  //     CONTENT_WIDTH, impactHdrH + allItems.length * 13, 1, 1, 'S');
+  // }
 
-  addFooter(doc, pageNumber);
+  // addFooter(doc, pageNumber);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PAGE 4 — ANALYSE DETAILLEE (real themes)
@@ -1016,7 +1016,7 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
 
   // Universal + Industry themes with sentiment
   const themeMap = new Map<string, Theme>();
-  [...themesUniv.slice(0, 3), ...themesInd.slice(0, 3)]
+  [...themesUniv.slice(0), ...themesInd.slice(0)]
     .filter(Boolean)
     .forEach((theme) => {
       const key = (theme.theme || '').trim().toLowerCase() || `${theme.theme}-${theme.count || theme.importance || 0}`;
@@ -3380,46 +3380,46 @@ if (fillW > 60) {
   // Last page — CONCLUSION STRATEGIQUE (real AI synthesis)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  pageNumber = addNewPage(doc, pageNumber);
-  yPos = MARGINS.top;
-  yPos = addSectionTitle(doc, S.conclusionTitle, yPos, COLORS.primary);
+  // pageNumber = addNewPage(doc, pageNumber);
+  // yPos = MARGINS.top;
+  // yPos = addSectionTitle(doc, S.conclusionTitle, yPos, COLORS.primary);
 
-  const strategicText = generateStrategicConclusion(data, ad, reportLang);
-  doc.setFillColor(...COLORS.background);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 200, 3, 3, 'F');
+  // const strategicText = generateStrategicConclusion(data, ad, reportLang);
+  // doc.setFillColor(...COLORS.background);
+  // doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 200, 3, 3, 'F');
 
-  doc.setTextColor(...COLORS.text);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
+  // doc.setTextColor(...COLORS.text);
+  // doc.setFontSize(10);
+  // doc.setFont('helvetica', 'normal');
 
-  const conclusionLines = doc.splitTextToSize(strategicText, CONTENT_WIDTH - 15);
-  let currentY = yPos + 10;
+  // const conclusionLines = doc.splitTextToSize(strategicText, CONTENT_WIDTH - 15);
+  // let currentY = yPos + 10;
 
-  conclusionLines.forEach((line: string) => {
-    if (currentY > yPos + 190) return;
-    const isSectionTitle = /^\d\./.test(line.trim());
-    doc.setFont('helvetica', isSectionTitle ? 'bold' : 'normal');
-    doc.setTextColor(...(isSectionTitle ? COLORS.primary : COLORS.text));
-    doc.text(line, MARGINS.left + 7, currentY);
-    currentY += 5.5;
-  });
+  // conclusionLines.forEach((line: string) => {
+  //   if (currentY > yPos + 190) return;
+  //   const isSectionTitle = /^\d\./.test(line.trim());
+  //   doc.setFont('helvetica', isSectionTitle ? 'bold' : 'normal');
+  //   doc.setTextColor(...(isSectionTitle ? COLORS.primary : COLORS.text));
+  //   doc.text(line, MARGINS.left + 7, currentY);
+  //   currentY += 5.5;
+  // });
 
-  yPos += 210;
-  doc.setFillColor(...COLORS.primary);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 20, 2, 2, 'F');
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'italic');
-  doc.text(
-    S.conclusionFooterLine1,
-    PAGE_WIDTH / 2, yPos + 8, { align: 'center' }
-  );
-  doc.text(
-    S.conclusionFooterLine2,
-    PAGE_WIDTH / 2, yPos + 14, { align: 'center' }
-  );
+  // yPos += 210;
+  // doc.setFillColor(...COLORS.primary);
+  // doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 20, 2, 2, 'F');
+  // doc.setTextColor(...COLORS.white);
+  // doc.setFontSize(9);
+  // doc.setFont('helvetica', 'italic');
+  // doc.text(
+  //   S.conclusionFooterLine1,
+  //   PAGE_WIDTH / 2, yPos + 8, { align: 'center' }
+  // );
+  // doc.text(
+  //   S.conclusionFooterLine2,
+  //   PAGE_WIDTH / 2, yPos + 14, { align: 'center' }
+  // );
 
-  addFooter(doc, pageNumber);
+  // addFooter(doc, pageNumber);
 
 
   // ── Save ────────────────────────────────────────────────────────────────────
