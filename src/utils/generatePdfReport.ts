@@ -2971,6 +2971,7 @@ if (fillW > 60) {
       pageNumber = addNewPage(doc, pageNumber);
       yPos = MARGINS.top;
     }
+    const cardStartY = yPos;
 
     doc.setFillColor(...pale);
     doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, cardH, 4, 4, "F");
@@ -3013,6 +3014,7 @@ if (fillW > 60) {
     doc.text(statusLabel, badgeX + badgeW / 2, yPos + 9.2, { align: "center" });
 
     yPos += 13;
+    const CARD_GAP = 6;
 
     if (!hasObjective) {
       doc.setFont("helvetica", "normal");
@@ -3032,11 +3034,10 @@ if (fillW > 60) {
         MARGINS.left + 6,
         yPos + 11,
       );
-      yPos += cardH + 6;
-      return;
+      yPos = cardStartY + cardH + CARD_GAP;      return;
     }
 
-    yPos += 2;
+    yPos += CARD_GAP;
 
     const summaryBoxes = [
       { title: checklistSectionTitle("daily"), value: entry.grouped.daily.length },
