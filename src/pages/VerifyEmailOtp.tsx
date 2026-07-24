@@ -22,10 +22,19 @@ import { useTranslation } from "react-i18next";
 
 type IncomingState = { email?: string };
 
+type PendingProfileData = {
+  first_name?: string;
+  last_name?: string;
+  full_name?: string;
+  preferred_language?: string;
+};
+
 const RESEND_COOLDOWN_SECONDS = 30;
+const PENDING_PROFILE_KEY = "pending_profile_data";
+const PENDING_EMAIL_KEY = "pending_verification_email";
 
 export default function VerifyEmailOtp() {
-  
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -35,7 +44,7 @@ export default function VerifyEmailOtp() {
   const [email, setEmail] = useState<string>(() => {
     const fromState = (location.state as IncomingState | null)?.email;
     if (fromState) return fromState;
-    return sessionStorage.getItem("pending_verification_email") || "";
+    return sessionStorage.getItem(PENDING_EMAIL_KEY) || "";
   });
 
   const [otp, setOtp] = useState("");
@@ -45,6 +54,7 @@ export default function VerifyEmailOtp() {
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [checkingStatus, setCheckingStatus] = useState(true);
 
   // Confirmation dialog state + which destination it should navigate to on confirm
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
@@ -52,14 +62,62 @@ export default function VerifyEmailOtp() {
 
   useEffect(() => {
     if (email) return;
-    if (authLoading) return; 
+    if (authLoading) return;
     if (user?.email) {
       setEmail(user.email);
     } else {
-     
+
       navigate("/inscription", { replace: true });
     }
   }, [email, authLoading, user?.email, navigate]);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkOnboardingStatus() {
+      if (authLoading) return;
+
+      if (!user) {
+        if (!cancelled) setCheckingStatus(false);
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("onboarding_status")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error("Failed to load onboarding_status:", error);
+
+        setCheckingStatus(false);
+        return;
+      }
+
+      const status = profile?.onboarding_status;
+
+      if (status === "active") {
+        navigate("/tableau-de-bord", { replace: true });
+        return;
+      }
+
+      if (status && status !== "email_pending") {
+
+        navigate("/inscription/etablissement", { replace: true });
+        return;
+      }
+
+      // status is "email_pending" (or missing) — this page is correct, show it.
+      setCheckingStatus(false);
+    }
+
+    checkOnboardingStatus();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     return () => {
@@ -78,6 +136,17 @@ export default function VerifyEmailOtp() {
         return prev - 1;
       });
     }, 1000);
+  }
+
+  function readPendingProfileData(): PendingProfileData | null {
+    const raw = sessionStorage.getItem(PENDING_PROFILE_KEY);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as PendingProfileData;
+    } catch (err) {
+      console.error("Failed to parse pending_profile_data:", err);
+      return null;
+    }
   }
 
   async function handleVerify(e: React.FormEvent) {
@@ -109,17 +178,26 @@ export default function VerifyEmailOtp() {
         setError(t("errors.generic"));
         return;
       }
+      const pendingProfile = readPendingProfileData();
 
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ onboarding_status: "email_verified", updated_at: new Date().toISOString() })
+        .update({
+          onboarding_status: "email_verified",
+          updated_at: new Date().toISOString(),
+          ...(pendingProfile ?? {}),
+        })
         .eq("id", data.user.id);
 
       if (profileError) {
-        console.warn("Failed to update onboarding_status:", profileError.message);
+        console.error("Failed to update profile after verification:", profileError.message);
+        setError(t("errors.generic"));
+        toast.error(t("errors.generic"))
+        return;
       }
 
-      sessionStorage.removeItem("pending_verification_email");
+      sessionStorage.removeItem(PENDING_PROFILE_KEY);
+      sessionStorage.removeItem(PENDING_EMAIL_KEY);
       navigate("/inscription/etablissement");
     } catch (err) {
       console.error("Unexpected OTP verification error:", err);
@@ -156,7 +234,8 @@ export default function VerifyEmailOtp() {
     setLeaving(true);
     try {
       await supabase.auth.signOut();
-      sessionStorage.removeItem("pending_verification_email");
+      sessionStorage.removeItem(PENDING_EMAIL_KEY);
+      sessionStorage.removeItem(PENDING_PROFILE_KEY);
       navigate(destination, { replace: true });
     } catch (err) {
       console.error("Error signing out:", err);
@@ -176,7 +255,7 @@ export default function VerifyEmailOtp() {
     handleLeave(leaveDestination);
   }
 
-  if (authLoading || !email) return null; 
+  if (authLoading || !email || checkingStatus) return null;
 
   return (
     <div className="relative min-h-screen overflow-hidden px-4 py-12">

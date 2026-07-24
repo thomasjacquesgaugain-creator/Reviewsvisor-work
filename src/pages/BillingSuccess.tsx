@@ -31,7 +31,7 @@ export default function BillingSuccess() {
   }, [user, navigate, t]);
 
   const handleContinue = () => {
-    navigate("/merci-inscription");
+    navigate("/etablissement");
   };
 
   return (

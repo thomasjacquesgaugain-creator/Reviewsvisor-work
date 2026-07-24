@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Etab } from "@/types/etablissement";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthProvider";
 
 function getRecommendedTier(avgReviews: number): TierKey {
   if (avgReviews <= 25)  return "basic";
@@ -96,6 +97,7 @@ export function PlanSelectionModal({
   reviewCountLast12Months,
 }: Props) {
   const { t,i18n } = useTranslation();
+  const { user } = useAuth();
   const recommendedTier = getRecommendedTier(
     reviewCountLast12Months != null ? reviewCountLast12Months / 12 : 10
   );
@@ -136,10 +138,27 @@ export function PlanSelectionModal({
         sessionStorage.setItem("pendingEstablishment", JSON.stringify(establishment));
       }
 
+     
+      let isFirstEstablishment = false;
+      if (user?.id) {
+        const { count, error: countError } = await supabase
+          .from("establishments")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id);
+
+        if (countError) {
+          console.warn("Could not determine establishment count:", countError.message);
+          isFirstEstablishment = false;
+        } else {
+          isFirstEstablishment = (count ?? 0) === 0;
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: {
           priceId: plan.priceId,
           language: i18n.language,
+          isFirstEstablishment,
           pendingEstablishment: establishment
             ? {
                 place_id: establishment.place_id,
@@ -171,7 +190,7 @@ export function PlanSelectionModal({
       setLoading(false);
     }
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-5xl max-h-[92vh] overflow-y-auto">

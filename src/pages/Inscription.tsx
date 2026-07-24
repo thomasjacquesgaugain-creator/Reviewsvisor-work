@@ -116,39 +116,27 @@ async function onSubmit(formData: InscriptionFormData) {
       return;
     }
 
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .upsert(
-        {
-          id: data.user.id,
-          user_id: data.user.id,
-          first_name: formData.firstName.trim(),
-          last_name: formData.lastName.trim(),
-          full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
-          company: "",
-          role: "worker",
-          preferred_language: currentLanguage,
-          updated_at: new Date().toISOString(),
-          // onboarding_status:"email_verified"   :- only uncomment to bypass otp flow
-        },
-        { onConflict: "id" }
-      );
-
-    if (profileError) {
-      console.warn("Profile upsert warning:", profileError.message);
-    }
+    sessionStorage.setItem(
+      "pending_profile_data",
+      JSON.stringify({
+        first_name: formData.firstName.trim(),
+        last_name: formData.lastName.trim(),
+        full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+        preferred_language: currentLanguage,
+      })
+    );
 
 
-    supabase.functions.invoke("send-welcome-email", {
-      body: {
-        email: formData.email.trim(),
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-      },
-    }).then(({ error: emailError }) => {
-      if (emailError) console.error("Welcome email error:", emailError);
-      else console.log("Welcome email sent");
-    }).catch((err) => console.error("Welcome email call error:", err));
+    // supabase.functions.invoke("send-welcome-email", {
+    //   body: {
+    //     email: formData.email.trim(),
+    //     firstName: formData.firstName.trim(),
+    //     lastName: formData.lastName.trim(),
+    //   },
+    // }).then(({ error: emailError }) => {
+    //   if (emailError) console.error("Welcome email error:", emailError);
+    //   else console.log("Welcome email sent");
+    // }).catch((err) => console.error("Welcome email call error:", err));
 
     sessionStorage.removeItem("pendingUser");
     localStorage.removeItem("subscribed_ok");

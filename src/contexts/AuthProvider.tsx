@@ -72,19 +72,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const hasBootstrappedRef = useRef(false);
 
-  const applyPreferredLanguage = async (
-    preferredLanguage: SupportedLanguage | null,
-    isInitialLoad: boolean,
-  ) => {
-    if (!preferredLanguage) return;
-    if (!isInitialLoad) return;
+const applyPreferredLanguage = async (
+       preferredLanguage: SupportedLanguage | null,
+       isInitialLoad: boolean,
+   ) => {
+       if (!preferredLanguage) return;
+       if (!isInitialLoad) return;
 
-    if (preferredLanguage !== i18n.language) {
-      await i18n.changeLanguage(preferredLanguage);
-    }
-    localStorage.setItem(LANGUAGE_STORAGE_KEY, preferredLanguage);
-  };
+       const storedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY) as SupportedLanguage | null;
 
+       if (storedLang && SUPPORTED_LANGUAGES.includes(storedLang)) {
+         if (storedLang !== i18n.language) {
+           await i18n.changeLanguage(storedLang);
+         }
+         return; // local choice wins, don't touch localStorage or overwrite with DB
+       }
+
+       if (preferredLanguage !== i18n.language) {
+         await i18n.changeLanguage(preferredLanguage);
+       }
+       localStorage.setItem(LANGUAGE_STORAGE_KEY, preferredLanguage);
+   };
+   
   const fetchProfile = async (userId: string, isInitialLoad: boolean) => {
     try {
       const { data, error } = await supabase
