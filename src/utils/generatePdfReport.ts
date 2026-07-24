@@ -3080,42 +3080,59 @@ if (fillW > 60) {
   // PAGE 10 — Improvement roadmap
   // ═══════════════════════════════════════════════════════════════════════════
 
+pageNumber = addNewPage(doc, pageNumber);
+yPos = MARGINS.top;
 
-  pageNumber = addNewPage(doc, pageNumber);
-  yPos = MARGINS.top;
- 
-  const roadmapLang = reportLang;
- 
-  const roadmapText = (field: unknown): string => {
-    if (!field) return '';
-    if (typeof field === 'string') {
-      try {
-        const p = JSON.parse(field);
-        if (p && typeof p === 'object') {
-          const obj = p as Record<string, unknown>;
-          return String(obj[roadmapLang] ?? obj.fr ?? obj.en ?? field);
-        }
-      } catch {}
-      return field;
-    }
-    if (typeof field === 'object') {
-      const f = field as Record<string, unknown>;
-      return String(f[roadmapLang] ?? f.fr ?? f.en ?? '');
-    }
-    return String(field);
-  };
- 
-  yPos = addSectionTitle(
-    doc,
-    roadmapLang === 'fr' ? "Feuille de route d'amelioration" : 'Improvement Roadmap',
-    yPos,
-    PURPLE_PRIMARY
-  );
- 
-  const roadmapIntroLines = doc.splitTextToSize(
+const roadmapLang = reportLang;
+
+const roadmapPhaseDefinitions = [
+  {
+    label: roadmapLang === "fr" ? "Semaine 1" : "Week 1",
+    note: roadmapLang === "fr" ? "Lancer les premieres actions." : "Launch the first actions.",
+  },
+  {
+    label: roadmapLang === "fr" ? "Mois 1" : "Month 1",
+    note: roadmapLang === "fr" ? "Revoir les premiers resultats et ajuster." : "Review the first results and adjust.",
+  },
+  {
+    label: roadmapLang === "fr" ? "Mois 2" : "Month 2",
+    note: roadmapLang === "fr" ? "Mesurer les KPI et poursuivre les ameliorations." : "Measure KPI improvements and keep refining.",
+  },
+];
+
+const roadmapPhases = roadmapPhaseDefinitions.map((phase) => ({
+  ...phase,
+  items: [] as Array<{ source: string; text: string }>,
+}));
+
+checklistObjectives.forEach((entry) => {
+  const objectiveActions = Array.isArray(entry.objective?.actions) && entry.objective!.actions.length > 0
+    ? entry.objective!.actions
+    : [...entry.grouped.daily, ...entry.grouped.weekly, ...entry.grouped.monthly];
+
+  objectiveActions.forEach((action: any, actionIdx: number) => {
+    const actionText = checklistText(action?.text ?? "");
+    if (!actionText) return;
+    const phaseIdx = Math.min(actionIdx, roadmapPhases.length - 1);
+    roadmapPhases[phaseIdx].items.push({ source: entry.issueName, text: actionText });
+  });
+});
+
+const roadmapHasItems = roadmapPhases.some((phase) => phase.items.length > 0);
+
+yPos = addSectionTitle(
+  doc,
+  roadmapLang === 'fr' ? "Feuille de route d'amelioration" : 'Improvement Roadmap',
+  yPos,
+  PURPLE_PRIMARY
+);
+yPos += 4;
+
+
+const roadmapIntroLines = doc.splitTextToSize(
     roadmapLang === 'fr'
-      ? "Les 3 priorites identifiees par l'IA, chacune avec un objectif SMART, une echeance cible, les KPI a suivre et la progression attendue."
-      : "The 3 priorities identified by AI, each with a SMART objective, a target deadline, KPIs to monitor, and expected progress.",
+      ? "Cette feuille de route montre quand chaque action recommandee doit etre realisee, pour suivre facilement la progression des ameliorations."
+      : "This roadmap shows when each recommended action should be completed, so the improvement journey is easy to follow.",
     CONTENT_WIDTH
   );
   doc.setFont('helvetica', 'italic');
@@ -3123,215 +3140,195 @@ if (fillW > 60) {
   doc.setTextColor(...COLORS.textLight);
   doc.text(roadmapIntroLines, MARGINS.left, yPos);
   yPos += roadmapIntroLines.length * 4.5 + 8;
- 
-  // Source of truth: issues from the Root Cause Analysis section (i.e. those
-  // that actually have root_causes populated), capped to 3. This keeps the
-  // roadmap in sync with the Ishikawa analysis instead of the raw top_issues
-  // list, which may include issues never analyzed for root cause.
-  const roadmapRootCauseIssues = topIssues
-    .filter((i: any) => i.root_causes && i.root_causes.length > 0)
-    .slice(0, 3);
- 
-  // Group SMART objectives by their matching issue key — an issue can have
-  // zero, one, or multiple objectives linked to it.
-  const roadmapObjectivesByKey = new Map<string, any[]>();
-  (data.smart_objectives ?? []).forEach((obj: any) => {
-    if (!obj.pareto_cause?.key && !obj.problem) return;
-    const key = String(obj.pareto_cause?.key ?? obj.problem ?? '').trim().toLowerCase();
-    const existing = roadmapObjectivesByKey.get(key) ?? [];
-    existing.push(obj);
-    roadmapObjectivesByKey.set(key, existing);
-  });
- 
-  const roadmapIssues = roadmapRootCauseIssues;
- 
-  if (roadmapIssues.length === 0) {
-    doc.setFillColor(250, 250, 250);
-    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 30, 3, 3, 'F');
-    doc.setDrawColor(...COLORS.textLight);
-    doc.setLineWidth(0.4);
-    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 30, 3, 3, 'S');
-    doc.setTextColor(...COLORS.textLight);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text(
-      roadmapLang === 'fr' ? 'Aucune priorite identifiee' : 'No priorities identified',
-      PAGE_WIDTH / 2, yPos + 17, { align: 'center' }
-    );
-  } else {
-    roadmapIssues.forEach((issue: any, idx: number) => {
-      const matchKey = String(issue.key ?? issue.theme ?? '').trim().toLowerCase();
-      const matchedObjectives: any[] = roadmapObjectivesByKey.get(matchKey) ?? [];
-      const hasMultiple = matchedObjectives.length > 1;
- 
-      // ── No SMART objective generated for this issue yet ─────────────────────
-      if (matchedObjectives.length === 0) {
-        const priorityName = issue.theme;
-        const roadmapCardH = 34;
- 
-        if (yPos + roadmapCardH > PAGE_HEIGHT - MARGINS.bottom - 5) {
-          addFooter(doc, pageNumber);
-          pageNumber = addNewPage(doc, pageNumber);
-          yPos = MARGINS.top;
-        }
- 
-        // Card shell (neutral gray — nothing generated yet)
-        doc.setFillColor(248, 248, 248);
-        doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, roadmapCardH, 3, 3, 'F');
-        doc.setDrawColor(...COLORS.textLight);
-        doc.setLineWidth(0.5);
-        doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, roadmapCardH, 3, 3, 'S');
- 
-        // Rank badge
-        doc.setFillColor(...COLORS.textLight);
-        doc.circle(MARGINS.left + 10, yPos + 10, 6, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.text(`${idx + 1}`, MARGINS.left + 10, yPos + 12, { align: 'center' });
- 
-        // Priority name + tag
-        doc.setTextColor(...COLORS.text);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.text(truncateText(priorityName, 40), MARGINS.left + 20, yPos + 8);
- 
-        doc.setTextColor(...COLORS.textLight);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7.5);
-        doc.text(
-          roadmapLang === 'fr' ? `PRIORITE ${idx + 1}` : `PRIORITY ${idx + 1}`,
-          MARGINS.left + 20, yPos + 13.5
-        );
- 
-        doc.setTextColor(...COLORS.textLight);
-        doc.setFont('helvetica', 'italic');
-        doc.setFontSize(8.3);
-        doc.text(
-          roadmapLang === 'fr'
-            ? "Aucun objectif SMART n'a encore ete genere pour cette priorite."
-            : 'No SMART objective has been generated for this priority yet.',
-          MARGINS.left + 20, yPos + 22
-        );
- 
-        yPos += roadmapCardH + 6;
-        return;
-      }
- 
-      // ── One full card per SMART objective linked to this issue ─────────────
-      matchedObjectives.forEach((obj: any, objIdx: number) => {
-        const priorityName = roadmapText(obj.pareto_cause) || obj.pareto_cause?.key || issue.theme;
-        const badgeLabel = hasMultiple ? `${idx + 1}.${objIdx + 1}` : `${idx + 1}`;
- 
-        const smartObjective = roadmapText(obj.problem);
-        const kpiText        = roadmapText(obj.kpi_label);
-        const unitText       = roadmapText(obj.unit).split('|')[0].trim();
-        const currentVal     = obj.current_value ?? 0;
-        const targetVal      = obj.computed_target ?? obj.target_value ?? 0;
-        const deadlineDate   = obj.deadline
-          ? new Date(obj.deadline).toLocaleDateString(
-              roadmapLang === 'fr' ? 'fr-FR' : 'en-GB',
-              { day: 'numeric', month: 'long', year: 'numeric' }
-            )
-          : '—';
- 
-        const roadmapSmartLines = doc.splitTextToSize(smartObjective, CONTENT_WIDTH - 20);
-        const roadmapCardH = 20 + roadmapSmartLines.length * 4.2 + 24 + 6;
- 
-        if (yPos + roadmapCardH > PAGE_HEIGHT - MARGINS.bottom - 5) {
-          addFooter(doc, pageNumber);
-          pageNumber = addNewPage(doc, pageNumber);
-          yPos = MARGINS.top;
-        }
- 
-        // Card shell
-        doc.setFillColor(250, 248, 255);
-        doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, roadmapCardH, 3, 3, 'F');
-        doc.setDrawColor(...PURPLE_PRIMARY);
-        doc.setLineWidth(0.5);
-        doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, roadmapCardH, 3, 3, 'S');
- 
-        // Rank badge
-        doc.setFillColor(...PURPLE_PRIMARY);
-        doc.circle(MARGINS.left + 10, yPos + 10, 6, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(hasMultiple ? 8.5 : 11);
-        doc.text(badgeLabel, MARGINS.left + 10, yPos + 12, { align: 'center' });
- 
-        // Priority name + tag
-        doc.setTextColor(...COLORS.text);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.text(truncateText(priorityName, 40), MARGINS.left + 20, yPos + 8);
- 
-        doc.setTextColor(...PURPLE_PRIMARY);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7.5);
-        doc.text(
-          roadmapLang === 'fr' ? `PRIORITE ${badgeLabel}` : `PRIORITY ${badgeLabel}`,
-          MARGINS.left + 20, yPos + 13.5
-        );
- 
-        let roadmapCy = yPos + 20;
- 
-        // SMART objective
-        doc.setTextColor(...PURPLE_PRIMARY);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7.5);
-        doc.text(roadmapLang === 'fr' ? 'OBJECTIF SMART' : 'SMART OBJECTIVE', MARGINS.left + 6, roadmapCy);
-        roadmapCy += 4.5;
-        doc.setTextColor(...COLORS.text);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8.3);
-        doc.text(roadmapSmartLines, MARGINS.left + 6, roadmapCy);
-        roadmapCy += roadmapSmartLines.length * 4.2 + 4;
- 
-        // 3 metric boxes: deadline / KPI / expected progress
-        const roadmapBoxGap = 4;
-        const roadmapBoxW = (CONTENT_WIDTH - 12 - roadmapBoxGap * 2) / 3;
-        const roadmapBoxH = 20;
-        const roadmapBoxY = roadmapCy;
- 
-        const drawRoadmapMetricBox = (x: number, label: string, value: string) => {
-          doc.setFillColor(...BLUE_PALE);
-          doc.roundedRect(x, roadmapBoxY, roadmapBoxW, roadmapBoxH, 2, 2, 'F');
-          doc.setTextColor(...BLUE_DARK);
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(6.8);
-          doc.text(label, x + roadmapBoxW / 2, roadmapBoxY + 6, { align: 'center' });
-          doc.setTextColor(...COLORS.text);
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(8);
-          const roadmapVLines = doc.splitTextToSize(value, roadmapBoxW - 6);
-          doc.text(roadmapVLines.slice(0, 2), x + roadmapBoxW / 2, roadmapBoxY + 12, { align: 'center' });
-        };
- 
-        drawRoadmapMetricBox(
-          MARGINS.left + 6,
-          roadmapLang === 'fr' ? 'ECHEANCE CIBLE' : 'TARGET DATE',
-          deadlineDate
-        );
-        drawRoadmapMetricBox(
-          MARGINS.left + 6 + roadmapBoxW + roadmapBoxGap,
-          'KPI',
-          truncateText(kpiText, 45) || '—'
-        );
-        drawRoadmapMetricBox(
-          MARGINS.left + 6 + (roadmapBoxW + roadmapBoxGap) * 2,
-          roadmapLang === 'fr' ? 'PROGRESSION ATTENDUE' : 'EXPECTED PROGRESS',
-          `${currentVal} -> ${targetVal} ${unitText}`
-        );
- 
-        yPos += roadmapCardH + 6;
-      });
-    });
-  }
- 
-  addFooter(doc, pageNumber);
 
-  
-  // ═══════════════════════════════════════════════════════════════════════════
+if (!roadmapHasItems) {
+  doc.setFillColor(250, 250, 250);
+  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 30, 3, 3, 'F');
+  doc.setDrawColor(...COLORS.textLight);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 30, 3, 3, 'S');
+  doc.setTextColor(...COLORS.textLight);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text(
+    roadmapLang === 'fr' ? 'Aucune priorite identifiee' : 'No priorities identified',
+    PAGE_WIDTH / 2, yPos + 17, { align: 'center' }
+  );
+} else {
+  const phaseTextWidth = CONTENT_WIDTH - 22;
+  const phaseLabelWidths = roadmapPhases.map((phase) => Math.max(34, doc.getTextWidth(phase.label) + 10));
+  const phaseGroups = roadmapPhases.map((phase) => {
+    const groupMap = new Map<string, string[]>();
+    phase.items.forEach((item) => {
+      const key = item.source || (roadmapLang === 'fr' ? 'Sans source' : 'Unspecified');
+      const existing = groupMap.get(key) ?? [];
+      existing.push(item.text);
+      groupMap.set(key, existing);
+    });
+    return { ...phase, groups: Array.from(groupMap.entries()).map(([source, items]) => ({ source, items })) };
+  });
+
+  // Single source of truth for spacing — used by BOTH the height calculator and the draw loop,
+  // so the box height and the actual rendered content can never drift apart again.
+  const RM = {
+    cardPad: 4,
+    phaseGap: 3,
+    noteOffset: 13,
+    noteToContentGap: 1.5,
+    sourceLineGap: 4.6,
+    groupBottomGap: 1.0,
+    itemExtra: 0.8,
+    bottomPad: 3,
+  };
+
+  const computePhaseHeight = (
+    phase: { note: string; groups: { source: string; items: string[] }[] },
+    isMonth2: boolean
+  ) => {
+    const noteStep = isMonth2 ? 3.1 : 3.5;
+    const itemLineStep = isMonth2 ? 2.8 : 3.0;
+    const itemBlockMin = isMonth2 ? 4.0 : 4.4;
+
+    const noteLines = doc.splitTextToSize(phase.note, phaseTextWidth - 10) as string[];
+    let y = RM.noteOffset + noteLines.length * noteStep + RM.noteToContentGap;
+
+    if (phase.groups.length === 0) {
+      y += 6;
+    } else {
+      phase.groups.forEach((group) => {
+        y += RM.sourceLineGap;
+        group.items.forEach((text) => {
+          const itemLines = doc.splitTextToSize(text, phaseTextWidth - 18) as string[];
+          y += Math.max(itemBlockMin, itemLines.length * itemLineStep + RM.itemExtra);
+        });
+        y += RM.groupBottomGap;
+      });
+    }
+
+    return y + RM.bottomPad;
+  };
+
+  const phaseHeights = phaseGroups.map((phase, phaseIdx) => computePhaseHeight(phase, phaseIdx === 2));
+
+  // Pre-check: if even the first phase can't fit under the title, move everything to a new page
+  // before drawing anything, so the title is never left orphaned above empty space.
+  const totalH = RM.cardPad + phaseHeights.reduce((s, v) => s + v, 0) + (phaseHeights.length - 1) * RM.phaseGap + RM.cardPad;
+  if (yPos + Math.min(totalH, RM.cardPad + phaseHeights[0] + RM.cardPad) > PAGE_HEIGHT - MARGINS.bottom - 5) {
+    addFooter(doc, pageNumber);
+    pageNumber = addNewPage(doc, pageNumber);
+    yPos = MARGINS.top;
+    yPos = addSectionTitle(
+      doc,
+      roadmapLang === 'fr' ? "Feuille de route d'amelioration" : 'Improvement Roadmap',
+      yPos,
+      PURPLE_PRIMARY
+    );
+    yPos += 4;
+  }
+
+  let roadmapCy = yPos + RM.cardPad;
+
+  phaseGroups.forEach((phase, phaseIdx) => {
+    const phaseH = phaseHeights[phaseIdx];
+
+    // Per-phase page-break check — self-correcting safety net, nothing can ever clip.
+    if (roadmapCy + phaseH > PAGE_HEIGHT - MARGINS.bottom - 5) {
+      addFooter(doc, pageNumber);
+      pageNumber = addNewPage(doc, pageNumber);
+      yPos = MARGINS.top;
+      yPos = addSectionTitle(
+        doc,
+        roadmapLang === 'fr' ? "Feuille de route d'amelioration" : 'Improvement Roadmap',
+        yPos,
+        PURPLE_PRIMARY
+      );
+      yPos += 4;
+      roadmapCy = yPos + RM.cardPad;
+    }
+
+    const isMonth2 = phaseIdx === 2;
+    const noteFontSize = isMonth2 ? 7.0 : 7.4;
+    const sourceFontSize = isMonth2 ? 6.4 : 6.7;
+    const itemFontSize = isMonth2 ? 7.0 : 7.3;
+    const itemIndent = isMonth2 ? 12.5 : 13;
+    const bulletX = isMonth2 ? 8.9 : 9.2;
+    const bulletRadius = isMonth2 ? 0.55 : 0.6;
+    const itemLineStep = isMonth2 ? 2.8 : 3.0;   // must match computePhaseHeight
+    const itemBlockMin = isMonth2 ? 4.0 : 4.4;   // must match computePhaseHeight
+    const noteStep = isMonth2 ? 3.1 : 3.5;      // must match computePhaseHeight
+
+    const phaseX = MARGINS.left + 6;
+    const phaseY = roadmapCy;
+    const labelW = phaseLabelWidths[phaseIdx];
+    const noteLines = doc.splitTextToSize(phase.note, phaseTextWidth - 10) as string[];
+
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(...PURPLE_PALE);
+    doc.setLineWidth(0.35);
+    doc.roundedRect(phaseX, phaseY, CONTENT_WIDTH - 12, phaseH, 2.5, 2.5, 'FD');
+
+    doc.setFillColor(...PURPLE_PRIMARY);
+    doc.rect(phaseX, phaseY, 2, phaseH, 'F');
+
+    doc.setFillColor(...PURPLE_PALE);
+    doc.roundedRect(phaseX + 6, phaseY + 3, labelW, 6.5, 2.2, 2.2, 'F');
+    doc.setTextColor(...PURPLE_PRIMARY);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.1);
+    doc.text(phase.label, phaseX + 6 + labelW / 2, phaseY + 7.5, { align: 'center' });
+
+    doc.setTextColor(...COLORS.textLight);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(noteFontSize);
+    doc.text(noteLines, phaseX + 6, phaseY + RM.noteOffset);
+
+    let phaseItemY = phaseY + RM.noteOffset + noteLines.length * noteStep + RM.noteToContentGap;
+    doc.setTextColor(...COLORS.text);
+
+    if (phase.groups.length === 0) {
+      doc.setTextColor(...COLORS.textLight);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.6);
+      doc.text(
+        roadmapLang === 'fr'
+          ? 'Aucune action planifiee pour cette etape.'
+          : 'No actions scheduled for this step yet.',
+        phaseX + 6,
+        phaseItemY,
+      );
+    } else {
+      phase.groups.forEach((group) => {
+        const sourceLabel = truncateText(group.source, 34);
+        doc.setTextColor(...PURPLE_PRIMARY);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(sourceFontSize);
+        doc.text(sourceLabel, phaseX + 8, phaseItemY + 1);
+
+        phaseItemY += RM.sourceLineGap;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(itemFontSize);
+        doc.setTextColor(...COLORS.text);
+
+        group.items.forEach((text) => {
+          const itemLines = doc.splitTextToSize(text, phaseTextWidth - 18) as string[];
+          doc.setFillColor(...PURPLE_PRIMARY);
+          doc.circle(phaseX + bulletX, phaseItemY - 1.0, bulletRadius, 'F');
+          doc.text(itemLines, phaseX + itemIndent, phaseItemY);
+          phaseItemY += Math.max(itemBlockMin, itemLines.length * itemLineStep + RM.itemExtra);
+        });
+
+        phaseItemY += RM.groupBottomGap;
+      });
+    }
+
+    roadmapCy += phaseH + RM.phaseGap;
+  });
+
+  yPos = roadmapCy + RM.cardPad;
+}
+
+addFooter(doc, pageNumber);
+
   // Last page — CONCLUSION STRATEGIQUE (real AI synthesis)
   // ═══════════════════════════════════════════════════════════════════════════
 
