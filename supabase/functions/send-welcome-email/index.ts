@@ -22,6 +22,13 @@ interface WelcomeEmailRequest {
   lastName?: string;
 }
 
+const LOGO_URL =
+  "https://dpiktgzlnrrhasllbpyl.supabase.co/storage/v1/object/public/assets/reviewsvisor-invoice-logo.png";
+
+const LOGO_MARKUP = `
+             <img src="${LOGO_URL}" alt="Reviewsvisor" width="160"
+                  style="display: block; margin: 0 auto 16px auto;" />`;
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -63,10 +70,12 @@ const handler = async (req: Request): Promise<Response> => {
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta name="color-scheme" content="light only">
+          <meta name="supported-color-schemes" content="light only">
         </head>
         <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
           <div style="background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
-            <div style="text-align: center; margin-bottom: 30px;">
+            <div style="text-align: center; margin-bottom: 30px;">${LOGO_MARKUP}
               <h1 style="color: #2F6BFF; font-size: 24px; margin: 0 0 8px 0;">
                 Your Reviewsvisor account has been created 🎉
               </h1>
@@ -115,10 +124,12 @@ const handler = async (req: Request): Promise<Response> => {
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta name="color-scheme" content="light only">
+          <meta name="supported-color-schemes" content="light only">
         </head>
         <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
           <div style="background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
-            <div style="text-align: center; margin-bottom: 30px;">
+            <div style="text-align: center; margin-bottom: 30px;">${LOGO_MARKUP}
               <h1 style="color: #2F6BFF; font-size: 24px; margin: 0 0 8px 0;">
                 Votre compte Reviewsvisor a bien été créé 🎉
               </h1>
