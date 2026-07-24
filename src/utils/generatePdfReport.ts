@@ -1643,33 +1643,13 @@ else {
   yPos += 12;
 
   if (painPoints.length > 0) {
-    const synthesisMap = new Map<string, string>();
-    topIssues.forEach((ti) => {
-      if (ti.ai_synthesis) {
-        synthesisMap.set(ti.theme.trim().toLowerCase(), ti.ai_synthesis);
-        synthesisMap.set(ti.key.trim().toLowerCase(), ti.ai_synthesis);
-      }
-    });
-    const getSynthesis = (issue: string): string => {
-      const norm = issue.trim().toLowerCase();
-      return synthesisMap.get(norm) ?? "";
-    };
-
-    // Truncate AI analysis to the first sentence (up to the first ".").
-    // If no period exists the full text is returned unchanged.
-    const firstSentence = (text: string): string => {
-      const dotIdx = text.indexOf('.');
-      return dotIdx !== -1 ? text.slice(0, dotIdx + 1).trim() : text.trim();
-    };
-
-    // ── Simplified 5-column table: Issue | Impact | Ease | First Action | AI ──
-    // Row height is computed per-row from actual AI line count.
-    const ppTableW     = CONTENT_WIDTH;
-    const ppIssueW     = 45;
-    const ppImpactW    = 20;
-    const ppEaseW      = 20;
-    const ppStepW      = 38;
-    const ppSynthesisW = ppTableW - ppIssueW - ppImpactW - ppEaseW - ppStepW;
+    // ── 4-column table: Issue | Impact | Ease | First Action ──
+    // Row height is computed per-row from actual first-action line count.
+    const ppTableW  = CONTENT_WIDTH;
+    const ppIssueW  = 45;
+    const ppImpactW = 20;
+    const ppEaseW   = 20;
+    const ppStepW   = ppTableW - ppIssueW - ppImpactW - ppEaseW;
     const ppHdrH       = 9;
     const PP_ROW_MIN   = 16;   // minimum row height (mm)
     const PP_LINE_H    = 4.0;  // line height for AI text (mm)
@@ -1681,11 +1661,10 @@ else {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
-    doc.text(S.ppHeaderIssue,       MARGINS.left + 4,                                                           yPos + 6);
-    doc.text(S.ppHeaderImpact,      MARGINS.left + ppIssueW + ppImpactW / 2,                                    yPos + 6, { align: "center" });
-    doc.text(S.ppHeaderEase,        MARGINS.left + ppIssueW + ppImpactW + ppEaseW / 2,                          yPos + 6, { align: "center" });
-    doc.text(S.ppHeaderFirstAction, MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW / 2,                yPos + 6, { align: "center" });
-    doc.text(S.ppHeaderAiAnalysis,  MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW + ppSynthesisW / 2, yPos + 6, { align: "center" });
+    doc.text(S.ppHeaderIssue,       MARGINS.left + 4,                                         yPos + 6);
+    doc.text(S.ppHeaderImpact,      MARGINS.left + ppIssueW + ppImpactW / 2,                  yPos + 6, { align: "center" });
+    doc.text(S.ppHeaderEase,        MARGINS.left + ppIssueW + ppImpactW + ppEaseW / 2,        yPos + 6, { align: "center" });
+    doc.text(S.ppHeaderFirstAction, MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW / 2, yPos + 6, { align: "center" });
     yPos += ppHdrH;
 
     // ── Rows — height adapts to AI analysis content ──────────────────────────
@@ -1693,25 +1672,13 @@ else {
     const rowHeights: number[] = [];
 
     painPoints.forEach((pp, idx) => {
-      // Pre-compute both text columns so row height fits whichever is taller.
-
-      // AI analysis — first sentence only
-      const rawSynth   = sanitizePdfText(getSynthesis(pp.issue));
-      const synthText  = rawSynth ? firstSentence(rawSynth) : "";
-      doc.setFont("helvetica", "italic");
-      doc.setFontSize(6.5);
-      const synthLines = synthText
-        ? (doc.splitTextToSize(synthText, ppSynthesisW - 8) as string[])
-        : [];
-
       // First action — full text, no truncation
       doc.setFont("helvetica", "normal");
       doc.setFontSize(6.5);
-      const stepLines  = doc.splitTextToSize(pp.first_step || "", ppStepW - 6) as string[];
+      const stepLines = doc.splitTextToSize(pp.first_step || "", ppStepW - 6) as string[];
 
-      // Row height = padding + tallest column × line-height, at least PP_ROW_MIN
-      const contentLines = Math.max(synthLines.length, stepLines.length);
-      const ppRowH = Math.max(PP_ROW_MIN, PP_PAD_V + contentLines * PP_LINE_H);
+      // Row height = padding + first-action line count × line-height, at least PP_ROW_MIN
+      const ppRowH = Math.max(PP_ROW_MIN, PP_PAD_V + stepLines.length * PP_LINE_H);
       rowHeights.push(ppRowH);
 
       const bg: [number, number, number] = idx % 2 === 0 ? ORANGE_PALE : ROW_WHITE;
@@ -1722,10 +1689,9 @@ else {
       doc.setDrawColor(220, 220, 220);
       doc.setLineWidth(0.3);
       if (idx > 0) doc.line(MARGINS.left, yPos, MARGINS.left + ppTableW, yPos);
-      doc.line(MARGINS.left + ppIssueW,                                 yPos, MARGINS.left + ppIssueW,                                 yPos + ppRowH);
-      doc.line(MARGINS.left + ppIssueW + ppImpactW,                     yPos, MARGINS.left + ppIssueW + ppImpactW,                     yPos + ppRowH);
-      doc.line(MARGINS.left + ppIssueW + ppImpactW + ppEaseW,           yPos, MARGINS.left + ppIssueW + ppImpactW + ppEaseW,           yPos + ppRowH);
-      doc.line(MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW, yPos, MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW, yPos + ppRowH);
+      doc.line(MARGINS.left + ppIssueW,                       yPos, MARGINS.left + ppIssueW,                       yPos + ppRowH);
+      doc.line(MARGINS.left + ppIssueW + ppImpactW,           yPos, MARGINS.left + ppIssueW + ppImpactW,           yPos + ppRowH);
+      doc.line(MARGINS.left + ppIssueW + ppImpactW + ppEaseW, yPos, MARGINS.left + ppIssueW + ppImpactW + ppEaseW, yPos + ppRowH);
 
       const midY = yPos + ppRowH / 2 + 1.5; // vertical centre of row
 
@@ -1772,18 +1738,6 @@ else {
       stepLines.forEach((line, li) => {
         doc.text(line, stepX, stepStartY + li * PP_LINE_H);
       });
-
-      // ── AI analysis — first sentence only, height-driven ──
-      if (synthLines.length > 0) {
-        const synthX      = MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW + 3;
-        const synthStartY = yPos + PP_PAD_V / 2 + PP_LINE_H * 0.8; // top-aligned with top padding
-        doc.setTextColor(...BLUE_DARK);
-        doc.setFont("helvetica", "italic");
-        doc.setFontSize(6.5);
-        synthLines.forEach((line, li) => {
-          doc.text(line, synthX, synthStartY + li * PP_LINE_H);
-        });
-      }
 
       yPos += ppRowH;
     });
