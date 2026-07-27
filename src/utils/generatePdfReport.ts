@@ -2327,43 +2327,79 @@ const smartObjectives = (data.smart_objectives ?? []).filter(obj =>
 
       yPos += hdrH + 3;
 
-      // ── Card body: stacked single-column layout ────────────────────────────
       if (!hasObjective) {
-        const missingCardH = 34;
+        const missingSub =
+          lang === "fr"
+            ? `Le probleme "${issueName}" n a pas encore d objectif SMART.`
+            : `The issue "${issueName}" has no SMART objective yet.`;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.6);
+        const missingLines = (
+          doc.splitTextToSize(missingSub, CONTENT_WIDTH - 16) as string[]
+        ).slice(0, 2);
+
+        const M_TOP_PAD = 7;
+        const M_TITLE_H = 5;
+        const M_TITLE_GAP = 3;
+        const M_LINE_H = 4.2;
+        const M_BOTTOM_PAD = 6;
+
+        const missingCardH =
+          M_TOP_PAD +
+          M_TITLE_H +
+          M_TITLE_GAP +
+          missingLines.length * M_LINE_H +
+          M_BOTTOM_PAD;
+
         doc.setFillColor(255, 250, 223);
-        doc.roundedRect(MARGINS.left + 2, yPos, CONTENT_WIDTH - 4, missingCardH, 3, 3, 'F');
+        doc.roundedRect(
+          MARGINS.left + 2,
+          yPos,
+          CONTENT_WIDTH - 4,
+          missingCardH,
+          3,
+          3,
+          "F",
+        );
         doc.setDrawColor(...COLORS.warning);
         doc.setLineWidth(0.5);
-        doc.roundedRect(MARGINS.left + 2, yPos, CONTENT_WIDTH - 4, missingCardH, 3, 3, 'S');
+        doc.roundedRect(
+          MARGINS.left + 2,
+          yPos,
+          CONTENT_WIDTH - 4,
+          missingCardH,
+          3,
+          3,
+          "S",
+        );
 
         doc.setTextColor(...COLORS.warning);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont("helvetica", "bold");
         doc.setFontSize(8.5);
         doc.text(
-          lang === 'fr' ? 'Aucun objectif SMART disponible' : 'No SMART objective available',
+          lang === "fr"
+            ? "Aucun objectif SMART disponible"
+            : "No SMART objective available",
           MARGINS.left + 7,
-          yPos + 12
+          yPos + M_TOP_PAD,
         );
 
         doc.setTextColor(...COLORS.textLight);
-        doc.setFont('helvetica', 'normal');
+        doc.setFont("helvetica", "normal");
         doc.setFontSize(7.6);
-        const missingSub = lang === 'fr'
-          ? `Le probleme "${issueName}" n a pas encore d objectif SMART.`
-          : `The issue "${issueName}" has no SMART objective yet.`;
-        const missingLines = doc.splitTextToSize(missingSub, CONTENT_WIDTH - 16);
-        missingLines.slice(0, 2).forEach((line: string, idx: number) => {
-          doc.text(line, MARGINS.left + 7, yPos + 19 + idx * 4.2);
+        const subtitleStartY = yPos + M_TOP_PAD + M_TITLE_H + M_TITLE_GAP;
+        missingLines.forEach((line: string, idx: number) => {
+          doc.text(line, MARGINS.left + 7, subtitleStartY + idx * M_LINE_H);
         });
 
-        yPos += missingCardH + 8;
+        yPos += missingCardH + 6; 
         return;
       }
-
       const PAD = 4.5;
       const IW = CONTENT_WIDTH - PAD * 2;
 
-      const problemTxt = hasObjective ? t(obj.problem) : '';
+      const problemTxt = hasObjective ? t(obj.problem) : "";
       const kpiTxt = hasObjective ? t(obj.kpi_label) : '';
       const unitTxt = hasObjective
         ? (() => {
@@ -2429,8 +2465,14 @@ const pdcaActLines = statusStr === 'todo'
       `${lang === 'fr' ? 'Field execution' : 'Field execution'}: ${fieldExecutionProgress}%`,
     ].flatMap((line: string) => doc.splitTextToSize(line, pdcaInnerW) as string[]);
 
-const measurePdcaStepHeight = (lines: string[], minHeight: number): number =>
-  Math.max(minHeight, PAD + 10 + lines.length * 4.2);
+const PDCA_BODY_OFFSET = 15;  
+const PDCA_LINE_STEP = 3.8;  
+const PDCA_BOTTOM_PAD = 5;    
+ 
+const measurePdcaStepHeight = (lines: string[], minHeight: number): number => {
+  const lastLineBaselineOffset = PDCA_BODY_OFFSET + Math.max(0, lines.length - 1) * PDCA_LINE_STEP;
+  return Math.max(minHeight, lastLineBaselineOffset + PDCA_BOTTOM_PAD);
+};
 
 const pdcaStepHeights = [
   measurePdcaStepHeight(pdcaPlanLines, 21),
@@ -2439,37 +2481,38 @@ const pdcaStepHeights = [
   measurePdcaStepHeight(pdcaActLines, 24),
 ];
 
-const pdcaBlockH =
-  8 +
-  pdcaStepHeights.reduce((sum, h) => sum + h, 0) +
-  7;
-
-const pillH  = 6;
+const badgeH = 6.5;
 const trackH = 6;
+
+const pdcaBlockH = 11 + pdcaStepHeights.reduce((sum, h) => sum + h + 2.5, 0);
 
 const cardH =
   PAD +
-  7 + PAD +
+  badgeH +
+  3 +
   PAD +
-  4 + problemLines.length * 4 + PAD +
-  4 + kpiLines.length * 4 + PAD +
-  6 +
-  pillH + 3 +
-  trackH + 3 +
-  5 + PAD +
+  4.2 +
+  problemLines.length * 4 +
+  3 +
+  4.2 +
+  kpiLines.length * 4 +
+  3 +
+  4.2 +
+  pillH +
+  3 +
+  trackH + 4 +
   pdcaBlockH +
   PAD;
 
-      doc.setFillColor(250, 248, 255);
-      doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, cardH, 3, 3, 'F');
-      doc.setDrawColor(...PURPLE_PRIMARY);
-      doc.setLineWidth(0.5);
+doc.setFillColor(250, 248, 255);
+doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, cardH, 3, 3, "F");
+doc.setDrawColor(...PURPLE_PRIMARY);
+doc.setLineWidth(0.5);
       doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, cardH, 3, 3, 'S');
 
       let cy = yPos + PAD;
 
-      // ── Badges row: Impact / Effort / Ishikawa ──────────────────────────────
-      const badgeH  = 6.5;
+    
       const badge3W = (IW - 6) / 3;
       const bX      = MARGINS.left + PAD;
 
