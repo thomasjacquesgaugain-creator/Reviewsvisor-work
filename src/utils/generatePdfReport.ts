@@ -172,7 +172,7 @@ const TXT = {
     noIssuesFound: 'Aucun probleme majeur identifie',
     loveHateTitle: "Ce que vos clients aiment et n'aiment pas",
     mentions: 'mentions',
-    detailedAnalysisTitle: 'Analyse Detaillee',
+    detailedAnalysisTitle: 'Résumé et analyse des thèmes',
     ratingDistribution: 'Repartition des avis par note',
     recurringThemesTitle: 'Themes recurrents avec sentiment et evidence quotes',
     recurringThemesSubtitle: 'Les evidence quotes ci-dessous illustrent des avis reels associes a chaque theme.',
@@ -243,7 +243,7 @@ const TXT = {
     noIssuesFound: 'No major issue identified',
     loveHateTitle: 'What your customers love and dislike',
     mentions: 'mentions',
-    detailedAnalysisTitle: 'Detailed Analysis',
+    detailedAnalysisTitle: 'Summary and theme analysis',
     ratingDistribution: 'Review distribution by rating',
     recurringThemesTitle: 'Recurring themes with sentiment and evidence quotes',
     recurringThemesSubtitle: 'The evidence quotes below illustrate real reviews associated with each theme.',
@@ -455,8 +455,8 @@ function sanitizePdfText(text: string): string {
       // Remove other non-printable control characters.
       .replace(/[\u0000-\u001F\u007F]/g, ' ')
       // Normalize curly quotes to plain ASCII quotes for cleaner wrapping.
-      .replace(/[“”]/g, '"')
-      .replace(/[‘’]/g, "'")
+      .replace(/[""]/g, '"')
+      .replace(/['']/g, "'")
   );
 }
 
@@ -833,104 +833,104 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
   // PAGE 3 — SYNTHESE CLIENT (real data)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  pageNumber = addNewPage(doc, pageNumber);
-  yPos = MARGINS.top;
-  yPos = addSectionTitle(doc, S.synthesisTitle, yPos);
+  // pageNumber = addNewPage(doc, pageNumber);
+  // yPos = MARGINS.top;
+  // yPos = addSectionTitle(doc, S.synthesisTitle, yPos);
 
-  // AI one-liner banner
-  if (oneLiner) {
-    const bannerLines = doc.splitTextToSize(`"${oneLiner}"`, CONTENT_WIDTH - 16);
-    const bannerH = Math.max(16, 8 + bannerLines.length * 5);
-    doc.setFillColor(...BLUE_PALE);
-    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, bannerH, 3, 3, 'F');
-    doc.setFillColor(...BLUE_PRIMARY);
-    doc.rect(MARGINS.left, yPos, 3, bannerH, 'F');
-    doc.setTextColor(...BLUE_DARK);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'italic');
-    doc.text(bannerLines, MARGINS.left + 8, yPos + 6);
-    yPos += bannerH + 10;
-  }
+  // // AI one-liner banner
+  // if (oneLiner) {
+  //   const bannerLines = doc.splitTextToSize(`"${oneLiner}"`, CONTENT_WIDTH - 16);
+  //   const bannerH = Math.max(16, 8 + bannerLines.length * 5);
+  //   doc.setFillColor(...BLUE_PALE);
+  //   doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, bannerH, 3, 3, 'F');
+  //   doc.setFillColor(...BLUE_PRIMARY);
+  //   doc.rect(MARGINS.left, yPos, 3, bannerH, 'F');
+  //   doc.setTextColor(...BLUE_DARK);
+  //   doc.setFontSize(9);
+  //   doc.setFont('helvetica', 'italic');
+  //   doc.text(bannerLines, MARGINS.left + 8, yPos + 6);
+  //   yPos += bannerH + 10;
+  // }
 
-  // Points forts from real top_praises
-  const strengthRows = topPraises.slice(0, 4).map(s => ({
-    label: s.theme, count: s.count
-  }));
-  yPos = drawSectionTable(
-    doc, yPos,
-    S.mostAppreciated,
-    strengthRows,
-    S.noStrengthsFound,
-    GREEN_PRIMARY, GREEN_PALE, GREEN_LIGHT,
-    [220, 252, 231], [22, 101, 52], GREEN_PRIMARY
-  );
+  // // Points forts from real top_praises
+  // const strengthRows = topPraises.slice(0, 4).map(s => ({
+  //   label: s.theme, count: s.count
+  // }));
+  // yPos = drawSectionTable(
+  //   doc, yPos,
+  //   S.mostAppreciated,
+  //   strengthRows,
+  //   S.noStrengthsFound,
+  //   GREEN_PRIMARY, GREEN_PALE, GREEN_LIGHT,
+  //   [220, 252, 231], [22, 101, 52], GREEN_PRIMARY
+  // );
 
-  // Points de friction from real top_issues
-  const issueRows = topIssues.slice(0, 4).map(i => ({
-    label: i.theme, count: i.count
-  }));
-  yPos = drawSectionTable(
-    doc, yPos,
-    S.mainFrictionPoints,
-    issueRows,
-    S.noIssuesFound,
-    RED_PRIMARY, RED_PALE, RED_LIGHT,
-    [254, 226, 226], [153, 27, 27], RED_PRIMARY
-  );
+  // // Points de friction from real top_issues
+  // const issueRows = topIssues.slice(0, 4).map(i => ({
+  //   label: i.theme, count: i.count
+  // }));
+  // yPos = drawSectionTable(
+  //   doc, yPos,
+  //   S.mainFrictionPoints,
+  //   issueRows,
+  //   S.noIssuesFound,
+  //   RED_PRIMARY, RED_PALE, RED_LIGHT,
+  //   [254, 226, 226], [153, 27, 27], RED_PRIMARY
+  // );
 
-  // What customers love/hate from summary
-  if (customersLove.length > 0 || customersHate.length > 0) {
-    const impactHdrH = 9;
-    doc.setFillColor(...BLUE_PRIMARY);
-    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, impactHdrH, 1, 1, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text(S.loveHateTitle, MARGINS.left + 5, yPos + 6);
-    yPos += impactHdrH;
+  // // What customers love/hate from summary
+  // if (customersLove.length > 0 || customersHate.length > 0) {
+  //   const impactHdrH = 9;
+  //   doc.setFillColor(...BLUE_PRIMARY);
+  //   doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, impactHdrH, 1, 1, 'F');
+  //   doc.setTextColor(255, 255, 255);
+  //   doc.setFontSize(9);
+  //   doc.setFont('helvetica', 'bold');
+  //   doc.text(S.loveHateTitle, MARGINS.left + 5, yPos + 6);
+  //   yPos += impactHdrH;
 
-    const allItems = [
-      ...customersLove.slice(0, 2).map(l => ({ ...l, type: 'love' as const })),
-      ...customersHate.slice(0, 2).map(h => ({ ...h, type: 'hate' as const })),
-    ];
+  //   const allItems = [
+  //     ...customersLove.slice(0, 2).map(l => ({ ...l, type: 'love' as const })),
+  //     ...customersHate.slice(0, 2).map(h => ({ ...h, type: 'hate' as const })),
+  //   ];
 
-    allItems.forEach((item, idx) => {
-      const rowH = 13;
-      const bg: [number, number, number] = item.type === 'love' ? GREEN_PALE : RED_PALE;
-      doc.setFillColor(...bg);
-      doc.rect(MARGINS.left, yPos, CONTENT_WIDTH, rowH, 'F');
-      doc.setDrawColor(220, 220, 220);
-      doc.setLineWidth(0.3);
-      if (idx > 0) doc.line(MARGINS.left, yPos, MARGINS.left + CONTENT_WIDTH, yPos);
+  //   allItems.forEach((item, idx) => {
+  //     const rowH = 13;
+  //     const bg: [number, number, number] = item.type === 'love' ? GREEN_PALE : RED_PALE;
+  //     doc.setFillColor(...bg);
+  //     doc.rect(MARGINS.left, yPos, CONTENT_WIDTH, rowH, 'F');
+  //     doc.setDrawColor(220, 220, 220);
+  //     doc.setLineWidth(0.3);
+  //     if (idx > 0) doc.line(MARGINS.left, yPos, MARGINS.left + CONTENT_WIDTH, yPos);
 
-      const iconColor: [number, number, number] = item.type === 'love' ? GREEN_PRIMARY : RED_PRIMARY;
-      const icon = item.type === 'love' ? '+' : '-';
-      doc.setFillColor(...iconColor);
-      doc.circle(MARGINS.left + 6, yPos + 6.5, 3.5, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.text(icon, MARGINS.left + 6, yPos + 7.5, { align: 'center' });
+  //     const iconColor: [number, number, number] = item.type === 'love' ? GREEN_PRIMARY : RED_PRIMARY;
+  //     const icon = item.type === 'love' ? '+' : '-';
+  //     doc.setFillColor(...iconColor);
+  //     doc.circle(MARGINS.left + 6, yPos + 6.5, 3.5, 'F');
+  //     doc.setTextColor(255, 255, 255);
+  //     doc.setFont('helvetica', 'bold');
+  //     doc.setFontSize(9);
+  //     doc.text(icon, MARGINS.left + 6, yPos + 7.5, { align: 'center' });
 
-      doc.setTextColor(...COLORS.text);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.5);
-      doc.text(truncateText(item.theme, 30), MARGINS.left + 14, yPos + 6);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.5);
-      doc.setTextColor(...COLORS.textLight);
-      doc.text(truncateText(item.reason || '', 70), MARGINS.left + 14, yPos + 11);
+  //     doc.setTextColor(...COLORS.text);
+  //     doc.setFont('helvetica', 'bold');
+  //     doc.setFontSize(8.5);
+  //     doc.text(truncateText(item.theme, 30), MARGINS.left + 14, yPos + 6);
+  //     doc.setFont('helvetica', 'normal');
+  //     doc.setFontSize(7.5);
+  //     doc.setTextColor(...COLORS.textLight);
+  //     doc.text(truncateText(item.reason || '', 70), MARGINS.left + 14, yPos + 11);
 
-      yPos += rowH;
-    });
+  //     yPos += rowH;
+  //   });
 
-    doc.setDrawColor(...BLUE_PRIMARY);
-    doc.setLineWidth(0);
-    doc.roundedRect(MARGINS.left, yPos - allItems.length * 13 - impactHdrH,
-      CONTENT_WIDTH, impactHdrH + allItems.length * 13, 1, 1, 'S');
-  }
+  //   doc.setDrawColor(...BLUE_PRIMARY);
+  //   doc.setLineWidth(0);
+  //   doc.roundedRect(MARGINS.left, yPos - allItems.length * 13 - impactHdrH,
+  //     CONTENT_WIDTH, impactHdrH + allItems.length * 13, 1, 1, 'S');
+  // }
 
-  addFooter(doc, pageNumber);
+  // addFooter(doc, pageNumber);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PAGE 4 — ANALYSE DETAILLEE (real themes)
@@ -1016,7 +1016,7 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
 
   // Universal + Industry themes with sentiment
   const themeMap = new Map<string, Theme>();
-  [...themesUniv.slice(0, 3), ...themesInd.slice(0, 3)]
+  [...themesUniv.slice(0), ...themesInd.slice(0)]
     .filter(Boolean)
     .forEach((theme) => {
       const key = (theme.theme || '').trim().toLowerCase() || `${theme.theme}-${theme.count || theme.importance || 0}`;
@@ -1088,18 +1088,18 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
 
     for (let i = 0; i < allThemes.length; i += 2) {
       const rowThemes = allThemes.slice(i, i + 2).map((theme) => {
-        const quotes = getThemeVerbatims(theme).slice(0, 2);
+        const quotes = getThemeVerbatims(theme).slice(0,2);
         const wrappedQuotes = quotes.length > 0
           ? quotes.map((quote) => {
-              const quoteTxt = truncateText(cleanVerbatim(quote), 180);
-              return doc.splitTextToSize(`"${quoteTxt}"`, themeCardW - 16).slice(0, 3) as string[];
+              const quoteTxt = truncateText(cleanVerbatim(quote), 320);
+              return doc.splitTextToSize(`"${quoteTxt}"`, themeCardW - 16) as string[];
             })
           : [];
 
         const quoteLineCount = wrappedQuotes.reduce((sum, lines) => sum + lines.length, 0);
         const cardH = Math.max(
           48,
-          47 + (quotes.length === 0 ? 6 : quoteLineCount * 4.4 + Math.max(0, quotes.length - 1) * 1.5)
+          47 + (quotes.length === 0 ? 6 : quoteLineCount * 4.1 + Math.max(0, quotes.length - 1) * 1.5)
         );
 
         return {
@@ -1215,7 +1215,7 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
             doc.text('-', cardX + 6, quoteY);
             doc.text(quoteLines, cardX + 9, quoteY);
 
-            quoteY += Math.max(6, quoteLines.length * 3.7) + 1.5;
+            quoteY += Math.max(6, quoteLines.length * 3.6) + 1.5;
           });
         }
       });
@@ -1230,9 +1230,13 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
   // ═══════════════════════════════════════════════════════════════════════════
   // PAGE 4 — ANALYSE APPROFONDIE DES PROBLEMES (root causes)
   // ═══════════════════════════════════════════════════════════════════════════
-const issuesWithRootCauses = topIssues.filter(
-  i => i.root_causes && i.root_causes.length > 0
-);
+
+const issuesWithRootCauses = topIssues
+  .map(issue => ({
+    ...issue,
+    root_causes: (issue.root_causes ?? []).filter(rc => rc.causes && rc.causes.length > 0),
+  }))
+  .filter(i => i.root_causes.length > 0);
 
 if (issuesWithRootCauses.length > 0) {
 
@@ -1398,7 +1402,7 @@ if (issuesWithRootCauses.length > 0) {
 
       const evidenceLineCount =
         evidenceLines.reduce(
-          (a, lines) => a + Math.min(lines.length, 3),
+          (a, lines) => a + lines.length,
           0
         );
 
@@ -1410,7 +1414,7 @@ if (issuesWithRootCauses.length > 0) {
 
       const rcCardH = Math.max(
         48,
-        22 + totalLines * 4
+        22 + totalLines * 3.8
       );
 
       // ─────────────────────────────────────
@@ -1574,7 +1578,7 @@ if (issuesWithRootCauses.length > 0) {
 
       evidenceLines.forEach(lines => {
 
-        lines.slice(0, 2).forEach((line: string) => {
+        lines.slice(0,2).forEach((line: string) => {
 
           doc.text(
             line,
@@ -1643,198 +1647,110 @@ else {
   yPos += 12;
 
   if (painPoints.length > 0) {
-    const synthesisMap = new Map<string, string>();
-    topIssues.forEach((ti) => {
-      if (ti.ai_synthesis) {
-        synthesisMap.set(ti.theme.trim().toLowerCase(), ti.ai_synthesis);
-        synthesisMap.set(ti.key.trim().toLowerCase(), ti.ai_synthesis);
-      }
-    });
-    const getSynthesis = (issue: string): string => {
-      const norm = issue.trim().toLowerCase();
-      return synthesisMap.get(norm) ?? "";
-    };
-    const ppTableW = CONTENT_WIDTH;
-    const ppIssueW = 50;
-    const ppImpactW = 24;
-    const ppEaseW = 18;
-    const ppStepW = 30;
-    const ppSynthesisW = ppTableW - ppIssueW - ppImpactW - ppEaseW - ppStepW;
-    const ppHdrH = 9;
-    const ppRowH = 34;
+    // ── 4-column table: Issue | Impact | Ease | First Action ──
+    // Row height is computed per-row from actual first-action line count.
+    const ppTableW  = CONTENT_WIDTH;
+    const ppIssueW  = 45;
+    const ppImpactW = 20;
+    const ppEaseW   = 20;
+    const ppStepW   = ppTableW - ppIssueW - ppImpactW - ppEaseW;
+    const ppHdrH       = 9;
+    const PP_ROW_MIN   = 16;   // minimum row height (mm)
+    const PP_LINE_H    = 4.0;  // line height for AI text (mm)
+    const PP_PAD_V     = 6;    // total vertical padding inside a row (mm)
 
-    // Header
+    // ── Header ──────────────────────────────────────────────────────────────
     doc.setFillColor(...COLORS.warning);
     doc.roundedRect(MARGINS.left, yPos, ppTableW, ppHdrH, 1, 1, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
-    doc.text(S.ppHeaderIssue, MARGINS.left + 4, yPos + 6);
-    doc.text(
-      S.ppHeaderImpact,
-      MARGINS.left + ppIssueW + ppImpactW / 2,
-      yPos + 6,
-      { align: "center" },
-    );
-    doc.text(
-      S.ppHeaderEase,
-      MARGINS.left + ppIssueW + ppImpactW + ppEaseW / 2,
-      yPos + 6,
-      { align: "center" },
-    );
-    doc.text(
-      S.ppHeaderFirstAction,
-      MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW / 2,
-      yPos + 6,
-      { align: "center" },
-    );
-    doc.text(
-      S.ppHeaderAiAnalysis,
-      MARGINS.left +
-        ppIssueW +
-        ppImpactW +
-        ppEaseW +
-        ppStepW +
-        ppSynthesisW / 2,
-      yPos + 6,
-      { align: "center" },
-    );
+    doc.text(S.ppHeaderIssue,       MARGINS.left + 4,                                         yPos + 6);
+    doc.text(S.ppHeaderImpact,      MARGINS.left + ppIssueW + ppImpactW / 2,                  yPos + 6, { align: "center" });
+    doc.text(S.ppHeaderEase,        MARGINS.left + ppIssueW + ppImpactW + ppEaseW / 2,        yPos + 6, { align: "center" });
+    doc.text(S.ppHeaderFirstAction, MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW / 2, yPos + 6, { align: "center" });
     yPos += ppHdrH;
 
+    // ── Rows — height adapts to AI analysis content ──────────────────────────
     const ppStartY = yPos;
+    const rowHeights: number[] = [];
+
     painPoints.forEach((pp, idx) => {
-      const bg: [number, number, number] =
-        idx % 2 === 0 ? ORANGE_PALE : ROW_WHITE;
+      // First action — full text, no truncation
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(6.5);
+      const stepLines = doc.splitTextToSize(pp.first_step || "", ppStepW - 6) as string[];
+
+      // Row height = padding + first-action line count × line-height, at least PP_ROW_MIN
+      const ppRowH = Math.max(PP_ROW_MIN, PP_PAD_V + stepLines.length * PP_LINE_H);
+      rowHeights.push(ppRowH);
+
+      const bg: [number, number, number] = idx % 2 === 0 ? ORANGE_PALE : ROW_WHITE;
       doc.setFillColor(...bg);
       doc.rect(MARGINS.left, yPos, ppTableW, ppRowH, "F");
 
+      // Dividers
       doc.setDrawColor(220, 220, 220);
       doc.setLineWidth(0.3);
       if (idx > 0) doc.line(MARGINS.left, yPos, MARGINS.left + ppTableW, yPos);
-      doc.line(
-        MARGINS.left + ppIssueW,
-        yPos,
-        MARGINS.left + ppIssueW,
-        yPos + ppRowH,
-      );
-      doc.line(
-        MARGINS.left + ppIssueW + ppImpactW,
-        yPos,
-        MARGINS.left + ppIssueW + ppImpactW,
-        yPos + ppRowH,
-      );
-      doc.line(
-        MARGINS.left + ppIssueW + ppImpactW + ppEaseW,
-        yPos,
-        MARGINS.left + ppIssueW + ppImpactW + ppEaseW,
-        yPos + ppRowH,
-      );
-      doc.line(
-        MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW,
-        yPos,
-        MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW,
-        yPos + ppRowH,
-      );
+      doc.line(MARGINS.left + ppIssueW,                       yPos, MARGINS.left + ppIssueW,                       yPos + ppRowH);
+      doc.line(MARGINS.left + ppIssueW + ppImpactW,           yPos, MARGINS.left + ppIssueW + ppImpactW,           yPos + ppRowH);
+      doc.line(MARGINS.left + ppIssueW + ppImpactW + ppEaseW, yPos, MARGINS.left + ppIssueW + ppImpactW + ppEaseW, yPos + ppRowH);
 
-      // Issue
+      const midY = yPos + ppRowH / 2 + 1.5; // vertical centre of row
+
+      // ── Issue (bold title only) ──
       doc.setTextColor(...COLORS.text);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      doc.text(truncateText(pp.issue, 25), MARGINS.left + 4, yPos + 7);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      doc.setTextColor(...COLORS.textLight);
-      const whyLines = doc.splitTextToSize(
-        pp.why_it_matters || "",
-        ppIssueW - 8,
-      );
-      doc.text(whyLines[0] || "", MARGINS.left + 4, yPos + 13);
-      if (whyLines[1]) doc.text(whyLines[1], MARGINS.left + 4, yPos + 17);
-      if (whyLines[2]) doc.text(whyLines[2], MARGINS.left + 4, yPos + 21);
+      doc.setFontSize(7.5);
+      const issueLines  = doc.splitTextToSize(pp.issue, ppIssueW - 8) as string[];
+      const issueStartY = midY - ((Math.min(issueLines.length, 2) - 1) * 4) / 2;
+      issueLines.slice(0, 2).forEach((line, li) => {
+        doc.text(line, MARGINS.left + 4, issueStartY + li * 4);
+      });
 
-      // Impact bar
-      const impactX = MARGINS.left + ppIssueW + 2;
-      const impactColor = getImpactColor(pp.impact);
+      // ── Impact — coloured badge ──
+      const impactX      = MARGINS.left + ppIssueW + 2;
+      const impactColor  = getImpactColor(pp.impact);
+      const impactBadgeW = ppImpactW - 6;
       doc.setFillColor(...impactColor);
-      doc.roundedRect(impactX, yPos + 4, 11, 5, 1, 1, "F");
+      doc.roundedRect(impactX, midY - 4, impactBadgeW, 7, 1.5, 1.5, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(6.5);
-      doc.text(`${pp.impact}`, impactX + 5.5, yPos + 8, { align: "center" });
-      doc.setTextColor(...COLORS.textLight);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(6);
-      doc.setFontSize(5.5);
-      doc.text("/100", impactX + 5.5, yPos + 13, {
-        align: "center",
-      });
+      doc.setFontSize(7.5);
+      doc.text(`${pp.impact}/100`, impactX + impactBadgeW / 2, midY + 0.5, { align: "center" });
 
-      // Ease
-      const easeX = MARGINS.left + ppIssueW + ppImpactW + 2;
-      const easeLabel = getEaseLabel(pp.ease);
+      // ── Difficulty — coloured label badge ──
+      const easeX      = MARGINS.left + ppIssueW + ppImpactW + 2;
+      const easeLabel  = getEaseLabel(pp.ease);
       const easeColor: [number, number, number] =
-        pp.ease >= 70
-          ? GREEN_PRIMARY
-          : pp.ease >= 40
-            ? COLORS.warning
-            : RED_PRIMARY;
+        pp.ease >= 70 ? GREEN_PRIMARY : pp.ease >= 40 ? COLORS.warning : RED_PRIMARY;
+      const easeBadgeW = ppEaseW - 4;
       doc.setFillColor(...easeColor);
-      doc.roundedRect(easeX, yPos + 4, ppEaseW - 4, 5, 1, 1, "F");
+      doc.roundedRect(easeX, midY - 4, easeBadgeW, 7, 1.5, 1.5, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(6.5);
-      doc.text(easeLabel, easeX + (ppEaseW - 4) / 2, yPos + 8, {
-        align: "center",
-      });
+      doc.text(easeLabel, easeX + easeBadgeW / 2, midY + 0.5, { align: "center" });
 
-      // First step
-      const stepX = MARGINS.left + ppIssueW + ppImpactW + ppEaseW + 3;
+      // ── First recommended action — full text, top-aligned ──
+      const stepX      = MARGINS.left + ppIssueW + ppImpactW + ppEaseW + 3;
+      const stepStartY = yPos + PP_PAD_V / 2 + PP_LINE_H * 0.8;
       doc.setTextColor(...COLORS.text);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(6.5);
-      const stepLines = doc.splitTextToSize(pp.first_step || "", ppStepW - 8);
-      stepLines.slice(0, 4).forEach((line: string, li: number) => {
-        doc.text(line, stepX, yPos + 7 + li * 4);
+      stepLines.forEach((line, li) => {
+        doc.text(line, stepX, stepStartY + li * PP_LINE_H);
       });
-
-      // AI Synthesis
-      const synthX =
-        MARGINS.left + ppIssueW + ppImpactW + ppEaseW + ppStepW + 3;
-      const synthesis = sanitizePdfText(getSynthesis(pp.issue));
-      if (synthesis) {
-        doc.setFillColor(...BLUE_PALE);
-        doc.roundedRect(
-          synthX - 1,
-          yPos + 2,
-          ppSynthesisW - 4,
-          ppRowH - 4,
-          1,
-          1,
-          "F",
-        );
-        doc.setTextColor(...BLUE_DARK);
-        doc.setFont("helvetica", "italic");
-        doc.setFontSize(6);
-        const synthLines = doc.splitTextToSize(synthesis, ppSynthesisW - 8);
-        synthLines.slice(0, 5).forEach((line: string, li: number) => {
-          doc.text(line, synthX + 2, yPos + 7 + li * 3.8);
-        });
-      }
 
       yPos += ppRowH;
     });
 
+    // Outer border spans the full accumulated height of all rows
+    const totalRowsH = rowHeights.reduce((a, b) => a + b, 0);
     doc.setDrawColor(...COLORS.warning);
     doc.setLineWidth(0.6);
-    doc.roundedRect(
-      MARGINS.left,
-      ppStartY - ppHdrH,
-      ppTableW,
-      ppHdrH + ppRowH * painPoints.length,
-      1,
-      1,
-      "S",
-    );
+    doc.roundedRect(MARGINS.left, ppStartY - ppHdrH, ppTableW, ppHdrH + totalRowsH, 1, 1, "S");
   } else {
     doc.setTextColor(...COLORS.textLight);
     doc.setFontSize(10);
@@ -1899,309 +1815,309 @@ else {
   // PAGE 6 — RECOMMANDATIONS (real quick_wins + projects)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  pageNumber = addNewPage(doc, pageNumber);
-  yPos = MARGINS.top;
+  // pageNumber = addNewPage(doc, pageNumber);
+  // yPos = MARGINS.top;
 
-  const page6Lang = reportLang;
-  const page6Text = (field: unknown): string => {
-    if (!field) return "";
-    if (typeof field === "string") {
-      try {
-        const parsed = JSON.parse(field);
-        if (parsed && typeof parsed === "object") {
-          const obj = parsed as Record<string, unknown>;
-          return String(obj[page6Lang] ?? obj.fr ?? obj.en ?? field);
-        }
-      } catch {}
-      return field;
-    }
-    if (typeof field === "object") {
-      const obj = field as Record<string, unknown>;
-      return String(obj[page6Lang] ?? obj.fr ?? obj.en ?? "");
-    }
-    return String(field);
-  };
+  // const page6Lang = reportLang;
+  // const page6Text = (field: unknown): string => {
+  //   if (!field) return "";
+  //   if (typeof field === "string") {
+  //     try {
+  //       const parsed = JSON.parse(field);
+  //       if (parsed && typeof parsed === "object") {
+  //         const obj = parsed as Record<string, unknown>;
+  //         return String(obj[page6Lang] ?? obj.fr ?? obj.en ?? field);
+  //       }
+  //     } catch {}
+  //     return field;
+  //   }
+  //   if (typeof field === "object") {
+  //     const obj = field as Record<string, unknown>;
+  //     return String(obj[page6Lang] ?? obj.fr ?? obj.en ?? "");
+  //   }
+  //   return String(field);
+  // };
 
-  const page6ResolveActionPlan = (obj: SmartObjective): string[] => {
-    const raw: unknown[] =
-      (obj.action_plan as any)?.[page6Lang] ??
-      (obj.action_plan as any)?.fr ??
-      (obj.action_plan as any)?.en ??
-      [];
+  // const page6ResolveActionPlan = (obj: SmartObjective): string[] => {
+  //   const raw: unknown[] =
+  //     (obj.action_plan as any)?.[page6Lang] ??
+  //     (obj.action_plan as any)?.fr ??
+  //     (obj.action_plan as any)?.en ??
+  //     [];
 
-    if (Array.isArray(raw) && raw.length > 0) {
-      return raw
-        .map((item) => {
-          if (typeof item === "string") return item;
-          if (item && typeof item === "object") {
-            const o = item as Record<string, unknown>;
-            if (typeof o.text === "string") return o.text;
-            if (o.title) return page6Text(o.title);
-            return page6Text(item);
-          }
-          return String(item);
-        })
-        .filter(Boolean);
-    }
+  //   if (Array.isArray(raw) && raw.length > 0) {
+  //     return raw
+  //       .map((item) => {
+  //         if (typeof item === "string") return item;
+  //         if (item && typeof item === "object") {
+  //           const o = item as Record<string, unknown>;
+  //           if (typeof o.text === "string") return o.text;
+  //           if (o.title) return page6Text(o.title);
+  //           return page6Text(item);
+  //         }
+  //         return String(item);
+  //       })
+  //       .filter(Boolean);
+  //   }
 
-    if (Array.isArray((obj as any).actions)) {
-      return ((obj as any).actions as any[])
-        .map((a) => {
-          if (typeof a === "string") return a;
-          if (typeof a?.text === "string") return a.text;
-          if (a?.title) return page6Text(a.title);
-          return page6Text(a);
-        })
-        .filter(Boolean);
-    }
+  //   if (Array.isArray((obj as any).actions)) {
+  //     return ((obj as any).actions as any[])
+  //       .map((a) => {
+  //         if (typeof a === "string") return a;
+  //         if (typeof a?.text === "string") return a.text;
+  //         if (a?.title) return page6Text(a.title);
+  //         return page6Text(a);
+  //       })
+  //       .filter(Boolean);
+  //   }
 
-    return [];
-  };
+  //   return [];
+  // };
 
-  const smartObjectivesByKey = new Map(
-    (data.smart_objectives ?? [])
-      .filter((obj) => obj.pareto_cause?.key || obj.problem)
-      .map((obj) => {
-        const key = String(obj.pareto_cause?.key ?? obj.problem ?? "")
-          .trim()
-          .toLowerCase();
-        return [key, obj] as const;
-      }),
-  );
+  // const smartObjectivesByKey = new Map(
+  //   (data.smart_objectives ?? [])
+  //     .filter((obj) => obj.pareto_cause?.key || obj.problem)
+  //     .map((obj) => {
+  //       const key = String(obj.pareto_cause?.key ?? obj.problem ?? "")
+  //         .trim()
+  //         .toLowerCase();
+  //       return [key, obj] as const;
+  //     }),
+  // );
 
-  const page6Objectives = topIssues.slice(0, 3).map((issue, idx) => {
-    const matchKey = String(issue.key ?? issue.theme ?? "")
-      .trim()
-      .toLowerCase();
-    const objective = smartObjectivesByKey.get(matchKey);
-    return {
-      issue,
-      objective,
-      issueName: page6Text(issue.theme || issue.key || `Issue ${idx + 1}`),
-      issuePct:
-        issue.count && data.totalReviews > 0
-          ? Math.round((issue.count / data.totalReviews) * 100)
-          : null,
-      actionPlanItems: objective
-        ? page6ResolveActionPlan(objective).slice(0, 4)
-        : [],
-      kpiText: objective ? page6Text(objective.kpi_label) : "",
-      status: String(objective?.status ?? "todo").toLowerCase(),
-      priority: String(objective?.priority ?? "").toLowerCase(),
-      currentProgress: objective
-        ? ((objective as any).current_progress ?? 0)
-        : 0,
-      currentValue: objective ? ((objective as any).current_value ?? 0) : 0,
-      isMissing: !objective,
-    };
-  });
+  // const page6Objectives = topIssues.slice(0, 3).map((issue, idx) => {
+  //   const matchKey = String(issue.key ?? issue.theme ?? "")
+  //     .trim()
+  //     .toLowerCase();
+  //   const objective = smartObjectivesByKey.get(matchKey);
+  //   return {
+  //     issue,
+  //     objective,
+  //     issueName: page6Text(issue.theme || issue.key || `Issue ${idx + 1}`),
+  //     issuePct:
+  //       issue.count && data.totalReviews > 0
+  //         ? Math.round((issue.count / data.totalReviews) * 100)
+  //         : null,
+  //     actionPlanItems: objective
+  //       ? page6ResolveActionPlan(objective).slice(0, 4)
+  //       : [],
+  //     kpiText: objective ? page6Text(objective.kpi_label) : "",
+  //     status: String(objective?.status ?? "todo").toLowerCase(),
+  //     priority: String(objective?.priority ?? "").toLowerCase(),
+  //     currentProgress: objective
+  //       ? ((objective as any).current_progress ?? 0)
+  //       : 0,
+  //     currentValue: objective ? ((objective as any).current_value ?? 0) : 0,
+  //     isMissing: !objective,
+  //   };
+  // });
 
-  yPos = addSectionTitle(
-    doc,
-    page6Lang === "fr" ? "Plan d'action recommande" : "Recommended action plan",
-    yPos,
-    COLORS.success,
-  );
+  // yPos = addSectionTitle(
+  //   doc,
+  //   page6Lang === "fr" ? "Plan d'action recommande" : "Recommended action plan",
+  //   yPos,
+  //   COLORS.success,
+  // );
 
-  if (page6Objectives.length === 0) {
-    const emptyText =
-      page6Lang === "fr" ? "Aucune action disponible" : "No actions available";
-    const emptySub =
-      page6Lang === "fr"
-        ? "Aucun objectif SMART n a encore ete genere pour cet etablissement."
-        : "No SMART objective has been created for this establishment yet.";
-    const emptyBoxH = 34;
-    doc.setFillColor(250, 250, 250);
-    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, emptyBoxH, 3, 3, "F");
-    doc.setDrawColor(...COLORS.textLight);
-    doc.setLineWidth(0.4);
-    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, emptyBoxH, 3, 3, "S");
-    doc.setTextColor(...COLORS.textLight);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text(emptyText, PAGE_WIDTH / 2, yPos + 15, { align: "center" });
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.text(emptySub, PAGE_WIDTH / 2, yPos + 22, { align: "center" });
-  } else {
-    page6Objectives.forEach((entry, idx) => {
-      const issueName = entry.issueName;
-      const issuePct = entry.issuePct;
-      const actionPlanItems = entry.actionPlanItems;
-      const kpiText = entry.kpiText;
-      const status = entry.status;
-      const priority = entry.priority;
-      const isMissing = entry.isMissing;
-      const accent =
-        status === "completed"
-          ? GREEN_PRIMARY
-          : status === "in_progress"
-            ? COLORS.warning
-            : ([156, 163, 175] as [number, number, number]);
-      const pale =
-        status === "completed"
-          ? GREEN_PALE
-          : status === "in_progress"
-            ? ([255, 248, 219] as [number, number, number])
-            : ([243, 244, 246] as [number, number, number]);
-      const statusLabel =
-        status === "completed"
-          ? page6Lang === "fr"
-            ? "Termine"
-            : "Completed"
-          : status === "in_progress"
-            ? page6Lang === "fr"
-              ? "En cours"
-              : "In progress"
-            : page6Lang === "fr"
-              ? "A faire"
-              : "To do";
+  // if (page6Objectives.length === 0) {
+  //   const emptyText =
+  //     page6Lang === "fr" ? "Aucune action disponible" : "No actions available";
+  //   const emptySub =
+  //     page6Lang === "fr"
+  //       ? "Aucun objectif SMART n a encore ete genere pour cet etablissement."
+  //       : "No SMART objective has been created for this establishment yet.";
+  //   const emptyBoxH = 34;
+  //   doc.setFillColor(250, 250, 250);
+  //   doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, emptyBoxH, 3, 3, "F");
+  //   doc.setDrawColor(...COLORS.textLight);
+  //   doc.setLineWidth(0.4);
+  //   doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, emptyBoxH, 3, 3, "S");
+  //   doc.setTextColor(...COLORS.textLight);
+  //   doc.setFont("helvetica", "bold");
+  //   doc.setFontSize(10);
+  //   doc.text(emptyText, PAGE_WIDTH / 2, yPos + 15, { align: "center" });
+  //   doc.setFont("helvetica", "normal");
+  //   doc.setFontSize(8);
+  //   doc.text(emptySub, PAGE_WIDTH / 2, yPos + 22, { align: "center" });
+  // } else {
+  //   page6Objectives.forEach((entry, idx) => {
+  //     const issueName = entry.issueName;
+  //     const issuePct = entry.issuePct;
+  //     const actionPlanItems = entry.actionPlanItems;
+  //     const kpiText = entry.kpiText;
+  //     const status = entry.status;
+  //     const priority = entry.priority;
+  //     const isMissing = entry.isMissing;
+  //     const accent =
+  //       status === "completed"
+  //         ? GREEN_PRIMARY
+  //         : status === "in_progress"
+  //           ? COLORS.warning
+  //           : ([156, 163, 175] as [number, number, number]);
+  //     const pale =
+  //       status === "completed"
+  //         ? GREEN_PALE
+  //         : status === "in_progress"
+  //           ? ([255, 248, 219] as [number, number, number])
+  //           : ([243, 244, 246] as [number, number, number]);
+  //     const statusLabel =
+  //       status === "completed"
+  //         ? page6Lang === "fr"
+  //           ? "Termine"
+  //           : "Completed"
+  //         : status === "in_progress"
+  //           ? page6Lang === "fr"
+  //             ? "En cours"
+  //             : "In progress"
+  //           : page6Lang === "fr"
+  //             ? "A faire"
+  //             : "To do";
 
-      const actionTextX = MARGINS.left + 12;
-      const actionWrapWidth = CONTENT_WIDTH - 12;
+  //     const actionTextX = MARGINS.left + 12;
+  //     const actionWrapWidth = CONTENT_WIDTH - 12;
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.2);
+  //     doc.setFont("helvetica", "normal");
+  //     doc.setFontSize(8.2);
 
-      const actionBlocks =
-        actionPlanItems.length > 0
-          ? actionPlanItems.map(
-              (item) => doc.splitTextToSize(item, actionWrapWidth) as string[],
-            )
-          : [];
+  //     const actionBlocks =
+  //       actionPlanItems.length > 0
+  //         ? actionPlanItems.map(
+  //             (item) => doc.splitTextToSize(item, actionWrapWidth) as string[],
+  //           )
+  //         : [];
 
-      const actionListH = actionBlocks.reduce(
-        (sum, lines) => sum + lines.length * 4.1 + 1.5,
-        0,
-      );
+  //     const actionListH = actionBlocks.reduce(
+  //       (sum, lines) => sum + lines.length * 4.1 + 1.5,
+  //       0,
+  //     );
 
-      const cardH = 24 + actionListH + 4;
-      if (yPos + cardH > PAGE_HEIGHT - MARGINS.bottom - 10) {
-        pageNumber = addNewPage(doc, pageNumber);
-        yPos = MARGINS.top;
-      }
+  //     const cardH = 24 + actionListH + 4;
+  //     if (yPos + cardH > PAGE_HEIGHT - MARGINS.bottom - 10) {
+  //       pageNumber = addNewPage(doc, pageNumber);
+  //       yPos = MARGINS.top;
+  //     }
 
-      const cardRadius = 3;
-      const accentWidth = 1.8;
+  //     const cardRadius = 3;
+  //     const accentWidth = 1.8;
 
-      doc.setFillColor(...accent);
-      doc.roundedRect(
-        MARGINS.left,
-        yPos,
-        CONTENT_WIDTH,
-        cardH,
-        cardRadius,
-        cardRadius,
-        "F",
-      );
+  //     doc.setFillColor(...accent);
+  //     doc.roundedRect(
+  //       MARGINS.left,
+  //       yPos,
+  //       CONTENT_WIDTH,
+  //       cardH,
+  //       cardRadius,
+  //       cardRadius,
+  //       "F",
+  //     );
 
-      doc.setFillColor(...pale);
-      doc.roundedRect(
-        MARGINS.left + accentWidth,
-        yPos,
-        CONTENT_WIDTH - accentWidth,
-        cardH,
-        cardRadius,
-        cardRadius,
-        "F",
-      );
+  //     doc.setFillColor(...pale);
+  //     doc.roundedRect(
+  //       MARGINS.left + accentWidth,
+  //       yPos,
+  //       CONTENT_WIDTH - accentWidth,
+  //       cardH,
+  //       cardRadius,
+  //       cardRadius,
+  //       "F",
+  //     );
 
-      doc.setDrawColor(...accent);
-      doc.setLineWidth(0.6);
-      doc.roundedRect(
-        MARGINS.left,
-        yPos,
-        CONTENT_WIDTH,
-        cardH,
-        cardRadius,
-        cardRadius,
-        "S",
-      );
+  //     doc.setDrawColor(...accent);
+  //     doc.setLineWidth(0.6);
+  //     doc.roundedRect(
+  //       MARGINS.left,
+  //       yPos,
+  //       CONTENT_WIDTH,
+  //       cardH,
+  //       cardRadius,
+  //       cardRadius,
+  //       "S",
+  //     );
 
-      doc.setTextColor(...COLORS.text);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      const displayedTitle = truncateText(issueName, 36);
-      doc.text(displayedTitle, MARGINS.left + 6, yPos + 8);
+  //     doc.setTextColor(...COLORS.text);
+  //     doc.setFont("helvetica", "bold");
+  //     doc.setFontSize(10);
+  //     const displayedTitle = truncateText(issueName, 36);
+  //     doc.text(displayedTitle, MARGINS.left + 6, yPos + 8);
 
-      doc.setFillColor(...accent);
-      doc.roundedRect(
-        MARGINS.left + CONTENT_WIDTH - 28,
-        yPos + 4,
-        20,
-        6,
-        2,
-        2,
-        "F",
-      );
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(6.8);
-      doc.text(statusLabel, MARGINS.left + CONTENT_WIDTH - 18, yPos + 8, {
-        align: "center",
-      });
+  //     doc.setFillColor(...accent);
+  //     doc.roundedRect(
+  //       MARGINS.left + CONTENT_WIDTH - 28,
+  //       yPos + 4,
+  //       20,
+  //       6,
+  //       2,
+  //       2,
+  //       "F",
+  //     );
+  //     doc.setTextColor(255, 255, 255);
+  //     doc.setFont("helvetica", "bold");
+  //     doc.setFontSize(6.8);
+  //     doc.text(statusLabel, MARGINS.left + CONTENT_WIDTH - 18, yPos + 8, {
+  //       align: "center",
+  //     });
 
-      if (actionBlocks.length > 0) {
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(...accent);
-        doc.setFontSize(8);
-        doc.text(
-          page6Lang === "fr" ? "Actions cles" : "Key actions",
-          MARGINS.left + 6,
-          yPos + 13,
-        );
-      } else {
-        doc.setFont("helvetica", "italic");
-        doc.setTextColor(...COLORS.textLight);
-        doc.setFontSize(8);
-        doc.text(
-          page6Lang === "fr"
-            ? "Aucune action disponible"
-            : "No action items available",
-          MARGINS.left + 6,
-          yPos + 13,
-        );
-      }
+  //     if (actionBlocks.length > 0) {
+  //       doc.setFont("helvetica", "bold");
+  //       doc.setTextColor(...accent);
+  //       doc.setFontSize(8);
+  //       doc.text(
+  //         page6Lang === "fr" ? "Actions cles" : "Key actions",
+  //         MARGINS.left + 6,
+  //         yPos + 13,
+  //       );
+  //     } else {
+  //       doc.setFont("helvetica", "italic");
+  //       doc.setTextColor(...COLORS.textLight);
+  //       doc.setFontSize(8);
+  //       doc.text(
+  //         page6Lang === "fr"
+  //           ? "Aucune action disponible"
+  //           : "No action items available",
+  //         MARGINS.left + 6,
+  //         yPos + 13,
+  //       );
+  //     }
 
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(...COLORS.text);
-      doc.setFontSize(8.2);
-      let lineY = yPos + 17;
-      actionBlocks.forEach((lines, actionIdx) => {
-        doc.setFillColor(...accent);
-        doc.roundedRect(
-          MARGINS.left + 5.5,
-          lineY - 2.4,
-          5.5,
-          5.5,
-          1.5,
-          1.5,
-          "F",
-        );
-        doc.setTextColor(255, 255, 255);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(6.8);
-        doc.text(String(actionIdx + 1), MARGINS.left + 8.75, lineY + 1.6, {
-          align: "center",
-        });
+  //     doc.setFont("helvetica", "normal");
+  //     doc.setTextColor(...COLORS.text);
+  //     doc.setFontSize(8.2);
+  //     let lineY = yPos + 17;
+  //     actionBlocks.forEach((lines, actionIdx) => {
+  //       doc.setFillColor(...accent);
+  //       doc.roundedRect(
+  //         MARGINS.left + 5.5,
+  //         lineY - 2.4,
+  //         5.5,
+  //         5.5,
+  //         1.5,
+  //         1.5,
+  //         "F",
+  //       );
+  //       doc.setTextColor(255, 255, 255);
+  //       doc.setFont("helvetica", "bold");
+  //       doc.setFontSize(6.8);
+  //       doc.text(String(actionIdx + 1), MARGINS.left + 8.75, lineY + 1.6, {
+  //         align: "center",
+  //       });
 
-        doc.setTextColor(...COLORS.text);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8.2);
-        lines.forEach((ln, lineIdx) => {
-          doc.text(ln, actionTextX, lineY + lineIdx * 4.1);
-        });
-        lineY += lines.length * 4.1 + 2.2;
-      });
+  //       doc.setTextColor(...COLORS.text);
+  //       doc.setFont("helvetica", "normal");
+  //       doc.setFontSize(8.2);
+  //       lines.forEach((ln, lineIdx) => {
+  //         doc.text(ln, actionTextX, lineY + lineIdx * 4.1);
+  //       });
+  //       lineY += lines.length * 4.1 + 2.2;
+  //     });
 
-      doc.setTextColor(...COLORS.textLight);
-      doc.setFontSize(7.8);
+  //     doc.setTextColor(...COLORS.textLight);
+  //     doc.setFontSize(7.8);
 
-      yPos += cardH + 4;
-    });
-  }
+  //     yPos += cardH + 4;
+  //   });
+  // }
 
-  addFooter(doc, pageNumber);
+  // addFooter(doc, pageNumber);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PAGE 10 — SMART OBJECTIFS (one card per objective, full page each)
@@ -2411,43 +2327,79 @@ const smartObjectives = (data.smart_objectives ?? []).filter(obj =>
 
       yPos += hdrH + 3;
 
-      // ── Card body: stacked single-column layout ────────────────────────────
       if (!hasObjective) {
-        const missingCardH = 34;
+        const missingSub =
+          lang === "fr"
+            ? `Le probleme "${issueName}" n a pas encore d objectif SMART.`
+            : `The issue "${issueName}" has no SMART objective yet.`;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.6);
+        const missingLines = (
+          doc.splitTextToSize(missingSub, CONTENT_WIDTH - 16) as string[]
+        ).slice(0, 2);
+
+        const M_TOP_PAD = 7;
+        const M_TITLE_H = 5;
+        const M_TITLE_GAP = 3;
+        const M_LINE_H = 4.2;
+        const M_BOTTOM_PAD = 6;
+
+        const missingCardH =
+          M_TOP_PAD +
+          M_TITLE_H +
+          M_TITLE_GAP +
+          missingLines.length * M_LINE_H +
+          M_BOTTOM_PAD;
+
         doc.setFillColor(255, 250, 223);
-        doc.roundedRect(MARGINS.left + 2, yPos, CONTENT_WIDTH - 4, missingCardH, 3, 3, 'F');
+        doc.roundedRect(
+          MARGINS.left + 2,
+          yPos,
+          CONTENT_WIDTH - 4,
+          missingCardH,
+          3,
+          3,
+          "F",
+        );
         doc.setDrawColor(...COLORS.warning);
         doc.setLineWidth(0.5);
-        doc.roundedRect(MARGINS.left + 2, yPos, CONTENT_WIDTH - 4, missingCardH, 3, 3, 'S');
+        doc.roundedRect(
+          MARGINS.left + 2,
+          yPos,
+          CONTENT_WIDTH - 4,
+          missingCardH,
+          3,
+          3,
+          "S",
+        );
 
         doc.setTextColor(...COLORS.warning);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont("helvetica", "bold");
         doc.setFontSize(8.5);
         doc.text(
-          lang === 'fr' ? 'Aucun objectif SMART disponible' : 'No SMART objective available',
+          lang === "fr"
+            ? "Aucun objectif SMART disponible"
+            : "No SMART objective available",
           MARGINS.left + 7,
-          yPos + 12
+          yPos + M_TOP_PAD,
         );
 
         doc.setTextColor(...COLORS.textLight);
-        doc.setFont('helvetica', 'normal');
+        doc.setFont("helvetica", "normal");
         doc.setFontSize(7.6);
-        const missingSub = lang === 'fr'
-          ? `Le probleme "${issueName}" n a pas encore d objectif SMART.`
-          : `The issue "${issueName}" has no SMART objective yet.`;
-        const missingLines = doc.splitTextToSize(missingSub, CONTENT_WIDTH - 16);
-        missingLines.slice(0, 2).forEach((line: string, idx: number) => {
-          doc.text(line, MARGINS.left + 7, yPos + 19 + idx * 4.2);
+        const subtitleStartY = yPos + M_TOP_PAD + M_TITLE_H + M_TITLE_GAP;
+        missingLines.forEach((line: string, idx: number) => {
+          doc.text(line, MARGINS.left + 7, subtitleStartY + idx * M_LINE_H);
         });
 
-        yPos += missingCardH + 8;
+        yPos += missingCardH + 6; 
         return;
       }
-
       const PAD = 4.5;
       const IW = CONTENT_WIDTH - PAD * 2;
 
-      const problemTxt = hasObjective ? t(obj.problem) : '';
+      const problemTxt = hasObjective ? t(obj.problem) : "";
       const kpiTxt = hasObjective ? t(obj.kpi_label) : '';
       const unitTxt = hasObjective
         ? (() => {
@@ -2513,8 +2465,14 @@ const pdcaActLines = statusStr === 'todo'
       `${lang === 'fr' ? 'Field execution' : 'Field execution'}: ${fieldExecutionProgress}%`,
     ].flatMap((line: string) => doc.splitTextToSize(line, pdcaInnerW) as string[]);
 
-const measurePdcaStepHeight = (lines: string[], minHeight: number): number =>
-  Math.max(minHeight, PAD + 10 + lines.length * 4.2);
+const PDCA_BODY_OFFSET = 15;  
+const PDCA_LINE_STEP = 3.8;  
+const PDCA_BOTTOM_PAD = 5;    
+ 
+const measurePdcaStepHeight = (lines: string[], minHeight: number): number => {
+  const lastLineBaselineOffset = PDCA_BODY_OFFSET + Math.max(0, lines.length - 1) * PDCA_LINE_STEP;
+  return Math.max(minHeight, lastLineBaselineOffset + PDCA_BOTTOM_PAD);
+};
 
 const pdcaStepHeights = [
   measurePdcaStepHeight(pdcaPlanLines, 21),
@@ -2523,37 +2481,38 @@ const pdcaStepHeights = [
   measurePdcaStepHeight(pdcaActLines, 24),
 ];
 
-const pdcaBlockH =
-  8 +
-  pdcaStepHeights.reduce((sum, h) => sum + h, 0) +
-  7;
-
-const pillH  = 6;
+const badgeH = 6.5;
 const trackH = 6;
+
+const pdcaBlockH = 11 + pdcaStepHeights.reduce((sum, h) => sum + h + 2.5, 0);
 
 const cardH =
   PAD +
-  7 + PAD +
+  badgeH +
+  3 +
   PAD +
-  4 + problemLines.length * 4 + PAD +
-  4 + kpiLines.length * 4 + PAD +
-  6 +
-  pillH + 3 +
-  trackH + 3 +
-  5 + PAD +
+  4.2 +
+  problemLines.length * 4 +
+  3 +
+  4.2 +
+  kpiLines.length * 4 +
+  3 +
+  4.2 +
+  pillH +
+  3 +
+  trackH + 4 +
   pdcaBlockH +
   PAD;
 
-      doc.setFillColor(250, 248, 255);
-      doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, cardH, 3, 3, 'F');
-      doc.setDrawColor(...PURPLE_PRIMARY);
-      doc.setLineWidth(0.5);
+doc.setFillColor(250, 248, 255);
+doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, cardH, 3, 3, "F");
+doc.setDrawColor(...PURPLE_PRIMARY);
+doc.setLineWidth(0.5);
       doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, cardH, 3, 3, 'S');
 
       let cy = yPos + PAD;
 
-      // ── Badges row: Impact / Effort / Ishikawa ──────────────────────────────
-      const badgeH  = 6.5;
+    
       const badge3W = (IW - 6) / 3;
       const bX      = MARGINS.left + PAD;
 
@@ -2839,19 +2798,10 @@ if (fillW > 60) {
   }
 
   
+// ═══════════════════════════════════════════════════════════════════════════
+  // PAGE 9 — Operational Checklist (unified layout: one calculation, one draw)
   // ═══════════════════════════════════════════════════════════════════════════
-  // PAGE 9 — Operational Checlist
-  // ═══════════════════════════════════════════════════════════════════════════
 
-
-
-
-
- 
-
-
-
-  // ═══════════════════════════════════════════════════════════════════════════
   const checklistLang = reportLang;
 
   const checklistText = (field: unknown): string => {
@@ -2940,14 +2890,14 @@ if (fillW > 60) {
         ? Math.round((issue.count / data.totalReviews) * 100)
         : null;
 
-    return { issueName, issuePct, objective, status, progress, grouped };
+    return { issueName, issuePct, objective, status, progress, grouped, hasObjective: Boolean(objective) };
   });
 
   pageNumber = addNewPage(doc, pageNumber);
   yPos = MARGINS.top;
   yPos = addSectionTitle(
     doc,
-    checklistLang === "fr" ? "Checklist operationnelle" : "Operational checklist",
+    checklistLang === "fr" ? "Checklist operationnelle/Plan d'action recommande" : "Operational checklist/Recommended action plan",
     yPos,
     GREEN_PRIMARY,
   );
@@ -2977,8 +2927,91 @@ if (fillW > 60) {
           ? "WEEKLY"
           : "MONTHLY";
 
+  const CL_HEADER_H = 13;        
+  const CL_CARD_GAP = 6;         
+  const CL_SUMMARY_H = 15;     
+  const CL_SECTION_HEADER_H = 7; 
+  const CL_INNER_BOTTOM_PAD = 4;  
+  const CL_CARD_GAP_BETWEEN = 10;  
+  const CL_MIN_CARD_H = 52;
+  const CL_NO_OBJECTIVE_H = 30;
+  const CL_TEXT_LEFT_OFFSET = 12;
+  const CL_TEXT_BADGE_GAP = 4;    
+  const CL_TEXT_RIGHT_MARGIN = 2; 
+
+  type ChecklistLineItem = {
+    item: any;
+    lines: string[];
+    rowHeight: number;
+    badgeText: string;
+    badgeFontSize: number;
+    badgeW: number;
+  };
+  type ChecklistSectionLayout = {
+    title: string;
+    count: number;
+    items: ChecklistLineItem[];
+    headerH: number;
+    itemsH: number;
+    totalH: number;
+  };
+
+  const layoutChecklistCard = (entry: (typeof checklistObjectives)[number]) => {
+    const rawSections: Array<{ key: "daily" | "weekly" | "monthly"; items: any[] }> = [
+      { key: "daily", items: entry.grouped.daily },
+      { key: "weekly", items: entry.grouped.weekly },
+      { key: "monthly", items: entry.grouped.monthly },
+    ];
+
+    const sections: ChecklistSectionLayout[] = rawSections.map((section) => {
+      const items: ChecklistLineItem[] = section.items.map((item: any) => {
+        const badgeText = checklistScheduleLabel(item);
+        let badgeW = 0;
+        const badgeFontSize = badgeText.length > 14 ? 5.2 : 5.8;
+        if (badgeText) {
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(badgeFontSize);
+          badgeW = Math.min(30, Math.max(12, doc.getTextWidth(badgeText) + 5));
+        }
+
+        const reservedForBadge = badgeText ? badgeW + CL_TEXT_BADGE_GAP : 0;
+        const rowTextWrapWidth =
+          CONTENT_WIDTH - CL_TEXT_LEFT_OFFSET - reservedForBadge - CL_TEXT_RIGHT_MARGIN;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.7);
+        const lines = doc.splitTextToSize(item.text || "", rowTextWrapWidth) as string[];
+        const rowHeight = Math.max(6.4, lines.length * 3.9 + 3.5);
+
+        return { item, lines, rowHeight, badgeText, badgeFontSize, badgeW };
+      });
+
+      const itemsH = items.reduce((sum, it) => sum + it.rowHeight + 1.5, 0);
+      const headerH = items.length > 0 ? CL_SECTION_HEADER_H : 0;
+
+      return {
+        title: checklistSectionTitle(section.key),
+        count: items.length,
+        items,
+        headerH,
+        itemsH,
+        totalH: headerH + itemsH,
+      };
+    });
+
+    const sectionsH = sections.reduce((sum, s) => sum + s.totalH, 0);
+    const cardH = entry.hasObjective
+      ? Math.max(CL_MIN_CARD_H, CL_HEADER_H + CL_CARD_GAP + CL_SUMMARY_H + sectionsH + CL_INNER_BOTTOM_PAD)
+      : CL_NO_OBJECTIVE_H;
+
+    return { sections, cardH };
+  };
+
   checklistObjectives.forEach((entry, idx) => {
-    const hasObjective = Boolean(entry.objective);
+    const hasObjective = entry.hasObjective;
+    const layout = layoutChecklistCard(entry);
+    const cardH = layout.cardH;
+
     const accent =
       entry.status === "completed"
         ? GREEN_PRIMARY
@@ -2991,28 +3024,12 @@ if (fillW > 60) {
         : entry.status === "in_progress"
           ? ORANGE_PALE
           : ([248, 250, 252] as [number, number, number]);
-    const taskWrapWidth = CONTENT_WIDTH - 24;
-    const groupedSections = [
-      { title: checklistSectionTitle("daily"), items: entry.grouped.daily },
-      { title: checklistSectionTitle("weekly"), items: entry.grouped.weekly },
-      { title: checklistSectionTitle("monthly"), items: entry.grouped.monthly },
-    ];
-    const estimatedTasksHeight = hasObjective
-      ? groupedSections.reduce((sum, section) => {
-          if (!section.items.length) return sum + 6;
-          const itemsHeight = section.items.reduce((acc, item) => {
-            const lines = doc.splitTextToSize(item.text || "", taskWrapWidth) as string[];
-            return acc + Math.max(6, lines.length * 3.9 + 4.2);
-          }, 0);
-          return sum + 8 + itemsHeight + 3;
-        }, 22)
-      : 22;
-    const cardH = hasObjective ? Math.max(52, estimatedTasksHeight) : 30;
 
     if (yPos + cardH > PAGE_HEIGHT - MARGINS.bottom - 10) {
       pageNumber = addNewPage(doc, pageNumber);
       yPos = MARGINS.top;
     }
+    const cardStartY = yPos; 
 
     doc.setFillColor(...pale);
     doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, cardH, 4, 4, "F");
@@ -3027,34 +3044,37 @@ if (fillW > 60) {
     doc.setFontSize(7.6);
     doc.text(String(idx + 1), MARGINS.left + 7, yPos + 9.1, { align: "center" });
 
+    const statusLabel =
+      entry.status === "completed"
+        ? checklistLang === "fr" ? "Termine" : "Completed"
+        : entry.status === "in_progress"
+          ? checklistLang === "fr" ? "En cours" : "In progress"
+          : checklistLang === "fr" ? "A faire" : "To do";
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(6.6);
+    const statusBadgeW = Math.max(18, doc.getTextWidth(statusLabel) + 8);
+    const statusBadgeX = MARGINS.left + CONTENT_WIDTH - statusBadgeW - 5;
+
     doc.setTextColor(...COLORS.text);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9.2);
-    doc.text(truncateText(entry.issueName, 40), MARGINS.left + 16, yPos + 7.2);
+    const titleMaxWidth = statusBadgeX - (MARGINS.left + 16) - 4;
+    let displayTitle = entry.issueName;
+    while (doc.getTextWidth(displayTitle) > titleMaxWidth && displayTitle.length > 3) {
+      displayTitle = displayTitle.slice(0, -1);
+    }
+    if (displayTitle !== entry.issueName) displayTitle = displayTitle.trimEnd() + "…";
+    doc.text(displayTitle, MARGINS.left + 16, yPos + 7.2);
 
-    const statusLabel =
-      entry.status === "completed"
-        ? checklistLang === "fr"
-          ? "Termine"
-          : "Completed"
-        : entry.status === "in_progress"
-          ? checklistLang === "fr"
-            ? "En cours"
-            : "In progress"
-          : checklistLang === "fr"
-            ? "A faire"
-            : "To do";
-
-    const badgeW = Math.max(18, doc.getTextWidth(statusLabel) + 8);
-    const badgeX = MARGINS.left + CONTENT_WIDTH - badgeW - 5;
     doc.setFillColor(...accent);
-    doc.roundedRect(badgeX, yPos + 4, badgeW, 7, 2.5, 2.5, "F");
+    doc.roundedRect(statusBadgeX, yPos + 4, statusBadgeW, 7, 2.5, 2.5, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(6.6);
-    doc.text(statusLabel, badgeX + badgeW / 2, yPos + 9.2, { align: "center" });
+    doc.text(statusLabel, statusBadgeX + statusBadgeW / 2, yPos + 9.2, { align: "center" });
 
-    yPos += 13;
+    yPos += CL_HEADER_H;
 
     if (!hasObjective) {
       doc.setFont("helvetica", "normal");
@@ -3074,22 +3094,16 @@ if (fillW > 60) {
         MARGINS.left + 6,
         yPos + 11,
       );
-      yPos += cardH + 6;
+      yPos = cardStartY + cardH + CL_CARD_GAP_BETWEEN;
       return;
     }
 
-    yPos += 2;
-
-    const summaryBoxes = [
-      { title: checklistSectionTitle("daily"), value: entry.grouped.daily.length },
-      { title: checklistSectionTitle("weekly"), value: entry.grouped.weekly.length },
-      { title: checklistSectionTitle("monthly"), value: entry.grouped.monthly.length },
-    ];
+    yPos += CL_CARD_GAP;
 
     const summaryInset = 2;
     const summaryGap = 4;
     const summaryW = (CONTENT_WIDTH - summaryInset * 2 - summaryGap * 2) / 3;
-    summaryBoxes.forEach((box, boxIdx) => {
+    layout.sections.forEach((section, boxIdx) => {
       const x = MARGINS.left + summaryInset + boxIdx * (summaryW + summaryGap);
       doc.setFillColor(255, 255, 255);
       doc.setDrawColor(...GREEN_LIGHT);
@@ -3098,14 +3112,14 @@ if (fillW > 60) {
       doc.setTextColor(...COLORS.textLight);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(6.2);
-      doc.text(box.title, x + 3, yPos + 4.4);
+      doc.text(section.title, x + 3, yPos + 4.4);
       doc.setTextColor(...accent);
       doc.setFontSize(8.8);
-      doc.text(`${box.value}`, x + 3, yPos + 8.3);
+      doc.text(`${section.count}`, x + 3, yPos + 8.3);
     });
-    yPos += 15;
+    yPos += CL_SUMMARY_H;
 
-    groupedSections.forEach((section) => {
+    layout.sections.forEach((section) => {
       if (!section.items.length) return;
 
       doc.setTextColor(...accent);
@@ -3119,16 +3133,10 @@ if (fillW > 60) {
       doc.setDrawColor(...GREEN_LIGHT);
       doc.setLineWidth(0.35);
       doc.line(MARGINS.left + 6, yPos + 4, PAGE_WIDTH - MARGINS.right - 6, yPos + 4);
-      yPos += 7;
+      yPos += CL_SECTION_HEADER_H;
 
-      section.items.forEach((item: any) => {
-        const lines = doc.splitTextToSize(item.text || "", taskWrapWidth) as string[];
-        const rowHeight = Math.max(6.4, lines.length * 3.9 + 3.5);
-
-        if (yPos + rowHeight > PAGE_HEIGHT - MARGINS.bottom - 10) {
-          pageNumber = addNewPage(doc, pageNumber);
-          yPos = MARGINS.top;
-        }
+      section.items.forEach((entryItem) => {
+        const { lines, rowHeight, badgeText, badgeFontSize, badgeW } = entryItem;
 
         doc.setDrawColor(191, 203, 217);
         doc.setLineWidth(0.35);
@@ -3139,13 +3147,11 @@ if (fillW > 60) {
         doc.setTextColor(...COLORS.text);
         let lineY = yPos + 3.4;
         lines.forEach((line: string, lineIdx: number) => {
-          doc.text(line, MARGINS.left + 12, lineY + lineIdx * 3.8);
+          doc.text(line, MARGINS.left + CL_TEXT_LEFT_OFFSET, lineY + lineIdx * 3.9);
         });
 
-        const badgeText = checklistScheduleLabel(item);
         if (badgeText) {
           const badgeH = 6.4;
-          const badgeW = Math.min(20, Math.max(12, doc.getTextWidth(badgeText) + 5));
           const badgeX = PAGE_WIDTH - MARGINS.right - badgeW - 2;
           doc.setFillColor(255, 255, 255);
           doc.setDrawColor(...GREEN_LIGHT);
@@ -3153,7 +3159,7 @@ if (fillW > 60) {
           doc.roundedRect(badgeX, yPos + 0.2, badgeW, badgeH, 2.5, 2.5, "FD");
           doc.setTextColor(...accent);
           doc.setFont("helvetica", "bold");
-          doc.setFontSize(5.8);
+          doc.setFontSize(badgeFontSize);
           doc.text(badgeText, badgeX + badgeW / 2, yPos + 4.7, { align: "center" });
         }
 
@@ -3161,48 +3167,65 @@ if (fillW > 60) {
       });
     });
 
-    yPos += 4;
+    yPos = cardStartY + cardH + CL_CARD_GAP_BETWEEN;
   });
 
   // PAGE 10 — Improvement roadmap
   // ═══════════════════════════════════════════════════════════════════════════
 
+pageNumber = addNewPage(doc, pageNumber);
+yPos = MARGINS.top;
 
-  pageNumber = addNewPage(doc, pageNumber);
-  yPos = MARGINS.top;
- 
-  const roadmapLang = reportLang;
- 
-  const roadmapText = (field: unknown): string => {
-    if (!field) return '';
-    if (typeof field === 'string') {
-      try {
-        const p = JSON.parse(field);
-        if (p && typeof p === 'object') {
-          const obj = p as Record<string, unknown>;
-          return String(obj[roadmapLang] ?? obj.fr ?? obj.en ?? field);
-        }
-      } catch {}
-      return field;
-    }
-    if (typeof field === 'object') {
-      const f = field as Record<string, unknown>;
-      return String(f[roadmapLang] ?? f.fr ?? f.en ?? '');
-    }
-    return String(field);
-  };
- 
-  yPos = addSectionTitle(
-    doc,
-    roadmapLang === 'fr' ? "Feuille de route d'amelioration" : 'Improvement Roadmap',
-    yPos,
-    PURPLE_PRIMARY
-  );
- 
-  const roadmapIntroLines = doc.splitTextToSize(
+const roadmapLang = reportLang;
+
+const roadmapPhaseDefinitions = [
+  {
+    label: roadmapLang === "fr" ? "Semaine 1" : "Week 1",
+    note: roadmapLang === "fr" ? "Lancer les premieres actions." : "Launch the first actions.",
+  },
+  {
+    label: roadmapLang === "fr" ? "Mois 1" : "Month 1",
+    note: roadmapLang === "fr" ? "Revoir les premiers resultats et ajuster." : "Review the first results and adjust.",
+  },
+  {
+    label: roadmapLang === "fr" ? "Mois 2" : "Month 2",
+    note: roadmapLang === "fr" ? "Mesurer les KPI et poursuivre les ameliorations." : "Measure KPI improvements and keep refining.",
+  },
+];
+
+const roadmapPhases = roadmapPhaseDefinitions.map((phase) => ({
+  ...phase,
+  items: [] as Array<{ source: string; text: string }>,
+}));
+
+checklistObjectives.forEach((entry) => {
+  const objectiveActions = Array.isArray(entry.objective?.actions) && entry.objective!.actions.length > 0
+    ? entry.objective!.actions
+    : [...entry.grouped.daily, ...entry.grouped.weekly, ...entry.grouped.monthly];
+
+  objectiveActions.forEach((action: any, actionIdx: number) => {
+    const actionText = checklistText(action?.text ?? "");
+    if (!actionText) return;
+    const phaseIdx = Math.min(actionIdx, roadmapPhases.length - 1);
+    roadmapPhases[phaseIdx].items.push({ source: entry.issueName, text: actionText });
+  });
+});
+
+const roadmapHasItems = roadmapPhases.some((phase) => phase.items.length > 0);
+
+yPos = addSectionTitle(
+  doc,
+  roadmapLang === 'fr' ? "Feuille de route d'amelioration" : 'Improvement Roadmap',
+  yPos,
+  PURPLE_PRIMARY
+);
+yPos += 4;
+
+
+const roadmapIntroLines = doc.splitTextToSize(
     roadmapLang === 'fr'
-      ? "Les 3 priorites identifiees par l'IA, chacune avec un objectif SMART, une echeance cible, les KPI a suivre et la progression attendue."
-      : "The 3 priorities identified by AI, each with a SMART objective, a target deadline, KPIs to monitor, and expected progress.",
+      ? "Cette feuille de route montre quand chaque action recommandee doit etre realisee, pour suivre facilement la progression des ameliorations."
+      : "This roadmap shows when each recommended action should be completed, so the improvement journey is easy to follow.",
     CONTENT_WIDTH
   );
   doc.setFont('helvetica', 'italic');
@@ -3210,258 +3233,238 @@ if (fillW > 60) {
   doc.setTextColor(...COLORS.textLight);
   doc.text(roadmapIntroLines, MARGINS.left, yPos);
   yPos += roadmapIntroLines.length * 4.5 + 8;
- 
-  // Source of truth: issues from the Root Cause Analysis section (i.e. those
-  // that actually have root_causes populated), capped to 3. This keeps the
-  // roadmap in sync with the Ishikawa analysis instead of the raw top_issues
-  // list, which may include issues never analyzed for root cause.
-  const roadmapRootCauseIssues = topIssues
-    .filter((i: any) => i.root_causes && i.root_causes.length > 0)
-    .slice(0, 3);
- 
-  // Group SMART objectives by their matching issue key — an issue can have
-  // zero, one, or multiple objectives linked to it.
-  const roadmapObjectivesByKey = new Map<string, any[]>();
-  (data.smart_objectives ?? []).forEach((obj: any) => {
-    if (!obj.pareto_cause?.key && !obj.problem) return;
-    const key = String(obj.pareto_cause?.key ?? obj.problem ?? '').trim().toLowerCase();
-    const existing = roadmapObjectivesByKey.get(key) ?? [];
-    existing.push(obj);
-    roadmapObjectivesByKey.set(key, existing);
-  });
- 
-  const roadmapIssues = roadmapRootCauseIssues;
- 
-  if (roadmapIssues.length === 0) {
-    doc.setFillColor(250, 250, 250);
-    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 30, 3, 3, 'F');
-    doc.setDrawColor(...COLORS.textLight);
-    doc.setLineWidth(0.4);
-    doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 30, 3, 3, 'S');
-    doc.setTextColor(...COLORS.textLight);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text(
-      roadmapLang === 'fr' ? 'Aucune priorite identifiee' : 'No priorities identified',
-      PAGE_WIDTH / 2, yPos + 17, { align: 'center' }
-    );
-  } else {
-    roadmapIssues.forEach((issue: any, idx: number) => {
-      const matchKey = String(issue.key ?? issue.theme ?? '').trim().toLowerCase();
-      const matchedObjectives: any[] = roadmapObjectivesByKey.get(matchKey) ?? [];
-      const hasMultiple = matchedObjectives.length > 1;
- 
-      // ── No SMART objective generated for this issue yet ─────────────────────
-      if (matchedObjectives.length === 0) {
-        const priorityName = issue.theme;
-        const roadmapCardH = 34;
- 
-        if (yPos + roadmapCardH > PAGE_HEIGHT - MARGINS.bottom - 5) {
-          addFooter(doc, pageNumber);
-          pageNumber = addNewPage(doc, pageNumber);
-          yPos = MARGINS.top;
-        }
- 
-        // Card shell (neutral gray — nothing generated yet)
-        doc.setFillColor(248, 248, 248);
-        doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, roadmapCardH, 3, 3, 'F');
-        doc.setDrawColor(...COLORS.textLight);
-        doc.setLineWidth(0.5);
-        doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, roadmapCardH, 3, 3, 'S');
- 
-        // Rank badge
-        doc.setFillColor(...COLORS.textLight);
-        doc.circle(MARGINS.left + 10, yPos + 10, 6, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.text(`${idx + 1}`, MARGINS.left + 10, yPos + 12, { align: 'center' });
- 
-        // Priority name + tag
-        doc.setTextColor(...COLORS.text);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.text(truncateText(priorityName, 40), MARGINS.left + 20, yPos + 8);
- 
-        doc.setTextColor(...COLORS.textLight);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7.5);
-        doc.text(
-          roadmapLang === 'fr' ? `PRIORITE ${idx + 1}` : `PRIORITY ${idx + 1}`,
-          MARGINS.left + 20, yPos + 13.5
-        );
- 
-        doc.setTextColor(...COLORS.textLight);
-        doc.setFont('helvetica', 'italic');
-        doc.setFontSize(8.3);
-        doc.text(
-          roadmapLang === 'fr'
-            ? "Aucun objectif SMART n'a encore ete genere pour cette priorite."
-            : 'No SMART objective has been generated for this priority yet.',
-          MARGINS.left + 20, yPos + 22
-        );
- 
-        yPos += roadmapCardH + 6;
-        return;
-      }
- 
-      // ── One full card per SMART objective linked to this issue ─────────────
-      matchedObjectives.forEach((obj: any, objIdx: number) => {
-        const priorityName = roadmapText(obj.pareto_cause) || obj.pareto_cause?.key || issue.theme;
-        const badgeLabel = hasMultiple ? `${idx + 1}.${objIdx + 1}` : `${idx + 1}`;
- 
-        const smartObjective = roadmapText(obj.problem);
-        const kpiText        = roadmapText(obj.kpi_label);
-        const unitText       = roadmapText(obj.unit).split('|')[0].trim();
-        const currentVal     = obj.current_value ?? 0;
-        const targetVal      = obj.computed_target ?? obj.target_value ?? 0;
-        const deadlineDate   = obj.deadline
-          ? new Date(obj.deadline).toLocaleDateString(
-              roadmapLang === 'fr' ? 'fr-FR' : 'en-GB',
-              { day: 'numeric', month: 'long', year: 'numeric' }
-            )
-          : '—';
- 
-        const roadmapSmartLines = doc.splitTextToSize(smartObjective, CONTENT_WIDTH - 20);
-        const roadmapCardH = 20 + roadmapSmartLines.length * 4.2 + 24 + 6;
- 
-        if (yPos + roadmapCardH > PAGE_HEIGHT - MARGINS.bottom - 5) {
-          addFooter(doc, pageNumber);
-          pageNumber = addNewPage(doc, pageNumber);
-          yPos = MARGINS.top;
-        }
- 
-        // Card shell
-        doc.setFillColor(250, 248, 255);
-        doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, roadmapCardH, 3, 3, 'F');
-        doc.setDrawColor(...PURPLE_PRIMARY);
-        doc.setLineWidth(0.5);
-        doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, roadmapCardH, 3, 3, 'S');
- 
-        // Rank badge
-        doc.setFillColor(...PURPLE_PRIMARY);
-        doc.circle(MARGINS.left + 10, yPos + 10, 6, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(hasMultiple ? 8.5 : 11);
-        doc.text(badgeLabel, MARGINS.left + 10, yPos + 12, { align: 'center' });
- 
-        // Priority name + tag
-        doc.setTextColor(...COLORS.text);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.text(truncateText(priorityName, 40), MARGINS.left + 20, yPos + 8);
- 
-        doc.setTextColor(...PURPLE_PRIMARY);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7.5);
-        doc.text(
-          roadmapLang === 'fr' ? `PRIORITE ${badgeLabel}` : `PRIORITY ${badgeLabel}`,
-          MARGINS.left + 20, yPos + 13.5
-        );
- 
-        let roadmapCy = yPos + 20;
- 
-        // SMART objective
-        doc.setTextColor(...PURPLE_PRIMARY);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7.5);
-        doc.text(roadmapLang === 'fr' ? 'OBJECTIF SMART' : 'SMART OBJECTIVE', MARGINS.left + 6, roadmapCy);
-        roadmapCy += 4.5;
-        doc.setTextColor(...COLORS.text);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8.3);
-        doc.text(roadmapSmartLines, MARGINS.left + 6, roadmapCy);
-        roadmapCy += roadmapSmartLines.length * 4.2 + 4;
- 
-        // 3 metric boxes: deadline / KPI / expected progress
-        const roadmapBoxGap = 4;
-        const roadmapBoxW = (CONTENT_WIDTH - 12 - roadmapBoxGap * 2) / 3;
-        const roadmapBoxH = 20;
-        const roadmapBoxY = roadmapCy;
- 
-        const drawRoadmapMetricBox = (x: number, label: string, value: string) => {
-          doc.setFillColor(...BLUE_PALE);
-          doc.roundedRect(x, roadmapBoxY, roadmapBoxW, roadmapBoxH, 2, 2, 'F');
-          doc.setTextColor(...BLUE_DARK);
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(6.8);
-          doc.text(label, x + roadmapBoxW / 2, roadmapBoxY + 6, { align: 'center' });
-          doc.setTextColor(...COLORS.text);
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(8);
-          const roadmapVLines = doc.splitTextToSize(value, roadmapBoxW - 6);
-          doc.text(roadmapVLines.slice(0, 2), x + roadmapBoxW / 2, roadmapBoxY + 12, { align: 'center' });
-        };
- 
-        drawRoadmapMetricBox(
-          MARGINS.left + 6,
-          roadmapLang === 'fr' ? 'ECHEANCE CIBLE' : 'TARGET DATE',
-          deadlineDate
-        );
-        drawRoadmapMetricBox(
-          MARGINS.left + 6 + roadmapBoxW + roadmapBoxGap,
-          'KPI',
-          truncateText(kpiText, 45) || '—'
-        );
-        drawRoadmapMetricBox(
-          MARGINS.left + 6 + (roadmapBoxW + roadmapBoxGap) * 2,
-          roadmapLang === 'fr' ? 'PROGRESSION ATTENDUE' : 'EXPECTED PROGRESS',
-          `${currentVal} -> ${targetVal} ${unitText}`
-        );
- 
-        yPos += roadmapCardH + 6;
-      });
-    });
-  }
- 
-  addFooter(doc, pageNumber);
 
-  
-  // ═══════════════════════════════════════════════════════════════════════════
+if (!roadmapHasItems) {
+  doc.setFillColor(250, 250, 250);
+  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 30, 3, 3, 'F');
+  doc.setDrawColor(...COLORS.textLight);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 30, 3, 3, 'S');
+  doc.setTextColor(...COLORS.textLight);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text(
+    roadmapLang === 'fr' ? 'Aucune priorite identifiee' : 'No priorities identified',
+    PAGE_WIDTH / 2, yPos + 17, { align: 'center' }
+  );
+} else {
+  const phaseTextWidth = CONTENT_WIDTH - 22;
+  const phaseLabelWidths = roadmapPhases.map((phase) => Math.max(34, doc.getTextWidth(phase.label) + 10));
+  const phaseGroups = roadmapPhases.map((phase) => {
+    const groupMap = new Map<string, string[]>();
+    phase.items.forEach((item) => {
+      const key = item.source || (roadmapLang === 'fr' ? 'Sans source' : 'Unspecified');
+      const existing = groupMap.get(key) ?? [];
+      existing.push(item.text);
+      groupMap.set(key, existing);
+    });
+    return { ...phase, groups: Array.from(groupMap.entries()).map(([source, items]) => ({ source, items })) };
+  });
+
+  // Single source of truth for spacing — used by BOTH the height calculator and the draw loop,
+  // so the box height and the actual rendered content can never drift apart again.
+  const RM = {
+    cardPad: 4,
+    phaseGap: 3,
+    noteOffset: 13,
+    noteToContentGap: 1.5,
+    sourceLineGap: 4.6,
+    groupBottomGap: 1.0,
+    itemExtra: 0.8,
+    bottomPad: 3,
+  };
+
+  const computePhaseHeight = (
+    phase: { note: string; groups: { source: string; items: string[] }[] },
+    isMonth2: boolean
+  ) => {
+    const noteStep = isMonth2 ? 3.1 : 3.5;
+    const itemLineStep = isMonth2 ? 2.8 : 3.0;
+    const itemBlockMin = isMonth2 ? 4.0 : 4.4;
+
+    const noteLines = doc.splitTextToSize(phase.note, phaseTextWidth - 10) as string[];
+    let y = RM.noteOffset + noteLines.length * noteStep + RM.noteToContentGap;
+
+    if (phase.groups.length === 0) {
+      y += 6;
+    } else {
+      phase.groups.forEach((group) => {
+        y += RM.sourceLineGap;
+        group.items.forEach((text) => {
+          const itemLines = doc.splitTextToSize(text, phaseTextWidth - 18) as string[];
+          y += Math.max(itemBlockMin, itemLines.length * itemLineStep + RM.itemExtra);
+        });
+        y += RM.groupBottomGap;
+      });
+    }
+
+    return y + RM.bottomPad;
+  };
+
+  const phaseHeights = phaseGroups.map((phase, phaseIdx) => computePhaseHeight(phase, phaseIdx === 2));
+
+  // Pre-check: if even the first phase can't fit under the title, move everything to a new page
+  // before drawing anything, so the title is never left orphaned above empty space.
+  const totalH = RM.cardPad + phaseHeights.reduce((s, v) => s + v, 0) + (phaseHeights.length - 1) * RM.phaseGap + RM.cardPad;
+  if (yPos + Math.min(totalH, RM.cardPad + phaseHeights[0] + RM.cardPad) > PAGE_HEIGHT - MARGINS.bottom - 5) {
+    addFooter(doc, pageNumber);
+    pageNumber = addNewPage(doc, pageNumber);
+    yPos = MARGINS.top;
+    yPos = addSectionTitle(
+      doc,
+      roadmapLang === 'fr' ? "Feuille de route d'amelioration" : 'Improvement Roadmap',
+      yPos,
+      PURPLE_PRIMARY
+    );
+    yPos += 4;
+  }
+
+  let roadmapCy = yPos + RM.cardPad;
+
+  phaseGroups.forEach((phase, phaseIdx) => {
+    const phaseH = phaseHeights[phaseIdx];
+
+    // Per-phase page-break check — self-correcting safety net, nothing can ever clip.
+    if (roadmapCy + phaseH > PAGE_HEIGHT - MARGINS.bottom - 5) {
+      addFooter(doc, pageNumber);
+      pageNumber = addNewPage(doc, pageNumber);
+      yPos = MARGINS.top;
+      yPos = addSectionTitle(
+        doc,
+        roadmapLang === 'fr' ? "Feuille de route d'amelioration" : 'Improvement Roadmap',
+        yPos,
+        PURPLE_PRIMARY
+      );
+      yPos += 4;
+      roadmapCy = yPos + RM.cardPad;
+    }
+
+    const isMonth2 = phaseIdx === 2;
+    const noteFontSize = isMonth2 ? 7.0 : 7.4;
+    const sourceFontSize = isMonth2 ? 6.4 : 6.7;
+    const itemFontSize = isMonth2 ? 7.0 : 7.3;
+    const itemIndent = isMonth2 ? 12.5 : 13;
+    const bulletX = isMonth2 ? 8.9 : 9.2;
+    const bulletRadius = isMonth2 ? 0.55 : 0.6;
+    const itemLineStep = isMonth2 ? 2.8 : 3.0;   // must match computePhaseHeight
+    const itemBlockMin = isMonth2 ? 4.0 : 4.4;   // must match computePhaseHeight
+    const noteStep = isMonth2 ? 3.1 : 3.5;      // must match computePhaseHeight
+
+    const phaseX = MARGINS.left + 6;
+    const phaseY = roadmapCy;
+    const labelW = phaseLabelWidths[phaseIdx];
+    const noteLines = doc.splitTextToSize(phase.note, phaseTextWidth - 10) as string[];
+
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(...PURPLE_PALE);
+    doc.setLineWidth(0.35);
+    doc.roundedRect(phaseX, phaseY, CONTENT_WIDTH - 12, phaseH, 2.5, 2.5, 'FD');
+
+    doc.setFillColor(...PURPLE_PRIMARY);
+    doc.rect(phaseX, phaseY, 2, phaseH, 'F');
+
+    doc.setFillColor(...PURPLE_PALE);
+    doc.roundedRect(phaseX + 6, phaseY + 3, labelW, 6.5, 2.2, 2.2, 'F');
+    doc.setTextColor(...PURPLE_PRIMARY);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.1);
+    doc.text(phase.label, phaseX + 6 + labelW / 2, phaseY + 7.5, { align: 'center' });
+
+    doc.setTextColor(...COLORS.textLight);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(noteFontSize);
+    doc.text(noteLines, phaseX + 6, phaseY + RM.noteOffset);
+
+    let phaseItemY = phaseY + RM.noteOffset + noteLines.length * noteStep + RM.noteToContentGap;
+    doc.setTextColor(...COLORS.text);
+
+    if (phase.groups.length === 0) {
+      doc.setTextColor(...COLORS.textLight);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.6);
+      doc.text(
+        roadmapLang === 'fr'
+          ? 'Aucune action planifiee pour cette etape.'
+          : 'No actions scheduled for this step yet.',
+        phaseX + 6,
+        phaseItemY,
+      );
+    } else {
+      phase.groups.forEach((group) => {
+        const sourceLabel = truncateText(group.source, 34);
+        doc.setTextColor(...PURPLE_PRIMARY);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(sourceFontSize);
+        doc.text(sourceLabel, phaseX + 8, phaseItemY + 1);
+
+        phaseItemY += RM.sourceLineGap;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(itemFontSize);
+        doc.setTextColor(...COLORS.text);
+
+        group.items.forEach((text) => {
+          const itemLines = doc.splitTextToSize(text, phaseTextWidth - 18) as string[];
+          doc.setFillColor(...PURPLE_PRIMARY);
+          doc.circle(phaseX + bulletX, phaseItemY - 1.0, bulletRadius, 'F');
+          doc.text(itemLines, phaseX + itemIndent, phaseItemY);
+          phaseItemY += Math.max(itemBlockMin, itemLines.length * itemLineStep + RM.itemExtra);
+        });
+
+        phaseItemY += RM.groupBottomGap;
+      });
+    }
+
+    roadmapCy += phaseH + RM.phaseGap;
+  });
+
+  yPos = roadmapCy + RM.cardPad;
+}
+
+addFooter(doc, pageNumber);
+
   // Last page — CONCLUSION STRATEGIQUE (real AI synthesis)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  pageNumber = addNewPage(doc, pageNumber);
-  yPos = MARGINS.top;
-  yPos = addSectionTitle(doc, S.conclusionTitle, yPos, COLORS.primary);
+  // pageNumber = addNewPage(doc, pageNumber);
+  // yPos = MARGINS.top;
+  // yPos = addSectionTitle(doc, S.conclusionTitle, yPos, COLORS.primary);
 
-  const strategicText = generateStrategicConclusion(data, ad, reportLang);
-  doc.setFillColor(...COLORS.background);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 200, 3, 3, 'F');
+  // const strategicText = generateStrategicConclusion(data, ad, reportLang);
+  // doc.setFillColor(...COLORS.background);
+  // doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 200, 3, 3, 'F');
 
-  doc.setTextColor(...COLORS.text);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
+  // doc.setTextColor(...COLORS.text);
+  // doc.setFontSize(10);
+  // doc.setFont('helvetica', 'normal');
 
-  const conclusionLines = doc.splitTextToSize(strategicText, CONTENT_WIDTH - 15);
-  let currentY = yPos + 10;
+  // const conclusionLines = doc.splitTextToSize(strategicText, CONTENT_WIDTH - 15);
+  // let currentY = yPos + 10;
 
-  conclusionLines.forEach((line: string) => {
-    if (currentY > yPos + 190) return;
-    const isSectionTitle = /^\d\./.test(line.trim());
-    doc.setFont('helvetica', isSectionTitle ? 'bold' : 'normal');
-    doc.setTextColor(...(isSectionTitle ? COLORS.primary : COLORS.text));
-    doc.text(line, MARGINS.left + 7, currentY);
-    currentY += 5.5;
-  });
+  // conclusionLines.forEach((line: string) => {
+  //   if (currentY > yPos + 190) return;
+  //   const isSectionTitle = /^\d\./.test(line.trim());
+  //   doc.setFont('helvetica', isSectionTitle ? 'bold' : 'normal');
+  //   doc.setTextColor(...(isSectionTitle ? COLORS.primary : COLORS.text));
+  //   doc.text(line, MARGINS.left + 7, currentY);
+  //   currentY += 5.5;
+  // });
 
-  yPos += 210;
-  doc.setFillColor(...COLORS.primary);
-  doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 20, 2, 2, 'F');
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'italic');
-  doc.text(
-    S.conclusionFooterLine1,
-    PAGE_WIDTH / 2, yPos + 8, { align: 'center' }
-  );
-  doc.text(
-    S.conclusionFooterLine2,
-    PAGE_WIDTH / 2, yPos + 14, { align: 'center' }
-  );
+  // yPos += 210;
+  // doc.setFillColor(...COLORS.primary);
+  // doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, 20, 2, 2, 'F');
+  // doc.setTextColor(...COLORS.white);
+  // doc.setFontSize(9);
+  // doc.setFont('helvetica', 'italic');
+  // doc.text(
+  //   S.conclusionFooterLine1,
+  //   PAGE_WIDTH / 2, yPos + 8, { align: 'center' }
+  // );
+  // doc.text(
+  //   S.conclusionFooterLine2,
+  //   PAGE_WIDTH / 2, yPos + 14, { align: 'center' }
+  // );
 
-  addFooter(doc, pageNumber);
+  // addFooter(doc, pageNumber);
 
 
   // ── Save ────────────────────────────────────────────────────────────────────
