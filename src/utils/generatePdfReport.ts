@@ -2755,19 +2755,10 @@ if (fillW > 60) {
   }
 
   
+// ═══════════════════════════════════════════════════════════════════════════
+  // PAGE 9 — Operational Checklist (unified layout: one calculation, one draw)
   // ═══════════════════════════════════════════════════════════════════════════
-  // PAGE 9 — Operational Checlist
-  // ═══════════════════════════════════════════════════════════════════════════
 
-
-
-
-
- 
-
-
-
-  // ═══════════════════════════════════════════════════════════════════════════
   const checklistLang = reportLang;
 
   const checklistText = (field: unknown): string => {
@@ -2856,7 +2847,7 @@ if (fillW > 60) {
         ? Math.round((issue.count / data.totalReviews) * 100)
         : null;
 
-    return { issueName, issuePct, objective, status, progress, grouped };
+    return { issueName, issuePct, objective, status, progress, grouped, hasObjective: Boolean(objective) };
   });
 
   pageNumber = addNewPage(doc, pageNumber);
@@ -2893,8 +2884,91 @@ if (fillW > 60) {
           ? "WEEKLY"
           : "MONTHLY";
 
+  const CL_HEADER_H = 13;        
+  const CL_CARD_GAP = 6;         
+  const CL_SUMMARY_H = 15;     
+  const CL_SECTION_HEADER_H = 7; 
+  const CL_INNER_BOTTOM_PAD = 4;  
+  const CL_CARD_GAP_BETWEEN = 10;  
+  const CL_MIN_CARD_H = 52;
+  const CL_NO_OBJECTIVE_H = 30;
+  const CL_TEXT_LEFT_OFFSET = 12;
+  const CL_TEXT_BADGE_GAP = 4;    
+  const CL_TEXT_RIGHT_MARGIN = 2; 
+
+  type ChecklistLineItem = {
+    item: any;
+    lines: string[];
+    rowHeight: number;
+    badgeText: string;
+    badgeFontSize: number;
+    badgeW: number;
+  };
+  type ChecklistSectionLayout = {
+    title: string;
+    count: number;
+    items: ChecklistLineItem[];
+    headerH: number;
+    itemsH: number;
+    totalH: number;
+  };
+
+  const layoutChecklistCard = (entry: (typeof checklistObjectives)[number]) => {
+    const rawSections: Array<{ key: "daily" | "weekly" | "monthly"; items: any[] }> = [
+      { key: "daily", items: entry.grouped.daily },
+      { key: "weekly", items: entry.grouped.weekly },
+      { key: "monthly", items: entry.grouped.monthly },
+    ];
+
+    const sections: ChecklistSectionLayout[] = rawSections.map((section) => {
+      const items: ChecklistLineItem[] = section.items.map((item: any) => {
+        const badgeText = checklistScheduleLabel(item);
+        let badgeW = 0;
+        const badgeFontSize = badgeText.length > 14 ? 5.2 : 5.8;
+        if (badgeText) {
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(badgeFontSize);
+          badgeW = Math.min(30, Math.max(12, doc.getTextWidth(badgeText) + 5));
+        }
+
+        const reservedForBadge = badgeText ? badgeW + CL_TEXT_BADGE_GAP : 0;
+        const rowTextWrapWidth =
+          CONTENT_WIDTH - CL_TEXT_LEFT_OFFSET - reservedForBadge - CL_TEXT_RIGHT_MARGIN;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.7);
+        const lines = doc.splitTextToSize(item.text || "", rowTextWrapWidth) as string[];
+        const rowHeight = Math.max(6.4, lines.length * 3.9 + 3.5);
+
+        return { item, lines, rowHeight, badgeText, badgeFontSize, badgeW };
+      });
+
+      const itemsH = items.reduce((sum, it) => sum + it.rowHeight + 1.5, 0);
+      const headerH = items.length > 0 ? CL_SECTION_HEADER_H : 0;
+
+      return {
+        title: checklistSectionTitle(section.key),
+        count: items.length,
+        items,
+        headerH,
+        itemsH,
+        totalH: headerH + itemsH,
+      };
+    });
+
+    const sectionsH = sections.reduce((sum, s) => sum + s.totalH, 0);
+    const cardH = entry.hasObjective
+      ? Math.max(CL_MIN_CARD_H, CL_HEADER_H + CL_CARD_GAP + CL_SUMMARY_H + sectionsH + CL_INNER_BOTTOM_PAD)
+      : CL_NO_OBJECTIVE_H;
+
+    return { sections, cardH };
+  };
+
   checklistObjectives.forEach((entry, idx) => {
-    const hasObjective = Boolean(entry.objective);
+    const hasObjective = entry.hasObjective;
+    const layout = layoutChecklistCard(entry);
+    const cardH = layout.cardH;
+
     const accent =
       entry.status === "completed"
         ? GREEN_PRIMARY
@@ -2907,29 +2981,12 @@ if (fillW > 60) {
         : entry.status === "in_progress"
           ? ORANGE_PALE
           : ([248, 250, 252] as [number, number, number]);
-    const taskWrapWidth = CONTENT_WIDTH - 24;
-    const groupedSections = [
-      { title: checklistSectionTitle("daily"), items: entry.grouped.daily },
-      { title: checklistSectionTitle("weekly"), items: entry.grouped.weekly },
-      { title: checklistSectionTitle("monthly"), items: entry.grouped.monthly },
-    ];
-    const estimatedTasksHeight = hasObjective
-      ? groupedSections.reduce((sum, section) => {
-          if (!section.items.length) return sum + 6;
-          const itemsHeight = section.items.reduce((acc, item) => {
-            const lines = doc.splitTextToSize(item.text || "", taskWrapWidth) as string[];
-            return acc + Math.max(6, lines.length * 3.9 + 4.2);
-          }, 0);
-          return sum + 8 + itemsHeight + 3;
-        }, 22)
-      : 22;
-    const cardH = hasObjective ? Math.max(52, estimatedTasksHeight) : 30;
 
     if (yPos + cardH > PAGE_HEIGHT - MARGINS.bottom - 10) {
       pageNumber = addNewPage(doc, pageNumber);
       yPos = MARGINS.top;
     }
-    const cardStartY = yPos;
+    const cardStartY = yPos; 
 
     doc.setFillColor(...pale);
     doc.roundedRect(MARGINS.left, yPos, CONTENT_WIDTH, cardH, 4, 4, "F");
@@ -2944,35 +3001,37 @@ if (fillW > 60) {
     doc.setFontSize(7.6);
     doc.text(String(idx + 1), MARGINS.left + 7, yPos + 9.1, { align: "center" });
 
+    const statusLabel =
+      entry.status === "completed"
+        ? checklistLang === "fr" ? "Termine" : "Completed"
+        : entry.status === "in_progress"
+          ? checklistLang === "fr" ? "En cours" : "In progress"
+          : checklistLang === "fr" ? "A faire" : "To do";
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(6.6);
+    const statusBadgeW = Math.max(18, doc.getTextWidth(statusLabel) + 8);
+    const statusBadgeX = MARGINS.left + CONTENT_WIDTH - statusBadgeW - 5;
+
     doc.setTextColor(...COLORS.text);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9.2);
-    doc.text(truncateText(entry.issueName, 40), MARGINS.left + 16, yPos + 7.2);
+    const titleMaxWidth = statusBadgeX - (MARGINS.left + 16) - 4;
+    let displayTitle = entry.issueName;
+    while (doc.getTextWidth(displayTitle) > titleMaxWidth && displayTitle.length > 3) {
+      displayTitle = displayTitle.slice(0, -1);
+    }
+    if (displayTitle !== entry.issueName) displayTitle = displayTitle.trimEnd() + "…";
+    doc.text(displayTitle, MARGINS.left + 16, yPos + 7.2);
 
-    const statusLabel =
-      entry.status === "completed"
-        ? checklistLang === "fr"
-          ? "Termine"
-          : "Completed"
-        : entry.status === "in_progress"
-          ? checklistLang === "fr"
-            ? "En cours"
-            : "In progress"
-          : checklistLang === "fr"
-            ? "A faire"
-            : "To do";
-
-    const badgeW = Math.max(18, doc.getTextWidth(statusLabel) + 8);
-    const badgeX = MARGINS.left + CONTENT_WIDTH - badgeW - 5;
     doc.setFillColor(...accent);
-    doc.roundedRect(badgeX, yPos + 4, badgeW, 7, 2.5, 2.5, "F");
+    doc.roundedRect(statusBadgeX, yPos + 4, statusBadgeW, 7, 2.5, 2.5, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(6.6);
-    doc.text(statusLabel, badgeX + badgeW / 2, yPos + 9.2, { align: "center" });
+    doc.text(statusLabel, statusBadgeX + statusBadgeW / 2, yPos + 9.2, { align: "center" });
 
-    yPos += 13;
-    const CARD_GAP = 6;
+    yPos += CL_HEADER_H;
 
     if (!hasObjective) {
       doc.setFont("helvetica", "normal");
@@ -2992,21 +3051,16 @@ if (fillW > 60) {
         MARGINS.left + 6,
         yPos + 11,
       );
-      yPos = cardStartY + cardH + CARD_GAP;      return;
+      yPos = cardStartY + cardH + CL_CARD_GAP_BETWEEN;
+      return;
     }
 
-    yPos += CARD_GAP;
-
-    const summaryBoxes = [
-      { title: checklistSectionTitle("daily"), value: entry.grouped.daily.length },
-      { title: checklistSectionTitle("weekly"), value: entry.grouped.weekly.length },
-      { title: checklistSectionTitle("monthly"), value: entry.grouped.monthly.length },
-    ];
+    yPos += CL_CARD_GAP;
 
     const summaryInset = 2;
     const summaryGap = 4;
     const summaryW = (CONTENT_WIDTH - summaryInset * 2 - summaryGap * 2) / 3;
-    summaryBoxes.forEach((box, boxIdx) => {
+    layout.sections.forEach((section, boxIdx) => {
       const x = MARGINS.left + summaryInset + boxIdx * (summaryW + summaryGap);
       doc.setFillColor(255, 255, 255);
       doc.setDrawColor(...GREEN_LIGHT);
@@ -3015,14 +3069,14 @@ if (fillW > 60) {
       doc.setTextColor(...COLORS.textLight);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(6.2);
-      doc.text(box.title, x + 3, yPos + 4.4);
+      doc.text(section.title, x + 3, yPos + 4.4);
       doc.setTextColor(...accent);
       doc.setFontSize(8.8);
-      doc.text(`${box.value}`, x + 3, yPos + 8.3);
+      doc.text(`${section.count}`, x + 3, yPos + 8.3);
     });
-    yPos += 15;
+    yPos += CL_SUMMARY_H;
 
-    groupedSections.forEach((section) => {
+    layout.sections.forEach((section) => {
       if (!section.items.length) return;
 
       doc.setTextColor(...accent);
@@ -3036,16 +3090,10 @@ if (fillW > 60) {
       doc.setDrawColor(...GREEN_LIGHT);
       doc.setLineWidth(0.35);
       doc.line(MARGINS.left + 6, yPos + 4, PAGE_WIDTH - MARGINS.right - 6, yPos + 4);
-      yPos += 7;
+      yPos += CL_SECTION_HEADER_H;
 
-      section.items.forEach((item: any) => {
-        const lines = doc.splitTextToSize(item.text || "", taskWrapWidth) as string[];
-        const rowHeight = Math.max(6.4, lines.length * 3.9 + 3.5);
-
-        if (yPos + rowHeight > PAGE_HEIGHT - MARGINS.bottom - 10) {
-          pageNumber = addNewPage(doc, pageNumber);
-          yPos = MARGINS.top;
-        }
+      section.items.forEach((entryItem) => {
+        const { lines, rowHeight, badgeText, badgeFontSize, badgeW } = entryItem;
 
         doc.setDrawColor(191, 203, 217);
         doc.setLineWidth(0.35);
@@ -3056,13 +3104,11 @@ if (fillW > 60) {
         doc.setTextColor(...COLORS.text);
         let lineY = yPos + 3.4;
         lines.forEach((line: string, lineIdx: number) => {
-          doc.text(line, MARGINS.left + 12, lineY + lineIdx * 3.8);
+          doc.text(line, MARGINS.left + CL_TEXT_LEFT_OFFSET, lineY + lineIdx * 3.9);
         });
 
-        const badgeText = checklistScheduleLabel(item);
         if (badgeText) {
           const badgeH = 6.4;
-          const badgeW = Math.min(20, Math.max(12, doc.getTextWidth(badgeText) + 5));
           const badgeX = PAGE_WIDTH - MARGINS.right - badgeW - 2;
           doc.setFillColor(255, 255, 255);
           doc.setDrawColor(...GREEN_LIGHT);
@@ -3070,7 +3116,7 @@ if (fillW > 60) {
           doc.roundedRect(badgeX, yPos + 0.2, badgeW, badgeH, 2.5, 2.5, "FD");
           doc.setTextColor(...accent);
           doc.setFont("helvetica", "bold");
-          doc.setFontSize(5.8);
+          doc.setFontSize(badgeFontSize);
           doc.text(badgeText, badgeX + badgeW / 2, yPos + 4.7, { align: "center" });
         }
 
@@ -3078,7 +3124,7 @@ if (fillW > 60) {
       });
     });
 
-    yPos += 4;
+    yPos = cardStartY + cardH + CL_CARD_GAP_BETWEEN;
   });
 
   // PAGE 10 — Improvement roadmap
