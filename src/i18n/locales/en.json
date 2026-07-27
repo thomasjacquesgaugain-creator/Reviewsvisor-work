@@ -288,6 +288,10 @@
     "importReviews": "Import reviews",
     "analyzeReviews": "Analyze reviews",
     "downloadReport": "Download report",
+    
+    "reportDownloaded": "Report downloaded",
+    "reportGeneratedSuccess": "Report generated successfully",
+
     "noReportAvailable": "No report available",
     "importReviewsToGenerateReport": "Import reviews to generate report",
     "paretoProblems": "Pareto Diagram - Problem Analysis",

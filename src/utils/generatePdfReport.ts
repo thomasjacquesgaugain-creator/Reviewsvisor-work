@@ -455,8 +455,8 @@ function sanitizePdfText(text: string): string {
       // Remove other non-printable control characters.
       .replace(/[\u0000-\u001F\u007F]/g, ' ')
       // Normalize curly quotes to plain ASCII quotes for cleaner wrapping.
-      .replace(/[“”]/g, '"')
-      .replace(/[‘’]/g, "'")
+      .replace(/[""]/g, '"')
+      .replace(/['']/g, "'")
   );
 }
 
@@ -1230,9 +1230,13 @@ export async function generatePdfReport(data: ReportData): Promise<void> {
   // ═══════════════════════════════════════════════════════════════════════════
   // PAGE 4 — ANALYSE APPROFONDIE DES PROBLEMES (root causes)
   // ═══════════════════════════════════════════════════════════════════════════
-const issuesWithRootCauses = topIssues.filter(
-  i => i.root_causes && i.root_causes.length > 0
-);
+
+const issuesWithRootCauses = topIssues
+  .map(issue => ({
+    ...issue,
+    root_causes: (issue.root_causes ?? []).filter(rc => rc.causes && rc.causes.length > 0),
+  }))
+  .filter(i => i.root_causes.length > 0);
 
 if (issuesWithRootCauses.length > 0) {
 
