@@ -85,6 +85,29 @@ function normalizeThemeText(text: string): string {
     .trim();
 }
 
+function normalizeThemeName(theme: unknown): string {
+  if (typeof theme === "string") {
+    return theme.trim();
+  }
+
+  if (theme && typeof theme === "object") {
+    const obj = theme as Record<string, unknown>;
+
+    // AI bug: {0:"f",1:"r",evidence_quotes:[]}
+    const chars = Object.keys(obj)
+      .filter(key => /^\d+$/.test(key))
+      .sort((a, b) => Number(a) - Number(b))
+      .map(key => obj[key])
+      .filter((value): value is string => typeof value === "string");
+
+    if (chars.length) {
+      return chars.join("").trim();
+    }
+  }
+
+  return "";
+}
+
 function formatThemeLabel(themeKey: string): string {
   return QUALITATIVE_THEME_LABELS[themeKey] || themeKey
     .replace(/[_-]+/g, " ")
@@ -271,6 +294,7 @@ export function QualitativeSection({ data, reviews, themes = [], dynamicThemes =
     neutral:  t("analysis.qualitative.neutral",  "Neutre"),
     negative: t("analysis.qualitative.negative", "Négatif"),
   };
+  console.log("dt",dynamicThemes)
 
   // Construire les groupes de thèmes dynamiques depuis insight?.themes
   const THEME_GROUPS = useMemo(() => {
@@ -301,8 +325,12 @@ export function QualitativeSection({ data, reviews, themes = [], dynamicThemes =
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/[^\w\s]/g, " ");
     }
+    const normalizedDynamicThemes = (dynamicThemes ?? []).map(theme => ({
+        ...theme,
+        theme: normalizeThemeName(theme.theme)
+      }));
 
-      dynamicThemes.forEach((theme, index) => {
+      normalizedDynamicThemes.forEach((theme, index) => {
         const themeName = (theme.theme || '').toLowerCase().replace(/[^a-z0-9]/g, '_');
         const colorIndex = index % themeColors.length;
         const colors = themeColors[colorIndex];
