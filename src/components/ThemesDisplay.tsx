@@ -121,6 +121,16 @@ const getThemeIcon = (name: string) => {
   return <BarChart3 className="w-4 h-4 text-purple-500" />;
 };
 
+const normalizeThemeName = (theme: any): string => {
+  if (typeof theme === "string") return theme;
+
+  if (theme && typeof theme.theme === "string") {
+    return theme.theme;
+  }
+
+  return "";
+};
+
   const processThemes = (themes: any[]) => {
   return themes
     .map((theme) => {
@@ -148,10 +158,11 @@ const getThemeIcon = (name: string) => {
       // }
       // const total = positive + negative;
 
-      return {
+        return {
         ...theme,
-        count,       // ✅ normalized
-        importance,  // ✅ normalized
+        theme: normalizeThemeName(theme),
+        count,
+        importance,
         percentage:
           totalThemeMentions > 0
             ? Math.round((count / totalThemeMentions) * 100)
@@ -159,8 +170,9 @@ const getThemeIcon = (name: string) => {
         positivePercent: total > 0 ? Math.round((positive / total) * 100) : 0,
         negativePercent: total > 0 ? Math.round((negative / total) * 100) : 0,
       };
-    })
-    .sort((a, b) => b.count - a.count);
+      })
+      .filter(theme => theme.theme)
+      .sort((a, b) => b.count - a.count);
 };
   const SentimentBadges = ({ p, n }: any) => (
     <div className="flex gap-2">

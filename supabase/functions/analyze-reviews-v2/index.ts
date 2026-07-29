@@ -903,7 +903,17 @@ const SYSTEM_RULES = `OUTPUT RULES (apply to every pass):
 const BILINGUAL_RULE = `BILINGUAL OUTPUT:
 - Generate both "en" and "fr" branches for every field
 - Translate only: theme names, descriptions, ai_synthesis, what_it_means, first_step, titles, reasons
-- Never translate: keys, sentiment values, count/impact numbers, or any review quotes`;
+- Never translate: keys, sentiment values, count/impact numbers, or any review quotes
+- OUTPUT LANGUAGE IS INDEPENDENT OF INPUT LANGUAGE: the source reviews you
+  are given may be written in French, English, or a mix of both — this has
+  NO bearing on which language each branch must be written in. Every
+  translatable field in the "en" branch MUST be written entirely in
+  natural English, and every translatable field in the "fr" branch MUST be
+  written entirely in natural French, regardless of what language the
+  underlying reviews use. Before finalizing your answer, re-read every
+  string you wrote into the "en" branch and confirm it contains no French
+  words or phrasing — translate anything you find before responding.`;
+
 
 // ─── PASS A — THEME EXTRACTION ───────────────────────────────────────────────
 
@@ -1003,24 +1013,29 @@ means several confirmed issues end up with the same sentiment.
 
 RANKING RULE FOR top_strength:
   top_strength = 3–5 themes with the most positive mentions, sorted by count desc.
-  • Find these independently from the full review set — they do not need
-    to relate to the confirmed issues above.
+  • Find these independently from the full review set.
+  • HARD EXCLUSION: a theme must NEVER appear in top_strength if its key or
+    its underlying topic matches ANY confirmed issue listed above — even if
+    that theme also has many positive mentions. Confirmed issues are already
+    tracked as problems; they must not simultaneously be presented as a
+    strength. If a confirmed issue is your best positive candidate, skip it
+    and pick the next-best genuinely distinct positive theme instead.
   • When counts are similar, prefer the more sector-specific theme.
   • top_strength themes must have sentiment "positive".
 
-Return this exact JSON shape (NO evidence_quotes or evidence arrays — leave them empty [], and themes_universal/themes_industry should contain ONLY one entry per confirmed issue above — no other themes):
+Return this exact JSON shape (NO evidence_quotes or evidence arrays — leave them empty [], and themes_universal/themes_industry should contain ONLY one entry per confirmed issue above — no other themes). Note: every "theme" value in an "en" array must be written in English, and every "theme" value in a "fr" array must be written in French — this applies even to sector hint terms you were given in both languages above:
 {
   "top_strength": {
-    "en": [{ "key": "snake_case", "theme": "Name", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }],
-    "fr": [{ "key": "same_key_as_en", "theme": "Nom", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }]
+    "en": [{ "key": "snake_case", "theme": "Name in English", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }],
+    "fr": [{ "key": "same_key_as_en", "theme": "Nom en français", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "..." }]
   },
   "themes_universal": {
-    "en": [{ "key": "snake_case", "theme": "Name", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "evidence_quotes": [] }],
-    "fr": [{ "key": "same_key_as_en", "theme": "Nom", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "evidence_quotes": [] }]
+    "en": [{ "key": "snake_case", "theme": "Name in English", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "evidence_quotes": [] }],
+    "fr": [{ "key": "same_key_as_en", "theme": "Nom en français", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "evidence_quotes": [] }]
   },
   "themes_industry": {
-    "en": [{ "key": "snake_case", "theme": "Name", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "evidence_quotes": [] }],
-    "fr": [{ "key": "same_key_as_en", "theme": "Nom", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "evidence_quotes": [] }]
+    "en": [{ "key": "snake_case", "theme": "Name in English", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "evidence_quotes": [] }],
+    "fr": [{ "key": "same_key_as_en", "theme": "Nom en français", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "evidence_quotes": [] }]
   },
   "summary": {
     "en": { "one_liner": "...", "what_customers_love": [{ "theme": "...", "reason": "...", "count": 0 }], "what_customers_hate": [{ "theme": "...", "reason": "...", "count": 0 }] },
@@ -1029,6 +1044,128 @@ Return this exact JSON shape (NO evidence_quotes or evidence arrays — leave th
 }`,
     },
   ]);
+}
+
+// ─── TOP STRENGTH — GUARD AGAINST CONFIRMED-ISSUE COLLISION ─────────────────
+// analyzePassA's prompt asks the model not to list a confirmed (Pareto)
+// issue as a top_strength, but nothing enforces it — this is the code-level
+// backstop, mirroring the confirmedKeySet filter already used in
+// analyzeAdditionalThemes() below. Applied right after the Pass A call,
+// before anything else (curateThemeAnalysis's backfill, etc.) reads
+// top_strength.
+function filterTopStrengthAgainstConfirmedIssues(
+  topStrength: { en: any[]; fr: any[] } | undefined,
+  confirmedIssues: ParetoIssueForPassA[],
+): { en: any[]; fr: any[] } {
+  const enItems = Array.isArray(topStrength?.en) ? topStrength!.en : [];
+  const frItems = Array.isArray(topStrength?.fr) ? topStrength!.fr : [];
+
+  if (!confirmedIssues.length || !enItems.length) {
+    return { en: enItems, fr: frItems };
+  }
+
+  const confirmedKeys = new Set(confirmedIssues.map((i) => i.key));
+  const keptEn = enItems.filter((s: any) => !confirmedKeys.has(s?.key));
+  const droppedEn = enItems.filter((s: any) => confirmedKeys.has(s?.key));
+
+  if (droppedEn.length > 0) {
+    console.warn(
+      `[filterTopStrengthAgainstConfirmedIssues] Dropped ${droppedEn.length} ` +
+      `top_strength item(s) that duplicated a confirmed issue: ` +
+      `${droppedEn.map((s: any) => `"${s.theme}" (${s.key})`).join(', ')}`,
+    );
+  }
+
+  const keptKeys = new Set(keptEn.map((s: any) => s.key));
+  const keptFr = frItems.filter((s: any) => keptKeys.has(s?.key));
+
+  return { en: keptEn, fr: keptFr };
+}
+
+// ─── TOP STRENGTH — TOP-UP TO A MINIMUM COUNT ───────────────────────────────
+// filterTopStrengthAgainstConfirmedIssues() can legitimately shrink
+// top_strength down to just 1-2 items when several of Pass A's positive
+// picks collide with confirmed (Pareto) issues. Rather than shipping a
+// thin list, backfill from the theme pools (which by this point also
+// include Pass A2's additional-theme discoveries) — same top-up pattern
+// used for top_issues via topUpTopIssuesTo5.
+const TOP_STRENGTH_MIN = 3;
+
+function themeToStrengthEntry(theme: any): any {
+  const count = Number(theme?.positive_count ?? theme?.count) || 0;
+  return {
+    key: theme.key,
+    theme: theme.theme,
+    count,
+    impact: count >= 10 ? 'high' : 'medium', // never "dominant" by default — that's reserved for Pass A's own top pick
+    ai_synthesis: theme.what_it_means ?? '',
+  };
+}
+
+function topUpTopStrength(
+  topStrength: { en: any[]; fr: any[] },
+  themesUniversal: { en: any[]; fr: any[] },
+  themesIndustry: { en: any[]; fr: any[] },
+  confirmedIssues: ParetoIssueForPassA[],
+): { en: any[]; fr: any[] } {
+  const enItems = Array.isArray(topStrength?.en) ? topStrength.en : [];
+  const frItems = Array.isArray(topStrength?.fr) ? topStrength.fr : [];
+
+  if (enItems.length >= TOP_STRENGTH_MIN) {
+    return { en: enItems, fr: frItems };
+  }
+
+  const confirmedKeys = new Set(confirmedIssues.map((i) => i.key));
+  const existingKeys  = new Set(enItems.map((s: any) => s.key));
+
+  const universalEn = Array.isArray(themesUniversal?.en) ? themesUniversal.en : [];
+  const industryEn  = Array.isArray(themesIndustry?.en)  ? themesIndustry.en  : [];
+  const universalFr = Array.isArray(themesUniversal?.fr) ? themesUniversal.fr : [];
+  const industryFr  = Array.isArray(themesIndustry?.fr)  ? themesIndustry.fr  : [];
+
+  const rankDesc = (a: any, b: any) =>
+    (Number(b.positive_count ?? b.count) || 0) - (Number(a.positive_count ?? a.count) || 0);
+
+  // Industry themes first (more useful/specific), then universal — same
+  // ordering preference used elsewhere (e.g. topUpTopIssuesTo5).
+  const candidates = [...industryEn, ...universalEn]
+    .filter((t: any) => t.sentiment === 'positive' && !confirmedKeys.has(t.key) && !existingKeys.has(t.key))
+    .sort(rankDesc);
+
+  const needed = TOP_STRENGTH_MIN - enItems.length;
+  const toAdd = candidates.slice(0, needed);
+
+  if (toAdd.length > 0) {
+    console.log(
+      `[topUpTopStrength] Topping up top_strength from ${enItems.length} to ` +
+      `${enItems.length + toAdd.length} using positive theme(s): ` +
+      `${toAdd.map((t: any) => t.theme).join(', ')}`,
+    );
+  } else if (enItems.length < TOP_STRENGTH_MIN) {
+    console.warn(
+      `[topUpTopStrength] Only ${enItems.length} strength(s) and no further ` +
+      `qualifying positive themes available to top up — shipping as-is. ` +
+      `Positive review signal is genuinely thin for this business.`,
+    );
+  }
+
+  const addedEn = toAdd.map(themeToStrengthEntry);
+
+  const industryFrByKey  = new Map(industryFr.map((t: any) => [t.key, t]));
+  const universalFrByKey = new Map(universalFr.map((t: any) => [t.key, t]));
+  const addedFr = addedEn.map((enItem: any) => {
+    const frTheme = industryFrByKey.get(enItem.key) ?? universalFrByKey.get(enItem.key);
+    return frTheme ? themeToStrengthEntry(frTheme) : { ...enItem };
+  });
+
+  const combinedEn = [...enItems, ...addedEn].sort((a, b) => (Number(b.count) || 0) - (Number(a.count) || 0));
+  const combinedFr = [...frItems, ...addedFr].sort((a, b) => {
+    const aCount = combinedEn.find((e) => e.key === a.key)?.count ?? 0;
+    const bCount = combinedEn.find((e) => e.key === b.key)?.count ?? 0;
+    return (Number(bCount) || 0) - (Number(aCount) || 0);
+  });
+
+  return { en: combinedEn, fr: combinedFr };
 }
 
 // ─── PASS A2 — DEDICATED NEW-THEME DISCOVERY ─────────────────────────────────
@@ -1102,10 +1239,13 @@ fundamentally about that concept regardless of industry; otherwise "none".
 When in doubt, choose "none". Never translate this field — it must be one
 of the exact lowercase codes above, or the literal string "none".
 
-Return ONLY this JSON:
+Return ONLY this JSON. Note: "theme" in the "en" array must be the English
+name (e.g. "Menu Variety"), and "theme" in the "fr" array must be the French
+name (e.g. "Variété du menu") — do not swap them, even though the sector
+hint lists above included both languages:
 {
-  "en": [{ "key": "snake_case", "theme": "Name", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "universal_match": "cleanliness|price|wait_time|communication|after_sales|trust|none", "evidence_quotes": [] }],
-  "fr": [{ "key": "same_key_as_en", "theme": "Nom", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "universal_match": "same_value_as_en", "evidence_quotes": [] }]
+  "en": [{ "key": "snake_case", "theme": "Name in English", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "universal_match": "cleanliness|price|wait_time|communication|after_sales|trust|none", "evidence_quotes": [] }],
+  "fr": [{ "key": "same_key_as_en", "theme": "Nom en français", "sentiment": "positive|mixed|negative", "importance": 0, "count": 0, "positive_count": 0, "negative_count": 0, "what_it_means": "...", "universal_match": "same_value_as_en", "evidence_quotes": [] }]
 }`,
     },
   ]);
@@ -1398,10 +1538,13 @@ Bad examples:
 ✗ Staff were rude and inattentive
 ✗ Long waiting times before food arrived
 
-Return ONLY this JSON:
+Return ONLY this JSON. Note: "theme" in the "en" array must be the short
+issue name in English, and "theme" in the "fr" array must be the short
+issue name in French — this applies even to sector terminology you were
+given in both languages above:
 {
-  "en": [{ "key": "snake_case", "theme": "Short issue name", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "...", "universal_match": "cleanliness|price|wait_time|communication|after_sales|trust|none" }],
-  "fr": [{ "key": "same_key_as_en", "theme": "Nom court", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "...", "universal_match": "same_value_as_en" }]
+  "en": [{ "key": "snake_case", "theme": "Short issue name in English", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "...", "universal_match": "cleanliness|price|wait_time|communication|after_sales|trust|none" }],
+  "fr": [{ "key": "same_key_as_en", "theme": "Nom court en français", "count": 0, "impact": "dominant|high|medium", "ai_synthesis": "...", "universal_match": "same_value_as_en" }]
 }`,
     },
   ]);
@@ -1779,8 +1922,16 @@ async function analyzePassC(
       role: "system",
       content: `You are a root cause analyst using the Ishikawa (fishbone / 5M) method.
 ${SYSTEM_RULES}
+${BILINGUAL_RULE}
 
-You receive only negative reviews (rating 1–3), each numbered.
+You receive only negative reviews (rating 1–3), each numbered — these may be
+written in French, English, or a mix of both. That has no bearing on your
+output: every "causes" entry in the "en" branch must be written entirely in
+English, and every "causes" entry in the "fr" branch must be written
+entirely in French. "evidence" quotes are the one exception — always kept
+verbatim in the review's original language, never translated, identical in
+both branches (see R7 below).
+
 Business type: ${businessType} (confidence: ${businessTypeConfidence}%)
 
 5M CATEGORIES for a ${businessType} business — use these sector-specific definitions:
@@ -2393,6 +2544,16 @@ Deno.serve(async (req) => {
     ]);
     if (!passAResult) return json({ ok: false, error: "analysis_pass_a_failed" }, 500);
 
+    // Guard: top_strength must never contain a theme also tracked as a
+    // confirmed (Pareto) issue — the prompt asks for this but doesn't
+    // enforce it, so this code-level filter is the real safety net. Must
+    // run before curateThemeAnalysis (which backfills positive themes from
+    // top_strength) so a filtered-out issue can never sneak back in there.
+    passAResult.top_strength = filterTopStrengthAgainstConfirmedIssues(
+      passAResult.top_strength,
+      confirmedIssuesForPassA,
+    );
+
     passAResult.top_issues = reconciledTopIssues;
 
     // Themes: keep the model-generated key as-is for anything NOT on the
@@ -2408,6 +2569,16 @@ Deno.serve(async (req) => {
     // positive-candidate search below, instead of it having to fall back to
     // backfilling from top_strength every time.
     mergeAdditionalThemesIntoPools(passAResult, additionalThemesResult);
+
+    // Backfill top_strength up to TOP_STRENGTH_MIN using positive themes
+    // from the (now Pass A2-enriched) theme pools — guards against the
+    // confirmed-issue collision filter above shrinking it too far.
+    passAResult.top_strength = topUpTopStrength(
+      passAResult.top_strength     ?? { en: [], fr: [] },
+      passAResult.themes_universal ?? { en: [], fr: [] },
+      passAResult.themes_industry  ?? { en: [], fr: [] },
+      confirmedIssuesForPassA,
+    );
 
     // ── STEP 3: Curate Theme Analysis from the top 3-4 Pareto issues
     // (identical key/name/bucket/rank, sentiment from real counts where

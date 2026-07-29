@@ -251,8 +251,22 @@ console.log("paretoIssue=",paretoIssues)
       rawIndustry .reduce((sum: number, item: any) => sum + (Number(item.count) || 0), 0);
     const totalCount = totalCountCheck >= totalReviews ? totalCountCheck : totalReviews;
 
+    function normalizeThemeName(theme: any): string {
+      if (typeof theme === "string") return theme;
+
+      if (
+        theme &&
+        typeof theme === "object" &&
+        typeof theme.theme === "string"
+      ) {
+        return theme.theme;
+      }
+
+      return "";
+    }
+
     const mapTheme = (theme: any) => ({
-      theme:      theme.theme || theme,
+      theme:      normalizeThemeName(theme.theme ?? theme),
       score:      computeThemeScore(theme, totalCount),
       sentiment:  theme.sentiment || "mixed",      
       count:      Number(theme.count)      || 0,   
@@ -260,8 +274,8 @@ console.log("paretoIssue=",paretoIssues)
       verbatims:  theme.evidence_quotes || [],
     });
 
-    const universalThemes = rawUniversal.map(mapTheme);
-    const industryThemes  = rawIndustry .map(mapTheme);
+    const universalThemes = rawUniversal.map(mapTheme).filter(t => t.theme);
+   const industryThemes = rawIndustry.map(mapTheme).filter(t => t.theme);
     themes = [...universalThemes, ...industryThemes];
 
     // ✅ Dedupe themes that appear in both universal and industry lists (e.g. "Wait Time"
