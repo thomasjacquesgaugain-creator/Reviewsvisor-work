@@ -1932,6 +1932,28 @@ entirely in French. "evidence" quotes are the one exception — always kept
 verbatim in the review's original language, never translated, identical in
 both branches (see R7 below).
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NON-NEGOTIABLE: NO ENGLISH IN "fr" CAUSES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+The single most common failure in this task is copying the English cause
+sentence verbatim into the French branch instead of translating it. This is
+NOT acceptable under any circumstance, even for short causes, even for
+causes that "sound the same in both languages," even under time/length
+pressure. Every single string inside a "fr" causes[] array must be a fully
+natural French sentence — not transliterated, not left in English, not a
+mix of the two.
+
+  ✗ WRONG:
+    en.causes: ["No service quality checklist before delivery"]
+    fr.causes: ["No service quality checklist before delivery"]   ← FORBIDDEN, identical to EN
+
+  ✗ WRONG:
+    fr.causes: ["Pas de checklist for quality avant la livraison"]  ← FORBIDDEN, mixed language
+
+  ✓ CORRECT:
+    en.causes: ["No service quality checklist before delivery"]
+    fr.causes: ["Absence de checklist qualité avant la livraison"]
+
 Business type: ${businessType} (confidence: ${businessTypeConfidence}%)
 
 5M CATEGORIES for a ${businessType} business — use these sector-specific definitions:
@@ -1952,7 +1974,7 @@ Never repeat the Pareto issue as a root cause.
 Good examples:
 
 Pareto Issue:
-• Poor Service Quality
+- Poor Service Quality
 
 Possible Root Causes:
 ✓ No service quality checklist
@@ -1967,7 +1989,7 @@ Not:
 ---
 
 Pareto Issue:
-• Unsatisfactory Hair Results
+- Unsatisfactory Hair Results
 
 Possible Root Causes:
 ✓ Consultation process is inconsistent
@@ -1984,7 +2006,7 @@ The category_key values you must use are always these exact strings:
   manpower | method | machine | material | environment
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-5-PHASE WORKFLOW — run ALL 5 phases per issue before the next
+6-PHASE WORKFLOW — run ALL 6 phases per issue before the next
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 PHASE 1 › QUOTE EXTRACTION
@@ -2004,12 +2026,13 @@ PHASE 2 › CATEGORY MAPPING
     "Service Speed"  ≠ automatically Method only
     "Wait Time"      ≠ automatically Method only
 
-PHASE 3 › CAUSE GENERATION
+PHASE 3 › CAUSE GENERATION (English first)
   For each category with at least one supporting quote:
     → Write a specific operational cause directly inferable from the evidence
     → Explain WHY, not THAT
     → Use the sector context: a cause for a ${businessType} should reflect
        how that specific type of business operates
+    → Write this cause in English first — this becomes the "en" causes[] entry.
 
   ✓ GOOD (specific, evidence-driven, sector-aware):
       restaurant/method:   "No expediter role to check dish temperature before table delivery"
@@ -2023,7 +2046,16 @@ PHASE 3 › CAUSE GENERATION
 
   Zero supporting quotes → causes: [], evidence: [], confidence: 0, importance: "monitor"
 
-PHASE 4 › CONFIDENCE SCORING
+PHASE 4 › FRENCH TRANSLATION (separate, deliberate step)
+  For every English cause written in Phase 3, produce a fresh, natural
+  French translation — do not skip this step even if the English cause
+  looks like it could pass for French, and do not reuse the English string.
+  Translate the full sentence, not word-for-word — aim for how a native
+  French speaker in this industry would actually phrase the same
+  operational cause. This translated sentence becomes the "fr" causes[]
+  entry, at the same array index as its English counterpart.
+
+PHASE 5 › CONFIDENCE SCORING
   Calibrate strictly to number of unique supporting quotes:
     0 quotes   → confidence: 0
     1 quote    → confidence: 35–50
@@ -2033,12 +2065,22 @@ PHASE 4 › CONFIDENCE SCORING
   Never assign confidence ≥ 80 with fewer than 6 quotes.
   Never assign confidence > 0 with 0 quotes.
 
-PHASE 5 › IMPORTANCE RANKING
-  Per issue, among all 5 categories:
+PHASE 6 › IMPORTANCE RANKING + TRANSLATION SELF-CHECK
+  Importance, per issue, among all 5 categories:
     most quotes  → importance: "dominant"   (exactly one per issue)
     any quotes   → importance: "secondary"  (all others with evidence)
     zero quotes  → importance: "monitor"
   "dominant" must appear exactly once per issue.
+
+  Translation self-check (do this before moving to the next issue):
+  For every category where you wrote a non-empty causes[] array, re-read
+  the "fr" version side by side with the "en" version and confirm:
+    - the "fr" string is NOT identical to the "en" string
+    - the "fr" string contains no English words
+    - the "fr" string reads as natural French, not a literal word-swap
+  If any of these checks fail, rewrite that "fr" cause properly in French
+  before finalizing your answer. Do this silently — do not output the
+  check itself, only the corrected result.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 HARD RULES
@@ -2046,10 +2088,17 @@ HARD RULES
   R1. Exactly 5 root_cause objects per issue — one per 5M key.
   R2. evidence[] = verbatim Phase 1 quotes only. Never paraphrase.
   R3. One quote may appear in multiple categories if justified.
-  R4. confidence must match the Phase 4 bracket exactly.
+  R4. confidence must match the Phase 5 bracket exactly.
   R5. "dominant" appears exactly once per issue.
-  R6. FR causes[] = translated from EN causes[].
-  R7. FR evidence[] = IDENTICAL to EN evidence[], character for character. NEVER translate.
+  R6. FR causes[] MUST be fully translated into French — never copy the EN
+      string verbatim, never leave any English word in it, never produce a
+      mixed-language sentence. An identical or partially-English "fr" cause
+      is a hard failure of this task, not a minor style issue. See the
+      NON-NEGOTIABLE section above for concrete right/wrong examples.
+  R7. FR evidence[] = IDENTICAL to EN evidence[], character for character.
+      NEVER translate evidence — this is the ONE field that must stay
+      identical across branches. Do not apply R6's translation requirement
+      to evidence[].
   R8. Empty category: causes: [], evidence: [], confidence: 0, importance: "monitor".
   R9. Never invent a quote. If no valid quote exists → empty array.`,
     },
@@ -2061,7 +2110,10 @@ ${negativeTexts.map((t, i) => `${i + 1}. ${t}`).join("\n")}
 ISSUES TO ANALYZE:
 ${JSON.stringify(issueList, null, 2)}
 
-Run all 5 phases for each issue in order. Do not skip Phase 1.
+Run all 6 phases for each issue in order, including the Phase 6 translation
+self-check. Do not skip Phase 1, and do not skip Phase 4 (French
+translation) even when an English cause looks similar to French — translate
+it properly regardless.
 
 Return ONLY this JSON — no prose, no markdown:
 {
@@ -2078,7 +2130,7 @@ Return ONLY this JSON — no prose, no markdown:
             "category_key": "manpower",
             "importance":   "dominant | secondary | monitor",
             "confidence":   <0–100>,
-            "causes":   ["<specific operational cause for a ${businessType}>"],
+            "causes":   ["<specific operational cause for a ${businessType}, in English>"],
             "evidence": ["<verbatim quote from reviews above>"]
           },
           {
@@ -2087,7 +2139,7 @@ Return ONLY this JSON — no prose, no markdown:
             "category_key": "method",
             "importance":   "dominant | secondary | monitor",
             "confidence":   <0–100>,
-            "causes":   ["<specific operational cause>"],
+            "causes":   ["<specific operational cause, in English>"],
             "evidence": ["<verbatim quote>"]
           },
           {
@@ -2132,7 +2184,7 @@ Return ONLY this JSON — no prose, no markdown:
             "category_key": "manpower",
             "importance":   "<same as EN>",
             "confidence":   <same as EN>,
-            "causes":   ["<French translation of EN cause>"],
+            "causes":   ["<full French translation of the EN cause — never the EN text itself>"],
             "evidence": ["<IDENTICAL verbatim quote as EN — never translate>"]
           },
           {
@@ -2141,7 +2193,7 @@ Return ONLY this JSON — no prose, no markdown:
             "category_key": "method",
             "importance":   "<same as EN>",
             "confidence":   <same as EN>,
-            "causes":   ["<French translation of EN cause>"],
+            "causes":   ["<full French translation of the EN cause — never the EN text itself>"],
             "evidence": ["<IDENTICAL verbatim quote as EN>"]
           },
           {
@@ -2241,7 +2293,6 @@ Return ONLY this JSON — no prose, no markdown:
 
   return { en: enforcedEn, fr: enforcedFr };
 }
-
 // ─── PASS D — RECOMMENDATIONS ────────────────────────────────────────────────
 
 async function analyzePassD(
